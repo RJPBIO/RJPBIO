@@ -374,11 +374,26 @@ export default function BioIgnicion(){
   const[greeting,setGreeting]=useState("");
   const[showScience,setShowScience]=useState(false);
   const[selSS,setSelSS]=useState("off");
-  const[durMult,setDurMult]=useState(1); // 0.5=60s, 1=120s, 1.5=180s
+  const[durMult,setDurMult]=useState(1);
   const[entryDone,setEntryDone]=useState(false);
+  const[nfcCtx,setNfcCtx]=useState(null); // {company,type:'entrada'|'salida',employee}
+  const[voiceOn,setVoiceOn]=useState(true);
+  const[sessionData,setSessionData]=useState({pauses:0,scienceViews:0,phaseTimings:[]});
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
   const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);svS(nv);},[st]);
+
+  // ═══ NFC/QR DEEP LINK READER ═══
+  useEffect(()=>{if(typeof window==="undefined")return;try{const params=new URLSearchParams(window.location.search);const c=params.get("c"),t=params.get("t"),e=params.get("e");if(c||t){setNfcCtx({company:c||"",type:t||"entrada",employee:e||""});setEntryDone(true);
+    const isExit=t==="salida"||t==="exit";const h=new Date().getHours();
+    let pool=isExit?P.filter(p=>p.int==="calma"||p.int==="reset"):h<12?P.filter(p=>p.int==="energia"||p.int==="enfoque"):P.filter(p=>p.int==="enfoque"||p.int==="reset");
+    const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
+  }}catch(e){};},[]);
+
+  // ═══ VOICE GUIDANCE (Web Speech API) ═══
+  function speak(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=0.85;u.pitch=0.95;u.volume=0.7;const voices=window.speechSynthesis.getVoices();const esVoice=voices.find(v=>v.lang.startsWith("es"));if(esVoice)u.voice=esVoice;window.speechSynthesis.speak(u);}catch(e){}}
+  function stopVoice(){try{if(typeof window!=="undefined"&&window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}}
+
   useEffect(()=>{setMt(true);const l=ldS();const cw=getWeekNum();if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;}if(l.weekNum===null)l.weekNum=cw;setSt_(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);},[]);
   const[isDark,setIsDark]=useState(false);
   useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
@@ -388,18 +403,17 @@ export default function BioIgnicion(){
   useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();}else{stopAmbient();stopSoundscape();}return()=>{stopAmbient();stopSoundscape();};},[ts]);
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
-  useEffect(()=>{const el=pr.d-sec;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=pr.ph[i].s){idx=i;break;}}if(idx!==pi){setPi(idx);H("ph");}},[sec,pr]);
+  useEffect(()=>{const el=pr.d-sec;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=pr.ph[i].s){idx=i;break;}}if(idx!==pi){setPi(idx);H("ph");speak(pr.ph[idx].k||pr.ph[idx].l);}},[sec,pr]);
   useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;function tk(){const p=t%cy;if(p<b.in){setBL("INHALA");setBS(1+.22*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){setBL("MANTÉN");setBS(1.22);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);setBL("EXHALA");setBS(1.22-.22*(ep/b.ex));setBCnt(b.ex-ep);}else{setBL("SOSTÉN");setBS(1);setBCnt(cy-p);}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.22*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.22);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.22-.22*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){speak(lbl.toLowerCase());lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
-  // NEW: Countdown 3-2-1 before session
-  function startCountdown(){setCountdown(3);H("tap");cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");setGreeting("");return 0;}H("tap");return p-1;});},1000);}
-  function go(){setPostStep("none");startCountdown();}
-  function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");}
-  function rs(){if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(pr.d);setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);}
+  function startCountdown(){setCountdown(3);H("tap");speak("Tres");cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speak(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speak(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
+  function go(){setPostStep("none");setSessionData({pauses:0,scienceViews:0,phaseTimings:[]});startCountdown();}
+  function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();setSessionData(d=>({...d,pauses:d.pauses+1}));}
+  function rs(){if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
-  function timerTap(){H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){setTs("running");H("go");}}
+  function timerTap(){H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){setTs("running");H("go");speak("continúa");}}
   function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTabFade(1);},150);H("tap");}
 
   function comp(){
@@ -539,9 +553,9 @@ export default function BioIgnicion(){
 
   {showSettings&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowSettings(false)}><div style={{width:"100%",maxWidth:430,background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
     <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:17,fontWeight:800,color:t1,marginBottom:16}}>Configuración</h3>
-    {[{l:"Sonido + ambiente",k:"soundOn",d:"Acordes y ruido ambiental"},{l:"Vibración",k:"hapticOn",d:"Feedback táctil"}].map(s=>(
+    {[{l:"Sonido + ambiente",k:"soundOn",d:"Acordes y ruido ambiental"},{l:"Vibración",k:"hapticOn",d:"Feedback táctil"},{l:"Voz guiada",k:"_voice",d:"Narración de fases y respiración"}].map(s=>(
       <div key={s.k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div><div style={{fontSize:12,fontWeight:700,color:t1}}>{s.l}</div><div style={{fontSize:9,color:t3,marginTop:1}}>{s.d}</div></div>
-        <div onClick={()=>setSt({...st,[s.k]:!st[s.k]})} style={{width:42,height:24,borderRadius:12,background:st[s.k]?ac:bd,cursor:"pointer",position:"relative",transition:"background .3s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:st[s.k]?20:2,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
+        <div onClick={()=>{if(s.k==="_voice"){setVoiceOn(!voiceOn);}else setSt({...st,[s.k]:!st[s.k]});}} style={{width:42,height:24,borderRadius:12,background:s.k==="_voice"?(voiceOn?ac:bd):(st[s.k]?ac:bd),cursor:"pointer",position:"relative",transition:"background .3s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:s.k==="_voice"?(voiceOn?20:2):(st[s.k]?20:2),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
       </div>))}
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{fontSize:12,fontWeight:700,color:t1}}>Tema</div><div style={{display:"flex",gap:4}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:"5px 11px",borderRadius:7,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?ac+"10":cd,color:(st.themeMode||"auto")===m?ac:t3,fontSize:9,fontWeight:700,cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
     <button onClick={()=>exportData(st)} style={{width:"100%",padding:"13px",marginTop:14,borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
@@ -561,6 +575,13 @@ export default function BioIgnicion(){
   <div style={{opacity:tabFade,transition:"opacity .15s",position:"relative",zIndex:1}}>
 
   {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
+    {/* NFC/QR Context Banner */}
+    {nfcCtx&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcCtx.type==="salida"?IND+"08":ac+"08",borderRadius:14,border:`1.5px solid ${nfcCtx.type==="salida"?IND+"20":ac+"20"}`,animation:"fi .4s"}}>
+      <div style={{width:28,height:28,borderRadius:8,background:nfcCtx.type==="salida"?"#6366F115":ac+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name={nfcCtx.type==="salida"?"calm":"energy"} size={14} color={nfcCtx.type==="salida"?"#6366F1":ac}/></div>
+      <div><div style={{fontSize:7,fontWeight:800,letterSpacing:2,color:nfcCtx.type==="salida"?"#6366F1":ac,textTransform:"uppercase"}}>{nfcCtx.type==="salida"?"SESIÓN DE SALIDA":"SESIÓN DE ENTRADA"}</div>
+      <div style={{fontSize:10,fontWeight:600,color:t1}}>{nfcCtx.type==="salida"?"Descomprime tu día. Llévate calma.":"Activa tu enfoque. Arranca con todo."}</div>
+      {nfcCtx.company&&<div style={{fontSize:7,color:t3,marginTop:1}}>{nfcCtx.company}</div>}</div>
+    </div>}
     {/* Immersive entry moment */}
     {!entryDone&&ts==="idle"&&st.totalSessions>0&&<div style={{textAlign:"center",padding:"30px 0 20px",animation:"fi 1s ease"}} onClick={()=>setEntryDone(true)}>
       <svg width="48" height="48" viewBox="0 0 52 52" style={{margin:"0 auto 16px",display:"block",animation:"pu 3s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3"/><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{animation:"innerRing 6s linear infinite"}}/><circle cx="26" cy="26" r="4" fill={ac} opacity=".3"/></svg>
