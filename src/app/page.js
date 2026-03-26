@@ -483,10 +483,15 @@ export default function BioIgnicion(){
   {compFlash&&<div style={{position:"fixed",inset:0,zIndex:230,background:`${ac}12`,animation:"compFlash .8s ease forwards",pointerEvents:"none"}}/>}
 
   {onboard&&<div style={{position:"fixed",inset:0,zIndex:250,background:"rgba(15,23,42,.5)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}><div style={{background:cd,borderRadius:28,padding:"36px 28px",maxWidth:360,textAlign:"center",animation:"po .5s cubic-bezier(.34,1.56,.64,1)"}}>
-    <svg width="52" height="52" viewBox="0 0 52 52" style={{margin:"0 auto 18px",display:"block"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="2.5"/><circle cx="26" cy="26" r="15" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="6 4" style={{animation:"innerRing 4s linear infinite"}}/><circle cx="26" cy="26" r="5" fill={ac} opacity=".5"/></svg>
-    <div style={{fontSize:22,fontWeight:800,color:t1,marginBottom:6}}>BIO-IGNICIÓN</div>
-    <div style={{fontSize:12,color:t2,lineHeight:1.7,marginBottom:24}}>120 segundos que transforman tu rendimiento. La ciencia del sistema nervioso, aplicada a tu día.</div>
-    <button onClick={()=>setOnboard(false)} style={{width:"100%",padding:"16px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>ACTIVAR SISTEMA</button>
+    <svg width="56" height="56" viewBox="0 0 56 56" style={{margin:"0 auto 18px",display:"block"}}><circle cx="28" cy="28" r="24" fill="none" stroke={ac} strokeWidth="2.5" opacity=".6"/><circle cx="28" cy="28" r="17" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="6 4" style={{animation:"innerRing 4s linear infinite"}}/><circle cx="28" cy="28" r="6" fill={ac} opacity=".4"/></svg>
+    <div style={{fontSize:22,fontWeight:800,color:t1,marginBottom:4}}>BIO-IGNICIÓN</div>
+    <div style={{fontSize:10,color:ac,fontWeight:700,letterSpacing:3,marginBottom:20,textTransform:"uppercase"}}>Rendimiento Cognitivo</div>
+    <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:24,textAlign:"left"}}>
+      <div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{width:32,height:32,borderRadius:9,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={14} color={ac}/></div><div><div style={{fontSize:11,fontWeight:700,color:t1}}>120 segundos</div><div style={{fontSize:9,color:t3}}>Protocolos neurocientíficos que resetean tu sistema nervioso</div></div></div>
+      <div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{width:32,height:32,borderRadius:9,background:"#6366F110",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="chart" size={14} color="#6366F1"/></div><div><div style={{fontSize:11,fontWeight:700,color:t1}}>Impacto medible</div><div style={{fontSize:9,color:t3}}>Check-in emocional antes y después de cada sesión</div></div></div>
+      <div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{width:32,height:32,borderRadius:9,background:"#D9770610",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="trophy" size={14} color="#D97706"/></div><div><div style={{fontSize:11,fontWeight:700,color:t1}}>Tu evolución</div><div style={{fontSize:9,color:t3}}>Dashboard con radar neural, logros, y tendencias</div></div></div>
+    </div>
+    <button onClick={()=>setOnboard(false)} style={{width:"100%",padding:"16px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",animation:"gl 3s ease infinite"}}>ACTIVAR SISTEMA</button>
   </div></div>}
 
   {/* POST: CHECK-IN */}
@@ -506,20 +511,26 @@ export default function BioIgnicion(){
   </div></div>}
 
   {/* POST: SUMMARY with Before/After */}
-  {postStep==="summary"&&ts==="done"&&<div style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F2`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}><div style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:400,width:"100%",animation:"po .5s cubic-bezier(.34,1.56,.64,1)",position:"relative",overflow:"hidden"}}>
-    {Array.from({length:8}).map((_,i)=><div key={i} style={{position:"absolute",top:"20%",left:"50%",width:4,height:4,borderRadius:"50%",background:ac,opacity:0,animation:`particle 1.2s ease ${i*.1}s forwards`,"--tx":`${(Math.random()-.5)*120}px`,"--ty":`${-40-Math.random()*80}px`}}/>)}
-    <div style={{textAlign:"center",marginBottom:14}}>
-      <svg width="44" height="44" viewBox="0 0 48 48" style={{margin:"0 auto 10px",display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity=".12"/><circle cx="24" cy="24" r="16" fill={ac} opacity=".2"/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
-      {st.totalSessions<=1?<div style={{fontSize:15,fontWeight:800,color:t1}}>Tu primera ignición.</div>:<div style={{fontSize:15,fontWeight:800,color:t1}}>Sesión #{st.totalSessions}</div>}
-      <div style={{fontSize:10,color:t2,marginTop:2}}>{pr.n} · {pr.d}s</div>
+  {postStep==="summary"&&ts==="done"&&<div style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F2`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}><div style={{background:cd,borderRadius:28,padding:"28px 22px",maxWidth:400,width:"100%",animation:"po .5s cubic-bezier(.34,1.56,.64,1)",position:"relative",overflow:"hidden"}}>
+    {Array.from({length:12}).map((_,i)=><div key={i} style={{position:"absolute",top:"15%",left:"50%",width:3+Math.random()*3,height:3+Math.random()*3,borderRadius:"50%",background:i%2===0?ac:"#6366F1",opacity:0,animation:`particle 1.5s ease ${i*.08}s forwards`,"--tx":`${(Math.random()-.5)*160}px`,"--ty":`${-30-Math.random()*100}px`}}/>)}
+    <div style={{textAlign:"center",marginBottom:16}}>
+      <svg width="48" height="48" viewBox="0 0 48 48" style={{margin:"0 auto 10px",display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity=".08"/><circle cx="24" cy="24" r="16" fill={ac} opacity=".12"/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
+      <div style={{fontSize:18,fontWeight:800,color:t1}}>Sesión completada</div>
+      <div style={{fontSize:10,color:t2,marginTop:3}}>{pr.n} · {Math.round(pr.d*durMult)}s</div>
     </div>
-    {/* Before → After comparison */}
-    {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:14,padding:"10px 12px",background:isDark?"#1A1E28":"#F1F5F9",borderRadius:14}}>
-      <div style={{textAlign:"center"}}><Ic name={MOODS[preMood-1].icon} size={18} color={MOODS[preMood-1].color}/><div style={{fontSize:7,color:t3,marginTop:2}}>Antes</div></div>
-      <div style={{fontSize:16,color:moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div>
-      <div style={{textAlign:"center"}}><Ic name={MOODS[checkMood-1].icon} size={18} color={MOODS[checkMood-1].color}/><div style={{fontSize:7,color:t3,marginTop:2}}>Después</div></div>
+    {/* Streak celebration */}
+    {st.streak>=7&&st.streak%7===0&&<div style={{textAlign:"center",padding:"10px",marginBottom:12,background:`linear-gradient(135deg,#D97706${isDark?"15":"08"},#D97706${isDark?"08":"04"})`,borderRadius:14,border:"1px solid #D9770615",animation:"fi .6s"}}>
+      <div style={{fontSize:24,marginBottom:2}}>🔥</div>
+      <div style={{fontSize:12,fontWeight:800,color:"#D97706"}}>{st.streak} días de racha</div>
+      <div style={{fontSize:9,color:t3}}>Tu constancia te define.</div>
     </div>}
-    {checkMood>0&&!preMood&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:12,padding:"8px",background:MOODS[checkMood-1].color+"08",borderRadius:12}}>
+    {/* Before → After comparison */}
+    {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:14,padding:"14px 16px",background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:16}}>
+      <div style={{textAlign:"center"}}><Ic name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{fontSize:7,color:t3,marginTop:3,fontWeight:600}}>Antes</div></div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:40,height:1,background:bd,marginBottom:4}}/><div style={{fontSize:18,color:moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={{fontSize:7,color:t3,marginTop:2}}>puntos</div></div>
+      <div style={{textAlign:"center"}}><Ic name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{fontSize:7,color:t3,marginTop:3,fontWeight:600}}>Después</div></div>
+    </div>}
+    {checkMood>0&&!preMood&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:12,padding:"10px",background:MOODS[checkMood-1].color+"08",borderRadius:12}}>
       <Ic name={MOODS[checkMood-1].icon} size={18} color={MOODS[checkMood-1].color}/><span style={{fontSize:11,fontWeight:700,color:MOODS[checkMood-1].color}}>{MOODS[checkMood-1].label}</span>
       {checkTag&&<span style={{fontSize:9,color:t3}}>· {checkTag}</span>}
     </div>}
@@ -660,10 +671,10 @@ export default function BioIgnicion(){
         </button>))}</div>
     </div>}
 
-    <div onClick={timerTap} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:250,height:250,margin:"0 auto 8px",cursor:"pointer",transform:tp?"scale(0.97)":"scale(1)",transition:"transform .2s cubic-bezier(.4,0,.2,1)",userSelect:"none"}}>
-      {isActive&&<><div style={{position:"absolute",inset:-10,borderRadius:"50%",border:`1.5px solid ${ac}10`,animation:"bth 4s ease infinite"}}/><div style={{position:"absolute",inset:-20,borderRadius:"50%",border:`1px solid ${ac}06`,animation:"bth 4s ease infinite .5s"}}/></>}
+    <div onClick={timerTap} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?220:250,height:isActive?220:250,margin:"0 auto 8px",cursor:"pointer",transform:tp?"scale(0.97)":"scale(1)",transition:"all .4s cubic-bezier(.4,0,.2,1)",userSelect:"none"}}>
+      {isActive&&<><div style={{position:"absolute",inset:-12,borderRadius:"50%",border:`1.5px solid ${ac}10`,animation:"bth 4s ease infinite"}}/><div style={{position:"absolute",inset:-22,borderRadius:"50%",border:`1px solid ${ac}06`,animation:"bth 4s ease infinite .5s"}}/></>}
       {isBr&&<><div style={{position:"absolute",top:"50%",left:"50%",width:150,height:150,transform:`translate(-50%,-50%) scale(${bS})`,borderRadius:"50%",background:`radial-gradient(circle,${ac}10,transparent)`,transition:"transform 1s cubic-bezier(.4,0,.2,1)",pointerEvents:"none"}}/><div style={{position:"absolute",top:"50%",left:"50%",width:105,height:105,transform:`translate(-50%,-50%) scale(${bS*1.05})`,borderRadius:"50%",background:`radial-gradient(circle,${ac}18,transparent)`,transition:"transform 1.1s cubic-bezier(.4,0,.2,1) .05s",pointerEvents:"none"}}/></>}
-      <svg width="250" height="250" viewBox="0 0 260 260" style={{transform:"rotate(-90deg)"}}><circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth="4"/><circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth="4" strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={dO} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",animation:isActive?"rp 2.5s ease infinite":"none"}}/><circle cx="130" cy="130" r="100" fill="none" stroke={isDark?"#1E2330":"#E2E8F0"} strokeWidth="1" strokeDasharray="4 6" style={{animation:isActive?"innerRing 8s linear infinite":"none"}}/></svg>
+      <svg width={isActive?"220":"250"} height={isActive?"220":"250"} viewBox="0 0 260 260" style={{transform:"rotate(-90deg)"}}><circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth={isActive?"5":"4"}/><circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth={isActive?"5":"4"} strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={dO} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",animation:isActive?"rp 2.5s ease infinite":"none"}}/><circle cx="130" cy="130" r="100" fill="none" stroke={isDark?"#1E2330":"#E2E8F0"} strokeWidth="1" strokeDasharray="4 6" style={{animation:isActive?"innerRing 8s linear infinite":"none"}}/></svg>
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none"}}>
         {isBr&&bL&&<div style={{animation:"fi .3s"}}><span style={{fontSize:8,fontWeight:800,letterSpacing:4,color:ac}}>{bL}</span><span style={{fontSize:10,fontWeight:800,color:ac,marginLeft:3}}>{bCnt}s</span></div>}
         <div style={{fontSize:56,fontWeight:800,color:t1,lineHeight:1,letterSpacing:"-3px"}}>{sec}</div>
@@ -674,7 +685,11 @@ export default function BioIgnicion(){
         {ts==="paused"&&<div style={{fontSize:9,fontWeight:700,color:ac,marginTop:3,animation:"pausePulse 2s ease infinite"}}>EN PAUSA</div>}
       </div>
     </div>
-    <div style={{textAlign:"center",marginBottom:8}}><div style={{display:"inline-flex",alignItems:"center",gap:5}}><Ic name={ph.ic} size={13} color={ac}/><span style={{fontSize:13,fontWeight:800,color:t1}}>{ph.l}</span></div><div style={{fontSize:9,color:t3}}>{ph.r}</div></div>
+    {/* Breathing bar - immersive gradient */}
+    {isBr&&bL&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"8px 16px",marginBottom:10,borderRadius:12,background:`linear-gradient(135deg,${ac}08,${ac}03)`,border:`1px solid ${ac}10`,animation:"fi .3s"}}>
+      <div style={{width:6,height:6,borderRadius:"50%",background:ac,animation:"pu 1.5s ease infinite"}}/><span style={{fontSize:11,fontWeight:800,letterSpacing:4,color:ac}}>{bL}</span><span style={{fontSize:12,fontWeight:800,color:ac}}>{bCnt}s</span>
+    </div>}
+    <div style={{textAlign:"center",marginBottom:isActive?6:10}}><div style={{display:"inline-flex",alignItems:"center",gap:6}}><Ic name={ph.ic} size={isActive?11:13} color={ac}/><span style={{fontSize:isActive?12:14,fontWeight:800,color:t1}}>{ph.l}</span></div>{!isActive&&<div style={{fontSize:9,color:t3,marginTop:2}}>{ph.r}</div>}</div>
     <div key={pi} style={{background:cd,borderRadius:16,padding:"14px",marginBottom:8,border:`1px solid ${bd}`,animation:"phaseSlide .35s ease"}}>
       {/* Animated phase illustration */}
       {isActive&&<PhaseVisual type={ph.ic} color={ac} scale={bS} active={isActive}/>}
