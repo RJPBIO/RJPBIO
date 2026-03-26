@@ -403,7 +403,7 @@ export default function BioIgnicion(){
   useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();}else{stopAmbient();stopSoundscape();}return()=>{stopAmbient();stopSoundscape();};},[ts]);
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
-  useEffect(()=>{const el=pr.d-sec;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=pr.ph[i].s){idx=i;break;}}if(idx!==pi){setPi(idx);H("ph");speak(pr.ph[idx].k||pr.ph[idx].l);}},[sec,pr]);
+  useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}if(idx!==pi){setPi(idx);H("ph");speak(pr.ph[idx].k||pr.ph[idx].l);}},[sec,pr,durMult]);
   useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.22*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.22);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.22-.22*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){speak(lbl.toLowerCase());lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
@@ -418,24 +418,47 @@ export default function BioIgnicion(){
 
   function comp(){
     const td=new Date().toDateString();const di=new Date().getDay();const ad=di===0?6:di-1;const nw=[...st.weeklyData];nw[ad]=(nw[ad]||0)+1;const ys=new Date(Date.now()-864e5).toDateString();let nsk=st.lastDate===td?st.streak:st.lastDate===ys?st.streak+1:1;
-    const cD=Math.floor(Math.random()*5)+2,rD=Math.floor(Math.random()*6)+3,eD=Math.floor(Math.random()*4)+1;
-    const nC=Math.min(st.coherencia+cD,100),nR=Math.min(st.resiliencia+rD,100),nE=Math.min(st.capacidad+eD,100);
-    const ns=st.totalSessions+1;const eVC=10+Math.floor(Math.random()*15);const vc=(st.vCores||0)+eVC;
+
+    // ═══ DATA-DRIVEN METRICS (not random) ═══
+    const ml=st.moodLog||[];const hist=st.history||[];
+    // Coherencia: based on recent mood improvements (last 10 sessions with pre/post)
+    const recentDeltas=ml.filter(m=>m.pre>0).slice(-10);
+    const avgDelta=recentDeltas.length>=2?recentDeltas.reduce((a,m)=>a+(m.mood-m.pre),0)/recentDeltas.length:0;
+    const cohBoost=Math.max(0,Math.min(8,Math.round(avgDelta*3+2)));
+    const nC=Math.min(100,Math.max(20,recentDeltas.length>=3?Math.round(50+avgDelta*15+recentDeltas.length*2):st.coherencia+cohBoost));
+
+    // Resiliencia: based on streak consistency and session frequency
+    const weekTotal=nw.reduce((a,b)=>a+b,0);
+    const consistencyScore=Math.min(7,weekTotal)/7;
+    const streakBonus=Math.min(30,nsk)*0.5;
+    const nR=Math.min(100,Math.max(20,Math.round(40+consistencyScore*30+streakBonus)));
+
+    // Capacidad: based on protocol diversity and total experience
+    const uniqueProtos=new Set([...hist.map(h=>h.p),pr.n]).size;
+    const diversityScore=(uniqueProtos/14)*30;
+    const expScore=Math.min(30,Math.sqrt(st.totalSessions||0)*3);
+    const nE=Math.min(100,Math.max(20,Math.round(30+diversityScore+expScore)));
+
+    const ns=st.totalSessions+1;
+    const eVC=Math.round(5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5));
+    const vc=(st.vCores||0)+eVC;
     const ach=[...st.achievements];
     if(nsk>=7&&!ach.includes("streak7"))ach.push("streak7");
     if(nsk>=30&&!ach.includes("streak30"))ach.push("streak30");
     if(nC>=90&&!ach.includes("coherencia90"))ach.push("coherencia90");
     if(ns>=50&&!ach.includes("sessions50"))ach.push("sessions50");
     if(ns>=100&&!ach.includes("sessions100"))ach.push("sessions100");
-    const totalT=(st.totalTime||0)+pr.d;if(totalT>=3600&&!ach.includes("time60"))ach.push("time60");
+    const totalT=(st.totalTime||0)+Math.round(pr.d*durMult);if(totalT>=3600&&!ach.includes("time60"))ach.push("time60");
     const hr=new Date().getHours();if(hr<7&&!ach.includes("earlyBird"))ach.push("earlyBird");
     if(hr>=22&&!ach.includes("nightOwl"))ach.push("nightOwl");
-    const uniqueP=new Set([...(st.history||[]).map(h=>h.p),pr.n]);if(uniqueP.size>=14&&!ach.includes("allProtos"))ach.push("allProtos");
-    const hist=[...(st.history||[]),{p:pr.n,ts:Date.now(),vc:eVC,c:nC,r:nR}].slice(-50);
+    const uP=new Set([...hist.map(h=>h.p),pr.n]);if(uP.size>=14&&!ach.includes("allProtos"))ach.push("allProtos");
+    // Extended history for B2B (200 sessions = 100 days at 2/day)
+    const newHist=[...hist,{p:pr.n,ts:Date.now(),vc:eVC,c:nC,r:nR,dur:Math.round(pr.d*durMult),ctx:nfcCtx?.type||"manual"}].slice(-200);
     setPostVC(eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
+    speak("Sesión completada");
     setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("checkin");},800);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
-    setSt({...st,totalSessions:ns,streak:nsk,todaySessions:st.lastDate===td?st.todaySessions+1:1,lastDate:td,weeklyData:nw,weekNum:getWeekNum(),coherencia:nC,resiliencia:nR,capacidad:nE,achievements:ach,vCores:vc,history:hist,totalTime:(st.totalTime||0)+pr.d,firstDone:true,progDay:Math.min((st.progDay||0)+1,7)});
+    setSt({...st,totalSessions:ns,streak:nsk,todaySessions:st.lastDate===td?st.todaySessions+1:1,lastDate:td,weeklyData:nw,weekNum:getWeekNum(),coherencia:nC,resiliencia:nR,capacidad:nE,achievements:ach,vCores:vc,history:newHist,totalTime:(st.totalTime||0)+Math.round(pr.d*durMult),firstDone:true,progDay:Math.min((st.progDay||0)+1,7)});
   }
   function submitCheckin(){
     if(checkMood>0){const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:checkMood,energy:checkEnergy||2,tag:checkTag,proto:pr.n,pre:preMood||0}].slice(-100);const ach=[...st.achievements];if(checkMood===5&&!ach.includes("mood5"))ach.push("mood5");setSt({...st,moodLog:ml,achievements:ach});}
@@ -443,7 +466,8 @@ export default function BioIgnicion(){
   }
 
   const lv=gL(st.totalSessions),ph=pr.ph[pi],fl=P.filter(p=>p.ct===sc),mW=Math.max(...st.weeklyData,1);
-  const pct=(pr.d-sec)/pr.d,CI=2*Math.PI*116,dO=CI*(1-pct),ins=genIns(st),isBr=ts==="running"&&ph.br;
+  const totalDur=Math.round(pr.d*durMult);
+  const pct=(totalDur-sec)/totalDur,CI=2*Math.PI*116,dO=CI*(1-pct),ins=genIns(st),isBr=ts==="running"&&ph.br;
   const perf=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
   const nSt=getStatus(perf);const lPct=lvPct(st.totalSessions);const nLv=nxtLv(st.totalSessions);
   const isActive=ts==="running";const noData=st.totalSessions===0;
@@ -713,7 +737,7 @@ export default function BioIgnicion(){
       <Ic name="rec" size={10} color={t3}/>
       <span style={{fontSize:8,color:t3,fontWeight:600}}>Siguiente: {nextPh.l} ({nextPh.r})</span>
     </div>}
-    <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=><div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:`1px solid ${bd}`,background:pi===i?ac+"08":cd,color:pi===i?ac:t3,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><span style={{width:3,height:3,borderRadius:"50%",background:pi===i?ac:bd}}/>{p.r}</div>)}</div>
+    <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;return<div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:`1px solid ${bd}`,background:pi===i?ac+"08":cd,color:pi===i?ac:t3,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><span style={{width:3,height:3,borderRadius:"50%",background:pi===i?ac:bd}}/>{sR}</div>;})}</div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
       {ts==="idle"&&<button onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",animation:"gl 3s ease infinite",boxShadow:`0 4px 18px ${ac}28`}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}><Ic name="bolt" size={13} color="#fff"/>INICIAR</button>}
       {ts==="running"&&<><button onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
