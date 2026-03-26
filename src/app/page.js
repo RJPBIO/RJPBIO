@@ -182,8 +182,8 @@ function startAmbient(){try{const c=gAC();if(!c)return;if(c.state==="suspended")
 function stopAmbient(){try{if(_ambGain){const c=gAC();if(c)_ambGain.gain.linearRampToValueAtTime(0,c.currentTime+1);}setTimeout(()=>{if(_ambNode){_ambNode.disconnect();_ambNode=null;}if(_ambGain){_ambGain.disconnect();_ambGain=null;}},1200);}catch(e){}}
 
 function hap(t,sO,hO){try{if(hO!==false&&typeof navigator!=="undefined"&&navigator.vibrate){if(t==="go")navigator.vibrate([20,40,20]);else if(t==="ph")navigator.vibrate(12);else if(t==="ok")navigator.vibrate([40,60,40,60,80]);else if(t==="tick")navigator.vibrate(5);else if(t==="tap")navigator.vibrate(8);}if(sO!==false){if(t==="go")playChord([432,648],.5,.05);else if(t==="ph")playChord([528,660,792],.5,.04);else if(t==="ok"){playChord([432,528,648,792],1.5,.06);setTimeout(()=>playChord([528,648,792],1.2,.025),300);}else if(t==="tap")playChord([440],.08,.02);}}catch(e){}}
-function ldS(){try{if(typeof window!=="undefined"){const r=localStorage.getItem("bio-g2");if(r)return{...DS,...JSON.parse(r)};}}catch(e){}return DS;}
-function svS(d){try{if(typeof window!=="undefined")localStorage.setItem("bio-g2",JSON.stringify(d));}catch(e){}}
+function ldS(){try{if(typeof window!=="undefined"){const r=localStorage.getItem("bio-g2");if(r){const parsed=JSON.parse(r);return{...DS,...parsed};}}}catch(e){console.error("Load error:",e);}return{...DS};}
+function svS(d){try{if(typeof window!=="undefined"){localStorage.setItem("bio-g2",JSON.stringify(d));}}catch(e){console.error("Save error:",e);}}
 function exportData(st){try{const blob=new Blob([JSON.stringify(st,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="bio-ignicion-data.json";a.click();URL.revokeObjectURL(url);}catch(e){}}
 
 function exportNOM035(st){try{
@@ -280,78 +280,74 @@ function AN({value,sfx="",color="#0F172A",sz=32}){const[d,sD]=useState(0);const 
 function SK({data,c="#059669",w=120,h=30,id:u}){if(!data||!data.length)return null;const mx=Math.max(...data,1);const pts=data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v/mx)*h*.8+h*.08)}`).join(" ");const gi="sk"+(u||"")+(c||"").replace("#","");return(<svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{display:"block"}}><defs><linearGradient id={gi} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={c} stopOpacity=".12"/><stop offset="100%" stopColor={c} stopOpacity="0"/></linearGradient></defs><polygon points={`0,${h} ${pts} ${w},${h}`} fill={`url(#${gi})`}/><polyline points={pts} fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>);}
 function groupHist(h){const n=new Date();const td=n.toDateString();const yd=new Date(Date.now()-864e5).toDateString();const g={hoy:[],ayer:[],antes:[]};for(const x of h){const d=new Date(x.ts).toDateString();if(d===td)g.hoy.push(x);else if(d===yd)g.ayer.push(x);else g.antes.push(x);}return g;}
 
-/* ═══ PHASE VISUAL — Animated SVG illustrations per phase type ═══ */
+/* ═══ PHASE VISUAL — Enhanced Animated SVG illustrations ═══ */
 function PhaseVisual({type,color,scale=1,active}){
   if(!active)return null;
-  const o=.15;const s={display:"block",margin:"0 auto"};
-  // BREATH: Animated lungs that expand/contract with breathing
+  const o=.12;const s={display:"block",margin:"0 auto 4px"};
+  // BREATH: Lungs with oxygen flow and bronchial tree
   if(type==="breath")return(
-    <svg width="80" height="70" viewBox="0 0 80 70" style={s}>
-      <g transform={`translate(40,35) scale(${scale})`} style={{transition:"transform 1s cubic-bezier(.4,0,.2,1)",transformOrigin:"center"}}>
-        {/* Left lung */}
-        <path d="M-4,-22 C-4,-22 -22,-14 -24,2 C-26,18 -16,26 -8,26 C-2,26 -4,20 -4,10 Z" fill={color} opacity={o} stroke={color} strokeWidth=".8"/>
-        {/* Right lung */}
-        <path d="M4,-22 C4,-22 22,-14 24,2 C26,18 16,26 8,26 C2,26 4,20 4,10 Z" fill={color} opacity={o} stroke={color} strokeWidth=".8"/>
-        {/* Trachea */}
-        <line x1="0" y1="-28" x2="0" y2="-16" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity=".4"/>
-        {/* Bronchi */}
-        <path d="M0,-16 C0,-16 -8,-8 -10,-2" fill="none" stroke={color} strokeWidth=".8" opacity=".3"/>
-        <path d="M0,-16 C0,-16 8,-8 10,-2" fill="none" stroke={color} strokeWidth=".8" opacity=".3"/>
-        {/* Air particles */}
-        <circle cx="0" cy={-28+((scale-1)*40)} r="1.5" fill={color} opacity={scale>1.1?.6:.1} style={{transition:"all 1s"}}/>
-        <circle cx="-3" cy={-25+((scale-1)*35)} r="1" fill={color} opacity={scale>1.1?.4:.05} style={{transition:"all 1.1s"}}/>
-        <circle cx="3" cy={-26+((scale-1)*38)} r="1" fill={color} opacity={scale>1.1?.5:.05} style={{transition:"all 1s"}}/>
+    <svg width="90" height="76" viewBox="0 0 90 76" style={s}>
+      <g transform={`translate(45,38) scale(${scale})`} style={{transition:"transform 1.2s cubic-bezier(.4,0,.2,1)",transformOrigin:"center"}}>
+        <path d="M-4,-24 C-4,-24 -24,-15 -26,3 C-28,20 -17,28 -9,28 C-3,28 -4,22 -4,11 Z" fill={color} opacity={o} stroke={color} strokeWidth=".7"/>
+        <path d="M4,-24 C4,-24 24,-15 26,3 C28,20 17,28 9,28 C3,28 4,22 4,11 Z" fill={color} opacity={o} stroke={color} strokeWidth=".7"/>
+        <line x1="0" y1="-30" x2="0" y2="-18" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity=".35"/>
+        <path d="M0,-18 Q-6,-12 -12,-4" fill="none" stroke={color} strokeWidth=".7" opacity=".25"/>
+        <path d="M0,-18 Q6,-12 12,-4" fill="none" stroke={color} strokeWidth=".7" opacity=".25"/>
+        <path d="M-12,-4 Q-15,2 -18,8" fill="none" stroke={color} strokeWidth=".4" opacity=".15"/>
+        <path d="M12,-4 Q15,2 18,8" fill="none" stroke={color} strokeWidth=".4" opacity=".15"/>
+        {[0,1,2,3,4].map(i=><circle key={i} cx={(i-2)*3} cy={-30+((scale-1)*(35+i*5))} r={1+i*.2} fill={color} opacity={scale>1.08?(.2+i*.12):.02} style={{transition:`all ${1+i*.15}s ease`}}/>)}
       </g>
     </svg>);
-  // BODY: Beating heart
+  // BODY: Heart with blood vessels and dynamic ECG
   if(type==="body")return(
-    <svg width="80" height="70" viewBox="0 0 80 70" style={s}>
-      <g style={{animation:"heartBeat 1.2s ease infinite",transformOrigin:"40px 32px"}}>
-        <path d="M40,58 C40,58 12,40 12,24 C12,14 20,8 28,8 C34,8 38,12 40,16 C42,12 46,8 52,8 C60,8 68,14 68,24 C68,40 40,58 40,58Z" fill={color} opacity={o} stroke={color} strokeWidth="1"/>
-        {/* Pulse line */}
-        <polyline points="18,34 28,34 32,22 36,42 40,28 44,36 48,30 52,34 62,34" fill="none" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity=".35" style={{animation:"ecgDraw 1.2s linear infinite"}}/>
+    <svg width="90" height="76" viewBox="0 0 90 76" style={s}>
+      <g style={{animation:"heartBeat 1.1s ease infinite",transformOrigin:"45px 35px"}}>
+        <path d="M45,64 C45,64 14,44 14,26 C14,15 22,9 31,9 C38,9 42,13 45,18 C48,13 52,9 59,9 C67,9 75,15 75,26 C75,44 45,64 45,64Z" fill={color} opacity={o} stroke={color} strokeWidth=".8"/>
+        <path d="M45,64 C45,64 14,44 14,26 C14,15 22,9 31,9 C38,9 42,13 45,18 C48,13 52,9 59,9 C67,9 75,15 75,26 C75,44 45,64 45,64Z" fill={color} opacity={.04}/>
+        <path d="M31,20 Q35,28 33,36" fill="none" stroke={color} strokeWidth=".4" opacity=".15"/>
+        <path d="M59,20 Q55,28 57,36" fill="none" stroke={color} strokeWidth=".4" opacity=".15"/>
+        <polyline points="20,36 30,36 34,24 38,46 42,30 46,38 50,32 54,36 58,36 64,36 70,36" fill="none" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity=".3" style={{animation:"ecgDraw 1.1s linear infinite"}}/>
+        <circle cx="45" cy="32" r="3" fill={color} opacity=".08" style={{animation:"focusLock 1.1s ease infinite"}}/>
       </g>
     </svg>);
-  // MIND: Brain with activating regions
+  // MIND: Brain with synaptic connections and wave patterns
   if(type==="mind")return(
-    <svg width="80" height="70" viewBox="0 0 80 70" style={s}>
-      {/* Brain outline */}
-      <path d="M40,10 C28,10 18,16 16,26 C14,34 18,42 22,46 C26,50 28,54 28,58 L52,58 C52,54 54,50 58,46 C62,42 66,34 64,26 C62,16 52,10 40,10Z" fill={color} opacity={.06} stroke={color} strokeWidth=".8"/>
-      {/* Center fissure */}
-      <path d="M40,12 L40,56" stroke={color} strokeWidth=".5" opacity=".2" strokeDasharray="2 2"/>
-      {/* Left hemisphere folds */}
-      <path d="M22,28 C26,24 32,26 36,22" fill="none" stroke={color} strokeWidth=".6" opacity=".2"/>
-      <path d="M20,36 C24,32 30,36 38,32" fill="none" stroke={color} strokeWidth=".6" opacity=".2"/>
-      {/* Right hemisphere folds */}
-      <path d="M58,28 C54,24 48,26 44,22" fill="none" stroke={color} strokeWidth=".6" opacity=".2"/>
-      <path d="M60,36 C56,32 50,36 42,32" fill="none" stroke={color} strokeWidth=".6" opacity=".2"/>
-      {/* Activation pulses */}
-      <circle cx="30" cy="30" r="6" fill={color} opacity=".08" style={{animation:"brainPulse 2.5s ease infinite"}}/>
-      <circle cx="50" cy="28" r="5" fill={color} opacity=".06" style={{animation:"brainPulse 2.5s ease infinite .8s"}}/>
-      <circle cx="40" cy="40" r="7" fill={color} opacity=".1" style={{animation:"brainPulse 3s ease infinite 1.2s"}}/>
+    <svg width="90" height="76" viewBox="0 0 90 76" style={s}>
+      <path d="M45,8 C31,8 20,15 18,27 C16,37 20,46 25,50 C29,54 31,58 31,63 L59,63 C59,58 61,54 65,50 C69,46 73,37 71,27 C69,15 58,8 45,8Z" fill={color} opacity={.05} stroke={color} strokeWidth=".7"/>
+      <path d="M45,10 L45,61" stroke={color} strokeWidth=".4" opacity=".15" strokeDasharray="2 3"/>
+      <path d="M24,30 C29,25 36,28 40,23" fill="none" stroke={color} strokeWidth=".5" opacity=".15"/>
+      <path d="M22,40 C27,35 34,39 43,34" fill="none" stroke={color} strokeWidth=".5" opacity=".15"/>
+      <path d="M66,30 C61,25 54,28 50,23" fill="none" stroke={color} strokeWidth=".5" opacity=".15"/>
+      <path d="M68,40 C63,35 56,39 47,34" fill="none" stroke={color} strokeWidth=".5" opacity=".15"/>
+      {/* Activation zones */}
+      <circle cx="33" cy="30" r="7" fill={color} opacity=".06" style={{animation:"brainPulse 2.5s ease infinite"}}/>
+      <circle cx="57" cy="28" r="6" fill={color} opacity=".05" style={{animation:"brainPulse 2.5s ease infinite .7s"}}/>
+      <circle cx="45" cy="42" r="8" fill={color} opacity=".07" style={{animation:"brainPulse 3s ease infinite 1.4s"}}/>
+      {/* Synaptic connections */}
+      <line x1="33" y1="30" x2="45" y2="42" stroke={color} strokeWidth=".3" opacity=".1" style={{animation:"ecgDraw 2s linear infinite"}}/>
+      <line x1="57" y1="28" x2="45" y2="42" stroke={color} strokeWidth=".3" opacity=".1" style={{animation:"ecgDraw 2s linear infinite .5s"}}/>
+      <line x1="33" y1="30" x2="57" y2="28" stroke={color} strokeWidth=".3" opacity=".08" style={{animation:"ecgDraw 2.5s linear infinite 1s"}}/>
       {/* Neural sparks */}
-      <circle cx="32" cy="24" r="1.2" fill={color} opacity=".5" style={{animation:"neuralSpark 1.5s ease infinite"}}/>
-      <circle cx="48" cy="22" r="1" fill={color} opacity=".4" style={{animation:"neuralSpark 1.5s ease infinite .5s"}}/>
-      <circle cx="38" cy="44" r="1.2" fill={color} opacity=".5" style={{animation:"neuralSpark 1.5s ease infinite 1s"}}/>
-      <circle cx="52" cy="38" r="1" fill={color} opacity=".35" style={{animation:"neuralSpark 1.5s ease infinite .3s"}}/>
+      {[[35,24],[52,22],[40,48],[58,40],[28,42],[48,32]].map(([x,y],i)=>
+        <circle key={i} cx={x} cy={y} r="1.2" fill={color} opacity=".4" style={{animation:`neuralSpark ${1.2+i*.3}s ease infinite ${i*.25}s`}}/>)}
     </svg>);
-  // FOCUS: Crosshair with pulsing target
+  // FOCUS: Crosshair with scanning laser and lock-on
   if(type==="focus")return(
-    <svg width="80" height="70" viewBox="0 0 80 70" style={s}>
-      {/* Outer ring */}
-      <circle cx="40" cy="35" r="24" fill="none" stroke={color} strokeWidth=".8" opacity=".15" strokeDasharray="4 3" style={{animation:"focusSpin 12s linear infinite",transformOrigin:"40px 35px"}}/>
-      {/* Mid ring */}
-      <circle cx="40" cy="35" r="16" fill="none" stroke={color} strokeWidth=".6" opacity=".12" strokeDasharray="3 4" style={{animation:"focusSpin 8s linear infinite reverse",transformOrigin:"40px 35px"}}/>
-      {/* Inner ring - target lock */}
-      <circle cx="40" cy="35" r="8" fill={color} opacity=".06" style={{animation:"focusLock 2s ease infinite"}}/>
-      <circle cx="40" cy="35" r="3" fill={color} opacity=".2" style={{animation:"focusLock 2s ease infinite .3s"}}/>
-      {/* Crosshair lines */}
-      <line x1="40" y1="8" x2="40" y2="22" stroke={color} strokeWidth="1" opacity=".2" strokeLinecap="round"/>
-      <line x1="40" y1="48" x2="40" y2="62" stroke={color} strokeWidth="1" opacity=".2" strokeLinecap="round"/>
-      <line x1="13" y1="35" x2="27" y2="35" stroke={color} strokeWidth="1" opacity=".2" strokeLinecap="round"/>
-      <line x1="53" y1="35" x2="67" y2="35" stroke={color} strokeWidth="1" opacity=".2" strokeLinecap="round"/>
-      {/* Center dot */}
-      <circle cx="40" cy="35" r="1.5" fill={color} opacity=".6"/>
+    <svg width="90" height="76" viewBox="0 0 90 76" style={s}>
+      <circle cx="45" cy="38" r="28" fill="none" stroke={color} strokeWidth=".6" opacity=".1" strokeDasharray="5 3" style={{animation:"focusSpin 14s linear infinite",transformOrigin:"45px 38px"}}/>
+      <circle cx="45" cy="38" r="20" fill="none" stroke={color} strokeWidth=".5" opacity=".08" strokeDasharray="3 4" style={{animation:"focusSpin 9s linear infinite reverse",transformOrigin:"45px 38px"}}/>
+      <circle cx="45" cy="38" r="12" fill="none" stroke={color} strokeWidth=".8" opacity=".12" style={{animation:"focusLock 2.5s ease infinite"}}/>
+      <circle cx="45" cy="38" r="5" fill={color} opacity=".06" style={{animation:"focusLock 2s ease infinite .2s"}}/>
+      <line x1="45" y1="6" x2="45" y2="24" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/>
+      <line x1="45" y1="52" x2="45" y2="70" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/>
+      <line x1="13" y1="38" x2="31" y2="38" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/>
+      <line x1="59" y1="38" x2="77" y2="38" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/>
+      {/* Corner brackets */}
+      <path d="M22,16 L22,12 L26,12" fill="none" stroke={color} strokeWidth=".6" opacity=".15"/>
+      <path d="M68,16 L68,12 L64,12" fill="none" stroke={color} strokeWidth=".6" opacity=".15"/>
+      <path d="M22,60 L22,64 L26,64" fill="none" stroke={color} strokeWidth=".6" opacity=".15"/>
+      <path d="M68,60 L68,64 L64,64" fill="none" stroke={color} strokeWidth=".6" opacity=".15"/>
+      <circle cx="45" cy="38" r="2" fill={color} opacity=".5"/>
     </svg>);
   return null;
 }
@@ -390,11 +386,17 @@ export default function BioIgnicion(){
     const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
   }}catch(e){};},[]);
 
-  // ═══ VOICE GUIDANCE (Web Speech API) ═══
-  function speak(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=0.85;u.pitch=0.95;u.volume=0.7;const voices=window.speechSynthesis.getVoices();const esVoice=voices.find(v=>v.lang.startsWith("es"));if(esVoice)u.voice=esVoice;window.speechSynthesis.speak(u);}catch(e){}}
+  // ═══ VOICE GUIDANCE (Web Speech API) — Enhanced ═══
+  const voicesRef=useRef([]);
+  useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;function loadVoices(){voicesRef.current=window.speechSynthesis.getVoices();}loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
+  function speak(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=0.9;u.pitch=1.0;u.volume=0.8;const voices=voicesRef.current;const esVoice=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(esVoice)u.voice=esVoice;window.speechSynthesis.speak(u);}catch(e){}}
+  function speakNow(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=0.9;u.pitch=1.0;u.volume=0.8;const voices=voicesRef.current;const esVoice=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(esVoice)u.voice=esVoice;window.speechSynthesis.speak(u);}catch(e){}}
   function stopVoice(){try{if(typeof window!=="undefined"&&window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}}
 
-  useEffect(()=>{setMt(true);const l=ldS();const cw=getWeekNum();if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;}if(l.weekNum===null)l.weekNum=cw;setSt_(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);},[]);
+  // ═══ LOAD STATE + PERSISTENCE ═══
+  useEffect(()=>{setMt(true);const l=ldS();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)svS(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);},[]);
+  // Auto-save every 30s + on page hide/unload
+  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>svS(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")svS(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
   const[isDark,setIsDark]=useState(false);
   useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
@@ -403,12 +405,12 @@ export default function BioIgnicion(){
   useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();}else{stopAmbient();stopSoundscape();}return()=>{stopAmbient();stopSoundscape();};},[ts]);
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
-  useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}if(idx!==pi){setPi(idx);H("ph");speak(pr.ph[idx].k||pr.ph[idx].l);}},[sec,pr,durMult]);
+  useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}if(idx!==pi){setPi(idx);H("ph");speakNow(pr.ph[idx].k||pr.ph[idx].l);}},[sec,pr,durMult]);
   useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.22*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.22);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.22-.22*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){speak(lbl.toLowerCase());lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
-  function startCountdown(){setCountdown(3);H("tap");speak("Tres");cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speak(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speak(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
+  function startCountdown(){setCountdown(3);H("tap");speakNow("Tres");cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speakNow(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
   function go(){setPostStep("none");setSessionData({pauses:0,scienceViews:0,phaseTimings:[]});startCountdown();}
   function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();setSessionData(d=>({...d,pauses:d.pauses+1}));}
   function rs(){if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
