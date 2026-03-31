@@ -2,11 +2,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
-   BIO-IGNICIÓN — GENESIS+
+   BIO-IGNICIÓN — NEURAL OPTIMIZATION PLATFORM v3.0
    ═══════════════════════════════════════════════════════════════════
-   3-2-1 Countdown · Pre-Session Mood · Before/After Comparison
-   Personal Records · Ambient Brown Noise · Data Export
-   + All GENESIS: Custom SVGs, Human Voice, Branded Timer, etc.
+   Plataforma de Optimización Humana Global
+   Binaural · Circadian · BioQuality · Motion · Burnout · BioSignal
+   Neural Engine · Anti-Trampa · Neuro-Arrastre · Digital Twin
    ═══════════════════════════════════════════════════════════════════ */
 
 function Ic({name,size=16,color="#64748B"}){const s={width:size,height:size,viewBox:"0 0 24 24",fill:"none",style:{display:"block",flexShrink:0}};const p={stroke:color,strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"};
@@ -38,7 +38,6 @@ function Ic({name,size=16,color="#64748B"}){const s={width:size,height:size,view
   if(name==="trophy")return<svg {...s}><path d="M6 3h12v5a6 6 0 0 1-12 0V3z" {...p}/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3M9 14v2M15 14v2M7 18h10" {...p}/></svg>;
   return null;
 }
-
 const P=[
 {id:1,n:"Reinicio Parasimpático",ct:"Reset",d:120,sb:"Restaura función ejecutiva",tg:"R1",cl:"#059669",int:"calma",dif:1,
 ph:[{l:"Respiración Vagal Box",r:"0–20s",s:0,e:20,k:"Inhala 4s. Mantén 4s. Exhala 4s. Sostén 4s.",i:"Cierra los ojos. Inhala por la nariz, lento, 4 segundos — siente el aire llenar tu abdomen. Mantén 4 segundos sin tensión. Exhala por la boca, suave, 4 segundos. Quédate vacío 4 segundos. Repite el ciclo.",sc:"Activa el complejo vagal ventral, reduce frecuencia cardíaca",ic:"breath",br:{in:4,h1:4,ex:4,h2:4}},
@@ -104,7 +103,6 @@ ph:[{l:"Golpe de Silencio",r:"0–10s",s:0,e:10,k:"Silencio total. Apago todo. A
 {l:"Expansión Omega",r:"90–110s",s:90,e:110,k:"Expansión total. Luminoso. Sin límites.",i:"Tu conciencia se expande 20 a 40 centímetros alrededor de tu cuerpo. Sientes los límites de tu presencia extenderse. No estás solo dentro de tu piel — tu campo de atención abarca todo a tu alrededor. Luminoso. Expandido. Presente.",sc:"Estado de metaestado expandido, asociado con flow y rendimiento óptimo",ic:"mind",br:null},
 {l:"Sello OMNIA",r:"110–120s",s:110,e:120,k:"Di internamente con absoluta convicción: 'Estoy ence...",i:"Di internamente con absoluta convicción: 'Estoy encendido.' Abre los ojos lentamente. Mira el mundo como si lo vieras por primera vez. Lleva esta activación contigo.",sc:"Sello de activación neural, consolida el estado alcanzado",ic:"focus",br:null}]}
 ];
-
 const CATS=["Reset","Activación","Protocolo"];const LVL=[{n:"INICIADO",m:0,mx:1,c:"#94A3B8"},{n:"OPERADOR",m:1,mx:10,c:"#6366F1"},{n:"EJECUTOR",m:10,mx:25,c:"#059669"},{n:"ESTRATEGA",m:25,mx:50,c:"#D97706"},{n:"COMANDANTE",m:50,mx:100,c:"#DC2626"},{n:"ARQUITECTO",m:100,mx:999,c:"#7C3AED"}];
 function gL(s){let l=LVL[0];for(const v of LVL)if(s>=v.m)l=v;return l;}function lvPct(s){const l=gL(s);if(s>=l.mx)return 100;return Math.round(((s-l.m)/(l.mx-l.m))*100);}function nxtLv(s){const i=LVL.findIndex(l=>l.n===gL(s).n);return i<LVL.length-1?LVL[i+1]:null;}const DN=["L","M","X","J","V","S","D"];
 
@@ -276,9 +274,146 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
   a.click();URL.revokeObjectURL(url);
 }catch(e){console.error(e);}}
 
+
+/* ═══ NEURAL ENGINE — Complete Biohacking Systems ═══ */
+
+/* Binaural Audio Engine — Protocol-specific neuro-entrainment */
+let _binauralL=null,_binauralR=null,_binauralGain=null,_binauralPan=0;
+function startBinaural(type){try{const c=gAC();if(!c)return;stopBinaural();_binauralGain=c.createGain();_binauralGain.gain.value=0;_binauralGain.connect(c.destination);
+  const panL=c.createStereoPanner();const panR=c.createStereoPanner();
+  _binauralL=c.createOscillator();_binauralR=c.createOscillator();_binauralL.type="sine";_binauralR.type="sine";
+  if(type==="enfoque"){_binauralL.frequency.value=200;_binauralR.frequency.value=214;}
+  else if(type==="energia"){_binauralL.frequency.value=200;_binauralR.frequency.value=218;}
+  else if(type==="calma"){_binauralL.frequency.value=200;_binauralR.frequency.value=210;}
+  else if(type==="reset"){_binauralL.frequency.value=200;_binauralR.frequency.value=206;}
+  else{_binauralL.frequency.value=200;_binauralR.frequency.value=210;}
+  // 8D spatial rotation
+  function rotatePan(){panL.pan.value=Math.sin(_binauralPan)*0.8;panR.pan.value=Math.cos(_binauralPan)*0.8;_binauralPan+=0.015;if(_binauralGain)requestAnimationFrame(rotatePan);}
+  _binauralL.connect(panL);_binauralR.connect(panR);panL.connect(_binauralGain);panR.connect(_binauralGain);
+  _binauralL.start();_binauralR.start();rotatePan();_binauralGain.gain.linearRampToValueAtTime(0.025,c.currentTime+4);
+}catch(e){}}
+function stopBinaural(){try{if(_binauralGain){const c=gAC();if(c)_binauralGain.gain.linearRampToValueAtTime(0,c.currentTime+2);}setTimeout(()=>{try{if(_binauralL){_binauralL.stop();_binauralL.disconnect();}if(_binauralR){_binauralR.stop();_binauralR.disconnect();}if(_binauralGain)_binauralGain.disconnect();_binauralL=null;_binauralR=null;_binauralGain=null;}catch(e){}},2500);}catch(e){}}
+
+/* Circadian Engine — Full chronobiology adaptation */
+function getCircadian(){const h=new Date().getHours();
+  if(h>=5&&h<9)return{period:"amanecer",energy:"alta",voiceRate:0.95,voicePitch:1.05,warmth:0,intent:"energia",uiWarmth:"0deg",audioFreq:"beta"};
+  if(h>=9&&h<13)return{period:"mañana",energy:"máxima",voiceRate:0.92,voicePitch:1.0,warmth:0,intent:"enfoque",uiWarmth:"0deg",audioFreq:"beta"};
+  if(h>=13&&h<16)return{period:"mediodía",energy:"media",voiceRate:0.90,voicePitch:0.98,warmth:10,intent:"reset",uiWarmth:"5deg",audioFreq:"alpha"};
+  if(h>=16&&h<20)return{period:"tarde",energy:"descendente",voiceRate:0.88,voicePitch:0.95,warmth:20,intent:"enfoque",uiWarmth:"10deg",audioFreq:"alpha"};
+  if(h>=20&&h<23)return{period:"noche",energy:"baja",voiceRate:0.82,voicePitch:0.90,warmth:40,intent:"calma",uiWarmth:"20deg",audioFreq:"theta"};
+  return{period:"madrugada",energy:"mínima",voiceRate:0.78,voicePitch:0.88,warmth:50,intent:"calma",uiWarmth:"25deg",audioFreq:"delta"};}
+
+/* BIO QUALITY SCORE™ — Anti-trampa behavioral validation */
+function calcBioQuality(sd,dur){
+  const maxI=Math.floor(dur/30);const iScore=maxI>0?Math.min(1,(sd.interactions||0)/maxI):0;
+  const pauseP=Math.max(0,1-(sd.pauses||0)*0.15);
+  const mScore=Math.min(1,(sd.motionSamples||0)/Math.max(1,dur/10));
+  const touchP=Math.min(1,(sd.touchHolds||0)/Math.max(1,Math.floor(dur/45)));
+  const raw=(iScore*0.30+pauseP*0.20+mScore*0.15+touchP*0.20+0.15)*100;
+  const score=Math.round(Math.max(10,Math.min(100,raw)));
+  const quality=score>=75?"alta":score>=50?"media":score>=25?"baja":"inválida";
+  return{score,quality,iScore:Math.round(iScore*100),mScore:Math.round(mScore*100),tScore:Math.round(touchP*100)};}
+
+/* Motion Detection — Accelerometer/gyroscope biofeedback */
+function setupMotionDetection(cb){
+  if(typeof window==="undefined")return null;
+  let samples=0,stability=0,lastMag=9.8;
+  function handle(e){const a=e.accelerationIncludingGravity;if(!a)return;
+    const mag=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z);const diff=Math.abs(mag-lastMag);
+    if(diff>0.3)samples++;stability=stability*0.95+diff*0.05;lastMag=mag;if(cb)cb({samples,stability});}
+  try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
+    DeviceMotionEvent.requestPermission().then(p=>{if(p==="granted")window.addEventListener("devicemotion",handle);});
+  }else{window.addEventListener("devicemotion",handle);}}catch(e){}
+  return{getSamples:()=>samples,getStability:()=>stability,cleanup:()=>{try{window.removeEventListener("devicemotion",handle);}catch(e){}}};}
+
+/* Burnout Prediction Index — Predictive analytics */
+function calcBurnoutIndex(ml,hist){
+  ml=ml||[];hist=hist||[];if(ml.length<5)return{index:0,risk:"sin datos",trend:"neutral",prediction:"",avgMood:3};
+  const last7=ml.slice(-7);const prev7=ml.slice(-14,-7);
+  const avgR=last7.reduce((a,m)=>a+m.mood,0)/last7.length;
+  const avgP=prev7.length>=3?prev7.reduce((a,m)=>a+m.mood,0)/prev7.length:avgR;
+  const trend=avgR-avgP;const lowC=last7.filter(m=>m.mood<=2).length;
+  const sessW=hist.filter(s=>(Date.now()-s.ts)<7*86400000).length;
+  const raw=Math.max(0,Math.min(100,50-trend*15+lowC*10-sessW*2+(avgR<2.5?20:0)));
+  const idx=Math.round(raw);const risk=idx>=70?"crítico":idx>=50?"alto":idx>=30?"moderado":"bajo";
+  const pred=idx>=70?"Riesgo de agotamiento en 48h. Protocolo OMEGA recomendado.":idx>=50?"Tendencia descendente detectada. Aumentar frecuencia de sesiones.":idx>=30?"Estado estable con margen de mejora.":"Sistema en buen estado. Mantener ritmo.";
+  return{index:idx,risk,trend:trend>0.3?"mejorando":trend<-0.3?"deteriorando":"estable",prediction:pred,avgMood:+avgR.toFixed(1)};}
+
+/* Protocol Sensitivity — Per-user effectiveness mapping */
+function calcProtoSensitivity(ml){
+  const m=(ml||[]).filter(m=>m.pre>0&&m.proto);const bp={};
+  m.forEach(x=>{if(!bp[x.proto])bp[x.proto]={d:[],c:0};bp[x.proto].d.push(x.mood-x.pre);bp[x.proto].c++;});
+  const r={};Object.entries(bp).forEach(([n,d])=>{const a=d.d.reduce((a,b)=>a+b,0)/d.d.length;
+    r[n]={avgDelta:+a.toFixed(2),sessions:d.c,eff:a>0.5?"alta":a>0?"media":"baja"};});return r;}
+
+/* BIO SIGNAL SCORE™ — Aggregate neural state */
+function calcBioSignal(st){
+  const perf=Math.round(((st.coherencia||50)+(st.resiliencia||50)+(st.capacidad||50))/3);
+  const ml=st.moodLog||[];const rec=ml.slice(-7);
+  const mAvg=rec.length?rec.reduce((a,m)=>a+m.mood,0)/rec.length:3;
+  const cons=Math.min(1,(st.weeklyData||[]).filter(v=>v>0).length/7);
+  const bo=calcBurnoutIndex(ml,st.history);
+  const sig=Math.round(perf*0.3+mAvg*12+cons*20-bo.index*0.2);
+  return{score:Math.max(0,Math.min(100,sig)),perf,mAvg:+mAvg.toFixed(1),consistency:Math.round(cons*100),burnout:bo};}
+
+/* Neural Fingerprint — Unique user cognitive profile */
+function calcNeuralFingerprint(st){
+  const ml=st.moodLog||[];const h=st.history||[];if(h.length<10)return null;
+  const hrs=Array(24).fill(0);h.forEach(x=>{hrs[new Date(x.ts).getHours()]++;});
+  const peakHour=hrs.indexOf(Math.max(...hrs));
+  const protoEff=calcProtoSensitivity(ml);
+  const bestProto=Object.entries(protoEff).sort((a,b)=>b[1].avgDelta-a[1].avgDelta)[0];
+  const avgQuality=h.slice(-20).filter(x=>x.bioQ).reduce((a,x)=>a+(x.bioQ||50),0)/Math.max(1,h.slice(-20).filter(x=>x.bioQ).length);
+  const weekPattern=(st.weeklyData||[]).map((v,i)=>({day:["L","M","X","J","V","S","D"][i],sessions:v}));
+  const moodBaseline=ml.length>=14?+(ml.slice(-14).reduce((a,m)=>a+m.mood,0)/Math.min(ml.length,14)).toFixed(1):3;
+  return{peakHour,bestProto:bestProto?bestProto[0]:"N/D",avgQuality:Math.round(avgQuality),weekPattern,moodBaseline,
+    adaptationRate:h.length>=20?+((h.slice(-10).reduce((a,x)=>a+(x.c||50),0)/10)-(h.slice(-20,-10).reduce((a,x)=>a+(x.c||50),0)/10)).toFixed(1):0,
+    cognitiveBaseline:{focus:st.coherencia||50,calm:st.resiliencia||50,energy:st.capacidad||50}};}
+
+/* Cognitive Entropy Detection — Reaction time analysis */
+function calcCognitiveEntropy(sessionData){
+  const rt=sessionData.reactionTimes||[];if(rt.length<2)return{entropy:0,state:"neutral"};
+  const avg=rt.reduce((a,b)=>a+b,0)/rt.length;
+  const variance=rt.reduce((a,t)=>a+Math.pow(t-avg,2),0)/rt.length;
+  const entropy=Math.min(100,Math.round(Math.sqrt(variance)*10));
+  return{entropy,state:entropy>60?"alto — cerebro desordenado":entropy>30?"medio — procesamiento irregular":"bajo — alta coherencia",avgReaction:Math.round(avg)};}
+
+/* Haptic Patterns — Phase-specific tactile feedback */
+function hapticPhase(type){if(typeof navigator==="undefined"||!navigator.vibrate)return;
+  try{if(type==="breath")navigator.vibrate([30,60,30]);
+  else if(type==="body")navigator.vibrate([50,30,50,30,50]);
+  else if(type==="mind")navigator.vibrate([20,100,20]);
+  else if(type==="focus")navigator.vibrate([80,20,80]);
+  else navigator.vibrate(30);}catch(e){}}
+function hapticBreath(label){if(typeof navigator==="undefined"||!navigator.vibrate)return;
+  try{if(label==="INHALA")navigator.vibrate([15,30,15,30,15]);
+  else if(label==="EXHALA")navigator.vibrate([40]);
+  else if(label==="MANTÉN")navigator.vibrate(20);
+  else navigator.vibrate(10);}catch(e){}}
+
+/* Expanded Data Model — All Supabase-ready variables */
+function buildSessionRecord(pr,st,sd,nfcCtx,durMult,bioQ,burnout,bioSignal,circadian){
+  return{
+    // Core
+    p:pr.n,ts:Date.now(),dur:Math.round(pr.d*durMult),ctx:nfcCtx?.type||"manual",intent:pr.int,
+    // Quality
+    bioQ:bioQ.score,quality:bioQ.quality,interactions:sd.interactions||0,touchHolds:sd.touchHolds||0,
+    motionSamples:sd.motionSamples||0,motionStability:sd.stability||0,pauses:sd.pauses||0,
+    // Cognitive state
+    c:st.coherencia,r:st.resiliencia,e:st.capacidad,
+    // Predictions
+    burnoutIdx:burnout.index,bioSignalScore:bioSignal.score,
+    // Context
+    circadian:circadian.period,hour:new Date().getHours(),
+    // Reaction
+    entropy:sd.reactionTimes?calcCognitiveEntropy(sd).entropy:0,
+    avgReaction:sd.reactionTimes?calcCognitiveEntropy(sd).avgReaction:0
+  };}
+
 function AN({value,sfx="",color="#0F172A",sz=32}){const[d,sD]=useState(0);const rf=useRef(null);useEffect(()=>{let s=d;const e=value;const t0=performance.now();function step(n){const p=Math.min((n-t0)/700,1);sD(Math.round(s+(1-Math.pow(1-p,3))*(e-s)));if(p<1)rf.current=requestAnimationFrame(step);}rf.current=requestAnimationFrame(step);return()=>{if(rf.current)cancelAnimationFrame(rf.current);};},[value]);return<span style={{fontSize:sz,fontWeight:800,color,fontFamily:"'Manrope',sans-serif",letterSpacing:"-1px"}}>{d}{sfx}</span>;}
 function SK({data,c="#059669",w=120,h=30,id:u}){if(!data||!data.length)return null;const mx=Math.max(...data,1);const pts=data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v/mx)*h*.8+h*.08)}`).join(" ");const gi="sk"+(u||"")+(c||"").replace("#","");return(<svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{display:"block"}}><defs><linearGradient id={gi} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={c} stopOpacity=".12"/><stop offset="100%" stopColor={c} stopOpacity="0"/></linearGradient></defs><polygon points={`0,${h} ${pts} ${w},${h}`} fill={`url(#${gi})`}/><polyline points={pts} fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>);}
 function groupHist(h){const n=new Date();const td=n.toDateString();const yd=new Date(Date.now()-864e5).toDateString();const g={hoy:[],ayer:[],antes:[]};for(const x of h){const d=new Date(x.ts).toDateString();if(d===td)g.hoy.push(x);else if(d===yd)g.ayer.push(x);else g.antes.push(x);}return g;}
+
 
 /* ═══ PHASE VISUAL — Enhanced Animated SVG illustrations ═══ */
 function PhaseVisual({type,color,scale=1,active}){
@@ -352,108 +487,96 @@ function PhaseVisual({type,color,scale=1,active}){
   return null;
 }
 
-/* ═══ BINAURAL AUDIO ENGINE — Protocol-specific frequencies ═══ */
-let _binauralL=null,_binauralR=null,_binauralGain=null;
-function startBinaural(type){try{const c=gAC();if(!c)return;stopBinaural();_binauralGain=c.createGain();_binauralGain.gain.value=0;_binauralGain.connect(c.destination);
-  const panL=c.createStereoPanner();const panR=c.createStereoPanner();panL.pan.value=-1;panR.pan.value=1;
-  _binauralL=c.createOscillator();_binauralR=c.createOscillator();_binauralL.type="sine";_binauralR.type="sine";
-  // Frequency by protocol intent
-  if(type==="enfoque"){_binauralL.frequency.value=200;_binauralR.frequency.value=214;}  // Beta 14Hz
-  else if(type==="energia"){_binauralL.frequency.value=200;_binauralR.frequency.value=218;}  // Beta 18Hz
-  else if(type==="calma"){_binauralL.frequency.value=200;_binauralR.frequency.value=210;}  // Alpha 10Hz
-  else if(type==="reset"){_binauralL.frequency.value=200;_binauralR.frequency.value=206;}  // Theta 6Hz
-  else{_binauralL.frequency.value=200;_binauralR.frequency.value=210;}
-  _binauralL.connect(panL);_binauralR.connect(panR);panL.connect(_binauralGain);panR.connect(_binauralGain);
-  _binauralL.start();_binauralR.start();_binauralGain.gain.linearRampToValueAtTime(0.025,c.currentTime+4);
-}catch(e){}}
-function stopBinaural(){try{if(_binauralGain){const c=gAC();if(c)_binauralGain.gain.linearRampToValueAtTime(0,c.currentTime+2);}setTimeout(()=>{try{if(_binauralL){_binauralL.stop();_binauralL.disconnect();}if(_binauralR){_binauralR.stop();_binauralR.disconnect();}if(_binauralGain)_binauralGain.disconnect();_binauralL=null;_binauralR=null;_binauralGain=null;}catch(e){}},2500);}catch(e){}}
 
-/* ═══ CIRCADIAN ENGINE — Adapts to time of day ═══ */
-function getCircadian(){const h=new Date().getHours();
-  if(h>=5&&h<9)return{period:"amanecer",energy:"alta",voiceRate:0.95,voicePitch:1.05,warmth:0,intent:"energia"};
-  if(h>=9&&h<13)return{period:"mañana",energy:"máxima",voiceRate:0.92,voicePitch:1.0,warmth:0,intent:"enfoque"};
-  if(h>=13&&h<16)return{period:"mediodía",energy:"media",voiceRate:0.90,voicePitch:0.98,warmth:0.1,intent:"reset"};
-  if(h>=16&&h<20)return{period:"tarde",energy:"descendente",voiceRate:0.88,voicePitch:0.95,warmth:0.2,intent:"enfoque"};
-  if(h>=20&&h<23)return{period:"noche",energy:"baja",voiceRate:0.82,voicePitch:0.90,warmth:0.4,intent:"calma"};
-  return{period:"madrugada",energy:"mínima",voiceRate:0.78,voicePitch:0.88,warmth:0.5,intent:"calma"};}
+function exportNOM035(st){try{
+  const ml=st.moodLog||[];const h=st.history||[];const now=new Date();
+  const totalMin=Math.round((st.totalTime||0)/60);
+  const avgMd=ml.length?+(ml.reduce((a,m)=>a+m.mood,0)/ml.length).toFixed(1):0;
+  const avgEn=ml.filter(m=>m.energy).length?+(ml.filter(m=>m.energy).reduce((a,m)=>a+m.energy,0)/ml.filter(m=>m.energy).length).toFixed(1):0;
+  const withPre=ml.filter(m=>m.pre>0);
+  const delta=withPre.length?+(withPre.reduce((a,m)=>a+(m.mood-m.pre),0)/withPre.length).toFixed(2):0;
+  const riskCount=ml.filter(m=>m.mood<=2).length;
+  const riskPct=ml.length?Math.round((riskCount/ml.length)*100):0;
+  const tags={};ml.forEach(m=>{if(m.tag){tags[m.tag]=(tags[m.tag]||0)+1;}});
+  const topTags=Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const protos={};h.forEach(x=>{protos[x.p]=(protos[x.p]||0)+1;});
+  const topProtos=Object.entries(protos).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const hrs=Array(24).fill(0);h.forEach(x=>{hrs[new Date(x.ts).getHours()]++;});
+  const peakHr=hrs.indexOf(Math.max(...hrs));
+  const uniqueDays=new Set(h.map(x=>new Date(x.ts).toDateString())).size;
+  const freqPerWeek=uniqueDays>0?(st.totalSessions/(uniqueDays/7)).toFixed(1):"0";
+  const moodByWeek=[];for(let i=0;i<Math.min(ml.length,28);i+=7){const slice=ml.slice(i,i+7);moodByWeek.push(+(slice.reduce((a,m)=>a+m.mood,0)/slice.length).toFixed(1));}
+  const bestProto=withPre.length>=2?(()=>{const bp={};withPre.forEach(m=>{if(!bp[m.proto])bp[m.proto]={s:0,c:0};bp[m.proto].s+=m.mood-m.pre;bp[m.proto].c++;});const sorted=Object.entries(bp).sort((a,b)=>(b[1].s/b[1].c)-(a[1].s/a[1].c));return sorted[0]?sorted[0][0]+" (+"+(sorted[0][1].s/sorted[0][1].c).toFixed(1)+")":"N/D";})():"Datos insuficientes";
 
-/* ═══ BIO QUALITY SCORE — Anti-trampa metrics ═══ */
-function calcBioQuality(sessionData,totalDur){
-  const maxInteractions=Math.floor(totalDur/30);
-  const interactionScore=maxInteractions>0?Math.min(1,(sessionData.interactions||0)/maxInteractions):0;
-  const pausePenalty=Math.max(0,1-(sessionData.pauses||0)*0.15);
-  const completionBonus=1;
-  const motionScore=Math.min(1,(sessionData.motionSamples||0)/Math.max(1,totalDur/10));
-  const raw=(interactionScore*0.35+pausePenalty*0.25+completionBonus*0.25+motionScore*0.15)*100;
-  const score=Math.round(Math.max(10,Math.min(100,raw)));
-  const quality=score>=75?"alta":score>=50?"media":score>=25?"baja":"inválida";
-  return{score,quality,interactionScore:Math.round(interactionScore*100),motionScore:Math.round(motionScore*100)};}
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Informe de Bienestar Laboral — NOM-035</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0F172A;background:#fff;padding:40px;max-width:800px;margin:0 auto;font-size:14px;line-height:1.6}
+.header{border-bottom:3px solid #059669;padding-bottom:20px;margin-bottom:30px}.logo{font-size:24px;font-weight:800;color:#059669;letter-spacing:-0.5px}.sub{font-size:11px;color:#64748B;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+.meta{display:flex;justify-content:space-between;margin-top:12px;font-size:11px;color:#475569}.badge{background:#059669;color:#fff;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700}
+h2{font-size:16px;font-weight:800;color:#0F172A;margin:28px 0 14px;padding-bottom:6px;border-bottom:1px solid #E2E8F0}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}.card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px}.card .v{font-size:22px;font-weight:800;color:#0F172A}.card .l{font-size:10px;color:#64748B;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.risk{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:14px;margin-bottom:20px}.risk .v{font-size:20px;font-weight:800;color:#DC2626}.risk .l{font-size:11px;color:#DC2626}
+.ok{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:14px;margin-bottom:20px}.ok .v{font-size:20px;font-weight:800;color:#059669}.ok .l{font-size:11px;color:#059669}
+table{width:100%;border-collapse:collapse;margin-bottom:20px}th{text-align:left;padding:8px 10px;background:#F1F5F9;font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #E2E8F0}td{padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:12px}
+.footer{margin-top:40px;padding-top:16px;border-top:2px solid #E2E8F0;font-size:10px;color:#94A3B8;text-align:center}
+.imp{font-size:28px;font-weight:800;color:${delta>=0?"#059669":"#DC2626"};text-align:center;padding:20px;background:${delta>=0?"#F0FDF4":"#FEF2F2"};border-radius:12px;margin-bottom:20px}
+.imp span{display:block;font-size:11px;font-weight:400;color:#64748B;margin-top:4px}
+@media print{body{padding:20px}}</style></head><body>
+<div class="header"><div class="logo">BIO-IGNICIÓN</div><div class="sub">Informe de Bienestar Laboral — Cumplimiento NOM-035-STPS-2018</div>
+<div class="meta"><span>Fecha: ${now.toLocaleDateString("es-MX",{year:"numeric",month:"long",day:"numeric"})}</span><span>Periodo: ${h.length?new Date(h[0].ts).toLocaleDateString("es-MX"):"—"} al ${now.toLocaleDateString("es-MX")}</span><span class="badge">MEDIDA PREVENTIVA</span></div></div>
 
-/* ═══ MOTION DETECTION — Accelerometer/gyroscope ═══ */
-function setupMotionDetection(callback){
-  if(typeof window==="undefined")return null;
-  let samples=0;let lastX=0,lastY=0,lastZ=0;
-  function handleMotion(e){
-    const a=e.accelerationIncludingGravity;if(!a)return;
-    const dx=Math.abs(a.x-lastX),dy=Math.abs(a.y-lastY),dz=Math.abs(a.z-lastZ);
-    if(dx>0.3||dy>0.3||dz>0.3)samples++;
-    lastX=a.x;lastY=a.y;lastZ=a.z;
-    if(callback)callback(samples);
-  }
-  try{
-    if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
-      DeviceMotionEvent.requestPermission().then(p=>{if(p==="granted")window.addEventListener("devicemotion",handleMotion);});
-    }else{window.addEventListener("devicemotion",handleMotion);}
-  }catch(e){}
-  return{getSamples:()=>samples,cleanup:()=>{try{window.removeEventListener("devicemotion",handleMotion);}catch(e){}}};}
+<h2>Resumen Ejecutivo</h2>
+<div class="grid"><div class="card"><div class="v">${st.totalSessions}</div><div class="l">Sesiones realizadas</div></div>
+<div class="card"><div class="v">${totalMin} min</div><div class="l">Tiempo invertido</div></div>
+<div class="card"><div class="v">${uniqueDays}</div><div class="l">Días activos</div></div></div>
 
-/* ═══ BURNOUT PREDICTION INDEX ═══ */
-function calcBurnoutIndex(moodLog,history){
-  const ml=moodLog||[];const h=history||[];if(ml.length<5)return{index:0,risk:"sin datos",trend:"neutral"};
-  const last7=ml.slice(-7);const prev7=ml.slice(-14,-7);
-  const avgRecent=last7.reduce((a,m)=>a+m.mood,0)/last7.length;
-  const avgPrev=prev7.length>=3?prev7.reduce((a,m)=>a+m.mood,0)/prev7.length:avgRecent;
-  const trend=avgRecent-avgPrev;
-  const lowMoodCount=last7.filter(m=>m.mood<=2).length;
-  const sessionsLastWeek=h.filter(s=>(Date.now()-s.ts)<7*86400000).length;
-  const burnoutRaw=Math.max(0,Math.min(100,
-    50-trend*15+lowMoodCount*10-sessionsLastWeek*2+(avgRecent<2.5?20:0)));
-  const index=Math.round(burnoutRaw);
-  const risk=index>=70?"crítico":index>=50?"alto":index>=30?"moderado":"bajo";
-  return{index,risk,trend:trend>0.3?"mejorando":trend<-0.3?"deteriorando":"estable",avgMood:+avgRecent.toFixed(1)};}
+<div class="imp">${delta>=0?"+":""}${delta} puntos<span>Mejora promedio de estado emocional por sesión (escala 1-5)</span></div>
 
-/* ═══ PROTOCOL SENSITIVITY — Per-user effectiveness ═══ */
-function calcProtoSensitivity(moodLog){
-  const ml=(moodLog||[]).filter(m=>m.pre>0&&m.proto);
-  const byProto={};ml.forEach(m=>{
-    if(!byProto[m.proto])byProto[m.proto]={deltas:[],count:0};
-    byProto[m.proto].deltas.push(m.mood-m.pre);byProto[m.proto].count++;});
-  const results={};
-  Object.entries(byProto).forEach(([name,data])=>{
-    const avg=data.deltas.reduce((a,b)=>a+b,0)/data.deltas.length;
-    results[name]={avgDelta:+avg.toFixed(2),sessions:data.count,effectiveness:avg>0.5?"alta":avg>0?"media":"baja"};});
-  return results;}
+<h2>Indicadores de Bienestar (KPIs)</h2>
+<div class="grid2">
+<div class="${riskPct>30?"risk":"ok"}"><div class="v">${riskPct}%</div><div class="l">Sesiones con estado de tensión alta o agotamiento</div></div>
+<div class="ok"><div class="v">${avgMd}/5</div><div class="l">Estado emocional promedio</div></div>
+<div class="card"><div class="v">${avgEn}/3</div><div class="l">Energía promedio reportada</div></div>
+<div class="card"><div class="v">${freqPerWeek}/sem</div><div class="l">Frecuencia semanal</div></div>
+<div class="card"><div class="v">${st.streak} días</div><div class="l">Racha consecutiva actual</div></div>
+<div class="card"><div class="v">${peakHr}:00</div><div class="l">Hora pico de actividad</div></div></div>
 
-/* ═══ BIO SIGNAL SCORE — Aggregate user state ═══ */
-function calcBioSignal(st){
-  const perf=Math.round(((st.coherencia||50)+(st.resiliencia||50)+(st.capacidad||50))/3);
-  const ml=st.moodLog||[];const recent=ml.slice(-7);
-  const moodAvg=recent.length?recent.reduce((a,m)=>a+m.mood,0)/recent.length:3;
-  const consistency=Math.min(1,(st.weeklyData||[]).filter(v=>v>0).length/7);
-  const burnout=calcBurnoutIndex(ml,st.history);
-  const signal=Math.round(perf*0.3+moodAvg*12+consistency*20-burnout.index*0.2);
-  return{score:Math.max(0,Math.min(100,signal)),perf,moodAvg:+moodAvg.toFixed(1),consistency:Math.round(consistency*100),burnout};}
+<h2>Protocolos Utilizados</h2>
+<table><tr><th>Protocolo</th><th>Veces usado</th><th>% del total</th></tr>
+${topProtos.map(([n,c])=>`<tr><td>${n}</td><td>${c}</td><td>${Math.round(c/st.totalSessions*100)}%</td></tr>`).join("")}</table>
 
-/* ═══ HAPTIC PATTERNS — Differentiated by phase type ═══ */
-function hapticPhase(type){if(typeof navigator==="undefined"||!navigator.vibrate)return;
-  try{if(type==="breath")navigator.vibrate([30,50,30]);
-  else if(type==="body")navigator.vibrate([50,30,50,30,50]);
-  else if(type==="mind")navigator.vibrate([20,80,20]);
-  else if(type==="focus")navigator.vibrate([80]);
-  else navigator.vibrate(30);}catch(e){}}
+<h2>Contexto Laboral</h2>
+<table><tr><th>Contexto</th><th>Frecuencia</th></tr>
+${topTags.map(([t,c])=>`<tr><td>${t}</td><td>${c} sesiones</td></tr>`).join("")}
+${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":""}</table>
 
+<h2>Análisis de Efectividad</h2>
+<div class="grid2"><div class="card"><div class="v">${bestProto}</div><div class="l">Protocolo más efectivo</div></div>
+<div class="card"><div class="v">${withPre.length}</div><div class="l">Sesiones con evaluación pre/post</div></div></div>
 
-export default function BioIgnicion(){
+<h2>Identificación de Factores de Riesgo</h2>
+<div class="${riskPct>30?"risk":"ok"}">
+<div class="l">${riskPct>30?"⚠️ Se detectaron "+riskCount+" sesiones con indicadores de tensión alta o agotamiento ("+riskPct+"%). Se recomienda seguimiento y posible canalización conforme al numeral 5.5 de la NOM-035.":"✅ Los indicadores de bienestar se encuentran dentro de rangos aceptables. "+riskCount+" sesiones con tensión detectada ("+riskPct+"%)."}</div></div>
+
+<h2>Cumplimiento NOM-035-STPS-2018</h2>
+<table><tr><th>Requisito</th><th>Estado</th><th>Evidencia</th></tr>
+<tr><td>Medidas de prevención (5.2)</td><td>✅ Implementado</td><td>${st.totalSessions} sesiones de intervención realizadas</td></tr>
+<tr><td>Identificación de riesgo (5.3)</td><td>✅ Activo</td><td>Check-in emocional pre/post en cada sesión</td></tr>
+<tr><td>Seguimiento (5.5)</td><td>${riskPct>30?"⚠️ Requiere acción":"✅ Sin alertas"}</td><td>${riskPct}% de sesiones con indicadores de riesgo</td></tr>
+<tr><td>Entorno organizacional (5.6)</td><td>✅ Monitoreado</td><td>Datos de contexto laboral: ${topTags.map(t=>t[0]).join(", ")||"pendiente"}</td></tr></table>
+
+<div class="footer">
+<p><strong>BIO-IGNICIÓN</strong> — Plataforma de Rendimiento Cognitivo y Bienestar Laboral</p>
+<p>Este informe fue generado automáticamente como evidencia de implementación de medidas preventivas conforme a la NOM-035-STPS-2018.</p>
+<p>Documento generado: ${now.toLocaleString("es-MX")} | Los datos presentados son autorreportados por el usuario.</p>
+</div></body></html>`;
+
+  const blob=new Blob([html],{type:"text/html"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=`Informe-Bienestar-NOM035-${now.toISOString().split("T")[0]}.html`;
+  a.click();URL.revokeObjectURL(url);
+}catch(e){console.error(e);}}export default function BioIgnicion(){
   const[mt,setMt]=useState(false);const[tab,setTab]=useState("ignicion");const[st,setSt_]=useState(DS);
   const[pr,setPr]=useState(P[12]);const[sc,setSc]=useState("Protocolo");const[sl,setSl]=useState(false);
   const[ts,setTs]=useState("idle");const[sec,setSec]=useState(120);const[pi,setPi]=useState(0);
@@ -492,12 +615,11 @@ export default function BioIgnicion(){
   useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;function loadVoices(){voicesRef.current=window.speechSynthesis.getVoices();}loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
   function unlockVoice(){if(voiceUnlocked.current||typeof window==="undefined"||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance("");u.volume=0;window.speechSynthesis.speak(u);voiceUnlocked.current=true;}catch(e){}}
   function speak(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{
-    // iOS Safari pauses synthesis in background - resume it
     if(window.speechSynthesis.paused)window.speechSynthesis.resume();
-    const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=0.92;u.pitch=1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
+    const circ=getCircadian();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circ.voiceRate||0.92;u.pitch=circ.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
   function speakNow(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{
     if(window.speechSynthesis.paused)window.speechSynthesis.resume();
-    window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=0.92;u.pitch=1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
+    window.speechSynthesis.cancel();const circ=getCircadian();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circ.voiceRate||0.92;u.pitch=circ.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
   function stopVoice(){try{if(typeof window!=="undefined"&&window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}}
 
   // ═══ LOAD STATE + PERSISTENCE ═══
