@@ -1017,9 +1017,56 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
       {/* Detail instruction - readable */}
       <p style={{fontSize:12,lineHeight:1.75,color:t2,margin:0,fontWeight:400,opacity:isActive?.8:1,transition:"opacity .5s"}}>{ph.i}</p>
       {/* Anti-trampa micro-interaction */}
-      {isActive&&sec%30===15&&sec>10&&<div style={{marginTop:10,animation:"fi .5s"}}><button onClick={()=>{H("tap");setSessionData(d=>({...d,interactions:(d.interactions||0)+1}));}} onTouchStart={e=>{e.currentTarget.style.transform="scale(0.95)";e.currentTarget.style.background=ac+"15";}} onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"06";}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px dashed ${ac}30`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .2s"}}>
-        <div style={{width:6,height:6,borderRadius:"50%",background:ac,animation:"pu 1.5s ease infinite"}}/><span style={{fontSize:11,fontWeight:600,color:ac}}>Toca al exhalar</span>
-      </button></div>}
+      {isActive && sec > 10 && Math.random() < 0.02 && (
+<div style={{ marginTop: 10, animation: "fi .5s" }}>
+<button
+onClick={() => {
+const now = Date.now();
+const valid = now - lastBreath > 800 && now - lastBreath < 3000;
+
+setSessionData(d => ({
+...d,
+interactions: (d.interactions || 0) + 1,
+validInteractions: valid ? (d.validInteractions || 0) + 1 : d.validInteractions || 0
+}));
+
+H("tap");
+}}
+onTouchStart={e => {
+e.currentTarget.style.transform = "scale(0.95)";
+e.currentTarget.style.background = ac + "15";
+}}
+onTouchEnd={e => {
+e.currentTarget.style.transform = "scale(1)";
+e.currentTarget.style.background = ac + "06";
+}}
+style={{
+width: "100%",
+padding: "10px",
+borderRadius: 12,
+border: `1px dashed ${ac}30`,
+background: ac + "06",
+cursor: "pointer",
+display: "flex",
+alignItems: "center",
+justifyContent: "center",
+gap: 6,
+transition: "all .2s"
+}}
+>
+<div style={{
+width: 6,
+height: 6,
+borderRadius: "50%",
+background: ac,
+animation: "pu 1.5s ease infinite"
+}} />
+<span style={{ fontSize: 11, fontWeight: 600, color: ac }}>
+Toca al exhalar
+</span>
+</button>
+</div>
+)}
       {/* Expandable science */}
       <button onClick={()=>{setShowScience(!showScience);setSessionData(d=>({...d,scienceViews:(d.scienceViews||0)+1}));}} style={{display:"flex",alignItems:"center",gap:5,marginTop:12,padding:"6px 0",background:"none",border:"none",cursor:"pointer"}}>
         <Ic name="mind" size={11} color={ac}/>
