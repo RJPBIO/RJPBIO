@@ -592,7 +592,7 @@ function PhaseVisual({type,color,scale=1,active}){
 }
 
 
-function exportNOM035(st){try{
+function exportNOM035_v2(st){try{
   const ml=st.moodLog||[];const h=st.history||[];const now=new Date();
   const totalMin=Math.round((st.totalTime||0)/60);
   const avgMd=ml.length?+(ml.reduce((a,m)=>a+m.mood,0)/ml.length).toFixed(1):0;
