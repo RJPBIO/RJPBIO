@@ -1,4 +1,17 @@
-"use client";
+
+    {/* ═══ NEURAL FINGERPRINT ═══ */}
+    {(()=>{const fp=calcNeuralFingerprint(st);if(!fp)return null;return(
+    <div style={{background:cd,borderRadius:18,padding:"16px 14px",marginBottom:14,border:`1px solid ${bd}`}}>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Tu Firma Neural</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:10}}>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Hora pico</div><div style={{fontSize:14,fontWeight:800,color:t1}}>{fp.peakHour}:00</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Mejor protocolo</div><div style={{fontSize:11,fontWeight:800,color:ac}}>{fp.bestProto}</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Calidad promedio</div><div style={{fontSize:14,fontWeight:800,color:fp.avgQuality>=70?"#059669":fp.avgQuality>=45?"#D97706":"#DC2626"}}>{fp.avgQuality}%</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Tasa adaptación</div><div style={{fontSize:14,fontWeight:800,color:fp.adaptationRate>0?"#059669":"#DC2626"}}>{fp.adaptationRate>0?"+":""}{fp.adaptationRate}</div></div>
+      </div>
+      <div style={{fontSize:10,color:t2,lineHeight:1.5}}>Baseline cognitivo: Enfoque {fp.cognitiveBaseline.focus}% · Calma {fp.cognitiveBaseline.calm}% · Energía {fp.cognitiveBaseline.energy}%</div>
+    </div>);})()}
+    "use client";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -256,6 +269,7 @@ function svS(d){try{if(typeof window!=="undefined"){localStorage.setItem("bio-g2
 function exportData(st){try{const blob=new Blob([JSON.stringify(st,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="bio-ignicion-data.json";a.click();URL.revokeObjectURL(url);}catch(e){}}
 
 function exportNOM035(st){try{
+  const bs=calcBioSignal(st);const bo=calcBurnoutIndex(st.moodLog,st.history);const avgQ=Math.round(h.filter(x=>x.bioQ).reduce((a,x)=>a+(x.bioQ||50),0)/Math.max(1,h.filter(x=>x.bioQ).length));const activeDays=(st.weeklyData||[]).filter(v=>v>0).length;
   const ml=st.moodLog||[];const h=st.history||[];const now=new Date();
   const totalMin=Math.round((st.totalTime||0)/60);
   const avgMd=ml.length?+(ml.reduce((a,m)=>a+m.mood,0)/ml.length).toFixed(1):0;
@@ -331,6 +345,14 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
 <tr><td>Identificación de riesgo (5.3)</td><td>✅ Activo</td><td>Check-in emocional pre/post en cada sesión</td></tr>
 <tr><td>Seguimiento (5.5)</td><td>${riskPct>30?"⚠️ Requiere acción":"✅ Sin alertas"}</td><td>${riskPct}% de sesiones con indicadores de riesgo</td></tr>
 <tr><td>Entorno organizacional (5.6)</td><td>✅ Monitoreado</td><td>Datos de contexto laboral: ${topTags.map(t=>t[0]).join(", ")||"pendiente"}</td></tr></table>
+<h3 style="color:#059669;margin-top:20px">Métricas Avanzadas BIO-IGNICIÓN</h3>
+<table style="width:100%;border-collapse:collapse;margin:10px 0">
+<tr style="background:#059669;color:white"><th style="padding:8px;text-align:left">Métrica</th><th style="padding:8px;text-align:left">Valor</th><th style="padding:8px;text-align:left">Estado</th></tr>
+<tr><td style="padding:6px;border-bottom:1px solid #eee">BioSignal Score</td><td style="padding:6px;border-bottom:1px solid #eee">${bs.score}/100</td><td style="padding:6px;border-bottom:1px solid #eee">${bs.score>=70?"Óptimo":bs.score>=45?"Funcional":"Requiere atención"}</td></tr>
+<tr><td style="padding:6px;border-bottom:1px solid #eee">Índice Burnout</td><td style="padding:6px;border-bottom:1px solid #eee">${bo.index}/100</td><td style="padding:6px;border-bottom:1px solid #eee">Riesgo ${bo.risk}</td></tr>
+<tr><td style="padding:6px;border-bottom:1px solid #eee">Calidad Promedio</td><td style="padding:6px;border-bottom:1px solid #eee">${avgQ}%</td><td style="padding:6px;border-bottom:1px solid #eee">${avgQ>=70?"Alta":avgQ>=45?"Media":"Baja"}</td></tr>
+<tr><td style="padding:6px;border-bottom:1px solid #eee">Consistencia Semanal</td><td style="padding:6px;border-bottom:1px solid #eee">${activeDays}/7 días</td><td style="padding:6px;border-bottom:1px solid #eee">${activeDays>=5?"Excelente":activeDays>=3?"Buena":"Necesita mejorar"}</td></tr>
+</table>
 
 <div class="footer">
 <p><strong>BIO-IGNICIÓN</strong> — Plataforma de Rendimiento Cognitivo y Bienestar Laboral</p>
@@ -376,14 +398,25 @@ function getCircadian(){const h=new Date().getHours();
 
 /* BIO QUALITY SCORE™ — Anti-trampa behavioral validation */
 function calcBioQuality(sd,dur){
-  const maxI=Math.floor(dur/30);const iScore=maxI>0?Math.min(1,(sd.interactions||0)/maxI):0;
-  const pauseP=Math.max(0,1-(sd.pauses||0)*0.15);
-  const mScore=Math.min(1,(sd.motionSamples||0)/Math.max(1,dur/10));
-  const touchP=Math.min(1,(sd.touchHolds||0)/Math.max(1,Math.floor(dur/45)));
-  const raw=(iScore*0.30+pauseP*0.20+mScore*0.15+touchP*0.20+0.15)*100;
-  const score=Math.round(Math.max(10,Math.min(100,raw)));
-  const quality=score>=75?"alta":score>=50?"media":score>=25?"baja":"inválida";
-  return{score,quality,iScore:Math.round(iScore*100),mScore:Math.round(mScore*100),tScore:Math.round(touchP*100)};}
+  // Expected: 3 interaction prompts per session, 1 touch hold, motion if handheld
+  const interactions=sd.interactions||0;
+  const touchHolds=sd.touchHolds||0;
+  const motionSamples=sd.motionSamples||0;
+  const pauses=sd.pauses||0;
+  // Interaction score: 3 prompts expected, each worth 33%
+  const iScore=Math.min(1,interactions/3);
+  // Touch hold: at least 1 sustained press validates presence
+  const tScore=touchHolds>=1?1:interactions>=2?0.5:0;
+  // Motion: any movement confirms device is in hand (not on desk)
+  const mScore=motionSamples>=5?1:motionSamples>=2?0.6:0;
+  // Pause penalty: each pause reduces score
+  const pauseP=Math.max(0,1-pauses*0.2);
+  // Completion is baseline (always 1 if session completed)
+  const raw=(iScore*0.30+tScore*0.25+mScore*0.15+pauseP*0.15+0.15)*100;
+  const score=Math.round(Math.max(5,Math.min(100,raw)));
+  // Zero interaction = inválida regardless
+  const quality=interactions===0&&touchHolds===0?"inválida":score>=70?"alta":score>=45?"media":score>=20?"baja":"inválida";
+  return{score,quality,iScore:Math.round(iScore*100),mScore:Math.round(mScore*100),tScore:Math.round(tScore*100)};}
 
 /* Motion Detection — Accelerometer/gyroscope biofeedback */
 function setupMotionDetection(cb){
@@ -647,7 +680,13 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
   const a=document.createElement("a");
   a.href=url;a.download=`Informe-Bienestar-NOM035-${now.toISOString().split("T")[0]}.html`;
   a.click();URL.revokeObjectURL(url);
-}catch(e){console.error(e);}}export default function BioIgnicion(){
+}catch(e){console.error(e);}}
+/* Wake Lock — screen stays on during session */
+let _wakeLock=null;
+async function requestWakeLock(){try{if('wakeLock' in navigator){_wakeLock=await navigator.wakeLock.request('screen');}}catch(e){}}
+function releaseWakeLock(){try{if(_wakeLock){_wakeLock.release();_wakeLock=null;}}catch(e){}}
+
+export default function BioIgnicion(){
   const[mt,setMt]=useState(false);const[tab,setTab]=useState("ignicion");const[st,setSt_]=useState(DS);
   const[pr,setPr]=useState(P[12]);const[sc,setSc]=useState("Protocolo");const[sl,setSl]=useState(false);
   const[ts,setTs]=useState("idle");const[sec,setSec]=useState(120);const[pi,setPi]=useState(0);
@@ -664,6 +703,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
   const[onboard,setOnboard]=useState(false);const[showIntent,setShowIntent]=useState(false);
   const[greeting,setGreeting]=useState("");
   const[showScience,setShowScience]=useState(false);
+  const[neuralZone,setNeuralZone]=useState(null);
   const[selSS,setSelSS]=useState("off");
   const[durMult,setDurMult]=useState(1);
   const[entryDone,setEntryDone]=useState(false);
@@ -711,21 +751,21 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
   // Phase transitions with pre-announcement (ease-in 2s before)
   useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}
     // Pre-announce next phase 2s before transition
-    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);speakNow(pr.ph[nextIdx].k||pr.ph[nextIdx].l);}
+    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);const _phIdx=nextIdx;setTimeout(()=>{if(ts==="running"&&pi===_phIdx)speak(pr.ph[_phIdx].i);},2500);}
     // Pre-hint 2s before next phase
-    if(nextPh){const nextStart=Math.round(nextPh.s*scale);const timeToNext=nextStart-el;if(timeToNext===2&&ts==="running"){speak("Prepárate");}}
+    const nxtIdx=pi<pr.ph.length-1?pi+1:null;if(nxtIdx!==null){const nxtStart=Math.round(pr.ph[nxtIdx].s*scale);const ttN=nxtStart-el;if(ttN===2&&ts==="running"){speak("Prepárate");}}
   },[sec,pr,durMult]);
   useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   // Breathing engine with circadian-adapted voice
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){speak(lbl.toLowerCase());lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase());hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
-  function startCountdown(){setCountdown(3);H("tap");speakNow("Tres");cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speakNow(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
-  function go(){unlockVoice();setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[]});startCountdown();}
-  function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();setSessionData(d=>({...d,pauses:d.pauses+1}));}
-  function rs(){if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
+  function startCountdown(){setCountdown(3);H("tap");(()=>{const g=st.streak>=7?"Racha de "+st.streak+" días. ":st.todaySessions>0?"Sesión "+(st.todaySessions+1)+" de hoy. ":"";const p=circadian.period==="amanecer"||circadian.period==="mañana"?"Buenos días. ":circadian.period==="noche"||circadian.period==="madrugada"?"Buenas noches. ":"";speakNow(p+g+"Tres");})();cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speakNow(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
+  function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[]});startCountdown();}
+  function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();setSessionData(d=>({...d,pauses:d.pauses+1}));}
+  function rs(){releaseWakeLock();try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
-  function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){setTs("running");H("go");speakNow("continúa");}}
+  function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){setTs("running");H("go");speakNow("continúa");if(st.soundOn!==false)startBinaural(pr.int);}}
   function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTabFade(1);},150);H("tap");}
 
   function comp(){
@@ -755,7 +795,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
     // ═══ BIO QUALITY SCORE ═══
     const bioQ=calcBioQuality(sessionData,Math.round(pr.d*durMult));
     const qualityMult=bioQ.quality==="alta"?1.5:bioQ.quality==="media"?1.0:bioQ.quality==="baja"?0.5:0.2;
-    const eVC=Math.round((5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5))*qualityMult);
+    const eVC=Math.max(3,Math.round((5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5))*qualityMult));
     const vc=(st.vCores||0)+eVC;
     const ach=[...st.achievements];
     if(nsk>=7&&!ach.includes("streak7"))ach.push("streak7");
@@ -782,8 +822,8 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
       bioSignal:bioSignal.score
     }].slice(-200);
     setPostVC(eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
-    speakNow(bioQ.quality==="alta"?"Sesión excelente":"Sesión completada");
-    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("checkin");},800);
+    releaseWakeLock();speakNow(bioQ.quality==="alta"?"Sesión excelente":"Sesión completada");
+    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);setTimeout(()=>{setPostStep("checkin");},5000);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,totalSessions:ns,streak:nsk,todaySessions:st.lastDate===td?st.todaySessions+1:1,lastDate:td,weeklyData:nw,weekNum:getWeekNum(),coherencia:nC,resiliencia:nR,capacidad:nE,achievements:ach,vCores:vc,history:newHist,totalTime:(st.totalTime||0)+Math.round(pr.d*durMult),firstDone:true,progDay:Math.min((st.progDay||0)+1,7)});
   }
@@ -814,7 +854,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
   const favs=st.favs||[];
   const toggleFav=(name)=>{const nf=favs.includes(name)?favs.filter(f=>f!==name):[...favs,name];setSt({...st,favs:nf});};
   const weeklySummary=useMemo(()=>{const pw=st.prevWeekData||[0,0,0,0,0,0,0];const pwTotal=pw.reduce((a,b)=>a+b,0);const cwTotal=st.weeklyData.reduce((a,b)=>a+b,0);if(pwTotal===0)return null;const diff=cwTotal-pwTotal;const bestDay=pw.indexOf(Math.max(...pw));const ml=st.moodLog||[];const weekMoods=ml.slice(-7);const mAvg=weekMoods.length?+(weekMoods.reduce((a,m)=>a+m.mood,0)/weekMoods.length).toFixed(1):0;return{prev:pwTotal,curr:cwTotal,diff,bestDay:DN[bestDay],mAvg};},[st.prevWeekData,st.weeklyData,st.moodLog]);
-  const smartPick=useMemo(()=>smartSuggest(st),[st.moodLog,st.history]);
+  const smartPick=useMemo(()=>{const base=smartSuggest(st);if(!base)return null;const sens=calcProtoSensitivity(st.moodLog);if(Object.keys(sens).length<3)return base;const best=Object.entries(sens).filter(([n,d])=>d.avgDelta>0.3).sort((a,b)=>b[1].avgDelta-a[1].avgDelta)[0];if(best){const found=P.find(p=>p.n===best[0]);if(found)return found;}return base;},[st.moodLog,st.history]);
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
 
@@ -861,10 +901,17 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
       </div>
     </div>
     <div style={{fontSize:10,color:ac,fontStyle:"italic",marginBottom:16,lineHeight:1.5}}>Tu primera ignición será guiada por voz. Solo cierra los ojos y sigue las instrucciones.</div>
-    <button onClick={()=>{setOnboard(false);unlockVoice();}} style={{width:"100%",padding:"16px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",animation:"gl 3s ease infinite"}}>PRIMERA IGNICIÓN</button>
+    <button onClick={()=>{setOnboard(false);unlockVoice();const d=getDailyIgn(st);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}}} style={{width:"100%",padding:"16px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",animation:"gl 3s ease infinite"}}>PRIMERA IGNICIÓN</button>
   </div></div>}
 
-  {/* POST: CHECK-IN */}
+    {/* POST: BREATHE MOMENT */}
+  {postStep==="breathe"&&ts==="done"&&<div style={{position:"fixed",inset:0,zIndex:220,background:bg+"F8",backdropFilter:"blur(30px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+    <div style={{width:60,height:60,borderRadius:"50%",background:"radial-gradient(circle,"+ac+"15,transparent)",animation:"pu 3s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:12,height:12,borderRadius:"50%",background:ac,opacity:.4,animation:"focusLock 2s ease infinite"}}/></div>
+    <div style={{fontSize:14,fontWeight:600,color:t1,marginTop:20,textAlign:"center",lineHeight:1.6}}>Quédate un momento con esta sensación.</div>
+    <div style={{fontSize:11,color:t3,marginTop:8}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)} segundos.</div>
+  </div>}
+
+{/* POST: CHECK-IN */}
   {postStep==="checkin"&&ts==="done"&&<div style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F5`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}><div style={{background:cd,borderRadius:28,padding:"28px 22px",maxWidth:400,width:"100%",animation:"po .4s cubic-bezier(.34,1.56,.64,1)"}}>
     <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:16,fontWeight:800,color:t1}}>¿Cómo te sientes ahora?</div></div>
     <div style={{display:"flex",justifyContent:"center",gap:4,marginBottom:18}}>{MOODS.map(m=>(
@@ -874,10 +921,12 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
       </button>))}</div>
     <div style={{marginBottom:16}}><div style={{fontSize:9,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Energía</div><div style={{display:"flex",gap:7}}>{ENERGY_LEVELS.map(e=>(
       <button key={e.id} onClick={()=>{setCheckEnergy(e.v);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:checkEnergy===e.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:checkEnergy===e.v?ac+"08":cd,color:checkEnergy===e.v?ac:t3,fontSize:11,fontWeight:700,cursor:"pointer"}}>{e.label}</button>))}</div></div>
+    
+    <div style={{marginBottom:16}}><div style={{fontSize:9,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Claridad mental</div><div style={{display:"flex",gap:5}}>{[{l:"Nublado",v:1},{l:"Regular",v:2},{l:"Claro",v:3},{l:"Cristalino",v:4}].map(c=><button key={c.v} onClick={()=>{setCheckEnergy(prev=>prev||2);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:"1.5px solid "+bd,background:cd,color:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{c.l}</button>)}</div></div>
     <div style={{marginBottom:18}}><div style={{fontSize:9,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Contexto</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{WORK_TAGS.map(tg=>(
       <button key={tg} onClick={()=>{setCheckTag(checkTag===tg?"":tg);H("tap");}} style={{padding:"5px 11px",borderRadius:18,border:checkTag===tg?`1.5px solid ${ac}`:`1px solid ${bd}`,background:checkTag===tg?ac+"08":cd,color:checkTag===tg?ac:t3,fontSize:9,fontWeight:600,cursor:"pointer"}}>{tg}</button>))}</div></div>
     <button onClick={submitCheckin} style={{width:"100%",padding:"14px",borderRadius:50,background:checkMood>0?ac:bd,border:"none",color:checkMood>0?"#fff":t3,fontSize:12,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>{checkMood>0?"CONTINUAR":"SELECCIONA ESTADO"}</button>
-    <button onClick={()=>setPostStep("summary")} style={{width:"100%",padding:"8px",marginTop:6,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir</button>
+    <button onClick={()=>setPostStep("summary")} style={{width:"100%",padding:"8px",marginTop:6,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir (tu progreso mejora con check-in)</button>
   </div></div>}
 
   {/* POST: SUMMARY with Before/After */}
@@ -889,10 +938,9 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
       <div style={{fontSize:10,color:t2,marginTop:3}}>{pr.n} · {Math.round(pr.d*durMult)}s</div>
     </div>
     {/* Streak celebration */}
-    {st.streak>=7&&st.streak%7===0&&<div style={{textAlign:"center",padding:"10px",marginBottom:12,background:`linear-gradient(135deg,#D97706${isDark?"15":"08"},#D97706${isDark?"08":"04"})`,borderRadius:14,border:"1px solid #D9770615",animation:"fi .6s"}}>
+    {st.streak>=3&&<div style={{textAlign:"center",padding:"10px",marginBottom:12,background:`linear-gradient(135deg,#D97706${isDark?"15":"08"},#D97706${isDark?"08":"04"})`,borderRadius:14,border:"1px solid #D9770615",animation:"fi .6s"}}>
       <div style={{fontSize:24,marginBottom:2}}>🔥</div>
-      <div style={{fontSize:12,fontWeight:800,color:"#D97706"}}>{st.streak} días de racha</div>
-      <div style={{fontSize:9,color:t3}}>Tu constancia te define.</div>
+      <div style={{fontSize:13,fontWeight:800,color:"#D97706"}}>{st.streak} días — {st.streak>=60?"LEGENDARIO":st.streak>=30?"IMPARABLE":st.streak>=14?"DISCIPLINADO":st.streak>=7?"CONSTANTE":"EN CONSTRUCCIÓN"}</div><div style={{fontSize:10,color:t2,marginTop:2}}>{st.streak>=30?"Tu cerebro ya opera en un nivel superior":st.streak>=14?"Tu sistema nervioso se ha adaptado. Eres más fuerte.":st.streak>=7?"El hábito se está solidificando. No pares.":"Cada día que vuelves, tu cerebro se reconfigura."}</div>
     </div>}
     {/* Before → After comparison */}
     {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:14,padding:"14px 16px",background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:16}}>
@@ -942,6 +990,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
       <div style={{width:26,height:26,borderRadius:7,background:sugN.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={sugN.cl}/></div><div><div style={{fontSize:9,color:t3,fontWeight:700,textTransform:"uppercase"}}>Siguiente</div><div style={{fontSize:10,fontWeight:700,color:t1}}>{sugN.n}</div></div>
     </button>
     <button onClick={()=>{rs();setPostStep("none");}} style={{width:"100%",padding:"13px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</button>
+
   </div></div>}
 
   {showIntent&&<div style={{position:"fixed",inset:0,zIndex:210,background:"rgba(15,23,42,.4)",backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowIntent(false)}><div style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%",animation:"po .4s"}} onClick={e=>e.stopPropagation()}>
@@ -952,7 +1001,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
   {sl&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setSl(false)}><div style={{width:"100%",maxWidth:430,maxHeight:"82vh",background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",overflowY:"auto",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
     <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:20,fontWeight:800,color:t1,marginBottom:16}}>Protocolos</h3>
     <div style={{display:"flex",background:isDark?"#1A1E28":"#EEF2F7",borderRadius:12,padding:3,marginBottom:16}}>{CATS.map(c=><button key={c} onClick={()=>setSc(c)} style={{flex:1,padding:"9px 0",borderRadius:10,border:"none",background:sc===c?cd:"transparent",color:sc===c?t1:t3,fontWeight:700,fontSize:12,cursor:"pointer",transition:"all .3s"}}>{c}</button>)}</div>
-    {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;return<button key={p.id} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:9,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:9,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>recomendado</span>}</div><div style={{fontSize:9,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#059669":p.dif===2?"#D97706":"#DC2626"}}>{DIF_LABELS[(p.dif||1)-1]}</span></div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Ic name="star" size={16} color={isFav?ac:bd}/></div>{pr.id===p.id&&<Ic name="check" size={16} color={p.cl}/>}</button>;})}
+    {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;return<button key={p.id} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:9,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:9,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>recomendado</span>}</div><div style={{fontSize:9,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#059669":p.dif===2?"#D97706":"#DC2626"}}>{DIF_LABELS[(p.dif||1)-1]}</span></div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Ic name="star" size={16} color={isFav?ac:bd}/></div>{(()=>{const s=protoSens[p.n];return s&&s.sessions>=2?<span style={{fontSize:9,fontWeight:800,color:s.avgDelta>0?"#059669":"#DC2626",marginRight:4}}>{s.avgDelta>0?"+":""}{s.avgDelta}</span>:null;})()}{pr.id===p.id&&<Ic name="check" size={16} color={p.cl}/>}</button>;})}
   </div></div>)}
 
   {showSettings&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowSettings(false)}><div style={{width:"100%",maxWidth:430,background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
@@ -989,7 +1038,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
     {/* Immersive entry moment */}
     {!entryDone&&ts==="idle"&&st.totalSessions>0&&<div style={{textAlign:"center",padding:"30px 0 20px",animation:"fi 1s ease"}} onClick={()=>setEntryDone(true)}>
       <svg width="48" height="48" viewBox="0 0 52 52" style={{margin:"0 auto 16px",display:"block",animation:"pu 3s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3"/><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{animation:"innerRing 6s linear infinite"}}/><circle cx="26" cy="26" r="4" fill={ac} opacity=".3"/></svg>
-      <div style={{fontSize:14,fontWeight:300,color:t2,lineHeight:1.7,maxWidth:280,margin:"0 auto",letterSpacing:"0.2px"}}>{daily.phrase}</div>
+      <div style={{fontSize:14,fontWeight:300,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto",letterSpacing:"0.2px"}}>{st.todaySessions>0?"Llevas "+st.todaySessions+" sesión"+(st.todaySessions>1?"es":"")+" hoy. Tu coherencia: "+st.coherencia+"%. "+(st.coherencia>70?"Rendimiento alto.":"Margen de mejora."):daily.phrase}</div>
       <div style={{fontSize:9,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>TOCA PARA CONTINUAR</div>
     </div>}
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
@@ -1000,6 +1049,9 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
     </div>}
     {st.todaySessions>0&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:8}}>
       <div style={{width:4,height:4,borderRadius:"50%",background:ac}}/><span style={{fontSize:9,fontWeight:700,color:ac}}>{st.todaySessions} {st.todaySessions===1?"sesión":"sesiones"} hoy</span>
+    </div>}
+    {ts==="idle"&&st.totalSessions>=3&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8,animation:"fi .4s"}}>
+      <Ic name="rec" size={12} color={t3}/><span style={{fontSize:10,fontWeight:600,color:t2}}>Ventana óptima: <span style={{color:ac,fontWeight:800}}>{(()=>{const fp=calcNeuralFingerprint(st);const h=fp?fp.peakHour:new Date().getHours()<12?14:9;return(h<10?"0":"")+h+":00";})()}</span></span>
     </div>}
 
     {/* ═══ DAILY IGNICIÓN ═══ */}
@@ -1086,6 +1138,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
         {isBr&&bL&&<div style={{animation:"fi .3s",marginBottom:2}}><span style={{fontSize:11,fontWeight:800,letterSpacing:4,color:ac,opacity:.9}}>{bL}</span><span style={{fontSize:12,fontWeight:800,color:ac,marginLeft:3}}>{bCnt}s</span></div>}
         <div style={{fontSize:isActive?46:52,fontWeight:800,color:t1,lineHeight:1,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none",transition:"font-size .5s"}}>{sec}</div>
         {isActive&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:3,opacity:.8}}>{sessPct}%</div>}
+        {isActive&&sessionData.motionSamples>0&&<div style={{display:"flex",alignItems:"center",gap:3,marginTop:3}}><div style={{width:4,height:4,borderRadius:"50%",background:sessionData.stability<0.5?"#059669":sessionData.stability<1.5?"#D97706":"#DC2626",animation:"pu 1.5s ease infinite"}}/><span style={{fontSize:9,color:t3}}>Coherencia {sessionData.stability<0.5?"alta":sessionData.stability<1.5?"media":"calibrando"}</span></div>}
         {ts==="idle"&&<><div style={{fontSize:9,fontWeight:700,letterSpacing:4,color:t3,marginTop:4,textTransform:"uppercase"}}>segundos</div><div style={{fontSize:10,color:ac,marginTop:6,fontWeight:600,opacity:.7,animation:"pu 3s ease-in-out infinite"}}>toca para ignición</div></>}
         {ts==="running"&&!isBr&&<div style={{fontSize:9,color:t3,marginTop:3,opacity:.6}}>toca para pausar</div>}
         {ts==="paused"&&<div style={{fontSize:10,fontWeight:700,color:ac,marginTop:4,animation:"pausePulse 2s ease infinite"}}>EN PAUSA</div>}
@@ -1100,47 +1153,87 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
     <div style={{textAlign:"center",marginBottom:isActive?6:10}}><div style={{display:"inline-flex",alignItems:"center",gap:6}}><Ic name={ph.ic} size={isActive?11:13} color={ac}/><span style={{fontSize:isActive?12:14,fontWeight:800,color:t1}}>{ph.l}</span></div>{!isActive&&<div style={{fontSize:9,color:t3,marginTop:2}}>{ph.r}</div>}</div>
     <div key={pi} style={{background:cd,borderRadius:16,padding:"16px",marginBottom:10,border:`1px solid ${bd}`,animation:"phaseSlide .5s cubic-bezier(.4,0,.2,1)"}}>
       {/* Animated phase illustration */}
-      {isActive&&<PhaseVisual type={ph.ic} color={ac} scale={bS} active={isActive}/>}
+      {isActive&&<><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:700,color:ac}}>Fase {pi+1} de {pr.ph.length}</span><span style={{fontSize:10,color:t3}}>{Math.round((pi+1)/pr.ph.length*100)}%</span></div><PhaseVisual type={ph.ic} color={ac} scale={bS} active={isActive}/></>}
       {/* Key phrase - LARGE, the mantra */}
       {ph.k&&<div style={{fontSize:16,fontWeight:800,color:t1,lineHeight:1.45,marginBottom:10,letterSpacing:"-0.3px",opacity:isActive?.95:1,transition:"opacity .5s"}}>{ph.k}</div>}
       {/* Detail instruction - readable */}
       <p style={{fontSize:12,lineHeight:1.75,color:t2,margin:0,fontWeight:400,opacity:isActive?.8:1,transition:"opacity .5s"}}>{ph.i}</p>
-      {/* Anti-trampa: Varied micro-interactions with touch hold validation */}
+      {/* ═══ ANTI-TRAMPA: Bio-Validation System ═══ */}
       {isActive&&(()=>{
-        const elapsed=totalDur-sec;const showAt=[Math.round(totalDur*0.25),Math.round(totalDur*0.55),Math.round(totalDur*0.80)];
-        const isVisible=showAt.some(t=>Math.abs(elapsed-t)<4);
-        const interactionType=elapsed<totalDur*0.4?"hold":elapsed<totalDur*0.7?"exhale":"tap";
-        if(!isVisible)return null;
-        if(interactionType==="hold")return(
-          <div style={{marginTop:10,animation:"fi .5s"}}><button
-            onTouchStart={(e)=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.93)";e.currentTarget.style.background=ac+"18";e.currentTarget.style.boxShadow=`0 0 20px ${ac}15`;hapticBreath("INHALA");}}
-            onTouchEnd={(e)=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"06";e.currentTarget.style.boxShadow="none";
-              if(dur>=1500){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");speak("bien");}
-              else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("tap");}}}
-            onMouseDown={(e)=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.93)";}}
-            onMouseUp={(e)=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";
-              if(dur>=1500){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");}
-              else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3}));H("tap");}}}
-            style={{width:"100%",padding:"12px",borderRadius:14,border:`1.5px solid ${ac}25`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .3s cubic-bezier(.4,0,.2,1)"}}>
-            <div style={{width:10,height:10,borderRadius:"50%",background:ac,opacity:.6,animation:"pu 1.2s ease infinite"}}/>
-            <span style={{fontSize:12,fontWeight:700,color:ac}}>Mantén presionado mientras exhalas</span>
-          </button></div>);
-        if(interactionType==="exhale")return(
-          <div style={{marginTop:10,animation:"fi .5s"}}><button
-            onTouchStart={()=>{const t0=Date.now();setSessionData(d=>({...d,_tapStart:t0}));}}
-            onTouchEnd={()=>{const now=Date.now();setSessionData(d=>{const rt=now-(d._tapStart||now);return{...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),rt]};});H("tap");hapticBreath("EXHALA");}}
-            onClick={()=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+1}));H("tap");}}
-            style={{width:"100%",padding:"12px",borderRadius:14,border:`1px dashed ${ac}30`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:ac,opacity:.5,animation:"pu 1.5s ease infinite"}}/>
-            <span style={{fontSize:12,fontWeight:700,color:ac}}>Toca al exhalar</span>
-          </button></div>);
+        const elapsed=totalDur-sec;
+        // 3 checkpoints at 25%, 50%, 78% of session — each visible for 10 seconds
+        const cp1=Math.round(totalDur*0.25),cp2=Math.round(totalDur*0.50),cp3=Math.round(totalDur*0.78);
+        const isCP1=elapsed>=cp1&&elapsed<cp1+10;
+        const isCP2=elapsed>=cp2&&elapsed<cp2+10;
+        const isCP3=elapsed>=cp3&&elapsed<cp3+10;
+        if(!isCP1&&!isCP2&&!isCP3)return null;
+
+        // Voice announces interaction at start of each window
+        if(elapsed===cp1||elapsed===cp2||elapsed===cp3){
+          if(elapsed===cp1)speak("Mantén presionado");
+          else if(elapsed===cp2)speak("Toca al exhalar");
+          else speak("Confirma tu presencia");
+        }
+
+        // CHECKPOINT 1 (25%): TOUCH HOLD — sustained pressure 2+ seconds
+        if(isCP1)return(
+          <div style={{marginTop:12,animation:"fi .5s"}}>
+            <button
+              onTouchStart={(e)=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.dataset.holding="true";e.currentTarget.style.transform="scale(0.94)";e.currentTarget.style.background=ac+"15";e.currentTarget.style.borderColor=ac+"50";hapticBreath("INHALA");
+                // Start hold progress animation
+                const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar)bar.style.transition="width 2.5s linear";if(bar)bar.style.width="100%";}}
+              onTouchEnd={(e)=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.dataset.holding="false";e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"06";e.currentTarget.style.borderColor=ac+"25";
+                const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
+                if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");hapticPhase("focus");speak("verificado");}
+                else if(dur>=800){setSessionData(d=>({...d,interactions:(d.interactions||0)+0.5,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("tap");}
+                else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.2}));H("tap");}}}
+              onMouseDown={(e)=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.94)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="width 2.5s linear";bar.style.width="100%";}}}
+              onMouseUp={(e)=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
+                if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");}
+                else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3}));H("tap");}}}
+              style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`2px solid ${ac}25`,background:ac+"06",cursor:"pointer",display:"flex",flexDirection:"column",gap:8,transition:"all .3s cubic-bezier(.4,0,.2,1)",position:"relative",overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:ac,opacity:.7,animation:"pu 1s ease infinite"}}/>
+                <span style={{fontSize:13,fontWeight:700,color:ac}}>Mantén presionado 2 segundos</span>
+              </div>
+              <div style={{height:4,background:bd,borderRadius:4,overflow:"hidden",width:"100%"}}>
+                <div data-hold-bar="" style={{width:"0%",height:"100%",background:`linear-gradient(90deg,${ac}60,${ac})`,borderRadius:4}}/>
+              </div>
+              <div style={{fontSize:10,color:t3,textAlign:"center"}}>Sostén mientras exhalas</div>
+            </button>
+          </div>);
+
+        // CHECKPOINT 2 (50%): TOCA AL EXHALAR — tap synchronized with breathing
+        if(isCP2)return(
+          <div style={{marginTop:12,animation:"fi .5s"}}>
+            <button
+              onTouchStart={(e)=>{e.currentTarget.dataset.tapTime=Date.now();e.currentTarget.style.transform="scale(0.95)";e.currentTarget.style.background=ac+"12";}}
+              onTouchEnd={(e)=>{const rt=Date.now()-(+e.currentTarget.dataset.tapTime||Date.now());e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"06";
+                const isExhale=bL==="EXHALA"||bL==="SOSTÉN";
+                const bonus=isExhale?1.0:0.7;
+                setSessionData(d=>({...d,interactions:(d.interactions||0)+bonus,reactionTimes:[...(d.reactionTimes||[]),rt]}));
+                H("tap");hapticBreath("EXHALA");
+                if(isExhale)speak("sincronizado");}}
+              onClick={(e)=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.7}));H("tap");}}
+              style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px dashed ${ac}35`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
+              <div style={{width:9,height:9,borderRadius:"50%",background:bL==="EXHALA"?ac:"transparent",border:`2px solid ${ac}`,opacity:.6,animation:bL==="EXHALA"?"pu .8s ease infinite":"none",transition:"all .3s"}}/>
+              <span style={{fontSize:13,fontWeight:700,color:ac}}>Toca al exhalar</span>
+              {bL==="EXHALA"&&<span style={{fontSize:11,fontWeight:800,color:ac,animation:"fi .3s"}}>¡AHORA!</span>}
+            </button>
+          </div>);
+
+        // CHECKPOINT 3 (78%): CONFIRMA PRESENCIA — simple verified tap
         return(
-          <div style={{marginTop:10,animation:"fi .5s"}}><button
-            onClick={()=>{const t0=performance.now();setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Math.round(performance.now()-t0+Math.random()*200+100)]}));H("tap");hapticPhase(ph.ic);}}
-            style={{width:"100%",padding:"12px",borderRadius:14,border:`1px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
-            <div style={{width:6,height:6,borderRadius:"50%",background:ac,opacity:.4}}/>
-            <span style={{fontSize:12,fontWeight:700,color:ac}}>Confirma presencia</span>
-          </button></div>);
+          <div style={{marginTop:12,animation:"fi .5s"}}>
+            <button
+              onClick={()=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");hapticPhase(ph.ic);speak("confirmado");}}
+              onTouchStart={(e)=>{e.currentTarget.style.transform="scale(0.95)";e.currentTarget.style.background=ac+"10";}}
+              onTouchEnd={(e)=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"04";}}
+              style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:ac,opacity:.5}}/>
+              <span style={{fontSize:13,fontWeight:700,color:ac}}>Confirma tu presencia</span>
+            </button>
+          </div>);
       })()}
       {/* Expandable science */}
       <button onClick={()=>{setShowScience(!showScience);setSessionData(d=>({...d,scienceViews:(d.scienceViews||0)+1}));}} style={{display:"flex",alignItems:"center",gap:5,marginTop:12,padding:"6px 0",background:"none",border:"none",cursor:"pointer"}}>
@@ -1158,7 +1251,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
       <Ic name="rec" size={10} color={t3}/>
       <span style={{fontSize:9,color:t3,fontWeight:600}}>Siguiente: {nextPh.l} ({nextPh.r})</span>
     </div>}
-    <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;return<div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:`1px solid ${bd}`,background:pi===i?ac+"08":cd,color:pi===i?ac:t3,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><span style={{width:3,height:3,borderRadius:"50%",background:pi===i?ac:bd}}/>{sR}</div>;})}</div>
+    <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;return<div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:i<pi?`1px solid ${ac}40`:`1px solid ${bd}`,background:pi===i?ac+"08":i<pi?ac+"04":cd,color:pi===i?ac:i<pi?ac:t3,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",gap:3,opacity:i<=pi?1:.5,transition:"all .3s"}}><span style={{width:5,height:5,borderRadius:"50%",background:i<=pi?ac:bd,transition:"all .3s"}}/>{sR}</div>;})}</div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
       {ts==="idle"&&<button onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",animation:"gl 3s ease infinite",boxShadow:`0 4px 18px ${ac}28`}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}><Ic name="bolt" size={13} color="#fff"/>INICIAR</button>}
       {ts==="running"&&<><button onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
@@ -1173,7 +1266,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
     :<>
 
     {/* ═══ NEURAL ENGINE VISUAL ═══ */}
-    {(()=>{const [neuralZone,setNeuralZone]=useState(null);
+    {(()=>{
       const focus=st.coherencia||50,calm=st.resiliencia||50,energy=st.capacidad||50;
       const stress=Math.max(0,100-Math.round((focus+calm)/2));
       const zones=[
@@ -1288,6 +1381,7 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
         <AN value={burnout.index} sfx="" color={burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={26}/>
         <div style={{fontSize:10,color:burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626",fontWeight:600,marginTop:4}}>Riesgo {burnout.risk}</div>
         <div style={{fontSize:9,color:t3,marginTop:2}}>Tendencia: {burnout.trend}</div>
+        {burnout.prediction&&<div style={{fontSize:9,color:burnout.risk==="crítico"||burnout.risk==="alto"?"#DC2626":t2,marginTop:4,lineHeight:1.4,fontStyle:"italic"}}>{burnout.prediction}</div>}
       </div>
     </div>
 
@@ -1303,6 +1397,30 @@ ${topTags.length===0?"<tr><td colspan='2'>Sin datos de contexto aún</td></tr>":
           </div>
         </div>))}
     </div>}
+
+    
+    {/* Weekly Comparison */}
+    {weeklySummary&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1px solid "+bd}}>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Esta semana vs anterior</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:t3}}>{weeklySummary.prev}</div><div style={{fontSize:9,color:t3}}>Anterior</div></div>
+        <div style={{fontSize:18,fontWeight:800,color:weeklySummary.diff>0?"#059669":weeklySummary.diff<0?"#DC2626":t3}}>{weeklySummary.diff>0?"+":""}{weeklySummary.diff}</div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ac}}>{weeklySummary.curr}</div><div style={{fontSize:9,color:t3}}>Esta</div></div>
+      </div>
+      {weeklySummary.mAvg>0&&<div style={{fontSize:10,color:t2,textAlign:"center",marginTop:6}}>Mood promedio: {weeklySummary.mAvg}/5</div>}
+    </div>}
+
+    
+    {/* Baseline Comparison */}
+    {st.history&&st.history.length>=5&&(()=>{const first5=st.history.slice(0,5);const last5=st.history.slice(-5);const baseC=Math.round(first5.reduce((a,h)=>a+(h.c||50),0)/5);const nowC=Math.round(last5.reduce((a,h)=>a+(h.c||50),0)/5);const delta=nowC-baseC;return(<div style={{background:delta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1.5px solid "+(delta>0?"#05966920":"#DC262620")}}>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:6}}>Tu evolución</div>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div><div style={{fontSize:9,color:t3}}>Inicio</div><div style={{fontSize:18,fontWeight:800,color:t3}}>{baseC}%</div></div>
+        <div style={{fontSize:20,fontWeight:800,color:delta>0?"#059669":"#DC2626"}}>{delta>0?"+":""}{delta}%</div>
+        <div><div style={{fontSize:9,color:t3}}>Ahora</div><div style={{fontSize:18,fontWeight:800,color:delta>0?"#059669":t1}}>{nowC}%</div></div>
+      </div>
+      <div style={{fontSize:10,color:t2,marginTop:6}}>{delta>0?"Tu coherencia mejoró "+delta+"% desde que empezaste.":"En proceso de calibración. Mantén la constancia."}</div>
+    </div>);})()}
 
     {/* ═══ IMPACTO MEDIBLE ═══ */}
     {(()=>{const ml=st.moodLog||[];const withPre=ml.filter(m=>m.pre>0);if(withPre.length<2)return null;const avg=+(withPre.reduce((a,m)=>a+(m.mood-m.pre),0)/withPre.length).toFixed(1);const bestP={};withPre.forEach(m=>{if(!bestP[m.proto])bestP[m.proto]={sum:0,cnt:0};bestP[m.proto].sum+=m.mood-m.pre;bestP[m.proto].cnt++;});const best=Object.entries(bestP).sort((a,b)=>(b[1].sum/b[1].cnt)-(a[1].sum/a[1].cnt))[0];return(
