@@ -352,6 +352,107 @@ function PhaseVisual({type,color,scale=1,active}){
   return null;
 }
 
+/* ═══ BINAURAL AUDIO ENGINE — Protocol-specific frequencies ═══ */
+let _binauralL=null,_binauralR=null,_binauralGain=null;
+function startBinaural(type){try{const c=gAC();if(!c)return;stopBinaural();_binauralGain=c.createGain();_binauralGain.gain.value=0;_binauralGain.connect(c.destination);
+  const panL=c.createStereoPanner();const panR=c.createStereoPanner();panL.pan.value=-1;panR.pan.value=1;
+  _binauralL=c.createOscillator();_binauralR=c.createOscillator();_binauralL.type="sine";_binauralR.type="sine";
+  // Frequency by protocol intent
+  if(type==="enfoque"){_binauralL.frequency.value=200;_binauralR.frequency.value=214;}  // Beta 14Hz
+  else if(type==="energia"){_binauralL.frequency.value=200;_binauralR.frequency.value=218;}  // Beta 18Hz
+  else if(type==="calma"){_binauralL.frequency.value=200;_binauralR.frequency.value=210;}  // Alpha 10Hz
+  else if(type==="reset"){_binauralL.frequency.value=200;_binauralR.frequency.value=206;}  // Theta 6Hz
+  else{_binauralL.frequency.value=200;_binauralR.frequency.value=210;}
+  _binauralL.connect(panL);_binauralR.connect(panR);panL.connect(_binauralGain);panR.connect(_binauralGain);
+  _binauralL.start();_binauralR.start();_binauralGain.gain.linearRampToValueAtTime(0.025,c.currentTime+4);
+}catch(e){}}
+function stopBinaural(){try{if(_binauralGain){const c=gAC();if(c)_binauralGain.gain.linearRampToValueAtTime(0,c.currentTime+2);}setTimeout(()=>{try{if(_binauralL){_binauralL.stop();_binauralL.disconnect();}if(_binauralR){_binauralR.stop();_binauralR.disconnect();}if(_binauralGain)_binauralGain.disconnect();_binauralL=null;_binauralR=null;_binauralGain=null;}catch(e){}},2500);}catch(e){}}
+
+/* ═══ CIRCADIAN ENGINE — Adapts to time of day ═══ */
+function getCircadian(){const h=new Date().getHours();
+  if(h>=5&&h<9)return{period:"amanecer",energy:"alta",voiceRate:0.95,voicePitch:1.05,warmth:0,intent:"energia"};
+  if(h>=9&&h<13)return{period:"mañana",energy:"máxima",voiceRate:0.92,voicePitch:1.0,warmth:0,intent:"enfoque"};
+  if(h>=13&&h<16)return{period:"mediodía",energy:"media",voiceRate:0.90,voicePitch:0.98,warmth:0.1,intent:"reset"};
+  if(h>=16&&h<20)return{period:"tarde",energy:"descendente",voiceRate:0.88,voicePitch:0.95,warmth:0.2,intent:"enfoque"};
+  if(h>=20&&h<23)return{period:"noche",energy:"baja",voiceRate:0.82,voicePitch:0.90,warmth:0.4,intent:"calma"};
+  return{period:"madrugada",energy:"mínima",voiceRate:0.78,voicePitch:0.88,warmth:0.5,intent:"calma"};}
+
+/* ═══ BIO QUALITY SCORE — Anti-trampa metrics ═══ */
+function calcBioQuality(sessionData,totalDur){
+  const maxInteractions=Math.floor(totalDur/30);
+  const interactionScore=maxInteractions>0?Math.min(1,(sessionData.interactions||0)/maxInteractions):0;
+  const pausePenalty=Math.max(0,1-(sessionData.pauses||0)*0.15);
+  const completionBonus=1;
+  const motionScore=Math.min(1,(sessionData.motionSamples||0)/Math.max(1,totalDur/10));
+  const raw=(interactionScore*0.35+pausePenalty*0.25+completionBonus*0.25+motionScore*0.15)*100;
+  const score=Math.round(Math.max(10,Math.min(100,raw)));
+  const quality=score>=75?"alta":score>=50?"media":score>=25?"baja":"inválida";
+  return{score,quality,interactionScore:Math.round(interactionScore*100),motionScore:Math.round(motionScore*100)};}
+
+/* ═══ MOTION DETECTION — Accelerometer/gyroscope ═══ */
+function setupMotionDetection(callback){
+  if(typeof window==="undefined")return null;
+  let samples=0;let lastX=0,lastY=0,lastZ=0;
+  function handleMotion(e){
+    const a=e.accelerationIncludingGravity;if(!a)return;
+    const dx=Math.abs(a.x-lastX),dy=Math.abs(a.y-lastY),dz=Math.abs(a.z-lastZ);
+    if(dx>0.3||dy>0.3||dz>0.3)samples++;
+    lastX=a.x;lastY=a.y;lastZ=a.z;
+    if(callback)callback(samples);
+  }
+  try{
+    if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
+      DeviceMotionEvent.requestPermission().then(p=>{if(p==="granted")window.addEventListener("devicemotion",handleMotion);});
+    }else{window.addEventListener("devicemotion",handleMotion);}
+  }catch(e){}
+  return{getSamples:()=>samples,cleanup:()=>{try{window.removeEventListener("devicemotion",handleMotion);}catch(e){}}};}
+
+/* ═══ BURNOUT PREDICTION INDEX ═══ */
+function calcBurnoutIndex(moodLog,history){
+  const ml=moodLog||[];const h=history||[];if(ml.length<5)return{index:0,risk:"sin datos",trend:"neutral"};
+  const last7=ml.slice(-7);const prev7=ml.slice(-14,-7);
+  const avgRecent=last7.reduce((a,m)=>a+m.mood,0)/last7.length;
+  const avgPrev=prev7.length>=3?prev7.reduce((a,m)=>a+m.mood,0)/prev7.length:avgRecent;
+  const trend=avgRecent-avgPrev;
+  const lowMoodCount=last7.filter(m=>m.mood<=2).length;
+  const sessionsLastWeek=h.filter(s=>(Date.now()-s.ts)<7*86400000).length;
+  const burnoutRaw=Math.max(0,Math.min(100,
+    50-trend*15+lowMoodCount*10-sessionsLastWeek*2+(avgRecent<2.5?20:0)));
+  const index=Math.round(burnoutRaw);
+  const risk=index>=70?"crítico":index>=50?"alto":index>=30?"moderado":"bajo";
+  return{index,risk,trend:trend>0.3?"mejorando":trend<-0.3?"deteriorando":"estable",avgMood:+avgRecent.toFixed(1)};}
+
+/* ═══ PROTOCOL SENSITIVITY — Per-user effectiveness ═══ */
+function calcProtoSensitivity(moodLog){
+  const ml=(moodLog||[]).filter(m=>m.pre>0&&m.proto);
+  const byProto={};ml.forEach(m=>{
+    if(!byProto[m.proto])byProto[m.proto]={deltas:[],count:0};
+    byProto[m.proto].deltas.push(m.mood-m.pre);byProto[m.proto].count++;});
+  const results={};
+  Object.entries(byProto).forEach(([name,data])=>{
+    const avg=data.deltas.reduce((a,b)=>a+b,0)/data.deltas.length;
+    results[name]={avgDelta:+avg.toFixed(2),sessions:data.count,effectiveness:avg>0.5?"alta":avg>0?"media":"baja"};});
+  return results;}
+
+/* ═══ BIO SIGNAL SCORE — Aggregate user state ═══ */
+function calcBioSignal(st){
+  const perf=Math.round(((st.coherencia||50)+(st.resiliencia||50)+(st.capacidad||50))/3);
+  const ml=st.moodLog||[];const recent=ml.slice(-7);
+  const moodAvg=recent.length?recent.reduce((a,m)=>a+m.mood,0)/recent.length:3;
+  const consistency=Math.min(1,(st.weeklyData||[]).filter(v=>v>0).length/7);
+  const burnout=calcBurnoutIndex(ml,st.history);
+  const signal=Math.round(perf*0.3+moodAvg*12+consistency*20-burnout.index*0.2);
+  return{score:Math.max(0,Math.min(100,signal)),perf,moodAvg:+moodAvg.toFixed(1),consistency:Math.round(consistency*100),burnout};}
+
+/* ═══ HAPTIC PATTERNS — Differentiated by phase type ═══ */
+function hapticPhase(type){if(typeof navigator==="undefined"||!navigator.vibrate)return;
+  try{if(type==="breath")navigator.vibrate([30,50,30]);
+  else if(type==="body")navigator.vibrate([50,30,50,30,50]);
+  else if(type==="mind")navigator.vibrate([20,80,20]);
+  else if(type==="focus")navigator.vibrate([80]);
+  else navigator.vibrate(30);}catch(e){}}
+
+
 export default function BioIgnicion(){
   const[mt,setMt]=useState(false);const[tab,setTab]=useState("ignicion");const[st,setSt_]=useState(DS);
   const[pr,setPr]=useState(P[12]);const[sc,setSc]=useState("Protocolo");const[sl,setSl]=useState(false);
@@ -407,14 +508,24 @@ export default function BioIgnicion(){
   useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
 
-  // Soundscape management
-  useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();}else{stopAmbient();stopSoundscape();}return()=>{stopAmbient();stopSoundscape();};},[ts]);
+  // Soundscape + Binaural management
+  const motionRef=useRef(null);const circadian=useMemo(()=>getCircadian(),[]);
+  useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();startBinaural(pr.int);}else{stopAmbient();stopSoundscape();stopBinaural();}return()=>{stopAmbient();stopSoundscape();stopBinaural();};},[ts]);
+  // Motion detection during session
+  useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection((samples)=>{setSessionData(d=>({...d,motionSamples:samples}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
-  useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}if(idx!==pi){setPi(idx);H("ph");speakNow(pr.ph[idx].k||pr.ph[idx].l);}},[sec,pr,durMult]);
+  // Phase transitions with pre-announcement (ease-in 2s before)
+  useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}
+    // Pre-announce next phase 2s before transition
+    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);speakNow(pr.ph[nextIdx].k||pr.ph[nextIdx].l);}
+    // Pre-hint 2s before next phase
+    if(nextPh){const nextStart=Math.round(nextPh.s*scale);const timeToNext=nextStart-el;if(timeToNext===2&&ts==="running"){speak("Prepárate");}}
+  },[sec,pr,durMult]);
   useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.22*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.22);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.22-.22*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){speak(lbl.toLowerCase());lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  // Breathing engine with circadian-adapted voice
+  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){speak(lbl.toLowerCase());lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);H("tap");speakNow("Tres");cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speakNow(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
   function go(){unlockVoice();setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,phaseTimings:[]});startCountdown();}
@@ -448,7 +559,10 @@ export default function BioIgnicion(){
     const nE=Math.min(100,Math.max(20,Math.round(30+diversityScore+expScore)));
 
     const ns=st.totalSessions+1;
-    const eVC=Math.round(5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5));
+    // ═══ BIO QUALITY SCORE ═══
+    const bioQ=calcBioQuality(sessionData,Math.round(pr.d*durMult));
+    const qualityMult=bioQ.quality==="alta"?1.5:bioQ.quality==="media"?1.0:bioQ.quality==="baja"?0.5:0.2;
+    const eVC=Math.round((5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5))*qualityMult);
     const vc=(st.vCores||0)+eVC;
     const ach=[...st.achievements];
     if(nsk>=7&&!ach.includes("streak7"))ach.push("streak7");
@@ -460,10 +574,22 @@ export default function BioIgnicion(){
     const hr=new Date().getHours();if(hr<7&&!ach.includes("earlyBird"))ach.push("earlyBird");
     if(hr>=22&&!ach.includes("nightOwl"))ach.push("nightOwl");
     const uP=new Set([...hist.map(h=>h.p),pr.n]);if(uP.size>=14&&!ach.includes("allProtos"))ach.push("allProtos");
-    // Extended history for B2B (200 sessions = 100 days at 2/day)
-    const newHist=[...hist,{p:pr.n,ts:Date.now(),vc:eVC,c:nC,r:nR,dur:Math.round(pr.d*durMult),ctx:nfcCtx?.type||"manual"}].slice(-200);
+    // ═══ EXPANDED DATA MODEL — Supabase-ready ═══
+    const burnout=calcBurnoutIndex(ml,hist);
+    const bioSignal=calcBioSignal(st);
+    const newHist=[...hist,{
+      p:pr.n,ts:Date.now(),vc:eVC,c:nC,r:nR,
+      dur:Math.round(pr.d*durMult),ctx:nfcCtx?.type||"manual",
+      bioQ:bioQ.score,quality:bioQ.quality,
+      interactions:sessionData.interactions||0,
+      motionSamples:sessionData.motionSamples||0,
+      pauses:sessionData.pauses||0,
+      burnoutIdx:burnout.index,
+      circadian:circadian.period,
+      bioSignal:bioSignal.score
+    }].slice(-200);
     setPostVC(eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
-    speak("Sesión completada");
+    speakNow(bioQ.quality==="alta"?"Sesión excelente":"Sesión completada");
     setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("checkin");},800);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,totalSessions:ns,streak:nsk,todaySessions:st.lastDate===td?st.todaySessions+1:1,lastDate:td,weeklyData:nw,weekNum:getWeekNum(),coherencia:nC,resiliencia:nR,capacidad:nE,achievements:ach,vCores:vc,history:newHist,totalTime:(st.totalTime||0)+Math.round(pr.d*durMult),firstDone:true,progDay:Math.min((st.progDay||0)+1,7)});
@@ -477,6 +603,9 @@ export default function BioIgnicion(){
   const totalDur=Math.round(pr.d*durMult);
   const pct=(totalDur-sec)/totalDur,CI=2*Math.PI*116,dO=CI*(1-pct),ins=genIns(st),isBr=ts==="running"&&ph.br;
   const perf=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
+  const bioSignal=useMemo(()=>calcBioSignal(st),[st.coherencia,st.resiliencia,st.capacidad,st.moodLog,st.weeklyData,st.history]);
+  const burnout=useMemo(()=>calcBurnoutIndex(st.moodLog,st.history),[st.moodLog,st.history]);
+  const protoSens=useMemo(()=>calcProtoSensitivity(st.moodLog),[st.moodLog]);
   const nSt=getStatus(perf);const lPct=lvPct(st.totalSessions);const nLv=nxtLv(st.totalSessions);
   const isActive=ts==="running";const noData=st.totalSessions===0;
   const sugN=useMemo(()=>{const cs=["Reset","Activación","Protocolo"];const nc=cs[(cs.indexOf(pr.ct)+1)%3];const o=P.filter(p=>p.ct===nc);return o[Math.floor(o.length/2)]||P[0];},[pr.id]);
@@ -514,16 +643,32 @@ export default function BioIgnicion(){
   {/* Completion flash */}
   {compFlash&&<div style={{position:"fixed",inset:0,zIndex:230,background:`${ac}12`,animation:"compFlash .8s ease forwards",pointerEvents:"none"}}/>}
 
-  {onboard&&<div style={{position:"fixed",inset:0,zIndex:250,background:"rgba(15,23,42,.5)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}><div style={{background:cd,borderRadius:28,padding:"36px 28px",maxWidth:360,textAlign:"center",animation:"po .5s cubic-bezier(.34,1.56,.64,1)"}}>
-    <svg width="56" height="56" viewBox="0 0 56 56" style={{margin:"0 auto 18px",display:"block"}}><circle cx="28" cy="28" r="24" fill="none" stroke={ac} strokeWidth="2.5" opacity=".6"/><circle cx="28" cy="28" r="17" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="6 4" style={{animation:"innerRing 4s linear infinite"}}/><circle cx="28" cy="28" r="6" fill={ac} opacity=".4"/></svg>
+  {onboard&&<div style={{position:"fixed",inset:0,zIndex:250,background:"rgba(15,23,42,.5)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}><div style={{background:cd,borderRadius:28,padding:"32px 24px",maxWidth:380,textAlign:"center",animation:"po .5s cubic-bezier(.34,1.56,.64,1)"}}>
+    <svg width="56" height="56" viewBox="0 0 56 56" style={{margin:"0 auto 16px",display:"block"}}><circle cx="28" cy="28" r="24" fill="none" stroke={ac} strokeWidth="2.5" opacity=".6"/><circle cx="28" cy="28" r="17" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="6 4" style={{animation:"innerRing 4s linear infinite"}}/><circle cx="28" cy="28" r="6" fill={ac} opacity=".4"/></svg>
     <div style={{fontSize:22,fontWeight:800,color:t1,marginBottom:4}}>BIO-IGNICIÓN</div>
-    <div style={{fontSize:10,color:ac,fontWeight:700,letterSpacing:3,marginBottom:20,textTransform:"uppercase"}}>Rendimiento Cognitivo</div>
-    <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:24,textAlign:"left"}}>
-      <div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{width:32,height:32,borderRadius:9,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={14} color={ac}/></div><div><div style={{fontSize:11,fontWeight:700,color:t1}}>120 segundos</div><div style={{fontSize:9,color:t3}}>Protocolos neurocientíficos que resetean tu sistema nervioso</div></div></div>
-      <div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{width:32,height:32,borderRadius:9,background:"#6366F110",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="chart" size={14} color="#6366F1"/></div><div><div style={{fontSize:11,fontWeight:700,color:t1}}>Impacto medible</div><div style={{fontSize:9,color:t3}}>Check-in emocional antes y después de cada sesión</div></div></div>
-      <div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{width:32,height:32,borderRadius:9,background:"#D9770610",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="trophy" size={14} color="#D97706"/></div><div><div style={{fontSize:11,fontWeight:700,color:t1}}>Tu evolución</div><div style={{fontSize:9,color:t3}}>Dashboard con radar neural, logros, y tendencias</div></div></div>
+    <div style={{fontSize:10,color:ac,fontWeight:700,letterSpacing:3,marginBottom:20,textTransform:"uppercase"}}>Optimización Humana</div>
+    {/* What you will feel */}
+    <div style={{textAlign:"left",marginBottom:20}}>
+      <div style={{fontSize:11,fontWeight:700,color:t1,marginBottom:8}}>Qué vas a sentir:</div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}><div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="breath" size={13} color={ac}/></div><div><div style={{fontSize:11,fontWeight:600,color:t1}}>Calma fisiológica</div><div style={{fontSize:10,color:t3}}>Tu frecuencia cardíaca baja en 15-30 segundos</div></div></div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}><div style={{width:28,height:28,borderRadius:8,background:"#6366F110",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="focus" size={13} color="#6366F1"/></div><div><div style={{fontSize:11,fontWeight:600,color:t1}}>Claridad mental</div><div style={{fontSize:10,color:t3}}>El ruido mental se reduce y surge dirección</div></div></div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}><div style={{width:28,height:28,borderRadius:8,background:"#D9770610",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="energy" size={13} color="#D97706"/></div><div><div style={{fontSize:11,fontWeight:600,color:t1}}>Energía dirigida</div><div style={{fontSize:10,color:t3}}>Tu rendimiento sube sin esfuerzo extra</div></div></div>
+      </div>
     </div>
-    <button onClick={()=>setOnboard(false)} style={{width:"100%",padding:"16px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",animation:"gl 3s ease infinite"}}>ACTIVAR SISTEMA</button>
+    {/* How to use correctly */}
+    <div style={{textAlign:"left",marginBottom:20,padding:"12px",background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
+      <div style={{fontSize:11,fontWeight:700,color:t1,marginBottom:6}}>Cómo usarlo correctamente:</div>
+      <div style={{fontSize:10,color:t2,lineHeight:1.6}}>
+        1. Selecciona un protocolo o acepta la recomendación<br/>
+        2. Haz el check-in emocional antes de iniciar<br/>
+        3. Sigue la voz y las instrucciones con ojos cerrados<br/>
+        4. Toca la pantalla cuando te lo indique<br/>
+        5. Completa el check-in después para medir tu impacto
+      </div>
+    </div>
+    <div style={{fontSize:10,color:ac,fontStyle:"italic",marginBottom:16,lineHeight:1.5}}>Tu primera ignición será guiada por voz. Solo cierra los ojos y sigue las instrucciones.</div>
+    <button onClick={()=>{setOnboard(false);unlockVoice();}} style={{width:"100%",padding:"16px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",animation:"gl 3s ease infinite"}}>PRIMERA IGNICIÓN</button>
   </div></div>}
 
   {/* POST: CHECK-IN */}
@@ -570,6 +715,16 @@ export default function BioIgnicion(){
       {[{l:"V-Cores",v:"+"+postVC,c:ac},{l:"Enfoque",v:st.coherencia+"%",c:"#3B82F6"},{l:"Calma",v:st.resiliencia+"%",c:"#8B5CF6"}].map((m,i)=>(
         <div key={i} style={{background:m.c+"08",borderRadius:11,padding:"9px 5px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:m.c}}>{m.v}</div><div style={{fontSize:9,fontWeight:700,color:t3,letterSpacing:.5,marginTop:1,textTransform:"uppercase"}}>{m.l}</div></div>))}
     </div>
+    {/* BIO QUALITY SCORE */}
+    {(()=>{const bq=calcBioQuality(sessionData,Math.round(pr.d*durMult));return(
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:10,background:bq.quality==="alta"?(isDark?"#0A1A0A":"#F0FDF4"):bq.quality==="media"?cd:(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:12,border:`1px solid ${bq.quality==="alta"?"#05966920":bq.quality==="media"?bd:"#DC262620"}`}}>
+        <div style={{width:36,height:36,borderRadius:10,background:bq.quality==="alta"?"#05966912":bq.quality==="media"?ac+"08":"#DC262612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <span style={{fontSize:14,fontWeight:800,color:bq.quality==="alta"?"#059669":bq.quality==="media"?ac:"#DC2626"}}>{bq.score}</span>
+        </div>
+        <div><div style={{fontSize:11,fontWeight:700,color:t1}}>BIO Quality Score™</div>
+          <div style={{fontSize:10,color:t3}}>Calidad {bq.quality} · Interacción {bq.interactionScore}%{bq.motionScore>0?` · Movimiento ${bq.motionScore}%`:""}</div>
+        </div>
+      </div>);})()}
     <div style={{background:isDark?"#1A1E28":"#F1F5F9",borderRadius:11,padding:"10px",marginBottom:10}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:9,fontWeight:800,color:lv.c}}>{lv.n}</span><span style={{fontSize:9,color:t3}}>{lPct}%</span></div>
       <div style={{height:3,background:bd,borderRadius:3,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:3,background:lv.c}}/></div>
@@ -807,6 +962,34 @@ export default function BioIgnicion(){
         <div style={{background:bd,borderRadius:8,padding:"4px 8px"}}><span style={{fontSize:9,fontWeight:700,color:t3}}>{lPct}% → {nLv?.n||"MAX"}</span></div>
       </div>
     </div>
+
+    {/* ═══ BIO SIGNAL SCORE + BURNOUT INDEX ═══ */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:14}}>
+      <div style={{background:cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${bd}`}}>
+        <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>BioSignal Score</div>
+        <AN value={bioSignal.score} sfx="" color={bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"} sz={26}/>
+        <div style={{fontSize:10,color:t2,marginTop:4,lineHeight:1.4}}>{bioSignal.score>=70?"Sistema en rendimiento alto":bioSignal.score>=45?"Estado funcional, margen de mejora":"Requiere intervención activa"}</div>
+      </div>
+      <div style={{background:burnout.risk==="crítico"||burnout.risk==="alto"?(isDark?"#1A0A0A":"#FEF2F2"):cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${burnout.risk==="crítico"||burnout.risk==="alto"?"#DC262620":bd}`}}>
+        <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>Índice Burnout</div>
+        <AN value={burnout.index} sfx="" color={burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={26}/>
+        <div style={{fontSize:10,color:burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626",fontWeight:600,marginTop:4}}>Riesgo {burnout.risk}</div>
+        <div style={{fontSize:9,color:t3,marginTop:2}}>Tendencia: {burnout.trend}</div>
+      </div>
+    </div>
+
+    {/* ═══ PROTOCOL SENSITIVITY ═══ */}
+    {Object.keys(protoSens).length>=2&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
+      <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Tu Sensibilidad por Protocolo</div>
+      {Object.entries(protoSens).sort((a,b)=>b[1].avgDelta-a[1].avgDelta).slice(0,4).map(([name,data],i)=>(
+        <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<3?`1px solid ${bd}`:"none"}}>
+          <span style={{fontSize:11,color:t1,fontWeight:600}}>{name}</span>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:11,fontWeight:800,color:data.avgDelta>0?"#059669":data.avgDelta<0?"#DC2626":t3}}>{data.avgDelta>0?"+":""}{data.avgDelta}</span>
+            <span style={{fontSize:9,color:t3}}>{data.sessions}x</span>
+          </div>
+        </div>))}
+    </div>}
 
     {/* ═══ IMPACTO MEDIBLE ═══ */}
     {(()=>{const ml=st.moodLog||[];const withPre=ml.filter(m=>m.pre>0);if(withPre.length<2)return null;const avg=+(withPre.reduce((a,m)=>a+(m.mood-m.pre),0)/withPre.length).toFixed(1);const bestP={};withPre.forEach(m=>{if(!bestP[m.proto])bestP[m.proto]={sum:0,cnt:0};bestP[m.proto].sum+=m.mood-m.pre;bestP[m.proto].cnt++;});const best=Object.entries(bestP).sort((a,b)=>(b[1].sum/b[1].cnt)-(a[1].sum/a[1].cnt))[0];return(
