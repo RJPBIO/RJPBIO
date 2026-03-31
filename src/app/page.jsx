@@ -1,4 +1,4 @@
-
+"use client";
     {/* ═══ NEURAL FINGERPRINT ═══ */}
     {(()=>{const fp=calcNeuralFingerprint(st);if(!fp)return null;return(
     <div style={{background:cd,borderRadius:18,padding:"16px 14px",marginBottom:14,border:`1px solid ${bd}`}}>
@@ -11,7 +11,7 @@
       </div>
       <div style={{fontSize:10,color:t2,lineHeight:1.5}}>Baseline cognitivo: Enfoque {fp.cognitiveBaseline.focus}% · Calma {fp.cognitiveBaseline.calm}% · Energía {fp.cognitiveBaseline.energy}%</div>
     </div>);})()}
-    "use client";
+    
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
