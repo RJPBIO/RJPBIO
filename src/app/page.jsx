@@ -1,26 +1,4 @@
-
-    {/* User Stats */}
-    <div style={{background:cd,borderRadius:18,padding:"16px 14px",marginBottom:14,border:"1px solid "+bd}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:ac}}>{st.totalSessions}</div><div style={{fontSize:10,color:t3}}>sesiones</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:t1}}>{Math.floor((st.totalTime||0)/3600)}h {Math.floor(((st.totalTime||0)%3600)/60)}m</div><div style={{fontSize:10,color:t3}}>tiempo total</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:"#D97706"}}>{st.streak}</div><div style={{fontSize:10,color:t3}}>racha</div></div>
-      </div>
-    </div>
-
-    {/* ═══ NEURAL FINGERPRINT ═══ */}
-    {(()=>{const fp=calcNeuralFingerprint(st);if(!fp)return null;return(
-    <div style={{background:cd,borderRadius:18,padding:"16px 14px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Tu Firma Neural</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:10}}>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Hora pico</div><div style={{fontSize:14,fontWeight:800,color:t1}}>{fp.peakHour}:00</div></div>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Mejor protocolo</div><div style={{fontSize:11,fontWeight:800,color:ac}}>{fp.bestProto}</div></div>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Calidad promedio</div><div style={{fontSize:14,fontWeight:800,color:fp.avgQuality>=70?"#059669":fp.avgQuality>=45?"#D97706":"#DC2626"}}>{fp.avgQuality}%</div></div>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Tasa adaptación</div><div style={{fontSize:14,fontWeight:800,color:fp.adaptationRate>0?"#059669":"#DC2626"}}>{fp.adaptationRate>0?"+":""}{fp.adaptationRate}</div></div>
-      </div>
-      <div style={{fontSize:10,color:t2,lineHeight:1.5}}>Baseline cognitivo: Enfoque {fp.cognitiveBaseline.focus}% · Calma {fp.cognitiveBaseline.calm}% · Energía {fp.cognitiveBaseline.energy}%</div>
-    </div>);})()}
-    "use client";
+"use client";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -663,7 +641,7 @@ function PhaseVisual({type,color,scale=1,active}){
 }
 
 
-function exportNOM035_v2(st){try{
+function exportNOM035(st){try{
   const ml=st.moodLog||[];const h=st.history||[];const now=new Date();
   const totalMin=Math.round((st.totalTime||0)/60);
   const avgMd=ml.length?+(ml.reduce((a,m)=>a+m.mood,0)/ml.length).toFixed(1):0;
@@ -1638,6 +1616,28 @@ export default function BioIgnicion(){
     {/* Level progress */}
     <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:800,color:lv.c}}>{lv.n}</span>{nLv&&<span style={{fontSize:10,color:t3}}>→ {nLv.n}</span>}</div>
+
+    {/* User Stats */}
+    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:ac}}>{st.totalSessions}</div><div style={{fontSize:10,color:t3}}>sesiones</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:t1}}>{Math.floor((st.totalTime||0)/3600)}h {Math.floor(((st.totalTime||0)%3600)/60)}m</div><div style={{fontSize:10,color:t3}}>tiempo total</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:"#D97706"}}>{st.streak}</div><div style={{fontSize:10,color:t3}}>racha</div></div>
+      </div>
+    </div>
+
+    {/* Neural Fingerprint */}
+    {(()=>{const fp=calcNeuralFingerprint(st);if(!fp)return null;return(
+    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Tu Firma Neural</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:10}}>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Hora pico</div><div style={{fontSize:14,fontWeight:800,color:t1}}>{fp.peakHour}:00</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Mejor protocolo</div><div style={{fontSize:11,fontWeight:800,color:ac}}>{fp.bestProto}</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Calidad promedio</div><div style={{fontSize:14,fontWeight:800,color:fp.avgQuality>=70?"#059669":fp.avgQuality>=45?"#D97706":"#DC2626"}}>{fp.avgQuality}%</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Tasa adaptación</div><div style={{fontSize:14,fontWeight:800,color:fp.adaptationRate>0?"#059669":"#DC2626"}}>{fp.adaptationRate>0?"+":""}{fp.adaptationRate}</div></div>
+      </div>
+      <div style={{fontSize:10,color:t2,lineHeight:1.5}}>Baseline cognitivo: Enfoque {fp.cognitiveBaseline.focus}% · Calma {fp.cognitiveBaseline.calm}% · Energía {fp.cognitiveBaseline.energy}%</div>
+    </div>);})()}
       <div style={{height:5,background:bd,borderRadius:5,overflow:"hidden",marginBottom:6}}><div style={{width:lPct+"%",height:"100%",borderRadius:5,background:`linear-gradient(90deg,${lv.c},${lv.c}CC)`,transition:"width 1s"}}/></div>
       <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,color:t3}}>{lPct}%</span><span style={{fontSize:10,color:t3}}>{st.totalSessions} sesiones · {Math.round((st.totalTime||0)/60)} min · {st.streak}d racha</span></div>
     </div>
