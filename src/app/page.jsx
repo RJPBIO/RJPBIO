@@ -1,17 +1,26 @@
-"use client";
+
+    {/* User Stats */}
+    <div style={{background:cd,borderRadius:18,padding:"16px 14px",marginBottom:14,border:"1px solid "+bd}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:ac}}>{st.totalSessions}</div><div style={{fontSize:10,color:t3}}>sesiones</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:t1}}>{Math.floor((st.totalTime||0)/3600)}h {Math.floor(((st.totalTime||0)%3600)/60)}m</div><div style={{fontSize:10,color:t3}}>tiempo total</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:"#D97706"}}>{st.streak}</div><div style={{fontSize:10,color:t3}}>racha</div></div>
+      </div>
+    </div>
+
     {/* ═══ NEURAL FINGERPRINT ═══ */}
     {(()=>{const fp=calcNeuralFingerprint(st);if(!fp)return null;return(
     <div style={{background:cd,borderRadius:18,padding:"16px 14px",marginBottom:14,border:`1px solid ${bd}`}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Tu Firma Neural</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:10}}>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Hora pico</div><div style={{fontSize:14,fontWeight:800,color:t1}}>{fp.peakHour}:00</div></div>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Mejor protocolo</div><div style={{fontSize:11,fontWeight:800,color:ac}}>{fp.bestProto}</div></div>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Calidad promedio</div><div style={{fontSize:14,fontWeight:800,color:fp.avgQuality>=70?"#059669":fp.avgQuality>=45?"#D97706":"#DC2626"}}>{fp.avgQuality}%</div></div>
-        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:9,color:t3}}>Tasa adaptación</div><div style={{fontSize:14,fontWeight:800,color:fp.adaptationRate>0?"#059669":"#DC2626"}}>{fp.adaptationRate>0?"+":""}{fp.adaptationRate}</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Hora pico</div><div style={{fontSize:14,fontWeight:800,color:t1}}>{fp.peakHour}:00</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Mejor protocolo</div><div style={{fontSize:11,fontWeight:800,color:ac}}>{fp.bestProto}</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Calidad promedio</div><div style={{fontSize:14,fontWeight:800,color:fp.avgQuality>=70?"#059669":fp.avgQuality>=45?"#D97706":"#DC2626"}}>{fp.avgQuality}%</div></div>
+        <div style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Tasa adaptación</div><div style={{fontSize:14,fontWeight:800,color:fp.adaptationRate>0?"#059669":"#DC2626"}}>{fp.adaptationRate>0?"+":""}{fp.adaptationRate}</div></div>
       </div>
       <div style={{fontSize:10,color:t2,lineHeight:1.5}}>Baseline cognitivo: Enfoque {fp.cognitiveBaseline.focus}% · Calma {fp.cognitiveBaseline.calm}% · Energía {fp.cognitiveBaseline.energy}%</div>
     </div>);})()}
-    
+    "use client";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -264,7 +273,7 @@ function startAmbient(){try{const c=gAC();if(!c)return;if(c.state==="suspended")
 function stopAmbient(){try{if(_ambGain){const c=gAC();if(c)_ambGain.gain.linearRampToValueAtTime(0,c.currentTime+1);}setTimeout(()=>{if(_ambNode){_ambNode.disconnect();_ambNode=null;}if(_ambGain){_ambGain.disconnect();_ambGain=null;}},1200);}catch(e){}}
 
 function hap(t,sO,hO){try{if(hO!==false&&typeof navigator!=="undefined"&&navigator.vibrate){if(t==="go")navigator.vibrate([20,40,20]);else if(t==="ph")navigator.vibrate(12);else if(t==="ok")navigator.vibrate([40,60,40,60,80]);else if(t==="tick")navigator.vibrate(5);else if(t==="tap")navigator.vibrate(8);}if(sO!==false){if(t==="go")playChord([432,648],.5,.05);else if(t==="ph")playChord([528,660,792],.5,.04);else if(t==="ok"){playChord([432,528,648,792],1.5,.06);setTimeout(()=>playChord([528,648,792],1.2,.025),300);}else if(t==="tap")playChord([440],.08,.02);}}catch(e){}}
-function ldS(){try{if(typeof window!=="undefined"){const r=localStorage.getItem("bio-g2");if(r){const parsed=JSON.parse(r);return{...DS,...parsed};}}}catch(e){console.error("Load error:",e);}return{...DS};}
+function ldS(){try{if(typeof window!=="undefined"){const r=localStorage.getItem("bio-g2");if(r){const parsed=JSON.parse(r);const data={...DS,...parsed};if(!data._v||data._v<3){data._v=3;data._migrated=Date.now();}return data;}}}catch(e){console.error("Load error:",e);}return{...DS,_v:3,_created:Date.now()};}
 function svS(d){try{if(typeof window!=="undefined"){localStorage.setItem("bio-g2",JSON.stringify(d));}}catch(e){console.error("Save error:",e);}}
 function exportData(st){try{const blob=new Blob([JSON.stringify(st,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="bio-ignicion-data.json";a.click();URL.revokeObjectURL(url);}catch(e){}}
 
@@ -408,11 +417,14 @@ function calcBioQuality(sd,dur){
   // Touch hold: at least 1 sustained press validates presence
   const tScore=touchHolds>=1?1:interactions>=2?0.5:0;
   // Motion: any movement confirms device is in hand (not on desk)
-  const mScore=motionSamples>=5?1:motionSamples>=2?0.6:0;
+  const hasMotionPerm=motionSamples>0;
+  const mScore=hasMotionPerm?(motionSamples>=5?1:motionSamples>=2?0.6:0):0;
   // Pause penalty: each pause reduces score
   const pauseP=Math.max(0,1-pauses*0.2);
+  // Redistribute motion weight when no permission granted
+  const wI=hasMotionPerm?0.30:0.38;const wT=hasMotionPerm?0.25:0.32;const wM=hasMotionPerm?0.15:0;
   // Completion is baseline (always 1 if session completed)
-  const raw=(iScore*0.30+tScore*0.25+mScore*0.15+pauseP*0.15+0.15)*100;
+  const raw=(iScore*wI+tScore*wT+mScore*wM+pauseP*0.15+0.15)*100;
   const score=Math.round(Math.max(5,Math.min(100,raw)));
   // Zero interaction = inválida regardless
   const quality=interactions===0&&touchHolds===0?"inválida":score>=70?"alta":score>=45?"media":score>=20?"baja":"inválida";
@@ -439,8 +451,10 @@ function calcBurnoutIndex(ml,hist){
   const trend=avgR-avgP;const lowC=last7.filter(m=>m.mood<=2).length;
   const sessW=hist.filter(s=>(Date.now()-s.ts)<7*86400000).length;
   const raw=Math.max(0,Math.min(100,50-trend*15+lowC*10-sessW*2+(avgR<2.5?20:0)));
-  const idx=Math.round(raw);const risk=idx>=70?"crítico":idx>=50?"alto":idx>=30?"moderado":"bajo";
-  const pred=idx>=70?"Riesgo de agotamiento en 48h. Protocolo OMEGA recomendado.":idx>=50?"Tendencia descendente detectada. Aumentar frecuencia de sesiones.":idx>=30?"Estado estable con margen de mejora.":"Sistema en buen estado. Mantener ritmo.";
+  const idx=Math.round(raw);// Detect flat affect (always 3, never varies = disengagement signal)
+  const flatAffect=ml.length>=7&&ml.slice(-7).every(m=>m.mood===3);
+  const risk=flatAffect?"moderado":idx>=70?"crítico":idx>=50?"alto":idx>=30?"moderado":"bajo";
+  const pred=flatAffect?"Patrón de respuesta uniforme detectado. Posible desengagement. Variar protocolos recomendado.":idx>=70?"Riesgo de agotamiento en 48h. Protocolo OMEGA recomendado.":idx>=50?"Tendencia descendente detectada. Aumentar frecuencia de sesiones.":idx>=30?"Estado estable con margen de mejora.":"Sistema en buen estado. Mantener ritmo.";
   return{index:idx,risk,trend:trend>0.3?"mejorando":trend<-0.3?"deteriorando":"estable",prediction:pred,avgMood:+avgR.toFixed(1)};}
 
 /* Protocol Sensitivity — Per-user effectiveness mapping */
@@ -480,7 +494,12 @@ function calcCognitiveEntropy(sessionData){
   const avg=rt.reduce((a,b)=>a+b,0)/rt.length;
   const variance=rt.reduce((a,t)=>a+Math.pow(t-avg,2),0)/rt.length;
   const entropy=Math.min(100,Math.round(Math.sqrt(variance)*10));
-  return{entropy,state:entropy>60?"alto — cerebro desordenado":entropy>30?"medio — procesamiento irregular":"bajo — alta coherencia",avgReaction:Math.round(avg)};}
+  const speed=avg<400?"alta":avg<600?"media":avg<800?"normal":"baja";
+  const firstHalf=rt.slice(0,Math.floor(rt.length/2));const secondHalf=rt.slice(Math.floor(rt.length/2));
+  const avgFirst=firstHalf.length?firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length:avg;
+  const avgSecond=secondHalf.length?secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length:avg;
+  const activationDelta=Math.round(avgFirst-avgSecond);
+  return{entropy,state:entropy>60?"alto — cerebro desordenado":entropy>30?"medio — procesamiento irregular":"bajo — alta coherencia",avgReaction:Math.round(avg),speed,activationDelta,improved:activationDelta>50};}
 
 /* Haptic Patterns — Phase-specific tactile feedback */
 function hapticPhase(type){if(typeof navigator==="undefined"||!navigator.vibrate)return;
@@ -494,6 +513,56 @@ function hapticBreath(label){if(typeof navigator==="undefined"||!navigator.vibra
   else if(label==="EXHALA")navigator.vibrate([40]);
   else if(label==="MANTÉN")navigator.vibrate(20);
   else navigator.vibrate(10);}catch(e){}}
+
+
+/* Touch-Based Coherence Estimation — uses tap timing as biofeedback proxy */
+function estimateCoherence(reactionTimes){
+  if(!reactionTimes||reactionTimes.length<2)return{coherence:0,consistency:0,state:"sin datos"};
+  const avg=reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;
+  const variance=reactionTimes.reduce((a,t)=>a+Math.pow(t-avg,2),0)/reactionTimes.length;
+  const cv=Math.sqrt(variance)/avg; // coefficient of variation
+  // Low CV = consistent timing = likely coherent
+  // High CV = erratic = likely agitated
+  const consistency=Math.round(Math.max(0,Math.min(100,(1-cv)*100)));
+  const coherence=Math.round(Math.max(0,Math.min(100,consistency*0.7+Math.min(30,reactionTimes.length*5))));
+  const state=coherence>=70?"alta coherencia":coherence>=40?"coherencia parcial":"baja coherencia";
+  return{coherence,consistency,state,avgRT:Math.round(avg)};}
+
+
+/* Cross-Session Gaming Detection — detects automation and empty usage */
+function detectGamingPattern(history){
+  if(!history||history.length<5)return{gaming:false,reason:""};
+  const last10=history.slice(-10);
+  // Pattern 1: All sessions have 0 interactions
+  const zeroInteractions=last10.filter(h=>h.interactions===0).length;
+  if(zeroInteractions>=8)return{gaming:true,reason:"Sin interacción en "+zeroInteractions+"/"+last10.length+" sesiones"};
+  // Pattern 2: All sessions have identical low quality
+  const qualities=last10.map(h=>h.bioQ||0);
+  const allSame=qualities.every(q=>q===qualities[0])&&qualities[0]<30;
+  if(allSame)return{gaming:true,reason:"Calidad idéntica y baja en todas las sesiones"};
+  // Pattern 3: Sessions too close together (< 30 seconds apart)
+  for(let i=1;i<last10.length;i++){if(last10[i].ts-last10[i-1].ts<30000)return{gaming:true,reason:"Sesiones con menos de 30s entre ellas"};}
+  return{gaming:false,reason:""};}
+
+
+/* Recovery Index — measures how long session effects persist */
+function calcRecoveryIndex(moodLog){
+  if(!moodLog||moodLog.length<4)return null;
+  const withPre=moodLog.filter(m=>m.pre>0&&m.mood>0);
+  if(withPre.length<2)return null;
+  // Find pairs: session end (mood) → next session start (pre of next)
+  const recoveries=[];
+  for(let i=1;i<withPre.length;i++){
+    const prev=withPre[i-1];const curr=withPre[i];
+    const timeBetween=(curr.ts-prev.ts)/3600000; // hours
+    const moodAtEnd=prev.mood;const moodAtNextStart=curr.pre;
+    const retention=moodAtNextStart/Math.max(1,moodAtEnd);
+    if(timeBetween>0.5&&timeBetween<48)recoveries.push({hours:Math.round(timeBetween),retention:Math.round(retention*100)});}
+  if(!recoveries.length)return null;
+  const avgRetention=Math.round(recoveries.reduce((a,r)=>a+r.retention,0)/recoveries.length);
+  const avgHours=Math.round(recoveries.reduce((a,r)=>a+r.hours,0)/recoveries.length);
+  return{avgRetention,avgHours,sessions:recoveries.length,
+    interpretation:avgRetention>=80?"Excelente retención. El efecto persiste "+avgHours+"h promedio.":avgRetention>=60?"Retención moderada. Considerar 2 sesiones diarias.":"Baja retención. Aumentar frecuencia o cambiar protocolo."};}
 
 /* Expanded Data Model — All Supabase-ready variables */
 function buildSessionRecord(pr,st,sd,nfcCtx,durMult,bioQ,burnout,bioSignal,circadian){
@@ -511,6 +580,8 @@ function buildSessionRecord(pr,st,sd,nfcCtx,durMult,bioQ,burnout,bioSignal,circa
     circadian:circadian.period,hour:new Date().getHours(),
     // Reaction
     entropy:sd.reactionTimes?calcCognitiveEntropy(sd).entropy:0,
+    touchCoherence:estimateCoherence(sd.reactionTimes).coherence,
+    activationDelta:sd.reactionTimes?calcCognitiveEntropy(sd).activationDelta:0,
     avgReaction:sd.reactionTimes?calcCognitiveEntropy(sd).avgReaction:0
   };}
 
@@ -592,7 +663,7 @@ function PhaseVisual({type,color,scale=1,active}){
 }
 
 
-function exportNOM035_v2(st){try{
+function exportNOM035(st){try{
   const ml=st.moodLog||[];const h=st.history||[];const now=new Date();
   const totalMin=Math.round((st.totalTime||0)/60);
   const avgMd=ml.length?+(ml.reduce((a,m)=>a+m.mood,0)/ml.length).toFixed(1):0;
@@ -727,15 +798,18 @@ export default function BioIgnicion(){
   function unlockVoice(){if(voiceUnlocked.current||typeof window==="undefined"||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance("");u.volume=0;window.speechSynthesis.speak(u);voiceUnlocked.current=true;}catch(e){}}
   function speak(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{
     if(window.speechSynthesis.paused)window.speechSynthesis.resume();
-    const circ=getCircadian();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circ.voiceRate||0.92;u.pitch=circ.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
+    const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circadian.voiceRate||0.92;u.pitch=circadian.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
   function speakNow(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{
     if(window.speechSynthesis.paused)window.speechSynthesis.resume();
-    window.speechSynthesis.cancel();const circ=getCircadian();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circ.voiceRate||0.92;u.pitch=circ.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
+    window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circadian.voiceRate||0.92;u.pitch=circadian.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
   function stopVoice(){try{if(typeof window!=="undefined"&&window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}}
 
   // ═══ LOAD STATE + PERSISTENCE ═══
   useEffect(()=>{setMt(true);const l=ldS();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)svS(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);},[]);
-  // Auto-save every 30s + on page hide/unload
+  
+  // Pause session when user leaves tab/app
+  useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){pa();}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
+// Auto-save every 30s + on page hide/unload
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>svS(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")svS(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
   const[isDark,setIsDark]=useState(false);
   useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
@@ -751,24 +825,25 @@ export default function BioIgnicion(){
   // Phase transitions with pre-announcement (ease-in 2s before)
   useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}
     // Pre-announce next phase 2s before transition
-    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);const _phIdx=nextIdx;setTimeout(()=>{if(ts==="running"&&pi===_phIdx)speak(pr.ph[_phIdx].i);},2500);}
+    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);const _phIdx=nextIdx;setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[_phIdx].i);}catch(e){}},2500);}
     // Pre-hint 2s before next phase
     const nxtIdx=pi<pr.ph.length-1?pi+1:null;if(nxtIdx!==null){const nxtStart=Math.round(pr.ph[nxtIdx].s*scale);const ttN=nxtStart-el;if(ttN===2&&ts==="running"){speak("Prepárate");}}
   },[sec,pr,durMult]);
   useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   // Breathing engine with circadian-adapted voice
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"||!ph.br){setBL("");setBS(1);setBCnt(0);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase());hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running"){speak("Mantén la atención en la instrucción");}return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase());hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);H("tap");(()=>{const g=st.streak>=7?"Racha de "+st.streak+" días. ":st.todaySessions>0?"Sesión "+(st.todaySessions+1)+" de hoy. ":"";const p=circadian.period==="amanecer"||circadian.period==="mañana"?"Buenos días. ":circadian.period==="noche"||circadian.period==="madrugada"?"Buenas noches. ":"";speakNow(p+g+"Tres");})();cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speakNow(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
   function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[]});startCountdown();}
-  function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();setSessionData(d=>({...d,pauses:d.pauses+1}));}
-  function rs(){releaseWakeLock();try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
+  const pauseTRef=useRef(null);
+  function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
+  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
-  function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){setTs("running");H("go");speakNow("continúa");if(st.soundOn!==false)startBinaural(pr.int);}}
-  function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTabFade(1);},150);H("tap");}
+  function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){if(pauseTimeoutRef.current)clearTimeout(pauseTimeoutRef.current);setSessionData(d=>({...d,pauses:d.pauses}));setTs("running");H("go");speakNow("continúa");requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}}
+  function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>setTabFade(1),30);},180);H("tap");}
 
-  function comp(){
+  function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
     const td=new Date().toDateString();const di=new Date().getDay();const ad=di===0?6:di-1;const nw=[...st.weeklyData];nw[ad]=(nw[ad]||0)+1;const ys=new Date(Date.now()-864e5).toDateString();let nsk=st.lastDate===td?st.streak:st.lastDate===ys?st.streak+1:1;
 
     // ═══ DATA-DRIVEN METRICS (not random) ═══
@@ -777,7 +852,8 @@ export default function BioIgnicion(){
     const recentDeltas=ml.filter(m=>m.pre>0).slice(-10);
     const avgDelta=recentDeltas.length>=2?recentDeltas.reduce((a,m)=>a+(m.mood-m.pre),0)/recentDeltas.length:0;
     const cohBoost=Math.max(0,Math.min(8,Math.round(avgDelta*3+2)));
-    const nC=Math.min(100,Math.max(20,recentDeltas.length>=3?Math.round(50+avgDelta*15+recentDeltas.length*2):st.coherencia+cohBoost));
+    const cohDecay=avgDelta<=0&&recentDeltas.length>=3?-3:0;
+    const nC=Math.min(100,Math.max(20,recentDeltas.length>=3?Math.round(50+avgDelta*15+recentDeltas.length*2+cohDecay):st.coherencia+cohBoost+cohDecay));
 
     // Resiliencia: based on streak consistency and session frequency
     const weekTotal=nw.reduce((a,b)=>a+b,0);
@@ -794,6 +870,8 @@ export default function BioIgnicion(){
     const ns=st.totalSessions+1;
     // ═══ BIO QUALITY SCORE ═══
     const bioQ=calcBioQuality(sessionData,Math.round(pr.d*durMult));
+    const gamingCheck=detectGamingPattern(hist);
+    if(gamingCheck.gaming){bioQ.score=Math.min(bioQ.score,20);bioQ.quality="inválida";}
     const qualityMult=bioQ.quality==="alta"?1.5:bioQ.quality==="media"?1.0:bioQ.quality==="baja"?0.5:0.2;
     const eVC=Math.max(3,Math.round((5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5))*qualityMult));
     const vc=(st.vCores||0)+eVC;
@@ -823,7 +901,7 @@ export default function BioIgnicion(){
     }].slice(-200);
     setPostVC(eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
     releaseWakeLock();speakNow(bioQ.quality==="alta"?"Sesión excelente":"Sesión completada");
-    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);setTimeout(()=>{setPostStep("checkin");},5000);
+    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,totalSessions:ns,streak:nsk,todaySessions:st.lastDate===td?st.todaySessions+1:1,lastDate:td,weeklyData:nw,weekNum:getWeekNum(),coherencia:nC,resiliencia:nR,capacidad:nE,achievements:ach,vCores:vc,history:newHist,totalTime:(st.totalTime||0)+Math.round(pr.d*durMult),firstDone:true,progDay:Math.min((st.progDay||0)+1,7)});
   }
@@ -865,7 +943,7 @@ export default function BioIgnicion(){
 
   return(
   <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background .8s"}}>
-  <style>{`body{background:${bg}}@keyframes gl{0%,100%{box-shadow:0 0 20px ${ac}10,0 4px 20px ${ac}06}50%{box-shadow:0 0 40px ${ac}1A,0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
+  <style>{`body{background:${bg}}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 20px ${ac}10,0 4px 20px ${ac}06}50%{box-shadow:0 0 40px ${ac}1A,0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
 
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
   {showMid&&<div style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",zIndex:180,animation:"midPop 3.5s ease both",pointerEvents:"none"}}><div style={{background:cd,borderRadius:16,padding:"14px 22px",boxShadow:"0 8px 30px rgba(0,0,0,.08)",border:`1px solid ${bd}`,maxWidth:320,textAlign:"center"}}><div style={{fontSize:13,fontWeight:600,color:t1,lineHeight:1.6,fontStyle:"italic"}}>{midMsg}</div></div></div>}
@@ -909,24 +987,25 @@ export default function BioIgnicion(){
     <div style={{width:60,height:60,borderRadius:"50%",background:"radial-gradient(circle,"+ac+"15,transparent)",animation:"pu 3s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:12,height:12,borderRadius:"50%",background:ac,opacity:.4,animation:"focusLock 2s ease infinite"}}/></div>
     <div style={{fontSize:14,fontWeight:600,color:t1,marginTop:20,textAlign:"center",lineHeight:1.6}}>Quédate un momento con esta sensación.</div>
     <div style={{fontSize:11,color:t3,marginTop:8}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)} segundos.</div>
+    <button onClick={()=>setPostStep("checkin")} style={{marginTop:24,padding:"12px 32px",borderRadius:50,background:"none",border:"1.5px solid "+ac+"30",color:ac,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1,animation:"fi 2s ease"}}>Continuar</button>
   </div>}
 
 {/* POST: CHECK-IN */}
   {postStep==="checkin"&&ts==="done"&&<div style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F5`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}><div style={{background:cd,borderRadius:28,padding:"28px 22px",maxWidth:400,width:"100%",animation:"po .4s cubic-bezier(.34,1.56,.64,1)"}}>
-    <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:16,fontWeight:800,color:t1}}>¿Cómo te sientes ahora?</div></div>
+    <div style={{textAlign:"center",marginBottom:14}}><div style={{fontSize:17,fontWeight:800,color:t1}}>¿Cómo te sientes?</div><div style={{fontSize:11,color:t3,marginTop:4}}>1 toque. Tu progreso depende de esto.</div></div>
     <div style={{display:"flex",justifyContent:"center",gap:4,marginBottom:18}}>{MOODS.map(m=>(
       <button key={m.id} onClick={()=>{setCheckMood(m.value);H("tap");}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,padding:"8px 4px",borderRadius:13,border:checkMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:checkMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s",minWidth:56,flex:1}}>
         <Ic name={m.icon} size={20} color={checkMood===m.value?m.color:t3}/>
-        <span style={{fontSize:9,fontWeight:700,color:checkMood===m.value?m.color:t3,textAlign:"center",lineHeight:1.2}}>{m.label}</span>
+        <span style={{fontSize:10,fontWeight:700,color:checkMood===m.value?m.color:t3,textAlign:"center",lineHeight:1.2}}>{m.label}</span>
       </button>))}</div>
-    <div style={{marginBottom:16}}><div style={{fontSize:9,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Energía</div><div style={{display:"flex",gap:7}}>{ENERGY_LEVELS.map(e=>(
+    <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Energía</div><div style={{display:"flex",gap:7}}>{ENERGY_LEVELS.map(e=>(
       <button key={e.id} onClick={()=>{setCheckEnergy(e.v);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:checkEnergy===e.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:checkEnergy===e.v?ac+"08":cd,color:checkEnergy===e.v?ac:t3,fontSize:11,fontWeight:700,cursor:"pointer"}}>{e.label}</button>))}</div></div>
     
-    <div style={{marginBottom:16}}><div style={{fontSize:9,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Claridad mental</div><div style={{display:"flex",gap:5}}>{[{l:"Nublado",v:1},{l:"Regular",v:2},{l:"Claro",v:3},{l:"Cristalino",v:4}].map(c=><button key={c.v} onClick={()=>{setCheckEnergy(prev=>prev||2);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:"1.5px solid "+bd,background:cd,color:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{c.l}</button>)}</div></div>
-    <div style={{marginBottom:18}}><div style={{fontSize:9,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Contexto</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{WORK_TAGS.map(tg=>(
-      <button key={tg} onClick={()=>{setCheckTag(checkTag===tg?"":tg);H("tap");}} style={{padding:"5px 11px",borderRadius:18,border:checkTag===tg?`1.5px solid ${ac}`:`1px solid ${bd}`,background:checkTag===tg?ac+"08":cd,color:checkTag===tg?ac:t3,fontSize:9,fontWeight:600,cursor:"pointer"}}>{tg}</button>))}</div></div>
+    <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Claridad mental</div><div style={{display:"flex",gap:5}}>{[{l:"Nublado",v:1},{l:"Regular",v:2},{l:"Claro",v:3},{l:"Cristalino",v:4}].map(c=><button key={c.v} onClick={()=>{setCheckEnergy(prev=>prev||2);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:"1.5px solid "+bd,background:cd,color:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{c.l}</button>)}</div></div>
+    <div style={{marginBottom:18}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Contexto</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{WORK_TAGS.map(tg=>(
+      <button key={tg} onClick={()=>{setCheckTag(checkTag===tg?"":tg);H("tap");}} style={{padding:"5px 11px",borderRadius:18,border:checkTag===tg?`1.5px solid ${ac}`:`1px solid ${bd}`,background:checkTag===tg?ac+"08":cd,color:checkTag===tg?ac:t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{tg}</button>))}</div></div>
     <button onClick={submitCheckin} style={{width:"100%",padding:"14px",borderRadius:50,background:checkMood>0?ac:bd,border:"none",color:checkMood>0?"#fff":t3,fontSize:12,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>{checkMood>0?"CONTINUAR":"SELECCIONA ESTADO"}</button>
-    <button onClick={()=>setPostStep("summary")} style={{width:"100%",padding:"8px",marginTop:6,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir (tu progreso mejora con check-in)</button>
+    <button onClick={()=>{if(checkMood===0){const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:0,energy:0,tag:"skip",proto:pr.n,pre:preMood||0}].slice(-200);setSt({...st,moodLog:ml});}setPostStep("summary");}} style={{width:"100%",padding:"8px",marginTop:6,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir — tu evolución se mide aquí</button>
   </div></div>}
 
   {/* POST: SUMMARY with Before/After */}
@@ -934,7 +1013,7 @@ export default function BioIgnicion(){
     {Array.from({length:12}).map((_,i)=><div key={i} style={{position:"absolute",top:"15%",left:"50%",width:3+Math.random()*3,height:3+Math.random()*3,borderRadius:"50%",background:i%2===0?ac:"#6366F1",opacity:0,animation:`particle 1.5s ease ${i*.08}s forwards`,"--tx":`${(Math.random()-.5)*160}px`,"--ty":`${-30-Math.random()*100}px`}}/>)}
     <div style={{textAlign:"center",marginBottom:16}}>
       <svg width="48" height="48" viewBox="0 0 48 48" style={{margin:"0 auto 10px",display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity=".08"/><circle cx="24" cy="24" r="16" fill={ac} opacity=".12"/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
-      <div style={{fontSize:18,fontWeight:800,color:t1}}>Sesión completada</div>
+      <div style={{fontSize:18,fontWeight:800,color:t1}}>{st.totalSessions<=1?"Tu primera ignición":"Sesión completada"}</div><div style={{fontSize:11,color:ac,marginTop:4,fontWeight:600}}>{st.totalSessions<=1?"Tu sistema nervioso acaba de despertar":"Tu estado se transformó"}</div>
       <div style={{fontSize:10,color:t2,marginTop:3}}>{pr.n} · {Math.round(pr.d*durMult)}s</div>
     </div>
     {/* Streak celebration */}
@@ -944,17 +1023,17 @@ export default function BioIgnicion(){
     </div>}
     {/* Before → After comparison */}
     {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:14,padding:"14px 16px",background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:16}}>
-      <div style={{textAlign:"center"}}><Ic name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{fontSize:9,color:t3,marginTop:3,fontWeight:600}}>Antes</div></div>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:40,height:1,background:bd,marginBottom:4}}/><div style={{fontSize:18,color:moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={{fontSize:9,color:t3,marginTop:2}}>puntos</div></div>
-      <div style={{textAlign:"center"}}><Ic name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{fontSize:9,color:t3,marginTop:3,fontWeight:600}}>Después</div></div>
+      <div style={{textAlign:"center"}}><Ic name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Antes</div></div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:40,height:1,background:bd,marginBottom:4}}/><div style={{fontSize:18,color:moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={{fontSize:10,color:t3,marginTop:2}}>puntos</div></div>
+      <div style={{textAlign:"center"}}><Ic name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Después</div></div>
     </div>}
     {checkMood>0&&!preMood&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:12,padding:"10px",background:MOODS[checkMood-1].color+"08",borderRadius:12}}>
       <Ic name={MOODS[checkMood-1].icon} size={18} color={MOODS[checkMood-1].color}/><span style={{fontSize:11,fontWeight:700,color:MOODS[checkMood-1].color}}>{MOODS[checkMood-1].label}</span>
-      {checkTag&&<span style={{fontSize:9,color:t3}}>· {checkTag}</span>}
+      {checkTag&&<span style={{fontSize:10,color:t3}}>· {checkTag}</span>}
     </div>}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5,marginBottom:12}}>
       {[{l:"V-Cores",v:"+"+postVC,c:ac},{l:"Enfoque",v:st.coherencia+"%",c:"#3B82F6"},{l:"Calma",v:st.resiliencia+"%",c:"#8B5CF6"}].map((m,i)=>(
-        <div key={i} style={{background:m.c+"08",borderRadius:11,padding:"9px 5px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:m.c}}>{m.v}</div><div style={{fontSize:9,fontWeight:700,color:t3,letterSpacing:.5,marginTop:1,textTransform:"uppercase"}}>{m.l}</div></div>))}
+        <div key={i} style={{background:m.c+"08",borderRadius:11,padding:"9px 5px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:m.c}}>{m.v}</div><div style={{fontSize:10,fontWeight:700,color:t3,letterSpacing:.5,marginTop:1,textTransform:"uppercase"}}>{m.l}</div></div>))}
     </div>
     {/* BIO QUALITY SCORE */}
     {(()=>{const bq=calcBioQuality(sessionData,Math.round(pr.d*durMult));const ce=calcCognitiveEntropy(sessionData);const qColor=bq.quality==="alta"?"#059669":bq.quality==="media"?"#D97706":"#DC2626";return(<>
@@ -967,12 +1046,13 @@ export default function BioIgnicion(){
           <div style={{width:bq.score+"%",height:"100%",borderRadius:4,background:`linear-gradient(90deg,${qColor}80,${qColor})`,transition:"width .5s"}}/>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.iScore}%</div><div style={{fontSize:9,color:t3}}>Interacción</div></div>
-          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.tScore}%</div><div style={{fontSize:9,color:t3}}>Presión</div></div>
-          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.mScore}%</div><div style={{fontSize:9,color:t3}}>Movimiento</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.iScore}%</div><div style={{fontSize:10,color:t3}}>Interacción</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.tScore}%</div><div style={{fontSize:10,color:t3}}>Presión</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.mScore}%</div><div style={{fontSize:10,color:t3}}>Movimiento</div></div>
         </div>
         {bq.quality==="inválida"&&<div style={{marginTop:8,fontSize:10,color:"#DC2626",fontWeight:600,textAlign:"center"}}>Sesión sin participación activa. V-Cores reducidos.</div>}
         {bq.quality==="alta"&&(sessionData.touchHolds||0)>=2&&<div style={{marginTop:8,fontSize:10,color:"#059669",fontWeight:600,textAlign:"center"}}>Contrato biológico verificado. Ejecución real confirmada.</div>}
+        {(()=>{const tc=estimateCoherence(sessionData.reactionTimes);return tc.coherence>0?<div style={{marginTop:6,fontSize:10,color:t2,textAlign:"center"}}>Coherencia estimada: <span style={{fontWeight:800,color:tc.coherence>=70?"#059669":tc.coherence>=40?"#D97706":"#DC2626"}}>{tc.coherence}%</span> ({tc.state})</div>:null;})()}
       </div>
       {ce.entropy>0&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",marginBottom:10,borderRadius:10,background:isDark?"#1A1E28":"#F8FAFC"}}>
         <div style={{fontSize:10,color:t3}}>Entropía cognitiva:</div>
@@ -980,14 +1060,14 @@ export default function BioIgnicion(){
       </div>}
     </>);})()}
     <div style={{background:isDark?"#1A1E28":"#F1F5F9",borderRadius:11,padding:"10px",marginBottom:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:9,fontWeight:800,color:lv.c}}>{lv.n}</span><span style={{fontSize:9,color:t3}}>{lPct}%</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:800,color:lv.c}}>{lv.n}</span><span style={{fontSize:10,color:t3}}>{lPct}%</span></div>
       <div style={{height:3,background:bd,borderRadius:3,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:3,background:lv.c}}/></div>
     </div>
     <div style={{background:ac+"06",borderRadius:10,padding:"10px 12px",marginBottom:12,border:`1px solid ${ac}10`}}>
       <div style={{fontSize:11,color:t2,fontWeight:500,lineHeight:1.5,fontStyle:"italic"}}>{postMsg}</div>
     </div>
     <button onClick={()=>{sp(sugN);setPostStep("none");}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",gap:7,alignItems:"center",marginBottom:10}}>
-      <div style={{width:26,height:26,borderRadius:7,background:sugN.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={sugN.cl}/></div><div><div style={{fontSize:9,color:t3,fontWeight:700,textTransform:"uppercase"}}>Siguiente</div><div style={{fontSize:10,fontWeight:700,color:t1}}>{sugN.n}</div></div>
+      <div style={{width:26,height:26,borderRadius:7,background:sugN.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={sugN.cl}/></div><div><div style={{fontSize:10,color:t3,fontWeight:700,textTransform:"uppercase"}}>Siguiente</div><div style={{fontSize:10,fontWeight:700,color:t1}}>{sugN.n}</div></div>
     </button>
     <button onClick={()=>{rs();setPostStep("none");}} style={{width:"100%",padding:"13px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</button>
 
@@ -995,22 +1075,22 @@ export default function BioIgnicion(){
 
   {showIntent&&<div style={{position:"fixed",inset:0,zIndex:210,background:"rgba(15,23,42,.4)",backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowIntent(false)}><div style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%",animation:"po .4s"}} onClick={e=>e.stopPropagation()}>
     <div style={{textAlign:"center",marginBottom:18}}><div style={{fontSize:16,fontWeight:800,color:t1}}>¿Qué necesitas?</div></div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>{INTENTS.map(i=>{const b=P.filter(p=>p.int===i.id);const pk=b[Math.floor(b.length/2)]||P[0];return(<button key={i.id} onClick={()=>sp(pk)} style={{padding:"16px 10px",borderRadius:16,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",textAlign:"center"}}><Ic name={i.icon} size={26} color={i.color}/><div style={{fontSize:12,fontWeight:800,color:t1,marginTop:6}}>{i.label}</div><div style={{fontSize:9,color:i.color,fontWeight:700,marginTop:4}}>{pk.n}</div></button>);})}</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>{INTENTS.map(i=>{const b=P.filter(p=>p.int===i.id);const pk=b[Math.floor(b.length/2)]||P[0];return(<button key={i.id} onClick={()=>sp(pk)} style={{padding:"16px 10px",borderRadius:16,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",textAlign:"center"}}><Ic name={i.icon} size={26} color={i.color}/><div style={{fontSize:12,fontWeight:800,color:t1,marginTop:6}}>{i.label}</div><div style={{fontSize:10,color:i.color,fontWeight:700,marginTop:4}}>{pk.n}</div></button>);})}</div>
   </div></div>}
 
   {sl&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setSl(false)}><div style={{width:"100%",maxWidth:430,maxHeight:"82vh",background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",overflowY:"auto",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
     <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:20,fontWeight:800,color:t1,marginBottom:16}}>Protocolos</h3>
     <div style={{display:"flex",background:isDark?"#1A1E28":"#EEF2F7",borderRadius:12,padding:3,marginBottom:16}}>{CATS.map(c=><button key={c} onClick={()=>setSc(c)} style={{flex:1,padding:"9px 0",borderRadius:10,border:"none",background:sc===c?cd:"transparent",color:sc===c?t1:t3,fontWeight:700,fontSize:12,cursor:"pointer",transition:"all .3s"}}>{c}</button>)}</div>
-    {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;return<button key={p.id} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:9,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:9,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>recomendado</span>}</div><div style={{fontSize:9,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#059669":p.dif===2?"#D97706":"#DC2626"}}>{DIF_LABELS[(p.dif||1)-1]}</span></div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Ic name="star" size={16} color={isFav?ac:bd}/></div>{(()=>{const s=protoSens[p.n];return s&&s.sessions>=2?<span style={{fontSize:9,fontWeight:800,color:s.avgDelta>0?"#059669":"#DC2626",marginRight:4}}>{s.avgDelta>0?"+":""}{s.avgDelta}</span>:null;})()}{pr.id===p.id&&<Ic name="check" size={16} color={p.cl}/>}</button>;})}
+    {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;return<button key={p.id} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:10,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:10,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>recomendado</span>}</div><div style={{fontSize:10,color:t2,marginBottom:2}}>{p.sb}</div><div style={{fontSize:10,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#059669":p.dif===2?"#D97706":"#DC2626"}}>{DIF_LABELS[(p.dif||1)-1]}</span></div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Ic name="star" size={16} color={isFav?ac:bd}/></div>{(()=>{const s=protoSens[p.n];return s&&s.sessions>=2?<span style={{fontSize:10,fontWeight:800,color:s.avgDelta>0?"#059669":"#DC2626",marginRight:4}}>{s.avgDelta>0?"+":""}{s.avgDelta}</span>:null;})()}{pr.id===p.id&&<Ic name="check" size={16} color={p.cl}/>}</button>;})}
   </div></div>)}
 
   {showSettings&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowSettings(false)}><div style={{width:"100%",maxWidth:430,background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
     <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:17,fontWeight:800,color:t1,marginBottom:16}}>Configuración</h3>
     {[{l:"Sonido + ambiente",k:"soundOn",d:"Acordes y ruido ambiental"},{l:"Vibración",k:"hapticOn",d:"Feedback táctil"},{l:"Voz guiada",k:"_voice",d:"Narración de fases y respiración"}].map(s=>(
-      <div key={s.k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div><div style={{fontSize:12,fontWeight:700,color:t1}}>{s.l}</div><div style={{fontSize:9,color:t3,marginTop:1}}>{s.d}</div></div>
+      <div key={s.k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div><div style={{fontSize:12,fontWeight:700,color:t1}}>{s.l}</div><div style={{fontSize:10,color:t3,marginTop:1}}>{s.d}</div></div>
         <div onClick={()=>{if(s.k==="_voice"){setVoiceOn(!voiceOn);}else setSt({...st,[s.k]:!st[s.k]});}} style={{width:42,height:24,borderRadius:12,background:s.k==="_voice"?(voiceOn?ac:bd):(st[s.k]?ac:bd),cursor:"pointer",position:"relative",transition:"background .3s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:s.k==="_voice"?(voiceOn?20:2):(st[s.k]?20:2),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
       </div>))}
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{fontSize:12,fontWeight:700,color:t1}}>Tema</div><div style={{display:"flex",gap:4}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:"5px 11px",borderRadius:7,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?ac+"10":cd,color:(st.themeMode||"auto")===m?ac:t3,fontSize:9,fontWeight:700,cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{fontSize:12,fontWeight:700,color:t1}}>Tema</div><div style={{display:"flex",gap:4}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:"5px 11px",borderRadius:7,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?ac+"10":cd,color:(st.themeMode||"auto")===m?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
     <button onClick={()=>exportData(st)} style={{width:"100%",padding:"13px",marginTop:14,borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
       <Ic name="export" size={16} color={t2}/><span style={{fontSize:12,fontWeight:700,color:t2}}>Exportar datos (JSON)</span>
     </button>
@@ -1022,24 +1102,24 @@ export default function BioIgnicion(){
   {showHist&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowHist(false)}><div style={{width:"100%",maxWidth:430,maxHeight:"75vh",background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",overflowY:"auto",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
     <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:17,fontWeight:800,color:t1,marginBottom:14}}>Historial</h3>
     {!(st.history||[]).length&&<div style={{textAlign:"center",padding:"36px 0"}}><Ic name="chart" size={30} color={t3}/><div style={{fontSize:12,color:t3,marginTop:8}}>Tu primera sesión creará el registro.</div></div>}
-    {(()=>{const g=groupHist([...(st.history||[])].reverse());return Object.entries(g).map(([k,items])=>{if(!items.length)return null;return(<div key={k}><div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:7,marginTop:10}}>{k==="hoy"?"Hoy":k==="ayer"?"Ayer":"Anteriores"}</div>{items.map((h,i)=>{const tm=new Date(h.ts).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});const ml=(st.moodLog||[]).find(m=>Math.abs(m.ts-h.ts)<10000);return(<div key={i} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 0",borderBottom:`1px solid ${bd}`}}><div style={{width:30,height:30,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={ac}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:t1}}>{h.p}</div><div style={{display:"flex",alignItems:"center",gap:3,marginTop:1}}><span style={{fontSize:9,color:t3}}>{tm}</span>{ml&&<Ic name={MOODS[ml.mood-1]?.icon||"neutral"} size={10} color={MOODS[ml.mood-1]?.color||t3}/>}</div></div><div style={{textAlign:"right"}}><div style={{fontSize:11,fontWeight:800,color:ac}}>+{h.vc}</div></div></div>);})}</div>);});})()}
+    {(()=>{const g=groupHist([...(st.history||[])].reverse());return Object.entries(g).map(([k,items])=>{if(!items.length)return null;return(<div key={k}><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:7,marginTop:10}}>{k==="hoy"?"Hoy":k==="ayer"?"Ayer":"Anteriores"}</div>{items.map((h,i)=>{const tm=new Date(h.ts).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});const ml=(st.moodLog||[]).find(m=>Math.abs(m.ts-h.ts)<10000);return(<div key={i} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 0",borderBottom:`1px solid ${bd}`}}><div style={{width:30,height:30,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={ac}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:t1}}>{h.p}</div><div style={{display:"flex",alignItems:"center",gap:3,marginTop:1}}><span style={{fontSize:10,color:t3}}>{tm}</span>{ml&&<Ic name={MOODS[ml.mood-1]?.icon||"neutral"} size={10} color={MOODS[ml.mood-1]?.color||t3}/>}</div></div><div style={{textAlign:"right"}}><div style={{fontSize:11,fontWeight:800,color:ac}}>+{h.vc}</div></div></div>);})}</div>);});})()}
   </div></div>)}
 
-  <div style={{opacity:tabFade,transition:"opacity .15s",position:"relative",zIndex:1}}>
+  <div style={{opacity:tabFade,transition:"opacity .25s cubic-bezier(.4,0,.2,1),transform .25s",transform:tabFade===1?"translateY(0)":"translateY(8px)",position:"relative",zIndex:1}}>
 
   {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
     {/* NFC/QR Context Banner */}
     {nfcCtx&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcCtx.type==="salida"?IND+"08":ac+"08",borderRadius:14,border:`1.5px solid ${nfcCtx.type==="salida"?IND+"20":ac+"20"}`,animation:"fi .4s"}}>
       <div style={{width:28,height:28,borderRadius:8,background:nfcCtx.type==="salida"?"#6366F115":ac+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name={nfcCtx.type==="salida"?"calm":"energy"} size={14} color={nfcCtx.type==="salida"?"#6366F1":ac}/></div>
-      <div><div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:nfcCtx.type==="salida"?"#6366F1":ac,textTransform:"uppercase"}}>{nfcCtx.type==="salida"?"SESIÓN DE SALIDA":"SESIÓN DE ENTRADA"}</div>
+      <div><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:nfcCtx.type==="salida"?"#6366F1":ac,textTransform:"uppercase"}}>{nfcCtx.type==="salida"?"SESIÓN DE SALIDA":"SESIÓN DE ENTRADA"}</div>
       <div style={{fontSize:10,fontWeight:600,color:t1}}>{nfcCtx.type==="salida"?"Descomprime tu día. Llévate calma.":"Activa tu enfoque. Arranca con todo."}</div>
-      {nfcCtx.company&&<div style={{fontSize:9,color:t3,marginTop:1}}>{nfcCtx.company}</div>}</div>
+      {nfcCtx.company&&<div style={{fontSize:10,color:t3,marginTop:1}}>{nfcCtx.company}</div>}</div>
     </div>}
     {/* Immersive entry moment */}
     {!entryDone&&ts==="idle"&&st.totalSessions>0&&<div style={{textAlign:"center",padding:"30px 0 20px",animation:"fi 1s ease"}} onClick={()=>setEntryDone(true)}>
       <svg width="48" height="48" viewBox="0 0 52 52" style={{margin:"0 auto 16px",display:"block",animation:"pu 3s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3"/><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{animation:"innerRing 6s linear infinite"}}/><circle cx="26" cy="26" r="4" fill={ac} opacity=".3"/></svg>
       <div style={{fontSize:14,fontWeight:300,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto",letterSpacing:"0.2px"}}>{st.todaySessions>0?"Llevas "+st.todaySessions+" sesión"+(st.todaySessions>1?"es":"")+" hoy. Tu coherencia: "+st.coherencia+"%. "+(st.coherencia>70?"Rendimiento alto.":"Margen de mejora."):daily.phrase}</div>
-      <div style={{fontSize:9,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>TOCA PARA CONTINUAR</div>
+      <div style={{fontSize:10,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>TOCA PARA CONTINUAR</div>
     </div>}
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
     {/* Streak risk */}
@@ -1048,8 +1128,12 @@ export default function BioIgnicion(){
       <span style={{fontSize:10,fontWeight:600,color:"#D97706"}}>Tu racha de {st.streak} días termina esta noche.</span>
     </div>}
     {st.todaySessions>0&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:8}}>
-      <div style={{width:4,height:4,borderRadius:"50%",background:ac}}/><span style={{fontSize:9,fontWeight:700,color:ac}}>{st.todaySessions} {st.todaySessions===1?"sesión":"sesiones"} hoy</span>
-    </div>}
+      <div style={{width:4,height:4,borderRadius:"50%",background:ac}}/><span style={{fontSize:10,fontWeight:700,color:ac}}>{st.todaySessions} {st.todaySessions===1?"sesión":"sesiones"} hoy</span>
+    </div>
+    {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:12,background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
+      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:24,height:24,borderRadius:7,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="bolt" size={11} color={ac}/></div><span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de 2 sesiones hoy</span></div>
+      <div style={{width:40,height:5,borderRadius:5,background:bd,overflow:"hidden"}}><div style={{width:Math.min(100,(st.todaySessions||0)/2*100)+"%",height:"100%",background:ac,borderRadius:5,transition:"width .3s"}}/></div>
+    </div>}}
     {ts==="idle"&&st.totalSessions>=3&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8,animation:"fi .4s"}}>
       <Ic name="rec" size={12} color={t3}/><span style={{fontSize:10,fontWeight:600,color:t2}}>Ventana óptima: <span style={{color:ac,fontWeight:800}}>{(()=>{const fp=calcNeuralFingerprint(st);const h=fp?fp.peakHour:new Date().getHours()<12?14:9;return(h<10?"0":"")+h+":00";})()}</span></span>
     </div>}
@@ -1059,9 +1143,9 @@ export default function BioIgnicion(){
       <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
       <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
       <div style={{flex:1,position:"relative",zIndex:1}}>
-        <div style={{fontSize:9,fontWeight:800,color:daily.proto.cl,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>IGNICIÓN DEL DÍA</div>
+        <div style={{fontSize:10,fontWeight:800,color:daily.proto.cl,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>IGNICIÓN DEL DÍA</div>
         <div style={{fontSize:13,fontWeight:800,color:t1}}>{daily.proto.n}</div>
-        <div style={{fontSize:9,color:t3,marginTop:2,fontStyle:"italic",lineHeight:1.4}}>{daily.phrase}</div>
+        <div style={{fontSize:10,color:t3,marginTop:2,fontStyle:"italic",lineHeight:1.4}}>{daily.phrase}</div>
       </div>
       <Ic name="bolt" size={16} color={daily.proto.cl}/>
     </button>}
@@ -1069,31 +1153,31 @@ export default function BioIgnicion(){
     {/* ═══ 7-DAY PROGRAM ═══ */}
     {ts==="idle"&&(st.progDay||0)<7&&<div style={{marginBottom:14,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`,animation:"fi .6s"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
-        <span style={{fontSize:9,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
+        <span style={{fontSize:10,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
       </div>
       <div style={{display:"flex",gap:3,marginBottom:10}}>
         {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
       <button onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:isDark?"#1A1E28":"#F8FAFC",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
         <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={ac}/></div>
-        <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:9,color:t3}}>{progStep.d}</div></div>
+        <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
         <Ic name="rec" size={12} color={ac}/>
       </button>
     </div>}
 
     {ts==="idle"&&smartPick&&pr.id!==smartPick.id&&daily.proto.id!==smartPick.id&&<button onClick={()=>sp(smartPick)} style={{width:"100%",padding:"10px 12px",marginBottom:14,borderRadius:14,border:`1.5px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",gap:10,animation:"fi .5s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-      <div style={{width:32,height:32,borderRadius:9,background:smartPick.cl+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:smartPick.cl,flexShrink:0}}>{smartPick.tg}</div>
-      <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:9,fontWeight:700,color:ac,letterSpacing:1,textTransform:"uppercase"}}>También recomendado</div><div style={{fontSize:10,fontWeight:700,color:t1,marginTop:1}}>{smartPick.n}</div></div>
+      <div style={{width:32,height:32,borderRadius:9,background:smartPick.cl+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:smartPick.cl,flexShrink:0}}>{smartPick.tg}</div>
+      <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:10,fontWeight:700,color:ac,letterSpacing:1,textTransform:"uppercase"}}>También recomendado</div><div style={{fontSize:10,fontWeight:700,color:t1,marginTop:1}}>{smartPick.n}</div></div>
       <Ic name="rec" size={12} color={ac}/>
     </button>}
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:9,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
-      <div style={{display:"flex",alignItems:"center",gap:3}}><span style={{fontSize:9,fontWeight:700,color:lv.c}}>{lv.n}</span><div style={{width:36,height:3,borderRadius:2,background:bd,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:2,background:lv.c}}/></div></div>
+      <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:3}}><span style={{fontSize:10,fontWeight:700,color:lv.c}}>{lv.n}</span><div style={{width:36,height:3,borderRadius:2,background:bd,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:2,background:lv.c}}/></div></div>
     </div>
     <div style={{display:"flex",gap:7,marginBottom:16}}>
       <button onClick={()=>setSl(true)} style={{flex:1,padding:"10px 12px",borderRadius:15,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",gap:9}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-        <div style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:ac}}>{pr.tg}</div>
-        <div style={{flex:1,textAlign:"left"}}><div style={{fontWeight:700,fontSize:11,color:t1}}>{pr.n}</div><div style={{fontSize:9,color:t3}}>{pr.ph.length} fases</div></div>
+        <div style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:ac}}>{pr.tg}</div>
+        <div style={{flex:1,textAlign:"left"}}><div style={{fontWeight:700,fontSize:11,color:t1}}>{pr.n}</div><div style={{fontSize:10,color:t3}}>{pr.ph.length} fases</div></div>
         <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4L6 7L9 4" stroke={t3} strokeWidth="1.8" strokeLinecap="round"/></svg>
       </button>
       <button onClick={()=>setShowIntent(true)} style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="focus" size={18} color={t3}/></button>
@@ -1108,16 +1192,16 @@ export default function BioIgnicion(){
 
     {/* Pre-session mood capture */}
     {ts==="idle"&&<div style={{marginBottom:16,animation:"fi .4s"}}>
-      <div style={{fontSize:9,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>¿Cómo llegas a esta sesión?</div>
+      <div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>¿Cómo llegas a esta sesión?</div>
       <div style={{display:"flex",gap:4}}>{MOODS.map(m=>(
         <button key={m.id} onClick={()=>{setPreMood(m.value);H("tap");}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"7px 2px",borderRadius:11,border:preMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:preMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s"}}>
           <Ic name={m.icon} size={16} color={preMood===m.value?m.color:t3}/>
-          <span style={{fontSize:9,fontWeight:700,color:preMood===m.value?m.color:t3,lineHeight:1.1,textAlign:"center"}}>{m.label}</span>
+          <span style={{fontSize:10,fontWeight:700,color:preMood===m.value?m.color:t3,lineHeight:1.1,textAlign:"center"}}>{m.label}</span>
         </button>))}</div>
     </div>}
 
     {/* ═══ CORE DE IGNICIÓN — Living Nucleus ═══ */}
-    <div onClick={timerTap} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:236,height:isActive?200:236,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
+    <div onClick={timerTap} aria-label="Core de Ignición" role="button" onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:236,height:isActive?200:236,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
       {/* Energy field — outermost aura */}
       <div style={{position:"absolute",inset:isActive?-20:-12,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"10":"05"},transparent 65%)`,animation:ts==="idle"?"pu 4s ease-in-out infinite":isActive?"pu 2.5s ease infinite":"none",transition:"all .8s",filter:isActive?"blur(2px)":"blur(4px)"}}/>
       {/* Pulse rings — heartbeat */}
@@ -1138,19 +1222,16 @@ export default function BioIgnicion(){
         {isBr&&bL&&<div style={{animation:"fi .3s",marginBottom:2}}><span style={{fontSize:11,fontWeight:800,letterSpacing:4,color:ac,opacity:.9}}>{bL}</span><span style={{fontSize:12,fontWeight:800,color:ac,marginLeft:3}}>{bCnt}s</span></div>}
         <div style={{fontSize:isActive?46:52,fontWeight:800,color:t1,lineHeight:1,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none",transition:"font-size .5s"}}>{sec}</div>
         {isActive&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:3,opacity:.8}}>{sessPct}%</div>}
-        {isActive&&sessionData.motionSamples>0&&<div style={{display:"flex",alignItems:"center",gap:3,marginTop:3}}><div style={{width:4,height:4,borderRadius:"50%",background:sessionData.stability<0.5?"#059669":sessionData.stability<1.5?"#D97706":"#DC2626",animation:"pu 1.5s ease infinite"}}/><span style={{fontSize:9,color:t3}}>Coherencia {sessionData.stability<0.5?"alta":sessionData.stability<1.5?"media":"calibrando"}</span></div>}
-        {ts==="idle"&&<><div style={{fontSize:9,fontWeight:700,letterSpacing:4,color:t3,marginTop:4,textTransform:"uppercase"}}>segundos</div><div style={{fontSize:10,color:ac,marginTop:6,fontWeight:600,opacity:.7,animation:"pu 3s ease-in-out infinite"}}>toca para ignición</div></>}
-        {ts==="running"&&!isBr&&<div style={{fontSize:9,color:t3,marginTop:3,opacity:.6}}>toca para pausar</div>}
+        {isActive&&sessionData.motionSamples>0&&<div style={{display:"flex",alignItems:"center",gap:3,marginTop:3}}><div style={{width:4,height:4,borderRadius:"50%",background:sessionData.stability<0.5?"#059669":sessionData.stability<1.5?"#D97706":"#DC2626",animation:"pu 1.5s ease infinite"}}/><span style={{fontSize:10,color:t3}}>Coherencia {sessionData.stability<0.5?"alta":sessionData.stability<1.5?"media":"calibrando"}</span></div>}
+        {ts==="idle"&&<><div style={{fontSize:10,fontWeight:700,letterSpacing:4,color:t3,marginTop:4,textTransform:"uppercase"}}>segundos</div><div style={{fontSize:10,color:ac,marginTop:6,fontWeight:600,opacity:.7,animation:"pu 3s ease-in-out infinite"}}>toca para ignición</div></>}
+        {ts==="running"&&!isBr&&<div style={{fontSize:10,color:t3,marginTop:3,opacity:.6}}>toca para pausar</div>}
         {ts==="paused"&&<div style={{fontSize:10,fontWeight:700,color:ac,marginTop:4,animation:"pausePulse 2s ease infinite"}}>EN PAUSA</div>}
       </div>
       {/* Touch ripple */}
       {tp&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"100%",height:"100%",borderRadius:"50%",border:`2px solid ${ac}20`,animation:"cdPulse .6s ease forwards",pointerEvents:"none"}}/>}
     </div>
-    {/* Breathing bar - immersive gradient */}
-    {isBr&&bL&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"8px 16px",marginBottom:10,borderRadius:12,background:`linear-gradient(135deg,${ac}08,${ac}03)`,border:`1px solid ${ac}10`,animation:"fi .3s"}}>
-      <div style={{width:6,height:6,borderRadius:"50%",background:ac,animation:"pu 1.5s ease infinite"}}/><span style={{fontSize:11,fontWeight:800,letterSpacing:4,color:ac}}>{bL}</span><span style={{fontSize:12,fontWeight:800,color:ac}}>{bCnt}s</span>
-    </div>}
-    <div style={{textAlign:"center",marginBottom:isActive?6:10}}><div style={{display:"inline-flex",alignItems:"center",gap:6}}><Ic name={ph.ic} size={isActive?11:13} color={ac}/><span style={{fontSize:isActive?12:14,fontWeight:800,color:t1}}>{ph.l}</span></div>{!isActive&&<div style={{fontSize:9,color:t3,marginTop:2}}>{ph.r}</div>}</div>
+    {/* Breathing state — only shows when NOT in Core view */}
+    <div style={{textAlign:"center",marginBottom:isActive?6:10}}><div style={{display:"inline-flex",alignItems:"center",gap:6}}><Ic name={ph.ic} size={isActive?11:13} color={ac}/><span style={{fontSize:isActive?12:14,fontWeight:800,color:t1}}>{ph.l}</span></div>{!isActive&&<div style={{fontSize:10,color:t3,marginTop:2}}>{ph.r}</div>}</div>
     <div key={pi} style={{background:cd,borderRadius:16,padding:"16px",marginBottom:10,border:`1px solid ${bd}`,animation:"phaseSlide .5s cubic-bezier(.4,0,.2,1)"}}>
       {/* Animated phase illustration */}
       {isActive&&<><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:700,color:ac}}>Fase {pi+1} de {pr.ph.length}</span><span style={{fontSize:10,color:t3}}>{Math.round((pi+1)/pr.ph.length*100)}%</span></div><PhaseVisual type={ph.ic} color={ac} scale={bS} active={isActive}/></>}
@@ -1238,8 +1319,8 @@ export default function BioIgnicion(){
       {/* Expandable science */}
       <button onClick={()=>{setShowScience(!showScience);setSessionData(d=>({...d,scienceViews:(d.scienceViews||0)+1}));}} style={{display:"flex",alignItems:"center",gap:5,marginTop:12,padding:"6px 0",background:"none",border:"none",cursor:"pointer"}}>
         <Ic name="mind" size={11} color={ac}/>
-        <span style={{fontSize:9,color:ac,fontWeight:700,letterSpacing:.5}}>NEUROCIENCIA</span>
-        <span style={{fontSize:9,color:ac,transform:showScience?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>▾</span>
+        <span style={{fontSize:10,color:ac,fontWeight:700,letterSpacing:.5}}>NEUROCIENCIA</span>
+        <span style={{fontSize:10,color:ac,transform:showScience?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>▾</span>
       </button>
       {showScience&&<div style={{marginTop:8,padding:"12px 14px",background:ac+"05",borderRadius:12,border:`1px solid ${ac}08`,animation:"fi .3s"}}>
         <div style={{fontSize:11,color:t2,lineHeight:1.7,marginBottom:SCIENCE_DEEP[pr.id]?8:0}}>{ph.sc}</div>
@@ -1249,21 +1330,41 @@ export default function BioIgnicion(){
     {/* Next phase preview */}
     {isActive&&nextPh&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",marginBottom:10,borderRadius:10,background:isDark?"#1A1E28":"#F8FAFC"}}>
       <Ic name="rec" size={10} color={t3}/>
-      <span style={{fontSize:9,color:t3,fontWeight:600}}>Siguiente: {nextPh.l} ({nextPh.r})</span>
+      <span style={{fontSize:10,color:t3,fontWeight:600}}>Siguiente: {nextPh.l} ({nextPh.r})</span>
     </div>}
-    <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;return<div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:i<pi?`1px solid ${ac}40`:`1px solid ${bd}`,background:pi===i?ac+"08":i<pi?ac+"04":cd,color:pi===i?ac:i<pi?ac:t3,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",gap:3,opacity:i<=pi?1:.5,transition:"all .3s"}}><span style={{width:5,height:5,borderRadius:"50%",background:i<=pi?ac:bd,transition:"all .3s"}}/>{sR}</div>;})}</div>
+    <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;return<div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:i<pi?`1px solid ${ac}40`:`1px solid ${bd}`,background:pi===i?ac+"08":i<pi?ac+"04":cd,color:pi===i?ac:i<pi?ac:t3,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",gap:3,opacity:i<=pi?1:.5,transition:"all .3s"}}><span style={{width:5,height:5,borderRadius:"50%",background:i<=pi?ac:bd,transition:"all .3s"}}/>{sR}</div>;})}</div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
       {ts==="idle"&&<button onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",animation:"gl 3s ease infinite",boxShadow:`0 4px 18px ${ac}28`}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}><Ic name="bolt" size={13} color="#fff"/>INICIAR</button>}
       {ts==="running"&&<><button onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
       {ts==="paused"&&<><button onClick={()=>{setTs("running");H("go");}} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
     </div>
-    {isActive&&<div style={{marginTop:14,height:20,borderRadius:10,overflow:"hidden",background:cd,border:`1px solid ${bd}`,position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:0,left:0,animation:"wf 4s linear infinite",opacity:.2}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}15,${ac}06)`,transition:"width .95s linear",borderRadius:10}}/></div>}
+    {isActive&&<div style={{marginTop:14,height:26,borderRadius:13,overflow:"hidden",background:cd,border:`1.5px solid ${bd}`,position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:0,left:0,animation:"wf 4s linear infinite",opacity:.2}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}25,${ac}10)`,transition:"width .95s linear",borderRadius:10}}/></div>}
   </>}
   </div>)}
 
   {tab==="dashboard"&&(<div style={{padding:"14px 20px 180px"}}>
     {noData?<div style={{textAlign:"center",padding:"50px 20px"}}><Ic name="bolt" size={34} color={ac}/><div style={{fontSize:15,fontWeight:800,color:t1,marginTop:10,marginBottom:5}}>Tu dashboard te espera</div><div style={{fontSize:11,color:t3,marginBottom:18}}>Completa tu primera ignición.</div><button onClick={()=>switchTab("ignicion")} style={{padding:"11px 28px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>IR A IGNICIÓN</button></div>
     :<>
+
+    {/* ═══ EXECUTIVE SUMMARY ═══ */}
+    <div style={{background:"linear-gradient(135deg,"+ac+"08,"+ac+"03)",borderRadius:18,padding:"16px",marginBottom:14,border:"1.5px solid "+ac+"15"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ac}}>{st.weeklyData.reduce((a,b)=>a+b,0)}</div><div style={{fontSize:10,color:t3}}>sesiones semana</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"}}>{bioSignal.score}</div><div style={{fontSize:10,color:t3}}>BioSignal</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:burnout.risk==="bajo"?"#059669":"#DC2626"}}>{burnout.risk==="sin datos"?"—":burnout.index}</div><div style={{fontSize:10,color:t3}}>burnout</div></div>
+      </div>
+      <div style={{fontSize:11,color:t2,textAlign:"center",lineHeight:1.5}}>{perf>=70?"Rendimiento alto. Mantén tu ritmo actual.":perf>=50?"Estado funcional. Una sesión más hoy elevaría tu rendimiento.":"Tu sistema necesita atención. Prioriza una sesión de reset."}</div>
+    </div>
+
+    
+    {/* Yesterday Comparison */}
+    {(()=>{const ml=st.moodLog||[];const today=ml.filter(m=>new Date(m.ts).toDateString()===new Date().toDateString());const yday=ml.filter(m=>new Date(m.ts).toDateString()===new Date(Date.now()-86400000).toDateString());if(!yday.length||!today.length)return null;const tAvg=+(today.reduce((a,m)=>a+m.mood,0)/today.length).toFixed(1);const yAvg=+(yday.reduce((a,m)=>a+m.mood,0)/yday.length).toFixed(1);const d=+(tAvg-yAvg).toFixed(1);return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",marginBottom:14,background:d>=0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:12,border:"1px solid "+(d>=0?"#05966920":"#DC262620")}}>
+      <div style={{fontSize:10,color:t2}}>Ayer {yAvg}</div>
+      <div style={{fontSize:14,fontWeight:800,color:d>0?"#059669":d<0?"#DC2626":t3}}>{d>0?"+":""}{d}</div>
+      <div style={{fontSize:10,color:t2}}>Hoy {tAvg}</div>
+      <div style={{flex:1,textAlign:"right",fontSize:10,color:d>=0?"#059669":"#DC2626",fontWeight:600}}>{d>0?"Mejorando":"En ajuste"}</div>
+    </div>);})()}
 
     {/* ═══ NEURAL ENGINE VISUAL ═══ */}
     {(()=>{
@@ -1359,7 +1460,7 @@ export default function BioIgnicion(){
            perf>=45?"Rendimiento subóptimo. Una sesión de enfoque elevaría tu estado 15-20%.":
            "Sistema en modo de protección. Prioriza un reset antes de exigir rendimiento."}
         </div>
-        <div style={{fontSize:9,color:t3,marginTop:6,fontStyle:"italic"}}>Toca las zonas del cerebro para explorar cada estado</div>
+        <div style={{fontSize:10,color:t3,marginTop:6,fontStyle:"italic"}}>Toca las zonas del cerebro para explorar cada estado</div>
       </div>}
 
       {/* Level badge */}
@@ -1372,28 +1473,28 @@ export default function BioIgnicion(){
     {/* ═══ BIO SIGNAL SCORE + BURNOUT INDEX ═══ */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:14}}>
       <div style={{background:cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${bd}`}}>
-        <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>BioSignal Score</div>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>BioSignal Score</div>
         <AN value={bioSignal.score} sfx="" color={bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"} sz={26}/>
         <div style={{fontSize:10,color:t2,marginTop:4,lineHeight:1.4}}>{bioSignal.score>=70?"Sistema en rendimiento alto":bioSignal.score>=45?"Estado funcional, margen de mejora":"Requiere intervención activa"}</div>
       </div>
       <div style={{background:burnout.risk==="crítico"||burnout.risk==="alto"?(isDark?"#1A0A0A":"#FEF2F2"):cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${burnout.risk==="crítico"||burnout.risk==="alto"?"#DC262620":bd}`}}>
-        <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>Índice Burnout</div>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>Índice Burnout</div>
         <AN value={burnout.index} sfx="" color={burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={26}/>
         <div style={{fontSize:10,color:burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626",fontWeight:600,marginTop:4}}>Riesgo {burnout.risk}</div>
-        <div style={{fontSize:9,color:t3,marginTop:2}}>Tendencia: {burnout.trend}</div>
-        {burnout.prediction&&<div style={{fontSize:9,color:burnout.risk==="crítico"||burnout.risk==="alto"?"#DC2626":t2,marginTop:4,lineHeight:1.4,fontStyle:"italic"}}>{burnout.prediction}</div>}
+        <div style={{fontSize:10,color:t3,marginTop:2}}>Tendencia: {burnout.trend}</div>
+        {burnout.prediction&&<div style={{fontSize:10,color:burnout.risk==="crítico"||burnout.risk==="alto"?"#DC2626":t2,marginTop:4,lineHeight:1.4,fontStyle:"italic"}}>{burnout.prediction}</div>}
       </div>
     </div>
 
     {/* ═══ PROTOCOL SENSITIVITY ═══ */}
     {Object.keys(protoSens).length>=2&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Tu Sensibilidad por Protocolo</div>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Tu Sensibilidad por Protocolo</div>
       {Object.entries(protoSens).sort((a,b)=>b[1].avgDelta-a[1].avgDelta).slice(0,4).map(([name,data],i)=>(
         <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<3?`1px solid ${bd}`:"none"}}>
           <span style={{fontSize:11,color:t1,fontWeight:600}}>{name}</span>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <span style={{fontSize:11,fontWeight:800,color:data.avgDelta>0?"#059669":data.avgDelta<0?"#DC2626":t3}}>{data.avgDelta>0?"+":""}{data.avgDelta}</span>
-            <span style={{fontSize:9,color:t3}}>{data.sessions}x</span>
+            <span style={{fontSize:10,color:t3}}>{data.sessions}x</span>
           </div>
         </div>))}
     </div>}
@@ -1403,9 +1504,9 @@ export default function BioIgnicion(){
     {weeklySummary&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1px solid "+bd}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Esta semana vs anterior</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:t3}}>{weeklySummary.prev}</div><div style={{fontSize:9,color:t3}}>Anterior</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:t3}}>{weeklySummary.prev}</div><div style={{fontSize:10,color:t3}}>Anterior</div></div>
         <div style={{fontSize:18,fontWeight:800,color:weeklySummary.diff>0?"#059669":weeklySummary.diff<0?"#DC2626":t3}}>{weeklySummary.diff>0?"+":""}{weeklySummary.diff}</div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ac}}>{weeklySummary.curr}</div><div style={{fontSize:9,color:t3}}>Esta</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ac}}>{weeklySummary.curr}</div><div style={{fontSize:10,color:t3}}>Esta</div></div>
       </div>
       {weeklySummary.mAvg>0&&<div style={{fontSize:10,color:t2,textAlign:"center",marginTop:6}}>Mood promedio: {weeklySummary.mAvg}/5</div>}
     </div>}
@@ -1415,17 +1516,29 @@ export default function BioIgnicion(){
     {st.history&&st.history.length>=5&&(()=>{const first5=st.history.slice(0,5);const last5=st.history.slice(-5);const baseC=Math.round(first5.reduce((a,h)=>a+(h.c||50),0)/5);const nowC=Math.round(last5.reduce((a,h)=>a+(h.c||50),0)/5);const delta=nowC-baseC;return(<div style={{background:delta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1.5px solid "+(delta>0?"#05966920":"#DC262620")}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:6}}>Tu evolución</div>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <div><div style={{fontSize:9,color:t3}}>Inicio</div><div style={{fontSize:18,fontWeight:800,color:t3}}>{baseC}%</div></div>
+        <div><div style={{fontSize:10,color:t3}}>Inicio</div><div style={{fontSize:18,fontWeight:800,color:t3}}>{baseC}%</div></div>
         <div style={{fontSize:20,fontWeight:800,color:delta>0?"#059669":"#DC2626"}}>{delta>0?"+":""}{delta}%</div>
-        <div><div style={{fontSize:9,color:t3}}>Ahora</div><div style={{fontSize:18,fontWeight:800,color:delta>0?"#059669":t1}}>{nowC}%</div></div>
+        <div><div style={{fontSize:10,color:t3}}>Ahora</div><div style={{fontSize:18,fontWeight:800,color:delta>0?"#059669":t1}}>{nowC}%</div></div>
       </div>
       <div style={{fontSize:10,color:t2,marginTop:6}}>{delta>0?"Tu coherencia mejoró "+delta+"% desde que empezaste.":"En proceso de calibración. Mantén la constancia."}</div>
+    </div>);})()}
+
+    
+    {/* Recovery Index */}
+    {(()=>{const ri=calcRecoveryIndex(st.moodLog);if(!ri)return null;return(
+    <div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1px solid "+bd}}>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Índice de Recuperación</div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ri.avgRetention>=80?"#059669":ri.avgRetention>=60?"#D97706":"#DC2626"}}>{ri.avgRetention}%</div><div style={{fontSize:10,color:t3}}>retención</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:t1}}>{ri.avgHours}h</div><div style={{fontSize:10,color:t3}}>duración efecto</div></div>
+      </div>
+      <div style={{fontSize:11,color:t2,lineHeight:1.5}}>{ri.interpretation}</div>
     </div>);})()}
 
     {/* ═══ IMPACTO MEDIBLE ═══ */}
     {(()=>{const ml=st.moodLog||[];const withPre=ml.filter(m=>m.pre>0);if(withPre.length<2)return null;const avg=+(withPre.reduce((a,m)=>a+(m.mood-m.pre),0)/withPre.length).toFixed(1);const bestP={};withPre.forEach(m=>{if(!bestP[m.proto])bestP[m.proto]={sum:0,cnt:0};bestP[m.proto].sum+=m.mood-m.pre;bestP[m.proto].cnt++;});const best=Object.entries(bestP).sort((a,b)=>(b[1].sum/b[1].cnt)-(a[1].sum/a[1].cnt))[0];return(
       <div style={{background:`linear-gradient(135deg,${ac}08,${ac}03)`,borderRadius:18,padding:"16px 14px",marginBottom:14,border:`1px solid ${ac}12`}}>
-        <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:ac,textTransform:"uppercase",marginBottom:8}}>Impacto Medible</div>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:ac,textTransform:"uppercase",marginBottom:8}}>Impacto Medible</div>
         <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:6}}>
           <span style={{fontSize:28,fontWeight:800,color:avg>0?"#059669":avg<0?"#DC2626":t1}}>{avg>0?"+":""}{avg}</span>
           <span style={{fontSize:10,color:t2}}>puntos de mejora promedio por sesión</span>
@@ -1438,45 +1551,51 @@ export default function BioIgnicion(){
 
     {/* ═══ ACTIVITY HEATMAP (GitHub-style, 4 weeks) ═══ */}
     <div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Actividad · 28 días</div>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Actividad · 28 días</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
-        {(()=>{const cells=[];const now=new Date();const hist=st.history||[];for(let d=27;d>=0;d--){const day=new Date(now);day.setDate(day.getDate()-d);const ds=day.toDateString();const count=hist.filter(h=>new Date(h.ts).toDateString()===ds).length;const isToday=d===0;cells.push(<div key={d} style={{aspectRatio:"1",borderRadius:4,background:count===0?(isDark?"#1A1E28":"#F1F5F9"):count===1?ac+"30":count===2?ac+"60":ac,border:isToday?`1.5px solid ${ac}`:"1px solid transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>{count>0&&<span style={{fontSize:9,fontWeight:800,color:count>=3?"#fff":ac}}>{count}</span>}</div>);}return cells;})()}
+        {(()=>{const cells=[];const now=new Date();const hist=st.history||[];for(let d=27;d>=0;d--){const day=new Date(now);day.setDate(day.getDate()-d);const ds=day.toDateString();const count=hist.filter(h=>new Date(h.ts).toDateString()===ds).length;const isToday=d===0;cells.push(<div key={d} style={{aspectRatio:"1",borderRadius:4,background:count===0?(isDark?"#1A1E28":"#F1F5F9"):count===1?ac+"30":count===2?ac+"60":ac,border:isToday?`1.5px solid ${ac}`:"1px solid transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>{count>0&&<span style={{fontSize:10,fontWeight:800,color:count>=3?"#fff":ac}}>{count}</span>}</div>);}return cells;})()}
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}><span style={{fontSize:9,color:t3}}>4 semanas atrás</span><span style={{fontSize:9,color:t3}}>Hoy</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}><span style={{fontSize:10,color:t3}}>4 semanas atrás</span><span style={{fontSize:10,color:t3}}>Hoy</span></div>
     </div>
 
     {/* ═══ ENERGY FLOW — Hour distribution ═══ */}
     {st.history?.length>=3&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Tu Flujo de Energía</div>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Tu Flujo de Energía</div>
       <div style={{display:"flex",alignItems:"flex-end",gap:2,height:40}}>
-        {(()=>{const hrs=Array(24).fill(0);(st.history||[]).forEach(h=>{const hr=new Date(h.ts).getHours();hrs[hr]++;});const mx=Math.max(...hrs,1);const slots=[];for(let i=6;i<23;i++){const v=hrs[i];slots.push(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1}}><div style={{width:"100%",borderRadius:3,height:Math.max((v/mx)*34,1),background:v>0?ac:bd,transition:"height .5s",opacity:v>0?(.3+.7*(v/mx)):1}}/>{i%3===0&&<span style={{fontSize:9,color:t3}}>{i}</span>}</div>);}return slots;})()}
+        {(()=>{const hrs=Array(24).fill(0);(st.history||[]).forEach(h=>{const hr=new Date(h.ts).getHours();hrs[hr]++;});const mx=Math.max(...hrs,1);const slots=[];for(let i=6;i<23;i++){const v=hrs[i];slots.push(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1}}><div style={{width:"100%",borderRadius:3,height:Math.max((v/mx)*34,1),background:v>0?ac:bd,transition:"height .5s",opacity:v>0?(.3+.7*(v/mx)):1}}/>{i%3===0&&<span style={{fontSize:10,color:t3}}>{i}</span>}</div>);}return slots;})()}
       </div>
-      <div style={{fontSize:9,color:t2,marginTop:8,fontStyle:"italic"}}>{(()=>{const hrs=Array(24).fill(0);(st.history||[]).forEach(h=>{hrs[new Date(h.ts).getHours()]++;});const pk=hrs.indexOf(Math.max(...hrs));return pk>0?`Tu hora pico: ${pk}:00. Tu sistema rinde mejor aquí.`:"Aún recopilando datos de tu patrón.";})()}</div>
+      <div style={{fontSize:10,color:t2,marginTop:8,fontStyle:"italic"}}>{(()=>{const hrs=Array(24).fill(0);(st.history||[]).forEach(h=>{hrs[new Date(h.ts).getHours()]++;});const pk=hrs.indexOf(Math.max(...hrs));return pk>0?`Tu hora pico: ${pk}:00. Tu sistema rinde mejor aquí.`:"Aún recopilando datos de tu patrón.";})()}</div>
     </div>}
 
     {/* ═══ MOOD TREND ═══ */}
     {moodTrend.length>=2&&<div style={{background:cd,borderRadius:16,padding:"12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><span style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Tendencia Emocional</span><div style={{display:"flex",alignItems:"center",gap:3}}><Ic name={MOODS[Math.round(avgMood)-1]?.icon||"neutral"} size={12} color={MOODS[Math.round(avgMood)-1]?.color||t3}/><span style={{fontSize:12,fontWeight:800,color:MOODS[Math.round(avgMood)-1]?.color||t3}}>{avgMood}</span><span style={{fontSize:9,color:t3}}>/5</span></div></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Tendencia Emocional</span><div style={{display:"flex",alignItems:"center",gap:3}}><Ic name={MOODS[Math.round(avgMood)-1]?.icon||"neutral"} size={12} color={MOODS[Math.round(avgMood)-1]?.color||t3}/><span style={{fontSize:12,fontWeight:800,color:MOODS[Math.round(avgMood)-1]?.color||t3}}>{avgMood}</span><span style={{fontSize:10,color:t3}}>/5</span></div></div>
       <SK data={moodTrend} c={MOODS[Math.round(avgMood)-1]?.color||"#6366F1"} w={340} h={26} id="mood"/>
+    </div>}
+    {/* Mood Sparkline 14 days */}
+    {moodTrend.length>=3&&<div style={{background:cd,borderRadius:14,padding:"12px",marginBottom:14,border:"1px solid "+bd}}>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Evolución de mood · 14 días</div>
+      <SK data={moodTrend} c={avgMood>=3.5?"#059669":avgMood>=2.5?"#D97706":"#DC2626"} w={280} h={40} id="mood14"/>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span style={{fontSize:10,color:t3}}>hace 14 días</span><span style={{fontSize:10,fontWeight:700,color:avgMood>=3.5?"#059669":"#D97706"}}>hoy: {avgMood}/5</span></div>
     </div>}
 
     {/* ═══ METRICS GRID ═══ */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:14}}>
       {[{l:"Enfoque",v:st.coherencia,d:rD.c>0?"+"+rD.c+"%":"—",c:"#3B82F6",u:"e"},{l:"Calma",v:st.resiliencia,d:rD.r>0?"+"+rD.r+"%":"—",c:"#8B5CF6",u:"c"},{l:"V-Cores",v:st.vCores||0,d:"+"+(st.history?.slice(-1)[0]?.vc||0),c:"#D97706",u:"v"},{l:"Sesiones",v:st.totalSessions,d:st.streak+"d racha",c:"#059669",u:"t"}].map((k,i)=>(
         <div key={i} style={{background:cd,borderRadius:14,padding:"11px 10px",border:`1px solid ${bd}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:9,fontWeight:700,color:t3}}>{k.l}</span><span style={{fontSize:9,fontWeight:700,color:"#059669"}}>{k.d}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:t3}}>{k.l}</span><span style={{fontSize:10,fontWeight:700,color:"#059669"}}>{k.d}</span></div>
           <AN value={k.v} sfx={k.l==="Enfoque"||k.l==="Calma"?"%":""} color={k.c} sz={20}/>
         </div>))}
     </div>
 
     {/* ═══ RECORDS ═══ */}
     {records.topProto&&<div style={{background:cd,borderRadius:16,padding:"12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><Ic name="trophy" size={14} color={ac}/><span style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Récords Personales</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><Ic name="trophy" size={14} color={ac}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Récords Personales</span></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5}}>
         {[{v:records.bestStreak,l:"Mejor racha",s:"días"},{v:records.maxC+"%",l:"Max coherencia",s:""},{v:records.topProto.c+"x",l:records.topProto.n,s:""},{v:records.earliest!==null?records.earliest+":00":"—",l:"Más temprana",s:""}].map((r,i)=>
           <div key={i} style={{padding:"8px",background:isDark?"#1A1E28":"#F8FAFC",borderRadius:10}}>
             <div style={{fontSize:14,fontWeight:800,color:t1}}>{r.v}</div>
-            <div style={{fontSize:9,color:t3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.l} {r.s}</div>
+            <div style={{fontSize:10,color:t3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.l} {r.s}</div>
           </div>)}
       </div>
     </div>}
@@ -1491,41 +1610,41 @@ export default function BioIgnicion(){
 
     {/* ═══ WEEKLY CHART + SUMMARY ═══ */}
     {weeklySummary&&<div style={{background:isDark?"#141820":"#F8FAFC",borderRadius:16,padding:"12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:9,color:t2,lineHeight:1.6}}>Semana pasada: <span style={{fontWeight:800,color:t1}}>{weeklySummary.prev}</span>. Actual: <span style={{fontWeight:800,color:t1}}>{weeklySummary.curr}</span>.{weeklySummary.diff>0?<span style={{color:"#059669",fontWeight:700}}> +{weeklySummary.diff}</span>:weeklySummary.diff<0?<span style={{color:"#DC2626",fontWeight:700}}> {weeklySummary.diff}</span>:<span style={{color:t3}}> Igual</span>}.{weeklySummary.mAvg>0&&<span> Mood: <span style={{fontWeight:800}}>{weeklySummary.mAvg}/5</span></span>}</div>
+      <div style={{fontSize:10,color:t2,lineHeight:1.6}}>Semana pasada: <span style={{fontWeight:800,color:t1}}>{weeklySummary.prev}</span>. Actual: <span style={{fontWeight:800,color:t1}}>{weeklySummary.curr}</span>.{weeklySummary.diff>0?<span style={{color:"#059669",fontWeight:700}}> +{weeklySummary.diff}</span>:weeklySummary.diff<0?<span style={{color:"#DC2626",fontWeight:700}}> {weeklySummary.diff}</span>:<span style={{color:t3}}> Igual</span>}.{weeklySummary.mAvg>0&&<span> Mood: <span style={{fontWeight:800}}>{weeklySummary.mAvg}/5</span></span>}</div>
     </div>}
     <div style={{background:cd,borderRadius:16,padding:"12px 10px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:50}}>{st.weeklyData.map((v,i)=>{const a=((new Date().getDay()+6)%7)===i;return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><div style={{width:"100%",borderRadius:5,height:Math.max((v/mW)*42,2),background:a?ac:bd,transition:"height .6s"}}/><span style={{fontSize:9,color:a?ac:t3,fontWeight:a?800:600}}>{DN[i]}</span></div>);})}</div>
+      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:50}}>{st.weeklyData.map((v,i)=>{const a=((new Date().getDay()+6)%7)===i;return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><div style={{width:"100%",borderRadius:5,height:Math.max((v/mW)*42,2),background:a?ac:bd,transition:"height .6s"}}/><span style={{fontSize:10,color:a?ac:t3,fontWeight:a?800:600}}>{DN[i]}</span></div>);})}</div>
     </div>
 
     <button onClick={()=>setShowHist(true)} style={{width:"100%",padding:"11px",borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:14}}><Ic name="clock" size={13} color={t3}/><span style={{fontSize:10,fontWeight:700,color:t2}}>Historial ({(st.history||[]).length})</span></button>
-    {st.achievements.length>0&&<div style={{background:ac+"05",borderRadius:16,padding:"12px 10px",border:`1px solid ${ac}10`}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}><Ic name="star" size={14} color={ac}/><span style={{fontSize:11,fontWeight:800,color:ac}}>Logros</span></div>{st.achievements.map(a=><div key={a} style={{fontSize:9,color:ac,padding:"2px 0",display:"flex",alignItems:"center",gap:5,fontWeight:600}}><div style={{width:3,height:3,borderRadius:"50%",background:ac}}/>{AM[a]||a}</div>)}</div>}
+    {st.achievements.length>0&&<div style={{background:ac+"05",borderRadius:16,padding:"12px 10px",border:`1px solid ${ac}10`}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}><Ic name="star" size={14} color={ac}/><span style={{fontSize:11,fontWeight:800,color:ac}}>Logros</span></div>{st.achievements.map(a=><div key={a} style={{fontSize:10,color:ac,padding:"2px 0",display:"flex",alignItems:"center",gap:5,fontWeight:600}}><div style={{width:3,height:3,borderRadius:"50%",background:ac}}/>{AM[a]||a}</div>)}</div>}
     </>}
   </div>)}
 
   {tab==="perfil"&&(<div style={{padding:"14px 20px 180px"}}>
     <div style={{textAlign:"center",marginBottom:22,marginTop:12}}>
       <div style={{width:76,height:76,borderRadius:"50%",margin:"0 auto 10px",background:`linear-gradient(135deg,${ac},#6366F1)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 8px 30px ${ac}22`,position:"relative"}}><Ic name="user" size={30} color="#fff"/>
-        <div style={{position:"absolute",bottom:-2,right:-2,width:22,height:22,borderRadius:"50%",background:lv.c,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${cd}`}}><span style={{fontSize:9,fontWeight:800,color:"#fff"}}>{lv.n[0]}</span></div>
+        <div style={{position:"absolute",bottom:-2,right:-2,width:22,height:22,borderRadius:"50%",background:lv.c,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${cd}`}}><span style={{fontSize:10,fontWeight:800,color:"#fff"}}>{lv.n[0]}</span></div>
       </div>
       <div style={{fontSize:18,fontWeight:800,color:t1}}>Operador Neural</div>
-      <div style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:5,padding:"3px 10px",background:nSt.color+"0C",borderRadius:14}}><div style={{width:4,height:4,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:9,fontWeight:700,color:nSt.color}}>{nSt.label} · {lv.n}</span></div>
+      <div style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:5,padding:"3px 10px",background:nSt.color+"0C",borderRadius:14}}><div style={{width:4,height:4,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label} · {lv.n}</span></div>
     </div>
 
     {/* Level progress */}
     <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:9,fontWeight:800,color:lv.c}}>{lv.n}</span>{nLv&&<span style={{fontSize:9,color:t3}}>→ {nLv.n}</span>}</div>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:800,color:lv.c}}>{lv.n}</span>{nLv&&<span style={{fontSize:10,color:t3}}>→ {nLv.n}</span>}</div>
       <div style={{height:5,background:bd,borderRadius:5,overflow:"hidden",marginBottom:6}}><div style={{width:lPct+"%",height:"100%",borderRadius:5,background:`linear-gradient(90deg,${lv.c},${lv.c}CC)`,transition:"width 1s"}}/></div>
-      <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:9,color:t3}}>{lPct}%</span><span style={{fontSize:9,color:t3}}>{st.totalSessions} sesiones · {Math.round((st.totalTime||0)/60)} min · {st.streak}d racha</span></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,color:t3}}>{lPct}%</span><span style={{fontSize:10,color:t3}}>{st.totalSessions} sesiones · {Math.round((st.totalTime||0)/60)} min · {st.streak}d racha</span></div>
     </div>
 
     {/* V-Cores + Mood */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:10}}>
       <div style={{background:ac+"06",borderRadius:14,padding:"14px 12px",border:`1px solid ${ac}10`}}>
-        <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase",marginBottom:2}}>V-Cores</div>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase",marginBottom:2}}>V-Cores</div>
         <AN value={st.vCores||0} color={ac} sz={24}/>
       </div>
       <div style={{background:cd,borderRadius:14,padding:"14px 12px",border:`1px solid ${bd}`}}>
-        <div style={{fontSize:9,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:2}}>Mood</div>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:2}}>Mood</div>
         {avgMood>0?<div style={{display:"flex",alignItems:"center",gap:4}}><Ic name={MOODS[Math.round(avgMood)-1]?.icon||"neutral"} size={18} color={MOODS[Math.round(avgMood)-1]?.color||t3}/><span style={{fontSize:20,fontWeight:800,color:MOODS[Math.round(avgMood)-1]?.color||t3}}>{avgMood}</span></div>:<span style={{fontSize:11,color:t3}}>Sin datos</span>}
       </div>
     </div>
@@ -1540,15 +1659,15 @@ export default function BioIgnicion(){
     <div style={{background:`linear-gradient(135deg,${isDark?"#141820":"#F0F4FF"},${isDark?"#1A1E28":"#F8FAFC"})`,borderRadius:16,padding:"16px 14px",marginBottom:10,border:`1px solid ${isDark?"#2A2E3A":"#D4DDEF"}`}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
         <div style={{width:32,height:32,borderRadius:9,background:"#6366F110",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="brief" size={16} color="#6366F1"/></div>
-        <div><div style={{fontSize:12,fontWeight:800,color:t1}}>BIO-IGNICIÓN Enterprise</div><div style={{fontSize:9,color:"#6366F1",fontWeight:700}}>Para equipos y organizaciones</div></div>
+        <div><div style={{fontSize:12,fontWeight:800,color:t1}}>BIO-IGNICIÓN Enterprise</div><div style={{fontSize:10,color:"#6366F1",fontWeight:700}}>Para equipos y organizaciones</div></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:10}}>
         {[{n:"Dashboard\nde equipo",ic:"chart"},{n:"Métricas\nde bienestar",ic:"up"},{n:"Challenges\ngrupales",ic:"trophy"}].map((f,i)=>
           <div key={i} style={{textAlign:"center",padding:"8px 4px",background:cd,borderRadius:10,border:`1px solid ${bd}`}}>
-            <Ic name={f.ic} size={16} color="#6366F1"/><div style={{fontSize:9,color:t3,marginTop:3,lineHeight:1.3,whiteSpace:"pre-line"}}>{f.n}</div>
+            <Ic name={f.ic} size={16} color="#6366F1"/><div style={{fontSize:10,color:t3,marginTop:3,lineHeight:1.3,whiteSpace:"pre-line"}}>{f.n}</div>
           </div>)}
       </div>
-      <div style={{fontSize:9,color:t2,lineHeight:1.5,textAlign:"center"}}>SSO · API · HIPAA · Multi-empresa · QR Onboarding</div>
+      <div style={{fontSize:10,color:t2,lineHeight:1.5,textAlign:"center"}}>SSO · API · HIPAA · Multi-empresa · QR Onboarding</div>
     </div>
 
     <div style={{display:"flex",gap:6,marginBottom:10}}>
@@ -1560,15 +1679,15 @@ export default function BioIgnicion(){
   </div>
 
   <div style={{position:"fixed",bottom:58,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"5px 20px",background:`${bg}EB`,backdropFilter:"blur(14px)",display:"flex",justifyContent:"center",gap:12,zIndex:50,borderTop:`1px solid ${bd}`}}>
-    {[{v:st.coherencia,d:rD.c>0?`+${rD.c}`:"—",c:"#3B82F6",ic:"focus"},{v:st.resiliencia,d:rD.r>0?`+${rD.r}`:"—",c:"#8B5CF6",ic:"calm"},{v:st.capacidad,d:"+2",c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:2,fontSize:9}}><Ic name={m.ic} size={9} color={m.c}/><span style={{color:"#059669",fontWeight:700,fontSize:9}}>{m.d}</span><span style={{color:m.c,fontWeight:800}}>{m.v}%</span></div>)}
+    {[{v:st.coherencia,d:rD.c>0?`+${rD.c}`:"—",c:"#3B82F6",ic:"focus"},{v:st.resiliencia,d:rD.r>0?`+${rD.r}`:"—",c:"#8B5CF6",ic:"calm"},{v:st.capacidad,d:"+2",c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:2,fontSize:10}}><Ic name={m.ic} size={9} color={m.c}/><span style={{color:"#059669",fontWeight:700,fontSize:10}}>{m.d}</span><span style={{color:m.c,fontWeight:800}}>{m.v}%</span></div>)}
   </div>
   <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:`${isDark?"rgba(11,14,20,.94)":"rgba(255,255,255,.94)"}`,backdropFilter:"blur(18px)",borderTop:`1px solid ${bd}`,padding:"3px 10px 10px",display:"flex",justifyContent:"center",zIndex:60}}>
     {[{id:"ignicion",lb:"Ignición",ic:"bolt"},{id:"dashboard",lb:"Dashboard",ic:"chart"},{id:"perfil",lb:"Perfil",ic:"user"}].map(t=>{const a=tab===t.id;return(<button key={t.id} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"6px 0 1px",border:"none",cursor:"pointer",background:a?(isDark?"#1A1E28":"#E8ECF4"):"transparent",borderRadius:11,margin:"0 2px"}}>
-      <Ic name={t.ic} size={17} color={a?(t.id==="ignicion"?ac:t.id==="dashboard"?"#6366F1":t1):t3}/><span style={{fontSize:9,fontWeight:700,color:a?t1:t3}}>{t.lb}</span>
+      <Ic name={t.ic} size={17} color={a?(t.id==="ignicion"?ac:t.id==="dashboard"?"#6366F1":t1):t3}/><span style={{fontSize:10,fontWeight:700,color:a?t1:t3}}>{t.lb}</span>
     </button>);})}
   </div>
   </div>);
 }
 
 function RB({o,bd,cd,t3}){return<button onClick={o} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.93)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}><Ic name="reset" size={15} color={t3}/></button>;}
-function SL({t}){return<div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:"#94A3B8",textTransform:"uppercase",marginBottom:7}}>{t}</div>;}
+function SL({t}){return<div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:"#94A3B8",textTransform:"uppercase",marginBottom:7}}>{t}</div>;}
