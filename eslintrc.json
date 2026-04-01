@@ -1,0 +1,5 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {},
+  "ignorePatterns": ["src/app/page.jsx", "src/app/page.js"]
+}
