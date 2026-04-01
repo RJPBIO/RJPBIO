@@ -1127,13 +1127,18 @@ export default function BioIgnicion(){
       <Ic name="alert" size={14} color="#D97706"/>
       <span style={{fontSize:10,fontWeight:600,color:"#D97706"}}>Tu racha de {st.streak} días termina esta noche.</span>
     </div>}
-    {st.todaySessions>0&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:8}}>
+    {st.todaySessions>0&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:4}}>
       <div style={{width:4,height:4,borderRadius:"50%",background:ac}}/><span style={{fontSize:10,fontWeight:700,color:ac}}>{st.todaySessions} {st.todaySessions===1?"sesión":"sesiones"} hoy</span>
-    </div>
+    </div>}
     {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:12,background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:24,height:24,borderRadius:7,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="bolt" size={11} color={ac}/></div><span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de 2 sesiones hoy</span></div>
-      <div style={{width:40,height:5,borderRadius:5,background:bd,overflow:"hidden"}}><div style={{width:Math.min(100,(st.todaySessions||0)/2*100)+"%",height:"100%",background:ac,borderRadius:5,transition:"width .3s"}}/></div>
-    </div>}}
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        <div style={{width:24,height:24,borderRadius:7,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="bolt" size={11} color={ac}/></div>
+        <span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de 2 sesiones hoy</span>
+      </div>
+      <div style={{width:40,height:5,borderRadius:5,background:bd,overflow:"hidden"}}>
+        <div style={{width:Math.min(100,(st.todaySessions||0)/2*100)+"%",height:"100%",background:ac,borderRadius:5,transition:"width .3s"}}/>
+      </div>
+    </div>}
     {ts==="idle"&&st.totalSessions>=3&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8,animation:"fi .4s"}}>
       <Ic name="rec" size={12} color={t3}/><span style={{fontSize:10,fontWeight:600,color:t2}}>Ventana óptima: <span style={{color:ac,fontWeight:800}}>{(()=>{const fp=calcNeuralFingerprint(st);const h=fp?fp.peakHour:new Date().getHours()<12?14:9;return(h<10?"0":"")+h+":00";})()}</span></span>
     </div>}
