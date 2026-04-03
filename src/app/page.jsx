@@ -1772,7 +1772,7 @@ export default function BioIgnicion(){
       <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,color:t3}}>{lPct}%</span><span style={{fontSize:10,color:t3}}>{st.totalSessions} sesiones · {Math.round((st.totalTime||0)/60)} min · {st.streak}d racha</span></div>
     </div>
 
-    {/* V-Cores + Mood */}
+    /* V-Cores + Mood */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:10}}>
       <div style={{background:ac+"06",borderRadius:14,padding:"14px 12px",border:`1px solid ${ac}10`}}>
         <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase",marginBottom:2}}>V-Cores</div>
