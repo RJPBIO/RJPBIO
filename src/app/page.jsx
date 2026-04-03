@@ -903,7 +903,7 @@ export default function BioIgnicion(){
     if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);try{navigator.vibrate([30,50,30,50,80]);}catch(e){}speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);// Full instruction via voice removed — too long for iOS TTS queue. Key phrase is enough.}
     // Pre-hint 2s before next phase
     const nxtIdx=pi<pr.ph.length-1?pi+1:null;if(nxtIdx!==null){const nxtStart=Math.round(pr.ph[nxtIdx].s*scale);const ttN=nxtStart-el;if(ttN===2&&ts==="running"){speak("Prepárate");}}
-  }[sec,pr,durMult]);
+  }[sec,pr,durMult];
   useEffect(()=>{if(ts==="running"&&sec===Math.round(totalDur/2)){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);hapticBreath("INHALA");setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   // Breathing engine with circadian-adapted voice
