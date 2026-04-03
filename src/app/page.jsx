@@ -182,7 +182,142 @@ const ENERGY_LEVELS=[{id:1,label:"Bajo",v:1},{id:2,label:"Medio",v:2},{id:3,labe
 const WORK_TAGS=["Pre-reunión","Post-reunión","Inicio jornada","Mitad del día","Fin de jornada","Bajo presión","Pausa activa"];
 const INTENTS=[{id:"calma",label:"Calma",icon:"calm",desc:"Reducir tensión",color:"#059669"},{id:"enfoque",label:"Enfoque",icon:"focus",desc:"Concentración",color:"#6366F1"},{id:"energia",label:"Energía",icon:"energy",desc:"Activación",color:"#D97706"},{id:"reset",label:"Reset",icon:"reset",desc:"Reinicio",color:"#0D9488"}];
 
-const DS={totalSessions:0,streak:0,todaySessions:0,lastDate:null,weeklyData:[0,0,0,0,0,0,0],weekNum:null,coherencia:64,resiliencia:66,capacidad:73,achievements:[],vCores:0,history:[],totalTime:0,soundOn:true,hapticOn:true,themeMode:"auto",moodLog:[],firstDone:false,favs:[],prevWeekData:[0,0,0,0,0,0,0],progDay:0,soundscape:"off"};
+const DS={totalSessions:0,streak:0,todaySessions:0,lastDate:null,weeklyData:[0,0,0,0,0,0,0],weekNum:null,coherencia:64,resiliencia:66,capacidad:73,achievements:[],vCores:0,history:[],totalTime:0,soundOn:true,hapticOn:true,themeMode:"auto",moodLog:[],firstDone:false,favs:[],prevWeekData:[0,0,0,0,0,0,0],progDay:0,soundscape:"off",lastIntent:""};
+
+
+/* ═══ NEURAL INTELLIGENCE ENGINE — Central Brain ═══
+   Reads: moodLog, history, circadian, sessions, streak, metrics
+   Outputs: ONE unified state object that drives ALL UI/UX decisions
+   The user never sees this. They just feel "the system understands me." */
+function neuralIntelligence(st) {
+  const ml = st.moodLog || [];
+  const h = st.history || [];
+  const now = new Date();
+  const hour = now.getHours();
+  const circ = getCircadian();
+  
+  // ─── MOOD TRAJECTORY (not just last mood, but direction) ───
+  const last3 = ml.slice(-3).map(m => m.mood);
+  const last7 = ml.slice(-7).map(m => m.mood);
+  const moodNow = last3.length ? last3[last3.length-1] : 3;
+  const moodTrend = last3.length >= 2 ? last3[last3.length-1] - last3[0] : 0;
+  const moodVolatility = last7.length >= 3 ? Math.round(last7.reduce((a,m,i,arr) => i>0 ? a+Math.abs(m-arr[i-1]) : a, 0) / (last7.length-1) * 100) / 100 : 0;
+  
+  // ─── USER PATTERN (when do they use it, how often) ───
+  const todayCount = st.todaySessions || 0;
+  const weekTotal = (st.weeklyData||[]).reduce((a,b) => a+b, 0);
+  const isConsistent = weekTotal >= 5;
+  const isNew = st.totalSessions < 5;
+  const isExperienced = st.totalSessions >= 20;
+  
+  // ─── ENERGY HISTORY ───
+  const lastEnergy = ml.slice(-3).filter(m => m.energy > 0);
+  const avgEnergy = lastEnergy.length ? lastEnergy.reduce((a,m) => a + m.energy, 0) / lastEnergy.length : 2;
+  
+  // ─── NEED DETECTION (what does the user need RIGHT NOW) ───
+  let primaryNeed = "equilibrio";
+  let urgency = "normal";
+  let reason = "";
+  
+  if (moodNow <= 2 && moodTrend <= 0) {
+    primaryNeed = "rescate";
+    urgency = "alta";
+    reason = "Estado bajo y descendente";
+  } else if (avgEnergy <= 1.2 && moodNow >= 3) {
+    primaryNeed = "activacion";
+    urgency = "media";
+    reason = "Energía baja con mood aceptable";
+  } else if (moodNow <= 2) {
+    primaryNeed = "calma";
+    urgency = "alta";
+    reason = "Estado bajo pero estable";
+  } else if (moodVolatility > 1.2) {
+    primaryNeed = "estabilidad";
+    urgency = "media";
+    reason = "Alta variabilidad emocional";
+  } else if (hour >= 6 && hour < 10 && moodNow >= 3) {
+    primaryNeed = "activacion";
+    urgency = "normal";
+    reason = "Mañana con buen estado base";
+  } else if (hour >= 10 && hour < 17) {
+    primaryNeed = "enfoque";
+    urgency = "normal";
+    reason = "Horario de rendimiento";
+  } else if (hour >= 20) {
+    primaryNeed = "descarga";
+    urgency = "normal";
+    reason = "Cierre del día";
+  }
+  
+  // ─── PROTOCOL SELECTION (data-driven, not random) ───
+  const sens = calcProtoSensitivity(ml);
+  // Tag frequency analysis
+  const tagCounts = {};
+  ml.slice(-20).forEach(m => { if(m.tag) tagCounts[m.tag] = (tagCounts[m.tag]||0) + 1; });
+  const topTag = Object.entries(tagCounts).sort((a,b) => b[1] - a[1])[0];
+  const underPressure = topTag && (topTag[0] === "Bajo presión" || topTag[0] === "Pre-reunión") && topTag[1] >= 3;
+  if (underPressure && primaryNeed === "equilibrio") { primaryNeed = "calma"; reason = "Patrón de presión frecuente detectado"; }
+  
+  const needToIntent = {rescate:"reset",calma:"calma",estabilidad:"calma",activacion:"energia",enfoque:"enfoque",descarga:"reset",equilibrio:"calma"};
+  const intent = needToIntent[primaryNeed] || "calma";
+  
+  let bestProto = null;
+  // First: check if user has a proven effective protocol for this intent
+  const effective = Object.entries(sens)
+    .filter(([n,d]) => d.avgDelta > 0.2 && d.sessions >= 2)
+    .sort((a,b) => b[1].avgDelta - a[1].avgDelta);
+  if (effective.length) {
+    const match = effective.find(([n]) => {
+      const p = P.find(x => x.n === n);
+      return p && p.int === intent;
+    });
+    if (match) bestProto = P.find(p => p.n === match[0]);
+  }
+  // Fallback: pick by intent + difficulty appropriate to experience
+  if (!bestProto) {
+    const pool = P.filter(p => p.int === intent && (isNew ? p.dif <= 2 : true));
+    const lastP = h.length ? h[h.length-1].p : "";
+    const available = pool.filter(p => p.n !== lastP);
+    bestProto = available.length ? available[Math.floor(Math.random() * available.length)] : pool[0] || P[0];
+  }
+  
+  // ─── QUALITY TREND ───
+  const last5Q = h.slice(-5).map(s => s.bioQ || 50);
+  const qTrend = last5Q.length >= 3 ? last5Q[last5Q.length-1] - last5Q[0] : 0;
+  const qualityDeclining = qTrend < -15;
+  
+  // ─── UI STATE (drives animations, colors, text) ───
+  const systemState = moodNow >= 4 ? "optimal" : moodNow >= 3 ? "functional" : moodNow >= 2 ? "stressed" : "critical";
+  const pulseSpeed = systemState === "optimal" ? "slow" : systemState === "functional" ? "medium" : "fast";
+  const uiIntensity = systemState === "critical" ? 0.9 : systemState === "stressed" ? 0.7 : systemState === "optimal" ? 0.4 : 0.5;
+  
+  // ─── MESSAGE (one clear thing to tell the user) ───
+  let message = "";
+  if (isNew && todayCount === 0) message = "Tu primera sesión del día te espera.";
+  else if (urgency === "alta") message = "Tu sistema necesita atención. " + bestProto.n + " es lo indicado ahora.";
+  else if (todayCount >= 2) message = "Buen ritmo hoy. Tu sistema se fortalece.";
+  else if (st.streak >= 7) message = st.streak + " días seguidos. Tu cerebro ya cambió.";
+  else if (moodTrend > 0) message = "Tendencia ascendente. Sigue así.";
+  else if (qualityDeclining) message = "Tu calidad de sesión ha bajado. Enfócate en las instrucciones.";
+  else message = circ.period === "noche" ? "Cierra el día con calma." : "Tu próxima ignición te espera.";
+  
+  return {
+    // Need
+    primaryNeed, urgency, reason, intent,
+    // Quality
+    qualityDeclining, avgEnergy, topTag: topTag ? topTag[0] : null,
+    // Protocol
+    bestProto, 
+    // User profile
+    isNew, isExperienced, isConsistent,
+    // Mood
+    moodNow, moodTrend, moodVolatility,
+    // UI
+    systemState, pulseSpeed, uiIntensity,
+    // Communication
+    message
+  };
+}
 
 function getDailyIgn(st){const d=new Date();const seed=d.getFullYear()*1000+d.getMonth()*50+d.getDate();const h=d.getHours();const lastMood=(st.moodLog||[]).slice(-1)[0]?.mood||3;let pool=P;if(h<10)pool=P.filter(p=>p.int==="calma"||p.int==="energia");else if(h<15)pool=P.filter(p=>p.int==="enfoque");else if(h<19)pool=P.filter(p=>p.int==="enfoque"||p.int==="reset");else pool=P.filter(p=>p.int==="calma"||p.int==="reset");if(lastMood<=2)pool=pool.filter(p=>p.dif<=2);const pick=pool[seed%pool.length]||P[0];const phrase=DAILY_PHRASES[seed%DAILY_PHRASES.length];return{proto:pick,phrase};}
 
@@ -242,7 +377,7 @@ function getRecords(st){const h=st.history||[];const ml=st.moodLog||[];const bes
 
 // ─── AUDIO ────────────────────────────────────────────────
 let _aC=null;
-function gAC(){if(!_aC&&typeof window!=="undefined"){try{_aC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return _aC;}
+function gAC(){if(!_aC&&typeof window!=="undefined"){try{_aC=new(window.AudioContext||window.webkitAudioContext)();_aC.addEventListener("statechange",()=>{if(_aC.state==="interrupted"||_aC.state==="suspended"){try{_aC.resume();}catch(e){}}});}catch(e){}}return _aC;}
 function playChord(f,d,v){try{const c=gAC();if(!c)return;if(c.state==="suspended")c.resume();f.forEach(fr=>{const o=c.createOscillator();const g=c.createGain();o.connect(g);g.connect(c.destination);o.type="sine";o.frequency.value=fr;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime((v||.04)/f.length,c.currentTime+.08);g.gain.linearRampToValueAtTime(0,c.currentTime+d);o.start(c.currentTime);o.stop(c.currentTime+d);});}catch(e){}}
 
 // Brown noise ambient loop
@@ -261,7 +396,7 @@ function exportData(st){try{const blob=new Blob([JSON.stringify(st,null,2)],{typ
 /* ═══ NEURAL ENGINE — Complete Biohacking Systems ═══ */
 
 /* Binaural Audio Engine — Protocol-specific neuro-entrainment */
-let _binauralL=null,_binauralR=null,_binauralGain=null,_binauralPan=0;
+let _binauralL=null,_binauralR=null,_binauralGain=null,_binauralPan=0,_binauralRAF=null;
 function startBinaural(type){try{const c=gAC();if(!c)return;stopBinaural();_binauralGain=c.createGain();_binauralGain.gain.value=0;_binauralGain.connect(c.destination);
   const panL=c.createStereoPanner();const panR=c.createStereoPanner();
   _binauralL=c.createOscillator();_binauralR=c.createOscillator();_binauralL.type="sine";_binauralR.type="sine";
@@ -271,11 +406,11 @@ function startBinaural(type){try{const c=gAC();if(!c)return;stopBinaural();_bina
   else if(type==="reset"){_binauralL.frequency.value=200;_binauralR.frequency.value=206;}
   else{_binauralL.frequency.value=200;_binauralR.frequency.value=210;}
   // 8D spatial rotation
-  function rotatePan(){panL.pan.value=Math.sin(_binauralPan)*0.8;panR.pan.value=Math.cos(_binauralPan)*0.8;_binauralPan+=0.015;if(_binauralGain)requestAnimationFrame(rotatePan);}
+  function rotatePan(){panL.pan.value=Math.sin(_binauralPan)*0.8;panR.pan.value=Math.cos(_binauralPan)*0.8;_binauralPan+=0.015;if(_binauralGain)_binauralRAF=requestAnimationFrame(rotatePan);}
   _binauralL.connect(panL);_binauralR.connect(panR);panL.connect(_binauralGain);panR.connect(_binauralGain);
   _binauralL.start();_binauralR.start();rotatePan();_binauralGain.gain.linearRampToValueAtTime(0.025,c.currentTime+4);
 }catch(e){}}
-function stopBinaural(){try{if(_binauralGain){const c=gAC();if(c)_binauralGain.gain.linearRampToValueAtTime(0,c.currentTime+2);}setTimeout(()=>{try{if(_binauralL){_binauralL.stop();_binauralL.disconnect();}if(_binauralR){_binauralR.stop();_binauralR.disconnect();}if(_binauralGain)_binauralGain.disconnect();_binauralL=null;_binauralR=null;_binauralGain=null;}catch(e){}},2500);}catch(e){}}
+function stopBinaural(){try{if(_binauralRAF){cancelAnimationFrame(_binauralRAF);_binauralRAF=null;}if(_binauralGain){const c=gAC();if(c)_binauralGain.gain.linearRampToValueAtTime(0,c.currentTime+2);}setTimeout(()=>{try{if(_binauralL){_binauralL.stop();_binauralL.disconnect();}if(_binauralR){_binauralR.stop();_binauralR.disconnect();}if(_binauralGain)_binauralGain.disconnect();_binauralL=null;_binauralR=null;_binauralGain=null;}catch(e){}},2500);}catch(e){}}
 
 /* Circadian Engine — Full chronobiology adaptation */
 function getCircadian(){const h=new Date().getHours();
@@ -655,9 +790,21 @@ export default function BioIgnicion(){
   const[onboard,setOnboard]=useState(false);const[showIntent,setShowIntent]=useState(false);
   const[greeting,setGreeting]=useState("");
   const[showScience,setShowScience]=useState(false);
+  const[newAch,setNewAch]=useState(null);
+  const[dashSections,setDashSections]=useState({metrics:false,activity:false,insights:false});
   const[neuralZone,setNeuralZone]=useState(null);
   const[selSS,setSelSS]=useState("off");
-  const[durMult,setDurMult]=useState(1);
+  const[durMult,setDurMult]=useState(()=>{
+    try{
+      const h=(typeof window!=="undefined"&&localStorage.getItem("bio-g2"))?JSON.parse(localStorage.getItem("bio-g2")):null;
+      if(!h||!h.history||h.history.length<5)return 1;
+      const durs=h.history.slice(-10).map(s=>s.dur);
+      const avg=durs.reduce((a,b)=>a+b,0)/durs.length;
+      if(avg<=70)return 0.5;
+      if(avg>=150)return 1.5;
+      return 1;
+    }catch(e){return 1;}
+  });
   const[entryDone,setEntryDone]=useState(false);
   const[nfcCtx,setNfcCtx]=useState(null); // {company,type:'entrada'|'salida',employee}
   const[voiceOn,setVoiceOn]=useState(true);
@@ -673,19 +820,66 @@ export default function BioIgnicion(){
     const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
   }}catch(e){};},[]);
 
-  // ═══ VOICE GUIDANCE (Web Speech API) — Mobile-optimized ═══
-  const voicesRef=useRef([]);const voiceUnlocked=useRef(false);
-  useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;function loadVoices(){voicesRef.current=window.speechSynthesis.getVoices();}loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
-  function unlockVoice(){if(voiceUnlocked.current||typeof window==="undefined"||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance("");u.volume=0;window.speechSynthesis.speak(u);voiceUnlocked.current=true;}catch(e){}}
-  function speak(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{
-    if(window.speechSynthesis.paused)window.speechSynthesis.resume();
-    const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circadian.voiceRate||0.92;u.pitch=circadian.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
-  function speakNow(text){if(!voiceOn||typeof window==="undefined"||!window.speechSynthesis)return;try{
-    if(window.speechSynthesis.paused)window.speechSynthesis.resume();
-    window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-MX";u.rate=circadian.voiceRate||0.92;u.pitch=circadian.voicePitch||1.0;u.volume=0.85;const voices=voicesRef.current;const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));if(v)u.voice=v;window.speechSynthesis.speak(u);}catch(e){}}
-  function stopVoice(){try{if(typeof window!=="undefined"&&window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}}
 
-  // ═══ LOAD STATE + PERSISTENCE ═══
+  // ═══ VOICE SYSTEM — iOS-optimized ═══
+  const voicesRef=useRef([]);const voiceUnlocked=useRef(false);const speakingRef=useRef(false);const lastSpokenRef=useRef("");const lastSpokenTimeRef=useRef(0);
+  useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;function loadVoices(){voicesRef.current=window.speechSynthesis.getVoices();}loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
+  function unlockVoice(){if(voiceUnlocked.current||typeof window==="undefined"||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0.01;u.lang="es-MX";window.speechSynthesis.speak(u);voiceUnlocked.current=true;}catch(e){}}
+  
+  function speak(text){
+    if(!voiceOn||!text||typeof window==="undefined"||!window.speechSynthesis)return;
+    try{
+      // iOS anti-repeat: skip if same text spoken in last 3 seconds
+      const now=Date.now();
+      if(text===lastSpokenRef.current&&now-lastSpokenTimeRef.current<3000)return;
+      // iOS anti-queue: cancel if already speaking (prevents pile-up)
+      if(speakingRef.current){return;}
+      // iOS resume fix
+      if(window.speechSynthesis.paused)window.speechSynthesis.resume();
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang="es-MX";u.rate=circadian.voiceRate||0.92;u.pitch=circadian.voicePitch||1.0;u.volume=0.8;
+      const voices=voicesRef.current;
+      const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));
+      if(v)u.voice=v;
+      u.onstart=()=>{speakingRef.current=true;};
+      u.onend=()=>{speakingRef.current=false;};
+      u.onerror=()=>{speakingRef.current=false;};
+      lastSpokenRef.current=text;lastSpokenTimeRef.current=now;
+      // iOS 15+ fix: cancel before speak to clear ghost queue
+      window.speechSynthesis.cancel();
+      setTimeout(()=>{window.speechSynthesis.speak(u);},50);
+    }catch(e){speakingRef.current=false;}
+  }
+  
+  function speakNow(text){
+    if(!voiceOn||!text||typeof window==="undefined"||!window.speechSynthesis)return;
+    try{
+      speakingRef.current=false;
+      window.speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang="es-MX";u.rate=circadian.voiceRate||0.92;u.pitch=circadian.voicePitch||1.0;u.volume=0.85;
+      const voices=voicesRef.current;
+      const v=voices.find(v=>v.lang==="es-MX")||voices.find(v=>v.lang==="es-ES")||voices.find(v=>v.lang.startsWith("es"));
+      if(v)u.voice=v;
+      u.onstart=()=>{speakingRef.current=true;};
+      u.onend=()=>{speakingRef.current=false;};
+      u.onerror=()=>{speakingRef.current=false;};
+      lastSpokenRef.current=text;lastSpokenTimeRef.current=Date.now();
+      // iOS needs a tiny delay after cancel before new speak
+      setTimeout(()=>{window.speechSynthesis.speak(u);},60);
+    }catch(e){speakingRef.current=false;}
+  }
+  
+  function stopVoice(){try{speakingRef.current=false;lastSpokenRef.current="";if(typeof window!=="undefined"&&window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}}
+  
+  // iOS Safari workaround: periodically resume speechSynthesis (it pauses itself after ~15s)
+  useEffect(()=>{if(ts!=="running"||typeof window==="undefined"||!window.speechSynthesis)return;
+    const iosKeepAlive=setInterval(()=>{if(window.speechSynthesis.paused)window.speechSynthesis.resume();},5000);
+    return()=>clearInterval(iosKeepAlive);
+  },[ts]);
+
+
+    // ═══ LOAD STATE + PERSISTENCE ═══
   useEffect(()=>{setMt(true);const l=ldS();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)svS(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);},[]);
   
   // Pause session when user leaves tab/app
@@ -702,18 +896,18 @@ export default function BioIgnicion(){
   // Motion detection during session
   useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection(({samples,stability})=>{setSessionData(d=>({...d,motionSamples:samples,stability:stability}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
 
-  useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
+  useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>{H("tick");try{svS(st);}catch(e){}},4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
   // Phase transitions with pre-announcement (ease-in 2s before)
   useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}
     // Pre-announce next phase 2s before transition
-    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);const _phIdx=nextIdx;setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[_phIdx].i);}catch(e){}},2500);}
+    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);try{navigator.vibrate([30,50,30,50,80]);}catch(e){}speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);// Full instruction via voice removed — too long for iOS TTS queue. Key phrase is enough.}
     // Pre-hint 2s before next phase
     const nxtIdx=pi<pr.ph.length-1?pi+1:null;if(nxtIdx!==null){const nxtStart=Math.round(pr.ph[nxtIdx].s*scale);const ttN=nxtStart-el;if(ttN===2&&ts==="running"){speak("Prepárate");}}
   },[sec,pr,durMult]);
-  useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
+  useEffect(()=>{if(ts==="running"&&sec===Math.round(totalDur/2)){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);hapticBreath("INHALA");setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   // Breathing engine with circadian-adapted voice
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running"){speak("Mantén la atención en la instrucción");}return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase());hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%30===0&&ts==="running"){(()=>{const msgs=["Mantén la atención","Sigue con la práctica","Tu presencia importa","Respira y continúa"];speakNow(msgs[Math.floor(elapsed/30)%msgs.length]);})();}return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(lbl==="INHALA"&&t>0)speak("inhala");hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);H("tap");(()=>{const g=st.streak>=7?"Racha de "+st.streak+" días. ":st.todaySessions>0?"Sesión "+(st.todaySessions+1)+" de hoy. ":"";const p=circadian.period==="amanecer"||circadian.period==="mañana"?"Buenos días. ":circadian.period==="noche"||circadian.period==="madrugada"?"Buenas noches. ":"";speakNow(p+g+"Tres");})();cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza");setGreeting("");return 0;}speakNow(p===2?"Dos":"Uno");H("tap");return p-1;});},1000);}
   function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[]});startCountdown();}
@@ -722,10 +916,12 @@ export default function BioIgnicion(){
   function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
   function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){if(pauseTRef.current)clearTimeout(pauseTRef.current);setSessionData(d=>({...d,pauses:d.pauses}));setTs("running");H("go");speakNow("continúa");requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}}
-  function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>setTabFade(1),30);},180);H("tap");}
+  const tabSwitchRef=useRef(false);
+  function switchTab(id){if(id===tab||tabSwitchRef.current)return;tabSwitchRef.current=true;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>{setTabFade(1);tabSwitchRef.current=false;},30);},180);H("tap");}
 
   function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
-    const td=new Date().toDateString();const di=new Date().getDay();const ad=di===0?6:di-1;const nw=[...st.weeklyData];nw[ad]=(nw[ad]||0)+1;const ys=new Date(Date.now()-864e5).toDateString();let nsk=st.lastDate===td?st.streak:st.lastDate===ys?st.streak+1:1;
+    const td=new Date().toDateString();const di=new Date().getDay();const ad=di===0?6:di-1;const nw=[...st.weeklyData];nw[ad]=(nw[ad]||0)+1;const ys=new Date(Date.now()-864e5).toDateString();const twoDaysAgo=new Date(Date.now()-172800000).toDateString();
+    let nsk=st.lastDate===td?st.streak:st.lastDate===ys?st.streak+1:st.lastDate===twoDaysAgo?Math.max(1,st.streak):1;
 
     // ═══ DATA-DRIVEN METRICS (not random) ═══
     const ml=st.moodLog||[];const hist=st.history||[];
@@ -781,9 +977,10 @@ export default function BioIgnicion(){
       bioSignal:bioSignal.score
     }].slice(-200);
     setPostVC(eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
-    releaseWakeLock();speakNow(bioQ.quality==="alta"?"Sesión excelente":"Sesión completada");
+    releaseWakeLock();speakNow(bioQ.quality==="alta"?"Ignición completa. Tu sistema se transformó.":"Ignición completada.");
     setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
+    const prevAch=st.achievements.length;setTimeout(()=>{if(ach.length>prevAch){setNewAch(AM[ach[ach.length-1]]||ach[ach.length-1]);try{navigator.vibrate([50,50,50,50,100,100,200]);}catch(e){}setTimeout(()=>setNewAch(null),4000);}},2000);
     setSt({...st,totalSessions:ns,streak:nsk,todaySessions:st.lastDate===td?st.todaySessions+1:1,lastDate:td,weeklyData:nw,weekNum:getWeekNum(),coherencia:nC,resiliencia:nR,capacidad:nE,achievements:ach,vCores:vc,history:newHist,totalTime:(st.totalTime||0)+Math.round(pr.d*durMult),firstDone:true,progDay:Math.min((st.progDay||0)+1,7)});
   }
   function submitCheckin(){
@@ -814,16 +1011,17 @@ export default function BioIgnicion(){
   const toggleFav=(name)=>{const nf=favs.includes(name)?favs.filter(f=>f!==name):[...favs,name];setSt({...st,favs:nf});};
   const weeklySummary=useMemo(()=>{const pw=st.prevWeekData||[0,0,0,0,0,0,0];const pwTotal=pw.reduce((a,b)=>a+b,0);const cwTotal=st.weeklyData.reduce((a,b)=>a+b,0);if(pwTotal===0)return null;const diff=cwTotal-pwTotal;const bestDay=pw.indexOf(Math.max(...pw));const ml=st.moodLog||[];const weekMoods=ml.slice(-7);const mAvg=weekMoods.length?+(weekMoods.reduce((a,m)=>a+m.mood,0)/weekMoods.length).toFixed(1):0;return{prev:pwTotal,curr:cwTotal,diff,bestDay:DN[bestDay],mAvg};},[st.prevWeekData,st.weeklyData,st.moodLog]);
   const smartPick=useMemo(()=>{const base=smartSuggest(st);if(!base)return null;const sens=calcProtoSensitivity(st.moodLog);if(Object.keys(sens).length<3)return base;const best=Object.entries(sens).filter(([n,d])=>d.avgDelta>0.3).sort((a,b)=>b[1].avgDelta-a[1].avgDelta)[0];if(best){const found=P.find(p=>p.n===best[0]);if(found)return found;}return base;},[st.moodLog,st.history]);
+  const brain=useMemo(()=>neuralIntelligence(st),[st.moodLog,st.history,st.todaySessions,st.streak]);
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
 
   const bg=isDark?"#0B0E14":"#F1F4F9",cd=isDark?"#141820":"#FFFFFF",bd=isDark?"#1E2330":"#E2E8F0";
   const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8",ac=pr.cl;
 
-  if(!mt)return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#F1F4F9",gap:16}}><svg width="52" height="52" viewBox="0 0 52 52" style={{animation:"pu 1.8s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg><div style={{fontSize:10,fontWeight:800,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div></div>);
+  if(!mt)return(<div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#F1F4F9",gap:16}}><svg width="52" height="52" viewBox="0 0 52 52" style={{animation:"pu 1.8s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg><div style={{fontSize:10,fontWeight:800,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div></div>);
 
   return(
-  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background .8s"}}>
+  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background .8s"}}>
   <style>{`body{background:${bg}}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 20px ${ac}10,0 4px 20px ${ac}06}50%{box-shadow:0 0 40px ${ac}1A,0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
 
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
@@ -838,7 +1036,7 @@ export default function BioIgnicion(){
   {onboard&&<div style={{position:"fixed",inset:0,zIndex:250,background:"rgba(15,23,42,.5)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}><div style={{background:cd,borderRadius:28,padding:"32px 24px",maxWidth:380,textAlign:"center",animation:"po .5s cubic-bezier(.34,1.56,.64,1)"}}>
     <svg width="56" height="56" viewBox="0 0 56 56" style={{margin:"0 auto 16px",display:"block"}}><circle cx="28" cy="28" r="24" fill="none" stroke={ac} strokeWidth="2.5" opacity=".6"/><circle cx="28" cy="28" r="17" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="6 4" style={{animation:"innerRing 4s linear infinite"}}/><circle cx="28" cy="28" r="6" fill={ac} opacity=".4"/></svg>
     <div style={{fontSize:22,fontWeight:800,color:t1,marginBottom:4}}>BIO-IGNICIÓN</div>
-    <div style={{fontSize:10,color:ac,fontWeight:700,letterSpacing:3,marginBottom:20,textTransform:"uppercase"}}>Optimización Humana</div>
+    <div style={{fontSize:10,color:ac,fontWeight:700,letterSpacing:3,marginBottom:20,textTransform:"uppercase"}}>Activación Neural</div>
     {/* What you will feel */}
     <div style={{textAlign:"left",marginBottom:20}}>
       <div style={{fontSize:11,fontWeight:700,color:t1,marginBottom:8}}>Qué vas a sentir:</div>
@@ -866,8 +1064,8 @@ export default function BioIgnicion(){
     {/* POST: BREATHE MOMENT */}
   {postStep==="breathe"&&ts==="done"&&<div style={{position:"fixed",inset:0,zIndex:220,background:bg+"F8",backdropFilter:"blur(30px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
     <div style={{width:60,height:60,borderRadius:"50%",background:"radial-gradient(circle,"+ac+"15,transparent)",animation:"pu 3s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:12,height:12,borderRadius:"50%",background:ac,opacity:.4,animation:"focusLock 2s ease infinite"}}/></div>
-    <div style={{fontSize:14,fontWeight:600,color:t1,marginTop:20,textAlign:"center",lineHeight:1.6}}>Quédate un momento con esta sensación.</div>
-    <div style={{fontSize:11,color:t3,marginTop:8}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)} segundos.</div>
+    <div style={{fontSize:14,fontWeight:600,color:t1,marginTop:20,textAlign:"center",lineHeight:1.6}}>Esto que sientes es real.</div>
+    <div style={{fontSize:11,color:t3,marginTop:8}}>{Math.round(pr.d*durMult)} segundos de transformación neural.</div>
     <button onClick={()=>setPostStep("checkin")} style={{marginTop:24,padding:"12px 32px",borderRadius:50,background:"none",border:"1.5px solid "+ac+"30",color:ac,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1,animation:"fi 2s ease"}}>Continuar</button>
   </div>}
 
@@ -879,12 +1077,13 @@ export default function BioIgnicion(){
         <Ic name={m.icon} size={20} color={checkMood===m.value?m.color:t3}/>
         <span style={{fontSize:10,fontWeight:700,color:checkMood===m.value?m.color:t3,textAlign:"center",lineHeight:1.2}}>{m.label}</span>
       </button>))}</div>
-    <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Energía</div><div style={{display:"flex",gap:7}}>{ENERGY_LEVELS.map(e=>(
+    <details style={{marginBottom:14}}><summary style={{fontSize:11,fontWeight:700,color:ac,cursor:"pointer",padding:"6px 0",listStyle:"none"}}>Más detalle (opcional) ▾</summary>
+    <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Energía</div><div style={{display:"flex",gap:7}}>{ENERGY_LEVELS.map(e=>(
       <button key={e.id} onClick={()=>{setCheckEnergy(e.v);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:checkEnergy===e.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:checkEnergy===e.v?ac+"08":cd,color:checkEnergy===e.v?ac:t3,fontSize:11,fontWeight:700,cursor:"pointer"}}>{e.label}</button>))}</div></div>
-    
-    <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Claridad mental</div><div style={{display:"flex",gap:5}}>{[{l:"Nublado",v:1},{l:"Regular",v:2},{l:"Claro",v:3},{l:"Cristalino",v:4}].map(c=><button key={c.v} onClick={()=>{setCheckEnergy(prev=>prev||2);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:"1.5px solid "+bd,background:cd,color:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{c.l}</button>)}</div></div>
-    <div style={{marginBottom:18}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Contexto</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{WORK_TAGS.map(tg=>(
+    <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Claridad mental</div><div style={{display:"flex",gap:5}}>{[{l:"Nublado",v:1},{l:"Regular",v:2},{l:"Claro",v:3},{l:"Cristalino",v:4}].map(c=><button key={c.v} onClick={()=>{setCheckEnergy(prev=>prev||2);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:"1.5px solid "+bd,background:cd,color:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{c.l}</button>)}</div></div>
+    <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Contexto</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{WORK_TAGS.map(tg=>(
       <button key={tg} onClick={()=>{setCheckTag(checkTag===tg?"":tg);H("tap");}} style={{padding:"5px 11px",borderRadius:18,border:checkTag===tg?`1.5px solid ${ac}`:`1px solid ${bd}`,background:checkTag===tg?ac+"08":cd,color:checkTag===tg?ac:t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{tg}</button>))}</div></div>
+    </details>
     <button onClick={submitCheckin} style={{width:"100%",padding:"14px",borderRadius:50,background:checkMood>0?ac:bd,border:"none",color:checkMood>0?"#fff":t3,fontSize:12,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>{checkMood>0?"CONTINUAR":"SELECCIONA ESTADO"}</button>
     <button onClick={()=>{if(checkMood===0){const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:0,energy:0,tag:"skip",proto:pr.n,pre:preMood||0}].slice(-200);setSt({...st,moodLog:ml});}setPostStep("summary");}} style={{width:"100%",padding:"8px",marginTop:6,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir — tu evolución se mide aquí</button>
   </div></div>}
@@ -893,7 +1092,7 @@ export default function BioIgnicion(){
   {postStep==="summary"&&ts==="done"&&<div style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F2`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}><div style={{background:cd,borderRadius:28,padding:"28px 22px",maxWidth:400,width:"100%",animation:"po .5s cubic-bezier(.34,1.56,.64,1)",position:"relative",overflow:"hidden"}}>
     {Array.from({length:12}).map((_,i)=><div key={i} style={{position:"absolute",top:"15%",left:"50%",width:3+Math.random()*3,height:3+Math.random()*3,borderRadius:"50%",background:i%2===0?ac:"#6366F1",opacity:0,animation:`particle 1.5s ease ${i*.08}s forwards`,"--tx":`${(Math.random()-.5)*160}px`,"--ty":`${-30-Math.random()*100}px`}}/>)}
     <div style={{textAlign:"center",marginBottom:16}}>
-      <svg width="48" height="48" viewBox="0 0 48 48" style={{margin:"0 auto 10px",display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity=".08"/><circle cx="24" cy="24" r="16" fill={ac} opacity=".12"/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
+      <div style={{width:56,height:56,margin:"0 auto 12px",borderRadius:"50%",background:"radial-gradient(circle at 40% 40%,"+ac+"30,"+ac+"10,transparent)",animation:"pu 2.5s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}><div style={{width:16,height:16,borderRadius:"50%",background:ac,opacity:.5,animation:"focusLock 2s ease infinite"}}/><div style={{position:"absolute",inset:-4,borderRadius:"50%",border:"1.5px solid "+ac+"20",animation:"bth 3s ease infinite"}}/></div>
       <div style={{fontSize:18,fontWeight:800,color:t1}}>{st.totalSessions<=1?"Tu primera ignición":"Sesión completada"}</div><div style={{fontSize:11,color:ac,marginTop:4,fontWeight:600}}>{st.totalSessions<=1?"Tu sistema nervioso acaba de despertar":"Tu estado se transformó"}</div>
       <div style={{fontSize:10,color:t2,marginTop:3}}>{pr.n} · {Math.round(pr.d*durMult)}s</div>
     </div>
@@ -902,44 +1101,31 @@ export default function BioIgnicion(){
       <div style={{fontSize:24,marginBottom:2}}>🔥</div>
       <div style={{fontSize:13,fontWeight:800,color:"#D97706"}}>{st.streak} días — {st.streak>=60?"LEGENDARIO":st.streak>=30?"IMPARABLE":st.streak>=14?"DISCIPLINADO":st.streak>=7?"CONSTANTE":"EN CONSTRUCCIÓN"}</div><div style={{fontSize:10,color:t2,marginTop:2}}>{st.streak>=30?"Tu cerebro ya opera en un nivel superior":st.streak>=14?"Tu sistema nervioso se ha adaptado. Eres más fuerte.":st.streak>=7?"El hábito se está solidificando. No pares.":"Cada día que vuelves, tu cerebro se reconfigura."}</div>
     </div>}
+        {preMood===0&&checkMood===0&&<div style={{padding:"12px 14px",marginBottom:12,background:ac+"06",borderRadius:14,border:"1px solid "+ac+"10",textAlign:"center"}}>
+      <div style={{fontSize:11,fontWeight:600,color:t1,marginBottom:4}}>Tu sesión fue registrada</div>
+      <div style={{fontSize:10,color:t2}}>Completa el check-in pre y post para ver tu transformación.</div>
+    </div>}
     {/* Before → After comparison */}
     {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:14,padding:"14px 16px",background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:16}}>
       <div style={{textAlign:"center"}}><Ic name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Antes</div></div>
       <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:40,height:1,background:bd,marginBottom:4}}/><div style={{fontSize:18,color:moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={{fontSize:10,color:t3,marginTop:2}}>puntos</div></div>
       <div style={{textAlign:"center"}}><Ic name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Después</div></div>
     </div>}
-    {checkMood>0&&!preMood&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:12,padding:"10px",background:MOODS[checkMood-1].color+"08",borderRadius:12}}>
+    {!preMood&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:12,padding:"10px",background:MOODS[checkMood-1].color+"08",borderRadius:12}}>
       <Ic name={MOODS[checkMood-1].icon} size={18} color={MOODS[checkMood-1].color}/><span style={{fontSize:11,fontWeight:700,color:MOODS[checkMood-1].color}}>{MOODS[checkMood-1].label}</span>
       {checkTag&&<span style={{fontSize:10,color:t3}}>· {checkTag}</span>}
     </div>}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5,marginBottom:12}}>
-      {[{l:"V-Cores",v:"+"+postVC,c:ac},{l:"Enfoque",v:st.coherencia+"%",c:"#3B82F6"},{l:"Calma",v:st.resiliencia+"%",c:"#8B5CF6"}].map((m,i)=>(
-        <div key={i} style={{background:m.c+"08",borderRadius:11,padding:"9px 5px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:m.c}}>{m.v}</div><div style={{fontSize:10,fontWeight:700,color:t3,letterSpacing:.5,marginTop:1,textTransform:"uppercase"}}>{m.l}</div></div>))}
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px",marginBottom:10}}>
+      <span style={{fontSize:22,fontWeight:800,color:ac}}>+{postVC}</span><span style={{fontSize:12,fontWeight:700,color:t3}}>V-Cores</span>
     </div>
     {/* BIO QUALITY SCORE */}
-    {(()=>{const bq=calcBioQuality(sessionData,Math.round(pr.d*durMult));const ce=calcCognitiveEntropy(sessionData);const qColor=bq.quality==="alta"?"#059669":bq.quality==="media"?"#D97706":"#DC2626";return(<>
-      <div style={{padding:"14px",marginBottom:10,background:bq.quality==="alta"?(isDark?"#0A1A0A":"#F0FDF4"):bq.quality==="media"?(isDark?"#1A1A0A":"#FFFBEB"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:14,border:`1.5px solid ${qColor}20`}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-          <div style={{fontSize:12,fontWeight:800,color:t1}}>BIO Quality Score™</div>
-          <div style={{fontSize:18,fontWeight:800,color:qColor}}>{bq.score}</div>
-        </div>
-        <div style={{height:4,background:bd,borderRadius:4,overflow:"hidden",marginBottom:8}}>
-          <div style={{width:bq.score+"%",height:"100%",borderRadius:4,background:`linear-gradient(90deg,${qColor}80,${qColor})`,transition:"width .5s"}}/>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.iScore}%</div><div style={{fontSize:10,color:t3}}>Interacción</div></div>
-          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.tScore}%</div><div style={{fontSize:10,color:t3}}>Presión</div></div>
-          <div style={{textAlign:"center"}}><div style={{fontSize:13,fontWeight:800,color:qColor}}>{bq.mScore}%</div><div style={{fontSize:10,color:t3}}>Movimiento</div></div>
-        </div>
-        {bq.quality==="inválida"&&<div style={{marginTop:8,fontSize:10,color:"#DC2626",fontWeight:600,textAlign:"center"}}>Sesión sin participación activa. V-Cores reducidos.</div>}
-        {bq.quality==="alta"&&(sessionData.touchHolds||0)>=2&&<div style={{marginTop:8,fontSize:10,color:"#059669",fontWeight:600,textAlign:"center"}}>Contrato biológico verificado. Ejecución real confirmada.</div>}
-        {(()=>{const tc=estimateCoherence(sessionData.reactionTimes);return tc.coherence>0?<div style={{marginTop:6,fontSize:10,color:t2,textAlign:"center"}}>Coherencia estimada: <span style={{fontWeight:800,color:tc.coherence>=70?"#059669":tc.coherence>=40?"#D97706":"#DC2626"}}>{tc.coherence}%</span> ({tc.state})</div>:null;})()}
-      </div>
-      {ce.entropy>0&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",marginBottom:10,borderRadius:10,background:isDark?"#1A1E28":"#F8FAFC"}}>
-        <div style={{fontSize:10,color:t3}}>Entropía cognitiva:</div>
-        <div style={{fontSize:11,fontWeight:700,color:ce.entropy>60?"#DC2626":ce.entropy>30?"#D97706":"#059669"}}>{ce.state}</div>
-      </div>}
-    </>);})()}
+    {/* Session Quality — simplified */}
+    {(()=>{const bq=calcBioQuality(sessionData,Math.round(pr.d*durMult));const tc=estimateCoherence(sessionData.reactionTimes);return(
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",marginBottom:10,background:bq.quality==="alta"?"#05966908":bq.quality==="media"?"#D9770608":"#DC262608",borderRadius:12}}>
+        <div style={{width:6,height:6,borderRadius:"50%",background:bq.quality==="alta"?"#059669":bq.quality==="media"?"#D97706":"#DC2626"}}/> 
+        <span style={{fontSize:11,fontWeight:700,color:bq.quality==="alta"?"#059669":bq.quality==="media"?"#D97706":"#DC2626"}}>{bq.quality==="alta"?"Ejecución verificada · "+bq.score+"/100":bq.quality==="media"?"Ejecución parcial · "+bq.score+"/100":"Baja participación · "+bq.score+"/100"}</span>
+        {tc.coherence>30&&<span style={{fontSize:10,color:t3}}>· Coherencia {tc.coherence}%</span>}
+      </div>);})()}
     <div style={{background:isDark?"#1A1E28":"#F1F5F9",borderRadius:11,padding:"10px",marginBottom:10}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:800,color:lv.c}}>{lv.n}</span><span style={{fontSize:10,color:t3}}>{lPct}%</span></div>
       <div style={{height:3,background:bd,borderRadius:3,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:3,background:lv.c}}/></div>
@@ -947,9 +1133,7 @@ export default function BioIgnicion(){
     <div style={{background:ac+"06",borderRadius:10,padding:"10px 12px",marginBottom:12,border:`1px solid ${ac}10`}}>
       <div style={{fontSize:11,color:t2,fontWeight:500,lineHeight:1.5,fontStyle:"italic"}}>{postMsg}</div>
     </div>
-    <button onClick={()=>{sp(sugN);setPostStep("none");}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",gap:7,alignItems:"center",marginBottom:10}}>
-      <div style={{width:26,height:26,borderRadius:7,background:sugN.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={sugN.cl}/></div><div><div style={{fontSize:10,color:t3,fontWeight:700,textTransform:"uppercase"}}>Siguiente</div><div style={{fontSize:10,fontWeight:700,color:t1}}>{sugN.n}</div></div>
-    </button>
+    
     <button onClick={()=>{rs();setPostStep("none");}} style={{width:"100%",padding:"13px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</button>
 
   </div></div>}
@@ -975,6 +1159,14 @@ export default function BioIgnicion(){
     <button onClick={()=>exportData(st)} style={{width:"100%",padding:"13px",marginTop:14,borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
       <Ic name="export" size={16} color={t2}/><span style={{fontSize:12,fontWeight:700,color:t2}}>Exportar datos (JSON)</span>
     </button>
+    
+    <div style={{padding:"13px 0",borderBottom:"1px solid "+bd}}>
+      <div style={{fontSize:12,fontWeight:700,color:t1,marginBottom:8}}>Paisaje sonoro</div>
+      <div style={{display:"flex",gap:4}}>{[{id:"off",n:"Silencio"},{id:"wind",n:"Viento"},{id:"drone",n:"Drone"},{id:"bnarl",n:"Binaural"}].map(s=>
+        <button key={s.id} onClick={()=>{setSt({...st,soundscape:s.id});if(ts==="running")startSoundscape(s.id);}} style={{flex:1,padding:"8px 4px",borderRadius:10,border:(st.soundscape||"off")===s.id?"1.5px solid "+ac:"1px solid "+bd,background:(st.soundscape||"off")===s.id?ac+"08":cd,color:(st.soundscape||"off")===s.id?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{s.n}</button>
+      )}</div>
+    </div>
+
     <button onClick={()=>exportNOM035(st)} style={{width:"100%",padding:"13px",marginTop:8,borderRadius:13,border:"1.5px solid #059669",background:"#059669"+"08",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
       <Ic name="brief" size={16} color="#059669"/><span style={{fontSize:12,fontWeight:700,color:"#059669"}}>Informe NOM-035 (HTML)</span>
     </button>
@@ -986,11 +1178,21 @@ export default function BioIgnicion(){
     {(()=>{const g=groupHist([...(st.history||[])].reverse());return Object.entries(g).map(([k,items])=>{if(!items.length)return null;return(<div key={k}><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:7,marginTop:10}}>{k==="hoy"?"Hoy":k==="ayer"?"Ayer":"Anteriores"}</div>{items.map((h,i)=>{const tm=new Date(h.ts).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});const ml=(st.moodLog||[]).find(m=>Math.abs(m.ts-h.ts)<10000);return(<div key={i} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 0",borderBottom:`1px solid ${bd}`}}><div style={{width:30,height:30,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={ac}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:t1}}>{h.p}</div><div style={{display:"flex",alignItems:"center",gap:3,marginTop:1}}><span style={{fontSize:10,color:t3}}>{tm}</span>{ml&&<Ic name={MOODS[ml.mood-1]?.icon||"neutral"} size={10} color={MOODS[ml.mood-1]?.color||t3}/>}</div></div><div style={{textAlign:"right"}}><div style={{fontSize:11,fontWeight:800,color:ac}}>+{h.vc}</div></div></div>);})}</div>);});})()}
   </div></div>)}
 
+  
+  {/* Achievement Celebration */}
+  {newAch&&<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:300,animation:"po .5s cubic-bezier(.34,1.56,.64,1)",pointerEvents:"none"}}>
+    <div style={{background:"linear-gradient(135deg,"+ac+"15,#D9770615)",borderRadius:20,padding:"16px 28px",boxShadow:"0 12px 40px rgba(0,0,0,.12)",border:"1.5px solid "+ac+"30",textAlign:"center",backdropFilter:"blur(20px)"}}>
+      <div style={{fontSize:24,marginBottom:4}}>⚡</div>
+      <div style={{fontSize:12,fontWeight:800,color:ac,letterSpacing:2,textTransform:"uppercase"}}>LOGRO DESBLOQUEADO</div>
+      <div style={{fontSize:14,fontWeight:700,color:t1,marginTop:4}}>{newAch}</div>
+    </div>
+  </div>}
+
   <div style={{opacity:tabFade,transition:"opacity .25s cubic-bezier(.4,0,.2,1),transform .25s",transform:tabFade===1?"translateY(0)":"translateY(8px)",position:"relative",zIndex:1}}>
 
   {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
     {/* NFC/QR Context Banner */}
-    {nfcCtx&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcCtx.type==="salida"?IND+"08":ac+"08",borderRadius:14,border:`1.5px solid ${nfcCtx.type==="salida"?IND+"20":ac+"20"}`,animation:"fi .4s"}}>
+    {nfcCtx&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcCtx.type==="salida"?"#6366F1"+"08":ac+"08",borderRadius:14,border:`1.5px solid ${nfcCtx.type==="salida"?"#6366F1"+"20":ac+"20"}`,animation:"fi .4s"}}>
       <div style={{width:28,height:28,borderRadius:8,background:nfcCtx.type==="salida"?"#6366F115":ac+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name={nfcCtx.type==="salida"?"calm":"energy"} size={14} color={nfcCtx.type==="salida"?"#6366F1":ac}/></div>
       <div><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:nfcCtx.type==="salida"?"#6366F1":ac,textTransform:"uppercase"}}>{nfcCtx.type==="salida"?"SESIÓN DE SALIDA":"SESIÓN DE ENTRADA"}</div>
       <div style={{fontSize:10,fontWeight:600,color:t1}}>{nfcCtx.type==="salida"?"Descomprime tu día. Llévate calma.":"Activa tu enfoque. Arranca con todo."}</div>
@@ -999,8 +1201,8 @@ export default function BioIgnicion(){
     {/* Immersive entry moment */}
     {!entryDone&&ts==="idle"&&st.totalSessions>0&&<div style={{textAlign:"center",padding:"30px 0 20px",animation:"fi 1s ease"}} onClick={()=>setEntryDone(true)}>
       <svg width="48" height="48" viewBox="0 0 52 52" style={{margin:"0 auto 16px",display:"block",animation:"pu 3s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3"/><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{animation:"innerRing 6s linear infinite"}}/><circle cx="26" cy="26" r="4" fill={ac} opacity=".3"/></svg>
-      <div style={{fontSize:14,fontWeight:300,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto",letterSpacing:"0.2px"}}>{st.todaySessions>0?"Llevas "+st.todaySessions+" sesión"+(st.todaySessions>1?"es":"")+" hoy. Tu coherencia: "+st.coherencia+"%. "+(st.coherencia>70?"Rendimiento alto.":"Margen de mejora."):daily.phrase}</div>
-      <div style={{fontSize:10,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>TOCA PARA CONTINUAR</div>
+      <div style={{fontSize:14,fontWeight:300,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto",letterSpacing:"0.2px"}}>{brain.message}</div>
+      <div style={{fontSize:10,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>{circadian.period==="amanecer"||circadian.period==="mañana"?"ACTIVA TU MAÑANA":circadian.period==="noche"?"CIERRA TU DÍA":"TOCA PARA CONTINUAR"}</div>
     </div>}
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
     {/* Streak risk */}
@@ -1014,48 +1216,16 @@ export default function BioIgnicion(){
     {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:12,background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
       <div style={{display:"flex",alignItems:"center",gap:6}}>
         <div style={{width:24,height:24,borderRadius:7,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="bolt" size={11} color={ac}/></div>
-        <span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de 2 sesiones hoy</span>
+        <span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de {st.totalSessions>=20?Math.min(3,Math.ceil(st.weeklyData.reduce((a,b)=>a+b,0)/Math.max(1,(st.weeklyData.filter(v=>v>0).length))))+1:2} sesiones hoy</span>
       </div>
       <div style={{width:40,height:5,borderRadius:5,background:bd,overflow:"hidden"}}>
-        <div style={{width:Math.min(100,(st.todaySessions||0)/2*100)+"%",height:"100%",background:ac,borderRadius:5,transition:"width .3s"}}/>
+        <div style={{width:Math.min(100,(st.todaySessions||0)/((st.totalSessions>=20?Math.min(3,Math.ceil(st.weeklyData.reduce((a,b)=>a+b,0)/Math.max(1,(st.weeklyData.filter(v=>v>0).length))))+1:2))*100)+"%",height:"100%",background:ac,borderRadius:5,transition:"width .3s"}}/>
       </div>
     </div>}
     {ts==="idle"&&st.totalSessions>=3&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8,animation:"fi .4s"}}>
       <Ic name="rec" size={12} color={t3}/><span style={{fontSize:10,fontWeight:600,color:t2}}>Ventana óptima: <span style={{color:ac,fontWeight:800}}>{(()=>{const fp=calcNeuralFingerprint(st);const h=fp?fp.peakHour:new Date().getHours()<12?14:9;return(h<10?"0":"")+h+":00";})()}</span></span>
     </div>}
 
-    {/* ═══ DAILY IGNICIÓN ═══ */}
-    {ts==="idle"&&<button onClick={()=>sp(daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:14,borderRadius:18,border:`1.5px solid ${daily.proto.cl}20`,background:`linear-gradient(135deg,${daily.proto.cl}06,${daily.proto.cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",animation:"fi .5s",position:"relative",overflow:"hidden"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
-      <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
-      <div style={{flex:1,position:"relative",zIndex:1}}>
-        <div style={{fontSize:10,fontWeight:800,color:daily.proto.cl,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>IGNICIÓN DEL DÍA</div>
-        <div style={{fontSize:13,fontWeight:800,color:t1}}>{daily.proto.n}</div>
-        <div style={{fontSize:10,color:t3,marginTop:2,fontStyle:"italic",lineHeight:1.4}}>{daily.phrase}</div>
-      </div>
-      <Ic name="bolt" size={16} color={daily.proto.cl}/>
-    </button>}
-
-    {/* ═══ 7-DAY PROGRAM ═══ */}
-    {ts==="idle"&&(st.progDay||0)<7&&<div style={{marginBottom:14,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`,animation:"fi .6s"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
-        <span style={{fontSize:10,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
-      </div>
-      <div style={{display:"flex",gap:3,marginBottom:10}}>
-        {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
-      <button onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:isDark?"#1A1E28":"#F8FAFC",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
-        <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={ac}/></div>
-        <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
-        <Ic name="rec" size={12} color={ac}/>
-      </button>
-    </div>}
-
-    {ts==="idle"&&smartPick&&pr.id!==smartPick.id&&daily.proto.id!==smartPick.id&&<button onClick={()=>sp(smartPick)} style={{width:"100%",padding:"10px 12px",marginBottom:14,borderRadius:14,border:`1.5px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",gap:10,animation:"fi .5s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-      <div style={{width:32,height:32,borderRadius:9,background:smartPick.cl+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:smartPick.cl,flexShrink:0}}>{smartPick.tg}</div>
-      <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:10,fontWeight:700,color:ac,letterSpacing:1,textTransform:"uppercase"}}>También recomendado</div><div style={{fontSize:10,fontWeight:700,color:t1,marginTop:1}}>{smartPick.n}</div></div>
-      <Ic name="rec" size={12} color={ac}/>
-    </button>}
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
       <div style={{display:"flex",alignItems:"center",gap:3}}><span style={{fontSize:10,fontWeight:700,color:lv.c}}>{lv.n}</span><div style={{width:36,height:3,borderRadius:2,background:bd,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:2,background:lv.c}}/></div></div>
@@ -1079,6 +1249,7 @@ export default function BioIgnicion(){
     {/* Pre-session mood capture */}
     {ts==="idle"&&<div style={{marginBottom:16,animation:"fi .4s"}}>
       <div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>¿Cómo llegas a esta sesión?</div>
+      <div style={{fontSize:10,color:t3,marginTop:2}}>Esto mide tu transformación antes y después.</div>
       <div style={{display:"flex",gap:4}}>{MOODS.map(m=>(
         <button key={m.id} onClick={()=>{setPreMood(m.value);H("tap");}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"7px 2px",borderRadius:11,border:preMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:preMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s"}}>
           <Ic name={m.icon} size={16} color={preMood===m.value?m.color:t3}/>
@@ -1089,7 +1260,7 @@ export default function BioIgnicion(){
     {/* ═══ CORE DE IGNICIÓN — Living Nucleus ═══ */}
     <div onClick={timerTap} aria-label="Core de Ignición" role="button" onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:236,height:isActive?200:236,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
       {/* Energy field — outermost aura */}
-      <div style={{position:"absolute",inset:isActive?-20:-12,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"10":"05"},transparent 65%)`,animation:ts==="idle"?"pu 4s ease-in-out infinite":isActive?"pu 2.5s ease infinite":"none",transition:"all .8s",filter:isActive?"blur(2px)":"blur(4px)"}}/>
+      <div style={{position:"absolute",inset:isActive?-20:-12,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"10":"05"},transparent 65%)`,animation:ts==="idle"?"pu "+(brain.pulseSpeed==="fast"?"3":brain.pulseSpeed==="slow"?"6":"4.5")+"s ease-in-out infinite":isActive?"pu 2.5s ease infinite":"none",transition:"all .8s",filter:isActive?"blur(2px)":"blur(4px)"}}/>
       {/* Pulse rings — heartbeat */}
       {ts!=="paused"&&<><div style={{position:"absolute",inset:isActive?-10:-6,borderRadius:"50%",border:`1px solid ${ac}${isActive?"12":"08"}`,animation:ts==="idle"?"bth 5s ease-in-out infinite":"bth 3.5s ease infinite"}}/><div style={{position:"absolute",inset:isActive?-22:-14,borderRadius:"50%",border:`1px solid ${ac}${isActive?"08":"04"}`,animation:ts==="idle"?"bth 5s ease-in-out infinite .8s":"bth 3.5s ease infinite .6s"}}/>{isActive&&<div style={{position:"absolute",inset:-32,borderRadius:"50%",border:`1px solid ${ac}04`,animation:"bth 4s ease infinite 1.2s"}}/>}</>}
       {/* 3-layer breathing orbs */}
@@ -1101,7 +1272,7 @@ export default function BioIgnicion(){
         <circle cx="130" cy="130" r="98" fill="none" stroke={isDark?"#1E2330":"#E2E8F0"} strokeWidth=".5" strokeDasharray="3 8" style={{animation:isActive?"innerRing 10s linear infinite":ts==="idle"?"innerRing 30s linear infinite":"none"}}/>
       </svg>
       {/* Inner nucleus — the fire */}
-      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:isActive?40:50,height:isActive?40:50,borderRadius:"50%",background:`radial-gradient(circle at 40% 40%,${ac}${ts==="idle"?"15":"25"},${ac}08,transparent)`,animation:ts==="idle"?"pu 3.5s ease-in-out infinite":isActive?"pu 1.8s ease infinite":"none",transition:"all .6s",filter:`blur(${isActive?6:8}px)`,pointerEvents:"none"}}/>
+      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:isActive?40:50,height:isActive?40:50,borderRadius:"50%",background:`radial-gradient(circle at 40% 40%,${ac}${ts==="idle"?"15":"25"},${ac}08,transparent)`,animation:ts==="idle"?"pu "+(circadian.period==="noche"||circadian.period==="madrugada"?"5.5":"3.2")+"s ease-in-out infinite":isActive?"pu 1.8s ease infinite":"none",transition:"all .6s",filter:`blur(${isActive?6:8}px)`,pointerEvents:"none"}}/>
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:isActive?6:8,height:isActive?6:8,borderRadius:"50%",background:ac,opacity:ts==="idle"?.3:isActive?.6:.2,boxShadow:isActive?`0 0 12px ${ac}60,0 0 24px ${ac}30`:`0 0 8px ${ac}20`,animation:ts==="idle"?"focusLock 4s ease-in-out infinite":isActive?"focusLock 1.5s ease infinite":"none",transition:"all .5s",pointerEvents:"none"}}/>
       {/* Center content */}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none",zIndex:2}}>
@@ -1137,9 +1308,9 @@ export default function BioIgnicion(){
 
         // Voice announces interaction at start of each window
         if(elapsed===cp1||elapsed===cp2||elapsed===cp3){
-          if(elapsed===cp1)speak("Mantén presionado");
-          else if(elapsed===cp2)speak("Toca al exhalar");
-          else speak("Confirma tu presencia");
+          if(elapsed===cp1)speakNow("Mantén presionado");
+          else if(elapsed===cp2)speakNow("Toca al exhalar");
+          else speakNow("Confirma tu presencia");
         }
 
         // CHECKPOINT 1 (25%): TOUCH HOLD — sustained pressure 2+ seconds
@@ -1151,9 +1322,10 @@ export default function BioIgnicion(){
                 const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar)bar.style.transition="width 2.5s linear";if(bar)bar.style.width="100%";}}
               onTouchEnd={(e)=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.dataset.holding="false";e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"06";e.currentTarget.style.borderColor=ac+"25";
                 const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
-                if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");hapticPhase("focus");speak("verificado");}
+                if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");hapticPhase("focus");speakNow("verificado");}
                 else if(dur>=800){setSessionData(d=>({...d,interactions:(d.interactions||0)+0.5,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("tap");}
                 else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.2}));H("tap");}}}
+              onTouchCancel={(e)=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"06";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3}));}}
               onMouseDown={(e)=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.94)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="width 2.5s linear";bar.style.width="100%";}}}
               onMouseUp={(e)=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
                 if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");}
@@ -1180,7 +1352,7 @@ export default function BioIgnicion(){
                 const bonus=isExhale?1.0:0.7;
                 setSessionData(d=>({...d,interactions:(d.interactions||0)+bonus,reactionTimes:[...(d.reactionTimes||[]),rt]}));
                 H("tap");hapticBreath("EXHALA");
-                if(isExhale)speak("sincronizado");}}
+                if(isExhale)speakNow("sincronizado");}}
               onClick={(e)=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.7}));H("tap");}}
               style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px dashed ${ac}35`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
               <div style={{width:9,height:9,borderRadius:"50%",background:bL==="EXHALA"?ac:"transparent",border:`2px solid ${ac}`,opacity:.6,animation:bL==="EXHALA"?"pu .8s ease infinite":"none",transition:"all .3s"}}/>
@@ -1193,7 +1365,7 @@ export default function BioIgnicion(){
         return(
           <div style={{marginTop:12,animation:"fi .5s"}}>
             <button
-              onClick={()=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");hapticPhase(ph.ic);speak("confirmado");}}
+              onClick={()=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");hapticPhase(ph.ic);speakNow("confirmado");}}
               onTouchStart={(e)=>{e.currentTarget.style.transform="scale(0.95)";e.currentTarget.style.background=ac+"10";}}
               onTouchEnd={(e)=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.background=ac+"04";}}
               style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
@@ -1220,11 +1392,45 @@ export default function BioIgnicion(){
     </div>}
     <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;return<div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:i<pi?`1px solid ${ac}40`:`1px solid ${bd}`,background:pi===i?ac+"08":i<pi?ac+"04":cd,color:pi===i?ac:i<pi?ac:t3,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",gap:3,opacity:i<=pi?1:.5,transition:"all .3s"}}><span style={{width:5,height:5,borderRadius:"50%",background:i<=pi?ac:bd,transition:"all .3s"}}/>{sR}</div>;})}</div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
-      {ts==="idle"&&<button onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",animation:"gl 3s ease infinite",boxShadow:`0 4px 18px ${ac}28`}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}><Ic name="bolt" size={13} color="#fff"/>INICIAR</button>}
+      {ts==="idle"&&<button onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",animation:"gl 3s ease infinite",boxShadow:`0 4px 18px ${ac}28`}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}><Ic name="bolt" size={13} color="#fff"/>IGNICIÓN</button>}
       {ts==="running"&&<><button onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
       {ts==="paused"&&<><button onClick={()=>{setTs("running");H("go");}} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
     </div>
     {isActive&&<div style={{marginTop:14,height:26,borderRadius:13,overflow:"hidden",background:cd,border:`1.5px solid ${bd}`,position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:0,left:0,animation:"wf 4s linear infinite",opacity:.2}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}25,${ac}10)`,transition:"width .95s linear",borderRadius:10}}/></div>}
+    {/* ═══ DAILY IGNICIÓN ═══ */}
+    {ts==="idle"&&<button onClick={()=>sp(brain.bestProto||daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:14,borderRadius:18,border:`1.5px solid ${(brain.bestProto||daily.proto).cl}20`,background:`linear-gradient(135deg,${(brain.bestProto||daily.proto).cl}06,${(brain.bestProto||daily.proto).cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",animation:"fi .5s",position:"relative",overflow:"hidden"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
+      <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
+      <div style={{flex:1,position:"relative",zIndex:1}}>
+        <div style={{fontSize:10,fontWeight:800,color:daily.proto.cl,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>IGNICIÓN DEL DÍA</div>
+        <div style={{fontSize:13,fontWeight:800,color:t1}}>{daily.proto.n}</div>
+        <div style={{fontSize:10,color:t3,marginTop:2,fontStyle:"italic",lineHeight:1.4}}>{daily.phrase}</div>
+      </div>
+      <Ic name="bolt" size={16} color={daily.proto.cl}/>
+    </button>}
+
+    {/* ═══ 7-DAY PROGRAM ═══ */}
+    {ts==="idle"&&(st.progDay||0)<7&&<details style={{marginBottom:14}}><summary style={{background:cd,borderRadius:12,padding:"10px 14px",border:"1px solid "+bd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",listStyle:"none"}}><span style={{fontSize:11,fontWeight:800,color:ac}}>Programa 7 Días — Día {Math.min((st.progDay||0)+1,7)}/7</span><span style={{fontSize:12,color:t3}}>▾</span></summary><div style={{background:cd,borderRadius:"0 0 16px 16px",padding:"12px",border:"1px solid "+bd,borderTop:"none"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
+        <span style={{fontSize:10,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
+      </div>
+      <div style={{display:"flex",gap:3,marginBottom:10}}>
+        {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
+      <button onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:isDark?"#1A1E28":"#F8FAFC",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="bolt" size={12} color={ac}/></div>
+        <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
+        <Ic name="rec" size={12} color={ac}/>
+      </button>
+    </div></details>}
+
+    {ts==="idle"&&smartPick&&pr.id!==smartPick.id&&daily.proto.id!==smartPick.id&&<button onClick={()=>sp(smartPick)} style={{width:"100%",padding:"10px 12px",marginBottom:14,borderRadius:14,border:`1.5px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",gap:10,animation:"fi .5s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+      <div style={{width:32,height:32,borderRadius:9,background:smartPick.cl+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:smartPick.cl,flexShrink:0}}>{smartPick.tg}</div>
+      <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:10,fontWeight:700,color:ac,letterSpacing:1,textTransform:"uppercase"}}>También recomendado</div><div style={{fontSize:10,fontWeight:700,color:t1,marginTop:1}}>{smartPick.n}</div></div>
+      <Ic name="rec" size={12} color={ac}/>
+    </button>}
+    
+    
   </>}
   </div>)}
 
@@ -1239,7 +1445,7 @@ export default function BioIgnicion(){
         <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"}}>{bioSignal.score}</div><div style={{fontSize:10,color:t3}}>BioSignal</div></div>
         <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:burnout.risk==="bajo"?"#059669":"#DC2626"}}>{burnout.risk==="sin datos"?"—":burnout.index}</div><div style={{fontSize:10,color:t3}}>burnout</div></div>
       </div>
-      <div style={{fontSize:11,color:t2,textAlign:"center",lineHeight:1.5}}>{perf>=70?"Rendimiento alto. Mantén tu ritmo actual.":perf>=50?"Estado funcional. Una sesión más hoy elevaría tu rendimiento.":"Tu sistema necesita atención. Prioriza una sesión de reset."}</div>
+      <div style={{fontSize:11,color:t2,textAlign:"center",lineHeight:1.5}}>{brain.urgency==="alta"?brain.reason+". "+brain.bestProto.n+" recomendado.":brain.systemState==="optimal"?"Tu sistema está encendido. Mantén este ritmo.":brain.systemState==="functional"?"Buen estado. Una sesión más te llevaría al siguiente nivel.":"Tu cuerpo pide atención. Es momento de un reset."}</div>
     </div>
 
     
@@ -1252,13 +1458,25 @@ export default function BioIgnicion(){
       <div style={{flex:1,textAlign:"right",fontSize:10,color:d>=0?"#059669":"#DC2626",fontWeight:600}}>{d>0?"Mejorando":"En ajuste"}</div>
     </div>);})()}
 
+    
+    {/* Baseline Comparison */}
+    {st.history&&st.history.length>=5&&(()=>{const first5=st.history.slice(0,5);const last5=st.history.slice(-5);const baseC=Math.round(first5.reduce((a,h)=>a+(h.c||50),0)/5);const nowC=Math.round(last5.reduce((a,h)=>a+(h.c||50),0)/5);const delta=nowC-baseC;return(<div style={{background:delta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1.5px solid "+(delta>0?"#05966920":"#DC262620")}}>
+      <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:6}}>Tu evolución</div>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div><div style={{fontSize:10,color:t3}}>Inicio</div><div style={{fontSize:18,fontWeight:800,color:t3}}>{baseC}%</div></div>
+        <div style={{fontSize:20,fontWeight:800,color:delta>0?"#059669":"#DC2626"}}>{delta>0?"+":""}{delta}%</div>
+        <div><div style={{fontSize:10,color:t3}}>Ahora</div><div style={{fontSize:18,fontWeight:800,color:delta>0?"#059669":t1}}>{nowC}%</div></div>
+      </div>
+      <div style={{fontSize:10,color:t2,marginTop:6}}>{delta>0?"Tu coherencia mejoró "+delta+"% desde que empezaste.":"En proceso de calibración. Mantén la constancia."}</div>
+    </div>);})()}
+
     {/* ═══ NEURAL ENGINE VISUAL ═══ */}
     {(()=>{
       const focus=st.coherencia||50,calm=st.resiliencia||50,energy=st.capacidad||50;
       const stress=Math.max(0,100-Math.round((focus+calm)/2));
       const zones=[
         {id:"focus",label:"Enfoque",value:focus,color:"#3B82F6",interp:focus>=80?"Óptimo para decisiones críticas":focus>=60?"Funcional para trabajo profundo":focus>=40?"Disperso. Sesión de enfoque recomendada":"Bajo. Protocolo Lightning Focus sugerido"},
-        {id:"calm",label:"Calma",value:calm,color:"#059669",interp:calm>=80?"Regulación excelente. Sistema parasimpático activo":calm>=60?"Calma funcional. Buen baseline":calm>=40?"Tensión detectada. Protocolo de reset sugerido":"Alta activación simpática. Prioriza calma"},
+        {id:"calm",label:"Calma",value:calm,color:"#059669",interp:calm>=80?"Tu calma es sólida. Buen estado":calm>=60?"Calma funcional. Buen baseline":calm>=40?"Tensión detectada. Protocolo de reset sugerido":"Tensión alta. Una sesión de calma ayudará"},
         {id:"energy",label:"Energía",value:energy,color:"#D97706",interp:energy>=80?"Alto rendimiento disponible":energy>=60?"Energía moderada. Suficiente para ejecutar":energy>=40?"Bajo combustible. Pulse Shift recomendado":"Reservas agotadas. Recuperación necesaria"},
         {id:"stress",label:"Estrés",value:stress,color:"#DC2626",interp:stress<=20?"Mínimo. Estado óptimo":stress<=40?"Controlado. Sin riesgo":stress<=60?"Elevado. Monitor activo":"Crítico. Intervención inmediata"}
       ];
@@ -1268,7 +1486,7 @@ export default function BioIgnicion(){
     <div style={{background:cd,borderRadius:22,padding:"20px 16px",marginBottom:14,border:`1px solid ${bd}`,position:"relative",overflow:"hidden"}}>
       {/* Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-        <div><div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:3}}>Neural Engine</div><AN value={perf} sfx="%" color={t1} sz={28}/></div>
+        <div><div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:3}}>Tu Estado Neural</div><AN value={perf} sfx="%" color={t1} sz={28}/></div>
         <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:7,height:7,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:11,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
       </div>
 
@@ -1338,13 +1556,13 @@ export default function BioIgnicion(){
       {/* Interpretation + recommendation */}
       {!activeZone&&<div style={{padding:"10px 12px",marginTop:8,background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
         <div style={{fontSize:11,color:t1,fontWeight:600,marginBottom:3}}>
-          {perf>=80?"Activación controlada":perf>=65?"Modo funcional":perf>=45?"Calibración necesaria":"Recuperación activa"}
+          {perf>=80?"Estado óptimo":perf>=65?"Buen ritmo":perf>=45?"Espacio para crecer":"Tu cuerpo necesita reset"}
         </div>
         <div style={{fontSize:10,color:t2,lineHeight:1.5}}>
-          {perf>=80?"Córtex prefrontal en alta eficiencia. Ventana óptima para decisiones críticas.":
-           perf>=65?"Sistema operando en rango funcional. Buen momento para trabajo profundo.":
-           perf>=45?"Rendimiento subóptimo. Una sesión de enfoque elevaría tu estado 15-20%.":
-           "Sistema en modo de protección. Prioriza un reset antes de exigir rendimiento."}
+          {perf>=80?"Tu mente está en su mejor momento. Ventana óptima para decisiones críticas.":
+           perf>=65?"Estás en buen estado. Sigue así. Buen momento para trabajo profundo.":
+           perf>=45?"Tienes margen de mejora. Una sesión de enfoque elevaría tu estado 15-20%.":
+           "Tu cuerpo pide una pausa activa. Prioriza un reset antes de exigir rendimiento."}
         </div>
         <div style={{fontSize:10,color:t3,marginTop:6,fontStyle:"italic"}}>Toca las zonas del cerebro para explorar cada estado</div>
       </div>}
@@ -1356,6 +1574,12 @@ export default function BioIgnicion(){
       </div>
     </div>);})()}
 
+    {/* ═══ MÉTRICAS AVANZADAS (collapsible) ═══ */}
+    <button onClick={()=>setDashSections(p=>({...p,metrics:!p.metrics}))} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:dashSections.metrics?8:14,background:cd,borderRadius:12,border:"1px solid "+bd,cursor:"pointer"}}>
+      <span style={{fontSize:11,fontWeight:800,color:t1}}>Métricas Avanzadas</span>
+      <span style={{fontSize:12,color:t3,transform:dashSections.metrics?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>▾</span>
+    </button>
+    {dashSections.metrics&&<>
     {/* ═══ BIO SIGNAL SCORE + BURNOUT INDEX ═══ */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:14}}>
       <div style={{background:cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${bd}`}}>
@@ -1386,6 +1610,8 @@ export default function BioIgnicion(){
     </div>}
 
     
+    </>}
+
     {/* Weekly Comparison */}
     {weeklySummary&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1px solid "+bd}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Esta semana vs anterior</div>
@@ -1398,16 +1624,7 @@ export default function BioIgnicion(){
     </div>}
 
     
-    {/* Baseline Comparison */}
-    {st.history&&st.history.length>=5&&(()=>{const first5=st.history.slice(0,5);const last5=st.history.slice(-5);const baseC=Math.round(first5.reduce((a,h)=>a+(h.c||50),0)/5);const nowC=Math.round(last5.reduce((a,h)=>a+(h.c||50),0)/5);const delta=nowC-baseC;return(<div style={{background:delta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:16,padding:"14px 12px",marginBottom:14,border:"1.5px solid "+(delta>0?"#05966920":"#DC262620")}}>
-      <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:6}}>Tu evolución</div>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <div><div style={{fontSize:10,color:t3}}>Inicio</div><div style={{fontSize:18,fontWeight:800,color:t3}}>{baseC}%</div></div>
-        <div style={{fontSize:20,fontWeight:800,color:delta>0?"#059669":"#DC2626"}}>{delta>0?"+":""}{delta}%</div>
-        <div><div style={{fontSize:10,color:t3}}>Ahora</div><div style={{fontSize:18,fontWeight:800,color:delta>0?"#059669":t1}}>{nowC}%</div></div>
-      </div>
-      <div style={{fontSize:10,color:t2,marginTop:6}}>{delta>0?"Tu coherencia mejoró "+delta+"% desde que empezaste.":"En proceso de calibración. Mantén la constancia."}</div>
-    </div>);})()}
+    
 
     
     {/* Recovery Index */}
@@ -1435,6 +1652,12 @@ export default function BioIgnicion(){
         </div>
       </div>);})()}
 
+    {/* ═══ ACTIVIDAD Y TENDENCIAS (collapsible) ═══ */}
+    <button onClick={()=>setDashSections(p=>({...p,activity:!p.activity}))} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:dashSections.activity?8:14,background:cd,borderRadius:12,border:"1px solid "+bd,cursor:"pointer"}}>
+      <span style={{fontSize:11,fontWeight:800,color:t1}}>Actividad y Tendencias</span>
+      <span style={{fontSize:12,color:t3,transform:dashSections.activity?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>▾</span>
+    </button>
+    {dashSections.activity&&<>
     {/* ═══ ACTIVITY HEATMAP (GitHub-style, 4 weeks) ═══ */}
     <div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Actividad · 28 días</div>
@@ -1502,6 +1725,8 @@ export default function BioIgnicion(){
       <div style={{display:"flex",alignItems:"flex-end",gap:3,height:50}}>{st.weeklyData.map((v,i)=>{const a=((new Date().getDay()+6)%7)===i;return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><div style={{width:"100%",borderRadius:5,height:Math.max((v/mW)*42,2),background:a?ac:bd,transition:"height .6s"}}/><span style={{fontSize:10,color:a?ac:t3,fontWeight:a?800:600}}>{DN[i]}</span></div>);})}</div>
     </div>
 
+    </>}
+
     <button onClick={()=>setShowHist(true)} style={{width:"100%",padding:"11px",borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:14}}><Ic name="clock" size={13} color={t3}/><span style={{fontSize:10,fontWeight:700,color:t2}}>Historial ({(st.history||[]).length})</span></button>
     {st.achievements.length>0&&<div style={{background:ac+"05",borderRadius:16,padding:"12px 10px",border:`1px solid ${ac}10`}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}><Ic name="star" size={14} color={ac}/><span style={{fontSize:11,fontWeight:800,color:ac}}>Logros</span></div>{st.achievements.map(a=><div key={a} style={{fontSize:10,color:ac,padding:"2px 0",display:"flex",alignItems:"center",gap:5,fontWeight:600}}><div style={{width:3,height:3,borderRadius:"50%",background:ac}}/>{AM[a]||a}</div>)}</div>}
     </>}
@@ -1519,6 +1744,8 @@ export default function BioIgnicion(){
     {/* Level progress */}
     <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:800,color:lv.c}}>{lv.n}</span>{nLv&&<span style={{fontSize:10,color:t3}}>→ {nLv.n}</span>}</div>
+
+    </div>
 
     {/* User Stats */}
     <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
@@ -1590,7 +1817,7 @@ export default function BioIgnicion(){
     {[{v:st.coherencia,d:rD.c>0?`+${rD.c}`:"—",c:"#3B82F6",ic:"focus"},{v:st.resiliencia,d:rD.r>0?`+${rD.r}`:"—",c:"#8B5CF6",ic:"calm"},{v:st.capacidad,d:"+2",c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:2,fontSize:10}}><Ic name={m.ic} size={9} color={m.c}/><span style={{color:"#059669",fontWeight:700,fontSize:10}}>{m.d}</span><span style={{color:m.c,fontWeight:800}}>{m.v}%</span></div>)}
   </div>
   <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:`${isDark?"rgba(11,14,20,.94)":"rgba(255,255,255,.94)"}`,backdropFilter:"blur(18px)",borderTop:`1px solid ${bd}`,padding:"3px 10px 10px",display:"flex",justifyContent:"center",zIndex:60}}>
-    {[{id:"ignicion",lb:"Ignición",ic:"bolt"},{id:"dashboard",lb:"Dashboard",ic:"chart"},{id:"perfil",lb:"Perfil",ic:"user"}].map(t=>{const a=tab===t.id;return(<button key={t.id} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"6px 0 1px",border:"none",cursor:"pointer",background:a?(isDark?"#1A1E28":"#E8ECF4"):"transparent",borderRadius:11,margin:"0 2px"}}>
+    {[{id:"ignicion",lb:"Core",ic:"bolt"},{id:"dashboard",lb:"Estado",ic:"chart"},{id:"perfil",lb:"Yo",ic:"user"}].map(t=>{const a=tab===t.id;return(<button key={t.id} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"6px 0 1px",border:"none",cursor:"pointer",background:a?(isDark?"#1A1E28":"#E8ECF4"):"transparent",borderRadius:11,margin:"0 2px"}}>
       <Ic name={t.ic} size={17} color={a?(t.id==="ignicion"?ac:t.id==="dashboard"?"#6366F1":t1):t3}/><span style={{fontSize:10,fontWeight:700,color:a?t1:t3}}>{t.lb}</span>
     </button>);})}
   </div>
