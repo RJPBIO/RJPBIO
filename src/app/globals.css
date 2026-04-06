@@ -50,7 +50,6 @@ input, textarea { font-family: inherit; }
 
 /* ═══ SMOOTH GLOBAL TRANSITIONS ═══ */
 button { transition: transform 0.15s cubic-bezier(.34,1.56,.64,1), opacity 0.2s; }
-button:active { transform: scale(0.97); }
 
 /* ═══ DETAILS/SUMMARY NATIVE STYLING ═══ */
 details summary { list-style: none; cursor: pointer; }
