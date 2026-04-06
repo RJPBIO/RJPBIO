@@ -47,3 +47,15 @@ input, textarea { font-family: inherit; }
 
 /* ═══ SELECTION ═══ */
 ::selection { background: rgba(5, 150, 105, 0.15); }
+
+/* ═══ SMOOTH GLOBAL TRANSITIONS ═══ */
+button { transition: transform 0.15s cubic-bezier(.34,1.56,.64,1), opacity 0.2s; }
+button:active { transform: scale(0.97); }
+
+/* ═══ DETAILS/SUMMARY NATIVE STYLING ═══ */
+details summary { list-style: none; cursor: pointer; }
+details summary::-webkit-details-marker { display: none; }
+details[open] summary { margin-bottom: 8px; }
+
+/* ═══ FOCUS VISIBLE (accessibility) ═══ */
+button:focus-visible { outline: 2px solid rgba(5, 150, 105, 0.5); outline-offset: 2px; }
