@@ -1015,14 +1015,18 @@ export default function BioIgnicion(){
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
 
-  const bg=isDark?"#0B0E14":"#F1F4F9",cd=isDark?"#141820":"#FFFFFF",bd=isDark?"#1E2330":"#E2E8F0";
+  // ═══ NEUROADAPTIVE COLOR SYSTEM ═══
+  // bg, cd, bd drive the ENTIRE UI. Making them brain-aware transforms everything.
+  const stateHue = brain.systemState==="optimal"?"149,69%":"stressed"===brain.systemState?"38,92%":"critical"===brain.systemState?"0,84%":"226,64%";
+  const bg=isDark?`hsl(${brain.systemState==="optimal"?"160,15%,4%":brain.systemState==="stressed"?"30,12%,5%":brain.systemState==="critical"?"0,10%,5%":"220,20%,5%"})`:`hsl(${brain.systemState==="optimal"?"152,30%,96%":brain.systemState==="stressed"?"40,30%,96%":brain.systemState==="critical"?"0,20%,96%":"220,27%,97%"})`;
+  const cd=isDark?"#141820":"#FFFFFF",bd=isDark?`hsl(${brain.systemState==="optimal"?"160,10%,16%":brain.systemState==="stressed"?"30,10%,16%":"220,12%,16%"})`:`hsl(${brain.systemState==="optimal"?"152,15%,88%":brain.systemState==="stressed"?"40,15%,88%":"220,14%,89%"})`;
   const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8",ac=pr.cl;
 
   if(!mt)return(<div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#F1F4F9",gap:16}}><svg width="52" height="52" viewBox="0 0 52 52" style={{animation:"pu 1.8s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg><div style={{fontSize:10,fontWeight:800,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div></div>);
 
   return(
-  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background .8s"}}>
-  <style>{`body{background:${bg}}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 ${brain.urgency==="alta"?"30":"20"}px ${ac}${brain.urgency==="alta"?"20":"10"},0 4px 20px ${ac}06}50%{box-shadow:0 0 ${brain.urgency==="alta"?"55":"40"}px ${ac}${brain.urgency==="alta"?"30":"1A"},0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
+  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background 2s ease"}}>
+  <style>{`body{background:${bg};transition:background 2s ease}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 ${brain.urgency==="alta"?"30":"20"}px ${ac}${brain.urgency==="alta"?"20":"10"},0 4px 20px ${ac}06}50%{box-shadow:0 0 ${brain.urgency==="alta"?"55":"40"}px ${ac}${brain.urgency==="alta"?"30":"1A"},0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
 
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${brain.systemState==="optimal"?"#059669":brain.systemState==="stressed"?"#D97706":brain.systemState==="critical"?"#DC2626":ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,${brain.systemState==="optimal"?"#059669":brain.systemState==="critical"?"#DC2626":"#818CF8"}${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
   {showMid&&<div style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",zIndex:180,animation:"midPop 3.5s ease both",pointerEvents:"none"}}><div style={{background:cd,borderRadius:16,padding:"14px 22px",boxShadow:"0 8px 30px rgba(0,0,0,.08)",border:`1px solid ${bd}`,maxWidth:320,textAlign:"center"}}><div style={{fontSize:13,fontWeight:600,color:t1,lineHeight:1.6,fontStyle:"italic"}}>{midMsg}</div></div></div>}
@@ -1490,58 +1494,122 @@ export default function BioIgnicion(){
         <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:7,height:7,borderRadius:"50%",background:nSt.color,animation:"shimDot "+(brain.systemState==="critical"?"1s":brain.systemState==="stressed"?"1.5s":"2.5s")+" ease infinite"}}/><span style={{fontSize:11,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
       </div>
 
-      {/* Brain visualization — organic SVG */}
-      <div style={{position:"relative",width:"100%",maxWidth:300,margin:"0 auto",aspectRatio:"1.2"}}>
-        <svg viewBox="0 0 300 250" style={{width:"100%",height:"100%"}}>
-          {/* Brain outline — organic shape */}
-          <path d="M150,25 C105,25 65,45 50,80 C35,115 45,155 60,180 C70,195 85,210 100,220 L200,220 C215,210 230,195 240,180 C255,155 265,115 250,80 C235,45 195,25 150,25Z" fill={isDark?"#1A1E28":"#F1F5F9"} stroke={bd} strokeWidth="1"/>
-          {/* Center fissure */}
-          <line x1="150" y1="30" x2="150" y2="215" stroke={bd} strokeWidth=".5" strokeDasharray="4 6"/>
-
-          {/* FOCUS zone — frontal (top) */}
-          <ellipse cx="150" cy="60" rx={35+focus*.15} ry={22+focus*.1} fill="#3B82F6"
-            opacity={.03+focus*.002} style={{animation:`brainPulse ${brainSpeed} ease infinite`,cursor:"pointer"}}
+      {/* Brain visualization — 3D-style with glow zones */}
+      <div style={{position:"relative",width:"100%",maxWidth:320,margin:"0 auto",aspectRatio:"1"}}>
+        <svg viewBox="0 0 320 320" style={{width:"100%",height:"100%"}}>
+          <defs>
+            {/* Radial glow filters for 3D depth */}
+            <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor={ac} stopOpacity=".06"/><stop offset="100%" stopColor={ac} stopOpacity="0"/></radialGradient>
+            <radialGradient id="focusG" cx="50%" cy="40%"><stop offset="0%" stopColor="#60A5FA" stopOpacity=".7"/><stop offset="50%" stopColor="#3B82F6" stopOpacity=".3"/><stop offset="100%" stopColor="#1D4ED8" stopOpacity=".05"/></radialGradient>
+            <radialGradient id="calmG" cx="50%" cy="60%"><stop offset="0%" stopColor="#34D399" stopOpacity=".6"/><stop offset="50%" stopColor="#059669" stopOpacity=".25"/><stop offset="100%" stopColor="#047857" stopOpacity=".05"/></radialGradient>
+            <radialGradient id="energyG" cx="50%" cy="50%"><stop offset="0%" stopColor="#FBBF24" stopOpacity=".8"/><stop offset="40%" stopColor="#D97706" stopOpacity=".35"/><stop offset="100%" stopColor="#B45309" stopOpacity=".05"/></radialGradient>
+            <radialGradient id="stressG" cx="50%" cy="50%"><stop offset="0%" stopColor="#F87171" stopOpacity=".5"/><stop offset="60%" stopColor="#DC2626" stopOpacity=".2"/><stop offset="100%" stopColor="#991B1B" stopOpacity=".03"/></radialGradient>
+            <filter id="brainGlow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="softGlow"><feGaussianBlur stdDeviation="3"/></filter>
+          </defs>
+          
+          {/* Background ambient glow */}
+          <circle cx="160" cy="160" r="150" fill="url(#bgGlow)"/>
+          
+          {/* Brain shape — organic, layered for depth */}
+          {/* Outer glow layer */}
+          <path d="M160,38 C115,38 72,60 55,98 C38,136 48,178 65,205 C76,222 92,236 110,245 L210,245 C228,236 244,222 255,205 C272,178 282,136 265,98 C248,60 205,38 160,38Z" 
+            fill="none" stroke={isDark?"#ffffff08":"#00000008"} strokeWidth="20" filter="url(#softGlow)"/>
+          {/* Main brain shape */}
+          <path d="M160,38 C115,38 72,60 55,98 C38,136 48,178 65,205 C76,222 92,236 110,245 L210,245 C228,236 244,222 255,205 C272,178 282,136 265,98 C248,60 205,38 160,38Z" 
+            fill={isDark?"#0D1117":"#EDF2F7"} stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".5" opacity=".9"/>
+          
+          {/* Center fissure with depth */}
+          <path d="M160,42 C158,80 162,120 158,160 C162,200 160,240 160,245" fill="none" stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".8" strokeDasharray="3 5" opacity=".4"/>
+          
+          {/* Left hemisphere sulci */}
+          <path d="M80,90 Q100,100 120,85 Q135,75 145,90" fill="none" stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".5" opacity=".25"/>
+          <path d="M65,140 Q90,130 115,145 Q135,155 150,140" fill="none" stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".5" opacity=".2"/>
+          <path d="M75,185 Q100,175 125,190 Q140,200 150,188" fill="none" stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".4" opacity=".15"/>
+          
+          {/* Right hemisphere sulci */}
+          <path d="M240,90 Q220,100 200,85 Q185,75 175,90" fill="none" stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".5" opacity=".25"/>
+          <path d="M255,140 Q230,130 205,145 Q185,155 170,140" fill="none" stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".5" opacity=".2"/>
+          <path d="M245,185 Q220,175 195,190 Q180,200 170,188" fill="none" stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".4" opacity=".15"/>
+          
+          {/* ═══ FOCUS ZONE — Frontal lobe (top) ═══ */}
+          <ellipse cx="160" cy="75" rx={40+focus*.2} ry={28+focus*.12} fill="url(#focusG)" 
+            opacity={.15+focus*.006} style={{animation:`brainPulse ${brainSpeed} ease infinite`,cursor:"pointer",filter:"url(#brainGlow)"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="focus"?null:"focus");H("tap");}}/>
-          <ellipse cx="150" cy="60" rx={20+focus*.08} ry={12+focus*.05} fill="#3B82F6"
-            opacity={.05+focus*.003} style={{animation:`brainPulse ${brainSpeed} ease infinite .4s`}}/>
-
-          {/* CALM zone — base (bottom) */}
-          <ellipse cx="150" cy="190" rx={40+calm*.12} ry={18+calm*.08} fill="#059669"
-            opacity={.03+calm*.002} style={{animation:`brainPulse ${brainSpeed} ease infinite .6s`,cursor:"pointer"}}
+          <ellipse cx="160" cy="75" rx={22+focus*.08} ry={14+focus*.05} fill="#3B82F6"
+            opacity={.1+focus*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .5s`}}/>
+          {/* Focus neural network lines */}
+          <path d="M130,65 Q145,55 160,65 Q175,55 190,65" fill="none" stroke="#3B82F6" strokeWidth=".6" opacity={.08+focus*.003} style={{animation:`ecgDraw ${brainSpeed} linear infinite .2s`}}/>
+          
+          {/* ═══ CALM ZONE — Temporal/Base (bottom) ═══ */}
+          <ellipse cx="160" cy="210" rx={45+calm*.15} ry={22+calm*.1} fill="url(#calmG)"
+            opacity={.12+calm*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .8s`,cursor:"pointer",filter:"url(#brainGlow)"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}}/>
-          <ellipse cx="150" cy="190" rx={22+calm*.06} ry={10+calm*.04} fill="#059669"
-            opacity={.05+calm*.003} style={{animation:`brainPulse ${brainSpeed} ease infinite 1s`}}/>
-
-          {/* ENERGY zone — center */}
-          <circle cx="150" cy="120" r={16+energy*.12} fill="#D97706"
-            opacity={.04+energy*.002} style={{animation:`brainPulse ${brainSpeed} ease infinite .2s`,cursor:"pointer"}}
+          <ellipse cx="160" cy="210" rx={25+calm*.08} ry={12+calm*.05} fill="#059669"
+            opacity={.08+calm*.004} style={{animation:`brainPulse ${brainSpeed} ease infinite 1.2s`}}/>
+          
+          {/* ═══ ENERGY ZONE — Core/Center ═══ */}
+          <circle cx="160" cy="140" r={20+energy*.15} fill="url(#energyG)"
+            opacity={.15+energy*.006} style={{animation:`brainPulse ${brainSpeed} ease infinite .3s`,cursor:"pointer",filter:"url(#brainGlow)"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="energy"?null:"energy");H("tap");}}/>
-          <circle cx="150" cy="120" r={8+energy*.06} fill="#D97706"
-            opacity={.06+energy*.003} style={{animation:`brainPulse ${brainSpeed} ease infinite .8s`}}/>
-
-          {/* STRESS zone — peripheral */}
-          <path d="M60,70 Q40,120 60,170" fill="none" stroke="#DC2626" strokeWidth={1+stress*.02}
-            opacity={.05+stress*.004} style={{animation:`ecgDraw ${stress>50?"2s":"4s"} linear infinite`,cursor:"pointer"}}
+          <circle cx="160" cy="140" r={10+energy*.06} fill="#D97706"
+            opacity={.2+energy*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .9s`}}/>
+          {/* Energy core spark */}
+          <circle cx="160" cy="140" r={4+energy*.02} fill="#FBBF24" opacity={.3+energy*.004} style={{animation:`focusLock ${brainSpeed} ease infinite`}}/>
+          
+          {/* ═══ STRESS ZONE — Peripheral arcs ═══ */}
+          <path d="M58,80 Q35,140 58,200" fill="none" stroke="url(#stressG)" strokeWidth={2+stress*.04}
+            opacity={.1+stress*.007} style={{animation:`ecgDraw ${stress>50?"1.5s":"3.5s"} linear infinite`,cursor:"pointer"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="stress"?null:"stress");H("tap");}}/>
-          <path d="M240,70 Q260,120 240,170" fill="none" stroke="#DC2626" strokeWidth={1+stress*.02}
-            opacity={.05+stress*.004} style={{animation:`ecgDraw ${stress>50?"2s":"4s"} linear infinite .5s`}}/>
-
-          {/* Neural connections */}
-          <line x1="150" y1="75" x2="150" y2="108" stroke={ac} strokeWidth=".4" opacity=".1" style={{animation:"ecgDraw 3s linear infinite"}}/>
-          <line x1="150" y1="132" x2="150" y2="178" stroke={ac} strokeWidth=".4" opacity=".1" style={{animation:"ecgDraw 3s linear infinite .5s"}}/>
-          <line x1="120" y1="120" x2="80" y2="120" stroke={ac} strokeWidth=".3" opacity=".08" style={{animation:"ecgDraw 4s linear infinite 1s"}}/>
-          <line x1="180" y1="120" x2="220" y2="120" stroke={ac} strokeWidth=".3" opacity=".08" style={{animation:"ecgDraw 4s linear infinite 1.5s"}}/>
-
-          {/* Zone labels */}
-          <text x="150" y="40" textAnchor="middle" fill={neuralZone==="focus"?"#3B82F6":t3} fontSize="10" fontWeight="700" style={{cursor:"pointer"}} onClick={()=>setNeuralZone(neuralZone==="focus"?null:"focus")}>Enfoque {focus}%</text>
-          <text x="150" y="240" textAnchor="middle" fill={neuralZone==="calm"?"#059669":t3} fontSize="10" fontWeight="700" style={{cursor:"pointer"}} onClick={()=>setNeuralZone(neuralZone==="calm"?null:"calm")}>Calma {calm}%</text>
-          <text x="40" y="125" textAnchor="middle" fill={neuralZone==="stress"?"#DC2626":t3} fontSize="10" fontWeight="700" style={{cursor:"pointer"}} onClick={()=>setNeuralZone(neuralZone==="stress"?null:"stress")}>{stress}%</text>
-          <text x="260" y="125" textAnchor="middle" fill={neuralZone==="energy"?"#D97706":t3} fontSize="10" fontWeight="700" style={{cursor:"pointer"}} onClick={()=>setNeuralZone(neuralZone==="energy"?null:"energy")}>{energy}%</text>
-
-          {/* Sparks */}
-          {[[130,50],[170,55],[140,110],[160,130],[130,185],[170,180]].map(([x,y],i)=>
-            <circle key={i} cx={x} cy={y} r="1.5" fill={ac} opacity=".3" style={{animation:`neuralSpark ${1.5+i*.3}s ease infinite ${i*.2}s`}}/>)}
+          <path d="M262,80 Q285,140 262,200" fill="none" stroke="url(#stressG)" strokeWidth={2+stress*.04}
+            opacity={.1+stress*.007} style={{animation:`ecgDraw ${stress>50?"1.5s":"3.5s"} linear infinite .7s`}}/>
+          {/* Stress micro-arcs */}
+          <path d="M50,110 Q38,140 50,170" fill="none" stroke="#DC2626" strokeWidth=".8" opacity={stress*.003} style={{animation:`ecgDraw ${stress>50?"1s":"3s"} linear infinite .3s`}}/>
+          <path d="M270,110 Q282,140 270,170" fill="none" stroke="#DC2626" strokeWidth=".8" opacity={stress*.003} style={{animation:`ecgDraw ${stress>50?"1s":"3s"} linear infinite 1s`}}/>
+          
+          {/* Neural connections — synaptic pathways */}
+          <line x1="160" y1="90" x2="160" y2="125" stroke={ac} strokeWidth=".5" opacity=".12" style={{animation:"ecgDraw 2.5s linear infinite"}}/>
+          <line x1="160" y1="155" x2="160" y2="195" stroke={ac} strokeWidth=".5" opacity=".12" style={{animation:"ecgDraw 2.5s linear infinite .6s"}}/>
+          <line x1="135" y1="140" x2="85" y2="140" stroke={ac} strokeWidth=".4" opacity=".08" style={{animation:"ecgDraw 3s linear infinite 1s"}}/>
+          <line x1="185" y1="140" x2="235" y2="140" stroke={ac} strokeWidth=".4" opacity=".08" style={{animation:"ecgDraw 3s linear infinite 1.5s"}}/>
+          <line x1="140" y1="85" x2="110" y2="140" stroke="#3B82F6" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite .3s"}}/>
+          <line x1="180" y1="85" x2="210" y2="140" stroke="#3B82F6" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite .8s"}}/>
+          <line x1="140" y1="195" x2="120" y2="155" stroke="#059669" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite 1.2s"}}/>
+          <line x1="180" y1="195" x2="200" y2="155" stroke="#059669" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite 1.7s"}}/>
+          
+          {/* Neural sparks — synaptic fire */}
+          {[[135,65],[185,70],[140,130],[180,150],[135,205],[185,200],[160,105],[160,175],[100,140],[220,140]].map(([x,y],i)=>
+            <circle key={i} cx={x} cy={y} r={1.5+Math.random()} fill={i<2?"#60A5FA":i<4?"#FBBF24":i<6?"#34D399":ac} opacity=".4" style={{animation:`neuralSpark ${1.2+i*.25}s ease infinite ${i*.18}s`}}/>)}
         </svg>
+        
+        {/* ═══ INTERACTIVE ZONE BUTTONS — positioned around the brain ═══ */}
+        {/* FOCUS — top */}
+        <button onClick={()=>{setNeuralZone(neuralZone==="focus"?null:"focus");H("tap");}} style={{position:"absolute",top:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="focus"?"1.5px solid #3B82F6":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="focus"?(isDark?"#3B82F615":"#3B82F610"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"#3B82F6",animation:"shimDot "+brainSpeed+" ease infinite"}}/>
+          <span style={{fontSize:10,fontWeight:800,color:neuralZone==="focus"?"#3B82F6":t3}}>Enfoque</span>
+          <span style={{fontSize:11,fontWeight:800,color:"#3B82F6"}}>{focus}%</span>
+        </button>
+        
+        {/* CALM — bottom */}
+        <button onClick={()=>{setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}} style={{position:"absolute",bottom:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="calm"?"1.5px solid #059669":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="calm"?(isDark?"#05966915":"#05966910"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"#059669",animation:"shimDot "+brainSpeed+" ease infinite .4s"}}/>
+          <span style={{fontSize:10,fontWeight:800,color:neuralZone==="calm"?"#059669":t3}}>Calma</span>
+          <span style={{fontSize:11,fontWeight:800,color:"#059669"}}>{calm}%</span>
+        </button>
+        
+        {/* STRESS — left */}
+        <button onClick={()=>{setNeuralZone(neuralZone==="stress"?null:"stress");H("tap");}} style={{position:"absolute",top:"50%",left:"0%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 8px",borderRadius:14,border:neuralZone==="stress"?"1.5px solid #DC2626":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="stress"?(isDark?"#DC262615":"#DC262610"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+          <div style={{width:5,height:5,borderRadius:"50%",background:"#DC2626",animation:"shimDot "+(stress>50?"1.5s":"3s")+" ease infinite"}}/>
+          <span style={{fontSize:9,fontWeight:800,color:neuralZone==="stress"?"#DC2626":t3}}>Estrés</span>
+          <span style={{fontSize:10,fontWeight:800,color:"#DC2626"}}>{stress}%</span>
+        </button>
+        
+        {/* ENERGY — right */}
+        <button onClick={()=>{setNeuralZone(neuralZone==="energy"?null:"energy");H("tap");}} style={{position:"absolute",top:"50%",right:"0%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 8px",borderRadius:14,border:neuralZone==="energy"?"1.5px solid #D97706":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="energy"?(isDark?"#D9770615":"#D9770610"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+          <div style={{width:5,height:5,borderRadius:"50%",background:"#D97706",animation:"shimDot "+brainSpeed+" ease infinite .6s"}}/>
+          <span style={{fontSize:9,fontWeight:800,color:neuralZone==="energy"?"#D97706":t3}}>Energía</span>
+          <span style={{fontSize:10,fontWeight:800,color:"#D97706"}}>{energy}%</span>
+        </button>
       </div>
 
       {/* Zone detail — tap to explore */}
