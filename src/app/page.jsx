@@ -900,7 +900,7 @@ export default function BioIgnicion(){
   // Phase transitions with pre-announcement (ease-in 2s before)
   useEffect(()=>{const totalDur=Math.round(pr.d*durMult);const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}
     // Pre-announce next phase 2s before transition
-    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);try{navigator.vibrate([30,50,30,50,80]);}catch(e){}speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);// Full instruction via voice removed — too long for iOS TTS queue. Key phrase is enough.}
+    if(idx!==pi){const nextIdx=idx;setPi(nextIdx);hapticPhase(pr.ph[nextIdx].ic);try{navigator.vibrate([30,50,30,50,80]);}catch(e){}speakNow("Fase "+(nextIdx+1)+" de "+pr.ph.length+". "+pr.ph[nextIdx].k);}
     // Pre-hint 2s before next phase
     const nxtIdx=pi<pr.ph.length-1?pi+1:null;if(nxtIdx!==null){const nxtStart=Math.round(pr.ph[nxtIdx].s*scale);const ttN=nxtStart-el;if(ttN===2&&ts==="running"){speak("Prepárate");}}
   },[sec,pr,durMult]);
