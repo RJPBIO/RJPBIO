@@ -1016,10 +1016,12 @@ export default function BioIgnicion(){
   const progStep=PROG_7[(st.progDay||0)%7];
 
   // ═══ NEUROADAPTIVE COLOR SYSTEM ═══
-  // bg, cd, bd drive the ENTIRE UI. Making them brain-aware transforms everything.
-  const stateHue = brain.systemState==="optimal"?"149,69%":"stressed"===brain.systemState?"38,92%":"critical"===brain.systemState?"0,84%":"226,64%";
-  const bg=isDark?`hsl(${brain.systemState==="optimal"?"155,25%,4%":brain.systemState==="stressed"?"28,20%,5%":brain.systemState==="critical"?"0,18%,5%":"222,25%,5%"})`:`hsl(${brain.systemState==="optimal"?"152,45%,95%":brain.systemState==="stressed"?"38,45%,95%":brain.systemState==="critical"?"0,35%,95%":"222,30%,96%"})`;
-  const cd=isDark?"#141820":"#FFFFFF",bd=isDark?`hsl(${brain.systemState==="optimal"?"155,20%,15%":brain.systemState==="stressed"?"28,18%,15%":"222,18%,15%"})`:`hsl(${brain.systemState==="optimal"?"152,30%,87%":brain.systemState==="stressed"?"38,28%,87%":"222,20%,88%"})`;
+  const _s = brain.systemState;
+  const bgDark = _s==="optimal"?"#091210":_s==="stressed"?"#120E09":_s==="critical"?"#120909":"#0B0E14";
+  const bgLight = _s==="optimal"?"#EEFAF5":_s==="stressed"?"#FAF5EE":_s==="critical"?"#FAF0F0":"#F1F4F9";
+  const bdDark = _s==="optimal"?"#1A2E28":_s==="stressed"?"#2E281A":"#1E2330";
+  const bdLight = _s==="optimal"?"#D0E8DC":_s==="stressed"?"#E8DCD0":"#E2E8F0";
+  const bg=isDark?bgDark:bgLight,cd=isDark?"#141820":"#FFFFFF",bd=isDark?bdDark:bdLight;
   const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8",ac=pr.cl;
 
   if(!mt)return(<div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#F1F4F9",gap:16}}><svg width="52" height="52" viewBox="0 0 52 52" style={{animation:"pu 1.8s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg><div style={{fontSize:10,fontWeight:800,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div></div>);
