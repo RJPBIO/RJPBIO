@@ -135,7 +135,6 @@ ph:[{l:"Golpe de Silencio",r:"0–12s",s:0,e:12,k:"Silencio total. Apago todo. C
 ];
 
 const CATS=["Reset","Activación","Protocolo"];const LVL=[{n:"INICIADO",m:0,mx:1,c:"#94A3B8"},{n:"OPERADOR",m:1,mx:10,c:"#6366F1"},{n:"EJECUTOR",m:10,mx:25,c:"#059669"},{n:"ESTRATEGA",m:25,mx:50,c:"#D97706"},{n:"COMANDANTE",m:50,mx:100,c:"#DC2626"},{n:"ARQUITECTO",m:100,mx:999,c:"#7C3AED"}];
-function gL(s){let l=LVL[0];for(const v of LVL)if(s>=v.m)l=v;return l;}function lvPct(s){const l=gL(s);if(s>=l.mx)return 100;return Math.round(((s-l.m)/(l.mx-l.m))*100);}function nxtLv(s){const i=LVL.findIndex(l=>l.n===gL(s).n);return i<LVL.length-1?LVL[i+1]:null;}const DN=["L","M","X","J","V","S","D"];
 
 export { P, CATS, LVL };
 export function gL(s){let l=LVL[0];for(const v of LVL)if(s>=v.m)l=v;return l;}
