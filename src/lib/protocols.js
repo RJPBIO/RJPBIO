@@ -141,4 +141,4 @@ export function gL(s){let l=LVL[0];for(const v of LVL)if(s>=v.m)l=v;return l;}
 export function lvPct(s){const l=gL(s);if(s>=l.mx)return 100;return Math.round(((s-l.m)/(l.mx-l.m))*100);}
 export function nxtLv(s){const i=LVL.findIndex(l=>l.n===gL(s).n);return i<LVL.length-1?LVL[i+1]:null;}
 export const DN=["L","M","X","J","V","S","D"];
-export const DIF_LABELS=["Básico","Intermedio","Avanzado"]
+export const DIF_LABELS=["Básico","Intermedio","Avanzado"];
