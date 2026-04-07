@@ -1018,8 +1018,8 @@ export default function BioIgnicion(){
   // ═══ NEUROADAPTIVE COLOR SYSTEM ═══
   // bg, cd, bd drive the ENTIRE UI. Making them brain-aware transforms everything.
   const stateHue = brain.systemState==="optimal"?"149,69%":"stressed"===brain.systemState?"38,92%":"critical"===brain.systemState?"0,84%":"226,64%";
-  const bg=isDark?`hsl(${brain.systemState==="optimal"?"160,15%,4%":brain.systemState==="stressed"?"30,12%,5%":brain.systemState==="critical"?"0,10%,5%":"220,20%,5%"})`:`hsl(${brain.systemState==="optimal"?"152,30%,96%":brain.systemState==="stressed"?"40,30%,96%":brain.systemState==="critical"?"0,20%,96%":"220,27%,97%"})`;
-  const cd=isDark?"#141820":"#FFFFFF",bd=isDark?`hsl(${brain.systemState==="optimal"?"160,10%,16%":brain.systemState==="stressed"?"30,10%,16%":"220,12%,16%"})`:`hsl(${brain.systemState==="optimal"?"152,15%,88%":brain.systemState==="stressed"?"40,15%,88%":"220,14%,89%"})`;
+  const bg=isDark?`hsl(${brain.systemState==="optimal"?"155,25%,4%":brain.systemState==="stressed"?"28,20%,5%":brain.systemState==="critical"?"0,18%,5%":"222,25%,5%"})`:`hsl(${brain.systemState==="optimal"?"152,45%,95%":brain.systemState==="stressed"?"38,45%,95%":brain.systemState==="critical"?"0,35%,95%":"222,30%,96%"})`;
+  const cd=isDark?"#141820":"#FFFFFF",bd=isDark?`hsl(${brain.systemState==="optimal"?"155,20%,15%":brain.systemState==="stressed"?"28,18%,15%":"222,18%,15%"})`:`hsl(${brain.systemState==="optimal"?"152,30%,87%":brain.systemState==="stressed"?"38,28%,87%":"222,20%,88%"})`;
   const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8",ac=pr.cl;
 
   if(!mt)return(<div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#F1F4F9",gap:16}}><svg width="52" height="52" viewBox="0 0 52 52" style={{animation:"pu 1.8s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg><div style={{fontSize:10,fontWeight:800,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div></div>);
@@ -1028,7 +1028,7 @@ export default function BioIgnicion(){
   <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background 2s ease"}}>
   <style>{`body{background:${bg};transition:background 2s ease}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 ${brain.urgency==="alta"?"30":"20"}px ${ac}${brain.urgency==="alta"?"20":"10"},0 4px 20px ${ac}06}50%{box-shadow:0 0 ${brain.urgency==="alta"?"55":"40"}px ${ac}${brain.urgency==="alta"?"30":"1A"},0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
 
-  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${brain.systemState==="optimal"?"#059669":brain.systemState==="stressed"?"#D97706":brain.systemState==="critical"?"#DC2626":ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,${brain.systemState==="optimal"?"#059669":brain.systemState==="critical"?"#DC2626":"#818CF8"}${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
+  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${brain.systemState==="optimal"?"#059669":brain.systemState==="stressed"?"#D97706":brain.systemState==="critical"?"#DC2626":ac}${isDark?"12":"08"},transparent)`,,filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,${brain.systemState==="optimal"?"#059669":brain.systemState==="critical"?"#DC2626":"#818CF8"}${isDark?"10":"08"},transparent)`,,filter:"blur(45px)"}}/></div>
   {showMid&&<div style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",zIndex:180,animation:"midPop 3.5s ease both",pointerEvents:"none"}}><div style={{background:cd,borderRadius:16,padding:"14px 22px",boxShadow:"0 8px 30px rgba(0,0,0,.08)",border:`1px solid ${bd}`,maxWidth:320,textAlign:"center"}}><div style={{fontSize:13,fontWeight:600,color:t1,lineHeight:1.6,fontStyle:"italic"}}>{midMsg}</div></div></div>}
 
   {/* Countdown Overlay */}
@@ -1293,7 +1293,7 @@ export default function BioIgnicion(){
     </div>
     {/* Breathing state — only shows when NOT in Core view */}
     <div style={{textAlign:"center",marginBottom:isActive?6:10}}><div style={{display:"inline-flex",alignItems:"center",gap:6}}><Ic name={ph.ic} size={isActive?11:13} color={ac}/><span style={{fontSize:isActive?12:14,fontWeight:800,color:t1}}>{ph.l}</span></div>{!isActive&&<div style={{fontSize:10,color:t3,marginTop:2}}>{ph.r}</div>}</div>
-    <div key={pi} style={{background:cd,borderRadius:16,padding:"16px",marginBottom:10,border:`1px solid ${bd}`,borderLeft:`3px solid ${ac}40`,animation:"phaseSlide .5s cubic-bezier(.4,0,.2,1)"}}>
+    <div key={pi} style={{background:cd,borderRadius:16,padding:"16px",marginBottom:10,border:`1px solid ${bd}`,borderLeft:`3px solid ${ac}60`,animation:"phaseSlide .5s cubic-bezier(.4,0,.2,1)"}}>
       {/* Animated phase illustration */}
       {isActive&&<><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:700,color:ac}}>Fase {pi+1} de {pr.ph.length}</span><span style={{fontSize:10,color:t3}}>{Math.round((pi+1)/pr.ph.length*100)}%</span></div><PhaseVisual type={ph.ic} color={ac} scale={bS} active={isActive}/></>}
       {/* Key phrase - LARGE, the mantra */}
@@ -1445,9 +1445,9 @@ export default function BioIgnicion(){
     {/* ═══ EXECUTIVE SUMMARY ═══ */}
     <div style={{background:"linear-gradient(135deg,"+(brain.systemState==="critical"?"#DC2626":brain.systemState==="stressed"?"#D97706":ac)+"08,"+(brain.systemState==="critical"?"#DC2626":ac)+"03)",borderRadius:18,padding:"16px",marginBottom:14,border:"1.5px solid "+(brain.systemState==="critical"?"#DC262630":brain.systemState==="stressed"?"#D9770620":ac+"15")}}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ac}}>{st.weeklyData.reduce((a,b)=>a+b,0)}</div><div style={{fontSize:10,color:t3}}>sesiones semana</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"}}>{bioSignal.score}</div><div style={{fontSize:10,color:t3}}>BioSignal</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:burnout.risk==="bajo"?"#059669":"#DC2626"}}>{burnout.risk==="sin datos"?"—":burnout.index}</div><div style={{fontSize:10,color:t3}}>burnout</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:28,fontWeight:800,color:ac}}>{st.weeklyData.reduce((a,b)=>a+b,0)}</div><div style={{fontSize:10,color:t3}}>sesiones semana</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:28,fontWeight:800,color:bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"}}>{bioSignal.score}</div><div style={{fontSize:10,color:t3}}>BioSignal</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:28,fontWeight:800,color:burnout.risk==="bajo"?"#059669":"#DC2626"}}>{burnout.risk==="sin datos"?"—":burnout.index}</div><div style={{fontSize:10,color:t3}}>burnout</div></div>
       </div>
       <div style={{fontSize:11,color:t2,textAlign:"center",lineHeight:1.5}}>{brain.urgency==="alta"?brain.reason+". "+brain.bestProto.n+" recomendado.":brain.systemState==="optimal"?"Tu sistema está encendido. Mantén este ritmo.":brain.systemState==="functional"?"Buen estado. Una sesión más te llevaría al siguiente nivel.":"Tu cuerpo pide atención. Es momento de un reset."}</div>
     </div>
@@ -1491,11 +1491,11 @@ export default function BioIgnicion(){
       {/* Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
         <div><div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:3}}>Tu Estado Neural</div><AN value={perf} sfx="%" color={t1} sz={28}/></div>
-        <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:7,height:7,borderRadius:"50%",background:nSt.color,animation:"shimDot "+(brain.systemState==="critical"?"1s":brain.systemState==="stressed"?"1.5s":"2.5s")+" ease infinite"}}/><span style={{fontSize:11,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:9,height:9,borderRadius:"50%",background:nSt.color,animation:"shimDot "+(brain.systemState==="critical"?"1s":brain.systemState==="stressed"?"1.5s":"2.5s")+" ease infinite"}}/><span style={{fontSize:11,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
       </div>
 
       {/* Brain visualization — 3D-style with glow zones */}
-      <div style={{position:"relative",width:"100%",maxWidth:320,margin:"0 auto",aspectRatio:"1"}}>
+      <div style={{position:"relative",width:"100%",maxWidth:300,margin:"0 auto",aspectRatio:"1.1"}}>
         <svg viewBox="0 0 320 320" style={{width:"100%",height:"100%"}}>
           <defs>
             {/* Radial glow filters for 3D depth */}
@@ -1514,7 +1514,7 @@ export default function BioIgnicion(){
           {/* Brain shape — organic, layered for depth */}
           {/* Outer glow layer */}
           <path d="M160,38 C115,38 72,60 55,98 C38,136 48,178 65,205 C76,222 92,236 110,245 L210,245 C228,236 244,222 255,205 C272,178 282,136 265,98 C248,60 205,38 160,38Z" 
-            fill="none" stroke={isDark?"#ffffff08":"#00000008"} strokeWidth="20" filter="url(#softGlow)"/>
+            fill="none" stroke={isDark?"#ffffff08":"#00000008"} strokeWidth="20" />
           {/* Main brain shape */}
           <path d="M160,38 C115,38 72,60 55,98 C38,136 48,178 65,205 C76,222 92,236 110,245 L210,245 C228,236 244,222 255,205 C272,178 282,136 265,98 C248,60 205,38 160,38Z" 
             fill={isDark?"#0D1117":"#EDF2F7"} stroke={isDark?"#1E293B":"#CBD5E1"} strokeWidth=".5" opacity=".9"/>
@@ -1534,7 +1534,7 @@ export default function BioIgnicion(){
           
           {/* ═══ FOCUS ZONE — Frontal lobe (top) ═══ */}
           <ellipse cx="160" cy="75" rx={40+focus*.2} ry={28+focus*.12} fill="url(#focusG)" 
-            opacity={.15+focus*.006} style={{animation:`brainPulse ${brainSpeed} ease infinite`,cursor:"pointer",filter:"url(#brainGlow)"}}
+            opacity={.15+focus*.006} style={{animation:`brainPulse ${brainSpeed} ease infinite`,cursor:"pointer"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="focus"?null:"focus");H("tap");}}/>
           <ellipse cx="160" cy="75" rx={22+focus*.08} ry={14+focus*.05} fill="#3B82F6"
             opacity={.1+focus*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .5s`}}/>
@@ -1543,14 +1543,14 @@ export default function BioIgnicion(){
           
           {/* ═══ CALM ZONE — Temporal/Base (bottom) ═══ */}
           <ellipse cx="160" cy="210" rx={45+calm*.15} ry={22+calm*.1} fill="url(#calmG)"
-            opacity={.12+calm*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .8s`,cursor:"pointer",filter:"url(#brainGlow)"}}
+            opacity={.12+calm*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .8s`,cursor:"pointer"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}}/>
           <ellipse cx="160" cy="210" rx={25+calm*.08} ry={12+calm*.05} fill="#059669"
             opacity={.08+calm*.004} style={{animation:`brainPulse ${brainSpeed} ease infinite 1.2s`}}/>
           
           {/* ═══ ENERGY ZONE — Core/Center ═══ */}
           <circle cx="160" cy="140" r={20+energy*.15} fill="url(#energyG)"
-            opacity={.15+energy*.006} style={{animation:`brainPulse ${brainSpeed} ease infinite .3s`,cursor:"pointer",filter:"url(#brainGlow)"}}
+            opacity={.15+energy*.006} style={{animation:`brainPulse ${brainSpeed} ease infinite .3s`,cursor:"pointer"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="energy"?null:"energy");H("tap");}}/>
           <circle cx="160" cy="140" r={10+energy*.06} fill="#D97706"
             opacity={.2+energy*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .9s`}}/>
@@ -1578,34 +1578,34 @@ export default function BioIgnicion(){
           <line x1="180" y1="195" x2="200" y2="155" stroke="#059669" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite 1.7s"}}/>
           
           {/* Neural sparks — synaptic fire */}
-          {[[135,65],[185,70],[140,130],[180,150],[135,205],[185,200],[160,105],[160,175],[100,140],[220,140]].map(([x,y],i)=>
+          {[[140,70],[180,70],[140,140],[180,140],[140,200],[180,200]].map(([x,y],i)=>
             <circle key={i} cx={x} cy={y} r={1.5+Math.random()} fill={i<2?"#60A5FA":i<4?"#FBBF24":i<6?"#34D399":ac} opacity=".4" style={{animation:`neuralSpark ${1.2+i*.25}s ease infinite ${i*.18}s`}}/>)}
         </svg>
         
         {/* ═══ INTERACTIVE ZONE BUTTONS — positioned around the brain ═══ */}
         {/* FOCUS — top */}
-        <button onClick={()=>{setNeuralZone(neuralZone==="focus"?null:"focus");H("tap");}} style={{position:"absolute",top:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="focus"?"1.5px solid #3B82F6":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="focus"?(isDark?"#3B82F615":"#3B82F610"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+        <button onClick={()=>{setNeuralZone(neuralZone==="focus"?null:"focus");H("tap");}} style={{position:"absolute",top:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="focus"?"1.5px solid #3B82F6":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="focus"?(isDark?"#3B82F615":"#3B82F610"):(isDark?"#0D1117CC":"#FFFFFFCC"),,cursor:"pointer"}}>
           <div style={{width:6,height:6,borderRadius:"50%",background:"#3B82F6",animation:"shimDot "+brainSpeed+" ease infinite"}}/>
           <span style={{fontSize:10,fontWeight:800,color:neuralZone==="focus"?"#3B82F6":t3}}>Enfoque</span>
           <span style={{fontSize:11,fontWeight:800,color:"#3B82F6"}}>{focus}%</span>
         </button>
         
         {/* CALM — bottom */}
-        <button onClick={()=>{setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}} style={{position:"absolute",bottom:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="calm"?"1.5px solid #059669":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="calm"?(isDark?"#05966915":"#05966910"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+        <button onClick={()=>{setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}} style={{position:"absolute",bottom:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="calm"?"1.5px solid #059669":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="calm"?(isDark?"#05966915":"#05966910"):(isDark?"#0D1117CC":"#FFFFFFCC"),,cursor:"pointer"}}>
           <div style={{width:6,height:6,borderRadius:"50%",background:"#059669",animation:"shimDot "+brainSpeed+" ease infinite .4s"}}/>
           <span style={{fontSize:10,fontWeight:800,color:neuralZone==="calm"?"#059669":t3}}>Calma</span>
           <span style={{fontSize:11,fontWeight:800,color:"#059669"}}>{calm}%</span>
         </button>
         
         {/* STRESS — left */}
-        <button onClick={()=>{setNeuralZone(neuralZone==="stress"?null:"stress");H("tap");}} style={{position:"absolute",top:"50%",left:"0%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 8px",borderRadius:14,border:neuralZone==="stress"?"1.5px solid #DC2626":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="stress"?(isDark?"#DC262615":"#DC262610"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+        <button onClick={()=>{setNeuralZone(neuralZone==="stress"?null:"stress");H("tap");}} style={{position:"absolute",top:"50%",left:"0%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 8px",borderRadius:14,border:neuralZone==="stress"?"1.5px solid #DC2626":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="stress"?(isDark?"#DC262615":"#DC262610"):(isDark?"#0D1117CC":"#FFFFFFCC"),,cursor:"pointer"}}>
           <div style={{width:5,height:5,borderRadius:"50%",background:"#DC2626",animation:"shimDot "+(stress>50?"1.5s":"3s")+" ease infinite"}}/>
           <span style={{fontSize:9,fontWeight:800,color:neuralZone==="stress"?"#DC2626":t3}}>Estrés</span>
           <span style={{fontSize:10,fontWeight:800,color:"#DC2626"}}>{stress}%</span>
         </button>
         
         {/* ENERGY — right */}
-        <button onClick={()=>{setNeuralZone(neuralZone==="energy"?null:"energy");H("tap");}} style={{position:"absolute",top:"50%",right:"0%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 8px",borderRadius:14,border:neuralZone==="energy"?"1.5px solid #D97706":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="energy"?(isDark?"#D9770615":"#D9770610"):(isDark?"#0D111790":"#FFFFFF90"),backdropFilter:"blur(8px)",cursor:"pointer"}}>
+        <button onClick={()=>{setNeuralZone(neuralZone==="energy"?null:"energy");H("tap");}} style={{position:"absolute",top:"50%",right:"0%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 8px",borderRadius:14,border:neuralZone==="energy"?"1.5px solid #D97706":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="energy"?(isDark?"#D9770615":"#D9770610"):(isDark?"#0D1117CC":"#FFFFFFCC"),,cursor:"pointer"}}>
           <div style={{width:5,height:5,borderRadius:"50%",background:"#D97706",animation:"shimDot "+brainSpeed+" ease infinite .6s"}}/>
           <span style={{fontSize:9,fontWeight:800,color:neuralZone==="energy"?"#D97706":t3}}>Energía</span>
           <span style={{fontSize:10,fontWeight:800,color:"#D97706"}}>{energy}%</span>
