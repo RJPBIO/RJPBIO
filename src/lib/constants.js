@@ -145,3 +145,12 @@ function neuralIntelligence(st) {
 export { MOODS, ENERGY_LEVELS, WORK_TAGS, INTENTS, DS, SOUNDSCAPES, DAILY_PHRASES, PROG_7, SCIENCE_DEEP, AM, STATUS_MSGS, MID_MSGS, POST_MSGS, GREETINGS };
 export function getStatus(v){for(const s of STATUS_MSGS)if(v>=s.min&&v<s.max)return s;return STATUS_MSGS[3];}
 export function getWeekNum(){const d=new Date();const j=new Date(d.getFullYear(),0,1);return Math.ceil(((d-j)/864e5+j.getDay()+1)/7);}
+export const STATUS_MSGS = { 
+  idle: "Listo",
+  ready: "Preparado",
+  running: "En proceso",
+  breathing: "Respira",
+  focus: "Enfocado",
+  calm: "Calma",
+  complete: "Completado",
+}
