@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
-   BIO-IGNICIÓN DESIGN SYSTEM — v4.0 PREMIUM
-   Neural-Adaptive Visual Language
-   Zero dependencies. Pure CSS. Maximum impact.
+   BIO-IGNICIÓN Design System CSS v5.0
+   Neuro-Adaptive Motion Language
    ═══════════════════════════════════════════════════════════════ */
 
 /* ═══ RESET ═══ */
@@ -16,21 +15,19 @@ html, body {
 body { 
   padding-top: env(safe-area-inset-top); 
   padding-bottom: env(safe-area-inset-bottom);
+  transition: background-color 1.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ═══ INTERACTIVE ELEMENTS ═══ */
+/* ═══ INTERACTIVE ═══ */
 button { 
-  font-family: inherit; 
-  cursor: pointer; 
-  -webkit-user-select: none; 
-  user-select: none;
+  font-family: inherit; cursor: pointer; 
+  -webkit-user-select: none; user-select: none;
   transition: 
-    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.2s ease,
-    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.4s ease,
-    background-color 0.4s ease,
-    filter 0.3s ease;
+    box-shadow 0.35s ease,
+    border-color 0.35s ease,
+    background-color 0.35s ease;
   will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
@@ -39,51 +36,47 @@ button:active { transform: scale(0.96); }
 input, textarea { font-family: inherit; }
 svg { shape-rendering: geometricPrecision; }
 
-/* ═══ DETAILS / SUMMARY ═══ */
-details summary { 
-  list-style: none; cursor: pointer; 
-  -webkit-user-select: none; user-select: none;
-  transition: opacity 0.2s;
-}
+/* ═══ DETAILS/SUMMARY ═══ */
+details summary { list-style: none; cursor: pointer; -webkit-user-select: none; user-select: none; }
 details summary::-webkit-details-marker { display: none; }
 details summary::marker { display: none; }
 details[open] summary { margin-bottom: 8px; }
-details[open] > *:not(summary) { animation: bioFadeSlide 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+details[open] > *:not(summary) { animation: bioReveal 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-/* ═══ CORE ANIMATIONS — BIO-IGNICIÓN Motion Language ═══ */
+/* ═══ CORE ANIMATIONS ═══ */
 
-/* Fade + slide (content appearing) */
+/* Content reveal */
 @keyframes fi { 
   from { opacity: 0; transform: translateY(8px); } 
   to { opacity: 1; transform: translateY(0); } 
 }
-@keyframes bioFadeSlide { 
-  from { opacity: 0; transform: translateY(6px); } 
+@keyframes bioReveal { 
+  from { opacity: 0; transform: translateY(5px); } 
   to { opacity: 1; transform: translateY(0); } 
 }
 
-/* Pop (overlays, celebrations) — spring physics */
+/* Spring pop — overlays, celebrations */
 @keyframes po { 
   0% { opacity: 0; transform: scale(0.85); }
-  60% { opacity: 1; transform: scale(1.03); }
+  65% { opacity: 1; transform: scale(1.03); }
   100% { opacity: 1; transform: scale(1); } 
 }
 
-/* Slide up (bottom sheets) */
+/* Slide up */
 @keyframes su { 
   from { transform: translateY(100%); opacity: 0; } 
   to { transform: translateY(0); opacity: 1; } 
 }
 
-/* Core Pulse — the heartbeat of BIO-IGNICIÓN */
+/* Core pulse — the heartbeat */
 @keyframes pu { 
   0%, 100% { transform: scale(1); opacity: 0.7; } 
-  40% { transform: scale(1.05); opacity: 0.9; }
+  35% { transform: scale(1.04); opacity: 0.85; }
   50% { transform: scale(1.06); opacity: 1; } 
-  60% { transform: scale(1.05); opacity: 0.9; }
+  65% { transform: scale(1.04); opacity: 0.85; }
 }
 
-/* Breath ring expansion */
+/* Breath ring */
 @keyframes bth { 
   0%, 100% { transform: scale(1); opacity: 0.45; } 
   50% { transform: scale(1.04); opacity: 0.8; } 
@@ -92,14 +85,14 @@ details[open] > *:not(summary) { animation: bioFadeSlide 0.35s cubic-bezier(0.4,
 /* Soft ripple */
 @keyframes rp { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 
-/* Ambient background movement */
+/* Ambient drift — organic 3-point path */
 @keyframes am { 
   0%, 100% { transform: translate(0, 0) scale(1); } 
   33% { transform: translate(8px, -12px) scale(1.04); } 
   66% { transform: translate(-5px, 6px) scale(1.02); }
 }
 
-/* Status indicator — alive dot */
+/* Status dot — alive indicator */
 @keyframes shimDot { 
   0%, 100% { opacity: 0.35; transform: scale(0.75); } 
   50% { opacity: 1; transform: scale(1.4); } 
@@ -112,7 +105,7 @@ details[open] > *:not(summary) { animation: bioFadeSlide 0.35s cubic-bezier(0.4,
 @keyframes midPop { 
   0% { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(0.92); } 
   8% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } 
-  82% { opacity: 1; transform: translateX(-50%) translateY(0); } 
+  82% { opacity: 1; } 
   100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.97); } 
 }
 
@@ -122,18 +115,17 @@ details[open] > *:not(summary) { animation: bioFadeSlide 0.35s cubic-bezier(0.4,
   100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; } 
 }
 
-/* Progress waveform */
+/* Waveform */
 @keyframes wf { from { transform: translateX(-400px); } to { transform: translateX(0); } }
 
-/* Achievement particles */
+/* Particles — achievement celebration */
 @keyframes particle { 
   0% { opacity: 0; transform: translate(0, 0) scale(0) rotate(0deg); } 
   20% { opacity: 1; } 
   100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.3) rotate(180deg); } 
 }
 
-/* ═══ PHASE VISUAL ANIMATIONS ═══ */
-
+/* ═══ PHASE ANIMATIONS ═══ */
 @keyframes heartBeat { 
   0%, 100% { transform: scale(1); } 
   12% { transform: scale(1.12); } 
@@ -141,52 +133,30 @@ details[open] > *:not(summary) { animation: bioFadeSlide 0.35s cubic-bezier(0.4,
   36% { transform: scale(1.06); } 
   60% { transform: scale(1); } 
 }
-
-@keyframes ecgDraw { 
-  0% { opacity: 0.08; } 
-  40% { opacity: 0.55; } 
-  100% { opacity: 0.08; } 
-}
-
-@keyframes brainPulse { 
-  0%, 100% { opacity: 0.05; transform: scale(1); } 
-  50% { opacity: 0.22; transform: scale(1.35); } 
-}
-
-@keyframes neuralSpark { 
-  0%, 100% { opacity: 0.05; transform: scale(0.4); } 
-  50% { opacity: 1; transform: scale(2.2); } 
-}
-
+@keyframes ecgDraw { 0% { opacity: 0.08; } 40% { opacity: 0.55; } 100% { opacity: 0.08; } }
+@keyframes brainPulse { 0%, 100% { opacity: 0.05; transform: scale(1); } 50% { opacity: 0.22; transform: scale(1.35); } }
+@keyframes neuralSpark { 0%, 100% { opacity: 0.05; transform: scale(0.4); } 50% { opacity: 1; transform: scale(2.2); } }
 @keyframes focusSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-@keyframes focusLock { 
-  0%, 100% { opacity: 0.06; transform: scale(1); } 
-  50% { opacity: 0.25; transform: scale(1.3); } 
-}
-
+@keyframes focusLock { 0%, 100% { opacity: 0.06; transform: scale(1); } 50% { opacity: 0.25; transform: scale(1.3); } }
 @keyframes pausePulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes phaseSlide { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes compFlash { 0% { opacity: 0; } 35% { opacity: 0.9; } 100% { opacity: 0; } }
 
-@keyframes phaseSlide { 
-  from { opacity: 0; transform: translateX(18px); } 
-  to { opacity: 1; transform: translateX(0); } 
-}
-
-@keyframes compFlash { 
-  0% { opacity: 0; } 
-  35% { opacity: 0.9; } 
-  100% { opacity: 0; } 
+/* ═══ STATE TRANSITIONS ═══ */
+/* Applied to containers that change color with brain state */
+.bio-state-aware {
+  transition: 
+    background-color 1.8s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 1.8s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.6s ease;
 }
 
 /* ═══ PWA SAFE AREAS ═══ */
 @supports (padding: env(safe-area-inset-top)) {
-  body { 
-    padding-top: env(safe-area-inset-top); 
-    padding-bottom: env(safe-area-inset-bottom); 
-  }
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 }
 
-/* ═══ SCROLLBAR — premium minimal ═══ */
+/* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 2px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.15); border-radius: 10px; }
@@ -199,20 +169,10 @@ details[open] > *:not(summary) { animation: bioFadeSlide 0.35s cubic-bezier(0.4,
     transition-duration: 0.01ms !important; 
   }
 }
-
 ::selection { background: rgba(5, 150, 105, 0.2); color: inherit; }
+button:focus-visible { outline: 2px solid rgba(5, 150, 105, 0.5); outline-offset: 2px; }
 
-button:focus-visible { 
-  outline: 2px solid rgba(5, 150, 105, 0.5); 
-  outline-offset: 2px; 
-}
-
-/* ═══ MOBILE TOUCH TARGETS ═══ */
+/* ═══ TOUCH TARGETS ═══ */
 @media (hover: none) and (pointer: coarse) {
   button { min-height: 44px; }
-}
-
-/* ═══ GPU OPTIMIZATION ═══ */
-@media (prefers-reduced-motion: no-preference) {
-  .bio-animate { will-change: transform, opacity; }
 }
