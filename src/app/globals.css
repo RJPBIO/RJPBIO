@@ -106,5 +106,5 @@ details[open] > *:not(summary){animation:bioReveal .35s cubic-bezier(.4,0,.2,1)}
 ::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.12);border-radius:10px}
 ::selection{background:rgba(5,150,105,.15);color:inherit}
 button:focus-visible{outline:2px solid rgba(5,150,105,.4);outline-offset:3px}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-@media(hover:none)and(pointer:coarse){button{min-height:44px}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media (hover: none) and (pointer: coarse){button{min-height:44px}}
