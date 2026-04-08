@@ -1,178 +1,110 @@
 /* ═══════════════════════════════════════════════════════════════
-   BIO-IGNICIÓN Design System CSS v5.0
-   Neuro-Adaptive Motion Language
+   BIO-IGNICIÓN v7.0 — Premium Design System
+   Luxury PWA · Neural-Adaptive · Apple Health Level
    ═══════════════════════════════════════════════════════════════ */
 
-/* ═══ RESET ═══ */
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-html, body { 
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased; 
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html,body{overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+  font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-feature-settings:'cv02','cv03','cv04','cv11';
+  font-variant-numeric:tabular-nums;
+  transition:background-color 1.2s cubic-bezier(.4,0,.2,1);
 }
-body { 
-  padding-top: env(safe-area-inset-top); 
-  padding-bottom: env(safe-area-inset-bottom);
-  transition: background-color 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+/* ═══ CSS VARIABLES ═══ */
+:root{
+  --bio-bg:#F0F2F8;--bio-cd:#FFFFFF;--bio-bd:#DEE2ED;
+  --bio-t1:#0F172A;--bio-t2:#475569;--bio-t3:#94A3B8;
+  --bio-ac:#059669;--bio-sa:#059669;
+  --bio-radius:20px;--bio-radius-sm:14px;--bio-radius-xs:8px;
+  --bio-shadow:0 2px 20px rgba(0,0,0,.04);
+  --bio-shadow-lg:0 8px 40px rgba(0,0,0,.06);
+  --bio-anim-speed:4s;--bio-dot-speed:2.2s;
 }
+[data-theme="dark"]{
+  --bio-bg:#0A0D14;--bio-cd:#141820;--bio-bd:#1C2030;
+  --bio-t1:#E8ECF4;--bio-t2:#8B95A8;--bio-t3:#4B5568;
+  --bio-shadow:0 2px 20px rgba(0,0,0,.25);
+  --bio-shadow-lg:0 8px 40px rgba(0,0,0,.35);
+}
+
+/* ═══ NEURAL STATE THEMES ═══ */
+[data-state="optimal"]{--bio-sa:#059669;--bio-anim-speed:5s;--bio-dot-speed:2.8s}
+[data-state="optimal"][data-theme="dark"]{--bio-bg:#071210}
+[data-state="optimal"]:not([data-theme="dark"]){--bio-bg:#EEFAF5}
+[data-state="functional"]{--bio-sa:#6366F1;--bio-anim-speed:4s;--bio-dot-speed:2.2s}
+[data-state="stressed"]{--bio-sa:#D97706;--bio-anim-speed:2.5s;--bio-dot-speed:1.5s}
+[data-state="stressed"][data-theme="dark"]{--bio-bg:#120E07}
+[data-state="stressed"]:not([data-theme="dark"]){--bio-bg:#FBF6EE}
+[data-state="critical"]{--bio-sa:#DC2626;--bio-anim-speed:1.8s;--bio-dot-speed:1s}
+[data-state="critical"][data-theme="dark"]{--bio-bg:#120808}
+[data-state="critical"]:not([data-theme="dark"]){--bio-bg:#FBF0F0}
 
 /* ═══ INTERACTIVE ═══ */
-button { 
-  font-family: inherit; cursor: pointer; 
-  -webkit-user-select: none; user-select: none;
-  transition: 
-    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.2s ease,
-    box-shadow 0.35s ease,
-    border-color 0.35s ease,
-    background-color 0.35s ease;
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+button{
+  font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:none;
+  font-feature-settings:'cv02','cv03','cv04','cv11';
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .2s,box-shadow .4s,border-color .4s,background .4s;
+  will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;
 }
-button:active { transform: scale(0.96); }
-input, textarea { font-family: inherit; }
-svg { shape-rendering: geometricPrecision; }
+button:active{transform:scale(.96)}
+input,textarea{font-family:inherit}
+svg{shape-rendering:geometricPrecision}
 
-/* ═══ DETAILS/SUMMARY ═══ */
-details summary { list-style: none; cursor: pointer; -webkit-user-select: none; user-select: none; }
-details summary::-webkit-details-marker { display: none; }
-details summary::marker { display: none; }
-details[open] summary { margin-bottom: 8px; }
-details[open] > *:not(summary) { animation: bioReveal 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+/* ═══ DETAILS ═══ */
+details summary{list-style:none;cursor:pointer;-webkit-user-select:none;user-select:none}
+details summary::-webkit-details-marker{display:none}
+details summary::marker{display:none}
+details[open] summary{margin-bottom:10px}
+details[open] > *:not(summary){animation:bioReveal .35s cubic-bezier(.4,0,.2,1)}
 
-/* ═══ CORE ANIMATIONS ═══ */
+/* ═══ ANIMATIONS ═══ */
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bioReveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes po{0%{opacity:0;transform:scale(.84)}60%{opacity:1;transform:scale(1.03)}100%{opacity:1;transform:scale(1)}}
+@keyframes su{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pu{0%,100%{transform:scale(1);opacity:.7}35%{transform:scale(1.04);opacity:.85}50%{transform:scale(1.06);opacity:1}65%{transform:scale(1.04);opacity:.85}}
+@keyframes bth{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.04);opacity:.8}}
+@keyframes rp{0%,100%{opacity:.8}50%{opacity:1}}
+@keyframes am{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(8px,-12px) scale(1.04)}66%{transform:translate(-5px,6px) scale(1.02)}}
+@keyframes shimDot{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1.45)}}
+@keyframes innerRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes midPop{0%{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.92)}8%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}82%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.97)}}
+@keyframes cdPulse{0%{transform:translate(-50%,-50%) scale(.8);opacity:.6}100%{transform:translate(-50%,-50%) scale(1.6);opacity:0}}
+@keyframes wf{from{transform:translateX(-400px)}to{transform:translateX(0)}}
+@keyframes particle{0%{opacity:0;transform:translate(0,0) scale(0) rotate(0deg)}20%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1.3) rotate(180deg)}}
+@keyframes heartBeat{0%,100%{transform:scale(1)}12%{transform:scale(1.12)}24%{transform:scale(.98)}36%{transform:scale(1.06)}60%{transform:scale(1)}}
+@keyframes ecgDraw{0%{opacity:.06}40%{opacity:.55}100%{opacity:.06}}
+@keyframes brainPulse{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.22;transform:scale(1.35)}}
+@keyframes neuralSpark{0%,100%{opacity:.05;transform:scale(.4)}50%{opacity:1;transform:scale(2.2)}}
+@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes focusLock{0%,100%{opacity:.06;transform:scale(1)}50%{opacity:.25;transform:scale(1.3)}}
+@keyframes pausePulse{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes phaseSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+@keyframes compFlash{0%{opacity:0}35%{opacity:.9}100%{opacity:0}}
+@keyframes gl{0%,100%{box-shadow:0 0 22px color-mix(in srgb,var(--bio-ac) 12%,transparent),0 4px 20px color-mix(in srgb,var(--bio-ac) 6%,transparent)}50%{box-shadow:0 0 44px color-mix(in srgb,var(--bio-ac) 22%,transparent),0 4px 28px color-mix(in srgb,var(--bio-ac) 10%,transparent)}}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-/* Content reveal */
-@keyframes fi { 
-  from { opacity: 0; transform: translateY(8px); } 
-  to { opacity: 1; transform: translateY(0); } 
-}
-@keyframes bioReveal { 
-  from { opacity: 0; transform: translateY(5px); } 
-  to { opacity: 1; transform: translateY(0); } 
-}
+/* ═══ STAGGER ENTRANCE ═══ */
+.bio-stagger > *{opacity:0;animation:fadeSlide .45s cubic-bezier(.4,0,.2,1) forwards}
+.bio-stagger > *:nth-child(1){animation-delay:.04s}
+.bio-stagger > *:nth-child(2){animation-delay:.08s}
+.bio-stagger > *:nth-child(3){animation-delay:.12s}
+.bio-stagger > *:nth-child(4){animation-delay:.16s}
+.bio-stagger > *:nth-child(5){animation-delay:.2s}
+.bio-stagger > *:nth-child(6){animation-delay:.24s}
+.bio-stagger > *:nth-child(7){animation-delay:.28s}
+.bio-stagger > *:nth-child(8){animation-delay:.32s}
+.bio-stagger > *:nth-child(9){animation-delay:.36s}
+.bio-stagger > *:nth-child(10){animation-delay:.4s}
 
-/* Spring pop — overlays, celebrations */
-@keyframes po { 
-  0% { opacity: 0; transform: scale(0.85); }
-  65% { opacity: 1; transform: scale(1.03); }
-  100% { opacity: 1; transform: scale(1); } 
-}
-
-/* Slide up */
-@keyframes su { 
-  from { transform: translateY(100%); opacity: 0; } 
-  to { transform: translateY(0); opacity: 1; } 
-}
-
-/* Core pulse — the heartbeat */
-@keyframes pu { 
-  0%, 100% { transform: scale(1); opacity: 0.7; } 
-  35% { transform: scale(1.04); opacity: 0.85; }
-  50% { transform: scale(1.06); opacity: 1; } 
-  65% { transform: scale(1.04); opacity: 0.85; }
-}
-
-/* Breath ring */
-@keyframes bth { 
-  0%, 100% { transform: scale(1); opacity: 0.45; } 
-  50% { transform: scale(1.04); opacity: 0.8; } 
-}
-
-/* Soft ripple */
-@keyframes rp { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
-
-/* Ambient drift — organic 3-point path */
-@keyframes am { 
-  0%, 100% { transform: translate(0, 0) scale(1); } 
-  33% { transform: translate(8px, -12px) scale(1.04); } 
-  66% { transform: translate(-5px, 6px) scale(1.02); }
-}
-
-/* Status dot — alive indicator */
-@keyframes shimDot { 
-  0%, 100% { opacity: 0.35; transform: scale(0.75); } 
-  50% { opacity: 1; transform: scale(1.4); } 
-}
-
-/* Inner ring rotation */
-@keyframes innerRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-/* Mid-session message */
-@keyframes midPop { 
-  0% { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(0.92); } 
-  8% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } 
-  82% { opacity: 1; } 
-  100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.97); } 
-}
-
-/* Countdown ring */
-@keyframes cdPulse { 
-  0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.6; } 
-  100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; } 
-}
-
-/* Waveform */
-@keyframes wf { from { transform: translateX(-400px); } to { transform: translateX(0); } }
-
-/* Particles — achievement celebration */
-@keyframes particle { 
-  0% { opacity: 0; transform: translate(0, 0) scale(0) rotate(0deg); } 
-  20% { opacity: 1; } 
-  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.3) rotate(180deg); } 
-}
-
-/* ═══ PHASE ANIMATIONS ═══ */
-@keyframes heartBeat { 
-  0%, 100% { transform: scale(1); } 
-  12% { transform: scale(1.12); } 
-  24% { transform: scale(0.98); } 
-  36% { transform: scale(1.06); } 
-  60% { transform: scale(1); } 
-}
-@keyframes ecgDraw { 0% { opacity: 0.08; } 40% { opacity: 0.55; } 100% { opacity: 0.08; } }
-@keyframes brainPulse { 0%, 100% { opacity: 0.05; transform: scale(1); } 50% { opacity: 0.22; transform: scale(1.35); } }
-@keyframes neuralSpark { 0%, 100% { opacity: 0.05; transform: scale(0.4); } 50% { opacity: 1; transform: scale(2.2); } }
-@keyframes focusSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes focusLock { 0%, 100% { opacity: 0.06; transform: scale(1); } 50% { opacity: 0.25; transform: scale(1.3); } }
-@keyframes pausePulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
-@keyframes phaseSlide { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes compFlash { 0% { opacity: 0; } 35% { opacity: 0.9; } 100% { opacity: 0; } }
-
-/* ═══ STATE TRANSITIONS ═══ */
-/* Applied to containers that change color with brain state */
-.bio-state-aware {
-  transition: 
-    background-color 1.8s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 1.8s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.6s ease;
-}
-
-/* ═══ PWA SAFE AREAS ═══ */
-@supports (padding: env(safe-area-inset-top)) {
-  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-}
-
-/* ═══ SCROLLBAR ═══ */
-::-webkit-scrollbar { width: 2px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.15); border-radius: 10px; }
-
-/* ═══ ACCESSIBILITY ═══ */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { 
-    animation-duration: 0.01ms !important; 
-    animation-iteration-count: 1 !important; 
-    transition-duration: 0.01ms !important; 
-  }
-}
-::selection { background: rgba(5, 150, 105, 0.2); color: inherit; }
-button:focus-visible { outline: 2px solid rgba(5, 150, 105, 0.5); outline-offset: 2px; }
-
-/* ═══ TOUCH TARGETS ═══ */
-@media (hover: none) and (pointer: coarse) {
-  button { min-height: 44px; }
-}
+/* ═══ PLATFORM ═══ */
+@supports(padding:env(safe-area-inset-top)){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.12);border-radius:10px}
+::selection{background:rgba(5,150,105,.15);color:inherit}
+button:focus-visible{outline:2px solid rgba(5,150,105,.4);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media(hover:none)and(pointer:coarse){button{min-height:44px}}
