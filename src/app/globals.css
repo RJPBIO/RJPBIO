@@ -1,52 +1,125 @@
 /* ═══════════════════════════════════════════════════════════════
-   BIO-IGNICIÓN v8.0 — Dark Premium Neural Interface
-   Inspired by biometric systems + neural dashboards
+   BIO-IGNICIÓN v9.0 — Neural Operating System Interface
+   Bioluminescent design system. Every element breathes.
+   Every color has neuropsychological intent.
    ═══════════════════════════════════════════════════════════════ */
 
+/* ═══ RESET ═══ */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 html,body{overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 body{
   padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
-  font-family:'Manrope',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   font-feature-settings:'cv02','cv03','cv04','cv11';
   font-variant-numeric:tabular-nums;
-  background:#080B12;color:#E8ECF4;
-  transition:background-color 1.2s ease;
+  background:var(--bio-bg);color:var(--bio-t1);
+  transition:background-color 1.8s cubic-bezier(.4,0,.2,1);
 }
 
-/* ═══ CSS VARIABLES ═══ */
+/* ═══ DESIGN TOKENS ═══
+   Semantic naming: every variable has purpose.
+   State themes override accent + speed tokens.
+   ─────────────────────────────────────────── */
 :root{
-  --bio-bg:#080B12;--bio-cd:#0F1219;--bio-bd:#1A1F2E;
-  --bio-t1:#E8ECF4;--bio-t2:#8B95A8;--bio-t3:#4B5568;
-  --bio-ac:#22D3A0;
-  --bio-glass:rgba(15,18,25,.65);
-  --bio-glass-border:rgba(255,255,255,.06);
-  --bio-glow-ac:rgba(34,211,160,.15);
-  --bio-glow-blue:rgba(59,130,246,.12);
-  --bio-glow-amber:rgba(217,119,6,.12);
-  --bio-radius:20px;--bio-radius-sm:14px;
-  --bio-anim-speed:4s;--bio-dot-speed:2.2s;
-}
-[data-theme="light"]{
-  --bio-bg:#F0F2F8;--bio-cd:#FFFFFF;--bio-bd:#DEE2ED;
-  --bio-t1:#0F172A;--bio-t2:#475569;--bio-t3:#94A3B8;
-  --bio-glass:rgba(255,255,255,.7);
-  --bio-glass-border:rgba(0,0,0,.06);
+  /* Backgrounds — depth layers */
+  --bio-bg:#06090F;
+  --bio-surface:#0C1017;
+  --bio-elevated:#141820;
+  --bio-border:#1A2030;
+
+  /* Text — 3-tier hierarchy */
+  --bio-t1:#E8ECF4;
+  --bio-t2:#7B879E;
+  --bio-t3:#3E4A60;
+
+  /* Accent — state-driven, defaults to neural green */
+  --bio-ac:#10B981;
+  --bio-ac-dim:rgba(16,185,129,.08);
+  --bio-ac-glow:rgba(16,185,129,.15);
+  --bio-ac-strong:rgba(16,185,129,.25);
+
+  /* Glass */
+  --bio-glass:rgba(12,16,23,.72);
+  --bio-glass-border:rgba(255,255,255,.05);
+  --bio-glass-highlight:rgba(255,255,255,.02);
+
+  /* Radii */
+  --bio-r-xl:24px;
+  --bio-r-lg:18px;
+  --bio-r-md:14px;
+  --bio-r-sm:10px;
+  --bio-r-full:9999px;
+
+  /* Animation speeds — state-driven */
+  --bio-pulse:4s;
+  --bio-dot:2.2s;
+  --bio-glow:3s;
+  --bio-ease:cubic-bezier(.4,0,.2,1);
+
+  /* Spacing base: 8px */
+  --bio-s1:4px;
+  --bio-s2:8px;
+  --bio-s3:12px;
+  --bio-s4:16px;
+  --bio-s5:20px;
+  --bio-s6:24px;
+  --bio-s7:32px;
 }
 
-/* ═══ STATE THEMES ═══ */
-[data-state="optimal"]{--bio-ac:#22D3A0;--bio-anim-speed:5s;--bio-dot-speed:2.8s}
-[data-state="functional"]{--bio-ac:#6366F1;--bio-anim-speed:4s;--bio-dot-speed:2.2s}
-[data-state="stressed"]{--bio-ac:#F59E0B;--bio-anim-speed:2.5s;--bio-dot-speed:1.5s}
-[data-state="critical"]{--bio-ac:#EF4444;--bio-anim-speed:1.8s;--bio-dot-speed:1s}
+/* ═══ LIGHT THEME ═══ */
+[data-theme="light"]{
+  --bio-bg:#F4F6FA;
+  --bio-surface:#FFFFFF;
+  --bio-elevated:#FFFFFF;
+  --bio-border:#E2E6F0;
+  --bio-t1:#0C1222;
+  --bio-t2:#546178;
+  --bio-t3:#8B96AA;
+  --bio-glass:rgba(255,255,255,.78);
+  --bio-glass-border:rgba(0,0,0,.05);
+  --bio-glass-highlight:rgba(0,0,0,.01);
+}
+
+/* ═══ STATE THEMES ═══
+   Each state changes the accent color AND animation tempo.
+   The user subconsciously feels urgency through speed.
+   ─────────────────────────────────────────────────── */
+[data-state="optimal"]{
+  --bio-ac:#10B981;
+  --bio-ac-dim:rgba(16,185,129,.08);
+  --bio-ac-glow:rgba(16,185,129,.15);
+  --bio-ac-strong:rgba(16,185,129,.25);
+  --bio-pulse:5s;--bio-dot:2.8s;--bio-glow:4s;
+}
+[data-state="functional"]{
+  --bio-ac:#6366F1;
+  --bio-ac-dim:rgba(99,102,241,.08);
+  --bio-ac-glow:rgba(99,102,241,.15);
+  --bio-ac-strong:rgba(99,102,241,.25);
+  --bio-pulse:4s;--bio-dot:2.2s;--bio-glow:3s;
+}
+[data-state="stressed"]{
+  --bio-ac:#F59E0B;
+  --bio-ac-dim:rgba(245,158,11,.08);
+  --bio-ac-glow:rgba(245,158,11,.15);
+  --bio-ac-strong:rgba(245,158,11,.25);
+  --bio-pulse:2.5s;--bio-dot:1.5s;--bio-glow:1.8s;
+}
+[data-state="critical"]{
+  --bio-ac:#EF4444;
+  --bio-ac-dim:rgba(239,68,68,.08);
+  --bio-ac-glow:rgba(239,68,68,.15);
+  --bio-ac-strong:rgba(239,68,68,.25);
+  --bio-pulse:1.8s;--bio-dot:1s;--bio-glow:1.2s;
+}
 
 /* ═══ GLASSMORPHISM ═══ */
 .bio-glass{
   background:var(--bio-glass);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2);
   border:1px solid var(--bio-glass-border);
-  border-radius:var(--bio-radius);
+  border-radius:var(--bio-r-xl);
 }
 
 /* ═══ BUTTONS ═══ */
@@ -58,59 +131,248 @@ button{
 }
 button:active{transform:scale(.96)}
 
-/* ═══ ANIMATIONS ═══ */
-@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes po{0%{opacity:0;transform:scale(.84)}60%{opacity:1;transform:scale(1.03)}100%{opacity:1;transform:scale(1)}}
-@keyframes su{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes pu{0%,100%{transform:scale(1);opacity:.7}35%{transform:scale(1.04);opacity:.85}50%{transform:scale(1.06);opacity:1}65%{transform:scale(1.04);opacity:.85}}
-@keyframes bth{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.04);opacity:.8}}
-@keyframes rp{0%,100%{opacity:.8}50%{opacity:1}}
-@keyframes am{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(8px,-12px) scale(1.04)}66%{transform:translate(-5px,6px) scale(1.02)}}
-@keyframes shimDot{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1.45)}}
-@keyframes innerRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes midPop{0%{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.92)}8%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}82%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.97)}}
-@keyframes cdPulse{0%{transform:translate(-50%,-50%) scale(.8);opacity:.6}100%{transform:translate(-50%,-50%) scale(1.6);opacity:0}}
+/* ═══ KEYFRAME ANIMATIONS ═══
+   Named by function, not aesthetics.
+   Every animation serves the neural feedback loop.
+   ─────────────────────────────────────────────── */
+
+/* Core pulse — biofeedback sync. Speed = state urgency */
+@keyframes pu{
+  0%,100%{transform:scale(1);opacity:.7}
+  35%{transform:scale(1.04);opacity:.85}
+  50%{transform:scale(1.06);opacity:1}
+  65%{transform:scale(1.04);opacity:.85}
+}
+
+/* Breath sync — subtle ambient breathing */
+@keyframes bth{
+  0%,100%{transform:scale(1);opacity:.5}
+  50%{transform:scale(1.04);opacity:.85}
+}
+
+/* Fade in with upward motion — content reveal */
+@keyframes fi{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Pop scale — energetic entry */
+@keyframes po{
+  0%{opacity:0;transform:scale(.84)}
+  60%{opacity:1;transform:scale(1.02)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+/* Slide up — bottom sheet emergence */
+@keyframes su{
+  from{transform:translateY(100%);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+
+/* Shimmer dot — neural firing indicator */
+@keyframes shimDot{
+  0%,100%{opacity:.25;transform:scale(.6)}
+  50%{opacity:1;transform:scale(1.5)}
+}
+
+/* Inner ring rotation — orbital motion */
+@keyframes innerRing{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+/* Mid-session message pop */
+@keyframes midPop{
+  0%{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.92)}
+  8%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+  82%{opacity:1}
+  100%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.97)}
+}
+
+/* Countdown pulse — expanding rings */
+@keyframes cdPulse{
+  0%{transform:translate(-50%,-50%) scale(.8);opacity:.6}
+  100%{transform:translate(-50%,-50%) scale(1.6);opacity:0}
+}
+
+/* Waveform scan */
 @keyframes wf{from{transform:translateX(-400px)}to{transform:translateX(0)}}
-@keyframes particle{0%{opacity:0;transform:translate(0,0) scale(0) rotate(0)}20%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1.3) rotate(180deg)}}
-@keyframes heartBeat{0%,100%{transform:scale(1)}12%{transform:scale(1.12)}24%{transform:scale(.98)}36%{transform:scale(1.06)}60%{transform:scale(1)}}
-@keyframes ecgDraw{0%{opacity:.06}40%{opacity:.55}100%{opacity:.06}}
-@keyframes brainPulse{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.22;transform:scale(1.35)}}
-@keyframes neuralSpark{0%,100%{opacity:.05;transform:scale(.4)}50%{opacity:1;transform:scale(2.2)}}
+
+/* Particle burst — completion celebration */
+@keyframes particle{
+  0%{opacity:0;transform:translate(0,0) scale(0) rotate(0)}
+  20%{opacity:1}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1.3) rotate(180deg)}
+}
+
+/* Heartbeat — biometric resonance */
+@keyframes heartBeat{
+  0%,100%{transform:scale(1)}
+  12%{transform:scale(1.12)}
+  24%{transform:scale(.98)}
+  36%{transform:scale(1.06)}
+  60%{transform:scale(1)}
+}
+
+/* ECG line draw — medical credibility */
+@keyframes ecgDraw{
+  0%{opacity:.04}
+  40%{opacity:.4}
+  100%{opacity:.04}
+}
+
+/* Brain zone pulse */
+@keyframes brainPulse{
+  0%,100%{opacity:.05;transform:scale(1)}
+  50%{opacity:.22;transform:scale(1.35)}
+}
+
+/* Neural spark — synaptic firing */
+@keyframes neuralSpark{
+  0%,100%{opacity:.05;transform:scale(.4)}
+  50%{opacity:1;transform:scale(2.2)}
+}
+
+/* Focus crosshair spin */
 @keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes focusLock{0%,100%{opacity:.06;transform:scale(1)}50%{opacity:.25;transform:scale(1.3)}}
+
+/* Focus lock-on pulse */
+@keyframes focusLock{
+  0%,100%{opacity:.06;transform:scale(1)}
+  50%{opacity:.25;transform:scale(1.3)}
+}
+
+/* Pause state breathing */
 @keyframes pausePulse{0%,100%{opacity:.25}50%{opacity:1}}
+
+/* Phase transition slide */
 @keyframes phaseSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+
+/* Completion flash — full screen */
 @keyframes compFlash{0%{opacity:0}35%{opacity:.9}100%{opacity:0}}
-@keyframes gl{0%,100%{box-shadow:0 0 30px var(--bio-glow-ac),0 0 60px rgba(34,211,160,.08)}50%{box-shadow:0 0 50px var(--bio-glow-ac),0 0 100px rgba(34,211,160,.12)}}
-@keyframes orbFloat{0%,100%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(3px,-5px) rotate(2deg)}50%{transform:translate(-2px,3px) rotate(-1deg)}75%{transform:translate(4px,2px) rotate(1deg)}}
-@keyframes fadeSlide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes breathAmbient{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.006);opacity:.97}}
-@keyframes coreGlow{0%,100%{box-shadow:0 0 40px rgba(34,211,160,.15),0 0 80px rgba(34,211,160,.08),inset 0 0 30px rgba(34,211,160,.05)}50%{box-shadow:0 0 60px rgba(34,211,160,.25),0 0 120px rgba(34,211,160,.12),inset 0 0 40px rgba(34,211,160,.08)}}
 
-/* ═══ STAGGER ═══ */
-.bio-stagger > *{opacity:0;animation:fadeSlide .45s cubic-bezier(.4,0,.2,1) forwards}
-.bio-stagger > *:nth-child(1){animation-delay:.04s}
-.bio-stagger > *:nth-child(2){animation-delay:.08s}
-.bio-stagger > *:nth-child(3){animation-delay:.12s}
-.bio-stagger > *:nth-child(4){animation-delay:.16s}
-.bio-stagger > *:nth-child(5){animation-delay:.2s}
-.bio-stagger > *:nth-child(6){animation-delay:.24s}
-.bio-stagger > *:nth-child(7){animation-delay:.28s}
-.bio-stagger > *:nth-child(8){animation-delay:.32s}
+/* Core glow — bioluminescent pulse */
+@keyframes coreGlow{
+  0%,100%{
+    box-shadow:0 0 40px var(--bio-ac-glow),0 0 80px rgba(16,185,129,.06),inset 0 0 30px rgba(16,185,129,.04)
+  }
+  50%{
+    box-shadow:0 0 70px var(--bio-ac-strong),0 0 140px rgba(16,185,129,.1),inset 0 0 50px rgba(16,185,129,.06)
+  }
+}
 
-/* ═══ DETAILS ═══ */
+/* Ambient glow — state-driven atmosphere */
+@keyframes gl{
+  0%,100%{box-shadow:0 0 30px var(--bio-ac-glow),0 4px 20px rgba(0,0,0,.06)}
+  50%{box-shadow:0 0 55px var(--bio-ac-strong),0 4px 28px rgba(0,0,0,.1)}
+}
+
+/* Orbital float — organic particle drift */
+@keyframes orbFloat{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  25%{transform:translate(4px,-6px) rotate(2deg)}
+  50%{transform:translate(-3px,4px) rotate(-1.5deg)}
+  75%{transform:translate(5px,2px) rotate(1deg)}
+}
+
+/* Ambient drift — large-scale slow motion */
+@keyframes am{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(8px,-12px) scale(1.03)}
+  66%{transform:translate(-5px,6px) scale(1.01)}
+}
+
+/* Stagger cascade — content reveal */
+@keyframes fadeSlide{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Breath ambient — subconscious UI breathing */
+@keyframes breathAmbient{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.006);opacity:.97}
+}
+
+/* Ring reveal — circular progress animation */
+@keyframes ringReveal{
+  from{stroke-dashoffset:var(--circ)}
+  to{stroke-dashoffset:var(--offset)}
+}
+
+/* Nucleus warp — depth illusion */
+@keyframes nucleusWarp{
+  0%,100%{border-radius:50%}
+  25%{border-radius:48% 52% 50% 50%}
+  50%{border-radius:50% 48% 52% 50%}
+  75%{border-radius:52% 50% 48% 52%}
+}
+
+/* Scanline — diagnostic aesthetic */
+@keyframes scanline{
+  from{transform:translateY(-100%)}
+  to{transform:translateY(100%)}
+}
+
+/* Neural wave — flowing energy */
+@keyframes neuralWave{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* Status pulse — living indicator */
+@keyframes statusPulse{
+  0%,100%{box-shadow:0 0 0 0 var(--bio-ac-glow)}
+  50%{box-shadow:0 0 0 6px transparent}
+}
+
+/* ═══ STAGGER SYSTEM ═══ */
+.bio-stagger>*{opacity:0;animation:fadeSlide .5s var(--bio-ease) forwards}
+.bio-stagger>*:nth-child(1){animation-delay:.03s}
+.bio-stagger>*:nth-child(2){animation-delay:.07s}
+.bio-stagger>*:nth-child(3){animation-delay:.11s}
+.bio-stagger>*:nth-child(4){animation-delay:.15s}
+.bio-stagger>*:nth-child(5){animation-delay:.19s}
+.bio-stagger>*:nth-child(6){animation-delay:.23s}
+.bio-stagger>*:nth-child(7){animation-delay:.27s}
+.bio-stagger>*:nth-child(8){animation-delay:.31s}
+
+/* ═══ DETAILS (expandable sections) ═══ */
 details summary{list-style:none;cursor:pointer;-webkit-user-select:none;user-select:none}
 details summary::-webkit-details-marker{display:none}
 details summary::marker{display:none}
 details[open] summary{margin-bottom:10px}
-details[open] > *:not(summary){animation:fi .3s ease}
+details[open]>*:not(summary){animation:fi .3s ease}
 
-/* ═══ PLATFORM ═══ */
-@supports (padding:env(safe-area-inset-top)){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
+/* ═══ PLATFORM ADAPTATIONS ═══ */
+@supports(padding:env(safe-area-inset-top)){
+  body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+}
 input,textarea{font-family:inherit}
 svg{shape-rendering:geometricPrecision}
-::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.1);border-radius:10px}
-::selection{background:rgba(34,211,160,.2);color:inherit}
-button:focus-visible{outline:2px solid rgba(34,211,160,.4);outline-offset:3px}
-@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-@media (hover: none) and (pointer: coarse){button{min-height:44px}}
+
+/* Scrollbar — near invisible */
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(148,163,184,.08);border-radius:10px}
+
+/* Selection */
+::selection{background:var(--bio-ac-dim);color:inherit}
+
+/* Focus visible */
+button:focus-visible{outline:2px solid var(--bio-ac-glow);outline-offset:3px}
+
+/* Accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+
+/* Mobile touch targets */
+@media (hover: none) and (pointer: coarse) {
+  button{min-height:44px}
+}
