@@ -30,6 +30,8 @@ async function requestWakeLock(){try{if('wakeLock' in navigator){_wakeLock=await
 function releaseWakeLock(){try{if(_wakeLock){_wakeLock.release();_wakeLock=null;}}catch(e){}}
 
 export default function BioIgnicion(){
+  // Defensive: ensure window exists (client-only component)
+  if(typeof window === "undefined") return null;
   const[mt,setMt]=useState(false);const[tab,setTab]=useState("ignicion");const[st,setSt_]=useState(DS);
   const[pr,setPr]=useState(P[12]);const[sc,setSc]=useState("Protocolo");const[sl,setSl]=useState(false);
   const[ts,setTs]=useState("idle");const[sec,setSec]=useState(120);const[pi,setPi]=useState(0);
@@ -136,7 +138,7 @@ export default function BioIgnicion(){
 
 
     // ═══ LOAD STATE + PERSISTENCE ═══
-  useEffect(()=>{setMt(true);const l=ldS();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)svS(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);},[]);
+  useEffect(()=>{setMt(true);const l=ldS();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...(l.weeklyData||[0,0,0,0,0,0,0])];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)svS(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);},[]);
   
   // Pause session when user leaves tab/app
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){pa();}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
@@ -208,7 +210,7 @@ export default function BioIgnicion(){
     const qualityMult=bioQ.quality==="alta"?1.5:bioQ.quality==="media"?1.0:bioQ.quality==="baja"?0.5:0.2;
     const eVC=Math.max(3,Math.round((5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5))*qualityMult));
     const vc=(st.vCores||0)+eVC;
-    const ach=[...st.achievements];
+    const ach=[...(st.achievements||[])];
     if(nsk>=7&&!ach.includes("streak7"))ach.push("streak7");
     if(nsk>=30&&!ach.includes("streak30"))ach.push("streak30");
     if(nC>=90&&!ach.includes("coherencia90"))ach.push("coherencia90");
@@ -264,10 +266,10 @@ export default function BioIgnicion(){
   const streakRisk=useMemo(()=>{if(st.streak<2||st.todaySessions>0)return false;const h=new Date().getHours();return h>=20;},[st.streak,st.todaySessions]);
   const lastProto=useMemo(()=>{const h=st.history||[];if(!h.length)return null;return h[h.length-1].p;},[st.history]);
   const favs=st.favs||[];
-  const toggleFav=(name)=>{const nf=favs.includes(name)?favs.filter(f=>f!==name):[...favs,name];setSt({...st,favs:nf});};
-  const weeklySummary=useMemo(()=>{const pw=st.prevWeekData||[0,0,0,0,0,0,0];const pwTotal=pw.reduce((a,b)=>a+b,0);const cwTotal=st.weeklyData.reduce((a,b)=>a+b,0);if(pwTotal===0)return null;const diff=cwTotal-pwTotal;const bestDay=pw.indexOf(Math.max(...pw));const ml=st.moodLog||[];const weekMoods=ml.slice(-7);const mAvg=weekMoods.length?+(weekMoods.reduce((a,m)=>a+m.mood,0)/weekMoods.length).toFixed(1):0;return{prev:pwTotal,curr:cwTotal,diff,bestDay:DN[bestDay],mAvg};},[st.prevWeekData,st.weeklyData,st.moodLog]);
+  const toggleFav=(name)=>{const nf=favs.includes(name)?favs.filter(f=>f!==name):[...(favs||[]),name];setSt({...st,favs:nf});};
+  const weeklySummary=useMemo(()=>{const pw=st.prevWeekData||[0,0,0,0,0,0,0];const pwTotal=pw.reduce((a,b)=>a+b,0);const cwTotal=(st.weeklyData||[0,0,0,0,0,0,0]).reduce((a,b)=>a+b,0);if(pwTotal===0)return null;const diff=cwTotal-pwTotal;const bestDay=pw.indexOf(Math.max(...pw));const ml=st.moodLog||[];const weekMoods=ml.slice(-7);const mAvg=weekMoods.length?+(weekMoods.reduce((a,m)=>a+m.mood,0)/weekMoods.length).toFixed(1):0;return{prev:pwTotal,curr:cwTotal,diff,bestDay:DN[bestDay],mAvg};},[st.prevWeekData,st.weeklyData,st.moodLog]);
   const smartPick=useMemo(()=>{const base=smartSuggest(st);if(!base)return null;const sens=calcProtoSensitivity(st.moodLog);if(Object.keys(sens).length<3)return base;const best=Object.entries(sens).filter(([n,d])=>d.avgDelta>0.3).sort((a,b)=>b[1].avgDelta-a[1].avgDelta)[0];if(best){const found=P.find(p=>p.n===best[0]);if(found)return found;}return base;},[st.moodLog,st.history]);
-  const brain=useMemo(()=>neuralIntelligence(st),[st.moodLog,st.history,st.todaySessions,st.streak]);
+  const brain=useMemo(()=>{try{return neuralIntelligence(st);}catch(e){return{systemState:"functional",urgency:"baja",reason:"",bestProto:P[12],message:"",pulseSpeed:"normal",primaryNeed:"maintenance",intent:"calma",moodTrend:"stable",isNew:true,isExperienced:false,isConsistent:false};}},[st.moodLog,st.history,st.todaySessions,st.streak]);
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
 
@@ -485,7 +487,7 @@ export default function BioIgnicion(){
     {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:12,background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
       <div style={{display:"flex",alignItems:"center",gap:6}}>
         <div style={{width:24,height:24,borderRadius:7,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="bolt" size={11} color={ac}/></div>
-        <span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de {st.totalSessions>=20?Math.min(3,Math.ceil(st.weeklyData.reduce((a,b)=>a+b,0)/Math.max(1,(st.weeklyData.filter(v=>v>0).length))))+1:2} sesiones hoy</span>
+        <span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de {st.totalSessions>=20?Math.min(3,Math.ceil((st.weeklyData||[0,0,0,0,0,0,0]).reduce((a,b)=>a+b,0)/Math.max(1,(st.weeklyData.filter(v=>v>0).length))))+1:2} sesiones hoy</span>
       </div>
       <div style={{width:40,height:5,borderRadius:5,background:bd,overflow:"hidden"}}>
         <div style={{width:Math.min(100,(st.todaySessions||0)/((st.totalSessions>=20?Math.min(3,Math.ceil(st.weeklyData.reduce((a,b)=>a+b,0)/Math.max(1,(st.weeklyData.filter(v=>v>0).length))))+1:2))*100)+"%",height:"100%",background:ac,borderRadius:5,transition:"width .3s"}}/>
@@ -1052,7 +1054,7 @@ export default function BioIgnicion(){
       <div style={{fontSize:10,color:t2,lineHeight:1.6}}>Semana pasada: <span style={{fontWeight:800,color:t1}}>{weeklySummary.prev}</span>. Actual: <span style={{fontWeight:800,color:t1}}>{weeklySummary.curr}</span>.{weeklySummary.diff>0?<span style={{color:"#059669",fontWeight:700}}> +{weeklySummary.diff}</span>:weeklySummary.diff<0?<span style={{color:"#DC2626",fontWeight:700}}> {weeklySummary.diff}</span>:<span style={{color:t3}}> Igual</span>}.{weeklySummary.mAvg>0&&<span> Mood: <span style={{fontWeight:800}}>{weeklySummary.mAvg}/5</span></span>}</div>
     </div>}
     <div style={{background:cd,borderRadius:16,padding:"12px 10px",marginBottom:16,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:50}}>{st.weeklyData.map((v,i)=>{const a=((new Date().getDay()+6)%7)===i;return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><div style={{width:"100%",borderRadius:5,height:Math.max((v/mW)*42,2),background:a?ac:bd,transition:"height .6s"}}/><span style={{fontSize:10,color:a?ac:t3,fontWeight:a?800:600}}>{DN[i]}</span></div>);})}</div>
+      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:50}}>{(st.weeklyData||[0,0,0,0,0,0,0]).map((v,i)=>{const a=((new Date().getDay()+6)%7)===i;return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><div style={{width:"100%",borderRadius:5,height:Math.max((v/mW)*42,2),background:a?ac:bd,transition:"height .6s"}}/><span style={{fontSize:10,color:a?ac:t3,fontWeight:a?800:600}}>{DN[i]}</span></div>);})}</div>
     </div>
 
     </>}
