@@ -1,5 +1,4 @@
 "use client";
-import { TabItem } from "./AnimatedNumber";
 
 export function TabBar({ tab, onSwitch, accent, isDark, bg, bd }) {
   const tabs = [
