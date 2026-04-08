@@ -12,6 +12,8 @@ import { TabBar, MetricsBar } from "./TabBar";
 import { LoadingScreen } from "./LoadingScreen";
 import { CountdownOverlay } from "./CountdownOverlay";
 import { NeuralSummary } from "./NeuralSummary";
+import { BioHeader } from "./BioHeader";
+import { DurationSelector } from "./DurationSelector";
 import { BreathSync } from "./BreathSync";
 import { StateBar } from "./StateBarNew";
 import { RingGauge, MiniRing } from "./RingGauge";
@@ -144,7 +146,7 @@ export default function BioIgnicion(){
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){pa();}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
 // Auto-save every 30s + on page hide/unload
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>svS(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")svS(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
-  const[isDark,setIsDark]=useState(false);
+  const[isDark,setIsDark]=useState(true);
   useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
 
@@ -290,7 +292,7 @@ export default function BioIgnicion(){
   if(!mt)return <LoadingScreen />;
 
   return(
-  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background 2s ease"}}>
+  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background 1.2s ease"}}>
   <style>{`body{background:${bg};transition:background 2s ease}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 ${theme.isUrgent?"30":"20"}px ${ac}${theme.isUrgent?"20":"10"},0 4px 20px ${ac}06}50%{box-shadow:0 0 ${theme.isUrgent?"55":"40"}px ${ac}${theme.isUrgent?"30":"1A"},0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
 
   <StateOrbs theme={theme} isDark={isDark} ac={ac} />
