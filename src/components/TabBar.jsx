@@ -1,5 +1,5 @@
 "use client";
-import { TabItem } from "./BioIgnicion";
+import { TabItem } from "./MetricCard";
 
 export function TabBar({ tab, onSwitch, accent, isDark, bg, bd }) {
   const tabs = [
