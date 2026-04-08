@@ -3,12 +3,10 @@ import { useEffect } from "react";
 
 /**
  * useTheme — Syncs neural state to CSS variables via data attributes.
- * Drop this in any component and the entire app reacts to brain state.
- * 
+ * The entire app reacts to brain state through CSS custom properties
+ * defined in globals.css under [data-state="..."] and [data-theme="..."].
+ *
  * Usage: useTheme(brain.systemState, isDark);
- * 
- * CSS reads: [data-state="optimal"] { --bio-sa: #059669; }
- *            [data-theme="dark"] { --bio-bg: #0A0D14; }
  */
 export function useTheme(brainState, isDark) {
   useEffect(() => {
