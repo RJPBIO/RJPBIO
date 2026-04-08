@@ -4,13 +4,13 @@ import dynamic from "next/dynamic";
 const BioIgnicion = dynamic(() => import("@/components/BioIgnicion"), {
   ssr: false,
   loading: () => (
-    <div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#0A0D14",gap:16}}>
-      <svg width="56" height="56" viewBox="0 0 56 56" style={{animation:"pu 1.8s ease infinite"}}>
-        <circle cx="28" cy="28" r="24" fill="none" stroke="#059669" strokeWidth="2" opacity=".4"/>
-        <circle cx="28" cy="28" r="17" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="5 4"/>
-        <circle cx="28" cy="28" r="6" fill="#059669" opacity=".5"/>
+    <div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#06090F",gap:20}}>
+      <svg width="64" height="64" viewBox="0 0 64 64" style={{animation:"pu 2.2s ease infinite",filter:"drop-shadow(0 0 12px rgba(16,185,129,.2))"}}>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#10B981" strokeWidth="1.5" opacity=".35" strokeDasharray="4 2"/>
+        <circle cx="32" cy="32" r="20" fill="none" stroke="#6366F1" strokeWidth="1" strokeDasharray="5 4" opacity=".45"/>
+        <circle cx="32" cy="32" r="4" fill="#10B981" opacity=".5"/>
       </svg>
-      <div style={{fontSize:10,fontWeight:800,color:"#4B5568",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div>
+      <div style={{fontSize:11,fontWeight:800,color:"#3E4A60",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div>
     </div>
   ),
 });
