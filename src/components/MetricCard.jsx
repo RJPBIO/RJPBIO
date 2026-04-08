@@ -37,7 +37,7 @@ export function MetricCard({ label, value, suffix, color, trend, isDark, cd, bd,
           {trend && (
             <span style={{
               fontSize: 10, fontWeight: 700, marginLeft: 6,
-              color: trend.startsWith("+") ? "#059669" : trend === "—" ? t3 : "#DC2626",
+              color: trend.startsWith("+") ? "#10B981" : trend === "—" ? t3 : "#DC2626",
             }}>{trend}</span>
           )}
         </div>
