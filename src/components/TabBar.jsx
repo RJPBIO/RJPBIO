@@ -1,5 +1,5 @@
 "use client";
-import { Tabitem} from "./UI";
+import { TabItem } from "./UI";
 
 export function TabBar({ tab, onSwitch, accent, isDark, bg, bd }) {
   const tabs = [
