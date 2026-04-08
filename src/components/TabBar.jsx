@@ -1,5 +1,5 @@
 "use client";
-import { TabItem } from "./useUIStore";
+import { TabItem } from "./BioIgnicion";
 
 export function TabBar({ tab, onSwitch, accent, isDark, bg, bd }) {
   const tabs = [
