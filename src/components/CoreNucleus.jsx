@@ -32,10 +32,8 @@ export function CoreNucleus({
   const circumference = 2 * Math.PI * ringR;
   const strokeOffset = circumference * (1 - progress);
 
-  // Format time display
-  const mins = Math.floor(sec / 60);
-  const secs = sec % 60;
-  const timeDisplay = sec > 0 ? (mins > 0 ? `${mins}:${String(secs).padStart(2, "0")}` : `${sec}`) : "0";
+  // ALWAYS show seconds — never minutes. This is a biohacking system, not a clock.
+  const timeDisplay = `${sec}s`;
 
   return (
     <div style={{
