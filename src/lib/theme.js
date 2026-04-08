@@ -1,52 +1,50 @@
 /**
- * BIO-IGNICIÓN Neuro-Adaptive Theme Engine
+ * BIO-IGNICIÓN v9 Neuro-Adaptive Theme Engine
  * Computes visual tokens from neural state in real-time.
  * Every color, speed, and intensity has neuropsychological intent.
+ *
+ * Color psychology:
+ * - Emerald greens → homeostatic balance (optimal)
+ * - Deep indigo → cognitive engagement (functional)
+ * - Warm amber → sympathetic alert (stressed)
+ * - Red → critical arousal (critical)
  */
-
-// ═══ STATE → COLOR MAPPING ═══
-// Based on color psychology + neurofeedback research:
-// - Cool blues → parasympathetic activation (calm)
-// - Warm ambers → sympathetic alert (stress)  
-// - Greens → homeostatic balance (optimal)
-// - Deep indigo → cognitive engagement (focus)
 
 const STATE_PALETTES = {
   optimal: {
-    bg:      { dark: "#071210", light: "#EEFAF5" },
-    bd:      { dark: "#1A2E28", light: "#C8E6D8" },
-    accent:  "#059669",
+    bg:      { dark: "#060F0D", light: "#EEFAF5" },
+    bd:      { dark: "#162E26", light: "#C8E6D8" },
+    accent:  "#10B981",
     glow:    "#34D39940",
-    orbPrimary: "#059669",
+    orbPrimary: "#10B981",
     orbSecondary: "#34D399",
   },
   functional: {
-    bg:      { dark: "#0A0D14", light: "#F0F2F8" },
-    bd:      { dark: "#1C2030", light: "#DEE2ED" },
+    bg:      { dark: "#06090F", light: "#F4F6FA" },
+    bd:      { dark: "#1A2030", light: "#E2E6F0" },
     accent:  "#6366F1",
     glow:    "#818CF840",
     orbPrimary: "#6366F1",
     orbSecondary: "#818CF8",
   },
   stressed: {
-    bg:      { dark: "#120E07", light: "#FBF6EE" },
+    bg:      { dark: "#100D06", light: "#FBF6EE" },
     bd:      { dark: "#2E2518", light: "#E8D8C0" },
-    accent:  "#D97706",
+    accent:  "#F59E0B",
     glow:    "#FBBF2440",
-    orbPrimary: "#D97706",
+    orbPrimary: "#F59E0B",
     orbSecondary: "#FBBF24",
   },
   critical: {
-    bg:      { dark: "#120808", light: "#FBF0F0" },
+    bg:      { dark: "#100606", light: "#FBF0F0" },
     bd:      { dark: "#2E1818", light: "#E8C0C0" },
-    accent:  "#DC2626",
+    accent:  "#EF4444",
     glow:    "#F8717140",
-    orbPrimary: "#DC2626",
+    orbPrimary: "#EF4444",
     orbSecondary: "#F87171",
   },
 };
 
-// ═══ STATE → MOTION MAPPING ═══
 // Calm states = slower, smoother animations
 // Stress states = faster, more urgent animations
 const STATE_MOTION = {
@@ -56,42 +54,33 @@ const STATE_MOTION = {
   critical:   { pulse: "1.8s", dot: "1s",   glow: "1.2s", ease: "cubic-bezier(0.2, 0, 0.8, 1)" },
 };
 
-// ═══ THEME COMPUTER ═══
 export function computeTheme(brainState, isDark, protocolColor) {
   const state = brainState || "functional";
   const palette = STATE_PALETTES[state] || STATE_PALETTES.functional;
   const motion = STATE_MOTION[state] || STATE_MOTION.functional;
 
   return {
-    // Colors
     bg: isDark ? palette.bg.dark : palette.bg.light,
-    cd: isDark ? "#141820" : "#FFFFFF",
+    cd: isDark ? "#0C1017" : "#FFFFFF",
     bd: isDark ? palette.bd.dark : palette.bd.light,
-    t1: isDark ? "#E8ECF4" : "#0F172A",
-    t2: isDark ? "#8B95A8" : "#475569",
-    t3: isDark ? "#4B5568" : "#94A3B8",
+    t1: isDark ? "#E8ECF4" : "#0C1222",
+    t2: isDark ? "#7B879E" : "#546178",
+    t3: isDark ? "#3E4A60" : "#8B96AA",
     ac: protocolColor,
-
-    // State-specific
     stateAccent: palette.accent,
     stateGlow: palette.glow,
     orbPrimary: palette.orbPrimary,
     orbSecondary: palette.orbSecondary,
-
-    // Motion
     pulseSpeed: motion.pulse,
     dotSpeed: motion.dot,
     glowSpeed: motion.glow,
     motionEase: motion.ease,
-
-    // Computed
     isDark,
     state,
     isUrgent: state === "critical" || state === "stressed",
   };
 }
 
-// ═══ URGENCY → UI SIMPLIFICATION ═══
 // When user is in critical/burnout, simplify the UI
 export function getUIComplexity(brainState, burnoutRisk) {
   if (burnoutRisk === "alto" || burnoutRisk === "crítico") return "minimal";
