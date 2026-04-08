@@ -278,16 +278,16 @@ export default function BioIgnicion(){
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
 
-  // ═══ NEUROADAPTIVE THEME ═══
+  // ═══ NEUROADAPTIVE THEME v9 ═══
   const theme = useMemo(() => {
     const _s = brain.systemState;
-    const palettes = {optimal:{bgD:"#071210",bgL:"#EEFAF5",bdD:"#1A2E28",bdL:"#C8E6D8",sa:"#059669"},functional:{bgD:"#0A0D14",bgL:"#F0F2F8",bdD:"#1C2030",bdL:"#DEE2ED",sa:"#6366F1"},stressed:{bgD:"#120E07",bgL:"#FBF6EE",bdD:"#2E2518",bdL:"#E8D8C0",sa:"#D97706"},critical:{bgD:"#120808",bgL:"#FBF0F0",bdD:"#2E1818",bdL:"#E8C0C0",sa:"#DC2626"}};
+    const palettes = {optimal:{bgD:"#060F0D",bgL:"#EEFAF5",bdD:"#162E26",bdL:"#C8E6D8",sa:"#10B981"},functional:{bgD:"#06090F",bgL:"#F4F6FA",bdD:"#1A2030",bdL:"#E2E6F0",sa:"#6366F1"},stressed:{bgD:"#100D06",bgL:"#FBF6EE",bdD:"#2E2518",bdL:"#E8D8C0",sa:"#F59E0B"},critical:{bgD:"#100606",bgL:"#FBF0F0",bdD:"#2E1818",bdL:"#E8C0C0",sa:"#EF4444"}};
     const p = palettes[_s] || palettes.functional;
     const motion = _s==="critical"?{pulse:"1.8s",dot:"1s",glow:"1.2s"}:_s==="stressed"?{pulse:"2.5s",dot:"1.5s",glow:"1.8s"}:_s==="optimal"?{pulse:"5s",dot:"2.8s",glow:"4s"}:{pulse:"4s",dot:"2.2s",glow:"3s"};
     return { ...p, motion, state: _s, isUrgent: _s==="critical"||_s==="stressed" };
   }, [brain.systemState]);
-  const bg=isDark?theme.bgD:theme.bgL,cd=isDark?"#141820":"#FFFFFF",bd=isDark?theme.bdD:theme.bdL;
-  const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8",ac=pr.cl;
+  const bg=isDark?theme.bgD:theme.bgL,cd=isDark?"#0C1017":"#FFFFFF",bd=isDark?theme.bdD:theme.bdL;
+  const t1=isDark?"#E8ECF4":"#0C1222",t2=isDark?"#7B879E":"#546178",t3=isDark?"#3E4A60":"#8B96AA",ac=pr.cl;
 
   // Sync theme to CSS variables
   useTheme(brain.systemState, isDark);
@@ -295,8 +295,8 @@ export default function BioIgnicion(){
   if(!mt)return <LoadingScreen />;
 
   return(
-  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:"#080B12",position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background 1.2s ease"}}>
-  <style>{`body{background:${bg};transition:background 2s ease}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 ${theme.isUrgent?"30":"20"}px ${ac}${theme.isUrgent?"20":"10"},0 4px 20px ${ac}06}50%{box-shadow:0 0 ${theme.isUrgent?"55":"40"}px ${ac}${theme.isUrgent?"30":"1A"},0 4px 28px ${ac}0D}}@keyframes compFlash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes pausePulse{0%,100%{opacity:.4}50%{opacity:1}}@keyframes phaseSlide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}@keyframes heartBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}@keyframes ecgDraw{0%{opacity:.15}50%{opacity:.45}100%{opacity:.15}}@keyframes brainPulse{0%,100%{opacity:.04;transform:scale(1)}50%{opacity:.15;transform:scale(1.3)}}@keyframes neuralSpark{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:.8;transform:scale(1.8)}}@keyframes focusSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes focusLock{0%,100%{opacity:.05;transform:scale(1)}50%{opacity:.15;transform:scale(1.2)}}`}</style>
+  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background 1.8s cubic-bezier(.4,0,.2,1)"}}>
+  <style>{`body{background:${bg};transition:background 2.5s cubic-bezier(.4,0,.2,1)}@keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes gl{0%,100%{box-shadow:0 0 ${theme.isUrgent?"35":"22"}px ${ac}${theme.isUrgent?"1A":"0C"},0 4px 20px ${ac}05}50%{box-shadow:0 0 ${theme.isUrgent?"60":"42"}px ${ac}${theme.isUrgent?"25":"15"},0 4px 28px ${ac}0A}}`}</style>
 
   <NeuralBackground ac={ac} isDark={isDark} theme={theme} />
   {showMid&&<div style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",zIndex:180,animation:"midPop 3.5s ease both",pointerEvents:"none"}}><div style={{background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",borderRadius:16,padding:"14px 22px",boxShadow:"0 8px 30px rgba(0,0,0,.08)",border:`1px solid ${bd}`,maxWidth:320,textAlign:"center"}}><div style={{fontSize:13,fontWeight:600,color:t1,lineHeight:1.6,fontStyle:"italic"}}>{midMsg}</div></div></div>}
@@ -382,7 +382,7 @@ export default function BioIgnicion(){
     {/* Before → After comparison */}
     {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:14,padding:"14px 16px",background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:16}}>
       <div style={{textAlign:"center"}}><Ic name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Antes</div></div>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:40,height:1,background:bd,marginBottom:4}}/><div style={{fontSize:18,color:moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={{fontSize:10,color:t3,marginTop:2}}>puntos</div></div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:40,height:1,background:bd,marginBottom:4}}/><div style={{fontSize:18,color:moodDiff>0?"#10B981":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={{fontSize:10,color:t3,marginTop:2}}>puntos</div></div>
       <div style={{textAlign:"center"}}><Ic name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Después</div></div>
     </div>}
     {!preMood&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:12,padding:"10px",background:MOODS[checkMood-1].color+"08",borderRadius:12}}>
@@ -395,9 +395,9 @@ export default function BioIgnicion(){
     {/* BIO QUALITY SCORE */}
     {/* Session Quality — simplified */}
     {(()=>{const bq=calcBioQuality(sessionData,Math.round(pr.d*durMult));const tc=estimateCoherence(sessionData.reactionTimes);return(
-      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",marginBottom:10,background:bq.quality==="alta"?"#05966908":bq.quality==="media"?"#D9770608":"#DC262608",borderRadius:12}}>
-        <div style={{width:6,height:6,borderRadius:"50%",background:bq.quality==="alta"?"#059669":bq.quality==="media"?"#D97706":"#DC2626"}}/> 
-        <span style={{fontSize:11,fontWeight:700,color:bq.quality==="alta"?"#059669":bq.quality==="media"?"#D97706":"#DC2626"}}>{bq.quality==="alta"?"Ejecución verificada · "+bq.score+"/100":bq.quality==="media"?"Ejecución parcial · "+bq.score+"/100":"Baja participación · "+bq.score+"/100"}</span>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",marginBottom:10,background:bq.quality==="alta"?"#10B98108":bq.quality==="media"?"#D9770608":"#DC262608",borderRadius:12}}>
+        <div style={{width:6,height:6,borderRadius:"50%",background:bq.quality==="alta"?"#10B981":bq.quality==="media"?"#D97706":"#DC2626"}}/> 
+        <span style={{fontSize:11,fontWeight:700,color:bq.quality==="alta"?"#10B981":bq.quality==="media"?"#D97706":"#DC2626"}}>{bq.quality==="alta"?"Ejecución verificada · "+bq.score+"/100":bq.quality==="media"?"Ejecución parcial · "+bq.score+"/100":"Baja participación · "+bq.score+"/100"}</span>
         {tc.coherence>30&&<span style={{fontSize:10,color:t3}}>· Coherencia {tc.coherence}%</span>}
       </div>);})()}
     <div style={{background:isDark?"#1A1E28":"#F1F5F9",borderRadius:11,padding:"10px",marginBottom:10}}>
@@ -420,7 +420,7 @@ export default function BioIgnicion(){
   {sl&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setSl(false)}><div style={{width:"100%",maxWidth:430,maxHeight:"82vh",background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",overflowY:"auto",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
     <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:20,fontWeight:800,color:t1,marginBottom:16}}>Protocolos</h3>
     <div style={{display:"flex",background:isDark?"#1A1E28":"#EEF2F7",borderRadius:12,padding:3,marginBottom:16}}>{CATS.map(c=><button key={c} onClick={()=>setSc(c)} style={{flex:1,padding:"9px 0",borderRadius:10,border:"none",background:sc===c?cd:"transparent",color:sc===c?t1:t3,fontWeight:700,fontSize:12,cursor:"pointer",transition:"all .3s"}}>{c}</button>)}</div>
-    {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;return<button key={p.id} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:10,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:10,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>recomendado</span>}</div><div style={{fontSize:10,color:t2,marginBottom:2}}>{p.sb}</div><div style={{fontSize:10,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#059669":p.dif===2?"#D97706":"#DC2626"}}>{".".repeat(p.dif||1)}</span></div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Ic name="star" size={16} color={isFav?ac:bd}/></div>{(()=>{const s=protoSens[p.n];return s&&s.sessions>=2?<span style={{fontSize:10,fontWeight:800,color:s.avgDelta>0?"#059669":"#DC2626",marginRight:4}}>{s.avgDelta>0?"+":""}{s.avgDelta}</span>:null;})()}{pr.id===p.id&&<Ic name="check" size={16} color={p.cl}/>}</button>;})}
+    {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;return<button key={p.id} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:10,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:10,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>recomendado</span>}</div><div style={{fontSize:10,color:t2,marginBottom:2}}>{p.sb}</div><div style={{fontSize:10,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#10B981":p.dif===2?"#D97706":"#DC2626"}}>{".".repeat(p.dif||1)}</span></div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Ic name="star" size={16} color={isFav?ac:bd}/></div>{(()=>{const s=protoSens[p.n];return s&&s.sessions>=2?<span style={{fontSize:10,fontWeight:800,color:s.avgDelta>0?"#10B981":"#DC2626",marginRight:4}}>{s.avgDelta>0?"+":""}{s.avgDelta}</span>:null;})()}{pr.id===p.id&&<Ic name="check" size={16} color={p.cl}/>}</button>;})}
   </div></div>)}
 
   {showSettings&&(<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowSettings(false)}><div style={{width:"100%",maxWidth:430,background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",animation:"su .4s"}} onClick={e=>e.stopPropagation()}>
@@ -441,8 +441,8 @@ export default function BioIgnicion(){
       )}</div>
     </div>
 
-    <button onClick={()=>exportNOM035(st)} style={{width:"100%",padding:"13px",marginTop:8,borderRadius:13,border:"1.5px solid #059669",background:"#059669"+"08",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-      <Ic name="brief" size={16} color="#059669"/><span style={{fontSize:12,fontWeight:700,color:"#059669"}}>Informe NOM-035 (HTML)</span>
+    <button onClick={()=>exportNOM035(st)} style={{width:"100%",padding:"13px",marginTop:8,borderRadius:13,border:"1.5px solid #10B981",background:"#10B981"+"08",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+      <Ic name="brief" size={16} color="#10B981"/><span style={{fontSize:12,fontWeight:700,color:"#10B981"}}>Informe NOM-035 (HTML)</span>
     </button>
   </div></div>)}
 
@@ -476,7 +476,7 @@ export default function BioIgnicion(){
     {/* Immersive entry moment */}
     {!entryDone&&ts==="idle"&&st.totalSessions>0&&<div style={{textAlign:"center",padding:"24px 0 16px",animation:"fi 1s ease"}} onClick={()=>setEntryDone(true)}>
       <svg width="48" height="48" viewBox="0 0 52 52" style={{margin:"0 auto 16px",display:"block",animation:"pu 3s ease infinite"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3"/><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{animation:"innerRing 6s linear infinite"}}/><circle cx="26" cy="26" r="4" fill={ac} opacity=".3"/></svg>
-      <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:16}}>{[{l:"Enfoque",v:st.coherencia,c:"#3B82F6"},{l:"Calma",v:st.resiliencia,c:"#059669"},{l:"Energía",v:st.capacidad,c:"#D97706"}].map((m,i)=><div key={i} style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:m.c}}>{m.v}<span style={{fontSize:10}}>%</span></div><div style={{fontSize:9,color:t3,marginTop:2}}>{m.l}</div></div>)}</div><div style={{fontSize:14,fontWeight:500,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto"}}>{brain.message}</div>
+      <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:16}}>{[{l:"Enfoque",v:st.coherencia,c:"#3B82F6"},{l:"Calma",v:st.resiliencia,c:"#10B981"},{l:"Energía",v:st.capacidad,c:"#D97706"}].map((m,i)=><div key={i} style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:m.c}}>{m.v}<span style={{fontSize:10}}>%</span></div><div style={{fontSize:9,color:t3,marginTop:2}}>{m.l}</div></div>)}</div><div style={{fontSize:14,fontWeight:500,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto"}}>{brain.message}</div>
       <div style={{fontSize:10,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>{circadian.period==="amanecer"||circadian.period==="mañana"?"ACTIVA TU MAÑANA":circadian.period==="noche"?"CIERRA TU DÍA":"TOCA PARA CONTINUAR"}</div>
     </div>}
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
@@ -589,21 +589,21 @@ export default function BioIgnicion(){
     
     {/* Yesterday Comparison */}
     {(()=>{const ml=st.moodLog||[];const today=ml.filter(m=>new Date(m.ts).toDateString()===new Date().toDateString());const yday=ml.filter(m=>new Date(m.ts).toDateString()===new Date(Date.now()-86400000).toDateString());if(!yday.length||!today.length)return null;const tAvg=+(today.reduce((a,m)=>a+m.mood,0)/today.length).toFixed(1);const yAvg=+(yday.reduce((a,m)=>a+m.mood,0)/yday.length).toFixed(1);const d=+(tAvg-yAvg).toFixed(1);return(
-    <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",marginBottom:14,background:d>=0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:12,border:"1px solid "+(d>=0?"#05966920":"#DC262620")}}>
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",marginBottom:14,background:d>=0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:12,border:"1px solid "+(d>=0?"#10B98120":"#DC262620")}}>
       <div style={{fontSize:10,color:t2}}>Ayer {yAvg}</div>
-      <div style={{fontSize:14,fontWeight:800,color:d>0?"#059669":d<0?"#DC2626":t3}}>{d>0?"+":""}{d}</div>
+      <div style={{fontSize:14,fontWeight:800,color:d>0?"#10B981":d<0?"#DC2626":t3}}>{d>0?"+":""}{d}</div>
       <div style={{fontSize:10,color:t2}}>Hoy {tAvg}</div>
-      <div style={{flex:1,textAlign:"right",fontSize:10,color:d>=0?"#059669":"#DC2626",fontWeight:600}}>{d>0?"Mejorando":"En ajuste"}</div>
+      <div style={{flex:1,textAlign:"right",fontSize:10,color:d>=0?"#10B981":"#DC2626",fontWeight:600}}>{d>0?"Mejorando":"En ajuste"}</div>
     </div>);})()}
 
     
     {/* Baseline Comparison */}
-    {st.history&&st.history.length>=5&&(()=>{const first5=st.history.slice(0,5);const last5=st.history.slice(-5);const baseC=Math.round(first5.reduce((a,h)=>a+(h.c||50),0)/5);const nowC=Math.round(last5.reduce((a,h)=>a+(h.c||50),0)/5);const delta=nowC-baseC;return(<div style={{background:delta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:16,padding:"14px 12px",marginBottom:16,border:"1.5px solid "+(delta>0?"#05966920":"#DC262620")}}>
+    {st.history&&st.history.length>=5&&(()=>{const first5=st.history.slice(0,5);const last5=st.history.slice(-5);const baseC=Math.round(first5.reduce((a,h)=>a+(h.c||50),0)/5);const nowC=Math.round(last5.reduce((a,h)=>a+(h.c||50),0)/5);const delta=nowC-baseC;return(<div style={{background:delta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A0A0A":"#FEF2F2"),borderRadius:16,padding:"14px 12px",marginBottom:16,border:"1.5px solid "+(delta>0?"#10B98120":"#DC262620")}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:6}}>Tu evolución</div>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
         <div><div style={{fontSize:10,color:t3}}>Inicio</div><div style={{fontSize:18,fontWeight:800,color:t3}}>{baseC}%</div></div>
-        <div style={{fontSize:20,fontWeight:800,color:delta>0?"#059669":"#DC2626"}}>{delta>0?"+":""}{delta}%</div>
-        <div><div style={{fontSize:10,color:t3}}>Ahora</div><div style={{fontSize:18,fontWeight:800,color:delta>0?"#059669":t1}}>{nowC}%</div></div>
+        <div style={{fontSize:20,fontWeight:800,color:delta>0?"#10B981":"#DC2626"}}>{delta>0?"+":""}{delta}%</div>
+        <div><div style={{fontSize:10,color:t3}}>Ahora</div><div style={{fontSize:18,fontWeight:800,color:delta>0?"#10B981":t1}}>{nowC}%</div></div>
       </div>
       <div style={{fontSize:10,color:t2,marginTop:6}}>{delta>0?"Tu coherencia mejoró "+delta+"% desde que empezaste.":"En proceso de calibración. Mantén la constancia."}</div>
     </div>);})()}
@@ -614,7 +614,7 @@ export default function BioIgnicion(){
       const stress=Math.max(0,100-Math.round((focus+calm)/2));
       const zones=[
         {id:"focus",label:"Enfoque",value:focus,color:"#3B82F6",interp:focus>=80?"Óptimo para decisiones críticas":focus>=60?"Funcional para trabajo profundo":focus>=40?"Disperso. Sesión de enfoque recomendada":"Bajo. Protocolo Lightning Focus sugerido"},
-        {id:"calm",label:"Calma",value:calm,color:"#059669",interp:calm>=80?"Tu calma es sólida. Buen estado":calm>=60?"Calma funcional. Buen baseline":calm>=40?"Tensión detectada. Protocolo de reset sugerido":"Tensión alta. Una sesión de calma ayudará"},
+        {id:"calm",label:"Calma",value:calm,color:"#10B981",interp:calm>=80?"Tu calma es sólida. Buen estado":calm>=60?"Calma funcional. Buen baseline":calm>=40?"Tensión detectada. Protocolo de reset sugerido":"Tensión alta. Una sesión de calma ayudará"},
         {id:"energy",label:"Energía",value:energy,color:"#D97706",interp:energy>=80?"Alto rendimiento disponible":energy>=60?"Energía moderada. Suficiente para ejecutar":energy>=40?"Bajo combustible. Pulse Shift recomendado":"Reservas agotadas. Recuperación necesaria"},
         {id:"stress",label:"Estrés",value:stress,color:"#DC2626",interp:stress<=20?"Mínimo. Estado óptimo":stress<=40?"Controlado. Sin riesgo":stress<=60?"Elevado. Monitor activo":"Crítico. Intervención inmediata"}
       ];
@@ -624,7 +624,7 @@ export default function BioIgnicion(){
     <div style={{background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",borderRadius:24,padding:"22px 18px",marginBottom:16,border:`1.5px solid ${bd}`,position:"relative",overflow:"hidden",boxShadow:isDark?"0 2px 20px rgba(0,0,0,.2)":"0 2px 20px rgba(0,0,0,.04)"}}>
       {/* Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-        <div><div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:theme.state==="optimal"?"#059669":theme.state==="stressed"?"#D97706":theme.state==="critical"?"#DC2626":t3,textTransform:"uppercase",marginBottom:3}}>Tu Estado Neural</div><AN value={perf} sfx="%" color={theme.state==="optimal"?"#059669":theme.state==="stressed"?"#D97706":theme.state==="critical"?"#DC2626":t1} sz={28}/></div>
+        <div><div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:theme.state==="optimal"?"#10B981":theme.state==="stressed"?"#D97706":theme.state==="critical"?"#DC2626":t3,textTransform:"uppercase",marginBottom:3}}>Tu Estado Neural</div><AN value={perf} sfx="%" color={theme.state==="optimal"?"#10B981":theme.state==="stressed"?"#D97706":theme.state==="critical"?"#DC2626":t1} sz={28}/></div>
         <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:9,height:9,borderRadius:"50%",background:nSt.color,animation:"shimDot "+(theme.state==="critical"?"1s":theme.state==="stressed"?"1.5s":"2.5s")+" ease infinite"}}/><span style={{fontSize:11,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
       </div>
 
@@ -635,7 +635,7 @@ export default function BioIgnicion(){
             {/* Radial glow filters for 3D depth */}
             <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor={ac} stopOpacity=".06"/><stop offset="100%" stopColor={ac} stopOpacity="0"/></radialGradient>
             <radialGradient id="focusG" cx="50%" cy="40%"><stop offset="0%" stopColor="#60A5FA" stopOpacity=".7"/><stop offset="50%" stopColor="#3B82F6" stopOpacity=".3"/><stop offset="100%" stopColor="#1D4ED8" stopOpacity=".05"/></radialGradient>
-            <radialGradient id="calmG" cx="50%" cy="60%"><stop offset="0%" stopColor="#34D399" stopOpacity=".6"/><stop offset="50%" stopColor="#059669" stopOpacity=".25"/><stop offset="100%" stopColor="#047857" stopOpacity=".05"/></radialGradient>
+            <radialGradient id="calmG" cx="50%" cy="60%"><stop offset="0%" stopColor="#34D399" stopOpacity=".6"/><stop offset="50%" stopColor="#10B981" stopOpacity=".25"/><stop offset="100%" stopColor="#047857" stopOpacity=".05"/></radialGradient>
             <radialGradient id="energyG" cx="50%" cy="50%"><stop offset="0%" stopColor="#FBBF24" stopOpacity=".8"/><stop offset="40%" stopColor="#D97706" stopOpacity=".35"/><stop offset="100%" stopColor="#B45309" stopOpacity=".05"/></radialGradient>
             <radialGradient id="stressG" cx="50%" cy="50%"><stop offset="0%" stopColor="#F87171" stopOpacity=".5"/><stop offset="60%" stopColor="#DC2626" stopOpacity=".2"/><stop offset="100%" stopColor="#991B1B" stopOpacity=".03"/></radialGradient>
             <filter id="brainGlow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -679,7 +679,7 @@ export default function BioIgnicion(){
           <ellipse cx="160" cy="210" rx={45+calm*.15} ry={22+calm*.1} fill="url(#calmG)"
             opacity={.12+calm*.005} style={{animation:`brainPulse ${brainSpeed} ease infinite .8s`,cursor:"pointer"}}
             onClick={e=>{e.stopPropagation();setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}}/>
-          <ellipse cx="160" cy="210" rx={25+calm*.08} ry={12+calm*.05} fill="#059669"
+          <ellipse cx="160" cy="210" rx={25+calm*.08} ry={12+calm*.05} fill="#10B981"
             opacity={.08+calm*.004} style={{animation:`brainPulse ${brainSpeed} ease infinite 1.2s`}}/>
           
           {/* ═══ ENERGY ZONE — Core/Center ═══ */}
@@ -708,8 +708,8 @@ export default function BioIgnicion(){
           <line x1="185" y1="140" x2="235" y2="140" stroke={ac} strokeWidth=".4" opacity=".08" style={{animation:"ecgDraw 3s linear infinite 1.5s"}}/>
           <line x1="140" y1="85" x2="110" y2="140" stroke="#3B82F6" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite .3s"}}/>
           <line x1="180" y1="85" x2="210" y2="140" stroke="#3B82F6" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite .8s"}}/>
-          <line x1="140" y1="195" x2="120" y2="155" stroke="#059669" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite 1.2s"}}/>
-          <line x1="180" y1="195" x2="200" y2="155" stroke="#059669" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite 1.7s"}}/>
+          <line x1="140" y1="195" x2="120" y2="155" stroke="#10B981" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite 1.2s"}}/>
+          <line x1="180" y1="195" x2="200" y2="155" stroke="#10B981" strokeWidth=".3" opacity=".06" style={{animation:"ecgDraw 4s linear infinite 1.7s"}}/>
           
           {/* Neural sparks — synaptic fire */}
           {[[140,70],[180,70],[140,140],[180,140],[140,200],[180,200]].map(([x,y],i)=>
@@ -725,10 +725,10 @@ export default function BioIgnicion(){
         </button>
         
         {/* CALM — bottom */}
-        <button onClick={()=>{setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}} style={{position:"absolute",bottom:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="calm"?"1.5px solid #059669":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="calm"?(isDark?"#05966915":"#05966910"):(isDark?"#0D1117CC":"#FFFFFFCC"),cursor:"pointer"}}>
-          <div style={{width:6,height:6,borderRadius:"50%",background:"#059669",animation:"shimDot "+brainSpeed+" ease infinite .4s"}}/>
-          <span style={{fontSize:10,fontWeight:800,color:neuralZone==="calm"?"#059669":t3}}>Calma</span>
-          <span style={{fontSize:11,fontWeight:800,color:"#059669"}}>{calm}%</span>
+        <button onClick={()=>{setNeuralZone(neuralZone==="calm"?null:"calm");H("tap");}} style={{position:"absolute",bottom:"2%",left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,border:neuralZone==="calm"?"1.5px solid #10B981":"1px solid "+(isDark?"#1E293B50":"#CBD5E150"),background:neuralZone==="calm"?(isDark?"#10B98115":"#10B98110"):(isDark?"#0D1117CC":"#FFFFFFCC"),cursor:"pointer"}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"#10B981",animation:"shimDot "+brainSpeed+" ease infinite .4s"}}/>
+          <span style={{fontSize:10,fontWeight:800,color:neuralZone==="calm"?"#10B981":t3}}>Calma</span>
+          <span style={{fontSize:11,fontWeight:800,color:"#10B981"}}>{calm}%</span>
         </button>
         
         {/* STRESS — left */}
@@ -786,13 +786,13 @@ export default function BioIgnicion(){
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:16}}>
       <div style={{background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:16,padding:"14px 12px",border:"1px solid "+(isDark?"rgba(255,255,255,.06)":"rgba(0,0,0,.06)")}}>
         <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>BioSignal Score</div>
-        <AN value={bioSignal.score} sfx="" color={bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"} sz={26}/>
+        <AN value={bioSignal.score} sfx="" color={bioSignal.score>=70?"#10B981":bioSignal.score>=45?"#D97706":"#DC2626"} sz={26}/>
         <div style={{fontSize:10,color:t2,marginTop:4,lineHeight:1.4}}>{bioSignal.score>=70?"Sistema en rendimiento alto":bioSignal.score>=45?"Estado funcional, margen de mejora":"Requiere intervención activa"}</div>
       </div>
       <div style={{background:burnout.risk==="crítico"||burnout.risk==="alto"?(isDark?"#1A0A0A":"#FEF2F2"):cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${burnout.risk==="crítico"||burnout.risk==="alto"?"#DC262620":bd}`}}>
         <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:4}}>Índice Burnout</div>
-        <AN value={burnout.index} sfx="" color={burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={26}/>
-        <div style={{fontSize:10,color:burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626",fontWeight:600,marginTop:4}}>Riesgo {burnout.risk}</div>
+        <AN value={burnout.index} sfx="" color={burnout.risk==="bajo"?"#10B981":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={26}/>
+        <div style={{fontSize:10,color:burnout.risk==="bajo"?"#10B981":burnout.risk==="moderado"?"#D97706":"#DC2626",fontWeight:600,marginTop:4}}>Riesgo {burnout.risk}</div>
         <div style={{fontSize:10,color:t3,marginTop:2}}>Tendencia: {burnout.trend}</div>
         {burnout.prediction&&<div style={{fontSize:10,color:burnout.risk==="crítico"||burnout.risk==="alto"?"#DC2626":t2,marginTop:4,lineHeight:1.4,fontStyle:"italic"}}>{burnout.prediction}</div>}
       </div>
@@ -805,7 +805,7 @@ export default function BioIgnicion(){
         <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<3?`1px solid ${bd}`:"none"}}>
           <span style={{fontSize:11,color:t1,fontWeight:600}}>{name}</span>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:11,fontWeight:800,color:data.avgDelta>0?"#059669":data.avgDelta<0?"#DC2626":t3}}>{data.avgDelta>0?"+":""}{data.avgDelta}</span>
+            <span style={{fontSize:11,fontWeight:800,color:data.avgDelta>0?"#10B981":data.avgDelta<0?"#DC2626":t3}}>{data.avgDelta>0?"+":""}{data.avgDelta}</span>
             <span style={{fontSize:10,color:t3}}>{data.sessions}x</span>
           </div>
         </div>))}
@@ -819,7 +819,7 @@ export default function BioIgnicion(){
       <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Esta semana vs anterior</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
         <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:t3}}>{weeklySummary.prev}</div><div style={{fontSize:10,color:t3}}>Anterior</div></div>
-        <div style={{fontSize:18,fontWeight:800,color:weeklySummary.diff>0?"#059669":weeklySummary.diff<0?"#DC2626":t3}}>{weeklySummary.diff>0?"+":""}{weeklySummary.diff}</div>
+        <div style={{fontSize:18,fontWeight:800,color:weeklySummary.diff>0?"#10B981":weeklySummary.diff<0?"#DC2626":t3}}>{weeklySummary.diff>0?"+":""}{weeklySummary.diff}</div>
         <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ac}}>{weeklySummary.curr}</div><div style={{fontSize:10,color:t3}}>Esta</div></div>
       </div>
       {weeklySummary.mAvg>0&&<div style={{fontSize:10,color:t2,textAlign:"center",marginTop:6}}>Mood promedio: {weeklySummary.mAvg}/5</div>}
@@ -834,7 +834,7 @@ export default function BioIgnicion(){
     <div style={{background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",borderRadius:16,padding:"14px 12px",marginBottom:16,border:"1px solid "+bd}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Índice de Recuperación</div>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ri.avgRetention>=80?"#059669":ri.avgRetention>=60?"#D97706":"#DC2626"}}>{ri.avgRetention}%</div><div style={{fontSize:10,color:t3}}>retención</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ri.avgRetention>=80?"#10B981":ri.avgRetention>=60?"#D97706":"#DC2626"}}>{ri.avgRetention}%</div><div style={{fontSize:10,color:t3}}>retención</div></div>
         <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:t1}}>{ri.avgHours}h</div><div style={{fontSize:10,color:t3}}>duración efecto</div></div>
       </div>
       <div style={{fontSize:11,color:t2,lineHeight:1.5}}>{ri.interpretation}</div>
@@ -845,7 +845,7 @@ export default function BioIgnicion(){
       <div style={{background:`linear-gradient(135deg,${ac}08,${ac}03)`,borderRadius:18,padding:"16px 14px",marginBottom:16,border:`1px solid ${ac}12`}}>
         <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:ac,textTransform:"uppercase",marginBottom:8}}>Impacto Medible</div>
         <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:6}}>
-          <span style={{fontSize:28,fontWeight:800,color:avg>0?"#059669":avg<0?"#DC2626":t1}}>{avg>0?"+":""}{avg}</span>
+          <span style={{fontSize:28,fontWeight:800,color:avg>0?"#10B981":avg<0?"#DC2626":t1}}>{avg>0?"+":""}{avg}</span>
           <span style={{fontSize:10,color:t2}}>puntos de mejora promedio por sesión</span>
         </div>
         <div style={{fontSize:10,color:t2,lineHeight:1.6}}>
@@ -886,15 +886,15 @@ export default function BioIgnicion(){
     {/* Mood Sparkline 14 days */}
     {moodTrend.length>=3&&<div style={{background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",borderRadius:14,padding:"12px",marginBottom:16,border:"1px solid "+bd}}>
       <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:8}}>Evolución de mood · 14 días</div>
-      <SK data={moodTrend} c={avgMood>=3.5?"#059669":avgMood>=2.5?"#D97706":"#DC2626"} w={280} h={40} id="mood14"/>
-      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span style={{fontSize:10,color:t3}}>hace 14 días</span><span style={{fontSize:10,fontWeight:700,color:avgMood>=3.5?"#059669":"#D97706"}}>hoy: {avgMood}/5</span></div>
+      <SK data={moodTrend} c={avgMood>=3.5?"#10B981":avgMood>=2.5?"#D97706":"#DC2626"} w={280} h={40} id="mood14"/>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span style={{fontSize:10,color:t3}}>hace 14 días</span><span style={{fontSize:10,fontWeight:700,color:avgMood>=3.5?"#10B981":"#D97706"}}>hoy: {avgMood}/5</span></div>
     </div>}
 
     {/* ═══ METRICS GRID ═══ */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:16}}>
-      {[{l:"Enfoque",v:st.coherencia,d:rD.c>0?"+"+rD.c+"%":"—",c:"#3B82F6",u:"e"},{l:"Calma",v:st.resiliencia,d:rD.r>0?"+"+rD.r+"%":"—",c:"#8B5CF6",u:"c"},{l:"V-Cores",v:st.vCores||0,d:"+"+(st.history?.slice(-1)[0]?.vc||0),c:"#D97706",u:"v"},{l:"Sesiones",v:st.totalSessions,d:st.streak+"d racha",c:"#059669",u:"t"}].map((k,i)=>(
+      {[{l:"Enfoque",v:st.coherencia,d:rD.c>0?"+"+rD.c+"%":"—",c:"#3B82F6",u:"e"},{l:"Calma",v:st.resiliencia,d:rD.r>0?"+"+rD.r+"%":"—",c:"#8B5CF6",u:"c"},{l:"V-Cores",v:st.vCores||0,d:"+"+(st.history?.slice(-1)[0]?.vc||0),c:"#D97706",u:"v"},{l:"Sesiones",v:st.totalSessions,d:st.streak+"d racha",c:"#10B981",u:"t"}].map((k,i)=>(
         <div key={i} style={{background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:14,padding:"11px 10px",border:"1px solid "+(isDark?"rgba(255,255,255,.06)":"rgba(0,0,0,.06)")}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:t3}}>{k.l}</span><span style={{fontSize:10,fontWeight:700,color:"#059669"}}>{k.d}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:t3}}>{k.l}</span><span style={{fontSize:10,fontWeight:700,color:"#10B981"}}>{k.d}</span></div>
           <AN value={k.v} sfx={k.l==="Enfoque"||k.l==="Calma"?"%":""} color={k.c} sz={20}/>
         </div>))}
     </div>
@@ -921,7 +921,7 @@ export default function BioIgnicion(){
 
     {/* ═══ WEEKLY CHART + SUMMARY ═══ */}
     {weeklySummary&&<div style={{background:isDark?"#141820":"#F8FAFC",borderRadius:16,padding:"12px",marginBottom:16,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:10,color:t2,lineHeight:1.6}}>Semana pasada: <span style={{fontWeight:800,color:t1}}>{weeklySummary.prev}</span>. Actual: <span style={{fontWeight:800,color:t1}}>{weeklySummary.curr}</span>.{weeklySummary.diff>0?<span style={{color:"#059669",fontWeight:700}}> +{weeklySummary.diff}</span>:weeklySummary.diff<0?<span style={{color:"#DC2626",fontWeight:700}}> {weeklySummary.diff}</span>:<span style={{color:t3}}> Igual</span>}.{weeklySummary.mAvg>0&&<span> Mood: <span style={{fontWeight:800}}>{weeklySummary.mAvg}/5</span></span>}</div>
+      <div style={{fontSize:10,color:t2,lineHeight:1.6}}>Semana pasada: <span style={{fontWeight:800,color:t1}}>{weeklySummary.prev}</span>. Actual: <span style={{fontWeight:800,color:t1}}>{weeklySummary.curr}</span>.{weeklySummary.diff>0?<span style={{color:"#10B981",fontWeight:700}}> +{weeklySummary.diff}</span>:weeklySummary.diff<0?<span style={{color:"#DC2626",fontWeight:700}}> {weeklySummary.diff}</span>:<span style={{color:t3}}> Igual</span>}.{weeklySummary.mAvg>0&&<span> Mood: <span style={{fontWeight:800}}>{weeklySummary.mAvg}/5</span></span>}</div>
     </div>}
     <div style={{background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderRadius:16,padding:"12px 10px",border:"1px solid "+(isDark?"rgba(255,255,255,.06)":"rgba(0,0,0,.06)")}}>
       <div style={{display:"flex",alignItems:"flex-end",gap:3,height:50}}>{(st.weeklyData||[0,0,0,0,0,0,0]).map((v,i)=>{const a=((new Date().getDay()+6)%7)===i;return(<div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><div style={{width:"100%",borderRadius:5,height:Math.max((v/mW)*42,2),background:a?ac:bd,transition:"height .6s"}}/><span style={{fontSize:10,color:a?ac:t3,fontWeight:a?800:600}}>{DN[i]}</span></div>);})}</div>
@@ -966,8 +966,8 @@ export default function BioIgnicion(){
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:10}}>
         <div style={{background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Hora pico</div><div style={{fontSize:14,fontWeight:800,color:t1}}>{fp.peakHour}:00</div></div>
         <div style={{background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Mejor protocolo</div><div style={{fontSize:11,fontWeight:800,color:ac}}>{fp.bestProto}</div></div>
-        <div style={{background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Calidad promedio</div><div style={{fontSize:14,fontWeight:800,color:fp.avgQuality>=70?"#059669":fp.avgQuality>=45?"#D97706":"#DC2626"}}>{fp.avgQuality}%</div></div>
-        <div style={{background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Tasa adaptación</div><div style={{fontSize:14,fontWeight:800,color:fp.adaptationRate>0?"#059669":"#DC2626"}}>{fp.adaptationRate>0?"+":""}{fp.adaptationRate}</div></div>
+        <div style={{background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Calidad promedio</div><div style={{fontSize:14,fontWeight:800,color:fp.avgQuality>=70?"#10B981":fp.avgQuality>=45?"#D97706":"#DC2626"}}>{fp.avgQuality}%</div></div>
+        <div style={{background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12,padding:"10px"}}><div style={{fontSize:10,color:t3}}>Tasa adaptación</div><div style={{fontSize:14,fontWeight:800,color:fp.adaptationRate>0?"#10B981":"#DC2626"}}>{fp.adaptationRate>0?"+":""}{fp.adaptationRate}</div></div>
       </div>
       <div style={{fontSize:10,color:t2,lineHeight:1.5}}>Baseline cognitivo: Enfoque {fp.cognitiveBaseline.focus}% · Calma {fp.cognitiveBaseline.calm}% · Energía {fp.cognitiveBaseline.energy}%</div>
     </div>);})()}
