@@ -8,7 +8,7 @@ import { StateOrbs } from "./StateOrbs";
 import { StatusBadge } from "./StatusBadge";
 import { MetricCard, MetricGrid, StatRow } from "./MetricCard";
 import { SectionLabel } from "./SectionLabel";
-import { TabBar, MetricsBar } from "./TabBar";
+import { TabBar } from "./TabBar";
 import { LoadingScreen } from "./LoadingScreen";
 import { CountdownOverlay } from "./CountdownOverlay";
 import { NeuralSummary } from "./NeuralSummary";
