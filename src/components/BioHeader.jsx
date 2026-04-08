@@ -1,84 +1,75 @@
 "use client";
 import { Ic } from "./Icons";
-import { RingGauge } from "./RingGauge";
 
 /**
- * BioHeader — Top header + 3 neural ring gauges
- * Matches the reference: dark premium biometric dashboard
+ * BioHeader v9 — Minimal Neural Identity Bar
+ *
+ * Simplified from v8: removed redundant ring gauges from header
+ * (they already exist in CoreNucleus orbital metrics).
+ * Now focuses on: brand identity + navigation + state indicator.
+ *
+ * Design: Clean, breathable, premium. Less is more.
  */
 export function BioHeader({ st, isDark, ac, t1, t2, t3, bd, nSt, theme, onProfile, onSettings }) {
+  const stateColor = nSt?.color || ac;
+  const dotSpeed = theme.motion?.dot || "2.2s";
+
   return (
-    <div style={{ padding: "12px 20px 0" }}>
-      {/* Top bar — Profile | Title | Settings */}
+    <div style={{ padding: "14px 20px 0" }}>
+      {/* Top bar — Profile | Brand | Settings */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: 20,
+        marginBottom: 14,
       }}>
+        {/* Profile button */}
         <button onClick={onProfile} style={{
-          width: 36, height: 36, borderRadius: "50%",
-          background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.08)",
+          width: 38, height: 38, borderRadius: "50%",
+          background: isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.03)",
+          border: `1px solid ${isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
+          backdropFilter: "blur(8px)",
         }}>
-          <Ic name="user" size={16} color={t3} />
+          <Ic name="user" size={15} color={t3} />
         </button>
-        
-        <div style={{ textAlign: "center" }}>
+
+        {/* Brand mark */}
+        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
           <div style={{
-            fontSize: 16, fontWeight: 800, color: t1, letterSpacing: 2,
+            fontSize: 15, fontWeight: 800, letterSpacing: 2.5,
+            display: "flex", alignItems: "center", gap: 0,
           }}>
             <span style={{ color: t1 }}>BIO-</span>
             <span style={{ color: ac }}>IGNICIÓN</span>
           </div>
-        </div>
-        
-        <button onClick={onSettings} style={{
-          width: 36, height: 36, borderRadius: "50%",
-          background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.08)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Ic name="gear" size={16} color={t3} />
-        </button>
-      </div>
-
-      {/* 3 Ring Gauges — Enfoque | Calma | Energía */}
-      <div style={{
-        display: "flex", justifyContent: "space-around", alignItems: "flex-start",
-        marginBottom: 16,
-      }}>
-        <RingGauge 
-          value={st.capacidad || 0} color="#D97706" 
-          label="Energía" size={76} strokeWidth={5} isDark={isDark} 
-        />
-        <RingGauge 
-          value={st.coherencia || 0} color="#3B82F6" 
-          label="Enfoque" size={86} strokeWidth={6} isDark={isDark} 
-        />
-        <RingGauge 
-          value={st.resiliencia || 0} color="#22D3A0" 
-          label="Calma" size={76} strokeWidth={5} isDark={isDark} 
-        />
-      </div>
-
-      {/* Neural state badge */}
-      <div style={{
-        display: "flex", justifyContent: "center", marginBottom: 8,
-      }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "4px 14px", borderRadius: 20,
-          background: (nSt.color || ac) + "10",
-          border: "1px solid " + (nSt.color || ac) + "18",
-        }}>
+          {/* State indicator — inline, minimal */}
           <div style={{
-            width: 6, height: 6, borderRadius: "50%",
-            background: nSt.color || ac,
-            animation: "shimDot " + (theme.motion ? theme.motion.dot : "2.2s") + " ease infinite",
-            boxShadow: "0 0 8px " + (nSt.color || ac) + "50",
-          }} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: nSt.color || ac }}>
-            {nSt.label}
-          </span>
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "3px 10px", borderRadius: 20,
+            background: `${stateColor}08`,
+            border: `1px solid ${stateColor}12`,
+          }}>
+            <div style={{
+              width: 5, height: 5, borderRadius: "50%",
+              background: stateColor,
+              animation: `shimDot ${dotSpeed} ease infinite`,
+              boxShadow: `0 0 6px ${stateColor}40`,
+            }} />
+            <span style={{ fontSize: 9, fontWeight: 700, color: stateColor, letterSpacing: 0.5 }}>
+              {nSt?.label || "Cargando"}
+            </span>
+          </div>
         </div>
+
+        {/* Settings button */}
+        <button onClick={onSettings} style={{
+          width: 38, height: 38, borderRadius: "50%",
+          background: isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.03)",
+          border: `1px solid ${isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)"}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          backdropFilter: "blur(8px)",
+        }}>
+          <Ic name="gear" size={15} color={t3} />
+        </button>
       </div>
     </div>
   );
