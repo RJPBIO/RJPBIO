@@ -1,9 +1,9 @@
 import { P } from './protocols';
 
-const MOODS=[{id:1,label:"Tensión alta",icon:"stress",value:1,color:"#94A3B8"},{id:2,label:"Agotamiento",icon:"drain",value:2,color:"#78909C"},{id:3,label:"Estable",icon:"neutral",value:3,color:"#607D8B"},{id:4,label:"Enfocado",icon:"sharp",value:4,color:"#0D9488"},{id:5,label:"Óptimo",icon:"peak",value:5,color:"#059669"}];
+const MOODS=[{id:1,label:"Tensión alta",icon:"stress",value:1,color:"#94A3B8"},{id:2,label:"Agotamiento",icon:"drain",value:2,color:"#78909C"},{id:3,label:"Estable",icon:"neutral",value:3,color:"#607D8B"},{id:4,label:"Enfocado",icon:"sharp",value:4,color:"#0D9488"},{id:5,label:"Óptimo",icon:"peak",value:5,color:"#10B981"}];
 const ENERGY_LEVELS=[{id:1,label:"Bajo",v:1},{id:2,label:"Medio",v:2},{id:3,label:"Alto",v:3}];
 const WORK_TAGS=["Pre-reunión","Post-reunión","Inicio jornada","Mitad del día","Fin de jornada","Bajo presión","Pausa activa"];
-const INTENTS=[{id:"calma",label:"Calma",icon:"calm",desc:"Reducir tensión",color:"#059669"},{id:"enfoque",label:"Enfoque",icon:"focus",desc:"Concentración",color:"#6366F1"},{id:"energia",label:"Energía",icon:"energy",desc:"Activación",color:"#D97706"},{id:"reset",label:"Reset",icon:"reset",desc:"Reinicio",color:"#0D9488"}];
+const INTENTS=[{id:"calma",label:"Calma",icon:"calm",desc:"Reducir tensión",color:"#10B981"},{id:"enfoque",label:"Enfoque",icon:"focus",desc:"Concentración",color:"#6366F1"},{id:"energia",label:"Energía",icon:"energy",desc:"Activación",color:"#D97706"},{id:"reset",label:"Reset",icon:"reset",desc:"Reinicio",color:"#0D9488"}];
 
 const DS={totalSessions:0,streak:0,todaySessions:0,lastDate:null,weeklyData:[0,0,0,0,0,0,0],weekNum:null,coherencia:64,resiliencia:66,capacidad:73,achievements:[],vCores:0,history:[],totalTime:0,soundOn:true,hapticOn:true,themeMode:"auto",moodLog:[],firstDone:false,favs:[],prevWeekData:[0,0,0,0,0,0,0],progDay:0,soundscape:"off",lastIntent:""};
 
@@ -173,7 +173,7 @@ const SCIENCE_DEEP={
 14:"OMNIA activa los 3 sistemas sensoriales simultáneamente (visual, auditivo, táctil) para generar una sincronización neural masiva. El eje dorado es una técnica de alineación propioceptiva usada en artes marciales internas. La expansión final busca el estado de 'conciencia testigo' descrito en la neurociencia contemplativa."
 };
 const AM={streak7:"7 días de racha",streak30:"30 días consecutivos",coherencia90:"Coherencia >90%",sessions50:"50 sesiones",sessions100:"100 sesiones — Centurión",mood5:"Sesión en rendimiento óptimo",allProtos:"Probó los 14 protocolos",time60:"60 minutos totales invertidos",earlyBird:"Sesión antes de las 7am",nightOwl:"Sesión después de las 10pm"};
-const STATUS_MSGS=[{min:0,max:40,label:"Calibrando",color:"#94A3B8"},{min:40,max:65,label:"Activación",color:"#6366F1"},{min:65,max:82,label:"Rendimiento",color:"#0D9488"},{min:82,max:100,label:"Óptimo",color:"#059669"}];
+const STATUS_MSGS=[{min:0,max:40,label:"Calibrando",color:"#94A3B8"},{min:40,max:65,label:"Activación",color:"#6366F1"},{min:65,max:82,label:"Rendimiento",color:"#0D9488"},{min:82,max:100,label:"Óptimo",color:"#10B981"}];
 const MID_MSGS=["Vas bien. Tu cuerpo siente el cambio.","El ruido mental baja. Sigue.","Estás construyendo claridad.","Tu sistema se recalibra.","Este momento es tuyo."];
 const POST_MSGS=["Dos minutos bien invertidos. Tu cerebro lo nota.","Sesión potente. El efecto dura 60-90 minutos.","Hiciste algo que el 95% no hace: pausar para rendir.","Tu sistema acaba de recalibrarse.","Consistencia mata talento. Hoy sumaste."];
 const GREETINGS=["Tu sistema está listo.","Cada sesión cuenta. Hoy puede ser la mejor.","Tu cerebro recuerda el hábito."];
