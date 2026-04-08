@@ -8,10 +8,12 @@ import { StateOrbs } from "./StateOrbs";
 import { StatusBadge } from "./StatusBadge";
 import { MetricCard, MetricGrid, StatRow } from "./MetricCard";
 import { SectionLabel } from "./SectionLabel";
-import { TabBar } from "./TabBar";
+import { TabBar, MetricsBar } from "./TabBar";
 import { LoadingScreen } from "./LoadingScreen";
 import { CountdownOverlay } from "./CountdownOverlay";
 import { NeuralSummary } from "./NeuralSummary";
+import { BreathSync } from "./BreathSync";
+import { StateBar } from "./StateBarNew";
 import { RingGauge, MiniRing } from "./RingGauge";
 import { P, CATS, LVL, gL, lvPct, nxtLv, DN, DIF_LABELS } from "@/lib/protocols";
 import { MOODS, ENERGY_LEVELS, WORK_TAGS, INTENTS, DS, SOUNDSCAPES, DAILY_PHRASES, PROG_7, SCIENCE_DEEP, AM, STATUS_MSGS, MID_MSGS, POST_MSGS, GREETINGS, getStatus, getWeekNum } from "@/lib/constants";
@@ -453,6 +455,8 @@ export default function BioIgnicion(){
     </div>
   </div>}
 
+  <StateBar greeting={greeting} nSt={nSt} theme={theme} pr={pr} ts={ts} isDark={isDark} t1={t1} t2={t2} t3={t3} ac={ac} bg={bg} bd={bd} />
+
   <div style={{opacity:tabFade,transition:"opacity .25s cubic-bezier(.4,0,.2,1),transform .25s",transform:tabFade===1?"translateY(0)":"translateY(8px)",position:"relative",zIndex:1}}>
 
   {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div className="bio-stagger" style={{padding:"14px 20px 180px"}}>
@@ -523,6 +527,7 @@ export default function BioIgnicion(){
     </div>}
 
     {/* ═══ CORE DE IGNICIÓN — Living Nucleus ═══ */}
+    <BreathSync bS={bS} isActive={ts==="running"}>
     <div onClick={timerTap} aria-label="Core de Ignición" role="button" onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:236,height:isActive?200:236,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
       {/* State-colored outer halo */}
       <div style={{position:"absolute",inset:isActive?-25:-16,borderRadius:"50%",background:"radial-gradient(circle,"+(theme.state==="optimal"?"#05966910":theme.state==="stressed"?"#D9770610":theme.state==="critical"?"#DC262610":ac+"08")+",transparent 70%)",transition:"all 2s ease",pointerEvents:"none"}}/>
@@ -663,6 +668,7 @@ export default function BioIgnicion(){
       {ts==="running"&&<><button onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
       {ts==="paused"&&<><button onClick={()=>{setTs("running");H("go");}} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</button><RB o={rs} bd={bd} cd={cd} t3={t3}/></>}
     </div>
+    </BreathSync>
     {isActive&&<div style={{marginTop:14,height:26,borderRadius:13,overflow:"hidden",background:cd,border:`1.5px solid ${bd}`,position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:0,left:0,animation:"wf 4s linear infinite",opacity:.2}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}25,${ac}10)`,transition:"width .95s linear",borderRadius:10}}/></div>}
     {/* ═══ DAILY IGNICIÓN ═══ */}
     {ts==="idle"&&<button onClick={()=>sp(brain.bestProto||daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:16,borderRadius:18,border:`1.5px solid ${(brain.bestProto||daily.proto).cl}20`,background:`linear-gradient(135deg,${(brain.bestProto||daily.proto).cl}06,${(brain.bestProto||daily.proto).cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",animation:"fi .5s",position:"relative",overflow:"hidden"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>

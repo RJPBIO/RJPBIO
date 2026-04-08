@@ -101,6 +101,9 @@ details[open] > *:not(summary){animation:bioReveal .35s cubic-bezier(.4,0,.2,1)}
 .bio-stagger > *:nth-child(9){animation-delay:.36s}
 .bio-stagger > *:nth-child(10){animation-delay:.4s}
 
+/* ═══ BREATH SYNC ═══ */
+@keyframes breathAmbient{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.006);opacity:.97}}
+
 /* ═══ PLATFORM ═══ */
 @supports(padding:env(safe-area-inset-top)){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
 ::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.12);border-radius:10px}
