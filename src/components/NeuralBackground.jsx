@@ -1,92 +1,121 @@
 "use client";
 
 /**
- * NeuralBackground — Floating neural particles + connections
- * Creates the bio-neural atmosphere seen in the reference.
- * Pure CSS — no canvas, no WebGL, GPU-friendly.
- * Particles drift slowly. Connections pulse.
+ * NeuralBackground v9 — Living Neural Atmosphere
+ *
+ * Design: Fewer elements, more impact. Each particle is a neuron.
+ * Connections pulse like synaptic transmissions.
+ * Two ambient nebulae create depth and state-reactive atmosphere.
+ *
+ * Performance: Pure CSS/SVG, GPU-accelerated, no canvas.
+ * Particles use will-change for compositor promotion.
  */
 export function NeuralBackground({ ac, isDark, theme }) {
-  const color = ac || "#22D3A0";
+  const color = ac || "#10B981";
   const secondary = "#6366F1";
-  const opacity = isDark ? 1 : 0.5;
+  const tertiary = "#D97706";
+  const opacity = isDark ? 1 : 0.4;
+  const pulseSpeed = theme.motion?.pulse || "5s";
 
-  // Generate particle positions deterministically
+  // 8 particles (down from 12) — each positioned for visual balance
   const particles = [
-    { x: 12, y: 8, s: 3, d: 15, del: 0 },
-    { x: 85, y: 12, s: 2, d: 18, del: 2 },
-    { x: 25, y: 35, s: 4, d: 20, del: 1 },
-    { x: 70, y: 28, s: 2.5, d: 16, del: 3 },
-    { x: 8, y: 55, s: 3, d: 22, del: 0.5 },
-    { x: 92, y: 50, s: 2, d: 17, del: 4 },
-    { x: 40, y: 70, s: 3.5, d: 19, del: 1.5 },
-    { x: 65, y: 80, s: 2, d: 21, del: 2.5 },
-    { x: 18, y: 88, s: 3, d: 16, del: 3.5 },
-    { x: 80, y: 92, s: 2.5, d: 18, del: 0.8 },
-    { x: 50, y: 15, s: 2, d: 20, del: 1.2 },
-    { x: 35, y: 50, s: 3, d: 15, del: 2.8 },
+    { x: 10, y: 6,  s: 3.5, dur: 18, del: 0,   c: 0 },
+    { x: 88, y: 10, s: 2.5, dur: 22, del: 1.5, c: 1 },
+    { x: 22, y: 38, s: 4,   dur: 20, del: 0.8, c: 0 },
+    { x: 75, y: 30, s: 2,   dur: 16, del: 2.5, c: 2 },
+    { x: 6,  y: 62, s: 3,   dur: 24, del: 1.2, c: 1 },
+    { x: 92, y: 55, s: 2.5, dur: 19, del: 3,   c: 0 },
+    { x: 45, y: 78, s: 3,   dur: 21, del: 0.5, c: 1 },
+    { x: 70, y: 88, s: 2,   dur: 17, del: 2,   c: 2 },
   ];
 
-  // Neural connections (lines between some particles)
+  const colors = [color, secondary, tertiary];
+
+  // 6 synaptic connections — fewer but more visible
   const connections = [
-    { x1: 12, y1: 8, x2: 25, y2: 35 },
-    { x1: 85, y1: 12, x2: 70, y2: 28 },
-    { x1: 25, y1: 35, x2: 40, y2: 70 },
-    { x1: 70, y1: 28, x2: 92, y2: 50 },
-    { x1: 8, y1: 55, x2: 18, y2: 88 },
-    { x1: 65, y1: 80, x2: 80, y2: 92 },
-    { x1: 40, y1: 70, x2: 65, y2: 80 },
-    { x1: 50, y1: 15, x2: 70, y2: 28 },
+    { x1: 10, y1: 6,  x2: 22, y2: 38 },
+    { x1: 88, y1: 10, x2: 75, y2: 30 },
+    { x1: 22, y1: 38, x2: 45, y2: 78 },
+    { x1: 75, y1: 30, x2: 92, y2: 55 },
+    { x1: 6,  y1: 62, x2: 45, y2: 78 },
+    { x1: 45, y1: 78, x2: 70, y2: 88 },
   ];
 
   return (
     <div style={{
       position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
       overflow: "hidden", opacity,
+      transition: "opacity 1.5s ease",
     }}>
-      {/* SVG neural network */}
+      {/* SVG synaptic network */}
       <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
-        {/* Connections */}
+        <defs>
+          {/* Gradient for connections — creates energy flow illusion */}
+          <linearGradient id="syn1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.06" />
+            <stop offset="50%" stopColor={color} stopOpacity="0.15" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.03" />
+          </linearGradient>
+          <linearGradient id="syn2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={secondary} stopOpacity="0.04" />
+            <stop offset="50%" stopColor={secondary} stopOpacity="0.12" />
+            <stop offset="100%" stopColor={secondary} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
         {connections.map((c, i) => (
           <line key={"c" + i}
             x1={c.x1 + "%"} y1={c.y1 + "%"}
             x2={c.x2 + "%"} y2={c.y2 + "%"}
-            stroke={i % 2 === 0 ? color : secondary}
-            strokeWidth="0.5"
-            opacity="0.06"
-            style={{ animation: `ecgDraw ${8 + i * 2}s linear infinite ${i * 0.8}s` }}
+            stroke={`url(#syn${i % 2 === 0 ? "1" : "2"})`}
+            strokeWidth="0.6"
+            style={{
+              animation: `ecgDraw ${10 + i * 3}s ease-in-out infinite ${i * 1.2}s`,
+            }}
           />
         ))}
       </svg>
 
-      {/* Floating particles */}
+      {/* Floating neuron particles */}
       {particles.map((p, i) => (
         <div key={"p" + i} style={{
           position: "absolute",
           left: p.x + "%", top: p.y + "%",
           width: p.s, height: p.s,
           borderRadius: "50%",
-          background: i % 3 === 0 ? color : i % 3 === 1 ? secondary : "#D97706",
-          opacity: 0.15 + (i % 3) * 0.08,
-          animation: `orbFloat ${p.d}s ease-in-out infinite ${p.del}s`,
-          boxShadow: `0 0 ${p.s * 2}px ${i % 3 === 0 ? color : secondary}30`,
+          background: colors[p.c],
+          opacity: 0.12 + (i % 3) * 0.06,
+          animation: `orbFloat ${p.dur}s ease-in-out infinite ${p.del}s`,
+          boxShadow: `0 0 ${p.s * 3}px ${colors[p.c]}25`,
+          willChange: "transform",
         }} />
       ))}
 
-      {/* Ambient glow orbs */}
+      {/* ═══ NEBULA 1 — Top right, primary state color ═══ */}
       <div style={{
-        position: "absolute", top: "-10%", right: "-15%",
-        width: "50%", height: "50%", borderRadius: "50%",
-        background: `radial-gradient(circle at 40% 40%, ${color}0A, transparent 65%)`,
-        filter: "blur(40px)",
-        animation: `am ${theme.motion ? theme.motion.pulse : "5s"} ease-in-out infinite`,
+        position: "absolute", top: "-15%", right: "-20%",
+        width: "55%", height: "55%", borderRadius: "50%",
+        background: `radial-gradient(circle at 35% 40%, ${color}08, ${color}03 45%, transparent 70%)`,
+        filter: "blur(50px)",
+        animation: `am ${pulseSpeed} ease-in-out infinite`,
+        transition: "background 2.5s ease",
       }} />
+
+      {/* ═══ NEBULA 2 — Bottom left, secondary accent ═══ */}
       <div style={{
-        position: "absolute", bottom: "-5%", left: "-10%",
-        width: "40%", height: "40%", borderRadius: "50%",
-        background: `radial-gradient(circle at 60% 60%, ${secondary}08, transparent 60%)`,
-        filter: "blur(35px)",
-        animation: `am ${theme.motion ? theme.motion.pulse : "5s"} ease-in-out infinite reverse`,
+        position: "absolute", bottom: "-10%", left: "-15%",
+        width: "45%", height: "45%", borderRadius: "50%",
+        background: `radial-gradient(circle at 60% 55%, ${secondary}06, transparent 65%)`,
+        filter: "blur(45px)",
+        animation: `am ${pulseSpeed} ease-in-out infinite reverse`,
+        transition: "background 2.5s ease",
+      }} />
+
+      {/* ═══ CENTER VIGNETTE — subtle depth ═══ */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: `radial-gradient(ellipse at 50% 45%, transparent 30%, ${isDark ? "rgba(6,9,15,.4)" : "rgba(244,246,250,.3)"} 100%)`,
+        pointerEvents: "none",
       }} />
     </div>
   );
