@@ -142,15 +142,42 @@ function neuralIntelligence(st) {
   };
 }
 
+
+
+// ═══ CONSTANTS RECOVERED FROM MONOLITH ═══
+const SOUNDSCAPES=[{id:"off",n:"Silencio"},{id:"wind",n:"Viento suave"},{id:"drone",n:"Drone tonal"},{id:"bnarl",n:"Binaural"}];
+const DAILY_PHRASES=["Hoy tu sistema se recalibra.","120 segundos pueden cambiar las próximas 4 horas.","No meditas para escapar. Meditas para llegar.","Tu mente es el instrumento. Esta es la afinación.","El rendimiento empieza en la pausa.","Dos minutos de silencio interno. El mundo puede esperar.","No necesitas más tiempo. Necesitas más presencia.","La claridad no se busca. Se construye.","Este es tu momento de ventaja.","Tu cuerpo sabe resetear. Solo necesita permiso.","La calma no es debilidad. Es tecnología.","Hoy entrenas lo que nadie ve: tu mente.","120 segundos. Sin distracciones. Solo tú.","El ruido mental tiene un interruptor. Estás a punto de tocarlo."];
+const PROG_7=[
+  {day:1,pid:1,t:"Día 1: Respira",d:"Tu primera conexión con el sistema nervioso."},
+  {day:2,pid:2,t:"Día 2: Enfoca",d:"Activa tu corteza prefrontal con intención."},
+  {day:3,pid:3,t:"Día 3: Decide",d:"Aprende a priorizar bajo presión."},
+  {day:4,pid:6,t:"Día 4: Ancla",d:"Presencia ejecutiva. Tu cuerpo como base."},
+  {day:5,pid:8,t:"Día 5: Intensifica",d:"Enfoque extremo. Nivel avanzado."},
+  {day:6,pid:13,t:"Día 6: Realinea",d:"Protocolo OMEGA completo. 6 fases."},
+  {day:7,pid:14,t:"Día 7: Enciende",d:"OMNIA. Activación humana total."}
+];
+const SCIENCE_DEEP={
+1:"La respiración box (4-4-4-4) activa el complejo vagal ventral, la rama del nervio vago responsable de la conexión social y la calma. Cuando inhalas y sostienes, aumentas la presión intratorácica que estimula los barorreceptores aórticos, enviando señales de 'seguridad' al tronco cerebral. La fase de desplazamiento de carga usa principios de terapia cognitiva: externalizar el pensamiento reduce la rumiación del córtex cingulado anterior.",
+2:"La respiración 6-2-8 genera coherencia cardíaca — un estado donde el corazón, la respiración y el sistema nervioso sincronizan sus ritmos. El etiquetado emocional (affect labeling) tiene respaldo en neuroimagen: nombrar una emoción reduce la activación amigdalar hasta un 40% y activa la corteza prefrontal ventrolateral, que regula las emociones.",
+3:"Las exhalaciones largas (ratio 1:3) activan directamente el sistema parasimpático. El triángulo de prioridad aplica la matriz de Eisenhower de forma embodied — al conectar la decisión con el cuerpo (cerrar el puño), se activa la memoria procedimental, que tiene mayor tasa de ejecución que la decisión puramente mental.",
+4:"El movimiento rítmico bilateral (marcha estática) cruza la línea media del cuerpo, activando ambos hemisferios. La apertura torácica revierte la postura de estrés (hombros cerrados, respiración superficial) y la contracción-liberación usa relajación muscular progresiva de Jacobson.",
+5:"La visión panorámica desactiva el sistema visual de amenazas (visión de túnel). El cambio de foco cerca-lejos reinicia el sistema atencional de la corteza parietal posterior. Estos protocolos oculomotores están basados en investigación de Andrew Huberman sobre regulación del estado de alerta.",
+6:"La postura erguida modifica los niveles de cortisol y testosterona en menos de 2 minutos (Carney et al.). La respiración triangular (ratio 1:1:2) equilibra el sistema simpático-parasimpático. La microtensión sostenida activa los propioceptores de Golgi, que generan sensación de estabilidad y control.",
+7:"La percusión esternal estimula el timo y activa el nervio vago por vibración mecánica. La contracción isométrica al 10% y posterior liberación es una técnica de descarga somática usada en SE (Somatic Experiencing) de Peter Levine para liberar tensión acumulada del trauma.",
+8:"Los movimientos oculares bilaterales replican el principio del EMDR (Eye Movement Desensitization and Reprocessing), integrando ambos hemisferios. La fijación visual sostenida activa masivamente la corteza prefrontal dorsolateral — el centro de control ejecutivo y toma de decisiones.",
+9:"El exhale explosivo resetea el tono vagal por cambio brusco de presión. La activación del core al 30-40% genera sensación de fuerza emocional porque los propioceptores abdominales están conectados al sistema límbico. La alineación vertebral activa la cadena propioceptiva completa.",
+10:"Los micro-pulsos respiratorios activan el diafragma de forma no habitual, creando nuevas vías neuromotoras. El barrido corporal (body scan) activa la ínsula, que es el centro cerebral de la interocepción — la capacidad de sentir el interior del cuerpo. La pulsación rítmica induce estados similares al flow.",
+11:"El exhale con fuerza hacia abajo conecta el diafragma con el suelo pélvico, creando un eje de estabilidad central. La relajación progresiva descendente (hombros→cara) sigue el patrón natural de descarga parasimpática. La expansión intencional genera ondas alfa (8-12Hz).",
+12:"La respiración vertical usa imaginería guiada para conectar el eje pelvis-coronilla, integrando el sistema nervioso central. El cruce contralateral (mano derecha→pecho izquierdo) fuerza la comunicación interhemisférica a través del cuerpo calloso.",
+13:"OMEGA combina 6 modalidades neurocientíficas en secuencia: regulación respiratoria, coherencia cardíaca, integración bilateral (EMDR), expansión propioceptiva, sincronización somatosensorial, y metacognición. Es el protocolo más completo del sistema.",
+14:"OMNIA activa los 3 sistemas sensoriales simultáneamente (visual, auditivo, táctil) para generar una sincronización neural masiva. El eje dorado es una técnica de alineación propioceptiva usada en artes marciales internas. La expansión final busca el estado de 'conciencia testigo' descrito en la neurociencia contemplativa."
+};
+const AM={streak7:"7 días de racha",streak30:"30 días consecutivos",coherencia90:"Coherencia >90%",sessions50:"50 sesiones",sessions100:"100 sesiones — Centurión",mood5:"Sesión en rendimiento óptimo",allProtos:"Probó los 14 protocolos",time60:"60 minutos totales invertidos",earlyBird:"Sesión antes de las 7am",nightOwl:"Sesión después de las 10pm"};
+const STATUS_MSGS=[{min:0,max:40,label:"Calibrando",color:"#94A3B8"},{min:40,max:65,label:"Activación",color:"#6366F1"},{min:65,max:82,label:"Rendimiento",color:"#0D9488"},{min:82,max:100,label:"Óptimo",color:"#059669"}];
+const MID_MSGS=["Vas bien. Tu cuerpo siente el cambio.","El ruido mental baja. Sigue.","Estás construyendo claridad.","Tu sistema se recalibra.","Este momento es tuyo."];
+const POST_MSGS=["Dos minutos bien invertidos. Tu cerebro lo nota.","Sesión potente. El efecto dura 60-90 minutos.","Hiciste algo que el 95% no hace: pausar para rendir.","Tu sistema acaba de recalibrarse.","Consistencia mata talento. Hoy sumaste."];
+const GREETINGS=["Tu sistema está listo.","Cada sesión cuenta. Hoy puede ser la mejor.","Tu cerebro recuerda el hábito."];
+
 export { MOODS, ENERGY_LEVELS, WORK_TAGS, INTENTS, DS, SOUNDSCAPES, DAILY_PHRASES, PROG_7, SCIENCE_DEEP, AM, STATUS_MSGS, MID_MSGS, POST_MSGS, GREETINGS };
 export function getStatus(v){for(const s of STATUS_MSGS)if(v>=s.min&&v<s.max)return s;return STATUS_MSGS[3];}
 export function getWeekNum(){const d=new Date();const j=new Date(d.getFullYear(),0,1);return Math.ceil(((d-j)/864e5+j.getDay()+1)/7);}
-export const STATUS_MSGS = { 
-  idle: "Listo",
-  ready: "Preparado",
-  running: "En proceso",
-  breathing: "Respira",
-  focus: "Enfocado",
-  calm: "Calma",
-  complete: "Completado",
-}
