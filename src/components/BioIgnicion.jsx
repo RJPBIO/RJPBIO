@@ -1133,7 +1133,6 @@ export default function BioIgnicion(){
     </div>
     <button onClick={()=>{if(typeof window!=="undefined"&&window.confirm("¿Reiniciar todos los datos?")){setSt({...DS,weekNum:getWeekNum()});}}} style={{width:"100%",padding:"11px",borderRadius:12,border:"1px solid #FEE2E2",background:isDark?"#1A0A0A":"#FFF5F5",color:"#DC2626",fontSize:10,fontWeight:700,cursor:"pointer"}}>Reiniciar Datos</button>
   </div>)}
-  </div>
 
   <MetricsBar coherencia={st.coherencia} resiliencia={st.resiliencia} capacidad={st.capacidad} rD={rD} bd={bd} isDark={isDark} bg={bg} />
   <TabBar tab={tab} switchTab={switchTab} isDark={isDark} bg={bg} bd={bd} t1={t1} t3={t3} ac={ac} theme={theme} />
