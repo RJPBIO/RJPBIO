@@ -18,6 +18,7 @@ import { CoreNucleus } from "./CoreNucleus";
 import { NeuralStatus } from "./NeuralStatus";
 import { NeuralBackground } from "./NeuralBackground";
 import { BreathSync } from "./BreathSync";
+import { SessionHUD } from "./SessionHUD";
 import { StateBar } from "./StateBarNew";
 import { RingGauge, MiniRing } from "./RingGauge";
 import { P, CATS, LVL, gL, lvPct, nxtLv, DN, DIF_LABELS } from "@/lib/protocols";
@@ -537,10 +538,20 @@ export default function BioIgnicion(){
       sec={sec} ts={ts} pi={pi} pr={pr} bS={bS} bL={bL} bCnt={bCnt} pct={pct}
       ac={ac} isDark={isDark} t1={t1} t2={t2} t3={t3} cd={cd} bd={bd} theme={theme}
       brain={brain} tp={tp} isActive={isActive} isBr={isBr}
-      onTap={timerTap} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)}
+      onTap={timerTap} onTouchStart={()=>{setTp(true);if(isActive)setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1}));}} onTouchEnd={()=>setTp(false)}
       st={st} totalDur={totalDur}
     />
-    {isActive&&<div style={{marginTop:14,height:26,borderRadius:13,overflow:"hidden",background:isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)",backdropFilter:"blur(10px)",border:"1px solid "+(isDark?"rgba(255,255,255,.06)":"rgba(0,0,0,.06)"),position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:0,left:0,animation:"wf 4s linear infinite",opacity:.2}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}25,${ac}10)`,transition:"width .95s linear",borderRadius:10}}/></div>}
+    {/* ═══ SESSION HUD — Real-time protocol instructions during active session ═══ */}
+    {(isActive || ts==="paused") && (
+      <SessionHUD
+        pr={pr} pi={pi} sec={sec} totalDur={totalDur} durMult={durMult}
+        ac={ac} isDark={isDark} t1={t1} t2={t2} t3={t3} bd={bd}
+        theme={theme} isBr={isBr} bL={bL} bCnt={bCnt}
+        sessionData={sessionData}
+      />
+    )}
+    {/* Waveform progress bar during active session */}
+    {isActive&&<div style={{margin:"8px 20px 0",height:24,borderRadius:12,overflow:"hidden",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.025)",border:"1px solid "+(isDark?"rgba(255,255,255,.04)":"rgba(0,0,0,.04)"),position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:2,left:0,animation:"wf 4s linear infinite",opacity:.15}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}20,${ac}08)`,transition:"width .95s linear",borderRadius:10}}/></div>}
     <NeuralStatus nSt={nSt} brain={brain} theme={theme} ac={ac} isDark={isDark} t1={t1} t2={t2} t3={t3} ts={ts} />
     {/* ═══ DAILY IGNICIÓN ═══ */}
     {ts==="idle"&&<button onClick={()=>sp(brain.bestProto||daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:16,borderRadius:18,border:`1.5px solid ${(brain.bestProto||daily.proto).cl}20`,background:`linear-gradient(135deg,${(brain.bestProto||daily.proto).cl}06,${(brain.bestProto||daily.proto).cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",animation:"fi .5s",position:"relative",overflow:"hidden"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
