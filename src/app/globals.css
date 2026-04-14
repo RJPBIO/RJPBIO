@@ -45,5 +45,14 @@ input, textarea { font-family: inherit; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
+/* ═══ NEURAL ORB ENHANCEMENTS ═══ */
+@keyframes orbFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes neuralGlow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.15); } }
+@keyframes ringExpand { 0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.4; } 100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; } }
+
+/* ═══ COACH & INSIGHT CARDS ═══ */
+@keyframes insightSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes momentumPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+
 /* ═══ SELECTION ═══ */
 ::selection { background: rgba(5, 150, 105, 0.15); }
