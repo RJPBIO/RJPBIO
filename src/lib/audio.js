@@ -239,25 +239,8 @@ export function stopVoice() {
   try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
 }
 
-// ─── Persistence ──────────────────────────────────────────
-export function ldS(DS) {
-  try {
-    if (typeof window !== "undefined") {
-      const r = localStorage.getItem("bio-g2");
-      if (r) {
-        const parsed = JSON.parse(r);
-        const data = { ...DS, ...parsed };
-        if (!data._v || data._v < 3) { data._v = 3; data._migrated = Date.now(); }
-        return data;
-      }
-    }
-  } catch (e) { console.error("Load error:", e); }
-  return { ...DS, _v: 3, _created: Date.now() };
-}
-
-export function svS(d) {
-  try { if (typeof window !== "undefined") { localStorage.setItem("bio-g2", JSON.stringify(d)); } } catch (e) { console.error("Save error:", e); }
-}
+// ─── Persistence (DEPRECATED: use Zustand store) ─────────
+// ldS and svS removed in v5 unification — all state flows through useStore
 
 export function exportData(st) {
   try {
