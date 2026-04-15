@@ -44,10 +44,10 @@ export const INTENTS = [
 export const DIF_LABELS = ["Básico", "Intermedio", "Avanzado"];
 
 export const SOUNDSCAPES = [
-  { id: "off", n: "Silencio" },
-  { id: "wind", n: "Viento suave" },
-  { id: "drone", n: "Drone tonal" },
-  { id: "bnarl", n: "Binaural" },
+  { id: "off", n: "Silencio", cost: 0 },
+  { id: "wind", n: "Viento suave", cost: 25 },
+  { id: "drone", n: "Drone tonal", cost: 50 },
+  { id: "bnarl", n: "Binaural", cost: 75 },
 ];
 
 export const AM = {
@@ -157,6 +157,7 @@ export const DS = {
   prevWeekData: [0, 0, 0, 0, 0, 0, 0],
   progDay: 0,
   soundscape: "off",
+  unlockedSS: ["off"],
   neuralBaseline: null,
   onboardingComplete: false,
   sessionGoal: 2,
