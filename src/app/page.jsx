@@ -32,7 +32,7 @@ import {
   startSoundscape, stopSoundscape, startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
-  ldS, svS, exportData,
+  exportData,
 } from "../lib/audio";
 import { useStore } from "../store/useStore";
 import Icon from "../components/Icon";
@@ -122,7 +122,7 @@ export default function BioIgnicion(){
   const[showMore,setShowMore]=useState(false);
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
-  const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);svS(nv);},[st]);
+  const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);store.update(nv);},[st]);
 
   // ═══ Service Worker Registration ═══
   useEffect(()=>{if(typeof navigator!=="undefined"&&"serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}},[]);
@@ -137,14 +137,14 @@ export default function BioIgnicion(){
   // ═══ VOICE ═══
   useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
 
-  // ═══ LOAD STATE ═══
-  useEffect(()=>{setMt(true);const l=ldS(DS);const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)svS(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);
+  // ═══ LOAD STATE (via Zustand) ═══
+  useEffect(()=>{setMt(true);store.init();const l=useStore.getState();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)store.update(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);
     // Auto-select best protocol via adaptive engine
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
   },[]);
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){pa();}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
-  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>svS(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")svS(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
+  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
   const[isDark,setIsDark]=useState(false);
   useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
@@ -288,41 +288,32 @@ export default function BioIgnicion(){
   {showProtoDetail&&<ProtocolDetail protocol={pr} st={st} isDark={isDark} durMult={durMult} onClose={()=>setShowProtoDetail(false)} onStart={(p)=>{setShowProtoDetail(false);sp(p);go();}}/>}
   </AnimatePresence>
 
-  {/* ═══ POST: BREATHE ═══ */}
+  {/* ═══ POST: BREATHE + CHECK-IN (combined) ═══ */}
   <AnimatePresence>
-  {postStep==="breathe"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:220,background:bg+"F8",backdropFilter:"blur(30px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
-    {/* Breathing orb celebration */}
-    <motion.div animate={{scale:[1,1.12,1],opacity:[.3,.6,.3]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}} style={{width:100,height:100,borderRadius:"50%",background:`radial-gradient(circle,${ac}12,${ac}06,transparent)`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-      <motion.div animate={{scale:[1,1.08,1]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut",delay:.5}} style={{width:60,height:60,borderRadius:"50%",background:`radial-gradient(circle,${ac}18,transparent)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <motion.div animate={{opacity:[.3,.8,.3],boxShadow:[`0 0 10px ${ac}20`,`0 0 30px ${ac}40`,`0 0 10px ${ac}20`]}} transition={{duration:2.5,repeat:Infinity}} style={{width:14,height:14,borderRadius:"50%",background:ac}}/>
+  {postStep==="breathe"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F5`,backdropFilter:"blur(30px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
+    <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"24px 20px",maxWidth:400,width:"100%"}}>
+    {/* Breathing orb — compact */}
+    <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
+      <motion.div animate={{scale:[1,1.1,1],opacity:[.4,.7,.4]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}} style={{width:56,height:56,borderRadius:"50%",background:`radial-gradient(circle,${ac}15,${ac}06,transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <motion.div animate={{opacity:[.3,.8,.3]}} transition={{duration:2.5,repeat:Infinity}} style={{width:12,height:12,borderRadius:"50%",background:ac}}/>
       </motion.div>
-      {/* Orbiting dots */}
-      {[0,1,2].map(i=><motion.div key={i} animate={{rotate:360}} transition={{duration:6+i*2,repeat:Infinity,ease:"linear"}} style={{position:"absolute",inset:0}}><div style={{position:"absolute",top:i*6,left:"50%",width:3,height:3,borderRadius:"50%",background:ac,opacity:.3+i*.1}}/></motion.div>)}
-    </motion.div>
-    <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:.3}} style={{textAlign:"center",marginTop:24}}>
-      <div style={{fontSize:16,fontWeight:700,color:t1,lineHeight:1.6}}>Quédate un momento con esta sensación.</div>
-      <div style={{fontSize:12,color:t3,marginTop:8,lineHeight:1.5}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)} segundos.</div>
-    </motion.div>
-    <motion.button initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.5}} whileTap={{scale:.96}} onClick={()=>setPostStep("checkin")} style={{marginTop:28,padding:"13px 36px",borderRadius:50,background:"none",border:`1.5px solid ${ac}30`,color:ac,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1}}>Continuar</motion.button>
-  </motion.div>}
-  </AnimatePresence>
-
-  {/* ═══ POST: CHECK-IN ═══ */}
-  <AnimatePresence>
-  {postStep==="checkin"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F5`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-    <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"28px 22px",maxWidth:400,width:"100%"}}>
-    <div style={{textAlign:"center",marginBottom:14}}><div style={{fontSize:17,fontWeight:800,color:t1}}>¿Cómo te sientes?</div><div style={{fontSize:11,color:t3,marginTop:4}}>1 toque. Tu progreso depende de esto.</div></div>
-    <div style={{display:"flex",justifyContent:"center",gap:4,marginBottom:18}}>{MOODS.map(m=>(
-      <motion.button key={m.id} whileTap={{scale:.93}} onClick={()=>{setCheckMood(m.value);H("tap");}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,padding:"8px 4px",borderRadius:13,border:checkMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:checkMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s",minWidth:56,flex:1}}>
-        <Icon name={m.icon} size={20} color={checkMood===m.value?m.color:t3}/>
-        <span style={{fontSize:10,fontWeight:700,color:checkMood===m.value?m.color:t3,textAlign:"center",lineHeight:1.2}}>{m.label}</span>
-      </motion.button>))}</div>
-    <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Energía</div><div style={{display:"flex",gap:7}}>{ENERGY_LEVELS.map(e=>(
-      <motion.button key={e.id} whileTap={{scale:.95}} onClick={()=>{setCheckEnergy(e.v);H("tap");}} style={{flex:1,padding:"9px",borderRadius:11,border:checkEnergy===e.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:checkEnergy===e.v?ac+"08":cd,color:checkEnergy===e.v?ac:t3,fontSize:11,fontWeight:700,cursor:"pointer"}}>{e.label}</motion.button>))}</div></div>
-    <div style={{marginBottom:18}}><div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>Contexto</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{WORK_TAGS.map(tg=>(
-      <button key={tg} onClick={()=>{setCheckTag(checkTag===tg?"":tg);H("tap");}} style={{padding:"5px 11px",borderRadius:18,border:checkTag===tg?`1.5px solid ${ac}`:`1px solid ${bd}`,background:checkTag===tg?ac+"08":cd,color:checkTag===tg?ac:t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{tg}</button>))}</div></div>
-    <motion.button whileTap={{scale:.96}} onClick={submitCheckin} style={{width:"100%",padding:"14px",borderRadius:50,background:checkMood>0?ac:bd,border:"none",color:checkMood>0?"#fff":t3,fontSize:12,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>{checkMood>0?"CONTINUAR":"SELECCIONA ESTADO"}</motion.button>
-    <button onClick={()=>{setPostStep("summary");}} style={{width:"100%",padding:"8px",marginTop:6,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir</button>
+      <div><div style={{fontSize:15,fontWeight:700,color:t1,lineHeight:1.5}}>Sesión completada</div><div style={{fontSize:11,color:t3,lineHeight:1.4}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)}s</div></div>
+    </div>
+    {/* Mood check-in inline */}
+    <div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>¿Cómo te sientes ahora?</div>
+    <div style={{display:"flex",justifyContent:"center",gap:4}}>{MOODS.map(m=>(
+      <motion.button key={m.id} whileTap={{scale:.93}} onClick={()=>{setCheckMood(m.value);H("tap");}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"7px 3px",borderRadius:12,border:checkMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:checkMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s",flex:1}}>
+        <Icon name={m.icon} size={18} color={checkMood===m.value?m.color:t3}/>
+        <span style={{fontSize:9,fontWeight:700,color:checkMood===m.value?m.color:t3,textAlign:"center",lineHeight:1.1}}>{m.label}</span>
+      </motion.button>))}</div></div>
+    {/* Energy — compact row */}
+    <div style={{display:"flex",gap:6,marginBottom:14}}>{ENERGY_LEVELS.map(e=>(
+      <motion.button key={e.id} whileTap={{scale:.95}} onClick={()=>{setCheckEnergy(e.v);H("tap");}} style={{flex:1,padding:"8px",borderRadius:10,border:checkEnergy===e.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:checkEnergy===e.v?ac+"08":cd,color:checkEnergy===e.v?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{e.label}</motion.button>))}</div>
+    {/* Context tags — compact */}
+    <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:16}}>{WORK_TAGS.map(tg=>(
+      <button key={tg} onClick={()=>{setCheckTag(checkTag===tg?"":tg);H("tap");}} style={{padding:"4px 10px",borderRadius:16,border:checkTag===tg?`1.5px solid ${ac}`:`1px solid ${bd}`,background:checkTag===tg?ac+"08":cd,color:checkTag===tg?ac:t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{tg}</button>))}</div>
+    <motion.button whileTap={{scale:.96}} onClick={submitCheckin} style={{width:"100%",padding:"13px",borderRadius:50,background:checkMood>0?ac:bd,border:"none",color:checkMood>0?"#fff":t3,fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>{checkMood>0?"CONTINUAR":"SELECCIONA ESTADO"}</motion.button>
+    <button onClick={()=>{setPostStep("summary");}} style={{width:"100%",padding:"7px",marginTop:4,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir</button>
   </motion.div></motion.div>}
   </AnimatePresence>
 
@@ -394,6 +385,18 @@ export default function BioIgnicion(){
         <div onClick={()=>{if(s.k==="_voice"){setVoiceOn(!voiceOn);}else setSt({...st,[s.k]:!st[s.k]});}} style={{width:42,height:24,borderRadius:12,background:s.k==="_voice"?(voiceOn?ac:bd):(st[s.k]?ac:bd),cursor:"pointer",position:"relative",transition:"background .3s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:s.k==="_voice"?(voiceOn?20:2):(st[s.k]?20:2),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
       </div>))}
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:8}}><Icon name="palette" size={15} color={t3}/><div style={{fontSize:12,fontWeight:700,color:t1}}>Tema</div></div><div style={{display:"flex",gap:4}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:"5px 11px",borderRadius:7,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?ac+"10":cd,color:(st.themeMode||"auto")===m?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
+    {/* Soundscape Marketplace */}
+    <div style={{padding:"13px 0",borderBottom:`1px solid ${bd}`}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><Icon name="breath" size={15} color={t3}/><div><div style={{fontSize:12,fontWeight:700,color:t1}}>Paisaje sonoro</div><div style={{fontSize:10,color:t3}}>Desbloquea con V-Cores</div></div></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        {SOUNDSCAPES.map(s=>{const unlocked=(st.unlockedSS||["off"]).includes(s.id);const active=(st.soundscape||"off")===s.id;return<motion.button key={s.id} whileTap={{scale:.95}} onClick={()=>{if(unlocked){setSt({...st,soundscape:s.id});H("tap");}else if((st.vCores||0)>=s.cost){setSt({...st,soundscape:s.id,unlockedSS:[...(st.unlockedSS||["off"]),s.id],vCores:(st.vCores||0)-s.cost});H("ok");}}} style={{padding:"10px 8px",borderRadius:12,border:active?`2px solid ${ac}`:unlocked?`1.5px solid ${bd}`:`1.5px dashed ${bd}`,background:active?ac+"08":cd,cursor:unlocked||(st.vCores||0)>=s.cost?"pointer":"not-allowed",opacity:unlocked||(st.vCores||0)>=s.cost?1:.5,textAlign:"center"}}>
+          <div style={{fontSize:11,fontWeight:700,color:active?ac:unlocked?t1:t3}}>{s.n}</div>
+          {!unlocked&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><Icon name="sparkle" size={9} color={ac}/>{s.cost}</div>}
+          {unlocked&&active&&<div style={{fontSize:9,fontWeight:700,color:ac,marginTop:2}}>ACTIVO</div>}
+          {unlocked&&!active&&<div style={{fontSize:9,color:t3,marginTop:2}}>desbloqueado</div>}
+        </motion.button>;})}
+      </div>
+    </div>
     <div style={{display:"flex",gap:6,marginTop:14}}>
       <motion.button whileTap={{scale:.96}} onClick={()=>exportData(st)} style={{flex:1,padding:"13px",borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
         <Icon name="export" size={14} color={t2}/><span style={{fontSize:11,fontWeight:700,color:t2}}>JSON</span>
