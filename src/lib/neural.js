@@ -772,3 +772,150 @@ export function calcSessionQualityTrend(hist) {
       "La calidad baja. ¿Estás siguiendo las instrucciones con atención?",
   };
 }
+
+// ─── Streak Chain Analysis ──────────────────────────────
+// Analiza la cadena de rachas históricas para detectar patrones
+// de abandono y predecir probabilidad de mantener racha actual
+export function analyzeStreakChain(st) {
+  const hist = st.history || [];
+  if (hist.length < 7) return null;
+
+  // Reconstruir rachas históricas desde timestamps
+  const dates = [...new Set(hist.map((h) => new Date(h.ts).toDateString()))].sort(
+    (a, b) => new Date(a) - new Date(b)
+  );
+
+  const streaks = [];
+  let currentStreak = 1;
+
+  for (let i = 1; i < dates.length; i++) {
+    const diff = (new Date(dates[i]) - new Date(dates[i - 1])) / 86400000;
+    if (diff <= 1.5) {
+      currentStreak++;
+    } else {
+      streaks.push(currentStreak);
+      currentStreak = 1;
+    }
+  }
+  streaks.push(currentStreak);
+
+  const maxStreak = Math.max(...streaks);
+  const avgStreak = +(streaks.reduce((a, b) => a + b, 0) / streaks.length).toFixed(1);
+  const breakPoints = streaks.filter((s) => s > 2).map((s) => s);
+  const avgBreakPoint = breakPoints.length
+    ? Math.round(breakPoints.reduce((a, b) => a + b, 0) / breakPoints.length)
+    : 7;
+
+  // Predict if current streak is at risk
+  const currentStreakVal = st.streak || 0;
+  const atRisk = currentStreakVal >= avgBreakPoint * 0.8;
+
+  return {
+    maxStreak,
+    avgStreak,
+    totalStreaks: streaks.length,
+    avgBreakPoint,
+    atRisk,
+    currentStreak: currentStreakVal,
+    prediction:
+      currentStreakVal >= maxStreak
+        ? "En tu mejor racha histórica. Cada día es un récord."
+        : atRisk
+        ? `Históricamente pierdes la racha alrededor del día ${avgBreakPoint}. Estás cerca — enfócate hoy.`
+        : `Racha estable. Tu récord es ${maxStreak} días.`,
+    streakHistory: streaks.slice(-10),
+  };
+}
+
+// ─── Session Timing Optimizer ───────────────────────────
+// Sugiere la hora óptima para la próxima sesión basándose en
+// patrones de efectividad personal por hora del día
+export function suggestOptimalTime(st) {
+  const hist = st.history || [];
+  if (hist.length < 10) return null;
+
+  const hourBuckets = {};
+  const ml = st.moodLog || [];
+
+  hist.forEach((h) => {
+    const hour = new Date(h.ts).getHours();
+    const bucket = Math.floor(hour / 2) * 2; // 2-hour windows
+    if (!hourBuckets[bucket]) hourBuckets[bucket] = { sessions: 0, totalC: 0, avgQuality: 0 };
+    hourBuckets[bucket].sessions++;
+    hourBuckets[bucket].totalC += h.c || 50;
+  });
+
+  // Enrich with mood deltas per time window
+  ml.filter((m) => m.pre > 0).forEach((m) => {
+    const hour = new Date(m.ts).getHours();
+    const bucket = Math.floor(hour / 2) * 2;
+    if (hourBuckets[bucket]) {
+      if (!hourBuckets[bucket].deltas) hourBuckets[bucket].deltas = [];
+      hourBuckets[bucket].deltas.push(m.mood - m.pre);
+    }
+  });
+
+  // Score each bucket
+  const scored = Object.entries(hourBuckets)
+    .map(([bucket, data]) => {
+      const avgC = data.totalC / data.sessions;
+      const avgDelta = data.deltas?.length
+        ? data.deltas.reduce((a, b) => a + b, 0) / data.deltas.length
+        : 0;
+      return {
+        hour: parseInt(bucket),
+        sessions: data.sessions,
+        avgCoherence: Math.round(avgC),
+        avgDelta: +avgDelta.toFixed(2),
+        score: avgC * 0.4 + avgDelta * 20 + data.sessions * 2,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return {
+    best: scored[0] || null,
+    second: scored[1] || null,
+    worst: scored[scored.length - 1] || null,
+    recommendation: scored[0]
+      ? `Tu ventana óptima es ${scored[0].hour}:00–${scored[0].hour + 2}:00 (coherencia: ${scored[0].avgCoherence}%, delta: +${scored[0].avgDelta})`
+      : "Acumulando datos para optimizar tu horario",
+  };
+}
+
+// ─── Calibration Baseline Scoring ───────────────────────
+// Interpreta resultados de calibración y genera recomendaciones
+export function interpretCalibration(baseline) {
+  if (!baseline) return null;
+
+  const strengths = [];
+  const areas = [];
+
+  if (baseline.rtScore >= 70) strengths.push("Velocidad de procesamiento alta");
+  else if (baseline.rtScore < 40) areas.push("Velocidad de reacción — protocolos de enfoque ayudarán");
+
+  if (baseline.bhScore >= 60) strengths.push("Buena capacidad respiratoria");
+  else if (baseline.bhScore < 30) areas.push("Capacidad respiratoria — practica retención progresiva");
+
+  if (baseline.focusAccuracy >= 70) strengths.push("Foco atencional fuerte");
+  else if (baseline.focusAccuracy < 40) areas.push("Estabilidad atencional — entrena con Lightning Focus");
+
+  if (baseline.stressScore >= 60) strengths.push("Estado emocional equilibrado");
+  else if (baseline.stressScore < 40) areas.push("Regulación emocional — prioriza protocolos de calma");
+
+  return {
+    strengths,
+    areas,
+    primaryProtocol:
+      baseline.recommendations?.primaryIntent === "calma"
+        ? "Reinicio Parasimpático"
+        : baseline.recommendations?.primaryIntent === "enfoque"
+        ? "Activación Cognitiva"
+        : "Pulse Shift",
+    summary:
+      strengths.length >= 3
+        ? "Tu baseline indica alta capacidad cognitiva. Enfócate en protocolos avanzados."
+        : strengths.length >= 2
+        ? "Buen punto de partida. Los protocolos intermedios maximizarán tu progreso."
+        : "Excelente momento para empezar. Los protocolos básicos construirán tu fundación neural.",
+  };
+}
