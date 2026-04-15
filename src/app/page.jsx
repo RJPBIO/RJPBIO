@@ -14,80 +14,34 @@ import dynamic from "next/dynamic";
 import { P } from "../lib/protocols";
 import { SCIENCE_DEEP } from "../lib/protocols";
 import {
-  CATS, LVL, DN, MOODS, ENERGY_LEVELS, WORK_TAGS, INTENTS, DIF_LABELS,
-  SOUNDSCAPES, AM, MID_MSGS, POST_MSGS, GREETINGS, DAILY_PHRASES, PROG_7, DS, STATUS_MSGS,
+  CATS, MOODS, INTENTS, DIF_LABELS,
+  MID_MSGS, POST_MSGS, GREETINGS, PROG_7, DS,
 } from "../lib/constants";
 import {
-  gL, lvPct, nxtLv, getStatus, getWeekNum, getDailyIgn, getCircadian,
+  gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
   calcBioQuality, calcBurnoutIndex, calcBioSignal, calcProtoSensitivity,
-  calcNeuralFingerprint, calcCognitiveEntropy, estimateCoherence,
-  detectGamingPattern, calcRecoveryIndex, genIns, smartSuggest, getRecords,
-  calcNeuralVariability, predictSessionImpact, calcProtocolCorrelations,
-  adaptiveProtocolEngine, calcNeuralMomentum, estimateCognitiveLoad,
-  analyzeNeuralRhythm, generateCoachingInsights, calcProtocolDiversity,
-  analyzeStreakChain, suggestOptimalTime, interpretCalibration,
+  detectGamingPattern, predictSessionImpact,
+  adaptiveProtocolEngine, estimateCognitiveLoad,
 } from "../lib/neural";
 import {
   hap, hapticPhase, hapticBreath, startAmbient, stopAmbient,
   startSoundscape, stopSoundscape, startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
-  exportData,
 } from "../lib/audio";
 import { useStore } from "../store/useStore";
 import Icon from "../components/Icon";
 
 // Dynamic imports (code-split)
-const NeuralRadar = dynamic(() => import("../components/NeuralRadar"), { ssr: false });
-const NeuralCoach = dynamic(() => import("../components/NeuralCoach"), { ssr: false });
 const BreathOrb = dynamic(() => import("../components/BreathOrb"), { ssr: false });
 const NeuralCalibration = dynamic(() => import("../components/NeuralCalibration"), { ssr: false });
 const ProtocolDetail = dynamic(() => import("../components/ProtocolDetail"), { ssr: false });
-const WeeklyReport = dynamic(() => import("../components/WeeklyReport"), { ssr: false });
-const CorrelationMatrix = dynamic(() => import("../components/CorrelationMatrix"), { ssr: false });
 const StreakShield = dynamic(() => import("../components/StreakShield"), { ssr: false });
-const TemporalCharts = dynamic(() => import("../components/TemporalCharts").then(mod => ({
-  default: ({ type, ...props }) => {
-    if (type === "mood") return <mod.MoodTrendChart {...props} />;
-    if (type === "energy") return <mod.EnergyFlowChart {...props} />;
-    if (type === "heatmap") return <mod.ActivityHeatmap {...props} />;
-    if (type === "weekly") return <mod.WeeklyChart {...props} />;
-    if (type === "sparkline") return <mod.CoherenceSparkline {...props} />;
-    return null;
-  }
-})), { ssr: false });
-
-/* ═══ ANIMATED NUMBER ═══ */
-function AN({value,sfx="",color="#0F172A",sz=32}){const[d,sD]=useState(0);const rf=useRef(null);useEffect(()=>{let s=d;const e=value;const t0=performance.now();function step(n){const p=Math.min((n-t0)/700,1);sD(Math.round(s+(1-Math.pow(1-p,3))*(e-s)));if(p<1)rf.current=requestAnimationFrame(step);}rf.current=requestAnimationFrame(step);return()=>{if(rf.current)cancelAnimationFrame(rf.current);};},[value]);return<span style={{fontSize:sz,fontWeight:800,color,fontFamily:"'Manrope',sans-serif",letterSpacing:"-1px"}}>{d}{sfx}</span>;}
-
-/* ═══ PHASE VISUAL (fallback for non-breath phases) ═══ */
-function PhaseVisual({type,color,scale=1,active}){
-  if(!active)return null;
-  const o=.12;const s={display:"block",margin:"0 auto 4px"};
-  if(type==="breath")return(<svg width="90" height="76" viewBox="0 0 90 76" style={s}><g transform={`translate(45,38) scale(${scale})`} style={{transition:"transform 1.2s cubic-bezier(.4,0,.2,1)",transformOrigin:"center"}}><path d="M-4,-24 C-4,-24 -24,-15 -26,3 C-28,20 -17,28 -9,28 C-3,28 -4,22 -4,11 Z" fill={color} opacity={o} stroke={color} strokeWidth=".7"/><path d="M4,-24 C4,-24 24,-15 26,3 C28,20 17,28 9,28 C3,28 4,22 4,11 Z" fill={color} opacity={o} stroke={color} strokeWidth=".7"/><line x1="0" y1="-30" x2="0" y2="-18" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity=".35"/>{[0,1,2,3,4].map(i=><circle key={i} cx={(i-2)*3} cy={-30+((scale-1)*(35+i*5))} r={1+i*.2} fill={color} opacity={scale>1.08?(.2+i*.12):.02} style={{transition:`all ${1+i*.15}s ease`}}/>)}</g></svg>);
-  if(type==="body")return(<svg width="90" height="76" viewBox="0 0 90 76" style={s}><g style={{animation:"heartBeat 1.1s ease infinite",transformOrigin:"45px 35px"}}><path d="M45,64 C45,64 14,44 14,26 C14,15 22,9 31,9 C38,9 42,13 45,18 C48,13 52,9 59,9 C67,9 75,15 75,26 C75,44 45,64 45,64Z" fill={color} opacity={o} stroke={color} strokeWidth=".8"/><polyline points="20,36 30,36 34,24 38,46 42,30 46,38 50,32 54,36 58,36 64,36 70,36" fill="none" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity=".3" style={{animation:"ecgDraw 1.1s linear infinite"}}/></g></svg>);
-  if(type==="mind")return(<svg width="90" height="76" viewBox="0 0 90 76" style={s}><path d="M45,8 C31,8 20,15 18,27 C16,37 20,46 25,50 C29,54 31,58 31,63 L59,63 C59,58 61,54 65,50 C69,46 73,37 71,27 C69,15 58,8 45,8Z" fill={color} opacity={.05} stroke={color} strokeWidth=".7"/><circle cx="33" cy="30" r="7" fill={color} opacity=".06" style={{animation:"brainPulse 2.5s ease infinite"}}/><circle cx="57" cy="28" r="6" fill={color} opacity=".05" style={{animation:"brainPulse 2.5s ease infinite .7s"}}/><circle cx="45" cy="42" r="8" fill={color} opacity=".07" style={{animation:"brainPulse 3s ease infinite 1.4s"}}/>{[[35,24],[52,22],[40,48],[58,40],[28,42],[48,32]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="1.2" fill={color} opacity=".4" style={{animation:`neuralSpark ${1.2+i*.3}s ease infinite ${i*.25}s`}}/>)}</svg>);
-  if(type==="focus")return(<svg width="90" height="76" viewBox="0 0 90 76" style={s}><circle cx="45" cy="38" r="28" fill="none" stroke={color} strokeWidth=".6" opacity=".1" strokeDasharray="5 3" style={{animation:"focusSpin 14s linear infinite",transformOrigin:"45px 38px"}}/><circle cx="45" cy="38" r="12" fill="none" stroke={color} strokeWidth=".8" opacity=".12" style={{animation:"focusLock 2.5s ease infinite"}}/><circle cx="45" cy="38" r="5" fill={color} opacity=".06" style={{animation:"focusLock 2s ease infinite .2s"}}/><line x1="45" y1="6" x2="45" y2="24" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/><line x1="45" y1="52" x2="45" y2="70" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/><line x1="13" y1="38" x2="31" y2="38" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/><line x1="59" y1="38" x2="77" y2="38" stroke={color} strokeWidth=".8" opacity=".2" strokeLinecap="round"/><circle cx="45" cy="38" r="2" fill={color} opacity=".5"/></svg>);
-  return null;
-}
-
-/* ═══ NOM-035 EXPORT ═══ */
-function exportNOM035(st){try{
-  const ml=st.moodLog||[];const h=st.history||[];const now=new Date();
-  const totalMin=Math.round((st.totalTime||0)/60);
-  const avgMd=ml.length?+(ml.reduce((a,m)=>a+m.mood,0)/ml.length).toFixed(1):0;
-  const withPre=ml.filter(m=>m.pre>0);
-  const delta=withPre.length?+(withPre.reduce((a,m)=>a+(m.mood-m.pre),0)/withPre.length).toFixed(2):0;
-  const riskCount=ml.filter(m=>m.mood<=2).length;
-  const riskPct=ml.length?Math.round((riskCount/ml.length)*100):0;
-  const protos={};h.forEach(x=>{protos[x.p]=(protos[x.p]||0)+1;});
-  const topProtos=Object.entries(protos).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const uniqueDays=new Set(h.map(x=>new Date(x.ts).toDateString())).size;
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe NOM-035</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,sans-serif;color:#0F172A;background:#fff;padding:40px;max-width:800px;margin:0 auto;font-size:14px}.header{border-bottom:3px solid #059669;padding-bottom:20px;margin-bottom:30px}.logo{font-size:24px;font-weight:800;color:#059669}h2{font-size:16px;margin:28px 0 14px;border-bottom:1px solid #E2E8F0;padding-bottom:6px}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}.card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px}.card .v{font-size:22px;font-weight:800}.card .l{font-size:10px;color:#64748B;margin-top:2px;text-transform:uppercase}.imp{font-size:28px;font-weight:800;color:${delta>=0?"#059669":"#DC2626"};text-align:center;padding:20px;background:${delta>=0?"#F0FDF4":"#FEF2F2"};border-radius:12px;margin-bottom:20px}.footer{margin-top:40px;border-top:2px solid #E2E8F0;padding-top:16px;font-size:10px;color:#94A3B8;text-align:center}</style></head><body><div class="header"><div class="logo">BIO-IGNICIÓN</div><div style="font-size:11px;color:#64748B;margin-top:4px">Informe de Bienestar Laboral — NOM-035-STPS-2018</div><div style="font-size:11px;color:#475569;margin-top:8px">Fecha: ${now.toLocaleDateString("es-MX",{year:"numeric",month:"long",day:"numeric"})}</div></div><h2>Resumen</h2><div class="grid"><div class="card"><div class="v">${st.totalSessions}</div><div class="l">Sesiones</div></div><div class="card"><div class="v">${totalMin}min</div><div class="l">Tiempo</div></div><div class="card"><div class="v">${uniqueDays}</div><div class="l">Días activos</div></div></div><div class="imp">${delta>=0?"+":""}${delta} puntos<br><span style="font-size:11px;font-weight:400;color:#64748B">Mejora promedio por sesión</span></div><h2>Protocolos</h2>${topProtos.map(([n,c])=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9"><span>${n}</span><span>${c}x (${Math.round(c/st.totalSessions*100)}%)</span></div>`).join("")}<h2>Riesgo</h2><div style="padding:14px;background:${riskPct>30?"#FEF2F2":"#F0FDF4"};border-radius:10px;margin-bottom:20px"><div style="font-size:20px;font-weight:800;color:${riskPct>30?"#DC2626":"#059669"}">${riskPct}%</div><div style="font-size:11px;color:${riskPct>30?"#DC2626":"#059669"}">Sesiones con tensión alta</div></div><div class="footer"><p><strong>BIO-IGNICIÓN</strong> — Generado: ${now.toLocaleString("es-MX")}</p></div></body></html>`;
-  const blob=new Blob([html],{type:"text/html"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`NOM035-${now.toISOString().split("T")[0]}.html`;a.click();URL.revokeObjectURL(url);
-}catch(e){console.error(e);}}
-
-function groupHist(h){const n=new Date();const td=n.toDateString();const yd=new Date(Date.now()-864e5).toDateString();const g={hoy:[],ayer:[],antes:[]};for(const x of h){const d=new Date(x.ts).toDateString();if(d===td)g.hoy.push(x);else if(d===yd)g.ayer.push(x);else g.antes.push(x);}return g;}
+const DashboardView = dynamic(() => import("../components/DashboardView"), { ssr: false });
+const ProfileView = dynamic(() => import("../components/ProfileView"), { ssr: false });
+const PostSessionFlow = dynamic(() => import("../components/PostSessionFlow"), { ssr: false });
+const SettingsSheet = dynamic(() => import("../components/SettingsSheet"), { ssr: false });
+const HistorySheet = dynamic(() => import("../components/HistorySheet"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -110,13 +64,11 @@ export default function BioIgnicion(){
   const[onboard,setOnboard]=useState(false);const[showIntent,setShowIntent]=useState(false);
   const[greeting,setGreeting]=useState("");
   const[showScience,setShowScience]=useState(false);
-  const[selSS,setSelSS]=useState("off");
   const[durMult,setDurMult]=useState(1);
   const[entryDone,setEntryDone]=useState(false);
   const[nfcCtx,setNfcCtx]=useState(null);
   const[voiceOn,setVoiceOn]=useState(true);
   const[sessionData,setSessionData]=useState({pauses:0,scienceViews:0,phaseTimings:[]});
-  const[showPredict,setShowPredict]=useState(false);
   const[showCalibration,setShowCalibration]=useState(false);
   const[showProtoDetail,setShowProtoDetail]=useState(false);
   const[showMore,setShowMore]=useState(false);
@@ -209,33 +161,25 @@ export default function BioIgnicion(){
     setPostStep("summary");
   }
 
-  const lv=gL(st.totalSessions),ph=pr.ph[pi],fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc),mW=Math.max(...st.weeklyData,1);
-  const pct=(totalDur-sec)/totalDur,CI=2*Math.PI*116,dO=CI*(1-pct),ins=genIns(st),isBr=ts==="running"&&ph.br;
+  const lv=gL(st.totalSessions),ph=pr.ph[pi],fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc);
+  const pct=(totalDur-sec)/totalDur,CI=2*Math.PI*116,dO=CI*(1-pct),isBr=ts==="running"&&ph.br;
   const perf=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
-  const bioSignal=useMemo(()=>calcBioSignal(st),[st.coherencia,st.resiliencia,st.capacidad,st.moodLog,st.weeklyData,st.history]);
-  const burnout=useMemo(()=>calcBurnoutIndex(st.moodLog,st.history),[st.moodLog,st.history]);
   const protoSens=useMemo(()=>calcProtoSensitivity(st.moodLog),[st.moodLog]);
-  const nSt=getStatus(perf);const lPct=lvPct(st.totalSessions);const nLv=nxtLv(st.totalSessions);
-  const isActive=ts==="running";const noData=st.totalSessions===0;
+  const nSt=getStatus(perf);const lPct=lvPct(st.totalSessions);
+  const isActive=ts==="running";
   const rD=useMemo(()=>{const h=st.history||[];if(h.length<2)return{c:0,r:0};return{c:h.slice(-1)[0].c-(h.length>=5?h[h.length-5]:h[0]).c,r:h.slice(-1)[0].r-(h.length>=5?h[h.length-5]:h[0]).r};},[st.history]);
-  const moodTrend=useMemo(()=>(st.moodLog||[]).slice(-14).map(m=>m.mood),[st.moodLog]);
-  const avgMood=useMemo(()=>{const ml=st.moodLog||[];if(!ml.length)return 0;return+(ml.slice(-7).reduce((a,m)=>a+m.mood,0)/Math.min(ml.length,7)).toFixed(1);},[st.moodLog]);
-  const records=useMemo(()=>getRecords(st),[st.history,st.streak]);
   const moodDiff=preMood>0&&checkMood>0?checkMood-preMood:null;
   const nextPh=pi<pr.ph.length-1?pr.ph[pi+1]:null;
   const sessPct=Math.round(pct*100);
-  const streakRisk=useMemo(()=>{if(st.streak<2||st.todaySessions>0)return false;const h=new Date().getHours();return h>=20;},[st.streak,st.todaySessions]);
   const lastProto=useMemo(()=>{const h=st.history||[];if(!h.length)return null;return h[h.length-1].p;},[st.history]);
   const favs=st.favs||[];
   const toggleFav=(name)=>{const nf=favs.includes(name)?favs.filter(f=>f!==name):[...favs,name];setSt({...st,favs:nf});};
-  const weeklySummary=useMemo(()=>{const pw=st.prevWeekData||[0,0,0,0,0,0,0];const pwTotal=pw.reduce((a,b)=>a+b,0);const cwTotal=st.weeklyData.reduce((a,b)=>a+b,0);if(pwTotal===0)return null;const diff=cwTotal-pwTotal;const ml=st.moodLog||[];const weekMoods=ml.slice(-7);const mAvg=weekMoods.length?+(weekMoods.reduce((a,m)=>a+m.mood,0)/weekMoods.length).toFixed(1):0;return{prev:pwTotal,curr:cwTotal,diff,mAvg};},[st.prevWeekData,st.weeklyData,st.moodLog]);
   // Adaptive AI recommendation (replaces old smartPick)
   const aiRec=useMemo(()=>{try{return adaptiveProtocolEngine(st);}catch(e){return null;}},[st.moodLog,st.history,st.weeklyData]);
   const smartPick=aiRec?.primary?.protocol||null;
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
   const prediction=useMemo(()=>predictSessionImpact(st,pr),[st.moodLog,pr.id]);
-  const neuralVar=useMemo(()=>calcNeuralVariability(st.history),[st.history]);
   const cogLoad=useMemo(()=>estimateCognitiveLoad(st),[st.todaySessions,st.moodLog]);
 
   const bg=isDark?"#0B0E14":"#F1F4F9",cd=isDark?"#141820":"#FFFFFF",bd=isDark?"#1E2330":"#E2E8F0";
@@ -288,66 +232,8 @@ export default function BioIgnicion(){
   {showProtoDetail&&<ProtocolDetail protocol={pr} st={st} isDark={isDark} durMult={durMult} onClose={()=>setShowProtoDetail(false)} onStart={(p)=>{setShowProtoDetail(false);sp(p);go();}}/>}
   </AnimatePresence>
 
-  {/* ═══ POST: BREATHE + CHECK-IN (combined) ═══ */}
-  <AnimatePresence>
-  {postStep==="breathe"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F5`,backdropFilter:"blur(30px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
-    <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"24px 20px",maxWidth:400,width:"100%"}}>
-    {/* Breathing orb — compact */}
-    <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
-      <motion.div animate={{scale:[1,1.1,1],opacity:[.4,.7,.4]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}} style={{width:56,height:56,borderRadius:"50%",background:`radial-gradient(circle,${ac}15,${ac}06,transparent)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-        <motion.div animate={{opacity:[.3,.8,.3]}} transition={{duration:2.5,repeat:Infinity}} style={{width:12,height:12,borderRadius:"50%",background:ac}}/>
-      </motion.div>
-      <div><div style={{fontSize:15,fontWeight:700,color:t1,lineHeight:1.5}}>Sesión completada</div><div style={{fontSize:11,color:t3,lineHeight:1.4}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)}s</div></div>
-    </div>
-    {/* Mood check-in inline */}
-    <div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>¿Cómo te sientes ahora?</div>
-    <div style={{display:"flex",justifyContent:"center",gap:4}}>{MOODS.map(m=>(
-      <motion.button key={m.id} whileTap={{scale:.93}} onClick={()=>{setCheckMood(m.value);H("tap");}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"7px 3px",borderRadius:12,border:checkMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:checkMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s",flex:1}}>
-        <Icon name={m.icon} size={18} color={checkMood===m.value?m.color:t3}/>
-        <span style={{fontSize:9,fontWeight:700,color:checkMood===m.value?m.color:t3,textAlign:"center",lineHeight:1.1}}>{m.label}</span>
-      </motion.button>))}</div></div>
-    {/* Energy — compact row */}
-    <div style={{display:"flex",gap:6,marginBottom:14}}>{ENERGY_LEVELS.map(e=>(
-      <motion.button key={e.id} whileTap={{scale:.95}} onClick={()=>{setCheckEnergy(e.v);H("tap");}} style={{flex:1,padding:"8px",borderRadius:10,border:checkEnergy===e.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:checkEnergy===e.v?ac+"08":cd,color:checkEnergy===e.v?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer"}}>{e.label}</motion.button>))}</div>
-    {/* Context tags — compact */}
-    <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:16}}>{WORK_TAGS.map(tg=>(
-      <button key={tg} onClick={()=>{setCheckTag(checkTag===tg?"":tg);H("tap");}} style={{padding:"4px 10px",borderRadius:16,border:checkTag===tg?`1.5px solid ${ac}`:`1px solid ${bd}`,background:checkTag===tg?ac+"08":cd,color:checkTag===tg?ac:t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{tg}</button>))}</div>
-    <motion.button whileTap={{scale:.96}} onClick={submitCheckin} style={{width:"100%",padding:"13px",borderRadius:50,background:checkMood>0?ac:bd,border:"none",color:checkMood>0?"#fff":t3,fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>{checkMood>0?"CONTINUAR":"SELECCIONA ESTADO"}</motion.button>
-    <button onClick={()=>{setPostStep("summary");}} style={{width:"100%",padding:"7px",marginTop:4,background:"transparent",border:"none",color:t3,fontSize:10,cursor:"pointer"}}>Omitir</button>
-  </motion.div></motion.div>}
-  </AnimatePresence>
-
-  {/* ═══ POST: SUMMARY ═══ */}
-  <AnimatePresence>
-  {postStep==="summary"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F2`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
-    <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"28px 22px",maxWidth:400,width:"100%",position:"relative",overflow:"hidden"}}>
-    {/* Celebration particles — enhanced */}
-    {Array.from({length:24}).map((_,i)=>{const angle=(i/24)*Math.PI*2;const dist=60+Math.random()*80;return<motion.div key={i} initial={{opacity:0,scale:0,x:0,y:0}} animate={{opacity:[0,1,1,0],scale:[0,1.2,1,0.5],x:Math.cos(angle)*dist,y:Math.sin(angle)*dist-20}} transition={{duration:1.8,delay:i*.04,ease:"easeOut"}} style={{position:"absolute",top:"18%",left:"50%",width:i%3===0?5:3,height:i%3===0?5:3,borderRadius:i%4===0?"1px":"50%",background:i%3===0?ac:i%3===1?"#6366F1":"#D97706"}}/>})}
-    <div style={{textAlign:"center",marginBottom:16}}>
-      <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",stiffness:200,delay:.2}}>
-        <svg width="48" height="48" viewBox="0 0 48 48" style={{margin:"0 auto 10px",display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity=".08"/><circle cx="24" cy="24" r="16" fill={ac} opacity=".12"/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
-      </motion.div>
-      <div style={{fontSize:18,fontWeight:800,color:t1}}>{st.totalSessions<=1?"Tu primera ignición":"Sesión completada"}</div>
-      <div style={{fontSize:11,color:ac,marginTop:4,fontWeight:600}}>{pr.n} · {Math.round(pr.d*durMult)}s</div>
-    </div>
-    {st.streak>=3&&<div style={{textAlign:"center",padding:"10px",marginBottom:12,background:`linear-gradient(135deg,#D97706${isDark?"15":"08"},#D97706${isDark?"08":"04"})`,borderRadius:14,border:"1px solid #D9770615"}}>
-      <div style={{fontSize:13,fontWeight:800,color:"#D97706"}}><Icon name="fire" size={14} color="#D97706"/> {st.streak} días — {st.streak>=30?"IMPARABLE":st.streak>=14?"DISCIPLINADO":st.streak>=7?"CONSTANTE":"EN CONSTRUCCIÓN"}</div>
-    </div>}
-    {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:14,padding:"14px 16px",background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:16}}>
-      <div style={{textAlign:"center"}}><Icon name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Antes</div></div>
-      <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",delay:.3}} style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{fontSize:18,color:moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,fontWeight:800}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={{fontSize:10,color:t3}}>puntos</div></motion.div>
-      <div style={{textAlign:"center"}}><Icon name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{fontSize:10,color:t3,marginTop:3,fontWeight:600}}>Después</div></div>
-    </div>}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5,marginBottom:12}}>
-      {[{l:"V-Cores",v:"+"+postVC,c:ac},{l:"Enfoque",v:st.coherencia+"%",c:"#3B82F6"},{l:"Calma",v:st.resiliencia+"%",c:"#8B5CF6"}].map((m,i)=>(
-        <motion.div key={i} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:.2+i*.1}} style={{background:m.c+"08",borderRadius:11,padding:"9px 5px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:800,color:m.c}}>{m.v}</div><div style={{fontSize:10,fontWeight:700,color:t3,letterSpacing:.5,marginTop:1,textTransform:"uppercase"}}>{m.l}</div></motion.div>))}
-    </div>
-    <div style={{background:ac+"06",borderRadius:10,padding:"10px 12px",marginBottom:12,border:`1px solid ${ac}10`}}>
-      <div style={{fontSize:11,color:t2,fontWeight:500,lineHeight:1.5,fontStyle:"italic"}}>{postMsg}</div>
-    </div>
-    <motion.button whileTap={{scale:.96}} onClick={()=>{rs();setPostStep("none");}} style={{width:"100%",padding:"13px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</motion.button>
-  </motion.div></motion.div>}
-  </AnimatePresence>
+  {/* ═══ POST-SESSION FLOW ═══ */}
+  <PostSessionFlow postStep={postStep} ts={ts} bg={bg} cd={cd} bd={bd} ac={ac} t1={t1} t2={t2} t3={t3} isDark={isDark} pr={pr} durMult={durMult} st={st} checkMood={checkMood} setCheckMood={setCheckMood} checkEnergy={checkEnergy} setCheckEnergy={setCheckEnergy} checkTag={checkTag} setCheckTag={setCheckTag} preMood={preMood} postVC={postVC} postMsg={postMsg} moodDiff={moodDiff} H={H} submitCheckin={submitCheckin} onSetPostStep={setPostStep} onReset={rs}/>
 
   {/* ═══ INTENT PICKER ═══ */}
   <AnimatePresence>
@@ -376,47 +262,10 @@ export default function BioIgnicion(){
   </AnimatePresence>
 
   {/* ═══ SETTINGS ═══ */}
-  <AnimatePresence>
-  {showSettings&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowSettings(false)}>
-    <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px"}} onClick={e=>e.stopPropagation()}>
-    <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:17,fontWeight:800,color:t1,marginBottom:16}}>Configuración</h3>
-    {[{l:"Sonido + ambiente",k:"soundOn",d:"Acordes, ruido ambiental y binaural",ic:"volume-on"},{l:"Vibración",k:"hapticOn",d:"Feedback háptico neurosensorial",ic:"vibrate"},{l:"Voz guiada",k:"_voice",d:"Narración de fases y respiración",ic:"mind"}].map(s=>(
-      <div key={s.k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:8}}><Icon name={s.ic} size={15} color={t3}/><div><div style={{fontSize:12,fontWeight:700,color:t1}}>{s.l}</div><div style={{fontSize:10,color:t3,marginTop:1}}>{s.d}</div></div></div>
-        <div onClick={()=>{if(s.k==="_voice"){setVoiceOn(!voiceOn);}else setSt({...st,[s.k]:!st[s.k]});}} style={{width:42,height:24,borderRadius:12,background:s.k==="_voice"?(voiceOn?ac:bd):(st[s.k]?ac:bd),cursor:"pointer",position:"relative",transition:"background .3s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:s.k==="_voice"?(voiceOn?20:2):(st[s.k]?20:2),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
-      </div>))}
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:8}}><Icon name="palette" size={15} color={t3}/><div style={{fontSize:12,fontWeight:700,color:t1}}>Tema</div></div><div style={{display:"flex",gap:4}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:"5px 11px",borderRadius:7,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?ac+"10":cd,color:(st.themeMode||"auto")===m?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
-    {/* Soundscape Marketplace */}
-    <div style={{padding:"13px 0",borderBottom:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><Icon name="breath" size={15} color={t3}/><div><div style={{fontSize:12,fontWeight:700,color:t1}}>Paisaje sonoro</div><div style={{fontSize:10,color:t3}}>Desbloquea con V-Cores</div></div></div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-        {SOUNDSCAPES.map(s=>{const unlocked=(st.unlockedSS||["off"]).includes(s.id);const active=(st.soundscape||"off")===s.id;return<motion.button key={s.id} whileTap={{scale:.95}} onClick={()=>{if(unlocked){setSt({...st,soundscape:s.id});H("tap");}else if((st.vCores||0)>=s.cost){setSt({...st,soundscape:s.id,unlockedSS:[...(st.unlockedSS||["off"]),s.id],vCores:(st.vCores||0)-s.cost});H("ok");}}} style={{padding:"10px 8px",borderRadius:12,border:active?`2px solid ${ac}`:unlocked?`1.5px solid ${bd}`:`1.5px dashed ${bd}`,background:active?ac+"08":cd,cursor:unlocked||(st.vCores||0)>=s.cost?"pointer":"not-allowed",opacity:unlocked||(st.vCores||0)>=s.cost?1:.5,textAlign:"center"}}>
-          <div style={{fontSize:11,fontWeight:700,color:active?ac:unlocked?t1:t3}}>{s.n}</div>
-          {!unlocked&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><Icon name="sparkle" size={9} color={ac}/>{s.cost}</div>}
-          {unlocked&&active&&<div style={{fontSize:9,fontWeight:700,color:ac,marginTop:2}}>ACTIVO</div>}
-          {unlocked&&!active&&<div style={{fontSize:9,color:t3,marginTop:2}}>desbloqueado</div>}
-        </motion.button>;})}
-      </div>
-    </div>
-    <div style={{display:"flex",gap:6,marginTop:14}}>
-      <motion.button whileTap={{scale:.96}} onClick={()=>exportData(st)} style={{flex:1,padding:"13px",borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-        <Icon name="export" size={14} color={t2}/><span style={{fontSize:11,fontWeight:700,color:t2}}>JSON</span>
-      </motion.button>
-      <motion.button whileTap={{scale:.96}} onClick={()=>exportNOM035(st)} style={{flex:1,padding:"13px",borderRadius:13,border:"1.5px solid #059669",background:"#05966908",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-        <Icon name="file" size={14} color="#059669"/><span style={{fontSize:11,fontWeight:700,color:"#059669"}}>NOM-035</span>
-      </motion.button>
-    </div>
-  </motion.div></motion.div>)}
-  </AnimatePresence>
+  <SettingsSheet show={showSettings} onClose={()=>setShowSettings(false)} st={st} setSt={setSt} isDark={isDark} ac={ac} voiceOn={voiceOn} setVoiceOn={setVoiceOn} H={H}/>
 
   {/* ═══ HISTORY ═══ */}
-  <AnimatePresence>
-  {showHist&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowHist(false)}>
-    <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,maxHeight:"75vh",background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-    <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:17,fontWeight:800,color:t1,marginBottom:14}}>Historial</h3>
-    {!(st.history||[]).length&&<div style={{textAlign:"center",padding:"36px 0"}}><Icon name="chart" size={30} color={t3}/><div style={{fontSize:12,color:t3,marginTop:8}}>Tu primera sesión creará el registro.</div></div>}
-    {(()=>{const g=groupHist([...(st.history||[])].reverse());return Object.entries(g).map(([k,items])=>{if(!items.length)return null;return(<div key={k}><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:7,marginTop:10}}>{k==="hoy"?"Hoy":k==="ayer"?"Ayer":"Anteriores"}</div>{items.map((h,i)=>{const tm=new Date(h.ts).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});const ml=(st.moodLog||[]).find(m=>Math.abs(m.ts-h.ts)<10000);return(<div key={i} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 0",borderBottom:`1px solid ${bd}`}}><div style={{width:30,height:30,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:t1}}>{h.p}</div><div style={{display:"flex",alignItems:"center",gap:3,marginTop:1}}><span style={{fontSize:10,color:t3}}>{tm}</span>{ml&&<Icon name={MOODS[(ml.mood||3)-1]?.icon||"neutral"} size={10} color={MOODS[(ml.mood||3)-1]?.color||t3}/>}{h.bioQ&&<span style={{fontSize:10,fontWeight:700,color:h.bioQ>=70?"#059669":h.bioQ>=45?"#D97706":"#DC2626"}}>{h.bioQ}%</span>}</div></div><div style={{textAlign:"right"}}><div style={{fontSize:11,fontWeight:800,color:ac}}>+{h.vc}</div></div></div>);})}</div>);});})()}
-  </motion.div></motion.div>)}
-  </AnimatePresence>
+  <HistorySheet show={showHist} onClose={()=>setShowHist(false)} st={st} isDark={isDark} ac={ac}/>
 
   {/* ═══ MAIN CONTENT ═══ */}
   <div style={{opacity:tabFade,transition:"opacity .25s cubic-bezier(.4,0,.2,1),transform .25s",transform:tabFade===1?"translateY(0)":"translateY(8px)",position:"relative",zIndex:1}}>
@@ -650,224 +499,10 @@ export default function BioIgnicion(){
   </div>)}
 
   {/* ═══ TAB: DASHBOARD ═══ */}
-  {tab==="dashboard"&&(<div style={{padding:"14px 20px 180px"}}>
-    {noData?<div style={{textAlign:"center",padding:"50px 20px"}}><Icon name="bolt" size={34} color={ac}/><div style={{fontSize:15,fontWeight:800,color:t1,marginTop:10,marginBottom:5}}>Tu dashboard te espera</div><div style={{fontSize:11,color:t3,marginBottom:18}}>Completa tu primera ignición para ver tus métricas neurales.</div><motion.button whileTap={{scale:.95}} onClick={()=>switchTab("ignicion")} style={{padding:"11px 28px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>IR A IGNICIÓN</motion.button></div>
-    :<>
-    {/* Executive Summary — Hero card */}
-    <div style={{background:`linear-gradient(145deg,${isDark?"#0D1117":"#FFFFFF"},${isDark?"#141820":ac+"06"})`,borderRadius:22,padding:"20px 18px",marginBottom:16,border:`1.5px solid ${ac}15`,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:`radial-gradient(circle,${ac}10,transparent)`,filter:"blur(20px)"}}/>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,position:"relative"}}>
-        <div><div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:4}}>Rendimiento Neural</div>
-        <div style={{display:"flex",alignItems:"baseline",gap:4}}><span style={{fontSize:34,fontWeight:800,color:t1,letterSpacing:"-2px"}}>{perf}</span><span style={{fontSize:14,fontWeight:600,color:t3}}>%</span></div></div>
-        <div style={{width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${ac}15,${ac}08)`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${ac}15`}}>
-          <Icon name={perf>=70?"shield":perf>=50?"gauge":"alert"} size={22} color={ac}/>
-        </div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-        {[{v:st.weeklyData.reduce((a,b)=>a+b,0),l:"Semana",c:ac},{v:bioSignal.score,l:"BioSignal",c:bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"},{v:burnout.risk==="sin datos"?"—":burnout.index,l:"Burnout",c:burnout.risk==="bajo"?"#059669":"#DC2626"}].map((m,i)=>(
-          <div key={i} style={{textAlign:"center",padding:"8px 4px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12}}>
-            <div style={{fontSize:18,fontWeight:800,color:m.c}}>{m.v}</div>
-            <div style={{fontSize:9,color:t3,fontWeight:600,marginTop:2,textTransform:"uppercase",letterSpacing:1}}>{m.l}</div>
-          </div>))}
-      </div>
-      <div style={{fontSize:11,color:t2,lineHeight:1.5,padding:"8px 10px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:10,textAlign:"center"}}>{perf>=70?"Rendimiento alto. Mantén tu ritmo.":perf>=50?"Estado funcional. Una sesión más elevaría tu rendimiento.":"Tu sistema necesita atención. Prioriza un reset."}</div>
-    </div>
-
-    {/* ═══ NEURAL RADAR CHART ═══ */}
-    <div style={{marginBottom:14}}>
-      <NeuralRadar st={st} isDark={isDark} />
-    </div>
-
-    {/* ═══ NEURAL COACH IA ═══ */}
-    <NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} />
-
-    {/* ═══ WEEKLY REPORT (NEW) ═══ */}
-    <WeeklyReport st={st} isDark={isDark} />
-
-    {/* ═══ CORRELATION MATRIX (NEW) ═══ */}
-    <CorrelationMatrix st={st} isDark={isDark} onSelectProtocol={(p)=>{sp(p);switchTab("ignicion");}} />
-
-    {/* Neural Variability Index */}
-    {neuralVar&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-        <div style={{display:"flex",alignItems:"center",gap:5}}><Icon name="predict" size={12} color={t3}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Variabilidad Neural</span></div>
-        <span style={{fontSize:18,fontWeight:800,color:neuralVar.index<10?"#059669":neuralVar.index<20?"#D97706":"#DC2626"}}>{neuralVar.index}</span>
-      </div>
-      <div style={{fontSize:11,color:t2,lineHeight:1.5}}>{neuralVar.interpretation}</div>
-      <div style={{fontSize:10,color:t3,marginTop:4}}>Tendencia: <span style={{fontWeight:700,color:neuralVar.trend==="ascendente"?"#059669":neuralVar.trend==="descendente"?"#DC2626":t3}}>{neuralVar.trend}</span></div>
-    </div>}
-
-    {/* BioSignal + Burnout — Gradient accent cards */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:14}}>
-      <div style={{background:`linear-gradient(145deg,${cd},${(bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626")+"06"})`,borderRadius:18,padding:"16px 14px",border:`1px solid ${bd}`,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-10,right:-10,width:40,height:40,borderRadius:"50%",background:(bioSignal.score>=70?"#059669":"#D97706")+"08"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:6}}><Icon name="shield" size={12} color={bioSignal.score>=70?"#059669":"#D97706"}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>BioSignal</span></div>
-        <AN value={bioSignal.score} color={bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"} sz={28}/>
-        <div style={{fontSize:10,color:t2,marginTop:6,lineHeight:1.4}}>{bioSignal.score>=70?"Rendimiento alto":bioSignal.score>=45?"Estado funcional":"Intervención activa"}</div>
-      </div>
-      <div style={{background:`linear-gradient(145deg,${cd},${(burnout.risk==="bajo"?"#059669":"#DC2626")+"06"})`,borderRadius:18,padding:"16px 14px",border:`1px solid ${burnout.risk==="crítico"||burnout.risk==="alto"?"#DC262615":bd}`,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-10,right:-10,width:40,height:40,borderRadius:"50%",background:(burnout.risk==="bajo"?"#059669":"#DC2626")+"08"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:6}}><Icon name="alert-triangle" size={12} color={burnout.risk==="bajo"?"#059669":"#DC2626"}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Burnout</span></div>
-        <AN value={burnout.index} color={burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={28}/>
-        <div style={{fontSize:10,color:burnout.risk==="bajo"?"#059669":"#DC2626",fontWeight:700,marginTop:6}}>Riesgo {burnout.risk}</div>
-      </div>
-    </div>
-
-    {/* Mood Trend with Recharts */}
-    {moodTrend.length>=2&&<div style={{background:cd,borderRadius:16,padding:"12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-        <span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Tendencia Emocional</span>
-        <div style={{display:"flex",alignItems:"center",gap:3}}>
-          <Icon name={MOODS[Math.round(avgMood)-1]?.icon||"neutral"} size={12} color={MOODS[Math.round(avgMood)-1]?.color||t3}/>
-          <span style={{fontSize:12,fontWeight:800,color:MOODS[Math.round(avgMood)-1]?.color||t3}}>{avgMood}/5</span>
-        </div>
-      </div>
-      <TemporalCharts type="mood" moodLog={st.moodLog} isDark={isDark} />
-    </div>}
-
-    {/* Activity Heatmap */}
-    <div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Actividad · 28 días</div>
-      <TemporalCharts type="heatmap" history={st.history} isDark={isDark} ac={ac} />
-    </div>
-
-    {/* Energy Flow */}
-    {st.history?.length>=3&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:10}}>Flujo de Energía</div>
-      <TemporalCharts type="energy" history={st.history} isDark={isDark} ac={ac} />
-    </div>}
-
-    {/* Protocol Sensitivity */}
-    {Object.keys(protoSens).length>=2&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:8}}><Icon name="fingerprint" size={11} color={t3}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Sensibilidad por Protocolo</span></div>
-      {Object.entries(protoSens).sort((a,b)=>b[1].avgDelta-a[1].avgDelta).slice(0,5).map(([name,data],i)=>(
-        <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<4?`1px solid ${bd}`:"none"}}>
-          <span style={{fontSize:11,color:t1,fontWeight:600}}>{name}</span>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:11,fontWeight:800,color:data.avgDelta>0?"#059669":"#DC2626"}}>{data.avgDelta>0?"+":""}{data.avgDelta}</span>
-            <span style={{fontSize:10,color:t3}}>{data.sessions}x</span>
-          </div>
-        </div>))}
-    </div>}
-
-    {/* Weekly chart */}
-    <div style={{background:cd,borderRadius:16,padding:"12px 10px",marginBottom:14,border:`1px solid ${bd}`}}>
-      <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:8}}>Esta Semana</div>
-      <TemporalCharts type="weekly" weeklyData={st.weeklyData} isDark={isDark} ac={ac} />
-    </div>
-
-    {/* Metrics grid */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:14}}>
-      {[{l:"Enfoque",v:st.coherencia,d:rD.c>0?"+"+rD.c+"%":"—",c:"#3B82F6",ic:"focus"},{l:"Calma",v:st.resiliencia,d:rD.r>0?"+"+rD.r+"%":"—",c:"#8B5CF6",ic:"calm"},{l:"V-Cores",v:st.vCores||0,d:"+"+(st.history?.slice(-1)[0]?.vc||0),c:"#D97706",ic:"sparkle"},{l:"Sesiones",v:st.totalSessions,d:st.streak+"d racha",c:"#059669",ic:"bolt"}].map((k,i)=>(
-        <div key={i} style={{background:cd,borderRadius:14,padding:"11px 10px",border:`1px solid ${bd}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><div style={{display:"flex",alignItems:"center",gap:3}}><Icon name={k.ic} size={10} color={t3}/><span style={{fontSize:10,fontWeight:700,color:t3}}>{k.l}</span></div><span style={{fontSize:10,fontWeight:700,color:"#059669"}}>{k.d}</span></div>
-          <AN value={k.v} sfx={k.l==="Enfoque"||k.l==="Calma"?"%":""} color={k.c} sz={20}/>
-        </div>))}
-    </div>
-
-    <motion.button whileTap={{scale:.97}} onClick={()=>setShowHist(true)} style={{width:"100%",padding:"11px",borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:14}}><Icon name="clock" size={13} color={t3}/><span style={{fontSize:10,fontWeight:700,color:t2}}>Historial ({(st.history||[]).length})</span></motion.button>
-    {st.achievements.length>0&&<div style={{background:ac+"05",borderRadius:16,padding:"12px 10px",border:`1px solid ${ac}10`}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}><Icon name="trophy" size={14} color={ac}/><span style={{fontSize:11,fontWeight:800,color:ac}}>Logros</span></div>{st.achievements.map(a=><div key={a} style={{fontSize:10,color:ac,padding:"2px 0",display:"flex",alignItems:"center",gap:5,fontWeight:600}}><div style={{width:3,height:3,borderRadius:"50%",background:ac}}/>{AM[a]||a}</div>)}</div>}
-    </>}
-  </div>)}
+  {tab==="dashboard"&&<DashboardView st={st} isDark={isDark} ac={ac} switchTab={switchTab} sp={sp} onShowHist={()=>setShowHist(true)} />}
 
   {/* ═══ TAB: PERFIL ═══ */}
-  {tab==="perfil"&&(<div style={{padding:"14px 20px 180px"}}>
-    {/* Profile Hero */}
-    <div style={{textAlign:"center",marginBottom:20,marginTop:8,position:"relative"}}>
-      {/* Background glow */}
-      <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${ac}08,transparent)`,filter:"blur(30px)",pointerEvents:"none"}}/>
-      <motion.div initial={{scale:0.9,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:200}}>
-        <div style={{width:84,height:84,borderRadius:"50%",margin:"0 auto 12px",background:`linear-gradient(135deg,${ac},#6366F1)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 8px 30px ${ac}25,0 0 0 3px ${cd},0 0 0 5px ${ac}20`,position:"relative"}}>
-          <Icon name="user" size={32} color="#fff"/>
-          <div style={{position:"absolute",bottom:-3,right:-3,width:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${lv.c},${lv.c}CC)`,display:"flex",alignItems:"center",justifyContent:"center",border:`3px solid ${cd}`,boxShadow:`0 2px 8px ${lv.c}40`}}><span style={{fontSize:10,fontWeight:800,color:"#fff"}}>{lv.n[0]}</span></div>
-        </div>
-      </motion.div>
-      <div style={{fontSize:20,fontWeight:800,color:t1,letterSpacing:"-0.5px"}}>Operador Neural</div>
-      <div style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:6,padding:"4px 14px",background:nSt.color+"0C",borderRadius:20,border:`1px solid ${nSt.color}15`}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:11,fontWeight:700,color:nSt.color}}>{nSt.label} · {lv.n}</span></div>
-    </div>
-
-    {/* Stats — Integrated hero card */}
-    <div style={{background:`linear-gradient(145deg,${cd},${ac}05)`,borderRadius:20,padding:"18px 16px",marginBottom:12,border:`1px solid ${bd}`,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:ac+"06"}}/>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-        {[{v:st.totalSessions,l:"Sesiones",c:ac,ic:"bolt"},{v:`${Math.floor((st.totalTime||0)/3600)}h${Math.floor(((st.totalTime||0)%3600)/60)}m`,l:"Tiempo",c:t1,ic:"clock"},{v:st.streak,l:"Racha",c:"#D97706",ic:"fire"}].map((m,i)=>(
-          <div key={i} style={{textAlign:"center",padding:"8px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:14}}>
-            <Icon name={m.ic} size={14} color={m.c} style={{marginBottom:4}}/>
-            <div style={{fontSize:20,fontWeight:800,color:m.c,lineHeight:1}}>{m.v}</div>
-            <div style={{fontSize:9,color:t3,fontWeight:600,marginTop:3,textTransform:"uppercase",letterSpacing:1}}>{m.l}</div>
-          </div>))}
-      </div>
-      {/* Level progress — integrated */}
-      <div style={{padding:"10px 12px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <span style={{fontSize:11,fontWeight:800,color:lv.c}}>{lv.n}</span>
-          <span style={{fontSize:10,color:t3}}>{nLv?`→ ${nLv.n}`:""} · {lPct}%</span>
-        </div>
-        <div style={{height:6,background:bd,borderRadius:6,overflow:"hidden"}}>
-          <motion.div initial={{width:0}} animate={{width:lPct+"%"}} transition={{duration:1,ease:"easeOut"}} style={{height:"100%",borderRadius:6,background:`linear-gradient(90deg,${lv.c},${lv.c}BB)`,boxShadow:`0 0 8px ${lv.c}30`}}/>
-        </div>
-      </div>
-    </div>
-
-    {/* Neural Fingerprint */}
-    {(()=>{const fp=calcNeuralFingerprint(st);if(!fp)return null;return(
-    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:10}}><Icon name="fingerprint" size={12} color={t3}/><span style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase"}}>Tu Firma Neural</span></div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
-        {[{l:"Hora pico",v:`${fp.peakHour}:00`},{l:"Mejor protocolo",v:fp.bestProto,c:ac},{l:"Calidad",v:`${fp.avgQuality}%`,c:fp.avgQuality>=70?"#059669":"#D97706"},{l:"Adaptación",v:fp.adaptationRate>0?`+${fp.adaptationRate}`:`${fp.adaptationRate}`,c:fp.adaptationRate>0?"#059669":"#DC2626"}].map((d,i)=>(
-          <div key={i} style={{background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12,padding:"10px"}}>
-            <div style={{fontSize:10,color:t3}}>{d.l}</div>
-            <div style={{fontSize:14,fontWeight:800,color:d.c||t1}}>{d.v}</div>
-          </div>
-        ))}
-      </div>
-    </div>);})()}
-
-    {/* V-Cores + Mood */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:10}}>
-      <div style={{background:ac+"06",borderRadius:14,padding:"14px 12px",border:`1px solid ${ac}10`}}>
-        <div style={{display:"flex",alignItems:"center",gap:3,marginBottom:2}}><Icon name="sparkle" size={10} color={ac}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>V-Cores</span></div>
-        <AN value={st.vCores||0} color={ac} sz={24}/>
-      </div>
-      <div style={{background:cd,borderRadius:14,padding:"14px 12px",border:`1px solid ${bd}`}}>
-        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase",marginBottom:2}}>Mood</div>
-        {avgMood>0?<div style={{display:"flex",alignItems:"center",gap:4}}><Icon name={MOODS[Math.round(avgMood)-1]?.icon||"neutral"} size={18} color={MOODS[Math.round(avgMood)-1]?.color||t3}/><span style={{fontSize:20,fontWeight:800,color:MOODS[Math.round(avgMood)-1]?.color||t3}}>{avgMood}</span></div>:<span style={{fontSize:11,color:t3}}>Sin datos</span>}
-      </div>
-    </div>
-
-    {/* Optimal Time Suggestion */}
-    {(()=>{const ot=suggestOptimalTime(st);if(!ot||!ot.best)return null;return(
-    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:8}}><Icon name="clock" size={12} color={t3}/><span style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase"}}>Hora Óptima</span></div>
-      <div style={{fontSize:11,color:t2,lineHeight:1.6}}>{ot.recommendation}</div>
-    </div>);})()}
-
-    {/* Streak Chain Analysis */}
-    {(()=>{const sc=analyzeStreakChain(st);if(!sc)return null;return(
-    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:8}}><Icon name="fire" size={12} color="#D97706"/><span style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase"}}>Análisis de Rachas</span></div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:800,color:"#D97706"}}>{sc.maxStreak}d</div><div style={{fontSize:9,color:t3}}>récord</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:800,color:t1}}>{sc.avgStreak}d</div><div style={{fontSize:9,color:t3}}>promedio</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:800,color:"#6366F1"}}>{sc.avgBreakPoint}d</div><div style={{fontSize:9,color:t3}}>punto quiebre</div></div>
-      </div>
-      <div style={{fontSize:10,color:t2,lineHeight:1.5}}>{sc.prediction}</div>
-    </div>);})()}
-
-    {/* Actions grid */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-      <motion.button whileTap={{scale:.95}} onClick={()=>setShowSettings(true)} style={{padding:"14px",borderRadius:16,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-        <div style={{width:36,height:36,borderRadius:11,background:isDark?"#1A1E28":"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="gear" size={16} color={t3}/></div>
-        <span style={{fontSize:10,fontWeight:700,color:t2}}>Ajustes</span>
-      </motion.button>
-      <motion.button whileTap={{scale:.95}} onClick={()=>setShowHist(true)} style={{padding:"14px",borderRadius:16,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-        <div style={{width:36,height:36,borderRadius:11,background:isDark?"#1A1E28":"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="clock" size={16} color={t3}/></div>
-        <span style={{fontSize:10,fontWeight:700,color:t2}}>Historial</span>
-      </motion.button>
-    </div>
-    <motion.button whileTap={{scale:.95}} onClick={()=>setShowCalibration(true)} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid ${ac}20`,background:`linear-gradient(135deg,${ac}08,${ac}03)`,color:ac,fontSize:11,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Icon name="radar" size={14} color={ac}/>Recalibrar Baseline Neural</motion.button>
-    <button onClick={()=>{if(typeof window!=="undefined"&&window.confirm("¿Reiniciar todos los datos?")){setSt({...DS,weekNum:getWeekNum()});}}} style={{width:"100%",padding:"12px",borderRadius:14,border:"1px solid #FEE2E2",background:isDark?"#1A0A0A":"#FFF5F5",color:"#DC2626",fontSize:10,fontWeight:700,cursor:"pointer"}}>Reiniciar Datos</button>
-  </div>)}
+  {tab==="perfil"&&<ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} />}
   </div>
 
   {/* ═══ BOTTOM METRICS BAR ═══ */}
