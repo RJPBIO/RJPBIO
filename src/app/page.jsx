@@ -119,6 +119,7 @@ export default function BioIgnicion(){
   const[showPredict,setShowPredict]=useState(false);
   const[showCalibration,setShowCalibration]=useState(false);
   const[showProtoDetail,setShowProtoDetail]=useState(false);
+  const[showMore,setShowMore]=useState(false);
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
   const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);svS(nv);},[st]);
@@ -208,7 +209,7 @@ export default function BioIgnicion(){
     setPostStep("summary");
   }
 
-  const lv=gL(st.totalSessions),ph=pr.ph[pi],fl=P.filter(p=>p.ct===sc),mW=Math.max(...st.weeklyData,1);
+  const lv=gL(st.totalSessions),ph=pr.ph[pi],fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc),mW=Math.max(...st.weeklyData,1);
   const pct=(totalDur-sec)/totalDur,CI=2*Math.PI*116,dO=CI*(1-pct),ins=genIns(st),isBr=ts==="running"&&ph.br;
   const perf=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
   const bioSignal=useMemo(()=>calcBioSignal(st),[st.coherencia,st.resiliencia,st.capacidad,st.moodLog,st.weeklyData,st.history]);
@@ -290,10 +291,19 @@ export default function BioIgnicion(){
   {/* ═══ POST: BREATHE ═══ */}
   <AnimatePresence>
   {postStep==="breathe"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:220,background:bg+"F8",backdropFilter:"blur(30px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
-    <motion.div animate={{scale:[1,1.06,1],opacity:[.4,.7,.4]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}} style={{width:60,height:60,borderRadius:"50%",background:`radial-gradient(circle,${ac}15,transparent)`,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:12,height:12,borderRadius:"50%",background:ac,opacity:.4}}/></motion.div>
-    <div style={{fontSize:14,fontWeight:600,color:t1,marginTop:20,textAlign:"center",lineHeight:1.6}}>Quédate un momento con esta sensación.</div>
-    <div style={{fontSize:11,color:t3,marginTop:8}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)} segundos.</div>
-    <motion.button whileTap={{scale:.96}} onClick={()=>setPostStep("checkin")} style={{marginTop:24,padding:"12px 32px",borderRadius:50,background:"none",border:"1.5px solid "+ac+"30",color:ac,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1}}>Continuar</motion.button>
+    {/* Breathing orb celebration */}
+    <motion.div animate={{scale:[1,1.12,1],opacity:[.3,.6,.3]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}} style={{width:100,height:100,borderRadius:"50%",background:`radial-gradient(circle,${ac}12,${ac}06,transparent)`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+      <motion.div animate={{scale:[1,1.08,1]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut",delay:.5}} style={{width:60,height:60,borderRadius:"50%",background:`radial-gradient(circle,${ac}18,transparent)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <motion.div animate={{opacity:[.3,.8,.3],boxShadow:[`0 0 10px ${ac}20`,`0 0 30px ${ac}40`,`0 0 10px ${ac}20`]}} transition={{duration:2.5,repeat:Infinity}} style={{width:14,height:14,borderRadius:"50%",background:ac}}/>
+      </motion.div>
+      {/* Orbiting dots */}
+      {[0,1,2].map(i=><motion.div key={i} animate={{rotate:360}} transition={{duration:6+i*2,repeat:Infinity,ease:"linear"}} style={{position:"absolute",inset:0}}><div style={{position:"absolute",top:i*6,left:"50%",width:3,height:3,borderRadius:"50%",background:ac,opacity:.3+i*.1}}/></motion.div>)}
+    </motion.div>
+    <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:.3}} style={{textAlign:"center",marginTop:24}}>
+      <div style={{fontSize:16,fontWeight:700,color:t1,lineHeight:1.6}}>Quédate un momento con esta sensación.</div>
+      <div style={{fontSize:12,color:t3,marginTop:8,lineHeight:1.5}}>Tu sistema nervioso cambió en {Math.round(pr.d*durMult)} segundos.</div>
+    </motion.div>
+    <motion.button initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.5}} whileTap={{scale:.96}} onClick={()=>setPostStep("checkin")} style={{marginTop:28,padding:"13px 36px",borderRadius:50,background:"none",border:`1.5px solid ${ac}30`,color:ac,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1}}>Continuar</motion.button>
   </motion.div>}
   </AnimatePresence>
 
@@ -320,7 +330,8 @@ export default function BioIgnicion(){
   <AnimatePresence>
   {postStep==="summary"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:220,background:`${bg}F2`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
     <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"28px 22px",maxWidth:400,width:"100%",position:"relative",overflow:"hidden"}}>
-    {Array.from({length:12}).map((_,i)=><motion.div key={i} initial={{opacity:0,scale:0}} animate={{opacity:[0,1,0],scale:[0,1,1],x:(Math.random()-.5)*160,y:-30-Math.random()*100}} transition={{duration:1.5,delay:i*.08}} style={{position:"absolute",top:"15%",left:"50%",width:3+Math.random()*3,height:3+Math.random()*3,borderRadius:"50%",background:i%2===0?ac:"#6366F1"}}/>)}
+    {/* Celebration particles — enhanced */}
+    {Array.from({length:24}).map((_,i)=>{const angle=(i/24)*Math.PI*2;const dist=60+Math.random()*80;return<motion.div key={i} initial={{opacity:0,scale:0,x:0,y:0}} animate={{opacity:[0,1,1,0],scale:[0,1.2,1,0.5],x:Math.cos(angle)*dist,y:Math.sin(angle)*dist-20}} transition={{duration:1.8,delay:i*.04,ease:"easeOut"}} style={{position:"absolute",top:"18%",left:"50%",width:i%3===0?5:3,height:i%3===0?5:3,borderRadius:i%4===0?"1px":"50%",background:i%3===0?ac:i%3===1?"#6366F1":"#D97706"}}/>})}
     <div style={{textAlign:"center",marginBottom:16}}>
       <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",stiffness:200,delay:.2}}>
         <svg width="48" height="48" viewBox="0 0 48 48" style={{margin:"0 auto 10px",display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity=".08"/><circle cx="24" cy="24" r="16" fill={ac} opacity=".12"/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
@@ -362,8 +373,13 @@ export default function BioIgnicion(){
   <AnimatePresence>
   {sl&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setSl(false)}>
     <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,maxHeight:"82vh",background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-    <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:20,fontWeight:800,color:t1,marginBottom:16}}>Protocolos</h3>
-    <div style={{display:"flex",background:isDark?"#1A1E28":"#EEF2F7",borderRadius:12,padding:3,marginBottom:16}}>{CATS.map(c=><button key={c} onClick={()=>setSc(c)} style={{flex:1,padding:"9px 0",borderRadius:10,border:"none",background:sc===c?cd:"transparent",color:sc===c?t1:t3,fontWeight:700,fontSize:12,cursor:"pointer",transition:"all .3s"}}>{c}</button>)}</div>
+    <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 16px"}}/><h3 style={{fontSize:18,fontWeight:800,color:t1,marginBottom:12}}>Protocolos</h3>
+    {/* Intent quick-filter */}
+    <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
+      {INTENTS.map(i=>{const isActive=sc===i.id;return<motion.button key={i.id} whileTap={{scale:.93}} onClick={()=>setSc(isActive?"Protocolo":i.id)} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:20,border:isActive?`2px solid ${i.color}`:`1.5px solid ${bd}`,background:isActive?i.color+"0A":cd,cursor:"pointer",flexShrink:0,transition:"all .2s"}}><Icon name={i.icon} size={14} color={isActive?i.color:t3}/><span style={{fontSize:10,fontWeight:700,color:isActive?i.color:t3}}>{i.label}</span></motion.button>;})}
+    </div>
+    {/* Category tabs */}
+    <div style={{display:"flex",background:isDark?"#1A1E28":"#EEF2F7",borderRadius:12,padding:3,marginBottom:14}}>{CATS.map(c=><button key={c} onClick={()=>setSc(c)} style={{flex:1,padding:"8px 0",borderRadius:10,border:"none",background:sc===c?cd:"transparent",color:sc===c?t1:t3,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .3s"}}>{c}</button>)}</div>
     {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;const pred=predictSessionImpact(st,p);return<motion.button key={p.id} whileTap={{scale:.98}} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:10,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:10,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>IA recomienda</span>}</div><div style={{fontSize:10,color:t2,marginBottom:2}}>{p.sb}</div><div style={{fontSize:10,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#059669":p.dif===2?"#D97706":"#DC2626"}}>{DIF_LABELS[(p.dif||1)-1]}</span>{pred.predictedDelta>0&&<span style={{color:"#059669",fontWeight:700}}> · +{pred.predictedDelta} est.</span>}</div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Icon name="star" size={16} color={isFav?ac:bd}/></div>{(()=>{const s=protoSens[p.n];return s&&s.sessions>=2?<span style={{fontSize:10,fontWeight:800,color:s.avgDelta>0?"#059669":"#DC2626",marginRight:4}}>{s.avgDelta>0?"+":""}{s.avgDelta}</span>:null;})()}{pr.id===p.id&&<Icon name="check" size={16} color={p.cl}/>}</motion.button>;})}
   </motion.div></motion.div>)}
   </AnimatePresence>
@@ -450,40 +466,44 @@ export default function BioIgnicion(){
       <Icon name="bolt" size={16} color={daily.proto.cl}/>
     </motion.button>}
 
-    {/* AI Recommendation (NEW — adaptive engine) */}
-    {ts==="idle"&&aiRec&&aiRec.primary&&aiRec.primary.protocol.id!==daily.proto.id&&<motion.button initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} transition={{delay:.2}} whileTap={{scale:.97}} onClick={()=>sp(aiRec.primary.protocol)} style={{width:"100%",padding:"12px 14px",marginBottom:14,borderRadius:14,border:`1.5px solid ${ac}20`,background:isDark?"#0A1A0A":"#F0FDF4",cursor:"pointer",textAlign:"left",display:"flex",gap:10,alignItems:"center"}}>
-      <div style={{width:32,height:32,borderRadius:10,background:ac+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="cpu" size={14} color={ac}/></div>
-      <div style={{flex:1}}>
-        <div style={{fontSize:10,fontWeight:800,color:ac,letterSpacing:1.5,textTransform:"uppercase",marginBottom:1}}>IA RECOMIENDA</div>
-        <div style={{fontSize:12,fontWeight:700,color:t1}}>{aiRec.primary.protocol.n}</div>
-        <div style={{fontSize:10,color:t3,marginTop:1}}>{aiRec.primary.reason}</div>
-      </div>
-      <Icon name="chevron" size={14} color={ac}/>
+    {/* AI Recommendation — inline compact */}
+    {ts==="idle"&&aiRec&&aiRec.primary&&aiRec.primary.protocol.id!==daily.proto.id&&<motion.button initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} whileTap={{scale:.97}} onClick={()=>sp(aiRec.primary.protocol)} style={{width:"100%",padding:"10px 14px",marginBottom:10,borderRadius:14,border:`1.5px solid ${ac}15`,background:isDark?"#0A1A0A":"#F0FDF4",cursor:"pointer",textAlign:"left",display:"flex",gap:10,alignItems:"center"}}>
+      <div style={{width:28,height:28,borderRadius:8,background:ac+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="cpu" size={13} color={ac}/></div>
+      <div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:ac}}>IA: {aiRec.primary.protocol.n}</div><div style={{fontSize:10,color:t3}}>{aiRec.primary.reason}</div></div>
+      <Icon name="chevron" size={12} color={ac}/>
     </motion.button>}
 
-    {/* Prediction card */}
-    {ts==="idle"&&prediction&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:14,background:prediction.predictedDelta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A1E28":"#F8FAFC"),borderRadius:14,border:`1px solid ${prediction.predictedDelta>0?"#05966920":bd}`}}>
-      <Icon name="predict" size={16} color={prediction.predictedDelta>0?"#059669":"#6366F1"}/>
-      <div style={{flex:1}}>
-        <div style={{fontSize:10,fontWeight:700,color:prediction.predictedDelta>0?"#059669":"#6366F1"}}>{prediction.message}</div>
-        <div style={{fontSize:10,color:t3,marginTop:2}}>Confianza: {prediction.confidence}% · {prediction.basis}</div>
-      </div>
-    </div>}
-
-    {/* 7-Day Program */}
-    {ts==="idle"&&(st.progDay||0)<7&&<div style={{marginBottom:14,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
-        <span style={{fontSize:10,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
-      </div>
-      <div style={{display:"flex",gap:3,marginBottom:10}}>
-        {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
-      <motion.button whileTap={{scale:.97}} onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:isDark?"#1A1E28":"#F8FAFC",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
-        <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div>
-        <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
-        <Icon name="chevron" size={12} color={ac}/>
-      </motion.button>
-    </div>}
+    {/* Expandable secondary section */}
+    {ts==="idle"&&(prediction||(st.progDay||0)<7)&&<>
+    <button onClick={()=>{setShowMore(!showMore);H("tap");}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"6px 0",marginBottom:showMore?10:14,background:"none",border:"none",cursor:"pointer"}}>
+      <div style={{flex:1,height:1,background:bd}}/>
+      <span style={{fontSize:10,fontWeight:700,color:t3,display:"flex",alignItems:"center",gap:4,flexShrink:0}}>{showMore?"Menos":"Más"} <span style={{transform:showMore?"rotate(180deg)":"rotate(0)",display:"inline-block",transition:"transform .2s"}}>▾</span></span>
+      <div style={{flex:1,height:1,background:bd}}/>
+    </button>
+    <AnimatePresence>
+    {showMore&&<motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+      {/* Prediction */}
+      {prediction&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:10,background:prediction.predictedDelta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A1E28":"#F8FAFC"),borderRadius:14,border:`1px solid ${prediction.predictedDelta>0?"#05966920":bd}`}}>
+        <Icon name="predict" size={14} color={prediction.predictedDelta>0?"#059669":"#6366F1"}/>
+        <div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:prediction.predictedDelta>0?"#059669":"#6366F1"}}>{prediction.message}</div><div style={{fontSize:10,color:t3,marginTop:1}}>Confianza: {prediction.confidence}%</div></div>
+      </div>}
+      {/* 7-Day Program */}
+      {(st.progDay||0)<7&&<div style={{marginBottom:10,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
+          <span style={{fontSize:10,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
+        </div>
+        <div style={{display:"flex",gap:3,marginBottom:10}}>
+          {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
+        <motion.button whileTap={{scale:.97}} onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:isDark?"#1A1E28":"#F8FAFC",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div>
+          <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
+          <Icon name="chevron" size={12} color={ac}/>
+        </motion.button>
+      </div>}
+    </motion.div>}
+    </AnimatePresence>
+    </>}
 
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
@@ -517,21 +537,37 @@ export default function BioIgnicion(){
     </div>}
 
     {/* ═══ CORE DE IGNICIÓN ═══ */}
-    <div onClick={timerTap} role="button" onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:236,height:isActive?200:236,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
-      <div style={{position:"absolute",inset:isActive?-20:-12,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"10":"05"},transparent 65%)`,animation:ts==="idle"?"pu 4s ease-in-out infinite":isActive?"pu 2.5s ease infinite":"none",filter:isActive?"blur(2px)":"blur(4px)"}}/>
-      {ts!=="paused"&&<div style={{position:"absolute",inset:isActive?-10:-6,borderRadius:"50%",border:`1px solid ${ac}${isActive?"12":"08"}`,animation:ts==="idle"?"bth 5s ease-in-out infinite":"bth 3.5s ease infinite"}}/>}
-      <svg width={isActive?"200":"236"} height={isActive?"200":"236"} viewBox="0 0 260 260" style={{transform:"rotate(-90deg)"}}>
-        <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth="3" opacity=".5"/>
-        <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth={isActive?"6":"3"} strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={dO} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",filter:isActive?`drop-shadow(0 0 6px ${ac}50)`:"none"}}/>
+    <div onClick={timerTap} role="button" aria-label={ts==="idle"?"Iniciar sesión":ts==="running"?"Pausar sesión":"Reanudar sesión"} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:250,height:isActive?200:250,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
+      {/* Glow exterior pulsante */}
+      <motion.div animate={ts==="idle"?{scale:[1,1.06,1],opacity:[.3,.6,.3]}:isActive?{scale:[1,1.04,1],opacity:[.4,.7,.4]}:{}} transition={{duration:ts==="idle"?3.5:2.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:isActive?-16:-10,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"12":"08"},transparent 65%)`,filter:"blur(6px)"}}/>
+      {/* Anillo de respiración exterior */}
+      {ts!=="paused"&&<motion.div animate={{scale:[1,1.02,1]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:isActive?-8:-4,borderRadius:"50%",border:`1.5px solid ${ac}${isActive?"15":"0A"}`}}/>}
+      <svg width={isActive?"200":"250"} height={isActive?"200":"250"} viewBox="0 0 260 260" style={{transform:"rotate(-90deg)"}}>
+        {/* Track */}
+        <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth={ts==="idle"?"4":"3"} opacity=".4"/>
+        {/* Progreso */}
+        <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth={isActive?"7":ts==="idle"?"5":"3"} strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={ts==="idle"?0:dO} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",filter:isActive?`drop-shadow(0 0 8px ${ac}60)`:`drop-shadow(0 0 4px ${ac}30)`}}/>
+        {/* Anillo interior */}
         <circle cx="130" cy="130" r="98" fill="none" stroke={bd} strokeWidth=".5" strokeDasharray="3 8" style={{animation:isActive?"innerRing 10s linear infinite":"innerRing 30s linear infinite"}}/>
+        {/* Gradiente de fondo sutil en idle */}
+        {ts==="idle"&&<circle cx="130" cy="130" r="115" fill={`url(#timerGrad)`} opacity=".04"/>}
+        <defs><radialGradient id="timerGrad"><stop offset="0%" stopColor={ac}/><stop offset="100%" stopColor="transparent"/></radialGradient></defs>
       </svg>
-      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:isActive?6:8,height:isActive?6:8,borderRadius:"50%",background:ac,opacity:ts==="idle"?.3:.6,boxShadow:isActive?`0 0 12px ${ac}60`:`0 0 8px ${ac}20`,animation:ts==="idle"?"focusLock 4s ease infinite":"focusLock 1.5s ease infinite",pointerEvents:"none"}}/>
+      {/* Punto central neural */}
+      <motion.div animate={{opacity:[.3,.7,.3],boxShadow:[`0 0 8px ${ac}30`,`0 0 18px ${ac}50`,`0 0 8px ${ac}30`]}} transition={{duration:ts==="idle"?3:1.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:isActive?6:10,height:isActive?6:10,borderRadius:"50%",background:ac,pointerEvents:"none"}}/>
+      {/* Contenido central */}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none",zIndex:2}}>
-        {isBr&&bL&&<div style={{marginBottom:2}}><span style={{fontSize:11,fontWeight:800,letterSpacing:4,color:ac,opacity:.9}}>{bL}</span><span style={{fontSize:12,fontWeight:800,color:ac,marginLeft:3}}>{bCnt}s</span></div>}
-        <div style={{fontSize:isActive?46:52,fontWeight:800,color:t1,lineHeight:1,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
-        {isActive&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:3,opacity:.8}}>{sessPct}%</div>}
-        {ts==="idle"&&<><div style={{fontSize:10,fontWeight:700,letterSpacing:4,color:t3,marginTop:4,textTransform:"uppercase"}}>segundos</div><div style={{fontSize:10,color:ac,marginTop:6,fontWeight:600,opacity:.7,animation:"pu 3s ease-in-out infinite"}}>toca para ignición</div></>}
-        {ts==="paused"&&<div style={{fontSize:10,fontWeight:700,color:ac,marginTop:4,animation:"pausePulse 2s ease infinite"}}>EN PAUSA</div>}
+        {isBr&&bL&&<div style={{marginBottom:4}}><span style={{fontSize:12,fontWeight:800,letterSpacing:5,color:ac,opacity:.9}}>{bL}</span><span style={{fontSize:13,fontWeight:800,color:ac,marginLeft:4}}>{bCnt}s</span></div>}
+        <div style={{fontSize:isActive?48:56,fontWeight:800,color:t1,lineHeight:1,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
+        {isActive&&<div style={{fontSize:11,fontWeight:800,color:ac,marginTop:4,opacity:.8}}>{sessPct}%</div>}
+        {ts==="idle"&&<>
+          <div style={{fontSize:11,fontWeight:600,letterSpacing:3,color:t3,marginTop:6,textTransform:"uppercase"}}>segundos</div>
+          <motion.div animate={{opacity:[.5,1,.5],y:[0,-2,0]}} transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:12,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},#0D9488)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
+            <span style={{fontSize:10,fontWeight:800,color:ac,letterSpacing:2,textTransform:"uppercase"}}>INICIAR</span>
+          </motion.div>
+        </>}
+        {ts==="paused"&&<motion.div animate={{opacity:[.5,1,.5]}} transition={{duration:2,repeat:Infinity}} style={{marginTop:6}}><span style={{fontSize:11,fontWeight:800,color:ac,letterSpacing:3}}>EN PAUSA</span></motion.div>}
       </div>
       {tp&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"100%",height:"100%",borderRadius:"50%",border:`2px solid ${ac}20`,animation:"cdPulse .6s ease forwards",pointerEvents:"none"}}/>}
     </div>
@@ -600,7 +636,7 @@ export default function BioIgnicion(){
     {isActive&&nextPh&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",marginBottom:10,borderRadius:10,background:isDark?"#1A1E28":"#F8FAFC"}}>
       <Icon name="chevron" size={10} color={t3}/><span style={{fontSize:10,color:t3,fontWeight:600}}>Siguiente: {nextPh.l}</span>
     </div>}
-    <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;return<div key={i} style={{padding:"3px 8px",borderRadius:14,border:pi===i?`1.5px solid ${ac}`:i<pi?`1px solid ${ac}40`:`1px solid ${bd}`,background:pi===i?ac+"08":i<pi?ac+"04":cd,color:pi===i?ac:i<pi?ac:t3,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",gap:3,opacity:i<=pi?1:.5}}><span style={{width:5,height:5,borderRadius:"50%",background:i<=pi?ac:bd}}/>{sR}</div>;})}</div>
+    <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;const isCurr=pi===i;const isDone=i<pi;return<motion.div key={i} animate={isCurr?{scale:[1,1.03,1]}:{}} transition={isCurr?{duration:2,repeat:Infinity}:{}} style={{padding:"4px 10px",borderRadius:16,border:isCurr?`2px solid ${ac}`:isDone?`1.5px solid ${ac}30`:`1px solid ${bd}`,background:isCurr?ac+"10":isDone?ac+"06":cd,color:isCurr?ac:isDone?ac:t3,fontSize:10,fontWeight:isCurr?800:600,display:"flex",alignItems:"center",gap:4,opacity:i<=pi?1:.4,boxShadow:isCurr?`0 2px 8px ${ac}15`:"none",transition:"all .3s"}}><span style={{width:isCurr?7:5,height:isCurr?7:5,borderRadius:"50%",background:isDone?ac:isCurr?ac:bd,transition:"all .3s",boxShadow:isCurr?`0 0 6px ${ac}40`:"none"}}/>{isCurr&&<Icon name={p.ic} size={10} color={ac}/>}{sR}</motion.div>;})}</div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
       {ts==="idle"&&<motion.button whileTap={{scale:.95}} onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},#0D9488)`,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",boxShadow:`0 4px 18px ${ac}28`}}><Icon name="bolt" size={13} color="#fff"/>INICIAR</motion.button>}
       {ts==="running"&&<><motion.button whileTap={{scale:.95}} onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
@@ -614,14 +650,24 @@ export default function BioIgnicion(){
   {tab==="dashboard"&&(<div style={{padding:"14px 20px 180px"}}>
     {noData?<div style={{textAlign:"center",padding:"50px 20px"}}><Icon name="bolt" size={34} color={ac}/><div style={{fontSize:15,fontWeight:800,color:t1,marginTop:10,marginBottom:5}}>Tu dashboard te espera</div><div style={{fontSize:11,color:t3,marginBottom:18}}>Completa tu primera ignición para ver tus métricas neurales.</div><motion.button whileTap={{scale:.95}} onClick={()=>switchTab("ignicion")} style={{padding:"11px 28px",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>IR A IGNICIÓN</motion.button></div>
     :<>
-    {/* Executive Summary */}
-    <div style={{background:`linear-gradient(135deg,${ac}08,${ac}03)`,borderRadius:18,padding:"16px",marginBottom:14,border:`1.5px solid ${ac}15`}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:ac}}>{st.weeklyData.reduce((a,b)=>a+b,0)}</div><div style={{fontSize:10,color:t3}}>esta semana</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"}}>{bioSignal.score}</div><div style={{fontSize:10,color:t3}}>BioSignal</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:burnout.risk==="bajo"?"#059669":"#DC2626"}}>{burnout.risk==="sin datos"?"—":burnout.index}</div><div style={{fontSize:10,color:t3}}>burnout</div></div>
+    {/* Executive Summary — Hero card */}
+    <div style={{background:`linear-gradient(145deg,${isDark?"#0D1117":"#FFFFFF"},${isDark?"#141820":ac+"06"})`,borderRadius:22,padding:"20px 18px",marginBottom:16,border:`1.5px solid ${ac}15`,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:`radial-gradient(circle,${ac}10,transparent)`,filter:"blur(20px)"}}/>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,position:"relative"}}>
+        <div><div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase",marginBottom:4}}>Rendimiento Neural</div>
+        <div style={{display:"flex",alignItems:"baseline",gap:4}}><span style={{fontSize:34,fontWeight:800,color:t1,letterSpacing:"-2px"}}>{perf}</span><span style={{fontSize:14,fontWeight:600,color:t3}}>%</span></div></div>
+        <div style={{width:52,height:52,borderRadius:16,background:`linear-gradient(135deg,${ac}15,${ac}08)`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${ac}15`}}>
+          <Icon name={perf>=70?"shield":perf>=50?"gauge":"alert"} size={22} color={ac}/>
+        </div>
       </div>
-      <div style={{fontSize:11,color:t2,textAlign:"center",lineHeight:1.5}}>{perf>=70?"Rendimiento alto. Mantén tu ritmo.":perf>=50?"Estado funcional. Una sesión más elevaría tu rendimiento.":"Tu sistema necesita atención. Prioriza un reset."}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+        {[{v:st.weeklyData.reduce((a,b)=>a+b,0),l:"Semana",c:ac},{v:bioSignal.score,l:"BioSignal",c:bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"},{v:burnout.risk==="sin datos"?"—":burnout.index,l:"Burnout",c:burnout.risk==="bajo"?"#059669":"#DC2626"}].map((m,i)=>(
+          <div key={i} style={{textAlign:"center",padding:"8px 4px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12}}>
+            <div style={{fontSize:18,fontWeight:800,color:m.c}}>{m.v}</div>
+            <div style={{fontSize:9,color:t3,fontWeight:600,marginTop:2,textTransform:"uppercase",letterSpacing:1}}>{m.l}</div>
+          </div>))}
+      </div>
+      <div style={{fontSize:11,color:t2,lineHeight:1.5,padding:"8px 10px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:10,textAlign:"center"}}>{perf>=70?"Rendimiento alto. Mantén tu ritmo.":perf>=50?"Estado funcional. Una sesión más elevaría tu rendimiento.":"Tu sistema necesita atención. Prioriza un reset."}</div>
     </div>
 
     {/* ═══ NEURAL RADAR CHART ═══ */}
@@ -648,17 +694,19 @@ export default function BioIgnicion(){
       <div style={{fontSize:10,color:t3,marginTop:4}}>Tendencia: <span style={{fontWeight:700,color:neuralVar.trend==="ascendente"?"#059669":neuralVar.trend==="descendente"?"#DC2626":t3}}>{neuralVar.trend}</span></div>
     </div>}
 
-    {/* BioSignal + Burnout */}
+    {/* BioSignal + Burnout — Gradient accent cards */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:14}}>
-      <div style={{background:cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${bd}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><Icon name="shield" size={11} color={t3}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>BioSignal</span></div>
-        <AN value={bioSignal.score} color={bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"} sz={26}/>
-        <div style={{fontSize:10,color:t2,marginTop:4,lineHeight:1.4}}>{bioSignal.score>=70?"Rendimiento alto":bioSignal.score>=45?"Estado funcional":"Intervención activa"}</div>
+      <div style={{background:`linear-gradient(145deg,${cd},${(bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626")+"06"})`,borderRadius:18,padding:"16px 14px",border:`1px solid ${bd}`,position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-10,right:-10,width:40,height:40,borderRadius:"50%",background:(bioSignal.score>=70?"#059669":"#D97706")+"08"}}/>
+        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:6}}><Icon name="shield" size={12} color={bioSignal.score>=70?"#059669":"#D97706"}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>BioSignal</span></div>
+        <AN value={bioSignal.score} color={bioSignal.score>=70?"#059669":bioSignal.score>=45?"#D97706":"#DC2626"} sz={28}/>
+        <div style={{fontSize:10,color:t2,marginTop:6,lineHeight:1.4}}>{bioSignal.score>=70?"Rendimiento alto":bioSignal.score>=45?"Estado funcional":"Intervención activa"}</div>
       </div>
-      <div style={{background:burnout.risk==="crítico"||burnout.risk==="alto"?(isDark?"#1A0A0A":"#FEF2F2"):cd,borderRadius:16,padding:"14px 12px",border:`1px solid ${burnout.risk==="crítico"||burnout.risk==="alto"?"#DC262620":bd}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><Icon name="alert-triangle" size={11} color={t3}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Burnout</span></div>
-        <AN value={burnout.index} color={burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={26}/>
-        <div style={{fontSize:10,color:burnout.risk==="bajo"?"#059669":"#DC2626",fontWeight:600,marginTop:4}}>Riesgo {burnout.risk}</div>
+      <div style={{background:`linear-gradient(145deg,${cd},${(burnout.risk==="bajo"?"#059669":"#DC2626")+"06"})`,borderRadius:18,padding:"16px 14px",border:`1px solid ${burnout.risk==="crítico"||burnout.risk==="alto"?"#DC262615":bd}`,position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-10,right:-10,width:40,height:40,borderRadius:"50%",background:(burnout.risk==="bajo"?"#059669":"#DC2626")+"08"}}/>
+        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:6}}><Icon name="alert-triangle" size={12} color={burnout.risk==="bajo"?"#059669":"#DC2626"}/><span style={{fontSize:10,fontWeight:800,letterSpacing:2,color:t3,textTransform:"uppercase"}}>Burnout</span></div>
+        <AN value={burnout.index} color={burnout.risk==="bajo"?"#059669":burnout.risk==="moderado"?"#D97706":"#DC2626"} sz={28}/>
+        <div style={{fontSize:10,color:burnout.risk==="bajo"?"#059669":"#DC2626",fontWeight:700,marginTop:6}}>Riesgo {burnout.risk}</div>
       </div>
     </div>
 
@@ -721,28 +769,41 @@ export default function BioIgnicion(){
 
   {/* ═══ TAB: PERFIL ═══ */}
   {tab==="perfil"&&(<div style={{padding:"14px 20px 180px"}}>
-    <div style={{textAlign:"center",marginBottom:22,marginTop:12}}>
-      <div style={{width:76,height:76,borderRadius:"50%",margin:"0 auto 10px",background:`linear-gradient(135deg,${ac},#6366F1)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 8px 30px ${ac}22`,position:"relative"}}><Icon name="user" size={30} color="#fff"/>
-        <div style={{position:"absolute",bottom:-2,right:-2,width:22,height:22,borderRadius:"50%",background:lv.c,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${cd}`}}><span style={{fontSize:10,fontWeight:800,color:"#fff"}}>{lv.n[0]}</span></div>
-      </div>
-      <div style={{fontSize:18,fontWeight:800,color:t1}}>Operador Neural</div>
-      <div style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:5,padding:"3px 10px",background:nSt.color+"0C",borderRadius:14}}><div style={{width:4,height:4,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label} · {lv.n}</span></div>
+    {/* Profile Hero */}
+    <div style={{textAlign:"center",marginBottom:20,marginTop:8,position:"relative"}}>
+      {/* Background glow */}
+      <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${ac}08,transparent)`,filter:"blur(30px)",pointerEvents:"none"}}/>
+      <motion.div initial={{scale:0.9,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:200}}>
+        <div style={{width:84,height:84,borderRadius:"50%",margin:"0 auto 12px",background:`linear-gradient(135deg,${ac},#6366F1)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 8px 30px ${ac}25,0 0 0 3px ${cd},0 0 0 5px ${ac}20`,position:"relative"}}>
+          <Icon name="user" size={32} color="#fff"/>
+          <div style={{position:"absolute",bottom:-3,right:-3,width:26,height:26,borderRadius:"50%",background:`linear-gradient(135deg,${lv.c},${lv.c}CC)`,display:"flex",alignItems:"center",justifyContent:"center",border:`3px solid ${cd}`,boxShadow:`0 2px 8px ${lv.c}40`}}><span style={{fontSize:10,fontWeight:800,color:"#fff"}}>{lv.n[0]}</span></div>
+        </div>
+      </motion.div>
+      <div style={{fontSize:20,fontWeight:800,color:t1,letterSpacing:"-0.5px"}}>Operador Neural</div>
+      <div style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:6,padding:"4px 14px",background:nSt.color+"0C",borderRadius:20,border:`1px solid ${nSt.color}15`}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:11,fontWeight:700,color:nSt.color}}>{nSt.label} · {lv.n}</span></div>
     </div>
 
-    {/* Stats */}
-    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:ac}}>{st.totalSessions}</div><div style={{fontSize:10,color:t3}}>sesiones</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:t1}}>{Math.floor((st.totalTime||0)/3600)}h {Math.floor(((st.totalTime||0)%3600)/60)}m</div><div style={{fontSize:10,color:t3}}>tiempo total</div></div>
-        <div style={{textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:"#D97706"}}>{st.streak}</div><div style={{fontSize:10,color:t3}}>racha</div></div>
+    {/* Stats — Integrated hero card */}
+    <div style={{background:`linear-gradient(145deg,${cd},${ac}05)`,borderRadius:20,padding:"18px 16px",marginBottom:12,border:`1px solid ${bd}`,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:ac+"06"}}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+        {[{v:st.totalSessions,l:"Sesiones",c:ac,ic:"bolt"},{v:`${Math.floor((st.totalTime||0)/3600)}h${Math.floor(((st.totalTime||0)%3600)/60)}m`,l:"Tiempo",c:t1,ic:"clock"},{v:st.streak,l:"Racha",c:"#D97706",ic:"fire"}].map((m,i)=>(
+          <div key={i} style={{textAlign:"center",padding:"8px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:14}}>
+            <Icon name={m.ic} size={14} color={m.c} style={{marginBottom:4}}/>
+            <div style={{fontSize:20,fontWeight:800,color:m.c,lineHeight:1}}>{m.v}</div>
+            <div style={{fontSize:9,color:t3,fontWeight:600,marginTop:3,textTransform:"uppercase",letterSpacing:1}}>{m.l}</div>
+          </div>))}
       </div>
-    </div>
-
-    {/* Level */}
-    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:800,color:lv.c}}>{lv.n}</span>{nLv&&<span style={{fontSize:10,color:t3}}>→ {nLv.n}</span>}</div>
-      <div style={{height:5,background:bd,borderRadius:5,overflow:"hidden",marginBottom:6}}><div style={{width:lPct+"%",height:"100%",borderRadius:5,background:`linear-gradient(90deg,${lv.c},${lv.c}CC)`,transition:"width 1s"}}/></div>
-      <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,color:t3}}>{lPct}%</span><span style={{fontSize:10,color:t3}}>{st.totalSessions} sesiones</span></div>
+      {/* Level progress — integrated */}
+      <div style={{padding:"10px 12px",background:isDark?"rgba(255,255,255,.03)":"rgba(0,0,0,.02)",borderRadius:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+          <span style={{fontSize:11,fontWeight:800,color:lv.c}}>{lv.n}</span>
+          <span style={{fontSize:10,color:t3}}>{nLv?`→ ${nLv.n}`:""} · {lPct}%</span>
+        </div>
+        <div style={{height:6,background:bd,borderRadius:6,overflow:"hidden"}}>
+          <motion.div initial={{width:0}} animate={{width:lPct+"%"}} transition={{duration:1,ease:"easeOut"}} style={{height:"100%",borderRadius:6,background:`linear-gradient(90deg,${lv.c},${lv.c}BB)`,boxShadow:`0 0 8px ${lv.c}30`}}/>
+        </div>
+      </div>
     </div>
 
     {/* Neural Fingerprint */}
@@ -790,24 +851,38 @@ export default function BioIgnicion(){
       <div style={{fontSize:10,color:t2,lineHeight:1.5}}>{sc.prediction}</div>
     </div>);})()}
 
-    <div style={{display:"flex",gap:6,marginBottom:10}}>
-      <motion.button whileTap={{scale:.95}} onClick={()=>setShowSettings(true)} style={{flex:1,padding:"12px",borderRadius:13,border:`1px solid ${bd}`,background:cd,fontSize:10,fontWeight:700,color:t2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><Icon name="gear" size={13} color={t3}/>Ajustes</motion.button>
-      <motion.button whileTap={{scale:.95}} onClick={()=>setShowHist(true)} style={{flex:1,padding:"12px",borderRadius:13,border:`1px solid ${bd}`,background:cd,fontSize:10,fontWeight:700,color:t2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><Icon name="clock" size={13} color={t3}/>Historial</motion.button>
+    {/* Actions grid */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+      <motion.button whileTap={{scale:.95}} onClick={()=>setShowSettings(true)} style={{padding:"14px",borderRadius:16,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+        <div style={{width:36,height:36,borderRadius:11,background:isDark?"#1A1E28":"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="gear" size={16} color={t3}/></div>
+        <span style={{fontSize:10,fontWeight:700,color:t2}}>Ajustes</span>
+      </motion.button>
+      <motion.button whileTap={{scale:.95}} onClick={()=>setShowHist(true)} style={{padding:"14px",borderRadius:16,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+        <div style={{width:36,height:36,borderRadius:11,background:isDark?"#1A1E28":"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="clock" size={16} color={t3}/></div>
+        <span style={{fontSize:10,fontWeight:700,color:t2}}>Historial</span>
+      </motion.button>
     </div>
-    <motion.button whileTap={{scale:.95}} onClick={()=>setShowCalibration(true)} style={{width:"100%",padding:"11px",borderRadius:12,border:`1px solid ${ac}20`,background:ac+"05",color:ac,fontSize:10,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><Icon name="radar" size={12} color={ac}/>Recalibrar Baseline Neural</motion.button>
-    <button onClick={()=>{if(typeof window!=="undefined"&&window.confirm("¿Reiniciar todos los datos?")){setSt({...DS,weekNum:getWeekNum()});}}} style={{width:"100%",padding:"11px",borderRadius:12,border:"1px solid #FEE2E2",background:isDark?"#1A0A0A":"#FFF5F5",color:"#DC2626",fontSize:10,fontWeight:700,cursor:"pointer"}}>Reiniciar Datos</button>
+    <motion.button whileTap={{scale:.95}} onClick={()=>setShowCalibration(true)} style={{width:"100%",padding:"13px",borderRadius:14,border:`1.5px solid ${ac}20`,background:`linear-gradient(135deg,${ac}08,${ac}03)`,color:ac,fontSize:11,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Icon name="radar" size={14} color={ac}/>Recalibrar Baseline Neural</motion.button>
+    <button onClick={()=>{if(typeof window!=="undefined"&&window.confirm("¿Reiniciar todos los datos?")){setSt({...DS,weekNum:getWeekNum()});}}} style={{width:"100%",padding:"12px",borderRadius:14,border:"1px solid #FEE2E2",background:isDark?"#1A0A0A":"#FFF5F5",color:"#DC2626",fontSize:10,fontWeight:700,cursor:"pointer"}}>Reiniciar Datos</button>
   </div>)}
   </div>
 
   {/* ═══ BOTTOM METRICS BAR ═══ */}
-  <div style={{position:"fixed",bottom:58,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"5px 20px",background:`${bg}EB`,backdropFilter:"blur(14px)",display:"flex",justifyContent:"center",gap:12,zIndex:50,borderTop:`1px solid ${bd}`}}>
-    {[{v:st.coherencia,d:rD.c>0?`+${rD.c}`:"—",c:"#3B82F6",ic:"focus"},{v:st.resiliencia,d:rD.r>0?`+${rD.r}`:"—",c:"#8B5CF6",ic:"calm"},{v:st.capacidad,d:"+2",c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:2,fontSize:10}}><Icon name={m.ic} size={9} color={m.c}/><span style={{color:"#059669",fontWeight:700,fontSize:10}}>{m.d}</span><span style={{color:m.c,fontWeight:800}}>{m.v}%</span></div>)}
+  <div style={{position:"fixed",bottom:68,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:"8px 16px",background:`${isDark?"rgba(20,24,32,.92)":"rgba(255,255,255,.92)"}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:50,borderRadius:16,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
+    {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
+      <div style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
+      <div><div style={{fontSize:13,fontWeight:800,color:m.c,lineHeight:1}}>{m.v}%</div><div style={{fontSize:9,color:t3,fontWeight:600,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:"#059669",fontWeight:700}}>+{m.d}</span>}</div></div>
+    </div>)}
   </div>
 
   {/* ═══ BOTTOM NAV ═══ */}
-  <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:`${isDark?"rgba(11,14,20,.94)":"rgba(255,255,255,.94)"}`,backdropFilter:"blur(18px)",borderTop:`1px solid ${bd}`,padding:"3px 10px 10px",display:"flex",justifyContent:"center",zIndex:60}}>
-    {[{id:"ignicion",lb:"Ignición",ic:"bolt"},{id:"dashboard",lb:"Dashboard",ic:"chart"},{id:"perfil",lb:"Perfil",ic:"user"}].map(t=>{const a=tab===t.id;return(<motion.button key={t.id} whileTap={{scale:.9}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"6px 0 1px",border:"none",cursor:"pointer",background:a?(isDark?"#1A1E28":"#E8ECF4"):"transparent",borderRadius:11,margin:"0 2px"}}>
-      <Icon name={t.ic} size={17} color={a?(t.id==="ignicion"?ac:t.id==="dashboard"?"#6366F1":t1):t3}/><span style={{fontSize:10,fontWeight:700,color:a?t1:t3}}>{t.lb}</span>
+  <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:`${isDark?"rgba(11,14,20,.96)":"rgba(255,255,255,.96)"}`,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:"6px 16px max(10px, env(safe-area-inset-bottom))",display:"flex",justifyContent:"center",gap:4,zIndex:60}}>
+    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:"#6366F1"},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map(t=>{const a=tab===t.id;return(<motion.button key={t.id} whileTap={{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",cursor:"pointer",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
+      {a&&<motion.div layoutId="navIndicator" style={{position:"absolute",top:0,left:"20%",right:"20%",height:3,borderRadius:"0 0 3px 3px",background:t.ac}} transition={{type:"spring",stiffness:400,damping:30}}/>}
+      <motion.div animate={{scale:a?1:0.9,y:a?-1:0}} transition={{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
+        <Icon name={t.ic} size={a?19:17} color={a?t.ac:t3}/>
+      </motion.div>
+      <span style={{fontSize:10,fontWeight:a?800:600,color:a?t.ac:t3,transition:"all .2s",letterSpacing:a?0.5:0}}>{t.lb}</span>
     </motion.button>);})}
   </div>
   </div>);
