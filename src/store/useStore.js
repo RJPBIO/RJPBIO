@@ -141,6 +141,32 @@ export const useStore = create((set, get) => ({
     saveToStorage({ ...st, sessionGoal: goal });
   },
 
+  // ─── Import Data ─────────────────────────────────────────
+  importData: (data) => {
+    const merged = { ...DS, ...data, _v: STORE_VERSION, _imported: Date.now() };
+    set(merged);
+    saveToStorage(merged);
+  },
+
+  // ─── Recalibrate Neural Baseline ───────────────────────
+  recalibrate: (newBaseline) => {
+    const st = get();
+    const calibrationHistory = [...(st.calibrationHistory || []), {
+      ...newBaseline,
+      ts: Date.now(),
+      sessionCount: st.totalSessions,
+    }].slice(-10);
+    set({ neuralBaseline: newBaseline, calibrationHistory, onboardingComplete: true });
+    saveToStorage({ ...st, neuralBaseline: newBaseline, calibrationHistory, onboardingComplete: true });
+  },
+
+  // ─── Update Session Goal ───────────────────────────────
+  setDailyGoal: (goal) => {
+    const st = get();
+    set({ sessionGoal: goal });
+    saveToStorage({ ...st, sessionGoal: goal });
+  },
+
   // ─── Full Reset ─────────────────────────────────────────
   resetAll: () => {
     const fresh = { ...DS, weekNum: getWeekNum(), _v: STORE_VERSION };
