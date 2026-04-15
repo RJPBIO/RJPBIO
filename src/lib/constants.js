@@ -52,15 +52,23 @@ export const SOUNDSCAPES = [
 
 export const AM = {
   streak7: "7 días de racha",
+  streak14: "14 días — Disciplina neural",
   streak30: "30 días consecutivos",
+  streak60: "60 días — Maestro de hábitos",
   coherencia90: "Coherencia >90%",
   sessions50: "50 sesiones",
   sessions100: "100 sesiones — Centurión",
+  sessions250: "250 sesiones — Arquitecto Neural",
   mood5: "Sesión en rendimiento óptimo",
   allProtos: "Probó los 14 protocolos",
   time60: "60 minutos totales invertidos",
+  time300: "5 horas de entrenamiento neural",
   earlyBird: "Sesión antes de las 7am",
   nightOwl: "Sesión después de las 10pm",
+  calibrated: "Calibración neural completada",
+  weekPerfect: "7/7 días en una semana",
+  moodRecovery: "Subió de 1-2 a 4-5 en una sesión",
+  bioSignal80: "BioSignal Score >80",
 };
 
 export const STATUS_MSGS = [
@@ -149,8 +157,21 @@ export const DS = {
   prevWeekData: [0, 0, 0, 0, 0, 0, 0],
   progDay: 0,
   soundscape: "off",
-  // New fields for v4
   neuralBaseline: null,
   onboardingComplete: false,
   sessionGoal: 2,
+  // v5 fields
+  calibrationHistory: [],
+  bestStreak: 0,
+};
+
+// ─── Neural State Color Mapping ──────────────────────────
+// Colores adaptados al estado cognitivo actual
+export const NEURAL_COLORS = {
+  calma: { primary: "#059669", glow: "#05966920", gradient: "135deg, #059669, #0D9488" },
+  enfoque: { primary: "#6366F1", glow: "#6366F120", gradient: "135deg, #6366F1, #818CF8" },
+  energia: { primary: "#D97706", glow: "#D9770620", gradient: "135deg, #D97706, #F59E0B" },
+  reset: { primary: "#0D9488", glow: "#0D948820", gradient: "135deg, #0D9488, #14B8A6" },
+  stress: { primary: "#DC2626", glow: "#DC262620", gradient: "135deg, #DC2626, #EF4444" },
+  optimal: { primary: "#059669", glow: "#05966930", gradient: "135deg, #059669, #10B981" },
 };
