@@ -25,6 +25,7 @@ import {
   calcNeuralVariability, predictSessionImpact, calcProtocolCorrelations,
   adaptiveProtocolEngine, calcNeuralMomentum, estimateCognitiveLoad,
   analyzeNeuralRhythm, generateCoachingInsights, calcProtocolDiversity,
+  analyzeStreakChain, suggestOptimalTime, interpretCalibration,
 } from "../lib/neural";
 import {
   hap, hapticPhase, hapticBreath, startAmbient, stopAmbient,
@@ -40,6 +41,11 @@ import Icon from "../components/Icon";
 const NeuralRadar = dynamic(() => import("../components/NeuralRadar"), { ssr: false });
 const NeuralCoach = dynamic(() => import("../components/NeuralCoach"), { ssr: false });
 const BreathOrb = dynamic(() => import("../components/BreathOrb"), { ssr: false });
+const NeuralCalibration = dynamic(() => import("../components/NeuralCalibration"), { ssr: false });
+const ProtocolDetail = dynamic(() => import("../components/ProtocolDetail"), { ssr: false });
+const WeeklyReport = dynamic(() => import("../components/WeeklyReport"), { ssr: false });
+const CorrelationMatrix = dynamic(() => import("../components/CorrelationMatrix"), { ssr: false });
+const StreakShield = dynamic(() => import("../components/StreakShield"), { ssr: false });
 const TemporalCharts = dynamic(() => import("../components/TemporalCharts").then(mod => ({
   default: ({ type, ...props }) => {
     if (type === "mood") return <mod.MoodTrendChart {...props} />;
@@ -111,6 +117,8 @@ export default function BioIgnicion(){
   const[voiceOn,setVoiceOn]=useState(true);
   const[sessionData,setSessionData]=useState({pauses:0,scienceViews:0,phaseTimings:[]});
   const[showPredict,setShowPredict]=useState(false);
+  const[showCalibration,setShowCalibration]=useState(false);
+  const[showProtoDetail,setShowProtoDetail]=useState(false);
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
   const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);svS(nv);},[st]);
@@ -263,47 +271,20 @@ export default function BioIgnicion(){
 
   {compFlash&&<div style={{position:"fixed",inset:0,zIndex:230,background:`${ac}12`,animation:"compFlash .8s ease forwards",pointerEvents:"none"}}/>}
 
-  {/* ═══ ONBOARDING with Neural Baseline Calibration ═══ */}
+  {/* ═══ ONBOARDING — Neural Calibration Flow ═══ */}
   <AnimatePresence>
-  {onboard&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:250,background:"rgba(15,23,42,.5)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
-    <motion.div initial={{scale:.9,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"32px 24px",maxWidth:380,textAlign:"center"}}>
-    <motion.div animate={{rotate:[0,360]}} transition={{duration:4,repeat:Infinity,ease:"linear"}} style={{width:56,height:56,margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <svg width="56" height="56" viewBox="0 0 56 56"><circle cx="28" cy="28" r="24" fill="none" stroke={ac} strokeWidth="2.5" opacity=".6"/><circle cx="28" cy="28" r="17" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="6 4"/><circle cx="28" cy="28" r="6" fill={ac} opacity=".4"/></svg>
-    </motion.div>
-    <div style={{fontSize:22,fontWeight:800,color:t1,marginBottom:4}}>BIO-IGNICIÓN</div>
-    <div style={{fontSize:10,color:ac,fontWeight:700,letterSpacing:3,marginBottom:6,textTransform:"uppercase"}}>Neural Performance System</div>
-    <div style={{fontSize:10,color:t3,marginBottom:20}}>v5.0 — Motor Neural Adaptativo con IA</div>
+  {(onboard||showCalibration)&&<NeuralCalibration isDark={isDark} onComplete={(baseline)=>{
+    setOnboard(false);setShowCalibration(false);unlockVoice();
+    const nst={...st,neuralBaseline:baseline,onboardingComplete:true,calibrationHistory:[...(st.calibrationHistory||[]),{...baseline,ts:Date.now()}].slice(-10),sessionGoal:baseline.recommendations?.sessionGoal||2};
+    setSt(nst);
+    const d=getDailyIgn(nst);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}
+    const ach=[...nst.achievements];if(!ach.includes("calibrated")){ach.push("calibrated");setSt({...nst,achievements:ach});}
+  }}/>}
+  </AnimatePresence>
 
-    <div style={{textAlign:"left",marginBottom:20}}>
-      <div style={{fontSize:11,fontWeight:700,color:t1,marginBottom:8}}>Tu sistema se adapta a ti:</div>
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {[
-          {icon:"radar",color:ac,title:"Radar neural de 6 dimensiones",desc:"Enfoque, calma, energía, consistencia, adaptación, resiliencia"},
-          {icon:"cpu",color:"#6366F1",title:"IA adaptativa con coaching",desc:"Motor predictivo que aprende de tu historial personal"},
-          {icon:"chart",color:"#D97706",title:"Análisis temporal profundo",desc:"Tendencias, heatmaps, momentum neural y correlaciones"},
-          {icon:"gauge",color:"#8B5CF6",title:"Carga cognitiva en tiempo real",desc:"Estima tu capacidad disponible y ajusta recomendaciones"},
-        ].map((f,i)=>(
-          <motion.div key={i} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:.3+i*.1}} style={{display:"flex",gap:8,alignItems:"center"}}>
-            <div style={{width:28,height:28,borderRadius:8,background:f.color+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={f.icon} size={13} color={f.color}/></div>
-            <div><div style={{fontSize:11,fontWeight:600,color:t1}}>{f.title}</div><div style={{fontSize:10,color:t3}}>{f.desc}</div></div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-
-    <div style={{textAlign:"left",marginBottom:20,padding:"12px",background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
-      <div style={{fontSize:11,fontWeight:700,color:t1,marginBottom:6}}>Cómo usarlo:</div>
-      <div style={{fontSize:10,color:t2,lineHeight:1.6}}>
-        1. Selecciona un protocolo o acepta la recomendación IA<br/>
-        2. Haz el check-in emocional antes de iniciar<br/>
-        3. Sigue la voz y las instrucciones con ojos cerrados<br/>
-        4. Toca la pantalla cuando te lo indique<br/>
-        5. Completa el check-in para medir tu impacto neural
-      </div>
-    </div>
-    <div style={{fontSize:10,color:ac,fontStyle:"italic",marginBottom:16,lineHeight:1.5}}>Tu primera ignición será guiada por voz. Solo cierra los ojos y sigue las instrucciones.</div>
-    <motion.button whileTap={{scale:.96}} onClick={()=>{setOnboard(false);unlockVoice();const d=getDailyIgn(st);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}}} style={{width:"100%",padding:"16px",borderRadius:50,background:`linear-gradient(135deg,${ac},#0D9488)`,border:"none",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",boxShadow:`0 4px 20px ${ac}30`}}>PRIMERA IGNICIÓN</motion.button>
-  </motion.div></motion.div>}
+  {/* ═══ PROTOCOL DETAIL VIEW ═══ */}
+  <AnimatePresence>
+  {showProtoDetail&&<ProtocolDetail protocol={pr} st={st} isDark={isDark} durMult={durMult} onClose={()=>setShowProtoDetail(false)} onStart={(p)=>{setShowProtoDetail(false);sp(p);go();}}/>}
   </AnimatePresence>
 
   {/* ═══ POST: BREATHE ═══ */}
@@ -440,9 +421,8 @@ export default function BioIgnicion(){
     </motion.div>}
 
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
-    {streakRisk&&ts==="idle"&&<motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 12px",marginBottom:12,background:isDark?"#1A1510":"#FFFBEB",borderRadius:12,border:"1px solid #D9770620"}}>
-      <Icon name="alert" size={14} color="#D97706"/><span style={{fontSize:10,fontWeight:600,color:"#D97706"}}>Tu racha de {st.streak} días termina esta noche.</span>
-    </motion.div>}
+    {/* Streak Shield (replaces simple streak warning) */}
+    {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}}/>}
 
     {/* Cognitive Load indicator (NEW) */}
     {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:12,background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
@@ -515,6 +495,7 @@ export default function BioIgnicion(){
         <div style={{flex:1,textAlign:"left"}}><div style={{fontWeight:700,fontSize:11,color:t1}}>{pr.n}</div><div style={{fontSize:10,color:t3}}>{pr.ph.length} fases</div></div>
         <Icon name="chevron-down" size={12} color={t3}/>
       </motion.button>
+      <motion.button whileTap={{scale:.93}} onClick={()=>setShowProtoDetail(true)} style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} title="Ver detalle"><Icon name="info" size={16} color={t3}/></motion.button>
       <motion.button whileTap={{scale:.93}} onClick={()=>setShowIntent(true)} style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="target" size={18} color={t3}/></motion.button>
     </div>
 
@@ -648,8 +629,14 @@ export default function BioIgnicion(){
       <NeuralRadar st={st} isDark={isDark} />
     </div>
 
-    {/* ═══ NEURAL COACH IA (NEW) ═══ */}
+    {/* ═══ NEURAL COACH IA ═══ */}
     <NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} />
+
+    {/* ═══ WEEKLY REPORT (NEW) ═══ */}
+    <WeeklyReport st={st} isDark={isDark} />
+
+    {/* ═══ CORRELATION MATRIX (NEW) ═══ */}
+    <CorrelationMatrix st={st} isDark={isDark} onSelectProtocol={(p)=>{sp(p);switchTab("ignicion");}} />
 
     {/* Neural Variability Index */}
     {neuralVar&&<div style={{background:cd,borderRadius:16,padding:"14px 12px",marginBottom:14,border:`1px solid ${bd}`}}>
@@ -784,10 +771,30 @@ export default function BioIgnicion(){
       </div>
     </div>
 
+    {/* Optimal Time Suggestion */}
+    {(()=>{const ot=suggestOptimalTime(st);if(!ot||!ot.best)return null;return(
+    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
+      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:8}}><Icon name="clock" size={12} color={t3}/><span style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase"}}>Hora Óptima</span></div>
+      <div style={{fontSize:11,color:t2,lineHeight:1.6}}>{ot.recommendation}</div>
+    </div>);})()}
+
+    {/* Streak Chain Analysis */}
+    {(()=>{const sc=analyzeStreakChain(st);if(!sc)return null;return(
+    <div style={{background:cd,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${bd}`}}>
+      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:8}}><Icon name="fire" size={12} color="#D97706"/><span style={{fontSize:10,fontWeight:800,letterSpacing:3,color:t3,textTransform:"uppercase"}}>Análisis de Rachas</span></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:800,color:"#D97706"}}>{sc.maxStreak}d</div><div style={{fontSize:9,color:t3}}>récord</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:800,color:t1}}>{sc.avgStreak}d</div><div style={{fontSize:9,color:t3}}>promedio</div></div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:800,color:"#6366F1"}}>{sc.avgBreakPoint}d</div><div style={{fontSize:9,color:t3}}>punto quiebre</div></div>
+      </div>
+      <div style={{fontSize:10,color:t2,lineHeight:1.5}}>{sc.prediction}</div>
+    </div>);})()}
+
     <div style={{display:"flex",gap:6,marginBottom:10}}>
       <motion.button whileTap={{scale:.95}} onClick={()=>setShowSettings(true)} style={{flex:1,padding:"12px",borderRadius:13,border:`1px solid ${bd}`,background:cd,fontSize:10,fontWeight:700,color:t2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><Icon name="gear" size={13} color={t3}/>Ajustes</motion.button>
       <motion.button whileTap={{scale:.95}} onClick={()=>setShowHist(true)} style={{flex:1,padding:"12px",borderRadius:13,border:`1px solid ${bd}`,background:cd,fontSize:10,fontWeight:700,color:t2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><Icon name="clock" size={13} color={t3}/>Historial</motion.button>
     </div>
+    <motion.button whileTap={{scale:.95}} onClick={()=>setShowCalibration(true)} style={{width:"100%",padding:"11px",borderRadius:12,border:`1px solid ${ac}20`,background:ac+"05",color:ac,fontSize:10,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><Icon name="radar" size={12} color={ac}/>Recalibrar Baseline Neural</motion.button>
     <button onClick={()=>{if(typeof window!=="undefined"&&window.confirm("¿Reiniciar todos los datos?")){setSt({...DS,weekNum:getWeekNum()});}}} style={{width:"100%",padding:"11px",borderRadius:12,border:"1px solid #FEE2E2",background:isDark?"#1A0A0A":"#FFF5F5",color:"#DC2626",fontSize:10,fontWeight:700,cursor:"pointer"}}>Reiniciar Datos</button>
   </div>)}
   </div>
