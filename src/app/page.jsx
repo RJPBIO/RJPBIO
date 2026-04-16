@@ -11,17 +11,16 @@ import dynamic from "next/dynamic";
    ═══════════════════════════════════════════════════════════════ */
 
 // ─── Imports from modules ─────────────────────────────────
-import { P } from "../lib/protocols";
-import { SCIENCE_DEEP } from "../lib/protocols";
+import { P, SCIENCE_DEEP } from "../lib/protocols";
 import {
-  CATS, MOODS, INTENTS, DIF_LABELS,
-  MID_MSGS, POST_MSGS, GREETINGS, PROG_7, DS,
+  MOODS, INTENTS,
+  MID_MSGS, POST_MSGS, PROG_7, DS,
 } from "../lib/constants";
 import {
   gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
-  calcBioQuality, calcBurnoutIndex, calcBioSignal, calcProtoSensitivity,
-  detectGamingPattern, predictSessionImpact,
+  calcProtoSensitivity, predictSessionImpact,
   adaptiveProtocolEngine, estimateCognitiveLoad,
+  calcSessionCompletion,
 } from "../lib/neural";
 import {
   hap, hapticPhase, hapticBreath, startAmbient, stopAmbient,
@@ -42,6 +41,7 @@ const ProfileView = dynamic(() => import("../components/ProfileView"), { ssr: fa
 const PostSessionFlow = dynamic(() => import("../components/PostSessionFlow"), { ssr: false });
 const SettingsSheet = dynamic(() => import("../components/SettingsSheet"), { ssr: false });
 const HistorySheet = dynamic(() => import("../components/HistorySheet"), { ssr: false });
+const ProtocolSelector = dynamic(() => import("../components/ProtocolSelector"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -62,7 +62,6 @@ export default function BioIgnicion(){
   const[compFlash,setCompFlash]=useState(false);
   const[showHist,setShowHist]=useState(false);const[showSettings,setShowSettings]=useState(false);
   const[onboard,setOnboard]=useState(false);const[showIntent,setShowIntent]=useState(false);
-  const[greeting,setGreeting]=useState("");
   const[showScience,setShowScience]=useState(false);
   const[durMult,setDurMult]=useState(1);
   const[entryDone,setEntryDone]=useState(false);
@@ -90,7 +89,7 @@ export default function BioIgnicion(){
   useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
 
   // ═══ LOAD STATE (via Zustand) ═══
-  useEffect(()=>{setMt(true);store.init();const l=useStore.getState();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)store.update(l);if(l.totalSessions===0)setOnboard(true);else setGreeting(GREETINGS[Math.floor(Math.random()*GREETINGS.length)]);
+  useEffect(()=>{setMt(true);store.init();const l=useStore.getState();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)store.update(l);if(l.totalSessions===0)setOnboard(true);
     // Auto-select best protocol via adaptive engine
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
   },[]);
@@ -115,7 +114,7 @@ export default function BioIgnicion(){
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase(),circadian,voiceOn);hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
-  function startCountdown(){setCountdown(3);H("tap");speakNow("Tres",circadian,voiceOn);cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza",circadian,voiceOn);setGreeting("");return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);H("tap");return p-1;});},1000);}
+  function startCountdown(){setCountdown(3);H("tap");speakNow("Tres",circadian,voiceOn);cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);H("tap");return p-1;});},1000);}
   function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[]});startCountdown();}
   const pauseTRef=useRef(null);
   function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
@@ -125,36 +124,12 @@ export default function BioIgnicion(){
   function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>setTabFade(1),30);},180);H("tap");}
 
   function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
-    const td=new Date().toDateString();const di=new Date().getDay();const ad=di===0?6:di-1;const nw=[...st.weeklyData];nw[ad]=(nw[ad]||0)+1;const ys=new Date(Date.now()-864e5).toDateString();let nsk=st.lastDate===td?st.streak:st.lastDate===ys?st.streak+1:1;
-    const ml=st.moodLog||[];const hist=st.history||[];
-    const recentDeltas=ml.filter(m=>m.pre>0).slice(-10);
-    const avgDelta=recentDeltas.length>=2?recentDeltas.reduce((a,m)=>a+(m.mood-m.pre),0)/recentDeltas.length:0;
-    const cohBoost=Math.max(0,Math.min(8,Math.round(avgDelta*3+2)));
-    const cohDecay=avgDelta<=0&&recentDeltas.length>=3?-3:0;
-    const nC=Math.min(100,Math.max(20,recentDeltas.length>=3?Math.round(50+avgDelta*15+recentDeltas.length*2+cohDecay):st.coherencia+cohBoost+cohDecay));
-    const weekTotal=nw.reduce((a,b)=>a+b,0);const consistencyScore=Math.min(7,weekTotal)/7;const streakBonus=Math.min(30,nsk)*0.5;
-    const nR=Math.min(100,Math.max(20,Math.round(40+consistencyScore*30+streakBonus)));
-    const uniqueProtos=new Set([...hist.map(h=>h.p),pr.n]).size;const diversityScore=(uniqueProtos/14)*30;const expScore=Math.min(30,Math.sqrt(st.totalSessions||0)*3);
-    const nE=Math.min(100,Math.max(20,Math.round(30+diversityScore+expScore)));
-    const ns=st.totalSessions+1;
-    const bioQ=calcBioQuality(sessionData);const gamingCheck=detectGamingPattern(hist);
-    if(gamingCheck.gaming){bioQ.score=Math.min(bioQ.score,20);bioQ.quality="inválida";}
-    const qualityMult=bioQ.quality==="alta"?1.5:bioQ.quality==="media"?1.0:bioQ.quality==="baja"?0.5:0.2;
-    const eVC=Math.max(3,Math.round((5+(cohBoost*1.5)+(consistencyScore*5)+(uniqueProtos*0.5))*qualityMult));
-    const vc=(st.vCores||0)+eVC;const ach=[...st.achievements];
-    if(nsk>=7&&!ach.includes("streak7"))ach.push("streak7");if(nsk>=30&&!ach.includes("streak30"))ach.push("streak30");
-    if(nC>=90&&!ach.includes("coherencia90"))ach.push("coherencia90");if(ns>=50&&!ach.includes("sessions50"))ach.push("sessions50");
-    if(ns>=100&&!ach.includes("sessions100"))ach.push("sessions100");
-    const totalT=(st.totalTime||0)+Math.round(pr.d*durMult);if(totalT>=3600&&!ach.includes("time60"))ach.push("time60");
-    const hr=new Date().getHours();if(hr<7&&!ach.includes("earlyBird"))ach.push("earlyBird");if(hr>=22&&!ach.includes("nightOwl"))ach.push("nightOwl");
-    const uP=new Set([...hist.map(h=>h.p),pr.n]);if(uP.size>=14&&!ach.includes("allProtos"))ach.push("allProtos");
-    const burnout=calcBurnoutIndex(ml,hist);const bioSignal=calcBioSignal(st);
-    const newHist=[...hist,{p:pr.n,ts:Date.now(),vc:eVC,c:nC,r:nR,dur:Math.round(pr.d*durMult),ctx:nfcCtx?.type||"manual",bioQ:bioQ.score,quality:bioQ.quality,interactions:sessionData.interactions||0,motionSamples:sessionData.motionSamples||0,pauses:sessionData.pauses||0,burnoutIdx:burnout.index,circadian:circadian.period,bioSignal:bioSignal.score}].slice(-200);
-    setPostVC(eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
-    releaseWakeLock();speakNow(bioQ.quality==="alta"?"Sesión excelente":"Sesión completada",circadian,voiceOn);
+    const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData,nfcCtx,circadian});
+    setPostVC(result.eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
+    releaseWakeLock();speakNow(result.bioQ.quality==="alta"?"Sesión excelente":"Sesión completada",circadian,voiceOn);
     setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
-    setSt({...st,totalSessions:ns,streak:nsk,todaySessions:st.lastDate===td?st.todaySessions+1:1,lastDate:td,weeklyData:nw,weekNum:getWeekNum(),coherencia:nC,resiliencia:nR,capacidad:nE,achievements:ach,vCores:vc,history:newHist,totalTime:totalT,firstDone:true,progDay:Math.min((st.progDay||0)+1,7)});
+    setSt({...st,...result.newState});
   }
   function submitCheckin(){
     if(checkMood>0){const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:checkMood,energy:checkEnergy||2,tag:checkTag,proto:pr.n,pre:preMood||0}].slice(-100);const ach=[...st.achievements];if(checkMood===5&&!ach.includes("mood5"))ach.push("mood5");setSt({...st,moodLog:ml,achievements:ach});}
@@ -173,7 +148,7 @@ export default function BioIgnicion(){
   const sessPct=Math.round(pct*100);
   const lastProto=useMemo(()=>{const h=st.history||[];if(!h.length)return null;return h[h.length-1].p;},[st.history]);
   const favs=st.favs||[];
-  const toggleFav=(name)=>{const nf=favs.includes(name)?favs.filter(f=>f!==name):[...favs,name];setSt({...st,favs:nf});};
+  const toggleFav=useCallback((name)=>{setSt(s=>{const nf=(s.favs||[]).includes(name)?(s.favs||[]).filter(f=>f!==name):[...(s.favs||[]),name];return{...s,favs:nf};});},[setSt]);
   // Adaptive AI recommendation (replaces old smartPick)
   const aiRec=useMemo(()=>{try{return adaptiveProtocolEngine(st);}catch(e){return null;}},[st.moodLog,st.history,st.weeklyData]);
   const smartPick=aiRec?.primary?.protocol||null;
@@ -183,7 +158,8 @@ export default function BioIgnicion(){
   const cogLoad=useMemo(()=>estimateCognitiveLoad(st),[st.todaySessions,st.moodLog]);
 
   const bg=isDark?"#0B0E14":"#F1F4F9",cd=isDark?"#141820":"#FFFFFF",bd=isDark?"#1E2330":"#E2E8F0";
-  const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8",ac=pr.cl;
+  const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8";
+  const ac=pr.cl;
 
   // ─── Loading screen ─────────────────────────────────────
   if(!mt)return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#0B0E14",gap:16}}>
@@ -247,19 +223,7 @@ export default function BioIgnicion(){
   </AnimatePresence>
 
   {/* ═══ PROTOCOL SELECTOR ═══ */}
-  <AnimatePresence>
-  {sl&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setSl(false)}>
-    <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,maxHeight:"82vh",background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-    <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 16px"}}/><h3 style={{fontSize:18,fontWeight:800,color:t1,marginBottom:12}}>Protocolos</h3>
-    {/* Intent quick-filter */}
-    <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
-      {INTENTS.map(i=>{const isActive=sc===i.id;return<motion.button key={i.id} whileTap={{scale:.93}} onClick={()=>setSc(isActive?"Protocolo":i.id)} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:20,border:isActive?`2px solid ${i.color}`:`1.5px solid ${bd}`,background:isActive?i.color+"0A":cd,cursor:"pointer",flexShrink:0,transition:"all .2s"}}><Icon name={i.icon} size={14} color={isActive?i.color:t3}/><span style={{fontSize:10,fontWeight:700,color:isActive?i.color:t3}}>{i.label}</span></motion.button>;})}
-    </div>
-    {/* Category tabs */}
-    <div style={{display:"flex",background:isDark?"#1A1E28":"#EEF2F7",borderRadius:12,padding:3,marginBottom:14}}>{CATS.map(c=><button key={c} onClick={()=>setSc(c)} style={{flex:1,padding:"8px 0",borderRadius:10,border:"none",background:sc===c?cd:"transparent",color:sc===c?t1:t3,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .3s"}}>{c}</button>)}</div>
-    {[...fl].sort((a,b)=>(favs.includes(b.n)?1:0)-(favs.includes(a.n)?1:0)).map(p=>{const isLast=lastProto===p.n;const isFav=favs.includes(p.n);const isSmart=smartPick?.id===p.id;const pred=predictSessionImpact(st,p);return<motion.button key={p.id} whileTap={{scale:.98}} onClick={()=>sp(p)} style={{width:"100%",padding:"12px",marginBottom:4,borderRadius:14,border:isSmart?`2px solid ${ac}`:pr.id===p.id?`2px solid ${p.cl}`:`1.5px solid ${bd}`,background:isSmart?ac+"05":pr.id===p.id?p.cl+"06":cd,cursor:"pointer",textAlign:"left",display:"flex",gap:11,alignItems:"center",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",left:0,top:0,bottom:0,width:3,borderRadius:"0 2px 2px 0",background:p.cl}}/><div style={{width:40,height:40,borderRadius:11,background:p.cl+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:p.cl,flexShrink:0,marginLeft:4}}>{p.tg}</div><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:t1,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{p.n}{isLast&&<span style={{fontSize:10,fontWeight:700,color:t3,background:isDark?"#1A1E28":"#F1F5F9",padding:"1px 5px",borderRadius:4}}>último</span>}{isSmart&&<span style={{fontSize:10,fontWeight:700,color:ac,background:ac+"10",padding:"1px 5px",borderRadius:4}}>IA recomienda</span>}</div><div style={{fontSize:10,color:t2,marginBottom:2}}>{p.sb}</div><div style={{fontSize:10,color:t3,display:"flex",alignItems:"center",gap:6}}>{p.ph.length} fases · {p.d}s · <span style={{color:p.dif===1?"#059669":p.dif===2?"#D97706":"#DC2626"}}>{DIF_LABELS[(p.dif||1)-1]}</span>{pred.predictedDelta>0&&<span style={{color:"#059669",fontWeight:700}}> · +{pred.predictedDelta} est.</span>}</div></div><div onClick={e=>{e.stopPropagation();toggleFav(p.n);H("tap");}} style={{padding:4,cursor:"pointer",flexShrink:0}}><Icon name="star" size={16} color={isFav?ac:bd}/></div>{(()=>{const s=protoSens[p.n];return s&&s.sessions>=2?<span style={{fontSize:10,fontWeight:800,color:s.avgDelta>0?"#059669":"#DC2626",marginRight:4}}>{s.avgDelta>0?"+":""}{s.avgDelta}</span>:null;})()}{pr.id===p.id&&<Icon name="check" size={16} color={p.cl}/>}</motion.button>;})}
-  </motion.div></motion.div>)}
-  </AnimatePresence>
+  <ProtocolSelector show={sl} onClose={()=>setSl(false)} st={st} isDark={isDark} ac={ac} pr={pr} sc={sc} setSc={setSc} fl={fl} favs={favs} toggleFav={toggleFav} lastProto={lastProto} smartPick={smartPick} protoSens={protoSens} sp={sp} H={H}/>
 
   {/* ═══ SETTINGS ═══ */}
   <SettingsSheet show={showSettings} onClose={()=>setShowSettings(false)} st={st} setSt={setSt} isDark={isDark} ac={ac} voiceOn={voiceOn} setVoiceOn={setVoiceOn} H={H}/>
