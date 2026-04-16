@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { MOODS } from "../lib/constants";
+import { resolveTheme } from "../lib/theme";
 
 function groupHist(h) {
   const n = new Date(); const td = n.toDateString(); const yd = new Date(Date.now() - 864e5).toDateString();
@@ -11,10 +12,7 @@ function groupHist(h) {
 }
 
 export default function HistorySheet({ show, onClose, st, isDark, ac }) {
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
+  const { card: cd, border: bd, t1, t3 } = resolveTheme(isDark);
 
   return (
     <AnimatePresence>
