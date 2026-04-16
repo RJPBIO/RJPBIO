@@ -12,16 +12,16 @@ export const font = {
   mono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
 
   size: {
-    xs: 9,
-    sm: 10,
-    base: 11,
-    md: 12,
-    lg: 14,
-    xl: 16,
-    "2xl": 20,
-    "3xl": 28,
-    "4xl": 36,
-    hero: 48,
+    xs: 10,
+    sm: 11,
+    base: 12,
+    md: 13,
+    lg: 15,
+    xl: 17,
+    "2xl": 22,
+    "3xl": 30,
+    "4xl": 38,
+    hero: 52,
   },
 
   weight: {
@@ -192,15 +192,14 @@ export const z = {
 // ─── Layout Constants ────────────────────────────────────
 export const layout = {
   maxWidth: 430,
-  bottomNav: 68,         // bottom nav height
-  metricsBar: 52,        // metrics bar height
+  bottomNav: 72,         // unified nav height (metrics + tabs)
   contentPadding: 20,    // horizontal page padding
-  bottomSafe: 180,       // padding-bottom for scroll content
+  bottomSafe: 120,       // padding-bottom for scroll content (was 180 with double chrome)
 };
 
 // ─── Timer Sizes ─────────────────────────────────────────
 export const timer = {
-  idle: 220,
-  active: 180,
+  idle: 240,
+  active: 190,
   orbSize: 200,
 };
