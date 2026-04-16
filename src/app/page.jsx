@@ -307,7 +307,7 @@ export default function BioIgnicion() {
 
         {/* ═══ TAB: IGNICIÓN ═══ */}
         {tab === "ignicion" && postStep === "none" && countdown === 0 && !compFlash && (
-          <div style={{ padding: `${space[3]}px ${space[5]}px 180px` }}>
+          <div style={{ padding: `${space[3]}px ${space[5]}px ${layout.bottomSafe}px` }}>
 
             {/* NFC Context */}
             {nfcCtx && ts === "idle" && <div style={{ display: "flex", alignItems: "center", gap: space[2], padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[3], background: withAlpha(nfcCtx.type === "salida" ? "#6366F1" : ac, 4), borderRadius: radius.md, border: `1.5px solid ${withAlpha(nfcCtx.type === "salida" ? "#6366F1" : ac, 8)}` }}>
@@ -331,10 +331,13 @@ export default function BioIgnicion() {
 
               {/* ═══ TIMER-FIRST LAYOUT ═══ */}
 
-              {/* Status bar (compact) */}
-              {ts === "idle" && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[3] }}>
+              {/* Status bar (compact — neural state + level + session progress) */}
+              {ts === "idle" && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[2] }}>
                 <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><div style={{ width: 5, height: 5, borderRadius: radius.full, background: nSt.color, animation: "shimDot 2s ease infinite" }} /><span style={ty.caption(nSt.color)}>{nSt.label}</span></div>
-                <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><span style={ty.caption(lv.c)}>{lv.n}</span><div style={{ width: 36, height: 3, borderRadius: 2, background: bd, overflow: "hidden" }}><div style={{ width: lPct + "%", height: "100%", borderRadius: 2, background: lv.c }} /></div></div>
+                <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+                  <span style={{ ...ty.caption(cogLoad.color), display: "flex", alignItems: "center", gap: 3 }}><Icon name="bolt" size={9} color={cogLoad.color} />{st.todaySessions || 0}/{st.sessionGoal || 2}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><span style={ty.caption(lv.c)}>{lv.n}</span><div style={{ width: 32, height: 3, borderRadius: 2, background: bd, overflow: "hidden" }}><div style={{ width: lPct + "%", height: "100%", borderRadius: 2, background: lv.c }} /></div></div>
+                </div>
               </div>}
 
               {/* ═══ CORE TIMER (HERO POSITION) ═══ */}
@@ -376,35 +379,35 @@ export default function BioIgnicion() {
 
               {/* Protocol selector + controls (below timer) */}
               {ts === "idle" && <>
-                <div style={{ display: "flex", gap: space[1.5], marginBottom: space[3] }}>
-                  <motion.button aria-label={`Protocolo: ${pr.n}`} whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[2.5]}px ${space[3]}px`, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2] }}>
-                    <div style={{ width: 32, height: 32, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black }}>{pr.tg}</div>
+                <div style={{ display: "flex", gap: space[1.5], marginBottom: space[2] }}>
+                  <motion.button aria-label={`Protocolo: ${pr.n}`} whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[2]}px ${space[3]}px`, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2] }}>
+                    <div style={{ width: 30, height: 30, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black }}>{pr.tg}</div>
                     <div style={{ flex: 1, textAlign: "left" }}><div style={ty.title(t1)}>{pr.n}</div><div style={ty.caption(t3)}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div></div>
                     <Icon name="chevron-down" size={12} color={t3} />
                   </motion.button>
-                  <motion.button aria-label="Detalle del protocolo" whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={16} color={t3} /></motion.button>
-                  <motion.button aria-label="Seleccionar intención" whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="target" size={18} color={t3} /></motion.button>
+                  <motion.button aria-label="Detalle del protocolo" whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 42, height: 42, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={15} color={t3} /></motion.button>
+                  <motion.button aria-label="Seleccionar intención" whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 42, height: 42, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="target" size={16} color={t3} /></motion.button>
                 </div>
 
-                {/* Duration selector */}
-                <div style={{ display: "flex", justifyContent: "center", gap: space[1], marginBottom: space[3] }}>
-                  {[{ v: .5, l: "60s" }, { v: 1, l: "120s" }, { v: 1.5, l: "180s" }].map(d => (
-                    <motion.button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={durMult === d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ padding: `${space[1.5]}px ${space[4]}px`, borderRadius: radius.xl, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, color: durMult === d.v ? ac : t3, ...ty.caption(durMult === d.v ? ac : t3), fontWeight: font.weight.bold, cursor: "pointer", transition: "all .2s", minHeight: 44 }}>{d.l}</motion.button>
-                  ))}
-                </div>
-
-                {/* Pre-session mood */}
-                <div style={{ marginBottom: space[4] }}>
-                  <div style={{ ...ty.label(t3), marginBottom: space[1.5] }}>¿Cómo llegas a esta sesión?</div>
-                  <div style={{ display: "flex", gap: space[1] }}>{MOODS.map(m => (
-                    <motion.button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={preMood === m.value} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: `${space[1.5]}px 2px`, borderRadius: radius.sm + 3, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 4) : cd, cursor: "pointer", transition: "all .2s", minHeight: 44 }}>
-                      <Icon name={m.icon} size={16} color={preMood === m.value ? m.color : t3} />
-                      <span style={{ ...ty.caption(preMood === m.value ? m.color : t3), lineHeight: font.leading.tight, textAlign: "center" }}>{m.label}</span>
-                    </motion.button>))}</div>
+                {/* Duration + Mood — compact row */}
+                <div style={{ display: "flex", gap: space[2], marginBottom: space[2.5], alignItems: "stretch" }}>
+                  {/* Duration pills */}
+                  <div style={{ display: "flex", gap: space[1] }}>
+                    {[{ v: .5, l: "60s" }, { v: 1, l: "120s" }, { v: 1.5, l: "180s" }].map(d => (
+                      <motion.button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={durMult === d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ padding: `${space[1]}px ${space[2.5]}px`, borderRadius: radius.xl, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, color: durMult === d.v ? ac : t3, ...ty.caption(durMult === d.v ? ac : t3), fontWeight: font.weight.bold, cursor: "pointer", transition: "all .2s", minHeight: 38 }}>{d.l}</motion.button>
+                    ))}
+                  </div>
+                  {/* Mood mini-selector */}
+                  <div style={{ display: "flex", gap: 3, flex: 1, justifyContent: "flex-end" }}>
+                    {MOODS.map(m => (
+                      <motion.button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={preMood === m.value} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ width: 38, height: 38, borderRadius: radius.sm + 2, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 4) : cd, cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon name={m.icon} size={15} color={preMood === m.value ? m.color : t3} />
+                      </motion.button>))}
+                  </div>
                 </div>
 
                 {/* START CTA */}
-                <motion.button aria-label="Iniciar sesión" whileTap={{ scale: .95 }} onClick={go} style={{ width: "100%", maxWidth: 300, margin: `0 auto ${space[4]}px`, display: "flex", padding: `${space[3]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 4px 18px ${withAlpha(ac, 10)}`, minHeight: 48 }}><Icon name="bolt" size={13} color="#fff" />INICIAR</motion.button>
+                <motion.button aria-label="Iniciar sesión" whileTap={{ scale: .95 }} onClick={go} style={{ width: "100%", maxWidth: 300, margin: `0 auto ${space[3]}px`, display: "flex", padding: `${space[2.5]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 4px 18px ${withAlpha(ac, 10)}`, minHeight: 48 }}><Icon name="bolt" size={13} color="#fff" />INICIAR</motion.button>
               </>}
 
               {/* Active session controls */}
@@ -514,18 +517,6 @@ export default function BioIgnicion() {
                   <StreakShield st={st} isDark={isDark} onQuickSession={() => { setDurMult(0.5); const calmP = P.find(p => p.int === "calma" && p.dif === 1) || P[0]; setPr(calmP); setSec(Math.round(calmP.d * 0.5)); go(); }} />
                 </ErrorBoundary>
 
-                {/* Cognitive load */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: `${space[2]}px ${space[3]}px`, marginBottom: space[2], background: surface, borderRadius: radius.sm }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: space[1.5] }}>
-                    <div style={{ width: 22, height: 22, borderRadius: radius.sm - 2, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="bolt" size={10} color={ac} /></div>
-                    <span style={{ ...ty.caption(t1), fontWeight: font.weight.semibold }}>{st.todaySessions || 0}/{st.sessionGoal || 2} sesiones</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
-                    <Icon name="gauge" size={10} color={cogLoad.color} /><span style={ty.caption(cogLoad.color)}>{cogLoad.level}</span>
-                    <div style={{ width: 36, height: 4, borderRadius: 2, background: bd, overflow: "hidden" }}><div style={{ width: Math.min(100, (st.todaySessions || 0) / (st.sessionGoal || 2) * 100) + "%", height: "100%", background: ac, borderRadius: 2, transition: "width .3s" }} /></div>
-                  </div>
-                </div>
-
                 {/* Daily Ignición */}
                 <motion.button whileTap={{ scale: .97 }} onClick={() => sp(daily.proto)} style={{ width: "100%", padding: `${space[3]}px ${space[3]}px`, marginBottom: space[2.5], borderRadius: radius.lg, border: `1.5px solid ${withAlpha(daily.proto.cl, 8)}`, background: `linear-gradient(135deg,${withAlpha(daily.proto.cl, 2)},${withAlpha(daily.proto.cl, 1)})`, cursor: "pointer", textAlign: "left", display: "flex", gap: space[3], alignItems: "center", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: withAlpha(daily.proto.cl, 4) }} />
@@ -586,28 +577,28 @@ export default function BioIgnicion() {
         {tab === "perfil" && <ErrorBoundary isDark={isDark}><ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={() => setShowSettings(true)} onShowHist={() => setShowHist(true)} onShowCalibration={() => setShowCalibration(true)} /></ErrorBoundary>}
       </div>
 
-      {/* ═══ BOTTOM METRICS BAR ═══ */}
-      <div style={{ position: "fixed", bottom: layout.bottomNav, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: 400, padding: `${space[2]}px ${space[4]}px`, background: resolveTheme(isDark).glass, backdropFilter: "blur(16px)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: z.sticky, borderRadius: radius.lg, border: `1px solid ${bd}`, boxShadow: `0 4px 20px ${isDark ? "rgba(0,0,0,.3)" : "rgba(0,0,0,.06)"}` }}>
-        {[{ v: st.coherencia, l: "Enfoque", d: rD.c, c: "#3B82F6", ic: "focus" }, { v: st.resiliencia, l: "Calma", d: rD.r, c: "#8B5CF6", ic: "calm" }, { v: st.capacidad, l: "Energía", d: 0, c: "#6366F1", ic: "energy" }].map((m, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: space[1.5], flex: 1, justifyContent: "center" }}>
-            <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: withAlpha(m.c, 4), display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={m.ic} size={12} color={m.c} /></div>
-            <div>
-              <div style={{ ...ty.metric(m.c, font.size.md), lineHeight: font.leading.none }}>{m.v}%</div>
-              <div style={{ fontSize: font.size.xs, color: t3, fontWeight: font.weight.semibold, display: "flex", alignItems: "center", gap: 2 }}>{m.l}{m.d > 0 && <span style={{ color: "#059669", fontWeight: font.weight.bold }}>+{m.d}</span>}</div>
-            </div>
-          </div>))}
-      </div>
-
-      {/* ═══ BOTTOM NAV ═══ */}
-      <nav role="navigation" aria-label="Navegación principal" style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: resolveTheme(isDark).overlay, backdropFilter: "blur(20px)", borderTop: `1px solid ${bd}`, padding: `6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`, display: "flex", justifyContent: "center", gap: space[1], zIndex: z.nav }}>
-        {[{ id: "ignicion", lb: "Ignición", ic: "bolt", ac: ac }, { id: "dashboard", lb: "Dashboard", ic: "chart", ac: "#6366F1" }, { id: "perfil", lb: "Perfil", ic: "user", ac: t1 }].map(t => { const a = tab === t.id; return (
-          <motion.button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 48 }}>
-            {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 3, borderRadius: "0 0 3px 3px", background: t.ac }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
-            <motion.div animate={{ scale: a ? 1 : 0.9, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 32, height: 32, borderRadius: radius.sm + 2, background: a ? withAlpha(t.ac, 6) : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .2s" }}>
-              <Icon name={t.ic} size={a ? 19 : 17} color={a ? t.ac : t3} />
-            </motion.div>
-            <span style={{ fontSize: font.size.sm, fontWeight: a ? font.weight.black : font.weight.semibold, color: a ? t.ac : t3, transition: "all .2s", letterSpacing: a ? font.tracking.wide : font.tracking.normal }}>{t.lb}</span>
-          </motion.button>); })}
+      {/* ═══ BOTTOM NAV (unified — metrics integrated) ═══ */}
+      <nav role="navigation" aria-label="Navegación principal" style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: resolveTheme(isDark).overlay, backdropFilter: "blur(20px)", borderTop: `1px solid ${bd}`, padding: `0 ${space[4]}px max(10px, env(safe-area-inset-bottom))`, display: "flex", flexDirection: "column", zIndex: z.nav }}>
+        {/* Micro neural metrics — visible on Ignición tab only */}
+        {tab === "ignicion" && <div style={{ display: "flex", justifyContent: "center", gap: space[4], padding: `6px 0 2px` }}>
+          {[{ v: st.coherencia, l: "Enfoque", c: "#3B82F6" }, { v: st.resiliencia, l: "Calma", c: "#8B5CF6" }, { v: st.capacidad, l: "Energía", c: "#6366F1" }].map((m, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <div style={{ width: 5, height: 5, borderRadius: radius.full, background: m.c }} />
+              <span style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, color: m.c }}>{m.v}%</span>
+              <span style={{ fontSize: font.size.xs, color: t3, fontWeight: font.weight.semibold }}>{m.l}</span>
+            </div>))}
+        </div>}
+        {/* Tab buttons */}
+        <div style={{ display: "flex", justifyContent: "center", gap: space[1], padding: `4px 0 4px` }}>
+          {[{ id: "ignicion", lb: "Ignición", ic: "bolt", ac: ac }, { id: "dashboard", lb: "Dashboard", ic: "chart", ac: "#6366F1" }, { id: "perfil", lb: "Perfil", ic: "user", ac: t1 }].map(t => { const a = tab === t.id; return (
+            <motion.button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 44 }}>
+              {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2.5, borderRadius: "0 0 3px 3px", background: t.ac }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
+              <motion.div animate={{ scale: a ? 1 : 0.9, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 30, height: 30, borderRadius: radius.sm + 2, background: a ? withAlpha(t.ac, 6) : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .2s" }}>
+                <Icon name={t.ic} size={a ? 18 : 16} color={a ? t.ac : t3} />
+              </motion.div>
+              <span style={{ fontSize: font.size.xs, fontWeight: a ? font.weight.black : font.weight.semibold, color: a ? t.ac : t3, transition: "all .2s", letterSpacing: a ? font.tracking.wide : font.tracking.normal }}>{t.lb}</span>
+            </motion.button>); })}
+        </div>
       </nav>
     </div>
   );
