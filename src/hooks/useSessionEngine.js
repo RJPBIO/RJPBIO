@@ -16,11 +16,11 @@ import {
   unlockVoice, speak, speakNow, stopVoice,
 } from "../lib/audio";
 
+const PAUSE_TIMEOUT = 300000; // 5 min auto-reset
+
 /**
  * useSessionEngine — encapsulates all timer, breathing, countdown,
  * pause/resume, audio, motion, and session completion logic.
- *
- * Returns the full session state + control functions.
  */
 export function useSessionEngine({
   st, setSt, pr, durMult, nfcCtx, circadian, voiceOn, H,
@@ -67,13 +67,24 @@ export function useSessionEngine({
   const cdR = useRef(null);  // countdown interval
   const pauseTRef = useRef(null);
   const motionRef = useRef(null);
+  // Stable refs for latest values (prevents stale closures)
+  const tsRef = useRef(ts);
+  const stRef = useRef(st);
+  const prRef = useRef(pr);
+  const durMultRef = useRef(durMult);
+
+  // Keep refs in sync
+  tsRef.current = ts;
+  stRef.current = st;
+  prRef.current = pr;
+  durMultRef.current = durMult;
 
   // ─── Derived ───────────────────────────────────────────
   const totalDur = Math.round(pr.d * durMult);
-  const pct = (totalDur - sec) / totalDur;
+  const pct = totalDur > 0 ? (totalDur - sec) / totalDur : 0;
   const ph = pr.ph[pi];
   const isActive = ts === "running";
-  const isBr = isActive && ph.br;
+  const isBr = isActive && ph?.br;
   const moodDiff = preMood > 0 && checkMood > 0 ? checkMood - preMood : null;
   const CI = 2 * Math.PI * 116;
   const dO = CI * (1 - pct);
@@ -88,11 +99,13 @@ export function useSessionEngine({
     }
   }, [pr.id, durMult]);
 
-  // ─── Visibility pause ─────────────────────────────────
+  // ─── Visibility pause (uses ref to avoid stale closure) ──
   useEffect(() => {
     if (ts !== "running" || typeof document === "undefined") return;
     function onVis() {
-      if (document.visibilityState === "hidden" && ts === "running") pa();
+      if (document.visibilityState === "hidden" && tsRef.current === "running") {
+        doPause();
+      }
     }
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
@@ -110,7 +123,7 @@ export function useSessionEngine({
     return () => { stopAmbient(); stopSoundscape(); stopBinaural(); };
   }, [ts]);
 
-  // ─── Motion detection ──────────────────────────────────
+  // ─── Motion detection (cleanup on ANY ts change) ───────
   useEffect(() => {
     if (ts === "running") {
       motionRef.current = setupMotionDetection(({ samples, stability }) => {
@@ -149,10 +162,10 @@ export function useSessionEngine({
     }
     if (idx !== pi) {
       setPi(idx);
-      hapticPhase(pr.ph[idx].ic);
-      speakNow("Fase " + (idx + 1) + " de " + pr.ph.length + ". " + pr.ph[idx].k, circadian, voiceOn);
+      if (pr.ph[idx]?.ic) hapticPhase(pr.ph[idx].ic);
+      speakNow("Fase " + (idx + 1) + " de " + pr.ph.length + ". " + (pr.ph[idx]?.k || ""), circadian, voiceOn);
       setTimeout(() => {
-        try { if (document.visibilityState === "visible") speak(pr.ph[idx].i, circadian, voiceOn); } catch (e) {}
+        try { if (document.visibilityState === "visible") speak(pr.ph[idx]?.i || "", circadian, voiceOn); } catch (e) { console.warn("[BIO] Phase speak error:", e.message); }
       }, 2500);
     }
     const nxtIdx = pi < pr.ph.length - 1 ? pi + 1 : null;
@@ -187,7 +200,7 @@ export function useSessionEngine({
     if (bR.current) clearInterval(bR.current);
     const curPh = pr.ph[pi];
     if (ts !== "running") { setBL(""); setBS(1); setBCnt(0); return; }
-    if (!curPh.br) {
+    if (!curPh?.br) {
       setBL(""); setBS(1); setBCnt(0);
       const elapsed = totalDur - sec;
       if (elapsed > 0 && elapsed % 20 === 0 && ts === "running")
@@ -196,6 +209,7 @@ export function useSessionEngine({
     }
     const b = curPh.br;
     const cy = b.in + (b.h1 || 0) + b.ex + (b.h2 || 0);
+    if (cy <= 0) { setBL(""); setBS(1); setBCnt(0); return; } // guard div-by-zero
     let t = 0;
     let lastLabel = "";
     function tk() {
@@ -220,6 +234,14 @@ export function useSessionEngine({
 
   // ─── Control Functions ─────────────────────────────────
 
+  function clearAllIntervals() {
+    if (iR.current) clearInterval(iR.current);
+    if (bR.current) clearInterval(bR.current);
+    if (tR.current) clearInterval(tR.current);
+    if (cdR.current) clearInterval(cdR.current);
+    if (pauseTRef.current) clearTimeout(pauseTRef.current);
+  }
+
   function startCountdown() {
     setCountdown(3); H("tap");
     speakNow("Tres", circadian, voiceOn);
@@ -228,7 +250,7 @@ export function useSessionEngine({
         if (p <= 1) {
           clearInterval(cdR.current);
           setTs("running"); H("go");
-          speakNow(pr.ph[0].k || "Comienza", circadian, voiceOn);
+          speakNow(prRef.current.ph[0]?.k || "Comienza", circadian, voiceOn);
           return 0;
         }
         speakNow(p === 2 ? "Dos" : "Uno", circadian, voiceOn);
@@ -240,7 +262,7 @@ export function useSessionEngine({
 
   const go = useCallback(() => {
     unlockVoice(); requestWakeLock();
-    try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); } catch (e) {}
+    try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); } catch (e) { console.warn("[BIO] Fullscreen not available"); }
     setPostStep("none");
     setSessionData({
       pauses: 0, scienceViews: 0, interactions: 0,
@@ -250,29 +272,34 @@ export function useSessionEngine({
     startCountdown();
   }, [pr, circadian, voiceOn]);
 
-  const pa = useCallback(() => {
+  // Extracted pause logic (non-useCallback for use in visibility handler)
+  function doPause() {
     if (iR.current) clearInterval(iR.current);
     if (tR.current) clearInterval(tR.current);
     setTs("paused"); stopVoice(); stopBinaural(); releaseWakeLock();
     setSessionData(d => ({ ...d, pauses: d.pauses + 1 }));
     if (pauseTRef.current) clearTimeout(pauseTRef.current);
-    pauseTRef.current = setTimeout(() => { rs(); }, 300000);
+    pauseTRef.current = setTimeout(() => { doReset(); }, PAUSE_TIMEOUT);
+  }
+
+  const pa = useCallback(() => {
+    doPause();
   }, []);
 
-  const rs = useCallback(() => {
+  function doReset() {
     releaseWakeLock();
-    if (pauseTRef.current) clearTimeout(pauseTRef.current);
-    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
-    if (iR.current) clearInterval(iR.current);
-    if (bR.current) clearInterval(bR.current);
-    if (tR.current) clearInterval(tR.current);
-    if (cdR.current) clearInterval(cdR.current);
-    setTs("idle"); setSec(Math.round(pr.d * durMult));
+    clearAllIntervals();
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { console.warn("[BIO] Exit fullscreen error"); }
+    setTs("idle"); setSec(Math.round(prRef.current.d * durMultRef.current));
     setPi(0); setBL(""); setBS(1); setBCnt(0);
     setShowMid(false); setPostStep("none");
     setCheckMood(0); setCheckEnergy(0); setCheckTag("");
     setPreMood(0); setCountdown(0); setCompFlash(false);
     stopVoice();
+  }
+
+  const rs = useCallback(() => {
+    doReset();
   }, [pr, durMult]);
 
   const resume = useCallback(() => {
@@ -280,20 +307,22 @@ export function useSessionEngine({
     setTs("running"); H("go");
     speakNow("continúa", circadian, voiceOn);
     requestWakeLock();
-    if (st.soundOn !== false) startBinaural(pr.int);
-  }, [pr, circadian, voiceOn, st.soundOn]);
+    if (stRef.current.soundOn !== false) startBinaural(prRef.current.int);
+  }, [circadian, voiceOn]);
 
   const timerTap = useCallback(() => {
     unlockVoice(); H("tap");
-    if (ts === "idle") go();
-    else if (ts === "running") pa();
-    else if (ts === "paused") resume();
-  }, [ts, go, pa, resume]);
+    const current = tsRef.current;
+    if (current === "idle") go();
+    else if (current === "running") doPause();
+    else if (current === "paused") resume();
+  }, [go, resume]);
 
   function comp() {
-    if (pauseTRef.current) clearTimeout(pauseTRef.current);
+    clearAllIntervals();
     if (motionRef.current) { motionRef.current.cleanup(); motionRef.current = null; }
-    const result = calcSessionCompletion(st, { protocol: pr, durMult, sessionData, nfcCtx, circadian });
+    const curSt = stRef.current;
+    const result = calcSessionCompletion(curSt, { protocol: pr, durMult, sessionData, nfcCtx, circadian });
     setPostVC(result.eVC);
     setPostMsg(POST_MSGS[Math.floor(Math.random() * POST_MSGS.length)]);
     releaseWakeLock();
@@ -301,12 +330,11 @@ export function useSessionEngine({
     setCompFlash(true);
     setTimeout(() => { setCompFlash(false); setPostStep("breathe"); }, 800);
     setCheckMood(0); setCheckEnergy(0); setCheckTag("");
+    // Single write path: store action persists, setSt syncs local
     if (storeActions?.completeSession) {
       storeActions.completeSession(result.newState);
-      setSt({ ...st, ...result.newState });
-    } else {
-      setSt({ ...st, ...result.newState });
     }
+    setSt({ ...curSt, ...result.newState });
   }
 
   function submitCheckin() {
@@ -317,26 +345,21 @@ export function useSessionEngine({
       };
       if (storeActions?.logMood) {
         storeActions.logMood(entry);
-        // Sync local state
-        const ml = [...(st.moodLog || []), entry].slice(-200);
-        const ach = [...st.achievements];
-        if (checkMood === 5 && !ach.includes("mood5")) ach.push("mood5");
-        setSt({ ...st, moodLog: ml, achievements: ach });
-      } else {
-        const ml = [...(st.moodLog || []), entry].slice(-100);
-        const ach = [...st.achievements];
-        if (checkMood === 5 && !ach.includes("mood5")) ach.push("mood5");
-        setSt({ ...st, moodLog: ml, achievements: ach });
       }
+      // Sync local state (consistent slice limit)
+      const ml = [...(stRef.current.moodLog || []), entry].slice(-200);
+      const ach = [...stRef.current.achievements];
+      if (checkMood === 5 && !ach.includes("mood5")) ach.push("mood5");
+      setSt({ ...stRef.current, moodLog: ml, achievements: ach });
     }
     setPostStep("summary");
   }
 
   // ─── Protocol switch (resets timer) ────────────────────
   const selectProtocol = useCallback((p) => {
-    rs();
-    setSec(Math.round(p.d * durMult));
-  }, [rs, durMult]);
+    doReset();
+    setSec(Math.round(p.d * durMultRef.current));
+  }, []);
 
   return {
     // Timer state
