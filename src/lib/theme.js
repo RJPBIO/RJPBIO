@@ -67,29 +67,109 @@ export function cardGradient(base, accent, isDark) {
   return `linear-gradient(145deg, ${base}, ${accent}${isDark ? "08" : "04"})`;
 }
 
-/**
- * Label style preset — the uppercase tracking pattern used everywhere.
- * Returns a style object for spread.
- */
-export function labelStyle(color, size = font.size.sm) {
-  return {
-    fontSize: size,
+// ─── Typography Presets ──────────────────────────────────
+// Recurring patterns formalized as spreadable style objects.
+// Usage: <div style={{ ...ty.label(t3), marginBottom: 8 }}>
+
+export const ty = {
+  /**
+   * UPPERCASE LABEL — section headers, badge text, category names.
+   * The most overused pattern in the app. Now consistent everywhere.
+   * Before: fontSize:10, fontWeight:800, letterSpacing:2-3, textTransform:"uppercase"
+   */
+  label: (color) => ({
+    fontSize: font.size.sm,
     fontWeight: font.weight.bold,
     letterSpacing: font.tracking.caps,
     color,
     textTransform: "uppercase",
-  };
-}
+  }),
 
-/**
- * Metric value style preset.
- */
-export function metricStyle(color, size = font.size["2xl"]) {
-  return {
+  /**
+   * LARGE METRIC — hero numbers, scores, percentages.
+   * Before: fontSize:18-34, fontWeight:800, letterSpacing:"-1px"/"-2px"
+   */
+  metric: (color, size = font.size["2xl"]) => ({
     fontSize: size,
     fontWeight: font.weight.black,
     color,
     fontFamily: font.family,
-    letterSpacing: "-1px",
-  };
-}
+    letterSpacing: font.tracking.tight,
+  }),
+
+  /**
+   * CARD TITLE — protocol names, section titles, action labels.
+   * Before: fontSize:11-13, fontWeight:700
+   */
+  title: (color) => ({
+    fontSize: font.size.md,
+    fontWeight: font.weight.bold,
+    color,
+  }),
+
+  /**
+   * BODY — descriptions, instructions, phase text.
+   * Before: fontSize:11-12, fontWeight:400-500, lineHeight:1.5-1.7
+   */
+  body: (color) => ({
+    fontSize: font.size.base,
+    fontWeight: font.weight.normal,
+    color,
+    lineHeight: font.leading.relaxed,
+  }),
+
+  /**
+   * CAPTION — timestamps, secondary info, small badges.
+   * Before: fontSize:9-10, fontWeight:600, color:t3
+   */
+  caption: (color) => ({
+    fontSize: font.size.sm,
+    fontWeight: font.weight.semibold,
+    color,
+  }),
+
+  /**
+   * HEADING — sheet titles, modal headers.
+   * Before: fontSize:15-18, fontWeight:800
+   */
+  heading: (color) => ({
+    fontSize: font.size.xl,
+    fontWeight: font.weight.black,
+    color,
+  }),
+
+  /**
+   * HERO HEADING — page titles, big celebration text.
+   * Before: fontSize:18-20, fontWeight:800
+   */
+  heroHeading: (color) => ({
+    fontSize: font.size["2xl"],
+    fontWeight: font.weight.black,
+    color,
+    letterSpacing: font.tracking.tight,
+  }),
+
+  /**
+   * BADGE — small inline tags (último, IA recomienda).
+   * Before: fontSize:10, fontWeight:700, padding:"1px 5px"
+   */
+  badge: (color, bg) => ({
+    fontSize: font.size.sm,
+    fontWeight: font.weight.bold,
+    color,
+    background: bg,
+    padding: "1px 6px",
+    borderRadius: radius.sm / 2,
+  }),
+
+  /**
+   * BUTTON — CTA labels, action text.
+   * Before: fontSize:10-11, fontWeight:800, letterSpacing:2, textTransform:"uppercase"
+   */
+  button: {
+    fontSize: font.size.base,
+    fontWeight: font.weight.black,
+    letterSpacing: font.tracking.widest,
+    textTransform: "uppercase",
+  },
+};
