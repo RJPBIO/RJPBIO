@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { SOUNDSCAPES } from "../lib/constants";
 import { exportData } from "../lib/audio";
-import { resolveTheme } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 
 export default function SettingsSheet({
   show, onClose, st, setSt, isDark, ac, voiceOn, setVoiceOn, H,
@@ -12,32 +12,32 @@ export default function SettingsSheet({
 
   return (
     <AnimatePresence>
-    {show&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,background:cd,borderRadius:"26px 26px 0 0",padding:"18px 20px 36px"}} onClick={e=>e.stopPropagation()}>
-      <div style={{width:36,height:4,background:bd,borderRadius:2,margin:"0 auto 20px"}}/><h3 style={{fontSize:17,fontWeight:800,color:t1,marginBottom:16}}>Configuración</h3>
+    {show&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.overlay,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
+      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,background:cd,borderRadius:`${radius["2xl"]}px ${radius["2xl"]}px 0 0`,padding:`${space[5]}px ${space[5]}px ${space[10]}px`}} onClick={e=>e.stopPropagation()}>
+      <div style={{width:36,height:4,background:bd,borderRadius:2,margin:`0 auto ${space[5]}px`}}/><h3 style={{...ty.heading(t1),marginBottom:space[4]}}>Configuración</h3>
       {[{l:"Sonido + ambiente",k:"soundOn",d:"Acordes, ruido ambiental y binaural",ic:"volume-on"},{l:"Vibración",k:"hapticOn",d:"Feedback háptico neurosensorial",ic:"vibrate"},{l:"Voz guiada",k:"_voice",d:"Narración de fases y respiración",ic:"mind"}].map(s=>(
-        <div key={s.k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:8}}><Icon name={s.ic} size={15} color={t3}/><div><div style={{fontSize:12,fontWeight:700,color:t1}}>{s.l}</div><div style={{fontSize:10,color:t3,marginTop:1}}>{s.d}</div></div></div>
+        <div key={s.k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[3]}px 0`,borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:space[2]}}><Icon name={s.ic} size={15} color={t3}/><div><div style={ty.title(t1)}>{s.l}</div><div style={{...ty.caption(t3),marginTop:1}}>{s.d}</div></div></div>
           <div onClick={()=>{if(s.k==="_voice"){setVoiceOn(!voiceOn);}else setSt({...st,[s.k]:!st[s.k]});}} style={{width:42,height:24,borderRadius:12,background:s.k==="_voice"?(voiceOn?ac:bd):(st[s.k]?ac:bd),cursor:"pointer",position:"relative",transition:"background .3s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:s.k==="_voice"?(voiceOn?20:2):(st[s.k]?20:2),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
         </div>))}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 0",borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:8}}><Icon name="palette" size={15} color={t3}/><div style={{fontSize:12,fontWeight:700,color:t1}}>Tema</div></div><div style={{display:"flex",gap:4}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:"5px 11px",borderRadius:7,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?ac+"10":cd,color:(st.themeMode||"auto")===m?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[3]}px 0`,borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:space[2]}}><Icon name="palette" size={15} color={t3}/><div style={ty.title(t1)}>Tema</div></div><div style={{display:"flex",gap:space[1]}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:`${space[1]}px ${space[3]}px`,borderRadius:radius.sm-1,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?withAlpha(ac,6):cd,color:(st.themeMode||"auto")===m?ac:t3,...ty.caption((st.themeMode||"auto")===m?ac:t3),cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
       {/* Soundscape Marketplace */}
       <div style={{padding:"13px 0",borderBottom:`1px solid ${bd}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><Icon name="breath" size={15} color={t3}/><div><div style={{fontSize:12,fontWeight:700,color:t1}}>Paisaje sonoro</div><div style={{fontSize:10,color:t3}}>Desbloquea con V-Cores</div></div></div>
+        <div style={{display:"flex",alignItems:"center",gap:space[2],marginBottom:space[2.5]}}><Icon name="breath" size={15} color={t3}/><div><div style={ty.title(t1)}>Paisaje sonoro</div><div style={ty.caption(t3)}>Desbloquea con V-Cores</div></div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
           {SOUNDSCAPES.map(s=>{const unlocked=(st.unlockedSS||["off"]).includes(s.id);const active=(st.soundscape||"off")===s.id;return<motion.button key={s.id} whileTap={{scale:.95}} onClick={()=>{if(unlocked){setSt({...st,soundscape:s.id});H("tap");}else if((st.vCores||0)>=s.cost){setSt({...st,soundscape:s.id,unlockedSS:[...(st.unlockedSS||["off"]),s.id],vCores:(st.vCores||0)-s.cost});H("ok");}}} style={{padding:"10px 8px",borderRadius:12,border:active?`2px solid ${ac}`:unlocked?`1.5px solid ${bd}`:`1.5px dashed ${bd}`,background:active?ac+"08":cd,cursor:unlocked||(st.vCores||0)>=s.cost?"pointer":"not-allowed",opacity:unlocked||(st.vCores||0)>=s.cost?1:.5,textAlign:"center"}}>
-            <div style={{fontSize:11,fontWeight:700,color:active?ac:unlocked?t1:t3}}>{s.n}</div>
-            {!unlocked&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><Icon name="sparkle" size={9} color={ac}/>{s.cost}</div>}
-            {unlocked&&active&&<div style={{fontSize:9,fontWeight:700,color:ac,marginTop:2}}>ACTIVO</div>}
-            {unlocked&&!active&&<div style={{fontSize:9,color:t3,marginTop:2}}>desbloqueado</div>}
+            <div style={ty.title(active?ac:unlocked?t1:t3)}>{s.n}</div>
+            {!unlocked&&<div style={{...ty.caption(ac),fontWeight:font.weight.black,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><Icon name="sparkle" size={9} color={ac}/>{s.cost}</div>}
+            {unlocked&&active&&<div style={{fontSize:font.size.xs,fontWeight:font.weight.bold,color:ac,marginTop:2}}>ACTIVO</div>}
+            {unlocked&&!active&&<div style={{fontSize:font.size.xs,color:t3,marginTop:2}}>desbloqueado</div>}
           </motion.button>;})}
         </div>
       </div>
-      <div style={{display:"flex",gap:6,marginTop:14}}>
-        <motion.button whileTap={{scale:.96}} onClick={()=>exportData(st)} style={{flex:1,padding:"13px",borderRadius:13,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-          <Icon name="export" size={14} color={t2}/><span style={{fontSize:11,fontWeight:700,color:t2}}>JSON</span>
+      <div style={{display:"flex",gap:space[1.5],marginTop:space[4]}}>
+        <motion.button whileTap={{scale:.96}} onClick={()=>exportData(st)} style={{flex:1,padding:`${space[3]}px`,borderRadius:radius.md,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:space[2]}}>
+          <Icon name="export" size={14} color={t2}/><span style={ty.title(t2)}>JSON</span>
         </motion.button>
-        <motion.button whileTap={{scale:.96}} onClick={()=>exportNOM035(st)} style={{flex:1,padding:"13px",borderRadius:13,border:"1.5px solid #059669",background:"#05966908",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-          <Icon name="file" size={14} color="#059669"/><span style={{fontSize:11,fontWeight:700,color:"#059669"}}>NOM-035</span>
+        <motion.button whileTap={{scale:.96}} onClick={()=>exportNOM035(st)} style={{flex:1,padding:`${space[3]}px`,borderRadius:radius.md,border:"1.5px solid #059669",background:withAlpha("#059669",4),cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:space[2]}}>
+          <Icon name="file" size={14} color="#059669"/><span style={ty.title("#059669")}>NOM-035</span>
         </motion.button>
       </div>
     </motion.div></motion.div>)}
