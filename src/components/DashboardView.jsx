@@ -9,7 +9,7 @@ import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
   calcNeuralVariability,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, layout } from "../lib/theme";
 
 const NeuralRadar = dynamic(() => import("./NeuralRadar"), { ssr: false });
 const NeuralCoach = dynamic(() => import("./NeuralCoach"), { ssr: false });
@@ -40,18 +40,39 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
   const noData = st.totalSessions === 0;
 
   if (noData) return (
-    <div style={{ padding: "14px 20px 180px" }}>
-      <div style={{ textAlign: "center", padding: "50px 20px" }}>
-        <Icon name="bolt" size={34} color={ac} />
-        <div style={{ ...ty.heading(t1), marginTop: space[2.5], marginBottom: space[1] }}>Tu dashboard te espera</div>
-        <div style={{ ...ty.body(t3), marginBottom: space[5] }}>Completa tu primera ignición para ver tus métricas neurales.</div>
-        <motion.button whileTap={{ scale: .95 }} onClick={() => switchTab("ignicion")} style={{ padding: `${space[3]}px ${space[7]}px`, borderRadius: radius.full, background: ac, border: "none", color: "#fff", ...ty.button, cursor: "pointer" }}>IR A IGNICIÓN</motion.button>
+    <div style={{ padding: `14px 20px ${layout.bottomSafe}px` }}>
+      <div style={{ padding: "40px 20px" }}>
+        {/* Preview of what they'll unlock */}
+        <div style={{ textAlign: "center", marginBottom: space[5] }}>
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200 }}>
+            <svg width="64" height="64" viewBox="0 0 64 64" style={{ margin: `0 auto ${space[3]}px`, display: "block" }}>
+              <circle cx="32" cy="32" r="30" fill="none" stroke={ac} strokeWidth="1.5" opacity=".15" />
+              <circle cx="32" cy="32" r="22" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 6" opacity=".2" />
+              <circle cx="32" cy="32" r="6" fill={ac} opacity=".2" />
+              {[0, 60, 120, 180, 240, 300].map((angle, i) => {
+                const rad = (angle * Math.PI) / 180;
+                return <circle key={i} cx={32 + Math.cos(rad) * 22} cy={32 + Math.sin(rad) * 22} r="3" fill={["#3B82F6", "#059669", "#D97706", "#8B5CF6", "#0D9488", "#EC4899"][i]} opacity=".4" />;
+              })}
+            </svg>
+          </motion.div>
+          <div style={ty.heroHeading(t1)}>Tu radar neural</div>
+          <div style={{ ...ty.body(t3), maxWidth: 260, margin: `${space[1.5]}px auto 0` }}>Una sesión activa 6 dimensiones de tu rendimiento cognitivo.</div>
+        </div>
+        {/* Preview cards — what metrics they'll see */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[1.5], marginBottom: space[5], opacity: 0.5 }}>
+          {[{ l: "Enfoque", c: "#3B82F6" }, { l: "Calma", c: "#8B5CF6" }, { l: "Energía", c: "#6366F1" }].map((m, i) => (
+            <div key={i} style={{ background: withAlpha(m.c, 4), borderRadius: radius.sm + 3, padding: `${space[2.5]}px ${space[1]}px`, textAlign: "center" }}>
+              <div style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: m.c }}>—%</div>
+              <div style={{ ...ty.caption(t3), marginTop: 1 }}>{m.l}</div>
+            </div>))}
+        </div>
+        <motion.button whileTap={{ scale: .95 }} onClick={() => switchTab("ignicion")} style={{ width: "100%", maxWidth: 280, margin: "0 auto", display: "flex", padding: `${space[3]}px ${space[5]}px`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 4px 18px ${withAlpha(ac, 10)}` }}><Icon name="bolt" size={13} color="#fff" />PRIMERA IGNICIÓN</motion.button>
       </div>
     </div>
   );
 
   return (
-    <div style={{ padding: "14px 20px 180px" }}>
+    <div style={{ padding: `14px 20px ${layout.bottomSafe}px` }}>
       {/* Executive Summary — Hero card */}
       <div style={{ background: `linear-gradient(145deg,${isDark ? "#0D1117" : "#FFFFFF"},${isDark ? "#141820" : ac + "06"})`, borderRadius: 22, padding: "20px 18px", marginBottom: 16, border: `1.5px solid ${ac}15`, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: `radial-gradient(circle,${ac}10,transparent)`, filter: "blur(20px)" }} />
@@ -72,10 +93,17 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         <div style={{ ...ty.body(t2), padding: `${space[2]}px ${space[2.5]}px`, background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: radius.sm, textAlign: "center" }}>{perf >= 70 ? "Rendimiento alto. Mantén tu ritmo." : perf >= 50 ? "Estado funcional. Una sesión más elevaría tu rendimiento." : "Tu sistema necesita atención. Prioriza un reset."}</div>
       </div>
 
+      {/* ─── PRIMARY: Real-time state ─── */}
       <div style={{ marginBottom: 14 }}><NeuralRadar st={st} isDark={isDark} /></div>
       <NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} />
+
+      {/* ─── SECONDARY: Trends & patterns ─── */}
+      <div style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[1], paddingLeft: 2 }}>TENDENCIAS</div>
       <WeeklyReport st={st} isDark={isDark} />
       <CorrelationMatrix st={st} isDark={isDark} onSelectProtocol={(p) => { sp(p); switchTab("ignicion"); }} />
+
+      {/* ─── TERTIARY: Deep analytics ─── */}
+      <div style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[1], paddingLeft: 2 }}>ANÁLISIS PROFUNDO</div>
 
       {/* Neural Variability Index */}
       {neuralVar && <div style={{ background: cd, borderRadius: 16, padding: "14px 12px", marginBottom: 14, border: `1px solid ${bd}` }}>
