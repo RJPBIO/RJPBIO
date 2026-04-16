@@ -176,9 +176,9 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
 
       {/* Metrics grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
-        {[{ l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? "+" + rD.c + "%" : "—", c: "#3B82F6", ic: "focus" }, { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? "+" + rD.r + "%" : "—", c: "#8B5CF6", ic: "calm" }, { l: "V-Cores", v: st.vCores || 0, d: "+" + (st.history?.slice(-1)[0]?.vc || 0), c: "#D97706", ic: "sparkle" }, { l: "Sesiones", v: st.totalSessions, d: st.streak + "d racha", c: "#059669", ic: "bolt" }].map((k, i) => (
+        {[{ l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? "+" + rD.c + "%" : "—", c: "#3B82F6", ic: "focus" }, { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? "+" + rD.r + "%" : "—", c: "#8B5CF6", ic: "calm" }, { l: "V-Cores", v: st.vCores || 0, d: "+" + (st.history?.slice(-1)[0]?.vc || 0), c: semantic.warning, ic: "sparkle" }, { l: "Sesiones", v: st.totalSessions, d: st.streak + "d racha", c: semantic.success, ic: "bolt" }].map((k, i) => (
           <div key={i} style={{ background: cd, borderRadius: 14, padding: "11px 10px", border: `1px solid ${bd}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: space[1] }}><div style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name={k.ic} size={10} color={t3} /><span style={ty.caption(t3)}>{k.l}</span></div><span style={{ ...ty.caption("#059669"), fontWeight: font.weight.bold }}>{k.d}</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: space[1] }}><div style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name={k.ic} size={10} color={t3} /><span style={ty.caption(t3)}>{k.l}</span></div><span style={{ ...ty.caption(semantic.success), fontWeight: font.weight.bold }}>{k.d}</span></div>
             <AnimatedNumber value={k.v} suffix={k.l === "Enfoque" || k.l === "Calma" ? "%" : ""} color={k.c} size={20} />
           </div>))}
       </div>
