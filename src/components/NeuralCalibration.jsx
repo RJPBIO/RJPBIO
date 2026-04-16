@@ -154,30 +154,39 @@ export default function NeuralCalibration({ onComplete, isDark }) {
   }, []);
 
   // ─── Focus Test ────────────────────────────────────────
+  const focusTimersRef = useRef([]); // track ALL recursive timeouts
   const startFocusTest = useCallback(() => {
     setFocusPhase("testing");
     let count = 0;
     const totalFlashes = 5 + Math.floor(Math.random() * 8); // 5-12 flashes
     setActualFlashes(totalFlashes);
     let flashesDone = 0;
+    let cancelled = false;
 
     const flashInterval = () => {
-      if (flashesDone >= totalFlashes) {
+      if (cancelled || flashesDone >= totalFlashes) {
         setFocusPhase("input");
         return;
       }
       const delay = 400 + Math.random() * 1200;
-      focusTimerRef.current = setTimeout(() => {
+      const outerT = setTimeout(() => {
+        if (cancelled) return;
         setFlashVisible(true);
         count++;
         setFlashCount(count);
-        setTimeout(() => {
+        const innerT = setTimeout(() => {
+          if (cancelled) return;
           setFlashVisible(false);
           flashesDone++;
           flashInterval();
         }, 200 + Math.random() * 200);
+        focusTimersRef.current.push(innerT);
       }, delay);
+      focusTimerRef.current = outerT;
+      focusTimersRef.current.push(outerT);
     };
+    // Store cancel function for cleanup
+    focusTimersRef.current._cancel = () => { cancelled = true; };
     flashInterval();
   }, []);
 
@@ -186,6 +195,10 @@ export default function NeuralCalibration({ onComplete, isDark }) {
       if (rtTimerRef.current) clearTimeout(rtTimerRef.current);
       if (bhTimerRef.current) clearInterval(bhTimerRef.current);
       if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+      // Cancel recursive flash chain + clear all tracked timeouts
+      if (focusTimersRef.current._cancel) focusTimersRef.current._cancel();
+      focusTimersRef.current.forEach(t => clearTimeout(t));
+      focusTimersRef.current = [];
     };
   }, []);
 
