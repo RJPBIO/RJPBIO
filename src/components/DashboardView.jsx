@@ -123,7 +123,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           <AnimatedNumber value={bioSignal.score} color={bioSignal.score >= 70 ? semantic.success : bioSignal.score >= 45 ? semantic.warning : semantic.danger} size={28} />
           <div style={{ ...ty.caption(t2), marginTop: space[1.5] }}>{bioSignal.score >= 70 ? "Rendimiento alto" : bioSignal.score >= 45 ? "Estado funcional" : "Intervención activa"}</div>
         </div>
-        <div style={{ background: `linear-gradient(145deg,${cd},${(burnout.risk === "bajo" ? semantic.success : semantic.danger) + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${burnout.risk === "crítico" || burnout.risk === "alto" ? ${semantic.danger + "15"} : bd}`, position: "relative", overflow: "hidden" }}>
+        <div style={{ background: `linear-gradient(145deg,${cd},${(burnout.risk === "bajo" ? semantic.success : semantic.danger) + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${burnout.risk === "crítico" || burnout.risk === "alto" ? semantic.danger + "15" : bd}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -10, right: -10, width: 40, height: 40, borderRadius: "50%", background: (burnout.risk === "bajo" ? semantic.success : semantic.danger) + "08" }} />
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[1.5] }}><Icon name="alert-triangle" size={12} color={burnout.risk === "bajo" ? semantic.success : semantic.danger} /><span style={ty.label(t3)}>Burnout</span></div>
           <AnimatedNumber value={burnout.index} color={burnout.risk === "bajo" ? semantic.success : burnout.risk === "moderado" ? semantic.warning : semantic.danger} size={28} />
