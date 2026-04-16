@@ -8,7 +8,7 @@ import {
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, suggestOptimalTime, analyzeStreakChain,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, layout } from "../lib/theme";
 
 export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onShowHist, onShowCalibration }) {
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
@@ -21,7 +21,7 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
   const avgMood = useMemo(() => { const ml = st.moodLog || []; if (!ml.length) return 0; return +(ml.slice(-7).reduce((a, m) => a + m.mood, 0) / Math.min(ml.length, 7)).toFixed(1); }, [st.moodLog]);
 
   return (
-    <div style={{ padding: "14px 20px 180px" }}>
+    <div style={{ padding: `14px 20px ${layout.bottomSafe}px` }}>
       {/* Profile Hero */}
       <div style={{ textAlign: "center", marginBottom: 20, marginTop: 8, position: "relative" }}>
         <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle,${ac}08,transparent)`, filter: "blur(30px)", pointerEvents: "none" }} />
