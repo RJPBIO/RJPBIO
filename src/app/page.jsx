@@ -323,8 +323,11 @@ export default function BioIgnicion() {
               <motion.div animate={{ scale: [1, 1.06, 1], opacity: [.7, 1, .7] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
                 <svg width="48" height="48" viewBox="0 0 52 52" style={{ margin: `0 auto ${space[4]}px`, display: "block" }}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3" /><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{ animation: "innerRing 6s linear infinite" }} /><circle cx="26" cy="26" r="4" fill={ac} opacity=".3" /></svg>
               </motion.div>
+              {/* Contextual greeting based on user state */}
+              {st.streak >= 3 && <div style={{ ...ty.caption(ac), marginBottom: space[2] }}>{st.streak} días de racha activa</div>}
               <div style={{ ...ty.body(t2), fontSize: font.size.md, fontWeight: font.weight.light, lineHeight: font.leading.relaxed, maxWidth: 300, margin: "0 auto" }}>{daily.phrase}</div>
-              <div style={{ ...ty.label(t3), marginTop: space[4] }}>TOCA PARA CONTINUAR</div>
+              {st.todaySessions === 0 && <div style={{ ...ty.caption(t3), marginTop: space[2] }}>Aún sin sesión hoy</div>}
+              <div style={{ ...ty.label(t3), marginTop: space[3] }}>TOCA PARA CONTINUAR</div>
             </motion.div>}
 
             {(entryDone || st.totalSessions === 0 || ts !== "idle") && <>
@@ -356,9 +359,9 @@ export default function BioIgnicion() {
                 {/* Neural center dot */}
                 <motion.div animate={{ opacity: [.3, .7, .3], boxShadow: [`0 0 8px ${ac}30`, `0 0 18px ${ac}50`, `0 0 8px ${ac}30`] }} transition={{ duration: ts === "idle" ? 3 : 1.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: isActive ? 6 : 10, height: isActive ? 6 : 10, borderRadius: "50%", background: ac, pointerEvents: "none" }} />
                 {/* Center content */}
-                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none", zIndex: 2 }}>
+                <div aria-live={isActive ? "polite" : "off"} aria-atomic="true" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none", zIndex: 2 }}>
                   {isBr && bL && <div style={{ marginBottom: 4 }}><span style={{ ...ty.label(ac), letterSpacing: 5, opacity: .9 }}>{bL}</span><span style={{ ...ty.title(ac), marginLeft: 4 }}>{bCnt}s</span></div>}
-                  <div style={{ fontSize: isActive ? font.size.hero : 56, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-3px", textShadow: isActive ? `0 0 20px ${withAlpha(ac, 6)}` : "none" }}>{sec}</div>
+                  <div aria-label={`${sec} segundos`} style={{ fontSize: isActive ? font.size.hero : 56, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-3px", textShadow: isActive ? `0 0 20px ${withAlpha(ac, 6)}` : "none" }}>{sec}</div>
                   {isActive && <div style={{ ...ty.title(ac), fontWeight: font.weight.black, marginTop: space[1], opacity: .8 }}>{sessPct}%</div>}
                   {ts === "idle" && <>
                     <div style={{ ...ty.label(t3), fontWeight: font.weight.semibold, marginTop: space[1.5] }}>segundos</div>
@@ -495,19 +498,20 @@ export default function BioIgnicion() {
                 <Icon name="chevron" size={10} color={t3} /><span style={ty.caption(t3)}>Siguiente: {nextPh.l}</span>
               </div>}
 
-              {/* Phase dots */}
-              <div style={{ display: "flex", gap: space[1], justifyContent: "center", flexWrap: "wrap", marginBottom: space[3] }}>
+              {/* Phase dots — full in idle, compact bar in active */}
+              {!isActive ? <div style={{ display: "flex", gap: space[1], justifyContent: "center", flexWrap: "wrap", marginBottom: space[3] }}>
                 {pr.ph.map((p, i) => { const sR = durMult !== 1 ? Math.round(p.s * durMult) + "–" + Math.round(p.e * durMult) + "s" : p.r; const isCurr = pi === i; const isDone = i < pi; return (
                   <motion.div key={i} animate={isCurr ? { scale: [1, 1.03, 1] } : {}} transition={isCurr ? { duration: 2, repeat: Infinity } : {}} style={{ padding: `${space[1]}px ${space[2.5]}px`, borderRadius: radius.xl, border: isCurr ? `2px solid ${ac}` : isDone ? `1.5px solid ${withAlpha(ac, 12)}` : `1px solid ${bd}`, background: isCurr ? withAlpha(ac, 4) : isDone ? withAlpha(ac, 2) : cd, color: isCurr ? ac : isDone ? ac : t3, ...ty.caption(isCurr ? ac : isDone ? ac : t3), fontWeight: isCurr ? font.weight.black : font.weight.semibold, display: "flex", alignItems: "center", gap: space[1], opacity: i <= pi ? 1 : .4, boxShadow: isCurr ? `0 2px 8px ${withAlpha(ac, 6)}` : "none", transition: "all .3s" }}>
                     <span style={{ width: isCurr ? 7 : 5, height: isCurr ? 7 : 5, borderRadius: "50%", background: isDone || isCurr ? ac : bd, transition: "all .3s", boxShadow: isCurr ? `0 0 6px ${withAlpha(ac, 14)}` : "none" }} />
                     {isCurr && <Icon name={p.ic} size={10} color={ac} />}{sR}
                   </motion.div>); })}
-              </div>
+              </div> : <div style={{ display: "flex", gap: 2, marginBottom: space[2] }}>
+                {pr.ph.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < pi ? ac : i === pi ? withAlpha(ac, 20) : bd, transition: "background .3s" }} />)}
+              </div>}
 
-              {/* Progress waveform (active only) */}
-              {isActive && <div style={{ marginBottom: space[3], height: 26, borderRadius: radius.lg, overflow: "hidden", background: cd, border: `1.5px solid ${bd}`, position: "relative" }}>
-                <svg width="800" height="20" viewBox="0 0 800 20" style={{ position: "absolute", top: 0, left: 0, animation: "wf 4s linear infinite", opacity: .2 }}><path d={`M0,10 ${Array.from({ length: 40 }, (_, i) => `Q${i * 20 + 10},${i % 2 === 0 ? 3 : 17} ${(i + 1) * 20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1" /></svg>
-                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: (pct * 100) + "%", background: `linear-gradient(90deg,${withAlpha(ac, 10)},${withAlpha(ac, 4)})`, transition: "width .95s linear", borderRadius: radius.sm }} />
+              {/* Progress bar (active only — clean replacement for waveform) */}
+              {isActive && <div style={{ marginBottom: space[2], height: 4, borderRadius: 2, background: bd, overflow: "hidden" }}>
+                <div style={{ width: (pct * 100) + "%", height: "100%", background: `linear-gradient(90deg,${withAlpha(ac, 20)},${ac})`, transition: "width .95s linear", borderRadius: 2 }} />
               </div>}
 
               {/* ═══ CONTEXTUAL AI SECTION (idle only) ═══ */}
