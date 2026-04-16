@@ -1,38 +1,30 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 
 /* ═══════════════════════════════════════════════════════════════
-   BIO-IGNICIÓN v5.0 — NEURAL OPTIMIZATION PLATFORM
+   BIO-IGNICIÓN v6.0 — NEURAL OPTIMIZATION PLATFORM
    ═══════════════════════════════════════════════════════════════
-   Modular Architecture · Zustand · Recharts · Framer Motion
-   Lucide Icons · Enhanced Neural AI · Adaptive Coaching
+   Modular Architecture · Custom Hooks · Zustand · ErrorBoundary
+   Timer-First UX · Design Tokens · Adaptive Neural AI
    ═══════════════════════════════════════════════════════════════ */
 
-// ─── Imports from modules ─────────────────────────────────
 import { P, SCIENCE_DEEP } from "../lib/protocols";
-import {
-  MOODS, INTENTS,
-  MID_MSGS, POST_MSGS, PROG_7, DS,
-} from "../lib/constants";
+import { MOODS, INTENTS, PROG_7, DS } from "../lib/constants";
 import {
   gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
   calcProtoSensitivity, predictSessionImpact,
   adaptiveProtocolEngine, estimateCognitiveLoad,
-  calcSessionCompletion,
 } from "../lib/neural";
-import {
-  hap, hapticPhase, hapticBreath, startAmbient, stopAmbient,
-  startSoundscape, stopSoundscape, startBinaural, stopBinaural,
-  setupMotionDetection, requestWakeLock, releaseWakeLock,
-  unlockVoice, speak, speakNow, stopVoice, loadVoices,
-} from "../lib/audio";
-import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize } from "../lib/theme";
+import { hap, loadVoices, speak, hapticBreath, speakNow } from "../lib/audio";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, layout } from "../lib/theme";
 import { useStore } from "../store/useStore";
+import { useSessionEngine } from "../hooks/useSessionEngine";
 import Icon from "../components/Icon";
+import ErrorBoundary from "../components/ErrorBoundary";
 
-// Dynamic imports (code-split)
+// ─── Dynamic imports (code-split) ────────────────────────
 const BreathOrb = dynamic(() => import("../components/BreathOrb"), { ssr: false });
 const NeuralCalibration = dynamic(() => import("../components/NeuralCalibration"), { ssr: false });
 const ProtocolDetail = dynamic(() => import("../components/ProtocolDetail"), { ssr: false });
@@ -47,445 +39,571 @@ const ProtocolSelector = dynamic(() => import("../components/ProtocolSelector"),
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════ */
-export default function BioIgnicion(){
+export default function BioIgnicion() {
   const store = useStore();
-  const[mt,setMt]=useState(false);const[tab,setTab]=useState("ignicion");const[st,setSt_]=useState(DS);
-  const[pr,setPr]=useState(P[12]);const[sc,setSc]=useState("Protocolo");const[sl,setSl]=useState(false);
-  const[ts,setTs]=useState("idle");const[sec,setSec]=useState(120);const[pi,setPi]=useState(0);
-  const[bL,setBL]=useState("");const[bS,setBS]=useState(1);const[bCnt,setBCnt]=useState(0);
-  const[midMsg,setMidMsg]=useState("");const[showMid,setShowMid]=useState(false);
-  const[tp,setTp]=useState(false);const[tabFade,setTabFade]=useState(1);
-  const[postStep,setPostStep]=useState("none");
-  const[postVC,setPostVC]=useState(0);const[postMsg,setPostMsg]=useState("");
-  const[checkMood,setCheckMood]=useState(0);const[checkEnergy,setCheckEnergy]=useState(0);const[checkTag,setCheckTag]=useState("");
-  const[preMood,setPreMood]=useState(0);
-  const[countdown,setCountdown]=useState(0);
-  const[compFlash,setCompFlash]=useState(false);
-  const[showHist,setShowHist]=useState(false);const[showSettings,setShowSettings]=useState(false);
-  const[onboard,setOnboard]=useState(false);const[showIntent,setShowIntent]=useState(false);
-  const[showScience,setShowScience]=useState(false);
-  const[durMult,setDurMult]=useState(1);
-  const[entryDone,setEntryDone]=useState(false);
-  const[nfcCtx,setNfcCtx]=useState(null);
-  const[voiceOn,setVoiceOn]=useState(true);
-  const[sessionData,setSessionData]=useState({pauses:0,scienceViews:0,phaseTimings:[]});
-  const[showCalibration,setShowCalibration]=useState(false);
-  const[showProtoDetail,setShowProtoDetail]=useState(false);
-  const[showMore,setShowMore]=useState(false);
-  const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
-  const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);store.update(nv);},[st]);
+  // ─── App-level state ───────────────────────────────────
+  const [mt, setMt] = useState(false);
+  const [tab, setTab] = useState("ignicion");
+  const [st, setSt_] = useState(DS);
+  const [pr, setPr] = useState(P[12]);
+  const [sc, setSc] = useState("Protocolo");
+  const [sl, setSl] = useState(false);
+  const [tp, setTp] = useState(false);
+  const [tabFade, setTabFade] = useState(1);
+  const [durMult, setDurMult] = useState(1);
+  const [entryDone, setEntryDone] = useState(false);
+  const [nfcCtx, setNfcCtx] = useState(null);
+  const [voiceOn, setVoiceOn] = useState(true);
+  const [isDark, setIsDark] = useState(false);
 
-  // ═══ Service Worker Registration ═══
-  useEffect(()=>{if(typeof navigator!=="undefined"&&"serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}},[]);
+  // ─── Panel visibility ──────────────────────────────────
+  const [showHist, setShowHist] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [onboard, setOnboard] = useState(false);
+  const [showIntent, setShowIntent] = useState(false);
+  const [showScience, setShowScience] = useState(false);
+  const [showCalibration, setShowCalibration] = useState(false);
+  const [showProtoDetail, setShowProtoDetail] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
-  // ═══ NFC/QR DEEP LINK ═══
-  useEffect(()=>{if(typeof window==="undefined")return;try{const params=new URLSearchParams(window.location.search);const c=params.get("c"),t=params.get("t"),e=params.get("e");if(c||t){setNfcCtx({company:c||"",type:t||"entrada",employee:e||""});setEntryDone(true);
-    const isExit=t==="salida"||t==="exit";const h=new Date().getHours();
-    let pool=isExit?P.filter(p=>p.int==="calma"||p.int==="reset"):h<12?P.filter(p=>p.int==="energia"||p.int==="enfoque"):P.filter(p=>p.int==="enfoque"||p.int==="reset");
-    const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
-  }}catch(e){};},[]);
+  // ─── State setter (wraps Zustand) ──────────────────────
+  const setSt = useCallback(v => {
+    const nv = typeof v === "function" ? v(st) : v;
+    setSt_(nv);
+    store.update(nv);
+  }, [st]);
 
-  // ═══ VOICE ═══
-  useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
+  // ─── Core callbacks ────────────────────────────────────
+  const H = useCallback(t => hap(t, st.soundOn, st.hapticOn), [st.soundOn, st.hapticOn]);
+  const circadian = useMemo(() => getCircadian(), []);
 
-  // ═══ LOAD STATE (via Zustand) ═══
-  useEffect(()=>{setMt(true);store.init();const l=useStore.getState();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)store.update(l);if(l.totalSessions===0)setOnboard(true);
-    // Auto-select best protocol via adaptive engine
-    try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
-  },[]);
+  // ─── Session engine (timer, breathing, audio, completion) ─
+  const storeActions = useMemo(() => ({
+    completeSession: store.completeSession,
+    logMood: store.logMood,
+    toggleFav: store.toggleFav,
+    recalibrate: store.recalibrate,
+  }), []);
+  const engine = useSessionEngine({ st, setSt, pr, durMult, nfcCtx, circadian, voiceOn, H, storeActions });
 
-  useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){pa();}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
-  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
-  const[isDark,setIsDark]=useState(false);
-  useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
-  const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
+  // ─── Service Worker ────────────────────────────────────
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
 
-  const motionRef=useRef(null);const circadian=useMemo(()=>getCircadian(),[]);
-  useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();startBinaural(pr.int);}else{stopAmbient();stopSoundscape();stopBinaural();}return()=>{stopAmbient();stopSoundscape();stopBinaural();};},[ts]);
-  useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection(({samples,stability})=>{setSessionData(d=>({...d,motionSamples:samples,stability:stability}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
+  // ─── NFC/QR deep link ──────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const c = params.get("c"), t = params.get("t"), e = params.get("e");
+      if (c || t) {
+        setNfcCtx({ company: c || "", type: t || "entrada", employee: e || "" });
+        setEntryDone(true);
+        const isExit = t === "salida" || t === "exit";
+        const h = new Date().getHours();
+        const pool = isExit
+          ? P.filter(p => p.int === "calma" || p.int === "reset")
+          : h < 12 ? P.filter(p => p.int === "energia" || p.int === "enfoque")
+          : P.filter(p => p.int === "enfoque" || p.int === "reset");
+        const pick = pool[Math.floor(Math.random() * pool.length)] || P[0];
+        setPr(pick);
+      }
+    } catch (e) {}
+  }, []);
 
-  useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
-  const totalDur=Math.round(pr.d*durMult);
-  useEffect(()=>{const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}
-    if(idx!==pi){setPi(idx);hapticPhase(pr.ph[idx].ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+pr.ph[idx].k,circadian,voiceOn);setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[idx].i,circadian,voiceOn);}catch(e){}},2500);}
-    const nxtIdx=pi<pr.ph.length-1?pi+1:null;if(nxtIdx!==null){const nxtStart=Math.round(pr.ph[nxtIdx].s*scale);const ttN=nxtStart-el;if(ttN===2&&ts==="running")speak("Prepárate",circadian,voiceOn);}
-  },[sec,pr,durMult]);
-  useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
-  useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase(),circadian,voiceOn);hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  // ─── Voice loading ─────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    return () => { try { window.speechSynthesis.removeEventListener("voiceschanged", loadVoices); } catch (e) {} };
+  }, []);
 
-  function startCountdown(){setCountdown(3);H("tap");speakNow("Tres",circadian,voiceOn);cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);H("tap");return p-1;});},1000);}
-  function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[]});startCountdown();}
-  const pauseTRef=useRef(null);
-  function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
-  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
-  function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
-  function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}}
-  function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>setTabFade(1),30);},180);H("tap");}
+  // ─── Load state (via Zustand) ──────────────────────────
+  useEffect(() => {
+    setMt(true);
+    store.init();
+    const l = useStore.getState();
+    setSt_(l);
+    if (l.totalSessions === 0) setOnboard(true);
+    try {
+      const rec = adaptiveProtocolEngine(l);
+      if (rec && rec.primary) setPr(rec.primary.protocol);
+    } catch (e) {}
+  }, []);
 
-  function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
-    const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData,nfcCtx,circadian});
-    setPostVC(result.eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
-    releaseWakeLock();speakNow(result.bioQ.quality==="alta"?"Sesión excelente":"Sesión completada",circadian,voiceOn);
-    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);
-    setCheckMood(0);setCheckEnergy(0);setCheckTag("");
-    setSt({...st,...result.newState});
+  // ─── Auto-save ─────────────────────────────────────────
+  useEffect(() => {
+    if (!mt || typeof window === "undefined") return;
+    const save = () => store.update(st);
+    const iv = setInterval(save, 30000);
+    const onHide = () => { if (document.visibilityState === "hidden") store.update(st); };
+    window.addEventListener("beforeunload", save);
+    window.addEventListener("pagehide", save);
+    document.addEventListener("visibilitychange", onHide);
+    return () => { clearInterval(iv); window.removeEventListener("beforeunload", save); window.removeEventListener("pagehide", save); document.removeEventListener("visibilitychange", onHide); };
+  }, [mt, st]);
+
+  // ─── Theme detection ───────────────────────────────────
+  useEffect(() => {
+    if (!mt) return;
+    function ck() {
+      const h = new Date().getHours();
+      const m = st.themeMode || "auto";
+      if (m === "dark") setIsDark(true);
+      else if (m === "light") setIsDark(false);
+      else setIsDark(h >= 20 || h < 6);
+    }
+    ck();
+    const iv = setInterval(ck, 60000);
+    return () => clearInterval(iv);
+  }, [mt, st.themeMode]);
+
+  // ─── Protocol switch ───────────────────────────────────
+  function sp(p) {
+    engine.rs();
+    setPr(p);
+    setSl(false);
+    setShowIntent(false);
+    setShowScience(false);
   }
-  function submitCheckin(){
-    if(checkMood>0){const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:checkMood,energy:checkEnergy||2,tag:checkTag,proto:pr.n,pre:preMood||0}].slice(-100);const ach=[...st.achievements];if(checkMood===5&&!ach.includes("mood5"))ach.push("mood5");setSt({...st,moodLog:ml,achievements:ach});}
-    setPostStep("summary");
+
+  function switchTab(id) {
+    if (id === tab) return;
+    setTabFade(0);
+    setTimeout(() => { setTab(id); setTimeout(() => setTabFade(1), 30); }, 180);
+    H("tap");
   }
 
-  const lv=gL(st.totalSessions),ph=pr.ph[pi],fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc);
-  const pct=(totalDur-sec)/totalDur,CI=2*Math.PI*116,dO=CI*(1-pct),isBr=ts==="running"&&ph.br;
-  const perf=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
-  const protoSens=useMemo(()=>calcProtoSensitivity(st.moodLog),[st.moodLog]);
-  const nSt=getStatus(perf);const lPct=lvPct(st.totalSessions);
-  const isActive=ts==="running";
-  const rD=useMemo(()=>{const h=st.history||[];if(h.length<2)return{c:0,r:0};return{c:h.slice(-1)[0].c-(h.length>=5?h[h.length-5]:h[0]).c,r:h.slice(-1)[0].r-(h.length>=5?h[h.length-5]:h[0]).r};},[st.history]);
-  const moodDiff=preMood>0&&checkMood>0?checkMood-preMood:null;
-  const nextPh=pi<pr.ph.length-1?pr.ph[pi+1]:null;
-  const sessPct=Math.round(pct*100);
-  const lastProto=useMemo(()=>{const h=st.history||[];if(!h.length)return null;return h[h.length-1].p;},[st.history]);
-  const favs=st.favs||[];
-  const toggleFav=useCallback((name)=>{setSt(s=>{const nf=(s.favs||[]).includes(name)?(s.favs||[]).filter(f=>f!==name):[...(s.favs||[]),name];return{...s,favs:nf};});},[setSt]);
-  // Adaptive AI recommendation (replaces old smartPick)
-  const aiRec=useMemo(()=>{try{return adaptiveProtocolEngine(st);}catch(e){return null;}},[st.moodLog,st.history,st.weeklyData]);
-  const smartPick=aiRec?.primary?.protocol||null;
-  const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
-  const progStep=PROG_7[(st.progDay||0)%7];
-  const prediction=useMemo(()=>predictSessionImpact(st,pr),[st.moodLog,pr.id]);
-  const cogLoad=useMemo(()=>estimateCognitiveLoad(st),[st.todaySessions,st.moodLog]);
+  // ─── Derived state ─────────────────────────────────────
+  const { ts, sec, pi, countdown, compFlash, totalDur, pct, ph, isActive, isBr, CI, dO, sessPct, nextPh, bL, bS, bCnt, midMsg, showMid, postStep, setPostStep, postVC, postMsg, checkMood, setCheckMood, checkEnergy, setCheckEnergy, checkTag, setCheckTag, preMood, setPreMood, moodDiff, sessionData, setSessionData, go, pa, rs, resume, timerTap, submitCheckin, setSec } = engine;
 
-  const{bg,card:cd,surface,border:bd,t1,t2,t3,scrim}=resolveTheme(isDark);
-  const ac=pr.cl;
+  const lv = gL(st.totalSessions);
+  const fl = INTENTS.some(i => i.id === sc) ? P.filter(p => p.int === sc) : P.filter(p => p.ct === sc);
+  const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
+  const protoSens = useMemo(() => calcProtoSensitivity(st.moodLog), [st.moodLog]);
+  const nSt = getStatus(perf);
+  const lPct = lvPct(st.totalSessions);
+  const rD = useMemo(() => { const h = st.history || []; if (h.length < 2) return { c: 0, r: 0 }; return { c: h.slice(-1)[0].c - (h.length >= 5 ? h[h.length - 5] : h[0]).c, r: h.slice(-1)[0].r - (h.length >= 5 ? h[h.length - 5] : h[0]).r }; }, [st.history]);
+  const lastProto = useMemo(() => { const h = st.history || []; if (!h.length) return null; return h[h.length - 1].p; }, [st.history]);
+  const favs = st.favs || [];
+  const toggleFav = useCallback((name) => { store.toggleFav(name); setSt(s => { const nf = (s.favs || []).includes(name) ? (s.favs || []).filter(f => f !== name) : [...(s.favs || []), name]; return { ...s, favs: nf }; }); }, [setSt]);
+  const aiRec = useMemo(() => { try { return adaptiveProtocolEngine(st); } catch (e) { return null; } }, [st.moodLog, st.history, st.weeklyData]);
+  const smartPick = aiRec?.primary?.protocol || null;
+  const daily = useMemo(() => getDailyIgn(st), [st.moodLog]);
+  const progStep = PROG_7[(st.progDay || 0) % 7];
+  const prediction = useMemo(() => predictSessionImpact(st, pr), [st.moodLog, pr.id]);
+  const cogLoad = useMemo(() => estimateCognitiveLoad(st), [st.todaySessions, st.moodLog]);
 
-  // ─── Loading screen ─────────────────────────────────────
-  if(!mt)return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#0B0E14",gap:space[4]}}>
-    <motion.div animate={{scale:[1,1.06,1],opacity:[.7,1,.7]}} transition={{duration:1.8,repeat:Infinity,ease:"easeInOut"}}>
-      <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg>
-    </motion.div>
-    <div style={{fontSize:font.size.sm,fontWeight:font.weight.black,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div>
-    <div style={{fontSize:font.size.sm,color:"#4B5568",marginTop:-8}}>v5.0 — Neural Engine IA</div>
-  </div>);
+  const { bg, card: cd, surface, border: bd, t1, t2, t3, scrim } = resolveTheme(isDark);
+  const ac = pr.cl;
 
-  return(
-  <div style={{maxWidth:layout.maxWidth,margin:"0 auto",minHeight:"100vh",background:bg,position:"relative",overflow:"hidden",fontFamily:font.family,transition:"background .8s"}}>
-
-  {/* Background aura */}
-  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
-
-  {/* Mid-session message */}
-  <AnimatePresence>
-  {showMid&&<motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",zIndex:180,pointerEvents:"none"}}><div style={{background:cd,borderRadius:16,padding:"14px 22px",boxShadow:"0 8px 30px rgba(0,0,0,.08)",border:`1px solid ${bd}`,maxWidth:320,textAlign:"center"}}><div style={{fontSize:13,fontWeight:600,color:t1,lineHeight:1.6,fontStyle:"italic"}}>{midMsg}</div></div></motion.div>}
-  </AnimatePresence>
-
-  {/* Countdown */}
-  <AnimatePresence>
-  {countdown>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.countdown,background:`${bg}DD`,backdropFilter:"blur(30px)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-    <motion.div key={countdown} initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:1.5,opacity:0}} transition={{type:"spring",stiffness:200,damping:15}}>
-      <div style={{fontSize:96,fontWeight:font.weight.black,color:ac}}>{countdown}</div>
-    </motion.div>
-  </motion.div>}
-  </AnimatePresence>
-
-  {compFlash&&<div style={{position:"fixed",inset:0,zIndex:z.flash,background:`${ac}12`,animation:"compFlash .8s ease forwards",pointerEvents:"none"}}/>}
-
-  {/* ═══ ONBOARDING — Neural Calibration Flow ═══ */}
-  <AnimatePresence>
-  {(onboard||showCalibration)&&<NeuralCalibration isDark={isDark} onComplete={(baseline)=>{
-    setOnboard(false);setShowCalibration(false);unlockVoice();
-    const nst={...st,neuralBaseline:baseline,onboardingComplete:true,calibrationHistory:[...(st.calibrationHistory||[]),{...baseline,ts:Date.now()}].slice(-10),sessionGoal:baseline.recommendations?.sessionGoal||2};
-    setSt(nst);
-    const d=getDailyIgn(nst);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}
-    const ach=[...nst.achievements];if(!ach.includes("calibrated")){ach.push("calibrated");setSt({...nst,achievements:ach});}
-  }}/>}
-  </AnimatePresence>
-
-  {/* ═══ PROTOCOL DETAIL VIEW ═══ */}
-  <AnimatePresence>
-  {showProtoDetail&&<ProtocolDetail protocol={pr} st={st} isDark={isDark} durMult={durMult} onClose={()=>setShowProtoDetail(false)} onStart={(p)=>{setShowProtoDetail(false);sp(p);go();}}/>}
-  </AnimatePresence>
-
-  {/* ═══ POST-SESSION FLOW ═══ */}
-  <PostSessionFlow postStep={postStep} ts={ts} ac={ac} isDark={isDark} pr={pr} durMult={durMult} st={st} checkMood={checkMood} setCheckMood={setCheckMood} checkEnergy={checkEnergy} setCheckEnergy={setCheckEnergy} checkTag={checkTag} setCheckTag={setCheckTag} preMood={preMood} postVC={postVC} postMsg={postMsg} moodDiff={moodDiff} H={H} submitCheckin={submitCheckin} onSetPostStep={setPostStep} onReset={rs}/>
-
-  {/* ═══ INTENT PICKER ═══ */}
-  <AnimatePresence>
-  {showIntent&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.modal,background:scrim,backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[6]}} onClick={()=>setShowIntent(false)}>
-    <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%"}} onClick={e=>e.stopPropagation()}>
-    <div style={{textAlign:"center",marginBottom:space[5]}}><div style={{fontSize:font.size.xl,fontWeight:font.weight.black,color:t1}}>¿Qué necesitas?</div>
-    {aiRec&&<div style={{...ty.caption(t3),marginTop:space[1]}}>IA sugiere: <span style={{color:ac,fontWeight:font.weight.bold}}>{aiRec.need}</span> · {aiRec.context.circadian}</div>}
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:space[2]}}>{INTENTS.map(i=>{const b=P.filter(p=>p.int===i.id);const pk=b[Math.floor(b.length/2)]||P[0];return(<motion.button key={i.id} whileTap={{scale:.95}} onClick={()=>sp(pk)} style={{padding:`${space[4]}px ${space[2.5]}px`,borderRadius:radius.lg,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",textAlign:"center"}}><Icon name={i.icon} size={26} color={i.color}/><div style={{...ty.title(t1),marginTop:space[1.5]}}>{i.label}</div><div style={{...ty.caption(i.color),fontWeight:font.weight.bold,marginTop:space[1]}}>{pk.n}</div></motion.button>);})}</div>
-  </motion.div></motion.div>}
-  </AnimatePresence>
-
-  {/* ═══ PROTOCOL SELECTOR ═══ */}
-  <ProtocolSelector show={sl} onClose={()=>setSl(false)} st={st} isDark={isDark} ac={ac} pr={pr} sc={sc} setSc={setSc} fl={fl} favs={favs} toggleFav={toggleFav} lastProto={lastProto} smartPick={smartPick} protoSens={protoSens} sp={sp} H={H}/>
-
-  {/* ═══ SETTINGS ═══ */}
-  <SettingsSheet show={showSettings} onClose={()=>setShowSettings(false)} st={st} setSt={setSt} isDark={isDark} ac={ac} voiceOn={voiceOn} setVoiceOn={setVoiceOn} H={H}/>
-
-  {/* ═══ HISTORY ═══ */}
-  <HistorySheet show={showHist} onClose={()=>setShowHist(false)} st={st} isDark={isDark} ac={ac}/>
-
-  {/* ═══ MAIN CONTENT ═══ */}
-  <div style={{opacity:tabFade,transition:"opacity .25s cubic-bezier(.4,0,.2,1),transform .25s",transform:tabFade===1?"translateY(0)":"translateY(8px)",position:"relative",zIndex:1}}>
-
-  {/* ═══ TAB: IGNICIÓN ═══ */}
-  {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
-    {/* NFC Context */}
-    {nfcCtx&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcCtx.type==="salida"?"#6366F108":ac+"08",borderRadius:14,border:`1.5px solid ${nfcCtx.type==="salida"?"#6366F120":ac+"20"}`,animation:"fi .4s"}}>
-      <div style={{width:28,height:28,borderRadius:8,background:nfcCtx.type==="salida"?"#6366F115":ac+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={nfcCtx.type==="salida"?"calm":"energy"} size={14} color={nfcCtx.type==="salida"?"#6366F1":ac}/></div>
-      <div><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:nfcCtx.type==="salida"?"#6366F1":ac,textTransform:"uppercase"}}>{nfcCtx.type==="salida"?"SESIÓN DE SALIDA":"SESIÓN DE ENTRADA"}</div>
-      <div style={{fontSize:10,fontWeight:600,color:t1}}>{nfcCtx.type==="salida"?"Descomprime tu día.":"Activa tu enfoque."}</div></div>
-    </div>}
-
-    {/* Immersive entry */}
-    {!entryDone&&ts==="idle"&&st.totalSessions>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1}} style={{textAlign:"center",padding:"30px 0 20px"}} onClick={()=>setEntryDone(true)}>
-      <motion.div animate={{scale:[1,1.06,1],opacity:[.7,1,.7]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>
-        <svg width="48" height="48" viewBox="0 0 52 52" style={{margin:"0 auto 16px",display:"block"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3"/><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{animation:"innerRing 6s linear infinite"}}/><circle cx="26" cy="26" r="4" fill={ac} opacity=".3"/></svg>
+  // ─── Loading screen ────────────────────────────────────
+  if (!mt) return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0B0E14", gap: space[4] }}>
+      <motion.div animate={{ scale: [1, 1.06, 1], opacity: [.7, 1, .7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
+        <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4" /></svg>
       </motion.div>
-      <div style={{fontSize:14,fontWeight:300,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto"}}>{daily.phrase}</div>
-      <div style={{fontSize:10,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>TOCA PARA CONTINUAR</div>
-    </motion.div>}
-
-    {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
-    {/* Streak Shield (replaces simple streak warning) */}
-    {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}}/>}
-
-    {/* Cognitive Load indicator (NEW) */}
-    {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[2.5]}px ${space[4]}px`,marginBottom:space[3],background:surface,borderRadius:radius.md}}>
-      <div style={{display:"flex",alignItems:"center",gap:space[1.5]}}>
-        <div style={{width:24,height:24,borderRadius:7,background:withAlpha(ac,6),display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="bolt" size={11} color={ac}/></div>
-        <span style={{...ty.body(t1),fontWeight:font.weight.semibold}}>{st.todaySessions||0} de {st.sessionGoal||2} sesiones hoy</span>
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:space[1.5]}}>
-        <div style={{display:"flex",alignItems:"center",gap:3}}><Icon name="gauge" size={10} color={cogLoad.color}/><span style={ty.caption(cogLoad.color)}>{cogLoad.level}</span></div>
-        <div style={{width:40,height:5,borderRadius:radius.sm/2,background:bd,overflow:"hidden"}}>
-          <div style={{width:Math.min(100,(st.todaySessions||0)/(st.sessionGoal||2)*100)+"%",height:"100%",background:ac,borderRadius:radius.sm/2,transition:"width .3s"}}/>
-        </div>
-      </div>
-    </div>}
-
-    {/* Daily Ignición with AI reasoning */}
-    {ts==="idle"&&<motion.button whileTap={{scale:.97}} onClick={()=>sp(daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:14,borderRadius:18,border:`1.5px solid ${daily.proto.cl}20`,background:`linear-gradient(135deg,${daily.proto.cl}06,${daily.proto.cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
-      <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
-      <div style={{flex:1,position:"relative",zIndex:1}}>
-        <div style={{...ty.label(daily.proto.cl),marginBottom:2}}>IGNICIÓN DEL DÍA</div>
-        <div style={{...ty.title(t1),fontWeight:font.weight.black}}>{daily.proto.n}</div>
-        <div style={{...ty.caption(t3),marginTop:2,fontStyle:"italic",lineHeight:font.leading.snug}}>{daily.phrase}</div>
-      </div>
-      <Icon name="bolt" size={16} color={daily.proto.cl}/>
-    </motion.button>}
-
-    {/* AI Recommendation — inline compact */}
-    {ts==="idle"&&aiRec&&aiRec.primary&&aiRec.primary.protocol.id!==daily.proto.id&&<motion.button initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} whileTap={{scale:.97}} onClick={()=>sp(aiRec.primary.protocol)} style={{width:"100%",padding:"10px 14px",marginBottom:10,borderRadius:14,border:`1.5px solid ${ac}15`,background:isDark?"#0A1A0A":"#F0FDF4",cursor:"pointer",textAlign:"left",display:"flex",gap:10,alignItems:"center"}}>
-      <div style={{width:28,height:28,borderRadius:8,background:ac+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="cpu" size={13} color={ac}/></div>
-      <div style={{flex:1}}><div style={{...ty.caption(ac),fontWeight:font.weight.bold}}>IA: {aiRec.primary.protocol.n}</div><div style={ty.caption(t3)}>{aiRec.primary.reason}</div></div>
-      <Icon name="chevron" size={12} color={ac}/>
-    </motion.button>}
-
-    {/* Expandable secondary section */}
-    {ts==="idle"&&(prediction||(st.progDay||0)<7)&&<>
-    <button onClick={()=>{setShowMore(!showMore);H("tap");}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"6px 0",marginBottom:showMore?10:14,background:"none",border:"none",cursor:"pointer"}}>
-      <div style={{flex:1,height:1,background:bd}}/>
-      <span style={{fontSize:10,fontWeight:700,color:t3,display:"flex",alignItems:"center",gap:4,flexShrink:0}}>{showMore?"Menos":"Más"} <span style={{transform:showMore?"rotate(180deg)":"rotate(0)",display:"inline-block",transition:"transform .2s"}}>▾</span></span>
-      <div style={{flex:1,height:1,background:bd}}/>
-    </button>
-    <AnimatePresence>
-    {showMore&&<motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
-      {/* Prediction */}
-      {prediction&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:10,background:prediction.predictedDelta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A1E28":"#F8FAFC"),borderRadius:14,border:`1px solid ${prediction.predictedDelta>0?"#05966920":bd}`}}>
-        <Icon name="predict" size={14} color={prediction.predictedDelta>0?"#059669":"#6366F1"}/>
-        <div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:prediction.predictedDelta>0?"#059669":"#6366F1"}}>{prediction.message}</div><div style={{fontSize:10,color:t3,marginTop:1}}>Confianza: {prediction.confidence}%</div></div>
-      </div>}
-      {/* 7-Day Program */}
-      {(st.progDay||0)<7&&<div style={{marginBottom:10,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
-          <span style={{fontSize:10,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
-        </div>
-        <div style={{display:"flex",gap:3,marginBottom:10}}>
-          {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
-        <motion.button whileTap={{scale:.97}} onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:isDark?"#1A1E28":"#F8FAFC",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div>
-          <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
-          <Icon name="chevron" size={12} color={ac}/>
-        </motion.button>
-      </div>}
-    </motion.div>}
-    </AnimatePresence>
-    </>}
-
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
-      <div style={{display:"flex",alignItems:"center",gap:3}}><span style={{fontSize:10,fontWeight:700,color:lv.c}}>{lv.n}</span><div style={{width:36,height:3,borderRadius:2,background:bd,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:2,background:lv.c}}/></div></div>
+      <div style={ty.label("#94A3B8")}>BIO-IGNICIÓN</div>
+      <div style={{ ...ty.caption("#4B5568"), marginTop: -8 }}>v6.0 — Neural Engine IA</div>
     </div>
-    <div style={{display:"flex",gap:7,marginBottom:16}}>
-      <motion.button whileTap={{scale:.96}} onClick={()=>setSl(true)} style={{flex:1,padding:"10px 12px",borderRadius:15,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",gap:9}}>
-        <div style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:ac}}>{pr.tg}</div>
-        <div style={{flex:1,textAlign:"left"}}><div style={{fontWeight:700,fontSize:11,color:t1}}>{pr.n}</div><div style={{fontSize:10,color:t3}}>{pr.ph.length} fases</div></div>
-        <Icon name="chevron-down" size={12} color={t3}/>
-      </motion.button>
-      <motion.button whileTap={{scale:.93}} onClick={()=>setShowProtoDetail(true)} style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} title="Ver detalle"><Icon name="info" size={16} color={t3}/></motion.button>
-      <motion.button whileTap={{scale:.93}} onClick={()=>setShowIntent(true)} style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="target" size={18} color={t3}/></motion.button>
-    </div>
+  );
 
-    {/* Duration selector */}
-    {ts==="idle"&&<div style={{display:"flex",justifyContent:"center",gap:4,marginBottom:16}}>
-      {[{v:.5,l:"60s"},{v:1,l:"120s"},{v:1.5,l:"180s"}].map(d=>(
-        <motion.button key={d.v} whileTap={{scale:.93}} onClick={()=>{setDurMult(d.v);setSec(Math.round(pr.d*d.v));H("tap");}} style={{padding:"6px 16px",borderRadius:20,border:durMult===d.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:durMult===d.v?ac+"08":cd,color:durMult===d.v?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer",transition:"all .2s"}}>{d.l}</motion.button>
-      ))}
-    </div>}
+  return (
+    <div style={{ maxWidth: layout.maxWidth, margin: "0 auto", minHeight: "100vh", background: bg, position: "relative", overflow: "hidden", fontFamily: font.family, transition: "background .8s" }}>
 
-    {/* Pre-session mood */}
-    {ts==="idle"&&<div style={{marginBottom:16}}>
-      <div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>¿Cómo llegas a esta sesión?</div>
-      <div style={{display:"flex",gap:4}}>{MOODS.map(m=>(
-        <motion.button key={m.id} whileTap={{scale:.9}} onClick={()=>{setPreMood(m.value);H("tap");}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"7px 2px",borderRadius:11,border:preMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:preMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s"}}>
-          <Icon name={m.icon} size={16} color={preMood===m.value?m.color:t3}/>
-          <span style={{fontSize:10,fontWeight:700,color:preMood===m.value?m.color:t3,lineHeight:1.1,textAlign:"center"}}>{m.label}</span>
-        </motion.button>))}</div>
-    </div>}
-
-    {/* ═══ CORE DE IGNICIÓN ═══ */}
-    <div onClick={timerTap} role="button" aria-label={ts==="idle"?"Iniciar sesión":ts==="running"?"Pausar sesión":"Reanudar sesión"} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:250,height:isActive?200:250,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
-      {/* Glow exterior pulsante */}
-      <motion.div animate={ts==="idle"?{scale:[1,1.06,1],opacity:[.3,.6,.3]}:isActive?{scale:[1,1.04,1],opacity:[.4,.7,.4]}:{}} transition={{duration:ts==="idle"?3.5:2.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:isActive?-16:-10,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"12":"08"},transparent 65%)`,filter:"blur(6px)"}}/>
-      {/* Anillo de respiración exterior */}
-      {ts!=="paused"&&<motion.div animate={{scale:[1,1.02,1]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:isActive?-8:-4,borderRadius:"50%",border:`1.5px solid ${ac}${isActive?"15":"0A"}`}}/>}
-      <svg width={isActive?"200":"250"} height={isActive?"200":"250"} viewBox="0 0 260 260" style={{transform:"rotate(-90deg)"}}>
-        {/* Track */}
-        <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth={ts==="idle"?"4":"3"} opacity=".4"/>
-        {/* Progreso */}
-        <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth={isActive?"7":ts==="idle"?"5":"3"} strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={ts==="idle"?0:dO} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",filter:isActive?`drop-shadow(0 0 8px ${ac}60)`:`drop-shadow(0 0 4px ${ac}30)`}}/>
-        {/* Anillo interior */}
-        <circle cx="130" cy="130" r="98" fill="none" stroke={bd} strokeWidth=".5" strokeDasharray="3 8" style={{animation:isActive?"innerRing 10s linear infinite":"innerRing 30s linear infinite"}}/>
-        {/* Gradiente de fondo sutil en idle */}
-        {ts==="idle"&&<circle cx="130" cy="130" r="115" fill={`url(#timerGrad)`} opacity=".04"/>}
-        <defs><radialGradient id="timerGrad"><stop offset="0%" stopColor={ac}/><stop offset="100%" stopColor="transparent"/></radialGradient></defs>
-      </svg>
-      {/* Punto central neural */}
-      <motion.div animate={{opacity:[.3,.7,.3],boxShadow:[`0 0 8px ${ac}30`,`0 0 18px ${ac}50`,`0 0 8px ${ac}30`]}} transition={{duration:ts==="idle"?3:1.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:isActive?6:10,height:isActive?6:10,borderRadius:"50%",background:ac,pointerEvents:"none"}}/>
-      {/* Contenido central */}
-      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none",zIndex:2}}>
-        {isBr&&bL&&<div style={{marginBottom:4}}><span style={{fontSize:12,fontWeight:800,letterSpacing:5,color:ac,opacity:.9}}>{bL}</span><span style={{fontSize:13,fontWeight:800,color:ac,marginLeft:4}}>{bCnt}s</span></div>}
-        <div style={{fontSize:isActive?font.size.hero:56,fontWeight:font.weight.black,color:t1,lineHeight:font.leading.none,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
-        {isActive&&<div style={{...ty.title(ac),fontWeight:font.weight.black,marginTop:space[1],opacity:.8}}>{sessPct}%</div>}
-        {ts==="idle"&&<>
-          <div style={{...ty.label(t3),fontWeight:font.weight.semibold,marginTop:space[1.5]}}>segundos</div>
-          <motion.div animate={{opacity:[.5,1,.5],y:[0,-2,0]}} transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:12,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-            <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},#0D9488)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
-            <span style={ty.label(ac)}>INICIAR</span>
-          </motion.div>
-        </>}
-        {ts==="paused"&&<motion.div animate={{opacity:[.5,1,.5]}} transition={{duration:2,repeat:Infinity}} style={{marginTop:6}}><span style={{fontSize:11,fontWeight:800,color:ac,letterSpacing:3}}>EN PAUSA</span></motion.div>}
+      {/* Background aura */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "-15%", right: "-15%", width: "50%", height: "50%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, isDark ? 6 : 4)},transparent)`, animation: "am 25s ease-in-out infinite", filter: "blur(50px)" }} />
+        <div style={{ position: "absolute", bottom: "-10%", left: "-10%", width: "40%", height: "40%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha("#818CF8", isDark ? 4 : 4)},transparent)`, animation: "am 30s ease-in-out infinite reverse", filter: "blur(45px)" }} />
       </div>
-      {tp&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"100%",height:"100%",borderRadius:"50%",border:`2px solid ${ac}20`,animation:"cdPulse .6s ease forwards",pointerEvents:"none"}}/>}
-    </div>
 
-    {/* BreathOrb (NEW — framer-motion breathing viz) */}
-    <BreathOrb type={ph.ic} color={ac} breathScale={bS} breathLabel={bL} breathCount={bCnt} active={isActive} sessionProgress={pct}/>
-
-    {/* Phase info */}
-    <div style={{textAlign:"center",marginBottom:isActive?6:10}}><div style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon name={ph.ic} size={isActive?11:13} color={ac}/><span style={{fontSize:isActive?12:14,fontWeight:800,color:t1}}>{ph.l}</span></div>{!isActive&&<div style={{fontSize:10,color:t3,marginTop:2}}>{ph.r}</div>}</div>
-    <motion.div key={pi} initial={{opacity:0,x:12}} animate={{opacity:1,x:0}} transition={{duration:.3}} style={{background:cd,borderRadius:16,padding:"16px",marginBottom:10,border:`1px solid ${bd}`}}>
-      {isActive&&<><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:700,color:ac}}>Fase {pi+1} de {pr.ph.length}</span><span style={{fontSize:10,color:t3}}>{Math.round((pi+1)/pr.ph.length*100)}%</span></div></>}
-      {ph.k&&<div style={{fontSize:16,fontWeight:800,color:t1,lineHeight:1.45,marginBottom:10,letterSpacing:"-0.3px"}}>{ph.k}</div>}
-      <p style={{fontSize:12,lineHeight:1.75,color:t2,margin:0}}>{ph.i}</p>
-
-      {/* Anti-trampa checkpoints */}
-      {isActive&&(()=>{
-        const elapsed=totalDur-sec;
-        const cp1=Math.round(totalDur*0.25),cp2=Math.round(totalDur*0.50),cp3=Math.round(totalDur*0.78);
-        const isCP1=elapsed>=cp1&&elapsed<cp1+10;const isCP2=elapsed>=cp2&&elapsed<cp2+10;const isCP3=elapsed>=cp3&&elapsed<cp3+10;
-        if(!isCP1&&!isCP2&&!isCP3)return null;
-        if(elapsed===cp1)speak("Mantén presionado",circadian,voiceOn);
-        else if(elapsed===cp2)speak("Toca al exhalar",circadian,voiceOn);
-        else if(elapsed===cp3)speak("Confirma tu presencia",circadian,voiceOn);
-
-        if(isCP1)return(<motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{marginTop:12}}><button
-          onTouchStart={e=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.94)";hapticBreath("INHALA");const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="width 2.5s linear";bar.style.width="100%";}}}
-          onTouchEnd={e=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
-            if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");speak("verificado",circadian,voiceOn);}
-            else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3}));H("tap");}}}
-          onMouseDown={e=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.94)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="width 2.5s linear";bar.style.width="100%";}}}
-          onMouseUp={e=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
-            if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");}
-            else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3}));H("tap");}}}
-          style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`2px solid ${ac}25`,background:ac+"06",cursor:"pointer",display:"flex",flexDirection:"column",gap:8,transition:"all .3s",position:"relative",overflow:"hidden"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><div style={{width:10,height:10,borderRadius:"50%",background:ac,opacity:.7,animation:"pu 1s ease infinite"}}/><span style={{fontSize:13,fontWeight:700,color:ac}}>Mantén presionado 2s</span></div>
-          <div style={{height:4,background:bd,borderRadius:4,overflow:"hidden",width:"100%"}}><div data-hold-bar="" style={{width:"0%",height:"100%",background:`linear-gradient(90deg,${ac}60,${ac})`,borderRadius:4}}/></div>
-        </button></motion.div>);
-        if(isCP2)return(<motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{marginTop:12}}><button
-          onClick={()=>{const isExhale=bL==="EXHALA"||bL==="SOSTÉN";setSessionData(d=>({...d,interactions:(d.interactions||0)+(isExhale?1:0.7),reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");if(isExhale)speak("sincronizado",circadian,voiceOn);}}
-          style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px dashed ${ac}35`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <div style={{width:9,height:9,borderRadius:"50%",background:bL==="EXHALA"?ac:"transparent",border:`2px solid ${ac}`,opacity:.6}}/><span style={{fontSize:13,fontWeight:700,color:ac}}>Toca al exhalar</span>
-          {bL==="EXHALA"&&<span style={{fontSize:11,fontWeight:800,color:ac}}>AHORA</span>}
-        </button></motion.div>);
-        return(<motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{marginTop:12}}><button
-          onClick={()=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");speak("confirmado",circadian,voiceOn);}}
-          style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <div style={{width:8,height:8,borderRadius:"50%",background:ac,opacity:.5}}/><span style={{fontSize:13,fontWeight:700,color:ac}}>Confirma tu presencia</span>
-        </button></motion.div>);
-      })()}
-
-      {/* Science */}
-      <button onClick={()=>{setShowScience(!showScience);}} style={{display:"flex",alignItems:"center",gap:5,marginTop:12,padding:"6px 0",background:"none",border:"none",cursor:"pointer"}}>
-        <Icon name="mind" size={11} color={ac}/><span style={{fontSize:10,color:ac,fontWeight:700}}>NEUROCIENCIA</span>
-        <span style={{fontSize:10,color:ac,transform:showScience?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>▾</span>
-      </button>
+      {/* Mid-session message */}
       <AnimatePresence>
-      {showScience&&<motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
-        <div style={{marginTop:8,padding:"12px 14px",background:ac+"05",borderRadius:12,border:`1px solid ${ac}08`}}>
-          <div style={{fontSize:11,color:t2,lineHeight:1.7}}>{ph.sc}</div>
-          {SCIENCE_DEEP[pr.id]&&<div style={{fontSize:10,color:t3,lineHeight:1.7,borderTop:`1px solid ${bd}`,paddingTop:8,marginTop:4}}>{SCIENCE_DEEP[pr.id]}</div>}
-        </div>
-      </motion.div>}
+        {showMid && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", zIndex: 180, pointerEvents: "none" }}>
+          <div style={{ background: cd, borderRadius: radius.lg, padding: `${space[3]}px ${space[5]}px`, boxShadow: "0 8px 30px rgba(0,0,0,.08)", border: `1px solid ${bd}`, maxWidth: 320, textAlign: "center" }}>
+            <div style={{ ...ty.body(t1), fontStyle: "italic" }}>{midMsg}</div>
+          </div>
+        </motion.div>}
       </AnimatePresence>
-    </motion.div>
 
-    {isActive&&nextPh&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",marginBottom:10,borderRadius:10,background:isDark?"#1A1E28":"#F8FAFC"}}>
-      <Icon name="chevron" size={10} color={t3}/><span style={{fontSize:10,color:t3,fontWeight:600}}>Siguiente: {nextPh.l}</span>
-    </div>}
-    <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;const isCurr=pi===i;const isDone=i<pi;return<motion.div key={i} animate={isCurr?{scale:[1,1.03,1]}:{}} transition={isCurr?{duration:2,repeat:Infinity}:{}} style={{padding:"4px 10px",borderRadius:16,border:isCurr?`2px solid ${ac}`:isDone?`1.5px solid ${ac}30`:`1px solid ${bd}`,background:isCurr?ac+"10":isDone?ac+"06":cd,color:isCurr?ac:isDone?ac:t3,fontSize:10,fontWeight:isCurr?800:600,display:"flex",alignItems:"center",gap:4,opacity:i<=pi?1:.4,boxShadow:isCurr?`0 2px 8px ${ac}15`:"none",transition:"all .3s"}}><span style={{width:isCurr?7:5,height:isCurr?7:5,borderRadius:"50%",background:isDone?ac:isCurr?ac:bd,transition:"all .3s",boxShadow:isCurr?`0 0 6px ${ac}40`:"none"}}/>{isCurr&&<Icon name={p.ic} size={10} color={ac}/>}{sR}</motion.div>;})}</div>
-    <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
-      {ts==="idle"&&<motion.button whileTap={{scale:.95}} onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},#0D9488)`,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",boxShadow:`0 4px 18px ${ac}28`}}><Icon name="bolt" size={13} color="#fff"/>INICIAR</motion.button>}
-      {ts==="running"&&<><motion.button whileTap={{scale:.95}} onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
-      {ts==="paused"&&<><motion.button whileTap={{scale:.95}} onClick={()=>{if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
+      {/* Countdown */}
+      <AnimatePresence>
+        {countdown > 0 && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: z.countdown, background: `${bg}DD`, backdropFilter: "blur(30px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <motion.div key={countdown} initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.5, opacity: 0 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
+            <div style={{ fontSize: 96, fontWeight: font.weight.black, color: ac }}>{countdown}</div>
+          </motion.div>
+        </motion.div>}
+      </AnimatePresence>
+
+      {compFlash && <div style={{ position: "fixed", inset: 0, zIndex: z.flash, background: withAlpha(ac, 6), animation: "compFlash .8s ease forwards", pointerEvents: "none" }} />}
+
+      {/* Onboarding — Neural Calibration */}
+      <AnimatePresence>
+        {(onboard || showCalibration) && <ErrorBoundary isDark={isDark}><NeuralCalibration isDark={isDark} onComplete={(baseline) => {
+          setOnboard(false); setShowCalibration(false);
+          store.recalibrate(baseline);
+          const nst = { ...useStore.getState(), sessionGoal: baseline.recommendations?.sessionGoal || 2 };
+          const ach = [...nst.achievements]; if (!ach.includes("calibrated")) ach.push("calibrated");
+          nst.achievements = ach;
+          store.update(nst);
+          setSt_(nst);
+          const d = getDailyIgn(nst); if (d && d.proto) setPr(d.proto);
+        }} /></ErrorBoundary>}
+      </AnimatePresence>
+
+      {/* Protocol Detail */}
+      <AnimatePresence>
+        {showProtoDetail && <ErrorBoundary isDark={isDark}><ProtocolDetail protocol={pr} st={st} isDark={isDark} durMult={durMult} onClose={() => setShowProtoDetail(false)} onStart={(p) => { setShowProtoDetail(false); sp(p); go(); }} /></ErrorBoundary>}
+      </AnimatePresence>
+
+      {/* Post-Session Flow */}
+      <ErrorBoundary isDark={isDark}>
+        <PostSessionFlow postStep={postStep} ts={ts} ac={ac} isDark={isDark} pr={pr} durMult={durMult} st={st} checkMood={checkMood} setCheckMood={setCheckMood} checkEnergy={checkEnergy} setCheckEnergy={setCheckEnergy} checkTag={checkTag} setCheckTag={setCheckTag} preMood={preMood} postVC={postVC} postMsg={postMsg} moodDiff={moodDiff} H={H} submitCheckin={submitCheckin} onSetPostStep={setPostStep} onReset={rs} />
+      </ErrorBoundary>
+
+      {/* Intent Picker */}
+      <AnimatePresence>
+        {showIntent && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: z.modal, background: scrim, backdropFilter: "blur(16px)", display: "flex", alignItems: "center", justifyContent: "center", padding: space[6] }} onClick={() => setShowIntent(false)}>
+          <motion.div initial={{ scale: .9 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 20 }} style={{ background: cd, borderRadius: radius["2xl"], padding: `${space[6]}px ${space[5]}px`, maxWidth: 380, width: "100%" }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: "center", marginBottom: space[5] }}>
+              <div style={ty.heroHeading(t1)}>¿Qué necesitas?</div>
+              {aiRec && <div style={{ ...ty.caption(t3), marginTop: space[1] }}>IA sugiere: <span style={{ color: ac, fontWeight: font.weight.bold }}>{aiRec.need}</span> · {aiRec.context.circadian}</div>}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: space[2] }}>
+              {INTENTS.map(i => { const b = P.filter(p => p.int === i.id); const pk = b[Math.floor(b.length / 2)] || P[0]; return (
+                <motion.button key={i.id} whileTap={{ scale: .95 }} onClick={() => sp(pk)} style={{ padding: `${space[4]}px ${space[2.5]}px`, borderRadius: radius.lg, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", textAlign: "center" }}>
+                  <Icon name={i.icon} size={26} color={i.color} />
+                  <div style={{ ...ty.title(t1), marginTop: space[1.5] }}>{i.label}</div>
+                  <div style={{ ...ty.caption(i.color), fontWeight: font.weight.bold, marginTop: space[1] }}>{pk.n}</div>
+                </motion.button>); })}
+            </div>
+          </motion.div>
+        </motion.div>}
+      </AnimatePresence>
+
+      {/* Sheets */}
+      <ErrorBoundary isDark={isDark}>
+        <ProtocolSelector show={sl} onClose={() => setSl(false)} st={st} isDark={isDark} ac={ac} pr={pr} sc={sc} setSc={setSc} fl={fl} favs={favs} toggleFav={toggleFav} lastProto={lastProto} smartPick={smartPick} protoSens={protoSens} sp={sp} H={H} />
+      </ErrorBoundary>
+      <ErrorBoundary isDark={isDark}>
+        <SettingsSheet show={showSettings} onClose={() => setShowSettings(false)} st={st} setSt={setSt} isDark={isDark} ac={ac} voiceOn={voiceOn} setVoiceOn={setVoiceOn} H={H} />
+      </ErrorBoundary>
+      <ErrorBoundary isDark={isDark}>
+        <HistorySheet show={showHist} onClose={() => setShowHist(false)} st={st} isDark={isDark} ac={ac} />
+      </ErrorBoundary>
+
+      {/* ═══ MAIN CONTENT ═══ */}
+      <div style={{ opacity: tabFade, transition: "opacity .25s cubic-bezier(.4,0,.2,1),transform .25s", transform: tabFade === 1 ? "translateY(0)" : "translateY(8px)", position: "relative", zIndex: 1 }}>
+
+        {/* ═══ TAB: IGNICIÓN ═══ */}
+        {tab === "ignicion" && postStep === "none" && countdown === 0 && !compFlash && (
+          <div style={{ padding: `${space[3]}px ${space[5]}px 180px` }}>
+
+            {/* NFC Context */}
+            {nfcCtx && ts === "idle" && <div style={{ display: "flex", alignItems: "center", gap: space[2], padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[3], background: withAlpha(nfcCtx.type === "salida" ? "#6366F1" : ac, 4), borderRadius: radius.md, border: `1.5px solid ${withAlpha(nfcCtx.type === "salida" ? "#6366F1" : ac, 8)}` }}>
+              <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: withAlpha(nfcCtx.type === "salida" ? "#6366F1" : ac, 6), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name={nfcCtx.type === "salida" ? "calm" : "energy"} size={14} color={nfcCtx.type === "salida" ? "#6366F1" : ac} /></div>
+              <div>
+                <div style={ty.label(nfcCtx.type === "salida" ? "#6366F1" : ac)}>{nfcCtx.type === "salida" ? "SESIÓN DE SALIDA" : "SESIÓN DE ENTRADA"}</div>
+                <div style={ty.caption(t1)}>{nfcCtx.type === "salida" ? "Descomprime tu día." : "Activa tu enfoque."}</div>
+              </div>
+            </div>}
+
+            {/* Immersive entry */}
+            {!entryDone && ts === "idle" && st.totalSessions > 0 && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} style={{ textAlign: "center", padding: `${space[7]}px 0 ${space[5]}px` }} onClick={() => setEntryDone(true)}>
+              <motion.div animate={{ scale: [1, 1.06, 1], opacity: [.7, 1, .7] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+                <svg width="48" height="48" viewBox="0 0 52 52" style={{ margin: `0 auto ${space[4]}px`, display: "block" }}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3" /><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{ animation: "innerRing 6s linear infinite" }} /><circle cx="26" cy="26" r="4" fill={ac} opacity=".3" /></svg>
+              </motion.div>
+              <div style={{ ...ty.body(t2), fontSize: font.size.md, fontWeight: font.weight.light, lineHeight: font.leading.relaxed, maxWidth: 300, margin: "0 auto" }}>{daily.phrase}</div>
+              <div style={{ ...ty.label(t3), marginTop: space[4] }}>TOCA PARA CONTINUAR</div>
+            </motion.div>}
+
+            {(entryDone || st.totalSessions === 0 || ts !== "idle") && <>
+
+              {/* ═══ TIMER-FIRST LAYOUT ═══ */}
+
+              {/* Status bar (compact) */}
+              {ts === "idle" && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[3] }}>
+                <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><div style={{ width: 5, height: 5, borderRadius: radius.full, background: nSt.color, animation: "shimDot 2s ease infinite" }} /><span style={ty.caption(nSt.color)}>{nSt.label}</span></div>
+                <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><span style={ty.caption(lv.c)}>{lv.n}</span><div style={{ width: 36, height: 3, borderRadius: 2, background: bd, overflow: "hidden" }}><div style={{ width: lPct + "%", height: "100%", borderRadius: 2, background: lv.c }} /></div></div>
+              </div>}
+
+              {/* ═══ CORE TIMER (HERO POSITION) ═══ */}
+              <div onClick={timerTap} role="button" aria-label={ts === "idle" ? "Iniciar sesión" : ts === "running" ? "Pausar sesión" : "Reanudar sesión"} onMouseDown={() => setTp(true)} onMouseUp={() => setTp(false)} onMouseLeave={() => setTp(false)} onTouchStart={() => setTp(true)} onTouchEnd={() => setTp(false)} style={{ position: "relative", width: isActive ? 200 : 250, height: isActive ? 200 : 250, margin: `0 auto ${space[3]}px`, cursor: "pointer", transform: tp ? "scale(0.93)" : "scale(1)", transition: "all .6s cubic-bezier(.34,1.56,.64,1)", userSelect: "none" }}>
+                {/* Glow */}
+                <motion.div animate={ts === "idle" ? { scale: [1, 1.06, 1], opacity: [.3, .6, .3] } : isActive ? { scale: [1, 1.04, 1], opacity: [.4, .7, .4] } : {}} transition={{ duration: ts === "idle" ? 3.5 : 2.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: isActive ? -16 : -10, borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, isActive ? 6 : 4)},transparent 65%)`, filter: "blur(6px)" }} />
+                {/* Outer breathing ring */}
+                {ts !== "paused" && <motion.div animate={{ scale: [1, 1.02, 1] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: isActive ? -8 : -4, borderRadius: "50%", border: `1.5px solid ${withAlpha(ac, isActive ? 8 : 4)}` }} />}
+                <svg width={isActive ? "200" : "250"} height={isActive ? "200" : "250"} viewBox="0 0 260 260" style={{ transform: "rotate(-90deg)" }}>
+                  <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth={ts === "idle" ? "4" : "3"} opacity=".4" />
+                  <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth={isActive ? "7" : ts === "idle" ? "5" : "3"} strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={ts === "idle" ? 0 : dO} style={{ transition: isActive ? "stroke-dashoffset .95s linear" : "stroke-dashoffset .3s ease", filter: isActive ? `drop-shadow(0 0 8px ${ac}60)` : `drop-shadow(0 0 4px ${ac}30)` }} />
+                  <circle cx="130" cy="130" r="98" fill="none" stroke={bd} strokeWidth=".5" strokeDasharray="3 8" style={{ animation: isActive ? "innerRing 10s linear infinite" : "innerRing 30s linear infinite" }} />
+                  {ts === "idle" && <circle cx="130" cy="130" r="115" fill="url(#timerGrad)" opacity=".04" />}
+                  <defs><radialGradient id="timerGrad"><stop offset="0%" stopColor={ac} /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
+                </svg>
+                {/* Neural center dot */}
+                <motion.div animate={{ opacity: [.3, .7, .3], boxShadow: [`0 0 8px ${ac}30`, `0 0 18px ${ac}50`, `0 0 8px ${ac}30`] }} transition={{ duration: ts === "idle" ? 3 : 1.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: isActive ? 6 : 10, height: isActive ? 6 : 10, borderRadius: "50%", background: ac, pointerEvents: "none" }} />
+                {/* Center content */}
+                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none", zIndex: 2 }}>
+                  {isBr && bL && <div style={{ marginBottom: 4 }}><span style={{ ...ty.label(ac), letterSpacing: 5, opacity: .9 }}>{bL}</span><span style={{ ...ty.title(ac), marginLeft: 4 }}>{bCnt}s</span></div>}
+                  <div style={{ fontSize: isActive ? font.size.hero : 56, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-3px", textShadow: isActive ? `0 0 20px ${withAlpha(ac, 6)}` : "none" }}>{sec}</div>
+                  {isActive && <div style={{ ...ty.title(ac), fontWeight: font.weight.black, marginTop: space[1], opacity: .8 }}>{sessPct}%</div>}
+                  {ts === "idle" && <>
+                    <div style={{ ...ty.label(t3), fontWeight: font.weight.semibold, marginTop: space[1.5] }}>segundos</div>
+                    <motion.div animate={{ opacity: [.5, 1, .5], y: [0, -2, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} style={{ marginTop: space[3], display: "flex", flexDirection: "column", alignItems: "center", gap: space[1] }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${ac},#0D9488)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 14px ${withAlpha(ac, 12)}` }}><Icon name="bolt" size={16} color="#fff" /></div>
+                      <span style={ty.label(ac)}>INICIAR</span>
+                    </motion.div>
+                  </>}
+                  {ts === "paused" && <motion.div animate={{ opacity: [.5, 1, .5] }} transition={{ duration: 2, repeat: Infinity }} style={{ marginTop: space[1.5] }}><span style={{ ...ty.label(ac), letterSpacing: 3 }}>EN PAUSA</span></motion.div>}
+                </div>
+                {tp && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "100%", height: "100%", borderRadius: "50%", border: `2px solid ${withAlpha(ac, 8)}`, animation: "cdPulse .6s ease forwards", pointerEvents: "none" }} />}
+              </div>
+
+              {/* BreathOrb */}
+              <ErrorBoundary isDark={isDark}>
+                <BreathOrb type={ph.ic} color={ac} breathScale={bS} breathLabel={bL} breathCount={bCnt} active={isActive} sessionProgress={pct} />
+              </ErrorBoundary>
+
+              {/* Protocol selector + controls (below timer) */}
+              {ts === "idle" && <>
+                <div style={{ display: "flex", gap: space[1.5], marginBottom: space[3] }}>
+                  <motion.button whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[2.5]}px ${space[3]}px`, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2] }}>
+                    <div style={{ width: 32, height: 32, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black }}>{pr.tg}</div>
+                    <div style={{ flex: 1, textAlign: "left" }}><div style={ty.title(t1)}>{pr.n}</div><div style={ty.caption(t3)}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div></div>
+                    <Icon name="chevron-down" size={12} color={t3} />
+                  </motion.button>
+                  <motion.button whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={16} color={t3} /></motion.button>
+                  <motion.button whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="target" size={18} color={t3} /></motion.button>
+                </div>
+
+                {/* Duration selector */}
+                <div style={{ display: "flex", justifyContent: "center", gap: space[1], marginBottom: space[3] }}>
+                  {[{ v: .5, l: "60s" }, { v: 1, l: "120s" }, { v: 1.5, l: "180s" }].map(d => (
+                    <motion.button key={d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ padding: `${space[1.5]}px ${space[4]}px`, borderRadius: radius.xl, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, color: durMult === d.v ? ac : t3, ...ty.caption(durMult === d.v ? ac : t3), fontWeight: font.weight.bold, cursor: "pointer", transition: "all .2s" }}>{d.l}</motion.button>
+                  ))}
+                </div>
+
+                {/* Pre-session mood */}
+                <div style={{ marginBottom: space[4] }}>
+                  <div style={{ ...ty.label(t3), marginBottom: space[1.5] }}>¿Cómo llegas a esta sesión?</div>
+                  <div style={{ display: "flex", gap: space[1] }}>{MOODS.map(m => (
+                    <motion.button key={m.id} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: `${space[1.5]}px 2px`, borderRadius: radius.sm + 3, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 4) : cd, cursor: "pointer", transition: "all .2s" }}>
+                      <Icon name={m.icon} size={16} color={preMood === m.value ? m.color : t3} />
+                      <span style={{ ...ty.caption(preMood === m.value ? m.color : t3), lineHeight: font.leading.tight, textAlign: "center" }}>{m.label}</span>
+                    </motion.button>))}</div>
+                </div>
+
+                {/* START CTA */}
+                <motion.button whileTap={{ scale: .95 }} onClick={go} style={{ width: "100%", maxWidth: 300, margin: `0 auto ${space[4]}px`, display: "flex", padding: `${space[3]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 4px 18px ${withAlpha(ac, 10)}` }}><Icon name="bolt" size={13} color="#fff" />INICIAR</motion.button>
+              </>}
+
+              {/* Active session controls */}
+              {ts === "running" && <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginBottom: space[3] }}>
+                <motion.button whileTap={{ scale: .95 }} onClick={pa} style={{ flex: 1, maxWidth: 180, padding: `${space[3]}px 0`, borderRadius: radius.full, background: cd, border: `2px solid ${ac}`, color: ac, ...ty.button, cursor: "pointer" }}>PAUSAR</motion.button>
+                <motion.button whileTap={{ scale: .9 }} onClick={rs} style={{ width: 42, height: 42, borderRadius: "50%", border: `1px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="reset" size={15} color={t3} /></motion.button>
+              </div>}
+              {ts === "paused" && <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginBottom: space[3] }}>
+                <motion.button whileTap={{ scale: .95 }} onClick={resume} style={{ flex: 1, maxWidth: 180, padding: `${space[3]}px 0`, borderRadius: radius.full, background: ac, border: "none", color: "#fff", ...ty.button, cursor: "pointer" }}>CONTINUAR</motion.button>
+                <motion.button whileTap={{ scale: .9 }} onClick={rs} style={{ width: 42, height: 42, borderRadius: "50%", border: `1px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="reset" size={15} color={t3} /></motion.button>
+              </div>}
+
+              {/* Phase info */}
+              <div style={{ textAlign: "center", marginBottom: isActive ? space[1.5] : space[2.5] }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: space[1.5] }}>
+                  <Icon name={ph.ic} size={isActive ? 11 : 13} color={ac} />
+                  <span style={{ ...ty.title(t1), fontSize: isActive ? font.size.sm : font.size.md }}>{ph.l}</span>
+                </div>
+                {!isActive && <div style={ty.caption(t3)}>{ph.r}</div>}
+              </div>
+
+              <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
+                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[1.5] }}><span style={ty.caption(ac)}>Fase {pi + 1} de {pr.ph.length}</span><span style={ty.caption(t3)}>{Math.round((pi + 1) / pr.ph.length * 100)}%</span></div>}
+                {ph.k && <div style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
+                <p style={{ ...ty.body(t2), margin: 0 }}>{ph.i}</p>
+
+                {/* Anti-gaming checkpoints */}
+                {isActive && (() => {
+                  const elapsed = totalDur - sec;
+                  const cp1 = Math.round(totalDur * 0.25), cp2 = Math.round(totalDur * 0.50), cp3 = Math.round(totalDur * 0.78);
+                  const isCP1 = elapsed >= cp1 && elapsed < cp1 + 10;
+                  const isCP2 = elapsed >= cp2 && elapsed < cp2 + 10;
+                  const isCP3 = elapsed >= cp3 && elapsed < cp3 + 10;
+                  if (!isCP1 && !isCP2 && !isCP3) return null;
+                  if (elapsed === cp1) speak("Mantén presionado", circadian, voiceOn);
+                  else if (elapsed === cp2) speak("Toca al exhalar", circadian, voiceOn);
+                  else if (elapsed === cp3) speak("Confirma tu presencia", circadian, voiceOn);
+
+                  if (isCP1) return (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: space[3] }}>
+                      <button
+                        onTouchStart={e => { e.currentTarget.dataset.holdStart = Date.now(); e.currentTarget.style.transform = "scale(0.94)"; hapticBreath("INHALA"); const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "width 2.5s linear"; bar.style.width = "100%"; } }}
+                        onTouchEnd={e => { const dur = Date.now() - (+e.currentTarget.dataset.holdStart || Date.now()); e.currentTarget.style.transform = "scale(1)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "none"; bar.style.width = "0%"; } if (dur >= 2000) { setSessionData(d => ({ ...d, touchHolds: (d.touchHolds || 0) + 1, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), dur] })); H("ok"); speak("verificado", circadian, voiceOn); } else { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 0.3 })); H("tap"); } }}
+                        onMouseDown={e => { e.currentTarget.dataset.holdStart = Date.now(); e.currentTarget.style.transform = "scale(0.94)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "width 2.5s linear"; bar.style.width = "100%"; } }}
+                        onMouseUp={e => { const dur = Date.now() - (+e.currentTarget.dataset.holdStart || Date.now()); e.currentTarget.style.transform = "scale(1)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "none"; bar.style.width = "0%"; } if (dur >= 2000) { setSessionData(d => ({ ...d, touchHolds: (d.touchHolds || 0) + 1, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), dur] })); H("ok"); } else { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 0.3 })); H("tap"); } }}
+                        style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `2px solid ${withAlpha(ac, 10)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", flexDirection: "column", gap: space[2], transition: "all .3s", position: "relative", overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: ac, opacity: .7, animation: "pu 1s ease infinite" }} /><span style={ty.title(ac)}>Mantén presionado 2s</span></div>
+                        <div style={{ height: 4, background: bd, borderRadius: radius.sm, overflow: "hidden", width: "100%" }}><div data-hold-bar="" style={{ width: "0%", height: "100%", background: `linear-gradient(90deg,${withAlpha(ac, 20)},${ac})`, borderRadius: radius.sm }} /></div>
+                      </button>
+                    </motion.div>);
+                  if (isCP2) return (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: space[3] }}>
+                      <button onClick={() => { const isExhale = bL === "EXHALA" || bL === "SOSTÉN"; setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + (isExhale ? 1 : 0.7), reactionTimes: [...(d.reactionTimes || []), Date.now() % 1000] })); H("tap"); if (isExhale) speak("sincronizado", circadian, voiceOn); }}
+                        style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `1.5px dashed ${withAlpha(ac, 12)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}>
+                        <div style={{ width: 9, height: 9, borderRadius: "50%", background: bL === "EXHALA" ? ac : "transparent", border: `2px solid ${ac}`, opacity: .6 }} /><span style={ty.title(ac)}>Toca al exhalar</span>
+                        {bL === "EXHALA" && <span style={{ ...ty.caption(ac), fontWeight: font.weight.black }}>AHORA</span>}
+                      </button>
+                    </motion.div>);
+                  return (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: space[3] }}>
+                      <button onClick={() => { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), Date.now() % 1000] })); H("tap"); speak("confirmado", circadian, voiceOn); }}
+                        style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `1.5px solid ${withAlpha(ac, 8)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: ac, opacity: .5 }} /><span style={ty.title(ac)}>Confirma tu presencia</span>
+                      </button>
+                    </motion.div>);
+                })()}
+
+                {/* Science */}
+                <button onClick={() => setShowScience(!showScience)} style={{ display: "flex", alignItems: "center", gap: space[1], marginTop: space[3], padding: `${space[1.5]}px 0`, background: "none", border: "none", cursor: "pointer" }}>
+                  <Icon name="mind" size={11} color={ac} /><span style={ty.caption(ac)}>NEUROCIENCIA</span>
+                  <span style={{ ...ty.caption(ac), transform: showScience ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>▾</span>
+                </button>
+                <AnimatePresence>
+                  {showScience && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
+                    <div style={{ marginTop: space[2], padding: `${space[3]}px ${space[3]}px`, background: withAlpha(ac, 2), borderRadius: radius.md, border: `1px solid ${withAlpha(ac, 4)}` }}>
+                      <div style={ty.body(t2)}>{ph.sc}</div>
+                      {SCIENCE_DEEP[pr.id] && <div style={{ ...ty.caption(t3), lineHeight: font.leading.relaxed, borderTop: `1px solid ${bd}`, paddingTop: space[2], marginTop: space[1] }}>{SCIENCE_DEEP[pr.id]}</div>}
+                    </div>
+                  </motion.div>}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Next phase hint */}
+              {isActive && nextPh && <div style={{ display: "flex", alignItems: "center", gap: space[1.5], padding: `${space[1.5]}px ${space[2.5]}px`, marginBottom: space[2.5], borderRadius: radius.sm, background: surface }}>
+                <Icon name="chevron" size={10} color={t3} /><span style={ty.caption(t3)}>Siguiente: {nextPh.l}</span>
+              </div>}
+
+              {/* Phase dots */}
+              <div style={{ display: "flex", gap: space[1], justifyContent: "center", flexWrap: "wrap", marginBottom: space[3] }}>
+                {pr.ph.map((p, i) => { const sR = durMult !== 1 ? Math.round(p.s * durMult) + "–" + Math.round(p.e * durMult) + "s" : p.r; const isCurr = pi === i; const isDone = i < pi; return (
+                  <motion.div key={i} animate={isCurr ? { scale: [1, 1.03, 1] } : {}} transition={isCurr ? { duration: 2, repeat: Infinity } : {}} style={{ padding: `${space[1]}px ${space[2.5]}px`, borderRadius: radius.xl, border: isCurr ? `2px solid ${ac}` : isDone ? `1.5px solid ${withAlpha(ac, 12)}` : `1px solid ${bd}`, background: isCurr ? withAlpha(ac, 4) : isDone ? withAlpha(ac, 2) : cd, color: isCurr ? ac : isDone ? ac : t3, ...ty.caption(isCurr ? ac : isDone ? ac : t3), fontWeight: isCurr ? font.weight.black : font.weight.semibold, display: "flex", alignItems: "center", gap: space[1], opacity: i <= pi ? 1 : .4, boxShadow: isCurr ? `0 2px 8px ${withAlpha(ac, 6)}` : "none", transition: "all .3s" }}>
+                    <span style={{ width: isCurr ? 7 : 5, height: isCurr ? 7 : 5, borderRadius: "50%", background: isDone || isCurr ? ac : bd, transition: "all .3s", boxShadow: isCurr ? `0 0 6px ${withAlpha(ac, 14)}` : "none" }} />
+                    {isCurr && <Icon name={p.ic} size={10} color={ac} />}{sR}
+                  </motion.div>); })}
+              </div>
+
+              {/* Progress waveform (active only) */}
+              {isActive && <div style={{ marginBottom: space[3], height: 26, borderRadius: radius.lg, overflow: "hidden", background: cd, border: `1.5px solid ${bd}`, position: "relative" }}>
+                <svg width="800" height="20" viewBox="0 0 800 20" style={{ position: "absolute", top: 0, left: 0, animation: "wf 4s linear infinite", opacity: .2 }}><path d={`M0,10 ${Array.from({ length: 40 }, (_, i) => `Q${i * 20 + 10},${i % 2 === 0 ? 3 : 17} ${(i + 1) * 20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1" /></svg>
+                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: (pct * 100) + "%", background: `linear-gradient(90deg,${withAlpha(ac, 10)},${withAlpha(ac, 4)})`, transition: "width .95s linear", borderRadius: radius.sm }} />
+              </div>}
+
+              {/* ═══ CONTEXTUAL AI SECTION (idle only) ═══ */}
+              {ts === "idle" && <>
+                {/* Streak Shield */}
+                <ErrorBoundary isDark={isDark}>
+                  <StreakShield st={st} isDark={isDark} onQuickSession={() => { setDurMult(0.5); const calmP = P.find(p => p.int === "calma" && p.dif === 1) || P[0]; setPr(calmP); setSec(Math.round(calmP.d * 0.5)); go(); }} />
+                </ErrorBoundary>
+
+                {/* Cognitive load */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: `${space[2]}px ${space[3]}px`, marginBottom: space[2], background: surface, borderRadius: radius.sm }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: space[1.5] }}>
+                    <div style={{ width: 22, height: 22, borderRadius: radius.sm - 2, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="bolt" size={10} color={ac} /></div>
+                    <span style={{ ...ty.caption(t1), fontWeight: font.weight.semibold }}>{st.todaySessions || 0}/{st.sessionGoal || 2} sesiones</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
+                    <Icon name="gauge" size={10} color={cogLoad.color} /><span style={ty.caption(cogLoad.color)}>{cogLoad.level}</span>
+                    <div style={{ width: 36, height: 4, borderRadius: 2, background: bd, overflow: "hidden" }}><div style={{ width: Math.min(100, (st.todaySessions || 0) / (st.sessionGoal || 2) * 100) + "%", height: "100%", background: ac, borderRadius: 2, transition: "width .3s" }} /></div>
+                  </div>
+                </div>
+
+                {/* Daily Ignición */}
+                <motion.button whileTap={{ scale: .97 }} onClick={() => sp(daily.proto)} style={{ width: "100%", padding: `${space[3]}px ${space[3]}px`, marginBottom: space[2.5], borderRadius: radius.lg, border: `1.5px solid ${withAlpha(daily.proto.cl, 8)}`, background: `linear-gradient(135deg,${withAlpha(daily.proto.cl, 2)},${withAlpha(daily.proto.cl, 1)})`, cursor: "pointer", textAlign: "left", display: "flex", gap: space[3], alignItems: "center", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: withAlpha(daily.proto.cl, 4) }} />
+                  <div style={{ width: 40, height: 40, borderRadius: radius.sm + 3, background: withAlpha(daily.proto.cl, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.title(daily.proto.cl), fontWeight: font.weight.black, flexShrink: 0, border: `1px solid ${withAlpha(daily.proto.cl, 6)}` }}>{daily.proto.tg}</div>
+                  <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+                    <div style={ty.label(daily.proto.cl)}>IGNICIÓN DEL DÍA</div>
+                    <div style={{ ...ty.title(t1), fontWeight: font.weight.black }}>{daily.proto.n}</div>
+                    <div style={{ ...ty.caption(t3), fontStyle: "italic", lineHeight: font.leading.snug }}>{daily.phrase}</div>
+                  </div>
+                  <Icon name="bolt" size={14} color={daily.proto.cl} />
+                </motion.button>
+
+                {/* AI Recommendation */}
+                {aiRec && aiRec.primary && aiRec.primary.protocol.id !== daily.proto.id && <motion.button initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} whileTap={{ scale: .97 }} onClick={() => sp(aiRec.primary.protocol)} style={{ width: "100%", padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[2.5], borderRadius: radius.md, border: `1.5px solid ${withAlpha(ac, 6)}`, background: isDark ? "#0A1A0A" : "#F0FDF4", cursor: "pointer", textAlign: "left", display: "flex", gap: space[2.5], alignItems: "center" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="cpu" size={13} color={ac} /></div>
+                  <div style={{ flex: 1 }}><div style={{ ...ty.caption(ac), fontWeight: font.weight.bold }}>IA: {aiRec.primary.protocol.n}</div><div style={ty.caption(t3)}>{aiRec.primary.reason}</div></div>
+                  <Icon name="chevron" size={12} color={ac} />
+                </motion.button>}
+
+                {/* Expandable secondary */}
+                {(prediction || (st.progDay || 0) < 7) && <>
+                  <button onClick={() => { setShowMore(!showMore); H("tap"); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: space[1.5], padding: `${space[1.5]}px 0`, marginBottom: showMore ? space[2.5] : space[3], background: "none", border: "none", cursor: "pointer" }}>
+                    <div style={{ flex: 1, height: 1, background: bd }} />
+                    <span style={{ ...ty.caption(t3), display: "flex", alignItems: "center", gap: space[1], flexShrink: 0 }}>{showMore ? "Menos" : "Más"} <span style={{ transform: showMore ? "rotate(180deg)" : "rotate(0)", display: "inline-block", transition: "transform .2s" }}>▾</span></span>
+                    <div style={{ flex: 1, height: 1, background: bd }} />
+                  </button>
+                  <AnimatePresence>
+                    {showMore && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
+                      {prediction && <div style={{ display: "flex", alignItems: "center", gap: space[2], padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[2.5], background: prediction.predictedDelta > 0 ? (isDark ? "#0A1A0A" : "#F0FDF4") : surface, borderRadius: radius.md, border: `1px solid ${prediction.predictedDelta > 0 ? withAlpha("#059669", 8) : bd}` }}>
+                        <Icon name="predict" size={14} color={prediction.predictedDelta > 0 ? "#059669" : "#6366F1"} />
+                        <div style={{ flex: 1 }}><div style={ty.caption(prediction.predictedDelta > 0 ? "#059669" : "#6366F1")}>{prediction.message}</div><div style={{ ...ty.caption(t3), marginTop: 1 }}>Confianza: {prediction.confidence}%</div></div>
+                      </div>}
+                      {(st.progDay || 0) < 7 && <div style={{ marginBottom: space[2.5], background: cd, borderRadius: radius.lg, padding: space[3], border: `1px solid ${bd}` }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: space[2] }}>
+                          <div style={ty.label(ac)}>Programa 7 Días</div>
+                          <span style={ty.caption(t1)}>Día {Math.min((st.progDay || 0) + 1, 7)}/7</span>
+                        </div>
+                        <div style={{ display: "flex", gap: 3, marginBottom: space[2.5] }}>
+                          {PROG_7.map((p, i) => { const done = i < (st.progDay || 0); const curr = i === (st.progDay || 0); return <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: done ? ac : curr ? withAlpha(ac, 20) : bd, transition: "background .5s" }} />; })}</div>
+                        <motion.button whileTap={{ scale: .97 }} onClick={() => { const p = P.find(x => x.id === progStep.pid); if (p) sp(p); }} style={{ width: "100%", padding: space[2.5], borderRadius: radius.md, border: `1px solid ${bd}`, background: surface, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2] }}>
+                          <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: withAlpha(ac, 4), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="bolt" size={12} color={ac} /></div>
+                          <div style={{ flex: 1, textAlign: "left" }}><div style={ty.title(t1)}>{progStep.t}</div><div style={ty.caption(t3)}>{progStep.d}</div></div>
+                          <Icon name="chevron" size={12} color={ac} />
+                        </motion.button>
+                      </div>}
+                    </motion.div>}
+                  </AnimatePresence>
+                </>}
+              </>}
+            </>}
+          </div>
+        )}
+
+        {/* ═══ TAB: DASHBOARD ═══ */}
+        {tab === "dashboard" && <ErrorBoundary isDark={isDark}><DashboardView st={st} isDark={isDark} ac={ac} switchTab={switchTab} sp={sp} onShowHist={() => setShowHist(true)} /></ErrorBoundary>}
+
+        {/* ═══ TAB: PERFIL ═══ */}
+        {tab === "perfil" && <ErrorBoundary isDark={isDark}><ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={() => setShowSettings(true)} onShowHist={() => setShowHist(true)} onShowCalibration={() => setShowCalibration(true)} /></ErrorBoundary>}
+      </div>
+
+      {/* ═══ BOTTOM METRICS BAR ═══ */}
+      <div style={{ position: "fixed", bottom: layout.bottomNav, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: 400, padding: `${space[2]}px ${space[4]}px`, background: resolveTheme(isDark).glass, backdropFilter: "blur(16px)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: z.sticky, borderRadius: radius.lg, border: `1px solid ${bd}`, boxShadow: `0 4px 20px ${isDark ? "rgba(0,0,0,.3)" : "rgba(0,0,0,.06)"}` }}>
+        {[{ v: st.coherencia, l: "Enfoque", d: rD.c, c: "#3B82F6", ic: "focus" }, { v: st.resiliencia, l: "Calma", d: rD.r, c: "#8B5CF6", ic: "calm" }, { v: st.capacidad, l: "Energía", d: 0, c: "#6366F1", ic: "energy" }].map((m, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: space[1.5], flex: 1, justifyContent: "center" }}>
+            <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: withAlpha(m.c, 4), display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={m.ic} size={12} color={m.c} /></div>
+            <div>
+              <div style={{ ...ty.metric(m.c, font.size.md), lineHeight: font.leading.none }}>{m.v}%</div>
+              <div style={{ fontSize: font.size.xs, color: t3, fontWeight: font.weight.semibold, display: "flex", alignItems: "center", gap: 2 }}>{m.l}{m.d > 0 && <span style={{ color: "#059669", fontWeight: font.weight.bold }}>+{m.d}</span>}</div>
+            </div>
+          </div>))}
+      </div>
+
+      {/* ═══ BOTTOM NAV ═══ */}
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: resolveTheme(isDark).overlay, backdropFilter: "blur(20px)", borderTop: `1px solid ${bd}`, padding: `6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`, display: "flex", justifyContent: "center", gap: space[1], zIndex: z.nav }}>
+        {[{ id: "ignicion", lb: "Ignición", ic: "bolt", ac: ac }, { id: "dashboard", lb: "Dashboard", ic: "chart", ac: "#6366F1" }, { id: "perfil", lb: "Perfil", ic: "user", ac: t1 }].map(t => { const a = tab === t.id; return (
+          <motion.button key={t.id} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 48 }}>
+            {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 3, borderRadius: "0 0 3px 3px", background: t.ac }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
+            <motion.div animate={{ scale: a ? 1 : 0.9, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 32, height: 32, borderRadius: radius.sm + 2, background: a ? withAlpha(t.ac, 6) : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .2s" }}>
+              <Icon name={t.ic} size={a ? 19 : 17} color={a ? t.ac : t3} />
+            </motion.div>
+            <span style={{ fontSize: font.size.sm, fontWeight: a ? font.weight.black : font.weight.semibold, color: a ? t.ac : t3, transition: "all .2s", letterSpacing: a ? font.tracking.wide : font.tracking.normal }}>{t.lb}</span>
+          </motion.button>); })}
+      </div>
     </div>
-    {isActive&&<div style={{marginTop:14,height:26,borderRadius:13,overflow:"hidden",background:cd,border:`1.5px solid ${bd}`,position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:0,left:0,animation:"wf 4s linear infinite",opacity:.2}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}25,${ac}10)`,transition:"width .95s linear",borderRadius:10}}/></div>}
-  </>}
-  </div>)}
-
-  {/* ═══ TAB: DASHBOARD ═══ */}
-  {tab==="dashboard"&&<DashboardView st={st} isDark={isDark} ac={ac} switchTab={switchTab} sp={sp} onShowHist={()=>setShowHist(true)} />}
-
-  {/* ═══ TAB: PERFIL ═══ */}
-  {tab==="perfil"&&<ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} />}
-  </div>
-
-  {/* ═══ BOTTOM METRICS BAR ═══ */}
-  <div style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:resolveTheme(isDark).glass,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
-    {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
-      <div style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
-      <div><div style={{...ty.metric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:"#059669",fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
-    </div>)}
-  </div>
-
-  {/* ═══ BOTTOM NAV ═══ */}
-  <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:layout.maxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:`6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav}}>
-    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:"#6366F1"},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map(t=>{const a=tab===t.id;return(<motion.button key={t.id} whileTap={{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",cursor:"pointer",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
-      {a&&<motion.div layoutId="navIndicator" style={{position:"absolute",top:0,left:"20%",right:"20%",height:3,borderRadius:"0 0 3px 3px",background:t.ac}} transition={{type:"spring",stiffness:400,damping:30}}/>}
-      <motion.div animate={{scale:a?1:0.9,y:a?-1:0}} transition={{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
-        <Icon name={t.ic} size={a?19:17} color={a?t.ac:t3}/>
-      </motion.div>
-      <span style={{fontSize:font.size.sm,fontWeight:a?font.weight.black:font.weight.semibold,color:a?t.ac:t3,transition:"all .2s",letterSpacing:a?font.tracking.wide:font.tracking.normal}}>{t.lb}</span>
-    </motion.button>);})}
-  </div>
-  </div>);
+  );
 }
