@@ -9,14 +9,11 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { DN } from "../lib/constants";
+import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
 
 export default function WeeklyReport({ st, isDark }) {
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const ac = "#059669";
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const ac = brand.primary;
 
   const report = useMemo(() => {
     const curr = st.weeklyData || [0, 0, 0, 0, 0, 0, 0];
