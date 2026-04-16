@@ -2,14 +2,16 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { MOODS, ENERGY_LEVELS, WORK_TAGS } from "../lib/constants";
+import { resolveTheme } from "../lib/theme";
 
 export default function PostSessionFlow({
-  postStep, ts, bg, cd, bd, ac, t1, t2, t3, isDark,
+  postStep, ts, ac, isDark,
   pr, durMult, st,
   checkMood, setCheckMood, checkEnergy, setCheckEnergy, checkTag, setCheckTag,
   preMood, postVC, postMsg, moodDiff,
   H, submitCheckin, onSetPostStep, onReset,
 }) {
+  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   return (
     <>
       {/* ═══ POST: BREATHE + CHECKIN ═══ */}
