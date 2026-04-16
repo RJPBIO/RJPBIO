@@ -5,7 +5,7 @@
    Replaces all duplicated isDark ternaries across components.
    ═══════════════════════════════════════════════════════════════ */
 
-import { dark, light, brand, alpha, font, space, radius, shadow, z, layout, timer, duration } from "./tokens";
+import { dark, light, brand, semantic, alpha, font, space, radius, shadow, z, layout, timer, duration } from "./tokens";
 
 /**
  * Resolve theme colors for current mode.
@@ -43,7 +43,7 @@ export function resolveTheme(isDark) {
 }
 
 // Re-export tokens for direct access alongside theme
-export { brand, alpha, font, space, radius, shadow, z, layout, timer, duration };
+export { brand, semantic, alpha, font, space, radius, shadow, z, layout, timer, duration };
 
 /**
  * Apply alpha to any hex color.
