@@ -126,6 +126,7 @@ export const ty = {
     fontSize: font.size.sm,
     fontWeight: font.weight.semibold,
     color,
+    lineHeight: font.leading.snug,
   }),
 
   /**
