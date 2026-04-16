@@ -74,30 +74,11 @@ export const useStore = create((set, get) => ({
   },
 
   // ─── Session Completion ─────────────────────────────────
-  // Recibe el resultado calculado de la sesión y actualiza todo
-  completeSession: (sessionResult) => {
+  // Accepts newState from calcSessionCompletion directly
+  completeSession: (newState) => {
     const st = get();
-    const { eVC, nC, nR, nE, ns, nsk, nw, newHist, ach, totalT } = sessionResult;
-    const td = new Date().toDateString();
-    const update = {
-      totalSessions: ns,
-      streak: nsk,
-      todaySessions: st.lastDate === td ? st.todaySessions + 1 : 1,
-      lastDate: td,
-      weeklyData: nw,
-      weekNum: getWeekNum(),
-      coherencia: nC,
-      resiliencia: nR,
-      capacidad: nE,
-      achievements: ach,
-      vCores: (st.vCores || 0) + eVC,
-      history: newHist,
-      totalTime: totalT,
-      firstDone: true,
-      progDay: Math.min((st.progDay || 0) + 1, 7),
-    };
-    set(update);
-    saveToStorage({ ...st, ...update });
+    set(newState);
+    saveToStorage({ ...st, ...newState });
   },
 
   // ─── Mood Logging ───────────────────────────────────────
