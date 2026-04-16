@@ -45,23 +45,31 @@ export default function PostSessionFlow({
 
       {/* ═══ POST: SUMMARY ═══ */}
       <AnimatePresence>
-      {postStep==="summary"&&ts==="done"&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.postSession,background:`${bg}F2`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[5],overflowY:"auto"}}>
+      {postStep==="summary"&&ts==="done"&&(()=>{
+        const isFirst = st.totalSessions <= 1;
+        const isMilestone = [10,25,50,100,200,500].includes(st.totalSessions);
+        const milestoneMsg = isMilestone ? `Sesión #${st.totalSessions} — ` + (st.totalSessions >= 100 ? "MAESTRO NEURAL" : st.totalSessions >= 50 ? "ÉLITE" : st.totalSessions >= 25 ? "AVANZADO" : "DEDICADO") : null;
+        const headline = isFirst ? "Tu primera ignición" : isMilestone ? milestoneMsg : "Sesión completada";
+        const particleCount = isFirst ? 32 : isMilestone ? 40 : 20;
+        return <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.postSession,background:`${bg}F2`,backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[5],overflowY:"auto"}}>
         <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:radius["2xl"],padding:`${space[7]}px ${space[6]}px`,maxWidth:400,width:"100%",position:"relative",overflow:"hidden"}}>
-        {/* Celebration particles */}
-        {Array.from({length:24}).map((_,i)=>{const angle=(i/24)*Math.PI*2;const dist=60+Math.random()*80;return<motion.div key={i} initial={{opacity:0,scale:0,x:0,y:0}} animate={{opacity:[0,1,1,0],scale:[0,1.2,1,0.5],x:Math.cos(angle)*dist,y:Math.sin(angle)*dist-20}} transition={{duration:1.8,delay:i*.04,ease:"easeOut"}} style={{position:"absolute",top:"18%",left:"50%",width:i%3===0?5:3,height:i%3===0?5:3,borderRadius:i%4===0?"1px":radius.full,background:i%3===0?ac:i%3===1?"#6366F1":"#D97706"}}/>})}
+        {/* Celebration particles — density scales with achievement */}
+        {Array.from({length:particleCount}).map((_,i)=>{const angle=(i/particleCount)*Math.PI*2;const dist=60+Math.random()*80;return<motion.div key={i} initial={{opacity:0,scale:0,x:0,y:0}} animate={{opacity:[0,1,1,0],scale:[0,1.2,1,0.5],x:Math.cos(angle)*dist,y:Math.sin(angle)*dist-20}} transition={{duration:1.8,delay:i*.04,ease:"easeOut"}} style={{position:"absolute",top:"18%",left:"50%",width:i%3===0?5:3,height:i%3===0?5:3,borderRadius:i%4===0?"1px":radius.full,background:i%3===0?ac:i%3===1?"#6366F1":"#D97706"}}/>})}
         <div style={{textAlign:"center",marginBottom:space[4]}}>
           <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",stiffness:200,delay:.2}}>
-            <svg width="48" height="48" viewBox="0 0 48 48" style={{margin:`0 auto ${space[2.5]}px`,display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity=".08"/><circle cx="24" cy="24" r="16" fill={ac} opacity=".12"/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
+            <svg width={isMilestone?56:48} height={isMilestone?56:48} viewBox="0 0 48 48" style={{margin:`0 auto ${space[2.5]}px`,display:"block"}}><circle cx="24" cy="24" r="22" fill={ac} opacity={isMilestone?".12":".08"}/><circle cx="24" cy="24" r="16" fill={ac} opacity={isMilestone?".18":".12"}/><path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none"/></svg>
           </motion.div>
-          <div style={ty.heroHeading(t1)}>{st.totalSessions<=1?"Tu primera ignición":"Sesión completada"}</div>
+          <div style={ty.heroHeading(t1)}>{headline}</div>
           <div style={{...ty.title(ac),marginTop:space[1]}}>{pr.n} · {Math.round(pr.d*durMult)}s</div>
+          {isFirst && <div style={{...ty.body(t3),marginTop:space[2],maxWidth:280,margin:`${space[2]}px auto 0`}}>Tu cerebro acaba de registrar su primera sesión de entrenamiento neural.</div>}
         </div>
         {st.streak>=3&&<div style={{textAlign:"center",padding:space[2.5],marginBottom:space[3],background:`linear-gradient(135deg,${withAlpha("#D97706",isDark?8:4)},${withAlpha("#D97706",isDark?4:2)})`,borderRadius:radius.lg,border:`1px solid ${withAlpha("#D97706",8)}`}}>
           <div style={ty.title("#D97706")}><Icon name="fire" size={14} color="#D97706"/> {st.streak} días — {st.streak>=30?"IMPARABLE":st.streak>=14?"DISCIPLINADO":st.streak>=7?"CONSTANTE":"EN CONSTRUCCIÓN"}</div>
         </div>}
+        {/* Mood delta — hero element when available */}
         {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:space[3],marginBottom:space[4],padding:`${space[4]}px ${space[4]}px`,background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:radius.lg}}>
           <div style={{textAlign:"center"}}><Icon name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{...ty.caption(t3),marginTop:3}}>Antes</div></div>
-          <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",delay:.3}} style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={ty.metric(moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,font.size.xl)}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={ty.caption(t3)}>puntos</div></motion.div>
+          <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",delay:.3}} style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={ty.metric(moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,font.size["2xl"])}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={ty.caption(t3)}>puntos</div></motion.div>
           <div style={{textAlign:"center"}}><Icon name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{...ty.caption(t3),marginTop:3}}>Después</div></div>
         </div>}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:space[1],marginBottom:space[3]}}>
@@ -72,7 +80,7 @@ export default function PostSessionFlow({
           <div style={{...ty.body(t2),fontStyle:"italic"}}>{postMsg}</div>
         </div>
         <motion.button whileTap={{scale:.96}} onClick={()=>{onReset();onSetPostStep("none");}} style={{width:"100%",padding:`${space[3]}px`,borderRadius:radius.full,background:ac,border:"none",color:"#fff",...ty.button,cursor:"pointer"}}>CONTINUAR</motion.button>
-      </motion.div></motion.div>}
+      </motion.div></motion.div>;})()}
       </AnimatePresence>
     </>
   );
