@@ -919,3 +919,82 @@ export function interpretCalibration(baseline) {
         : "Excelente momento para empezar. Los protocolos básicos construirán tu fundación neural.",
   };
 }
+
+// ─── Session Completion Calculator ───────────────────────
+// Pure function: given current state + session context, returns new metrics
+export function calcSessionCompletion(st, sessionCtx) {
+  const { protocol, durMult, sessionData, nfcCtx, circadian } = sessionCtx;
+  const td = new Date().toDateString();
+  const di = new Date().getDay();
+  const ad = di === 0 ? 6 : di - 1;
+  const nw = [...st.weeklyData];
+  nw[ad] = (nw[ad] || 0) + 1;
+  const ys = new Date(Date.now() - 864e5).toDateString();
+  let nsk = st.lastDate === td ? st.streak : st.lastDate === ys ? st.streak + 1 : 1;
+
+  const ml = st.moodLog || [];
+  const hist = st.history || [];
+  const recentDeltas = ml.filter((m) => m.pre > 0).slice(-10);
+  const avgDelta = recentDeltas.length >= 2 ? recentDeltas.reduce((a, m) => a + (m.mood - m.pre), 0) / recentDeltas.length : 0;
+  const cohBoost = Math.max(0, Math.min(8, Math.round(avgDelta * 3 + 2)));
+  const cohDecay = avgDelta <= 0 && recentDeltas.length >= 3 ? -3 : 0;
+  const nC = Math.min(100, Math.max(20, recentDeltas.length >= 3 ? Math.round(50 + avgDelta * 15 + recentDeltas.length * 2 + cohDecay) : st.coherencia + cohBoost + cohDecay));
+
+  const weekTotal = nw.reduce((a, b) => a + b, 0);
+  const consistencyScore = Math.min(7, weekTotal) / 7;
+  const streakBonus = Math.min(30, nsk) * 0.5;
+  const nR = Math.min(100, Math.max(20, Math.round(40 + consistencyScore * 30 + streakBonus)));
+
+  const uniqueProtos = new Set([...hist.map((h) => h.p), protocol.n]).size;
+  const diversityScore = (uniqueProtos / 14) * 30;
+  const expScore = Math.min(30, Math.sqrt(st.totalSessions || 0) * 3);
+  const nE = Math.min(100, Math.max(20, Math.round(30 + diversityScore + expScore)));
+
+  const ns = st.totalSessions + 1;
+  const bioQ = calcBioQuality(sessionData);
+  const gamingCheck = detectGamingPattern(hist);
+  if (gamingCheck.gaming) { bioQ.score = Math.min(bioQ.score, 20); bioQ.quality = "inválida"; }
+
+  const qualityMult = bioQ.quality === "alta" ? 1.5 : bioQ.quality === "media" ? 1.0 : bioQ.quality === "baja" ? 0.5 : 0.2;
+  const eVC = Math.max(3, Math.round((5 + (cohBoost * 1.5) + (consistencyScore * 5) + (uniqueProtos * 0.5)) * qualityMult));
+  const vc = (st.vCores || 0) + eVC;
+
+  const ach = [...st.achievements];
+  if (nsk >= 7 && !ach.includes("streak7")) ach.push("streak7");
+  if (nsk >= 30 && !ach.includes("streak30")) ach.push("streak30");
+  if (nC >= 90 && !ach.includes("coherencia90")) ach.push("coherencia90");
+  if (ns >= 50 && !ach.includes("sessions50")) ach.push("sessions50");
+  if (ns >= 100 && !ach.includes("sessions100")) ach.push("sessions100");
+  const totalT = (st.totalTime || 0) + Math.round(protocol.d * durMult);
+  if (totalT >= 3600 && !ach.includes("time60")) ach.push("time60");
+  const hr = new Date().getHours();
+  if (hr < 7 && !ach.includes("earlyBird")) ach.push("earlyBird");
+  if (hr >= 22 && !ach.includes("nightOwl")) ach.push("nightOwl");
+  const uP = new Set([...hist.map((h) => h.p), protocol.n]);
+  if (uP.size >= 14 && !ach.includes("allProtos")) ach.push("allProtos");
+
+  const burnout = calcBurnoutIndex(ml, hist);
+  const bioSignal = calcBioSignal(st);
+  const newHist = [...hist, {
+    p: protocol.n, ts: Date.now(), vc: eVC, c: nC, r: nR,
+    dur: Math.round(protocol.d * durMult), ctx: nfcCtx?.type || "manual",
+    bioQ: bioQ.score, quality: bioQ.quality,
+    interactions: sessionData.interactions || 0, motionSamples: sessionData.motionSamples || 0,
+    pauses: sessionData.pauses || 0, burnoutIdx: burnout.index,
+    circadian: circadian?.period || "day", bioSignal: bioSignal.score,
+  }].slice(-200);
+
+  return {
+    eVC,
+    newState: {
+      totalSessions: ns, streak: nsk,
+      todaySessions: st.lastDate === td ? st.todaySessions + 1 : 1,
+      lastDate: td, weeklyData: nw, weekNum: getWeekNum(),
+      coherencia: nC, resiliencia: nR, capacidad: nE,
+      achievements: ach, vCores: vc, history: newHist,
+      totalTime: totalT, firstDone: true,
+      progDay: Math.min((st.progDay || 0) + 1, 7),
+    },
+    bioQ,
+  };
+}
