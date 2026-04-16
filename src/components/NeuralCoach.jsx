@@ -17,7 +17,7 @@ import {
   calcProtocolDiversity,
   calcSessionQualityTrend,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, semantic, brand } from "../lib/theme";
 
 export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
   const [expanded, setExpanded] = useState(null);
@@ -44,7 +44,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="cpu" size={13} color="#059669" />
+          <Icon name="cpu" size={13} color={brand.primary} />
           <span
             style={{
               fontSize: 10,
@@ -62,7 +62,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
           style={{
             fontSize: 10,
             fontWeight: 700,
-            color: "#059669",
+            color: brand.primary,
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -113,9 +113,9 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
               size={12}
               color={
                 momentum.direction === "ascendente"
-                  ? "#059669"
+                  ? semantic.success
                   : momentum.direction === "descendente"
-                  ? "#DC2626"
+                  ? semantic.danger
                   : t3
               }
             />
@@ -126,9 +126,9 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
               fontWeight: 800,
               color:
                 momentum.score > 10
-                  ? "#059669"
+                  ? semantic.success
                   : momentum.score < -10
-                  ? "#DC2626"
+                  ? semantic.danger
                   : t1,
             }}
           >
@@ -321,7 +321,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                     fontSize: 16,
                     fontWeight: 800,
                     color:
-                      diversity.score >= 50 ? "#059669" : "#D97706",
+                      diversity.score >= 50 ? semantic.success : semantic.warning,
                   }}
                 >
                   {diversity.uniqueCount}/{diversity.totalAvailable}
@@ -351,7 +351,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                   >
                     Hora Pico
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#6366F1" }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: semantic.info }}>
                     {rhythm.peakWindow
                       ? `${rhythm.peakWindow.start}:00`
                       : "—"}
@@ -396,9 +396,9 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                         fontWeight: 800,
                         color:
                           qualityTrend.direction === "mejorando"
-                            ? "#059669"
+                            ? semantic.success
                             : qualityTrend.direction === "deteriorando"
-                            ? "#DC2626"
+                            ? semantic.danger
                             : t1,
                       }}
                     >
@@ -411,8 +411,8 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                           fontWeight: 700,
                           color:
                             qualityTrend.trend > 0
-                              ? "#059669"
-                              : "#DC2626",
+                              ? semantic.success
+                              : semantic.danger,
                         }}
                       >
                         {qualityTrend.trend > 0 ? "+" : ""}
