@@ -207,14 +207,21 @@ export default function BioIgnicion() {
   const { bg, card: cd, surface, border: bd, t1, t2, t3, scrim } = resolveTheme(isDark);
   const ac = pr.cl;
 
-  // ─── Loading screen ────────────────────────────────────
+  // ─── Loading screen — atmospheric first impression ─────
   if (!mt) return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0B0E14", gap: space[4] }}>
-      <motion.div animate={{ scale: [1, 1.06, 1], opacity: [.7, 1, .7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
-        <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke={brand.primary} strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="16" fill="none" stroke={brand.secondary} strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="5" fill={brand.primary} opacity=".4" /></svg>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#080A10", position: "relative", overflow: "hidden" }}>
+      {/* Ambient glow */}
+      <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%,-50%)", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle,${brand.primary}0A,transparent 70%)`, filter: "blur(60px)", animation: "ambientDrift 8s ease-in-out infinite" }} />
+      <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: space[5], position: "relative" }}>
+        <div style={{ position: "relative", width: 80, height: 80 }}>
+          <motion.div animate={{ scale: [1, 1.12, 1], opacity: [.15, .35, .15] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -20, borderRadius: "50%", background: `radial-gradient(circle,${brand.primary}12,transparent 65%)` }} />
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `1px solid ${brand.primary}0C` }} />
+          <motion.div animate={{ opacity: [.2, .7, .2] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 12, height: 12, borderRadius: "50%", background: brand.primary, boxShadow: `0 0 20px ${brand.primary}30, 0 0 40px ${brand.primary}15` }} />
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, letterSpacing: 6, color: "#8B95A8", textTransform: "uppercase", opacity: .7 }}>BIO-IGNICIÓN</div>
+        </div>
       </motion.div>
-      <div style={ty.label("#94A3B8")}>BIO-IGNICIÓN</div>
-      <div style={{ ...ty.caption("#4B5568"), marginTop: -8 }}>v6.0 — Neural Engine IA</div>
     </div>
   );
 
@@ -320,9 +327,9 @@ export default function BioIgnicion() {
             </div>}
 
             {/* Atmospheric greeting — auto-dismisses, no gate */}
-            {!entryDone && ts === "idle" && st.totalSessions > 0 && <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 1.2, ease: "easeOut" }} style={{ textAlign: "center", padding: `${space[4]}px 0 ${space[2]}px` }} onClick={() => setEntryDone(true)}>
-              <div style={{ ...ty.body(t2), fontSize: font.size.md, fontWeight: font.weight.light, lineHeight: font.leading.relaxed, maxWidth: 300, margin: "0 auto", opacity: 0.85 }}>{daily.phrase}</div>
-              {st.streak >= 3 && <div style={{ ...ty.caption(ac), marginTop: space[2], animation: "gentlePulse 3s ease infinite" }}>{st.streak} días consecutivos</div>}
+            {!entryDone && ts === "idle" && st.totalSessions > 0 && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 1.4, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ textAlign: "center", padding: `${space[5]}px 0 ${space[3]}px` }} onClick={() => setEntryDone(true)}>
+              <div style={{ fontSize: font.size.lg, fontWeight: font.weight.medium, lineHeight: font.leading.relaxed, maxWidth: 280, margin: "0 auto", color: t2, opacity: 0.9 }}>{daily.phrase}</div>
+              {st.streak >= 3 && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: space[1.5], marginTop: space[2.5] }}><Icon name="fire" size={12} color={semantic.warning} /><span style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: semantic.warning, letterSpacing: 1 }}>{st.streak} días</span></div>}
             </motion.div>}
 
             {/* Always show main content — no entry gate */}
@@ -386,41 +393,45 @@ export default function BioIgnicion() {
               {ts === "idle" && <>
                 {/* ─── Protocolo ─── */}
                 <div style={{ marginBottom: space[4] }}>
-                  <div style={{ ...ty.label(t3), marginBottom: space[2], paddingLeft: 2 }}>PROTOCOLO</div>
                   <div style={{ display: "flex", gap: space[1.5] }}>
-                    <motion.button aria-label={`Protocolo: ${pr.n}`} whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[2.5]}px ${space[3]}px`, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2] }}>
-                      <div style={{ width: 32, height: 32, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black }}>{pr.tg}</div>
-                      <div style={{ flex: 1, textAlign: "left" }}><div style={ty.title(t1)}>{pr.n}</div><div style={ty.caption(t3)}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div></div>
+                    <motion.button aria-label={`Protocolo: ${pr.n}`} whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[3]}px ${space[3]}px`, borderRadius: radius.lg, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2.5] }}>
+                      <div style={{ width: 38, height: 38, borderRadius: radius.md, background: withAlpha(ac, 5), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black, fontSize: font.size.md }}>{pr.tg}</div>
+                      <div style={{ flex: 1, textAlign: "left" }}><div style={{ ...ty.title(t1), fontSize: font.size.lg }}>{pr.n}</div><div style={{ ...ty.caption(t3), marginTop: 2 }}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div></div>
                       <Icon name="chevron-down" size={12} color={t3} />
                     </motion.button>
-                    <motion.button aria-label="Detalle del protocolo" whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={15} color={t3} /></motion.button>
-                    <motion.button aria-label="Seleccionar intención" whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="target" size={16} color={t3} /></motion.button>
+                    <div style={{ display: "flex", flexDirection: "column", gap: space[1] }}>
+                      <motion.button aria-label="Detalle del protocolo" whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 42, height: 42, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={14} color={t3} /></motion.button>
+                    </div>
                   </div>
                 </div>
 
-                {/* ─── Duración ─── */}
-                <div style={{ marginBottom: space[4] }}>
-                  <div style={{ ...ty.label(t3), marginBottom: space[2], paddingLeft: 2 }}>DURACIÓN</div>
-                  <div style={{ display: "flex", gap: space[1.5] }}>
-                    {[{ v: .5, l: "60s" }, { v: 1, l: "120s" }, { v: 1.5, l: "180s" }].map(d => (
-                      <motion.button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={durMult === d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ flex: 1, padding: `${space[2]}px ${space[2.5]}px`, borderRadius: radius.md, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, color: durMult === d.v ? ac : t3, ...ty.title(durMult === d.v ? ac : t3), cursor: "pointer", transition: "all .2s", minHeight: 42, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>{d.l}</motion.button>
-                    ))}
-                  </div>
+                {/* ─── Duration + Intent row ─── */}
+                <div style={{ display: "flex", gap: space[1.5], marginBottom: space[4] }}>
+                  {[{ v: .5, l: "Corta", sub: `${Math.round(pr.d * .5)}s` }, { v: 1, l: "Normal", sub: `${Math.round(pr.d)}s` }, { v: 1.5, l: "Larga", sub: `${Math.round(pr.d * 1.5)}s` }].map(d => (
+                    <motion.button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={durMult === d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ flex: 1, padding: `${space[2]}px ${space[1]}px`, borderRadius: radius.md, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, cursor: "pointer", transition: "all .2s", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, minHeight: 48 }}>
+                      <span style={{ fontSize: font.size.md, fontWeight: durMult === d.v ? font.weight.black : font.weight.bold, color: durMult === d.v ? ac : t1 }}>{d.l}</span>
+                      <span style={{ fontSize: font.size.xs, fontWeight: font.weight.semibold, color: durMult === d.v ? ac : t3, opacity: .7 }}>{d.sub}</span>
+                    </motion.button>
+                  ))}
+                  <motion.button aria-label="Seleccionar intención" whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 48, height: 48, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, alignSelf: "center" }}><Icon name="target" size={16} color={t3} /></motion.button>
                 </div>
 
-                {/* ─── Estado actual ─── */}
+                {/* ─── Mood pre-check ─── */}
                 <div style={{ marginBottom: space[5] }}>
-                  <div style={{ ...ty.label(t3), marginBottom: space[2], paddingLeft: 2 }}>¿CÓMO TE SIENTES?</div>
                   <div style={{ display: "flex", gap: space[1.5] }}>
                     {MOODS.map(m => (
-                      <motion.button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={preMood === m.value} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ flex: 1, height: 44, borderRadius: radius.md, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 4) : cd, cursor: "pointer", transition: "all .2s", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
-                        <Icon name={m.icon} size={16} color={preMood === m.value ? m.color : t3} />
+                      <motion.button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={preMood === m.value} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ flex: 1, padding: `${space[2]}px ${space[1]}px`, borderRadius: radius.md, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 5) : cd, cursor: "pointer", transition: "all .25s", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, minHeight: 52 }}>
+                        <Icon name={m.icon} size={18} color={preMood === m.value ? m.color : t3} />
+                        <span style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, color: preMood === m.value ? m.color : t3, opacity: preMood === m.value ? 1 : .6 }}>{m.label}</span>
                       </motion.button>))}
                   </div>
                 </div>
 
-                {/* ─── START CTA — prominent, clear action ─── */}
-                <motion.button aria-label="Iniciar sesión" whileTap={{ scale: .95 }} whileHover={{ scale: 1.01 }} onClick={go} style={{ width: "100%", maxWidth: 340, margin: `0 auto ${space[6]}px`, display: "flex", padding: `${space[3.5]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 6px 24px ${withAlpha(ac, 14)}, 0 2px 8px ${withAlpha(ac, 8)}`, minHeight: 54, fontSize: font.size.md, letterSpacing: 1 }}><Icon name="bolt" size={15} color="#fff" />INICIAR SESIÓN</motion.button>
+                {/* ─── START CTA — the moment of commitment ─── */}
+                <div style={{ position: "relative", maxWidth: 340, margin: `0 auto ${space[6]}px` }}>
+                  <motion.div animate={{ scale: [1, 1.04, 1], opacity: [.3, .5, .3] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -6, borderRadius: radius.full, background: `linear-gradient(135deg,${withAlpha(ac, 6)},${withAlpha("#0D9488", 4)})`, filter: "blur(8px)" }} />
+                  <motion.button aria-label="Iniciar sesión" whileTap={{ scale: .95 }} whileHover={{ scale: 1.01 }} onClick={go} style={{ width: "100%", display: "flex", padding: `${space[4]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 8px 30px ${withAlpha(ac, 15)}, 0 2px 8px ${withAlpha(ac, 10)}`, minHeight: 56, fontSize: font.size.md, letterSpacing: 2, position: "relative" }}><Icon name="bolt" size={16} color="#fff" />INICIAR SESIÓN</motion.button>
+                </div>
               </>}
 
               {/* Session controls moved to floating bottom bar */}
@@ -521,16 +532,18 @@ export default function BioIgnicion() {
                   <StreakShield st={st} isDark={isDark} onQuickSession={() => { setDurMult(0.5); const calmP = P.find(p => p.int === "calma" && p.dif === 1) || P[0]; setPr(calmP); setSec(Math.round(calmP.d * 0.5)); go(); }} />
                 </ErrorBoundary>
 
-                {/* Daily Ignición */}
-                <motion.button whileTap={{ scale: .97 }} onClick={() => sp(daily.proto)} style={{ width: "100%", padding: `${space[3]}px ${space[3]}px`, marginBottom: space[2.5], borderRadius: radius.lg, border: `1.5px solid ${withAlpha(daily.proto.cl, 8)}`, background: `linear-gradient(135deg,${withAlpha(daily.proto.cl, 2)},${withAlpha(daily.proto.cl, 1)})`, cursor: "pointer", textAlign: "left", display: "flex", gap: space[3], alignItems: "center", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: withAlpha(daily.proto.cl, 4) }} />
-                  <div style={{ width: 40, height: 40, borderRadius: radius.sm + 3, background: withAlpha(daily.proto.cl, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.title(daily.proto.cl), fontWeight: font.weight.black, flexShrink: 0, border: `1px solid ${withAlpha(daily.proto.cl, 6)}` }}>{daily.proto.tg}</div>
-                  <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
-                    <div style={ty.label(daily.proto.cl)}>IGNICIÓN DEL DÍA</div>
-                    <div style={{ ...ty.title(t1), fontWeight: font.weight.black }}>{daily.proto.n}</div>
-                    <div style={{ ...ty.caption(t3), fontStyle: "italic", lineHeight: font.leading.snug }}>{daily.phrase}</div>
+                {/* Daily Ignición — personalized recommendation */}
+                <motion.button whileTap={{ scale: .97 }} onClick={() => sp(daily.proto)} style={{ width: "100%", padding: `${space[3.5]}px ${space[3.5]}px`, marginBottom: space[2.5], borderRadius: radius.xl, border: `1px solid ${withAlpha(daily.proto.cl, 6)}`, background: `linear-gradient(145deg,${cd},${withAlpha(daily.proto.cl, 2)})`, cursor: "pointer", textAlign: "left", display: "flex", gap: space[3], alignItems: "center", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: -30, right: -30, width: 100, height: 100, borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(daily.proto.cl, 4)},transparent)` }} />
+                  <div style={{ width: 44, height: 44, borderRadius: radius.md, background: withAlpha(daily.proto.cl, 5), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: daily.proto.cl }}>{daily.proto.tg}</span>
                   </div>
-                  <Icon name="bolt" size={14} color={daily.proto.cl} />
+                  <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+                    <div style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, letterSpacing: 2, color: daily.proto.cl, textTransform: "uppercase", opacity: .8 }}>Tu ignición de hoy</div>
+                    <div style={{ fontSize: font.size.md, fontWeight: font.weight.black, color: t1, marginTop: 2 }}>{daily.proto.n}</div>
+                    <div style={{ ...ty.caption(t3), fontStyle: "italic", lineHeight: font.leading.snug, marginTop: 2 }}>{daily.phrase}</div>
+                  </div>
+                  <Icon name="chevron" size={12} color={daily.proto.cl} />
                 </motion.button>
 
                 {/* AI Recommendation */}
@@ -581,14 +594,14 @@ export default function BioIgnicion() {
         {tab === "perfil" && <ErrorBoundary isDark={isDark}><ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={() => setShowSettings(true)} onShowHist={() => setShowHist(true)} onShowCalibration={() => setShowCalibration(true)} /></ErrorBoundary>}
       </div>
 
-      {/* ═══ BOTTOM NAV — clean, no metric noise ═══ */}
+      {/* ═══ BOTTOM NAV — glass morphism ═══ */}
       <AnimatePresence>
-        {!isActive && <motion.nav role="navigation" aria-label="Navegación principal" initial={false} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.3 }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: resolveTheme(isDark).overlay, backdropFilter: "blur(24px)", borderTop: `1px solid ${withAlpha(bd, 50)}`, padding: `0 ${space[4]}px max(10px, env(safe-area-inset-bottom))`, zIndex: z.nav }}>
-          <div style={{ display: "flex", justifyContent: "center", gap: space[1], padding: "6px 0 4px" }}>
+        {!isActive && <motion.nav role="navigation" aria-label="Navegación principal" initial={false} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: isDark ? "rgba(8,10,16,.92)" : "rgba(243,246,251,.92)", backdropFilter: "blur(24px) saturate(1.5)", borderTop: `1px solid ${withAlpha(bd, isDark ? 30 : 50)}`, padding: `0 ${space[4]}px max(10px, env(safe-area-inset-bottom))`, zIndex: z.nav }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: space[1], padding: "8px 0 6px" }}>
             {[{ id: "ignicion", lb: "Ignición", ic: "bolt", ac: ac }, { id: "dashboard", lb: "Dashboard", ic: "chart", ac: "#6366F1" }, { id: "perfil", lb: "Perfil", ic: "user", ac: t1 }].map(t => { const a = tab === t.id; return (
-              <motion.button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "6px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 48 }}>
-                {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "25%", right: "25%", height: 2, borderRadius: "0 0 2px 2px", background: t.ac }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
-                <motion.div animate={{ scale: a ? 1 : 0.88, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 32, height: 32, borderRadius: radius.sm + 2, background: a ? withAlpha(t.ac, 6) : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <motion.button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 50 }}>
+                {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "25%", right: "25%", height: 2.5, borderRadius: "0 0 3px 3px", background: t.ac, boxShadow: `0 1px 6px ${withAlpha(t.ac, 12)}` }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
+                <motion.div animate={{ scale: a ? 1 : 0.88, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 34, height: 34, borderRadius: radius.sm + 3, background: a ? withAlpha(t.ac, 5) : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Icon name={t.ic} size={a ? 18 : 16} color={a ? t.ac : t3} />
                 </motion.div>
                 <span style={{ fontSize: font.size.xs, fontWeight: a ? font.weight.black : font.weight.semibold, color: a ? t.ac : t3, letterSpacing: a ? font.tracking.wide : font.tracking.normal }}>{t.lb}</span>
@@ -596,13 +609,15 @@ export default function BioIgnicion() {
           </div>
         </motion.nav>}
       </AnimatePresence>
-      {/* Active session: minimal floating controls */}
-      {isActive && <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, padding: `${space[3]}px ${space[5]}px max(${space[4]}px, env(safe-area-inset-bottom))`, zIndex: z.nav, background: `linear-gradient(transparent, ${bg}E0 30%)`, pointerEvents: "none" }}>
-        <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", pointerEvents: "auto" }}>
-          <motion.button aria-label={ts === "running" ? "Pausar" : "Continuar"} whileTap={{ scale: .95 }} onClick={ts === "running" ? pa : resume} style={{ flex: 1, maxWidth: 200, padding: `${space[3]}px 0`, borderRadius: radius.full, background: ts === "paused" ? ac : `${cd}E0`, backdropFilter: "blur(12px)", border: ts === "paused" ? "none" : `1.5px solid ${withAlpha(ac, 15)}`, color: ts === "paused" ? "#fff" : ac, ...ty.button, cursor: "pointer", minHeight: 48 }}>{ts === "running" ? "PAUSAR" : "CONTINUAR"}</motion.button>
-          <motion.button aria-label="Reiniciar" whileTap={{ scale: .9 }} onClick={rs} style={{ width: 48, height: 48, borderRadius: "50%", border: `1px solid ${withAlpha(bd, 30)}`, background: `${cd}B0`, backdropFilter: "blur(12px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="reset" size={16} color={t3} /></motion.button>
-        </div>
-      </div>}
+      {/* Active session: atmospheric floating controls */}
+      <AnimatePresence>
+        {isActive && <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ type: "spring", stiffness: 200, damping: 25 }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, padding: `${space[3]}px ${space[5]}px max(${space[4]}px, env(safe-area-inset-bottom))`, zIndex: z.nav, background: `linear-gradient(transparent, ${bg}D0 25%, ${bg}F0)`, pointerEvents: "none" }}>
+          <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", pointerEvents: "auto" }}>
+            <motion.button aria-label={ts === "running" ? "Pausar" : "Continuar"} whileTap={{ scale: .95 }} onClick={ts === "running" ? pa : resume} style={{ flex: 1, maxWidth: 200, padding: `${space[3]}px 0`, borderRadius: radius.full, background: ts === "paused" ? `linear-gradient(135deg,${ac},#0D9488)` : `${cd}E0`, backdropFilter: "blur(16px)", border: ts === "paused" ? "none" : `1px solid ${withAlpha(ac, 10)}`, color: ts === "paused" ? "#fff" : ac, ...ty.button, cursor: "pointer", minHeight: 50, boxShadow: ts === "paused" ? `0 4px 20px ${withAlpha(ac, 12)}` : "none" }}>{ts === "running" ? "PAUSAR" : "CONTINUAR"}</motion.button>
+            <motion.button aria-label="Reiniciar" whileTap={{ scale: .9 }} onClick={rs} style={{ width: 50, height: 50, borderRadius: "50%", border: `1px solid ${withAlpha(bd, 20)}`, background: `${cd}A0`, backdropFilter: "blur(16px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="reset" size={16} color={t3} /></motion.button>
+          </div>
+        </motion.div>}
+      </AnimatePresence>
     </div>
   );
 }
