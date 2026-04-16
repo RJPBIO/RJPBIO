@@ -9,6 +9,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
+import { resolveTheme, withAlpha, ty, font, space, radius, brand, semantic } from "../lib/theme";
 
 const CALIBRATION_STEPS = [
   {
@@ -90,13 +91,8 @@ export default function NeuralCalibration({ onComplete, isDark }) {
   const [userCount, setUserCount] = useState(0);
   const focusTimerRef = useRef(null);
 
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const ac = "#059669";
-  const bg = isDark ? "#0B0E14" : "#F1F4F9";
+  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const ac = brand.primary;
 
   const currentStep = CALIBRATION_STEPS[step];
 
