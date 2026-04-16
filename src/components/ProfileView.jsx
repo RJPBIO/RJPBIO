@@ -58,7 +58,7 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
       </div>
 
       {/* Neural Fingerprint */}
-      {(() => { const fp = calcNeuralFingerprint(st); if (!fp) return null; return (
+      {(() => { let fp; try { fp = calcNeuralFingerprint(st); } catch(e) { fp = null; } if (!fp) return null; return (
         <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2.5] }}><Icon name="fingerprint" size={12} color={t3} /><span style={ty.label(t3)}>Tu Firma Neural</span></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
@@ -84,14 +84,14 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
       </div>
 
       {/* Optimal Time Suggestion */}
-      {(() => { const ot = suggestOptimalTime(st); if (!ot || !ot.best) return null; return (
+      {(() => { let ot; try { ot = suggestOptimalTime(st); } catch(e) { ot = null; } if (!ot || !ot.best) return null; return (
         <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2] }}><Icon name="clock" size={12} color={t3} /><span style={ty.label(t3)}>Hora Óptima</span></div>
           <div style={ty.body(t2)}>{ot.recommendation}</div>
         </div>); })()}
 
       {/* Streak Chain Analysis */}
-      {(() => { const sc = analyzeStreakChain(st); if (!sc) return null; return (
+      {(() => { let sc; try { sc = analyzeStreakChain(st); } catch(e) { sc = null; } if (!sc) return null; return (
         <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2] }}><Icon name="fire" size={12} color="#D97706" /><span style={ty.label(t3)}>Análisis de Rachas</span></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2], marginBottom: space[2] }}>
