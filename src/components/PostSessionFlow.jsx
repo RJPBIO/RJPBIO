@@ -86,22 +86,23 @@ export default function PostSessionFlow({
           <div style={{...ty.title(semantic.warning),display:"flex",alignItems:"center",justifyContent:"center",gap:space[1.5]}}><Icon name="fire" size={15} color={semantic.warning}/> {st.streak} días — {st.streak>=30?"IMPARABLE":st.streak>=14?"DISCIPLINADO":st.streak>=7?"CONSTANTE":"EN CONSTRUCCIÓN"}</div>
         </motion.div>}
 
-        {/* Mood delta — hero reveal when available */}
-        {preMood>0&&checkMood>0&&<motion.div initial={{opacity:0,scale:.95}} animate={{opacity:1,scale:1}} transition={{delay:.5,type:"spring"}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:space[4],marginBottom:space[5],padding:`${space[5]}px ${space[4]}px`,background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:radius.lg}}>
-          <div style={{textAlign:"center"}}><Icon name={MOODS[preMood-1].icon} size={24} color={MOODS[preMood-1].color}/><div style={{...ty.caption(t3),marginTop:4}}>Antes</div></div>
-          <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",delay:.6}} style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+        {/* Mood delta — emotional reveal */}
+        {preMood>0&&checkMood>0&&<motion.div initial={{opacity:0,scale:.95}} animate={{opacity:1,scale:1}} transition={{delay:.5,type:"spring",stiffness:150}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:space[4],marginBottom:space[5],padding:`${space[5]}px ${space[4]}px`,background:`linear-gradient(135deg,${isDark?"#161B26":"#F1F5F9"},${isDark?"#111520":"#F8FAFC"})`,borderRadius:radius.lg,position:"relative",overflow:"hidden"}}>
+          {moodDiff>0&&<div style={{position:"absolute",inset:0,background:`radial-gradient(circle at 50% 50%,${withAlpha(semantic.success,3)},transparent 70%)`}}/>}
+          <div style={{textAlign:"center",position:"relative"}}><Icon name={MOODS[preMood-1].icon} size={26} color={MOODS[preMood-1].color}/><div style={{fontSize:font.size.xs,fontWeight:font.weight.semibold,color:t3,marginTop:5}}>Antes</div></div>
+          <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",delay:.6,stiffness:200}} style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
             <div style={{fontSize:font.size["3xl"],fontWeight:font.weight.black,color:moodDiff>0?semantic.success:moodDiff<0?semantic.danger:t3,lineHeight:font.leading.none}}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div>
-            <div style={{...ty.caption(t3),marginTop:2}}>puntos</div>
+            <div style={{fontSize:font.size.xs,fontWeight:font.weight.bold,color:moodDiff>0?semantic.success:moodDiff<0?semantic.danger:t3,marginTop:4,letterSpacing:1}}>{moodDiff>0?"MEJORASTE":moodDiff===0?"ESTABLE":"EXPLORA"}</div>
           </motion.div>
-          <div style={{textAlign:"center"}}><Icon name={MOODS[checkMood-1].icon} size={24} color={MOODS[checkMood-1].color}/><div style={{...ty.caption(t3),marginTop:4}}>Después</div></div>
+          <div style={{textAlign:"center",position:"relative"}}><Icon name={MOODS[checkMood-1].icon} size={26} color={MOODS[checkMood-1].color}/><div style={{fontSize:font.size.xs,fontWeight:font.weight.semibold,color:t3,marginTop:5}}>Ahora</div></div>
         </motion.div>}
 
-        {/* Metrics */}
-        <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:.6}} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:space[2],marginBottom:space[4]}}>
+        {/* Metrics — earned rewards */}
+        <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:.6}} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:space[2],marginBottom:space[5]}}>
           {[{l:"V-Cores",v:"+"+postVC,c:ac},{l:"Enfoque",v:st.coherencia+"%",c:"#3B82F6"},{l:"Calma",v:st.resiliencia+"%",c:"#8B5CF6"}].map((m,i)=>(
-            <div key={i} style={{background:withAlpha(m.c,4),borderRadius:radius.md,padding:`${space[3]}px ${space[1]}px`,textAlign:"center"}}>
-              <div style={{fontSize:font.size.xl,fontWeight:font.weight.black,color:m.c,lineHeight:font.leading.none}}>{m.v}</div>
-              <div style={{...ty.label(t3),fontSize:font.size.xs,marginTop:space[1.5]}}>{m.l}</div>
+            <div key={i} style={{background:withAlpha(m.c,3),borderRadius:radius.md,padding:`${space[3]}px ${space[1]}px`,textAlign:"center",border:`1px solid ${withAlpha(m.c,4)}`}}>
+              <div style={{fontSize:font.size["2xl"],fontWeight:font.weight.black,color:m.c,lineHeight:font.leading.none}}>{m.v}</div>
+              <div style={{fontSize:font.size.xs,fontWeight:font.weight.semibold,color:t3,letterSpacing:1,marginTop:space[1.5],textTransform:"uppercase"}}>{m.l}</div>
             </div>))}
         </motion.div>
 
