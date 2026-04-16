@@ -140,23 +140,24 @@ export const alpha = {
 };
 
 // ─── Dark Theme ──────────────────────────────────────────
+// Deepened for Calm-level atmospheric immersion
 export const dark = {
-  bg:      "#0B0E14",
-  card:    "#141820",
-  surface: "#1A1E28",
-  border:  "#1E2330",
+  bg:      "#080A10",
+  card:    "#111520",
+  surface: "#161B26",
+  border:  "#1C2130",
   text: {
-    primary:   "#E8ECF4",
+    primary:   "#ECF0F8",
     secondary: "#8B95A8",
-    muted:     "#4B5568",
+    muted:     "#3E4758",
   },
-  overlay: "rgba(11, 14, 20, 0.96)",
-  glass:   "rgba(20, 24, 32, 0.92)",
+  overlay: "rgba(8, 10, 16, 0.97)",
+  glass:   "rgba(17, 21, 32, 0.94)",
 };
 
 // ─── Light Theme ─────────────────────────────────────────
 export const light = {
-  bg:      "#F1F4F9",
+  bg:      "#F3F6FB",
   card:    "#FFFFFF",
   surface: "#F8FAFC",
   border:  "#E2E8F0",
@@ -165,8 +166,8 @@ export const light = {
     secondary: "#475569",
     muted:     "#94A3B8",
   },
-  overlay: "rgba(255, 255, 255, 0.96)",
-  glass:   "rgba(255, 255, 255, 0.92)",
+  overlay: "rgba(243, 246, 251, 0.97)",
+  glass:   "rgba(255, 255, 255, 0.94)",
 };
 
 // ─── Animation Durations ─────────────────────────────────
