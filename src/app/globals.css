@@ -4,30 +4,11 @@ body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inse
 button { font-family: inherit; }
 input, textarea { font-family: inherit; }
 
-/* ═══ CORE ANIMATIONS ═══ */
-@keyframes fi { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes po { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-@keyframes su { from { transform: translateY(100%); } to { transform: translateY(0); } }
+/* ═══ ANIMATIONS (only those actively referenced in JSX) ═══ */
 @keyframes pu { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.06); opacity: 1; } }
-@keyframes bth { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.04); opacity: 0.8; } }
-@keyframes rp { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
-@keyframes am { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(10px, -10px) scale(1.08); } }
 @keyframes shimDot { 0%, 100% { opacity: 0.5; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.3); } }
 @keyframes innerRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes midPop { 0% { opacity: 0; transform: translateX(-50%) translateY(-10px); } 10% { opacity: 1; transform: translateX(-50%) translateY(0); } 85% { opacity: 1; transform: translateX(-50%) translateY(0); } 100% { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
 @keyframes cdPulse { 0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; } }
-@keyframes wf { from { transform: translateX(-400px); } to { transform: translateX(0); } }
-@keyframes particle { 0% { opacity: 0; transform: translate(0, 0) scale(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1); } }
-
-/* Phase visual animations */
-@keyframes heartBeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.08); } 28% { transform: scale(1); } 42% { transform: scale(1.05); } 70% { transform: scale(1); } }
-@keyframes ecgDraw { 0% { opacity: 0.15; } 50% { opacity: 0.45; } 100% { opacity: 0.15; } }
-@keyframes brainPulse { 0%, 100% { opacity: 0.04; transform: scale(1); } 50% { opacity: 0.15; transform: scale(1.3); } }
-@keyframes neuralSpark { 0%, 100% { opacity: 0.1; transform: scale(0.6); } 50% { opacity: 0.8; transform: scale(1.8); } }
-@keyframes focusSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes focusLock { 0%, 100% { opacity: 0.05; transform: scale(1); } 50% { opacity: 0.15; transform: scale(1.2); } }
-@keyframes pausePulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-@keyframes phaseSlide { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes compFlash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ═══ PWA SAFE AREAS ═══ */
@@ -45,135 +26,16 @@ input, textarea { font-family: inherit; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
-/* ═══ NEURAL ORB ENHANCEMENTS ═══ */
-@keyframes orbFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-@keyframes neuralGlow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.15); } }
-@keyframes ringExpand { 0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.4; } 100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; } }
-
-/* ═══ COACH & INSIGHT CARDS ═══ */
-@keyframes insightSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes momentumPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
-
-/* ═══ NEURAL CALIBRATION ═══ */
-@keyframes calibrationPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); }
-  50% { box-shadow: 0 0 0 12px rgba(99,102,241,0); }
-}
-@keyframes reactionFlash {
-  0% { background: rgba(5,150,105,0.6); transform: scale(1.1); }
-  100% { background: transparent; transform: scale(1); }
-}
-@keyframes breathCircle {
-  0%, 100% { transform: scale(0.6); opacity: 0.4; }
-  50% { transform: scale(1); opacity: 1; }
-}
-@keyframes scoreReveal {
-  0% { opacity: 0; transform: scale(0.5) translateY(20px); }
-  60% { transform: scale(1.08) translateY(-4px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes profileGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.1); }
-  50% { box-shadow: 0 0 40px rgba(99,102,241,0.25); }
-}
-@keyframes stepProgress {
-  from { width: 0%; }
-  to { width: 100%; }
+/* ═══ FOCUS VISIBLE ═══ */
+:focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* ═══ SESSION PHASE TRANSITIONS ═══ */
-@keyframes phaseEnter {
-  0% { opacity: 0; transform: scale(0.92) translateY(8px); filter: blur(4px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+button:focus:not(:focus-visible) {
+  outline: none;
 }
-@keyframes phaseExit {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.05); filter: blur(2px); }
-}
-@keyframes breatheIn {
-  0% { transform: scale(0.7); opacity: 0.5; filter: brightness(0.9); }
-  100% { transform: scale(1.15); opacity: 1; filter: brightness(1.1); }
-}
-@keyframes breatheOut {
-  0% { transform: scale(1.15); opacity: 1; filter: brightness(1.1); }
-  100% { transform: scale(0.7); opacity: 0.5; filter: brightness(0.9); }
-}
-@keyframes holdBreath {
-  0%, 100% { transform: scale(1.15); opacity: 0.9; }
-  50% { transform: scale(1.12); opacity: 0.95; }
-}
-@keyframes bodyPulse {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.03); opacity: 0.85; }
-}
-
-/* ═══ STREAK SHIELD ═══ */
-@keyframes shieldPulse {
-  0%, 100% { border-color: rgba(220,38,38,0.15); }
-  50% { border-color: rgba(220,38,38,0.4); }
-}
-@keyframes urgencyGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.2); }
-  50% { box-shadow: 0 0 16px 4px rgba(220,38,38,0.15); }
-}
-
-/* ═══ DASHBOARD CARDS ═══ */
-@keyframes cardEnter {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes metricCount {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes radarSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes barGrow {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-@keyframes correlationFade {
-  from { opacity: 0; transform: translateX(-6px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-/* ═══ NEURAL STATE TRANSITIONS ═══ */
-@keyframes neuralShift {
-  0% { filter: hue-rotate(0deg) brightness(1); }
-  50% { filter: hue-rotate(5deg) brightness(1.08); }
-  100% { filter: hue-rotate(0deg) brightness(1); }
-}
-@keyframes stateTransition {
-  0% { opacity: 0.7; transform: scale(0.98); }
-  50% { opacity: 1; transform: scale(1.01); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-/* ═══ COMPLETION & REWARDS ═══ */
-@keyframes vcoreEarn {
-  0% { opacity: 0; transform: translateY(10px) scale(0.5); }
-  50% { opacity: 1; transform: translateY(-5px) scale(1.2); }
-  100% { opacity: 0; transform: translateY(-20px) scale(0.8); }
-}
-@keyframes achievementUnlock {
-  0% { opacity: 0; transform: scale(0.3) rotate(-10deg); }
-  60% { transform: scale(1.1) rotate(2deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
-}
-@keyframes levelUp {
-  0% { opacity: 0; transform: scale(0.5); filter: brightness(2); }
-  50% { transform: scale(1.15); filter: brightness(1.5); }
-  100% { opacity: 1; transform: scale(1); filter: brightness(1); }
-}
-
-/* ═══ UTILITY CLASSES ═══ */
-.neural-fade-in { animation: fi 0.3s ease-out; }
-.neural-pop { animation: po 0.25s ease-out; }
-.neural-slide-up { animation: su 0.35s cubic-bezier(0.16,1,0.3,1); }
-.phase-enter { animation: phaseEnter 0.5s cubic-bezier(0.16,1,0.3,1); }
-.card-enter { animation: cardEnter 0.4s ease-out both; }
 
 /* ═══ SELECTION ═══ */
 ::selection { background: rgba(5, 150, 105, 0.15); }
