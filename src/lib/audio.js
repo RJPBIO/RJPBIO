@@ -6,7 +6,7 @@
 let _aC = null;
 export function gAC() {
   if (!_aC && typeof window !== "undefined") {
-    try { _aC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    try { _aC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { /* no audio support */ }
   }
   return _aC;
 }
@@ -23,7 +23,7 @@ export function playChord(f, d, v) {
       g.gain.linearRampToValueAtTime(0, c.currentTime + d);
       o.start(c.currentTime); o.stop(c.currentTime + d);
     });
-  } catch (e) {}
+  } catch (e) { /* audio playback unavailable */ }
 }
 
 // ─── Brown noise ambient ──────────────────────────────────
@@ -44,14 +44,14 @@ export function startAmbient() {
       for (let i = 0; i < o.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; o[i] = last * 3.5; }
     };
     _ambGain.gain.linearRampToValueAtTime(0.12, c.currentTime + 2);
-  } catch (e) {}
+  } catch (e) { /* ambient audio unavailable */ }
 }
 
 export function stopAmbient() {
   try {
     if (_ambGain) { const c = gAC(); if (c) _ambGain.gain.linearRampToValueAtTime(0, c.currentTime + 1); }
     setTimeout(() => { if (_ambNode) { _ambNode.disconnect(); _ambNode = null; } if (_ambGain) { _ambGain.disconnect(); _ambGain = null; } }, 1200);
-  } catch (e) {}
+  } catch (e) { /* cleanup safe to ignore */ }
 }
 
 // ─── Soundscapes ──────────────────────────────────────────
@@ -85,14 +85,14 @@ export function startSoundscape(type) {
       _ssNode = { disconnect: () => { o.stop(); o2.stop(); o.disconnect(); o2.disconnect(); panL.disconnect(); panR.disconnect(); } };
       _ssGain.gain.linearRampToValueAtTime(0.035, c.currentTime + 3);
     }
-  } catch (e) {}
+  } catch (e) { /* soundscape audio unavailable */ }
 }
 
 export function stopSoundscape() {
   try {
     if (_ssGain) { const c = gAC(); if (c) _ssGain.gain.linearRampToValueAtTime(0, c.currentTime + 1.5); }
     setTimeout(() => { if (_ssNode) { _ssNode.disconnect(); _ssNode = null; } if (_ssGain) { _ssGain.disconnect(); _ssGain = null; } }, 1800);
-  } catch (e) {}
+  } catch (e) { /* cleanup safe to ignore */ }
 }
 
 // ─── Binaural Engine ──────────────────────────────────────
@@ -135,7 +135,7 @@ export function stopBinaural() {
     if (_binauralGain?._killRAF) { _binauralGain._killRAF(); }
     if (_binauralGain) { const c = gAC(); if (c) _binauralGain.gain.linearRampToValueAtTime(0, c.currentTime + 2); }
     setTimeout(() => {
-      try { if (_binauralL) { _binauralL.stop(); _binauralL.disconnect(); } if (_binauralR) { _binauralR.stop(); _binauralR.disconnect(); } if (_binauralGain) _binauralGain.disconnect(); _binauralL = null; _binauralR = null; _binauralGain = null; } catch (e) {}
+      try { if (_binauralL) { _binauralL.stop(); _binauralL.disconnect(); } if (_binauralR) { _binauralR.stop(); _binauralR.disconnect(); } if (_binauralGain) _binauralGain.disconnect(); _binauralL = null; _binauralR = null; _binauralGain = null; } catch (e) { /* oscillator already stopped */ }
     }, 2500);
   } catch (e) { console.warn("[BIO] Binaural stop error:", e.message); }
 }
@@ -156,7 +156,7 @@ export function hap(t, sO, hO) {
       else if (t === "ok") { playChord([432, 528, 648, 792], 1.5, 0.06); setTimeout(() => playChord([528, 648, 792], 1.2, 0.025), 300); }
       else if (t === "tap") playChord([440], 0.08, 0.02);
     }
-  } catch (e) {}
+  } catch (e) { /* haptic/audio unavailable */ }
 }
 
 export function hapticPhase(type) {
@@ -167,7 +167,7 @@ export function hapticPhase(type) {
     else if (type === "mind") navigator.vibrate([20, 100, 20]);
     else if (type === "focus") navigator.vibrate([80, 20, 80]);
     else navigator.vibrate(30);
-  } catch (e) {}
+  } catch (e) { /* vibration API unavailable */ }
 }
 
 export function hapticBreath(label) {
@@ -177,7 +177,7 @@ export function hapticBreath(label) {
     else if (label === "EXHALA") navigator.vibrate([40]);
     else if (label === "MANTÉN") navigator.vibrate(20);
     else navigator.vibrate(10);
-  } catch (e) {}
+  } catch (e) { /* vibration API unavailable */ }
 }
 
 // ─── Motion Detection ─────────────────────────────────────
@@ -196,17 +196,17 @@ export function setupMotionDetection(cb) {
     if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
       DeviceMotionEvent.requestPermission().then((p) => { if (p === "granted") window.addEventListener("devicemotion", handle); });
     } else { window.addEventListener("devicemotion", handle); }
-  } catch (e) {}
-  return { getSamples: () => samples, getStability: () => stability, cleanup: () => { try { window.removeEventListener("devicemotion", handle); } catch (e) {} } };
+  } catch (e) { /* motion detection unavailable */ }
+  return { getSamples: () => samples, getStability: () => stability, cleanup: () => { try { window.removeEventListener("devicemotion", handle); } catch (e) { /* safe */ } } };
 }
 
 // ─── Wake Lock ────────────────────────────────────────────
 let _wakeLock = null;
 export async function requestWakeLock() {
-  try { if ("wakeLock" in navigator) { _wakeLock = await navigator.wakeLock.request("screen"); } } catch (e) {}
+  try { if ("wakeLock" in navigator) { _wakeLock = await navigator.wakeLock.request("screen"); } } catch (e) { /* wake lock denied or unavailable */ }
 }
 export function releaseWakeLock() {
-  try { if (_wakeLock) { _wakeLock.release(); _wakeLock = null; } } catch (e) {}
+  try { if (_wakeLock) { _wakeLock.release(); _wakeLock = null; } } catch (e) { /* already released */ }
 }
 
 // ─── Voice Guidance ───────────────────────────────────────
@@ -221,7 +221,7 @@ export function loadVoices() {
 
 export function unlockVoice() {
   if (_voiceUnlocked || typeof window === "undefined" || !window.speechSynthesis) return;
-  try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; window.speechSynthesis.speak(u); _voiceUnlocked = true; } catch (e) {}
+  try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; window.speechSynthesis.speak(u); _voiceUnlocked = true; } catch (e) { /* speech synthesis unavailable */ }
 }
 
 export function speak(text, circadian, voiceOn = true) {
@@ -233,7 +233,7 @@ export function speak(text, circadian, voiceOn = true) {
     const v = _voices.find((v) => v.lang === "es-MX") || _voices.find((v) => v.lang === "es-ES") || _voices.find((v) => v.lang.startsWith("es"));
     if (v) u.voice = v;
     window.speechSynthesis.speak(u);
-  } catch (e) {}
+  } catch (e) { /* speech synthesis unavailable */ }
 }
 
 export function speakNow(text, circadian, voiceOn = true) {
@@ -246,11 +246,11 @@ export function speakNow(text, circadian, voiceOn = true) {
     const v = _voices.find((v) => v.lang === "es-MX") || _voices.find((v) => v.lang === "es-ES") || _voices.find((v) => v.lang.startsWith("es"));
     if (v) u.voice = v;
     window.speechSynthesis.speak(u);
-  } catch (e) {}
+  } catch (e) { /* speech synthesis unavailable */ }
 }
 
 export function stopVoice() {
-  try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* safe */ }
 }
 
 // ─── Persistence (DEPRECATED: use Zustand store) ─────────
@@ -262,5 +262,5 @@ export function exportData(st) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "bio-ignicion-data.json"; a.click();
     URL.revokeObjectURL(url);
-  } catch (e) {}
+  } catch (e) { console.warn("[BIO] Export error:", e.message); }
 }
