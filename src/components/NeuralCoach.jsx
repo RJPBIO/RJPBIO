@@ -17,6 +17,7 @@ import {
   calcProtocolDiversity,
   calcSessionQualityTrend,
 } from "../lib/neural";
+import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
 
 export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
   const [expanded, setExpanded] = useState(null);
@@ -29,11 +30,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
   const diversity = calcProtocolDiversity(st.history);
   const qualityTrend = calcSessionQualityTrend(st.history);
 
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   return (
     <div style={{ marginBottom: 14 }}>
