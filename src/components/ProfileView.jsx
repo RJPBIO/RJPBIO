@@ -1,32 +1,17 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
+import AnimatedNumber from "./AnimatedNumber";
 import { MOODS, DS } from "../lib/constants";
 import {
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, suggestOptimalTime, analyzeStreakChain,
 } from "../lib/neural";
-
-/* Animated Number */
-function AN({ value, sfx = "", color = "#0F172A", sz = 32 }) {
-  const [d, sD] = useState(0);
-  const rf = useRef(null);
-  useEffect(() => {
-    let s = d; const e = value; const t0 = performance.now();
-    function step(n) { const p = Math.min((n - t0) / 700, 1); sD(Math.round(s + (1 - Math.pow(1 - p, 3)) * (e - s))); if (p < 1) rf.current = requestAnimationFrame(step); }
-    rf.current = requestAnimationFrame(step);
-    return () => { if (rf.current) cancelAnimationFrame(rf.current); };
-  }, [value]);
-  return <span style={{ fontSize: sz, fontWeight: 800, color, fontFamily: "'Manrope',sans-serif", letterSpacing: "-1px" }}>{d}{sfx}</span>;
-}
+import { resolveTheme } from "../lib/theme";
 
 export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onShowHist, onShowCalibration }) {
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   const lv = gL(st.totalSessions);
   const lPct = lvPct(st.totalSessions);
@@ -90,7 +75,7 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 10 }}>
         <div style={{ background: ac + "06", borderRadius: 14, padding: "14px 12px", border: `1px solid ${ac}10` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 2 }}><Icon name="sparkle" size={10} color={ac} /><span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: ac, textTransform: "uppercase" }}>V-Cores</span></div>
-          <AN value={st.vCores || 0} color={ac} sz={24} />
+          <AnimatedNumber value={st.vCores || 0} color={ac} size={24} />
         </div>
         <div style={{ background: cd, borderRadius: 14, padding: "14px 12px", border: `1px solid ${bd}` }}>
           <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: t3, textTransform: "uppercase", marginBottom: 2 }}>Mood</div>
