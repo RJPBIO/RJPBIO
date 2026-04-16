@@ -28,6 +28,7 @@ import {
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
 } from "../lib/audio";
+import { resolveTheme, withAlpha, font, space, radius, z, layout, timer as timerSize } from "../lib/theme";
 import { useStore } from "../store/useStore";
 import Icon from "../components/Icon";
 
@@ -157,8 +158,7 @@ export default function BioIgnicion(){
   const prediction=useMemo(()=>predictSessionImpact(st,pr),[st.moodLog,pr.id]);
   const cogLoad=useMemo(()=>estimateCognitiveLoad(st),[st.todaySessions,st.moodLog]);
 
-  const bg=isDark?"#0B0E14":"#F1F4F9",cd=isDark?"#141820":"#FFFFFF",bd=isDark?"#1E2330":"#E2E8F0";
-  const t1=isDark?"#E8ECF4":"#0F172A",t2=isDark?"#8B95A8":"#475569",t3=isDark?"#4B5568":"#94A3B8";
+  const{bg,card:cd,surface,border:bd,t1,t2,t3,scrim}=resolveTheme(isDark);
   const ac=pr.cl;
 
   // ─── Loading screen ─────────────────────────────────────
@@ -171,7 +171,7 @@ export default function BioIgnicion(){
   </div>);
 
   return(
-  <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:bg,position:"relative",overflow:"hidden",fontFamily:"'Manrope',-apple-system,sans-serif",transition:"background .8s"}}>
+  <div style={{maxWidth:layout.maxWidth,margin:"0 auto",minHeight:"100vh",background:bg,position:"relative",overflow:"hidden",fontFamily:font.family,transition:"background .8s"}}>
 
   {/* Background aura */}
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
@@ -183,14 +183,14 @@ export default function BioIgnicion(){
 
   {/* Countdown */}
   <AnimatePresence>
-  {countdown>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:240,background:`${bg}DD`,backdropFilter:"blur(30px)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+  {countdown>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.countdown,background:`${bg}DD`,backdropFilter:"blur(30px)",display:"flex",alignItems:"center",justifyContent:"center"}}>
     <motion.div key={countdown} initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:1.5,opacity:0}} transition={{type:"spring",stiffness:200,damping:15}}>
       <div style={{fontSize:96,fontWeight:800,color:ac}}>{countdown}</div>
     </motion.div>
   </motion.div>}
   </AnimatePresence>
 
-  {compFlash&&<div style={{position:"fixed",inset:0,zIndex:230,background:`${ac}12`,animation:"compFlash .8s ease forwards",pointerEvents:"none"}}/>}
+  {compFlash&&<div style={{position:"fixed",inset:0,zIndex:z.flash,background:`${ac}12`,animation:"compFlash .8s ease forwards",pointerEvents:"none"}}/>}
 
   {/* ═══ ONBOARDING — Neural Calibration Flow ═══ */}
   <AnimatePresence>
@@ -209,11 +209,11 @@ export default function BioIgnicion(){
   </AnimatePresence>
 
   {/* ═══ POST-SESSION FLOW ═══ */}
-  <PostSessionFlow postStep={postStep} ts={ts} bg={bg} cd={cd} bd={bd} ac={ac} t1={t1} t2={t2} t3={t3} isDark={isDark} pr={pr} durMult={durMult} st={st} checkMood={checkMood} setCheckMood={setCheckMood} checkEnergy={checkEnergy} setCheckEnergy={setCheckEnergy} checkTag={checkTag} setCheckTag={setCheckTag} preMood={preMood} postVC={postVC} postMsg={postMsg} moodDiff={moodDiff} H={H} submitCheckin={submitCheckin} onSetPostStep={setPostStep} onReset={rs}/>
+  <PostSessionFlow postStep={postStep} ts={ts} ac={ac} isDark={isDark} pr={pr} durMult={durMult} st={st} checkMood={checkMood} setCheckMood={setCheckMood} checkEnergy={checkEnergy} setCheckEnergy={setCheckEnergy} checkTag={checkTag} setCheckTag={setCheckTag} preMood={preMood} postVC={postVC} postMsg={postMsg} moodDiff={moodDiff} H={H} submitCheckin={submitCheckin} onSetPostStep={setPostStep} onReset={rs}/>
 
   {/* ═══ INTENT PICKER ═══ */}
   <AnimatePresence>
-  {showIntent&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:210,background:"rgba(15,23,42,.4)",backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowIntent(false)}>
+  {showIntent&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.modal,background:scrim,backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[6]}} onClick={()=>setShowIntent(false)}>
     <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%"}} onClick={e=>e.stopPropagation()}>
     <div style={{textAlign:"center",marginBottom:18}}><div style={{fontSize:16,fontWeight:800,color:t1}}>¿Qué necesitas?</div>
     {aiRec&&<div style={{fontSize:10,color:t3,marginTop:4}}>IA sugiere: <span style={{color:ac,fontWeight:700}}>{aiRec.need}</span> · {aiRec.context.circadian}</div>}
@@ -470,7 +470,7 @@ export default function BioIgnicion(){
   </div>
 
   {/* ═══ BOTTOM METRICS BAR ═══ */}
-  <div style={{position:"fixed",bottom:68,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:"8px 16px",background:`${isDark?"rgba(20,24,32,.92)":"rgba(255,255,255,.92)"}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:50,borderRadius:16,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
+  <div style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:resolveTheme(isDark).glass,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
     {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
       <div style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
       <div><div style={{fontSize:13,fontWeight:800,color:m.c,lineHeight:1}}>{m.v}%</div><div style={{fontSize:9,color:t3,fontWeight:600,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:"#059669",fontWeight:700}}>+{m.d}</span>}</div></div>
@@ -478,7 +478,7 @@ export default function BioIgnicion(){
   </div>
 
   {/* ═══ BOTTOM NAV ═══ */}
-  <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:`${isDark?"rgba(11,14,20,.96)":"rgba(255,255,255,.96)"}`,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:"6px 16px max(10px, env(safe-area-inset-bottom))",display:"flex",justifyContent:"center",gap:4,zIndex:60}}>
+  <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:layout.maxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:`6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav}}>
     {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:"#6366F1"},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map(t=>{const a=tab===t.id;return(<motion.button key={t.id} whileTap={{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",cursor:"pointer",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
       {a&&<motion.div layoutId="navIndicator" style={{position:"absolute",top:0,left:"20%",right:"20%",height:3,borderRadius:"0 0 3px 3px",background:t.ac}} transition={{type:"spring",stiffness:400,damping:30}}/>}
       <motion.div animate={{scale:a?1:0.9,y:a?-1:0}} transition={{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
