@@ -28,7 +28,7 @@ import {
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
 } from "../lib/audio";
-import { resolveTheme, withAlpha, font, space, radius, z, layout, timer as timerSize } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize } from "../lib/theme";
 import { useStore } from "../store/useStore";
 import Icon from "../components/Icon";
 
@@ -162,12 +162,12 @@ export default function BioIgnicion(){
   const ac=pr.cl;
 
   // ─── Loading screen ─────────────────────────────────────
-  if(!mt)return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#0B0E14",gap:16}}>
+  if(!mt)return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#0B0E14",gap:space[4]}}>
     <motion.div animate={{scale:[1,1.06,1],opacity:[.7,1,.7]}} transition={{duration:1.8,repeat:Infinity,ease:"easeInOut"}}>
       <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg>
     </motion.div>
-    <div style={{fontSize:10,fontWeight:800,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div>
-    <div style={{fontSize:10,color:"#4B5568",marginTop:-8}}>v5.0 — Neural Engine IA</div>
+    <div style={{fontSize:font.size.sm,fontWeight:font.weight.black,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div>
+    <div style={{fontSize:font.size.sm,color:"#4B5568",marginTop:-8}}>v5.0 — Neural Engine IA</div>
   </div>);
 
   return(
@@ -185,7 +185,7 @@ export default function BioIgnicion(){
   <AnimatePresence>
   {countdown>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.countdown,background:`${bg}DD`,backdropFilter:"blur(30px)",display:"flex",alignItems:"center",justifyContent:"center"}}>
     <motion.div key={countdown} initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:1.5,opacity:0}} transition={{type:"spring",stiffness:200,damping:15}}>
-      <div style={{fontSize:96,fontWeight:800,color:ac}}>{countdown}</div>
+      <div style={{fontSize:96,fontWeight:font.weight.black,color:ac}}>{countdown}</div>
     </motion.div>
   </motion.div>}
   </AnimatePresence>
@@ -215,10 +215,10 @@ export default function BioIgnicion(){
   <AnimatePresence>
   {showIntent&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.modal,background:scrim,backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[6]}} onClick={()=>setShowIntent(false)}>
     <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%"}} onClick={e=>e.stopPropagation()}>
-    <div style={{textAlign:"center",marginBottom:18}}><div style={{fontSize:16,fontWeight:800,color:t1}}>¿Qué necesitas?</div>
-    {aiRec&&<div style={{fontSize:10,color:t3,marginTop:4}}>IA sugiere: <span style={{color:ac,fontWeight:700}}>{aiRec.need}</span> · {aiRec.context.circadian}</div>}
+    <div style={{textAlign:"center",marginBottom:space[5]}}><div style={{fontSize:font.size.xl,fontWeight:font.weight.black,color:t1}}>¿Qué necesitas?</div>
+    {aiRec&&<div style={{...ty.caption(t3),marginTop:space[1]}}>IA sugiere: <span style={{color:ac,fontWeight:font.weight.bold}}>{aiRec.need}</span> · {aiRec.context.circadian}</div>}
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>{INTENTS.map(i=>{const b=P.filter(p=>p.int===i.id);const pk=b[Math.floor(b.length/2)]||P[0];return(<motion.button key={i.id} whileTap={{scale:.95}} onClick={()=>sp(pk)} style={{padding:"16px 10px",borderRadius:16,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",textAlign:"center"}}><Icon name={i.icon} size={26} color={i.color}/><div style={{fontSize:12,fontWeight:800,color:t1,marginTop:6}}>{i.label}</div><div style={{fontSize:10,color:i.color,fontWeight:700,marginTop:4}}>{pk.n}</div></motion.button>);})}</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:space[2]}}>{INTENTS.map(i=>{const b=P.filter(p=>p.int===i.id);const pk=b[Math.floor(b.length/2)]||P[0];return(<motion.button key={i.id} whileTap={{scale:.95}} onClick={()=>sp(pk)} style={{padding:`${space[4]}px ${space[2.5]}px`,borderRadius:radius.lg,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",textAlign:"center"}}><Icon name={i.icon} size={26} color={i.color}/><div style={{...ty.title(t1),marginTop:space[1.5]}}>{i.label}</div><div style={{...ty.caption(i.color),fontWeight:font.weight.bold,marginTop:space[1]}}>{pk.n}</div></motion.button>);})}</div>
   </motion.div></motion.div>}
   </AnimatePresence>
 
@@ -257,15 +257,15 @@ export default function BioIgnicion(){
     {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}}/>}
 
     {/* Cognitive Load indicator (NEW) */}
-    {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",marginBottom:12,background:isDark?"#1A1E28":"#F8FAFC",borderRadius:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:6}}>
-        <div style={{width:24,height:24,borderRadius:7,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="bolt" size={11} color={ac}/></div>
-        <span style={{fontSize:11,fontWeight:600,color:t1}}>{st.todaySessions||0} de {st.sessionGoal||2} sesiones hoy</span>
+    {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[2.5]}px ${space[4]}px`,marginBottom:space[3],background:surface,borderRadius:radius.md}}>
+      <div style={{display:"flex",alignItems:"center",gap:space[1.5]}}>
+        <div style={{width:24,height:24,borderRadius:7,background:withAlpha(ac,6),display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="bolt" size={11} color={ac}/></div>
+        <span style={{...ty.body(t1),fontWeight:font.weight.semibold}}>{st.todaySessions||0} de {st.sessionGoal||2} sesiones hoy</span>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:6}}>
-        <div style={{display:"flex",alignItems:"center",gap:3}}><Icon name="gauge" size={10} color={cogLoad.color}/><span style={{fontSize:10,fontWeight:700,color:cogLoad.color}}>{cogLoad.level}</span></div>
-        <div style={{width:40,height:5,borderRadius:5,background:bd,overflow:"hidden"}}>
-          <div style={{width:Math.min(100,(st.todaySessions||0)/(st.sessionGoal||2)*100)+"%",height:"100%",background:ac,borderRadius:5,transition:"width .3s"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:space[1.5]}}>
+        <div style={{display:"flex",alignItems:"center",gap:3}}><Icon name="gauge" size={10} color={cogLoad.color}/><span style={ty.caption(cogLoad.color)}>{cogLoad.level}</span></div>
+        <div style={{width:40,height:5,borderRadius:radius.sm/2,background:bd,overflow:"hidden"}}>
+          <div style={{width:Math.min(100,(st.todaySessions||0)/(st.sessionGoal||2)*100)+"%",height:"100%",background:ac,borderRadius:radius.sm/2,transition:"width .3s"}}/>
         </div>
       </div>
     </div>}
@@ -275,9 +275,9 @@ export default function BioIgnicion(){
       <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
       <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
       <div style={{flex:1,position:"relative",zIndex:1}}>
-        <div style={{fontSize:10,fontWeight:800,color:daily.proto.cl,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>IGNICIÓN DEL DÍA</div>
-        <div style={{fontSize:13,fontWeight:800,color:t1}}>{daily.proto.n}</div>
-        <div style={{fontSize:10,color:t3,marginTop:2,fontStyle:"italic",lineHeight:1.4}}>{daily.phrase}</div>
+        <div style={{...ty.label(daily.proto.cl),marginBottom:2}}>IGNICIÓN DEL DÍA</div>
+        <div style={{...ty.title(t1),fontWeight:font.weight.black}}>{daily.proto.n}</div>
+        <div style={{...ty.caption(t3),marginTop:2,fontStyle:"italic",lineHeight:font.leading.snug}}>{daily.phrase}</div>
       </div>
       <Icon name="bolt" size={16} color={daily.proto.cl}/>
     </motion.button>}
@@ -285,7 +285,7 @@ export default function BioIgnicion(){
     {/* AI Recommendation — inline compact */}
     {ts==="idle"&&aiRec&&aiRec.primary&&aiRec.primary.protocol.id!==daily.proto.id&&<motion.button initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} whileTap={{scale:.97}} onClick={()=>sp(aiRec.primary.protocol)} style={{width:"100%",padding:"10px 14px",marginBottom:10,borderRadius:14,border:`1.5px solid ${ac}15`,background:isDark?"#0A1A0A":"#F0FDF4",cursor:"pointer",textAlign:"left",display:"flex",gap:10,alignItems:"center"}}>
       <div style={{width:28,height:28,borderRadius:8,background:ac+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="cpu" size={13} color={ac}/></div>
-      <div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:ac}}>IA: {aiRec.primary.protocol.n}</div><div style={{fontSize:10,color:t3}}>{aiRec.primary.reason}</div></div>
+      <div style={{flex:1}}><div style={{...ty.caption(ac),fontWeight:font.weight.bold}}>IA: {aiRec.primary.protocol.n}</div><div style={ty.caption(t3)}>{aiRec.primary.reason}</div></div>
       <Icon name="chevron" size={12} color={ac}/>
     </motion.button>}
 
@@ -374,13 +374,13 @@ export default function BioIgnicion(){
       {/* Contenido central */}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none",zIndex:2}}>
         {isBr&&bL&&<div style={{marginBottom:4}}><span style={{fontSize:12,fontWeight:800,letterSpacing:5,color:ac,opacity:.9}}>{bL}</span><span style={{fontSize:13,fontWeight:800,color:ac,marginLeft:4}}>{bCnt}s</span></div>}
-        <div style={{fontSize:isActive?48:56,fontWeight:800,color:t1,lineHeight:1,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
-        {isActive&&<div style={{fontSize:11,fontWeight:800,color:ac,marginTop:4,opacity:.8}}>{sessPct}%</div>}
+        <div style={{fontSize:isActive?font.size.hero:56,fontWeight:font.weight.black,color:t1,lineHeight:font.leading.none,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
+        {isActive&&<div style={{...ty.title(ac),fontWeight:font.weight.black,marginTop:space[1],opacity:.8}}>{sessPct}%</div>}
         {ts==="idle"&&<>
-          <div style={{fontSize:11,fontWeight:600,letterSpacing:3,color:t3,marginTop:6,textTransform:"uppercase"}}>segundos</div>
+          <div style={{...ty.label(t3),fontWeight:font.weight.semibold,marginTop:space[1.5]}}>segundos</div>
           <motion.div animate={{opacity:[.5,1,.5],y:[0,-2,0]}} transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:12,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
             <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},#0D9488)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
-            <span style={{fontSize:10,fontWeight:800,color:ac,letterSpacing:2,textTransform:"uppercase"}}>INICIAR</span>
+            <span style={ty.label(ac)}>INICIAR</span>
           </motion.div>
         </>}
         {ts==="paused"&&<motion.div animate={{opacity:[.5,1,.5]}} transition={{duration:2,repeat:Infinity}} style={{marginTop:6}}><span style={{fontSize:11,fontWeight:800,color:ac,letterSpacing:3}}>EN PAUSA</span></motion.div>}
@@ -473,7 +473,7 @@ export default function BioIgnicion(){
   <div style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:resolveTheme(isDark).glass,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
     {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
       <div style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
-      <div><div style={{fontSize:13,fontWeight:800,color:m.c,lineHeight:1}}>{m.v}%</div><div style={{fontSize:9,color:t3,fontWeight:600,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:"#059669",fontWeight:700}}>+{m.d}</span>}</div></div>
+      <div><div style={{...ty.metric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:"#059669",fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
     </div>)}
   </div>
 
@@ -484,7 +484,7 @@ export default function BioIgnicion(){
       <motion.div animate={{scale:a?1:0.9,y:a?-1:0}} transition={{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
         <Icon name={t.ic} size={a?19:17} color={a?t.ac:t3}/>
       </motion.div>
-      <span style={{fontSize:10,fontWeight:a?800:600,color:a?t.ac:t3,transition:"all .2s",letterSpacing:a?0.5:0}}>{t.lb}</span>
+      <span style={{fontSize:font.size.sm,fontWeight:a?font.weight.black:font.weight.semibold,color:a?t.ac:t3,transition:"all .2s",letterSpacing:a?font.tracking.wide:font.tracking.normal}}>{t.lb}</span>
     </motion.button>);})}
   </div>
   </div>);
