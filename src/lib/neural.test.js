@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
+  gL, lvPct, nxtLv, getStatus, getWeekNum,
+  getDailyIgn, getCircadian,
   calcBioQuality,
   calcBurnoutIndex,
   calcBioSignal,
@@ -8,6 +10,17 @@ import {
   calcSessionCompletion,
   calcProtoSensitivity,
   predictSessionImpact,
+  calcNeuralFingerprint,
+  suggestOptimalTime,
+  analyzeStreakChain,
+  estimateCognitiveLoad,
+  calcNeuralMomentum,
+  calcRecoveryIndex,
+  calcCognitiveEntropy,
+  estimateCoherence,
+  calcNeuralVariability,
+  calcProtocolDiversity,
+  genIns,
 } from "./neural";
 
 // ─── calcBioQuality ──────────────────────────────────────
@@ -322,5 +335,400 @@ describe("predictSessionImpact", () => {
     const r = predictSessionImpact(st, { n: "C", int: "enfoque" });
     expect(r).toHaveProperty("predictedDelta");
     expect(r).toHaveProperty("confidence");
+  });
+});
+
+// ─── Level System: gL, lvPct, nxtLv ────────────────────
+describe("gL (getLevel)", () => {
+  it("returns INICIADO for 0 sessions", () => {
+    expect(gL(0).n).toBe("INICIADO");
+  });
+
+  it("returns OPERADOR for 1 session", () => {
+    expect(gL(1).n).toBe("OPERADOR");
+  });
+
+  it("returns EJECUTOR for 10 sessions", () => {
+    expect(gL(10).n).toBe("EJECUTOR");
+  });
+
+  it("returns ARQUITECTO for 100+ sessions", () => {
+    expect(gL(100).n).toBe("ARQUITECTO");
+    expect(gL(500).n).toBe("ARQUITECTO");
+  });
+
+  it("has a color property", () => {
+    expect(gL(0)).toHaveProperty("c");
+    expect(typeof gL(0).c).toBe("string");
+  });
+});
+
+describe("lvPct", () => {
+  it("returns 0 for 0 sessions", () => {
+    expect(lvPct(0)).toBe(0);
+  });
+
+  it("returns 100 at level cap", () => {
+    // OPERADOR range is 1-10, at 9 sessions: (9-1)/(10-1)=88%
+    // At 10 you become EJECUTOR (m=10,mx=25), so lvPct(10)=0
+    // Use 9 to test near-cap within OPERADOR
+    expect(lvPct(9)).toBeGreaterThan(80);
+    // At max level (ARQUITECTO m=100 mx=999), test cap
+    expect(lvPct(999)).toBe(100);
+  });
+
+  it("returns intermediate percentage", () => {
+    // OPERADOR: m=1, mx=10 → at 5: (5-1)/(10-1)*100 = 44%
+    const pct = lvPct(5);
+    expect(pct).toBeGreaterThan(0);
+    expect(pct).toBeLessThan(100);
+  });
+});
+
+describe("nxtLv", () => {
+  it("returns next level for low sessions", () => {
+    const next = nxtLv(0);
+    expect(next).not.toBeNull();
+    expect(next.n).toBe("OPERADOR");
+  });
+
+  it("returns null at max level", () => {
+    expect(nxtLv(100)).toBeNull();
+  });
+});
+
+// ─── getStatus ──────────────────────────────────────────
+describe("getStatus", () => {
+  it("returns Calibrando for low values", () => {
+    expect(getStatus(20).label).toBe("Calibrando");
+  });
+
+  it("returns Activación for mid values", () => {
+    expect(getStatus(50).label).toBe("Activación");
+  });
+
+  it("returns Rendimiento for good values", () => {
+    expect(getStatus(70).label).toBe("Rendimiento");
+  });
+
+  it("returns Óptimo for high values", () => {
+    expect(getStatus(90).label).toBe("Óptimo");
+  });
+
+  it("has color property", () => {
+    expect(getStatus(50)).toHaveProperty("color");
+  });
+
+  it("falls back for out of range values", () => {
+    const r = getStatus(200);
+    expect(r).toHaveProperty("label");
+  });
+});
+
+// ─── getWeekNum ─────────────────────────────────────────
+describe("getWeekNum", () => {
+  it("returns a number between 1 and 53", () => {
+    const w = getWeekNum();
+    expect(w).toBeGreaterThanOrEqual(1);
+    expect(w).toBeLessThanOrEqual(53);
+  });
+});
+
+// ─── getCircadian ───────────────────────────────────────
+describe("getCircadian", () => {
+  it("returns an object with required properties", () => {
+    const c = getCircadian();
+    expect(c).toHaveProperty("period");
+    expect(c).toHaveProperty("energy");
+    expect(c).toHaveProperty("intent");
+    expect(c).toHaveProperty("audioFreq");
+    expect(c).toHaveProperty("voiceRate");
+    expect(c).toHaveProperty("voicePitch");
+  });
+
+  it("intent is one of known values", () => {
+    const c = getCircadian();
+    expect(["calma", "energia", "enfoque", "reset"]).toContain(c.intent);
+  });
+});
+
+// ─── getDailyIgn ────────────────────────────────────────
+describe("getDailyIgn", () => {
+  it("returns proto and phrase", () => {
+    const r = getDailyIgn({ moodLog: [] });
+    expect(r).toHaveProperty("proto");
+    expect(r).toHaveProperty("phrase");
+    expect(r.proto).toHaveProperty("n");
+  });
+
+  it("filters to easier protocols for low mood", () => {
+    const ml = [{ mood: 1, ts: Date.now() }];
+    const r = getDailyIgn({ moodLog: ml });
+    expect(r.proto.dif).toBeLessThanOrEqual(2);
+  });
+});
+
+// ─── calcNeuralFingerprint ──────────────────────────────
+describe("calcNeuralFingerprint", () => {
+  it("returns null with < 10 history entries", () => {
+    expect(calcNeuralFingerprint({ moodLog: [], history: [] })).toBeNull();
+    expect(calcNeuralFingerprint({ moodLog: [], history: Array(9).fill({ ts: Date.now(), c: 50 }) })).toBeNull();
+  });
+
+  it("returns fingerprint with sufficient history", () => {
+    const hist = Array.from({ length: 15 }, (_, i) => ({
+      ts: Date.now() - i * 3600000, p: "TestProto", c: 60 + i, bioQ: 70,
+    }));
+    const ml = Array.from({ length: 5 }, (_, i) => ({
+      mood: 4, pre: 2, proto: "TestProto", ts: Date.now() - i * 3600000,
+    }));
+    const r = calcNeuralFingerprint({ moodLog: ml, history: hist, weeklyData: [1, 2, 0, 1, 0, 0, 0], coherencia: 70, resiliencia: 60, capacidad: 55 });
+    expect(r).not.toBeNull();
+    expect(r).toHaveProperty("peakHour");
+    expect(r).toHaveProperty("bestProto");
+    expect(r).toHaveProperty("avgQuality");
+    expect(r).toHaveProperty("weekPattern");
+    expect(r).toHaveProperty("moodBaseline");
+    expect(r).toHaveProperty("adaptationRate");
+    expect(r).toHaveProperty("cognitiveBaseline");
+  });
+});
+
+// ─── suggestOptimalTime ─────────────────────────────────
+describe("suggestOptimalTime", () => {
+  it("returns null with < 10 history entries", () => {
+    expect(suggestOptimalTime({ history: [], moodLog: [] })).toBeNull();
+  });
+
+  it("returns best/worst windows with sufficient data", () => {
+    const hist = Array.from({ length: 20 }, (_, i) => ({
+      ts: new Date(2025, 0, 1, 9 + (i % 3), 0).getTime(), p: "T", c: 60 + i,
+    }));
+    const ml = Array.from({ length: 10 }, (_, i) => ({
+      mood: 4, pre: 2, ts: new Date(2025, 0, 1, 9, 0).getTime(), proto: "T",
+    }));
+    const r = suggestOptimalTime({ history: hist, moodLog: ml });
+    expect(r).not.toBeNull();
+    expect(r).toHaveProperty("best");
+    expect(r).toHaveProperty("recommendation");
+    expect(r.best).toHaveProperty("hour");
+    expect(r.best).toHaveProperty("sessions");
+  });
+});
+
+// ─── analyzeStreakChain ─────────────────────────────────
+describe("analyzeStreakChain", () => {
+  it("returns null with < 7 history entries", () => {
+    expect(analyzeStreakChain({ history: [], streak: 0 })).toBeNull();
+  });
+
+  it("analyzes streak patterns with sufficient data", () => {
+    const now = Date.now();
+    const hist = Array.from({ length: 14 }, (_, i) => ({
+      ts: now - (13 - i) * 86400000, p: "T",
+    }));
+    const r = analyzeStreakChain({ history: hist, streak: 5 });
+    expect(r).not.toBeNull();
+    expect(r).toHaveProperty("maxStreak");
+    expect(r).toHaveProperty("avgStreak");
+    expect(r).toHaveProperty("avgBreakPoint");
+    expect(r).toHaveProperty("prediction");
+    expect(r.maxStreak).toBeGreaterThanOrEqual(1);
+  });
+
+  it("detects at-risk streaks", () => {
+    const now = Date.now();
+    // 5-day streak, then gap, then 5-day streak — avgBreakPoint ≈ 5
+    const hist = [
+      ...Array.from({ length: 5 }, (_, i) => ({ ts: now - (20 - i) * 86400000, p: "T" })),
+      ...Array.from({ length: 5 }, (_, i) => ({ ts: now - (10 - i) * 86400000, p: "T" })),
+    ];
+    const r = analyzeStreakChain({ history: hist, streak: 4 });
+    expect(r).not.toBeNull();
+    expect(typeof r.atRisk).toBe("boolean");
+  });
+});
+
+// ─── estimateCognitiveLoad ──────────────────────────────
+describe("estimateCognitiveLoad", () => {
+  it("returns load between 0 and 100", () => {
+    const r = estimateCognitiveLoad({ todaySessions: 0, moodLog: [] });
+    expect(r.load).toBeGreaterThanOrEqual(0);
+    expect(r.load).toBeLessThanOrEqual(100);
+  });
+
+  it("returns known level values", () => {
+    const r = estimateCognitiveLoad({ todaySessions: 0, moodLog: [] });
+    expect(["bajo", "moderado", "alto", "máximo"]).toContain(r.level);
+  });
+
+  it("sessions reduce cognitive load", () => {
+    const noSessions = estimateCognitiveLoad({ todaySessions: 0, moodLog: [] });
+    const withSessions = estimateCognitiveLoad({ todaySessions: 3, moodLog: [] });
+    expect(withSessions.load).toBeLessThanOrEqual(noSessions.load);
+  });
+
+  it("has recommendation, color, optimalDuration", () => {
+    const r = estimateCognitiveLoad({ todaySessions: 0, moodLog: [] });
+    expect(r).toHaveProperty("recommendation");
+    expect(r).toHaveProperty("color");
+    expect(r).toHaveProperty("optimalDuration");
+  });
+});
+
+// ─── calcNeuralMomentum ─────────────────────────────────
+describe("calcNeuralMomentum", () => {
+  it("returns neutral with < 5 history entries", () => {
+    const r = calcNeuralMomentum({ history: [], streak: 0, weeklyData: [] });
+    expect(r.direction).toBe("neutral");
+    expect(r.score).toBe(0);
+  });
+
+  it("detects ascending momentum", () => {
+    const hist = [
+      ...Array.from({ length: 5 }, () => ({ c: 40 })),
+      ...Array.from({ length: 5 }, () => ({ c: 80 })),
+    ];
+    const r = calcNeuralMomentum({ history: hist, streak: 5, weeklyData: [1, 1, 1, 1, 1, 0, 0] });
+    expect(r.direction).toBe("ascendente");
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it("detects descending momentum", () => {
+    const hist = [
+      ...Array.from({ length: 5 }, () => ({ c: 80 })),
+      ...Array.from({ length: 5 }, () => ({ c: 30 })),
+    ];
+    const r = calcNeuralMomentum({ history: hist, streak: 0, weeklyData: [0, 0, 0, 0, 0, 0, 0] });
+    expect(r.direction).toBe("descendente");
+    expect(r.score).toBeLessThan(0);
+  });
+});
+
+// ─── calcRecoveryIndex ──────────────────────────────────
+describe("calcRecoveryIndex", () => {
+  it("returns null with < 4 entries", () => {
+    expect(calcRecoveryIndex([])).toBeNull();
+    expect(calcRecoveryIndex([{ mood: 3, pre: 2 }])).toBeNull();
+  });
+
+  it("returns null when < 2 entries have pre", () => {
+    const ml = Array.from({ length: 5 }, () => ({ mood: 3, pre: 0 }));
+    expect(calcRecoveryIndex(ml)).toBeNull();
+  });
+
+  it("calculates retention for valid data", () => {
+    const now = Date.now();
+    const ml = [
+      { mood: 4, pre: 2, ts: now - 86400000 * 3 },
+      { mood: 5, pre: 4, ts: now - 86400000 * 2 },
+      { mood: 4, pre: 3, ts: now - 86400000 },
+      { mood: 5, pre: 4, ts: now },
+    ];
+    const r = calcRecoveryIndex(ml);
+    expect(r).not.toBeNull();
+    expect(r).toHaveProperty("avgRetention");
+    expect(r).toHaveProperty("avgHours");
+    expect(r).toHaveProperty("interpretation");
+  });
+});
+
+// ─── calcCognitiveEntropy ───────────────────────────────
+describe("calcCognitiveEntropy", () => {
+  it("returns zero entropy with < 2 reaction times", () => {
+    expect(calcCognitiveEntropy({ reactionTimes: [] }).entropy).toBe(0);
+    expect(calcCognitiveEntropy({ reactionTimes: [300] }).entropy).toBe(0);
+  });
+
+  it("calculates entropy for varied reaction times", () => {
+    const r = calcCognitiveEntropy({ reactionTimes: [200, 800, 300, 700, 250] });
+    expect(r.entropy).toBeGreaterThan(0);
+    expect(r).toHaveProperty("speed");
+    expect(r).toHaveProperty("avgReaction");
+    expect(r).toHaveProperty("activationDelta");
+  });
+
+  it("low variance yields low entropy", () => {
+    const r = calcCognitiveEntropy({ reactionTimes: [400, 402, 398, 401, 399] });
+    expect(r.entropy).toBeLessThan(20);
+  });
+});
+
+// ─── estimateCoherence ──────────────────────────────────
+describe("estimateCoherence", () => {
+  it("returns sin datos with insufficient input", () => {
+    expect(estimateCoherence(null).state).toBe("sin datos");
+    expect(estimateCoherence([300]).state).toBe("sin datos");
+  });
+
+  it("returns coherence for valid data", () => {
+    const r = estimateCoherence([400, 410, 395, 405, 400]);
+    expect(r.coherence).toBeGreaterThan(0);
+    expect(r.coherence).toBeLessThanOrEqual(100);
+    expect(r).toHaveProperty("consistency");
+    expect(r).toHaveProperty("avgRT");
+  });
+});
+
+// ─── calcNeuralVariability ──────────────────────────────
+describe("calcNeuralVariability", () => {
+  it("returns null with < 3 entries", () => {
+    expect(calcNeuralVariability([])).toBeNull();
+    expect(calcNeuralVariability([{ c: 50 }, { c: 60 }])).toBeNull();
+  });
+
+  it("returns variability index for valid data", () => {
+    const hist = Array.from({ length: 5 }, (_, i) => ({ c: 50 + i * 5 }));
+    const r = calcNeuralVariability(hist);
+    expect(r).not.toBeNull();
+    expect(r).toHaveProperty("index");
+    expect(r).toHaveProperty("interpretation");
+    expect(r).toHaveProperty("trend");
+  });
+});
+
+// ─── calcProtocolDiversity ──────────────────────────────
+describe("calcProtocolDiversity", () => {
+  it("returns 0 score with < 5 entries", () => {
+    const r = calcProtocolDiversity([]);
+    expect(r.score).toBe(0);
+  });
+
+  it("calculates diversity for varied protocols", () => {
+    const hist = [
+      { p: "A" }, { p: "B" }, { p: "C" }, { p: "D" }, { p: "E" },
+    ];
+    const r = calcProtocolDiversity(hist);
+    expect(r.score).toBeGreaterThan(0);
+    expect(r.uniqueCount).toBe(5);
+    expect(r).toHaveProperty("totalAvailable");
+    expect(r).toHaveProperty("message");
+  });
+
+  it("low diversity for repeated protocols", () => {
+    const hist = Array.from({ length: 10 }, () => ({ p: "Same" }));
+    const r = calcProtocolDiversity(hist);
+    expect(r.uniqueCount).toBe(1);
+    expect(r.score).toBeLessThan(20);
+  });
+});
+
+// ─── genIns (Insights Generator) ────────────────────────
+describe("genIns", () => {
+  it("returns at least one insight for empty state", () => {
+    const r = genIns({ totalSessions: 0, moodLog: [], history: [], coherencia: 64, resiliencia: 66 });
+    expect(r.length).toBeGreaterThanOrEqual(1);
+    expect(r[0]).toHaveProperty("t");
+    expect(r[0]).toHaveProperty("x");
+  });
+
+  it("returns insights for active user", () => {
+    const r = genIns({
+      totalSessions: 20, coherencia: 80, resiliencia: 75, capacidad: 60,
+      streak: 5, totalTime: 1800,
+      moodLog: Array.from({ length: 5 }, () => ({ mood: 4 })),
+      history: Array.from({ length: 5 }, () => ({ p: "Alpha", ts: Date.now() })),
+    });
+    expect(r.length).toBeGreaterThanOrEqual(1);
   });
 });
