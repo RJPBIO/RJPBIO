@@ -946,7 +946,7 @@ export function calcSessionCompletion(st, sessionCtx) {
   const nR = Math.min(100, Math.max(20, Math.round(40 + consistencyScore * 30 + streakBonus)));
 
   const uniqueProtos = new Set([...hist.map((h) => h.p), protocol.n]).size;
-  const diversityScore = (uniqueProtos / 14) * 30;
+  const diversityScore = (uniqueProtos / P.length) * 30;
   const expScore = Math.min(30, Math.sqrt(st.totalSessions || 0) * 3);
   const nE = Math.min(100, Math.max(20, Math.round(30 + diversityScore + expScore)));
 
