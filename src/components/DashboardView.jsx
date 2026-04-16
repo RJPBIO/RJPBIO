@@ -73,37 +73,41 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
 
   return (
     <div style={{ padding: `14px 20px ${layout.bottomSafe}px` }}>
-      {/* Executive Summary — Hero card */}
-      <div style={{ background: `linear-gradient(145deg,${isDark ? "#0D1117" : "#FFFFFF"},${isDark ? "#141820" : ac + "06"})`, borderRadius: 22, padding: "20px 18px", marginBottom: 16, border: `1.5px solid ${ac}15`, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: `radial-gradient(circle,${ac}10,transparent)`, filter: "blur(20px)" }} />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, position: "relative" }}>
-          <div><div style={{ ...ty.label(t3), marginBottom: space[1] }}>Rendimiento Neural</div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: space[1] }}><span style={ty.metric(t1, font.size["4xl"])}>{perf}</span><span style={ty.caption(t3)}>%</span></div></div>
-          <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(135deg,${ac}15,${ac}08)`, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${ac}15` }}>
-            <Icon name={perf >= 70 ? "shield" : perf >= 50 ? "gauge" : "alert"} size={22} color={ac} />
+      {/* Executive Summary — Apple Health-inspired hero */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ background: `linear-gradient(155deg,${isDark ? "#0D1117" : "#FFFFFF"},${isDark ? "#141820" : ac + "04"})`, borderRadius: 24, padding: "28px 22px 22px", marginBottom: 20, border: `1px solid ${isDark ? ac + "10" : ac + "08"}`, position: "relative", overflow: "hidden" }}>
+        {/* Atmospheric glow */}
+        <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: `radial-gradient(circle,${ac}0C,transparent)`, filter: "blur(30px)" }} />
+        <div style={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: `radial-gradient(circle,#818CF808,transparent)`, filter: "blur(20px)" }} />
+        {/* Hero number */}
+        <div style={{ textAlign: "center", marginBottom: space[4], position: "relative" }}>
+          <div style={{ ...ty.label(t3), marginBottom: space[2], letterSpacing: 4 }}>RENDIMIENTO NEURAL</div>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: space[1] }}>
+            <AnimatedNumber value={perf} color={t1} size={52} />
+            <span style={{ fontSize: font.size.xl, fontWeight: font.weight.bold, color: t3, opacity: .5 }}>%</span>
           </div>
+          <div style={{ ...ty.body(t3), marginTop: space[2], opacity: .7 }}>{perf >= 70 ? "Rendimiento alto. Mantén tu ritmo." : perf >= 50 ? "Una sesión más elevaría tu estado." : "Tu sistema necesita atención."}</div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+        {/* Secondary metrics — clean grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
           {[{ v: st.weeklyData.reduce((a, b) => a + b, 0), l: "Semana", c: ac }, { v: bioSignal.score, l: "BioSignal", c: bioSignal.score >= 70 ? semantic.success : bioSignal.score >= 45 ? semantic.warning : semantic.danger }, { v: burnout.risk === "sin datos" ? "—" : burnout.index, l: "Burnout", c: burnout.risk === "bajo" ? semantic.success : semantic.danger }].map((m, i) => (
-            <div key={i} style={{ textAlign: "center", padding: `${space[2]}px ${space[1]}px`, background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: radius.md }}>
+            <div key={i} style={{ textAlign: "center", padding: `${space[2.5]}px ${space[1]}px`, background: isDark ? "rgba(255,255,255,.025)" : "rgba(0,0,0,.015)", borderRadius: radius.md + 2 }}>
               <div style={ty.metric(m.c, font.size.xl)}>{m.v}</div>
-              <div style={{ ...ty.label(t3), fontSize: font.size.xs, letterSpacing: font.tracking.wider, marginTop: 2 }}>{m.l}</div>
+              <div style={{ ...ty.label(t3), fontSize: font.size.xs, letterSpacing: font.tracking.wider, marginTop: 3 }}>{m.l}</div>
             </div>))}
         </div>
-        <div style={{ ...ty.body(t2), padding: `${space[2]}px ${space[2.5]}px`, background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: radius.sm, textAlign: "center" }}>{perf >= 70 ? "Rendimiento alto. Mantén tu ritmo." : perf >= 50 ? "Estado funcional. Una sesión más elevaría tu rendimiento." : "Tu sistema necesita atención. Prioriza un reset."}</div>
-      </div>
+      </motion.div>
 
       {/* ─── PRIMARY: Real-time state ─── */}
-      <div style={{ marginBottom: 14 }}><NeuralRadar st={st} isDark={isDark} /></div>
-      <NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }} style={{ marginBottom: 18 }}><NeuralRadar st={st} isDark={isDark} /></motion.div>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}><NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} /></motion.div>
 
       {/* ─── SECONDARY: Trends & patterns ─── */}
-      <div style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[1], paddingLeft: 2 }}>TENDENCIAS</div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[3], paddingLeft: 2, letterSpacing: 4 }}>TENDENCIAS</motion.div>
       <WeeklyReport st={st} isDark={isDark} />
       <CorrelationMatrix st={st} isDark={isDark} onSelectProtocol={(p) => { sp(p); switchTab("ignicion"); }} />
 
       {/* ─── TERTIARY: Deep analytics ─── */}
-      <div style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[1], paddingLeft: 2 }}>ANÁLISIS PROFUNDO</div>
+      <div style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[3], paddingLeft: 2, letterSpacing: 4 }}>ANÁLISIS PROFUNDO</div>
 
       {/* Neural Variability Index */}
       {neuralVar && <div style={{ background: cd, borderRadius: 16, padding: "14px 12px", marginBottom: 14, border: `1px solid ${bd}` }}>

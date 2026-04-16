@@ -11,6 +11,19 @@ input, textarea { font-family: inherit; }
 @keyframes cdPulse { 0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; } }
 @keyframes compFlash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
+/* ═══ ATMOSPHERIC AMBIENT — the Calm depth layer ═══ */
+@keyframes am { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-3%, 3%) scale(1.08); } }
+@keyframes ambientDrift { 0% { transform: translate(0, 0) rotate(0deg); } 33% { transform: translate(2%, -1%) rotate(1deg); } 66% { transform: translate(-1%, 2%) rotate(-0.5deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+@keyframes breathGlow { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } }
+@keyframes sessionPulse { 0%, 100% { box-shadow: 0 0 40px var(--session-glow, rgba(5,150,105,0.08)); } 50% { box-shadow: 0 0 80px var(--session-glow, rgba(5,150,105,0.15)); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes gentlePulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+@keyframes orbFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+/* ═══ SESSION IMMERSION MODE ═══ */
+.session-active .nav-metrics { opacity: 0; height: 0; overflow: hidden; transition: all 0.5s ease; }
+.session-active { --session-glow: rgba(5,150,105,0.12); }
+
 /* ═══ PWA SAFE AREAS ═══ */
 @supports (padding: env(safe-area-inset-top)) {
   body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
@@ -19,7 +32,7 @@ input, textarea { font-family: inherit; }
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 10px; }
 
 /* ═══ REDUCED MOTION ═══ */
 @media (prefers-reduced-motion: reduce) {

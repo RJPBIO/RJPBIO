@@ -219,12 +219,13 @@ export default function BioIgnicion() {
   );
 
   return (
-    <div style={{ maxWidth: layout.maxWidth, margin: "0 auto", minHeight: "100vh", background: bg, position: "relative", overflow: "hidden", fontFamily: font.family, transition: `background ${duration.slower}` }}>
+    <div className={isActive ? "session-active" : ""} style={{ maxWidth: layout.maxWidth, margin: "0 auto", minHeight: "100vh", background: bg, position: "relative", overflow: "hidden", fontFamily: font.family, transition: `background ${duration.slower}` }}>
 
-      {/* Background aura */}
+      {/* Atmospheric depth layers — Calm-inspired */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "-15%", right: "-15%", width: "50%", height: "50%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, isDark ? 6 : 4)},transparent)`, animation: "am 25s ease-in-out infinite", filter: "blur(50px)" }} />
-        <div style={{ position: "absolute", bottom: "-10%", left: "-10%", width: "40%", height: "40%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha("#818CF8", isDark ? 4 : 4)},transparent)`, animation: "am 30s ease-in-out infinite reverse", filter: "blur(45px)" }} />
+        <div style={{ position: "absolute", top: "-20%", right: "-20%", width: "60%", height: "60%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, isDark ? 8 : 5)},transparent 70%)`, animation: "ambientDrift 40s ease-in-out infinite", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", bottom: "-15%", left: "-15%", width: "50%", height: "50%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha("#818CF8", isDark ? 5 : 3)},transparent 70%)`, animation: "ambientDrift 50s ease-in-out infinite reverse", filter: "blur(55px)" }} />
+        {isActive && <div style={{ position: "absolute", top: "30%", left: "20%", width: "60%", height: "60%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, 4)},transparent 60%)`, animation: "breathGlow 6s ease-in-out infinite", filter: "blur(80px)" }} />}
       </div>
 
       {/* Mid-session message */}
@@ -318,19 +319,14 @@ export default function BioIgnicion() {
               </div>
             </div>}
 
-            {/* Immersive entry */}
-            {!entryDone && ts === "idle" && st.totalSessions > 0 && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} style={{ textAlign: "center", padding: `${space[7]}px 0 ${space[5]}px` }} onClick={() => setEntryDone(true)}>
-              <motion.div animate={{ scale: [1, 1.06, 1], opacity: [.7, 1, .7] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
-                <svg width="48" height="48" viewBox="0 0 52 52" style={{ margin: `0 auto ${space[4]}px`, display: "block" }}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3" /><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{ animation: "innerRing 6s linear infinite" }} /><circle cx="26" cy="26" r="4" fill={ac} opacity=".3" /></svg>
-              </motion.div>
-              {/* Contextual greeting based on user state */}
-              {st.streak >= 3 && <div style={{ ...ty.caption(ac), marginBottom: space[2] }}>{st.streak} días de racha activa</div>}
-              <div style={{ ...ty.body(t2), fontSize: font.size.md, fontWeight: font.weight.light, lineHeight: font.leading.relaxed, maxWidth: 300, margin: "0 auto" }}>{daily.phrase}</div>
-              {st.todaySessions === 0 && <div style={{ ...ty.caption(t3), marginTop: space[2] }}>Aún sin sesión hoy</div>}
-              <div style={{ ...ty.label(t3), marginTop: space[3] }}>TOCA PARA CONTINUAR</div>
+            {/* Atmospheric greeting — auto-dismisses, no gate */}
+            {!entryDone && ts === "idle" && st.totalSessions > 0 && <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 1.2, ease: "easeOut" }} style={{ textAlign: "center", padding: `${space[4]}px 0 ${space[2]}px` }} onClick={() => setEntryDone(true)}>
+              <div style={{ ...ty.body(t2), fontSize: font.size.md, fontWeight: font.weight.light, lineHeight: font.leading.relaxed, maxWidth: 300, margin: "0 auto", opacity: 0.85 }}>{daily.phrase}</div>
+              {st.streak >= 3 && <div style={{ ...ty.caption(ac), marginTop: space[2], animation: "gentlePulse 3s ease infinite" }}>{st.streak} días consecutivos</div>}
             </motion.div>}
 
-            {(entryDone || st.totalSessions === 0 || ts !== "idle") && <>
+            {/* Always show main content — no entry gate */}
+            <>
 
               {/* ═══ TIMER-FIRST LAYOUT ═══ */}
 
@@ -343,176 +339,180 @@ export default function BioIgnicion() {
                 </div>
               </div>}
 
-              {/* ═══ CORE TIMER (HERO POSITION) ═══ */}
-              <div onClick={timerTap} role="button" aria-label={ts === "idle" ? "Iniciar sesión" : ts === "running" ? "Pausar sesión" : "Reanudar sesión"} onMouseDown={() => setTp(true)} onMouseUp={() => setTp(false)} onMouseLeave={() => setTp(false)} onTouchStart={() => setTp(true)} onTouchEnd={() => setTp(false)} style={{ position: "relative", width: isActive ? 200 : 250, height: isActive ? 200 : 250, margin: `0 auto ${space[3]}px`, cursor: "pointer", transform: tp ? "scale(0.93)" : "scale(1)", transition: "all .6s cubic-bezier(.34,1.56,.64,1)", userSelect: "none" }}>
-                {/* Glow */}
-                <motion.div animate={ts === "idle" ? { scale: [1, 1.06, 1], opacity: [.3, .6, .3] } : isActive ? { scale: [1, 1.04, 1], opacity: [.4, .7, .4] } : {}} transition={{ duration: ts === "idle" ? 3.5 : 2.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: isActive ? -16 : -10, borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, isActive ? 6 : 4)},transparent 65%)`, filter: "blur(6px)" }} />
-                {/* Outer breathing ring */}
-                {ts !== "paused" && <motion.div animate={{ scale: [1, 1.02, 1] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: isActive ? -8 : -4, borderRadius: "50%", border: `1.5px solid ${withAlpha(ac, isActive ? 8 : 4)}` }} />}
-                <svg width={isActive ? "200" : "250"} height={isActive ? "200" : "250"} viewBox="0 0 260 260" style={{ transform: "rotate(-90deg)" }}>
-                  <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth={ts === "idle" ? "4" : "3"} opacity=".4" />
-                  <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth={isActive ? "7" : ts === "idle" ? "5" : "3"} strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={ts === "idle" ? 0 : dO} style={{ transition: isActive ? "stroke-dashoffset .95s linear" : "stroke-dashoffset .3s ease", filter: isActive ? `drop-shadow(0 0 8px ${ac}60)` : `drop-shadow(0 0 4px ${ac}30)` }} />
-                  <circle cx="130" cy="130" r="98" fill="none" stroke={bd} strokeWidth=".5" strokeDasharray="3 8" style={{ animation: isActive ? "innerRing 10s linear infinite" : "innerRing 30s linear infinite" }} />
-                  {ts === "idle" && <circle cx="130" cy="130" r="115" fill="url(#timerGrad)" opacity=".04" />}
-                  <defs><radialGradient id="timerGrad"><stop offset="0%" stopColor={ac} /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
-                </svg>
-                {/* Neural center dot */}
-                <motion.div animate={{ opacity: [.3, .7, .3], boxShadow: [`0 0 8px ${ac}30`, `0 0 18px ${ac}50`, `0 0 8px ${ac}30`] }} transition={{ duration: ts === "idle" ? 3 : 1.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: isActive ? 6 : 10, height: isActive ? 6 : 10, borderRadius: "50%", background: ac, pointerEvents: "none" }} />
-                {/* Center content */}
-                <div aria-live={isActive ? "polite" : "off"} aria-atomic="true" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none", zIndex: 2 }}>
-                  {isBr && bL && <div style={{ marginBottom: 4 }}><span style={{ ...ty.label(ac), letterSpacing: 5, opacity: .9 }}>{bL}</span><span style={{ ...ty.title(ac), marginLeft: 4 }}>{bCnt}s</span></div>}
-                  <div aria-label={`${sec} segundos`} style={{ fontSize: isActive ? font.size.hero : 56, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-3px", textShadow: isActive ? `0 0 20px ${withAlpha(ac, 6)}` : "none" }}>{sec}</div>
-                  {isActive && <div style={{ ...ty.title(ac), fontWeight: font.weight.black, marginTop: space[1], opacity: .8 }}>{sessPct}%</div>}
-                  {ts === "idle" && <>
-                    <div style={{ ...ty.label(t3), fontWeight: font.weight.semibold, marginTop: space[1.5] }}>segundos</div>
-                    <motion.div animate={{ opacity: [.5, 1, .5], y: [0, -2, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} style={{ marginTop: space[3], display: "flex", flexDirection: "column", alignItems: "center", gap: space[1] }}>
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg,${ac},#0D9488)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 14px ${withAlpha(ac, 12)}` }}><Icon name="bolt" size={16} color="#fff" /></div>
-                      <span style={ty.label(ac)}>INICIAR</span>
+              {/* ═══ CORE TIMER — Hero in idle, compact in active ═══ */}
+              {!isActive ? (
+                <div onClick={timerTap} role="button" aria-label="Iniciar sesión" onMouseDown={() => setTp(true)} onMouseUp={() => setTp(false)} onMouseLeave={() => setTp(false)} onTouchStart={() => setTp(true)} onTouchEnd={() => setTp(false)} style={{ position: "relative", width: 260, height: 260, margin: `${space[2]}px auto ${space[4]}px`, cursor: "pointer", transform: tp ? "scale(0.93)" : "scale(1)", transition: "all .6s cubic-bezier(.34,1.56,.64,1)", userSelect: "none" }}>
+                  {/* Ambient glow */}
+                  <motion.div animate={{ scale: [1, 1.08, 1], opacity: [.2, .5, .2] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -14, borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, 5)},transparent 65%)`, filter: "blur(8px)" }} />
+                  {/* Outer breathing ring */}
+                  <motion.div animate={{ scale: [1, 1.02, 1] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -6, borderRadius: "50%", border: `1px solid ${withAlpha(ac, 5)}` }} />
+                  <svg width="260" height="260" viewBox="0 0 260 260" style={{ transform: "rotate(-90deg)" }}>
+                    <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth="3" opacity=".3" />
+                    <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth="5" strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={0} style={{ filter: `drop-shadow(0 0 6px ${ac}30)` }} />
+                    <circle cx="130" cy="130" r="100" fill="none" stroke={bd} strokeWidth=".4" strokeDasharray="3 10" style={{ animation: "innerRing 30s linear infinite" }} />
+                    <circle cx="130" cy="130" r="115" fill="url(#timerGrad)" opacity=".03" />
+                    <defs><radialGradient id="timerGrad"><stop offset="0%" stopColor={ac} /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
+                  </svg>
+                  {/* Neural center dot */}
+                  <motion.div animate={{ opacity: [.2, .6, .2], boxShadow: [`0 0 10px ${ac}20`, `0 0 24px ${ac}40`, `0 0 10px ${ac}20`] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 10, height: 10, borderRadius: "50%", background: ac, pointerEvents: "none" }} />
+                  {/* Center content */}
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none", zIndex: 2 }}>
+                    <div aria-label={`${sec} segundos`} style={{ fontSize: 58, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-3px" }}>{sec}</div>
+                    <div style={{ ...ty.label(t3), fontWeight: font.weight.semibold, marginTop: space[1.5], opacity: .7 }}>segundos</div>
+                    <motion.div animate={{ opacity: [.4, .9, .4], y: [0, -2, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ marginTop: space[4], display: "flex", flexDirection: "column", alignItems: "center", gap: space[1] }}>
+                      <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg,${ac},#0D9488)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 6px 20px ${withAlpha(ac, 14)}` }}><Icon name="bolt" size={17} color="#fff" /></div>
+                      <span style={{ ...ty.label(ac), letterSpacing: 2 }}>INICIAR</span>
                     </motion.div>
-                  </>}
-                  {ts === "paused" && <motion.div animate={{ opacity: [.5, 1, .5] }} transition={{ duration: 2, repeat: Infinity }} style={{ marginTop: space[1.5] }}><span style={{ ...ty.label(ac), letterSpacing: 3 }}>EN PAUSA</span></motion.div>}
+                  </div>
+                  {tp && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "100%", height: "100%", borderRadius: "50%", border: `2px solid ${withAlpha(ac, 8)}`, animation: "cdPulse .6s ease forwards", pointerEvents: "none" }} />}
                 </div>
-                {tp && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "100%", height: "100%", borderRadius: "50%", border: `2px solid ${withAlpha(ac, 8)}`, animation: "cdPulse .6s ease forwards", pointerEvents: "none" }} />}
-              </div>
+              ) : (
+                /* Active: compact timer above hero BreathOrb */
+                <div onClick={timerTap} role="button" aria-label={ts === "running" ? "Pausar sesión" : "Reanudar sesión"} style={{ textAlign: "center", margin: `${space[3]}px 0 ${space[1]}px`, cursor: "pointer", userSelect: "none" }}>
+                  <div aria-live="polite" aria-atomic="true" style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: space[1.5] }}>
+                    <span style={{ fontSize: font.size["4xl"], fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-2px", textShadow: `0 0 24px ${withAlpha(ac, 8)}` }}>{sec}</span>
+                    <span style={{ ...ty.caption(t3), opacity: .6 }}>/ {totalDur}s</span>
+                  </div>
+                  {ts === "paused" && <motion.div animate={{ opacity: [.4, 1, .4] }} transition={{ duration: 2, repeat: Infinity }} style={{ marginTop: space[1] }}><span style={{ ...ty.label(ac), letterSpacing: 4 }}>EN PAUSA</span></motion.div>}
+                </div>
+              )}
 
-              {/* BreathOrb */}
+              {/* BreathOrb — hero-sized during active session */}
               <ErrorBoundary isDark={isDark}>
-                <BreathOrb type={ph.ic} color={ac} breathScale={bS} breathLabel={bL} breathCount={bCnt} active={isActive} sessionProgress={pct} />
+                <BreathOrb type={ph.ic} color={ac} breathScale={bS} breathLabel={bL} breathCount={bCnt} active={isActive} sessionProgress={pct} size={isActive ? 280 : 200} />
               </ErrorBoundary>
 
-              {/* Protocol selector + controls (below timer) */}
+              {/* ═══ SESSION CONFIG (idle only) ═══ */}
               {ts === "idle" && <>
-                <div style={{ display: "flex", gap: space[1.5], marginBottom: space[2] }}>
-                  <motion.button aria-label={`Protocolo: ${pr.n}`} whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[2]}px ${space[3]}px`, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2] }}>
-                    <div style={{ width: 30, height: 30, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black }}>{pr.tg}</div>
-                    <div style={{ flex: 1, textAlign: "left" }}><div style={ty.title(t1)}>{pr.n}</div><div style={ty.caption(t3)}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div></div>
-                    <Icon name="chevron-down" size={12} color={t3} />
-                  </motion.button>
-                  <motion.button aria-label="Detalle del protocolo" whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 42, height: 42, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={15} color={t3} /></motion.button>
-                  <motion.button aria-label="Seleccionar intención" whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 42, height: 42, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="target" size={16} color={t3} /></motion.button>
+                {/* ─── Protocolo ─── */}
+                <div style={{ marginBottom: space[4] }}>
+                  <div style={{ ...ty.label(t3), marginBottom: space[2], paddingLeft: 2 }}>PROTOCOLO</div>
+                  <div style={{ display: "flex", gap: space[1.5] }}>
+                    <motion.button aria-label={`Protocolo: ${pr.n}`} whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[2.5]}px ${space[3]}px`, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2] }}>
+                      <div style={{ width: 32, height: 32, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black }}>{pr.tg}</div>
+                      <div style={{ flex: 1, textAlign: "left" }}><div style={ty.title(t1)}>{pr.n}</div><div style={ty.caption(t3)}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div></div>
+                      <Icon name="chevron-down" size={12} color={t3} />
+                    </motion.button>
+                    <motion.button aria-label="Detalle del protocolo" whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={15} color={t3} /></motion.button>
+                    <motion.button aria-label="Seleccionar intención" whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 44, height: 44, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="target" size={16} color={t3} /></motion.button>
+                  </div>
                 </div>
 
-                {/* Duration + Mood — compact row */}
-                <div style={{ display: "flex", gap: space[2], marginBottom: space[2.5], alignItems: "stretch" }}>
-                  {/* Duration pills */}
-                  <div style={{ display: "flex", gap: space[1] }}>
+                {/* ─── Duración ─── */}
+                <div style={{ marginBottom: space[4] }}>
+                  <div style={{ ...ty.label(t3), marginBottom: space[2], paddingLeft: 2 }}>DURACIÓN</div>
+                  <div style={{ display: "flex", gap: space[1.5] }}>
                     {[{ v: .5, l: "60s" }, { v: 1, l: "120s" }, { v: 1.5, l: "180s" }].map(d => (
-                      <motion.button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={durMult === d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ padding: `${space[1]}px ${space[2.5]}px`, borderRadius: radius.xl, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, color: durMult === d.v ? ac : t3, ...ty.caption(durMult === d.v ? ac : t3), fontWeight: font.weight.bold, cursor: "pointer", transition: "all .2s", minHeight: 38 }}>{d.l}</motion.button>
+                      <motion.button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={durMult === d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ flex: 1, padding: `${space[2]}px ${space[2.5]}px`, borderRadius: radius.md, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, color: durMult === d.v ? ac : t3, ...ty.title(durMult === d.v ? ac : t3), cursor: "pointer", transition: "all .2s", minHeight: 42, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>{d.l}</motion.button>
                     ))}
                   </div>
-                  {/* Mood mini-selector */}
-                  <div style={{ display: "flex", gap: 3, flex: 1, justifyContent: "flex-end" }}>
+                </div>
+
+                {/* ─── Estado actual ─── */}
+                <div style={{ marginBottom: space[5] }}>
+                  <div style={{ ...ty.label(t3), marginBottom: space[2], paddingLeft: 2 }}>¿CÓMO TE SIENTES?</div>
+                  <div style={{ display: "flex", gap: space[1.5] }}>
                     {MOODS.map(m => (
-                      <motion.button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={preMood === m.value} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ width: 38, height: 38, borderRadius: radius.sm + 2, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 4) : cd, cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Icon name={m.icon} size={15} color={preMood === m.value ? m.color : t3} />
+                      <motion.button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={preMood === m.value} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ flex: 1, height: 44, borderRadius: radius.md, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 4) : cd, cursor: "pointer", transition: "all .2s", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                        <Icon name={m.icon} size={16} color={preMood === m.value ? m.color : t3} />
                       </motion.button>))}
                   </div>
                 </div>
 
-                {/* START CTA */}
-                <motion.button aria-label="Iniciar sesión" whileTap={{ scale: .95 }} onClick={go} style={{ width: "100%", maxWidth: 300, margin: `0 auto ${space[3]}px`, display: "flex", padding: `${space[2.5]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 4px 18px ${withAlpha(ac, 10)}`, minHeight: 48 }}><Icon name="bolt" size={13} color="#fff" />INICIAR</motion.button>
+                {/* ─── START CTA — prominent, clear action ─── */}
+                <motion.button aria-label="Iniciar sesión" whileTap={{ scale: .95 }} whileHover={{ scale: 1.01 }} onClick={go} style={{ width: "100%", maxWidth: 340, margin: `0 auto ${space[6]}px`, display: "flex", padding: `${space[3.5]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 6px 24px ${withAlpha(ac, 14)}, 0 2px 8px ${withAlpha(ac, 8)}`, minHeight: 54, fontSize: font.size.md, letterSpacing: 1 }}><Icon name="bolt" size={15} color="#fff" />INICIAR SESIÓN</motion.button>
               </>}
 
-              {/* Active session controls */}
-              {ts === "running" && <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginBottom: space[3] }}>
-                <motion.button aria-label="Pausar sesión" whileTap={{ scale: .95 }} onClick={pa} style={{ flex: 1, maxWidth: 180, padding: `${space[3]}px 0`, borderRadius: radius.full, background: cd, border: `2px solid ${ac}`, color: ac, ...ty.button, cursor: "pointer", minHeight: 48 }}>PAUSAR</motion.button>
-                <motion.button aria-label="Reiniciar sesión" whileTap={{ scale: .9 }} onClick={rs} style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="reset" size={15} color={t3} /></motion.button>
-              </div>}
-              {ts === "paused" && <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginBottom: space[3] }}>
-                <motion.button aria-label="Continuar sesión" whileTap={{ scale: .95 }} onClick={resume} style={{ flex: 1, maxWidth: 180, padding: `${space[3]}px 0`, borderRadius: radius.full, background: ac, border: "none", color: "#fff", ...ty.button, cursor: "pointer", minHeight: 48 }}>CONTINUAR</motion.button>
-                <motion.button aria-label="Reiniciar sesión" whileTap={{ scale: .9 }} onClick={rs} style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="reset" size={15} color={t3} /></motion.button>
-              </div>}
+              {/* Session controls moved to floating bottom bar */}
 
-              {/* Phase info */}
-              <div style={{ textAlign: "center", marginBottom: isActive ? space[1.5] : space[2.5] }}>
+              {/* Phase info — minimal during active, detailed in idle */}
+              <div style={{ textAlign: "center", marginBottom: isActive ? space[1] : space[2.5] }}>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: space[1.5] }}>
-                  <Icon name={ph.ic} size={isActive ? 11 : 13} color={ac} />
-                  <span style={{ ...ty.title(t1), fontSize: isActive ? font.size.sm : font.size.md }}>{ph.l}</span>
+                  <Icon name={ph.ic} size={isActive ? 10 : 13} color={ac} />
+                  <span style={{ ...ty.title(t1), fontSize: isActive ? font.size.xs : font.size.md }}>{ph.l}</span>
+                  {isActive && <span style={{ ...ty.caption(t3), opacity: .5 }}>· {pi + 1}/{pr.ph.length}</span>}
                 </div>
                 {!isActive && <div style={ty.caption(t3)}>{ph.r}</div>}
               </div>
 
-              <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
-                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[1.5] }}><span style={ty.caption(ac)}>Fase {pi + 1} de {pr.ph.length}</span><span style={ty.caption(t3)}>{Math.round((pi + 1) / pr.ph.length * 100)}%</span></div>}
-                {ph.k && <div style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
-                <p style={{ ...ty.body(t2), margin: 0 }}>{ph.i}</p>
+              {/* Phase card — full in idle, collapsed during active session */}
+              {!isActive ? (
+                <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
+                  {ph.k && <div style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
+                  <p style={{ ...ty.body(t2), margin: 0 }}>{ph.i}</p>
+                  {/* Science — collapsed by default */}
+                  <button onClick={() => setShowScience(!showScience)} style={{ display: "flex", alignItems: "center", gap: space[1], marginTop: space[3], padding: `${space[1.5]}px 0`, background: "none", border: "none", cursor: "pointer" }}>
+                    <Icon name="mind" size={11} color={ac} /><span style={ty.caption(ac)}>NEUROCIENCIA</span>
+                    <span style={{ ...ty.caption(ac), transform: showScience ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>▾</span>
+                  </button>
+                  <AnimatePresence>
+                    {showScience && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
+                      <div style={{ marginTop: space[2], padding: `${space[3]}px ${space[3]}px`, background: withAlpha(ac, 2), borderRadius: radius.md, border: `1px solid ${withAlpha(ac, 4)}` }}>
+                        <div style={ty.body(t2)}>{ph.sc}</div>
+                        {SCIENCE_DEEP[pr.id] && <div style={{ ...ty.caption(t3), lineHeight: font.leading.relaxed, borderTop: `1px solid ${bd}`, paddingTop: space[2], marginTop: space[1] }}>{SCIENCE_DEEP[pr.id]}</div>}
+                      </div>
+                    </motion.div>}
+                  </AnimatePresence>
+                </motion.div>
+              ) : (
+                /* Active session: minimal phase card + checkpoints only */
+                <div style={{ marginBottom: space[2] }}>
+                  {/* Anti-gaming checkpoints — float cleanly */}
+                  {(() => {
+                    const elapsed = totalDur - sec;
+                    const cp1 = Math.round(totalDur * 0.25), cp2 = Math.round(totalDur * 0.50), cp3 = Math.round(totalDur * 0.78);
+                    const isCP1 = elapsed >= cp1 && elapsed < cp1 + 10;
+                    const isCP2 = elapsed >= cp2 && elapsed < cp2 + 10;
+                    const isCP3 = elapsed >= cp3 && elapsed < cp3 + 10;
+                    if (!isCP1 && !isCP2 && !isCP3) return null;
+                    if (elapsed === cp1) speak("Mantén presionado", circadian, voiceOn);
+                    else if (elapsed === cp2) speak("Toca al exhalar", circadian, voiceOn);
+                    else if (elapsed === cp3) speak("Confirma tu presencia", circadian, voiceOn);
 
-                {/* Anti-gaming checkpoints */}
-                {isActive && (() => {
-                  const elapsed = totalDur - sec;
-                  const cp1 = Math.round(totalDur * 0.25), cp2 = Math.round(totalDur * 0.50), cp3 = Math.round(totalDur * 0.78);
-                  const isCP1 = elapsed >= cp1 && elapsed < cp1 + 10;
-                  const isCP2 = elapsed >= cp2 && elapsed < cp2 + 10;
-                  const isCP3 = elapsed >= cp3 && elapsed < cp3 + 10;
-                  if (!isCP1 && !isCP2 && !isCP3) return null;
-                  if (elapsed === cp1) speak("Mantén presionado", circadian, voiceOn);
-                  else if (elapsed === cp2) speak("Toca al exhalar", circadian, voiceOn);
-                  else if (elapsed === cp3) speak("Confirma tu presencia", circadian, voiceOn);
+                    if (isCP1) return (
+                      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                        <button
+                          onTouchStart={e => { e.currentTarget.dataset.holdStart = Date.now(); e.currentTarget.style.transform = "scale(0.94)"; hapticBreath("INHALA"); const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "width 2.5s linear"; bar.style.width = "100%"; } }}
+                          onTouchEnd={e => { const dur = Date.now() - (+e.currentTarget.dataset.holdStart || Date.now()); e.currentTarget.style.transform = "scale(1)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "none"; bar.style.width = "0%"; } if (dur >= 2000) { setSessionData(d => ({ ...d, touchHolds: (d.touchHolds || 0) + 1, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), dur] })); H("ok"); speak("verificado", circadian, voiceOn); } else { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 0.3 })); H("tap"); } }}
+                          onMouseDown={e => { e.currentTarget.dataset.holdStart = Date.now(); e.currentTarget.style.transform = "scale(0.94)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "width 2.5s linear"; bar.style.width = "100%"; } }}
+                          onMouseUp={e => { const dur = Date.now() - (+e.currentTarget.dataset.holdStart || Date.now()); e.currentTarget.style.transform = "scale(1)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "none"; bar.style.width = "0%"; } if (dur >= 2000) { setSessionData(d => ({ ...d, touchHolds: (d.touchHolds || 0) + 1, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), dur] })); H("ok"); } else { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 0.3 })); H("tap"); } }}
+                          style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `2px solid ${withAlpha(ac, 10)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", flexDirection: "column", gap: space[2], transition: "all .3s", position: "relative", overflow: "hidden" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: ac, opacity: .7, animation: "pu 1s ease infinite" }} /><span style={ty.title(ac)}>Mantén presionado 2s</span></div>
+                          <div style={{ height: 4, background: bd, borderRadius: radius.sm, overflow: "hidden", width: "100%" }}><div data-hold-bar="" style={{ width: "0%", height: "100%", background: `linear-gradient(90deg,${withAlpha(ac, 20)},${ac})`, borderRadius: radius.sm }} /></div>
+                        </button>
+                      </motion.div>);
+                    if (isCP2) return (
+                      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                        <button onClick={() => { const isExhale = bL === "EXHALA" || bL === "SOSTÉN"; setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + (isExhale ? 1 : 0.7), reactionTimes: [...(d.reactionTimes || []), Date.now() % 1000] })); H("tap"); if (isExhale) speak("sincronizado", circadian, voiceOn); }}
+                          style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `1.5px dashed ${withAlpha(ac, 12)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}>
+                          <div style={{ width: 9, height: 9, borderRadius: "50%", background: bL === "EXHALA" ? ac : "transparent", border: `2px solid ${ac}`, opacity: .6 }} /><span style={ty.title(ac)}>Toca al exhalar</span>
+                          {bL === "EXHALA" && <span style={{ ...ty.caption(ac), fontWeight: font.weight.black }}>AHORA</span>}
+                        </button>
+                      </motion.div>);
+                    return (
+                      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                        <button onClick={() => { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), Date.now() % 1000] })); H("tap"); speak("confirmado", circadian, voiceOn); }}
+                          style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `1.5px solid ${withAlpha(ac, 8)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: ac, opacity: .5 }} /><span style={ty.title(ac)}>Confirma tu presencia</span>
+                        </button>
+                      </motion.div>);
+                  })()}
+                </div>
+              )}
 
-                  if (isCP1) return (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: space[3] }}>
-                      <button
-                        onTouchStart={e => { e.currentTarget.dataset.holdStart = Date.now(); e.currentTarget.style.transform = "scale(0.94)"; hapticBreath("INHALA"); const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "width 2.5s linear"; bar.style.width = "100%"; } }}
-                        onTouchEnd={e => { const dur = Date.now() - (+e.currentTarget.dataset.holdStart || Date.now()); e.currentTarget.style.transform = "scale(1)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "none"; bar.style.width = "0%"; } if (dur >= 2000) { setSessionData(d => ({ ...d, touchHolds: (d.touchHolds || 0) + 1, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), dur] })); H("ok"); speak("verificado", circadian, voiceOn); } else { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 0.3 })); H("tap"); } }}
-                        onMouseDown={e => { e.currentTarget.dataset.holdStart = Date.now(); e.currentTarget.style.transform = "scale(0.94)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "width 2.5s linear"; bar.style.width = "100%"; } }}
-                        onMouseUp={e => { const dur = Date.now() - (+e.currentTarget.dataset.holdStart || Date.now()); e.currentTarget.style.transform = "scale(1)"; const bar = e.currentTarget.querySelector("[data-hold-bar]"); if (bar) { bar.style.transition = "none"; bar.style.width = "0%"; } if (dur >= 2000) { setSessionData(d => ({ ...d, touchHolds: (d.touchHolds || 0) + 1, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), dur] })); H("ok"); } else { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 0.3 })); H("tap"); } }}
-                        style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `2px solid ${withAlpha(ac, 10)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", flexDirection: "column", gap: space[2], transition: "all .3s", position: "relative", overflow: "hidden" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: ac, opacity: .7, animation: "pu 1s ease infinite" }} /><span style={ty.title(ac)}>Mantén presionado 2s</span></div>
-                        <div style={{ height: 4, background: bd, borderRadius: radius.sm, overflow: "hidden", width: "100%" }}><div data-hold-bar="" style={{ width: "0%", height: "100%", background: `linear-gradient(90deg,${withAlpha(ac, 20)},${ac})`, borderRadius: radius.sm }} /></div>
-                      </button>
-                    </motion.div>);
-                  if (isCP2) return (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: space[3] }}>
-                      <button onClick={() => { const isExhale = bL === "EXHALA" || bL === "SOSTÉN"; setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + (isExhale ? 1 : 0.7), reactionTimes: [...(d.reactionTimes || []), Date.now() % 1000] })); H("tap"); if (isExhale) speak("sincronizado", circadian, voiceOn); }}
-                        style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `1.5px dashed ${withAlpha(ac, 12)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}>
-                        <div style={{ width: 9, height: 9, borderRadius: "50%", background: bL === "EXHALA" ? ac : "transparent", border: `2px solid ${ac}`, opacity: .6 }} /><span style={ty.title(ac)}>Toca al exhalar</span>
-                        {bL === "EXHALA" && <span style={{ ...ty.caption(ac), fontWeight: font.weight.black }}>AHORA</span>}
-                      </button>
-                    </motion.div>);
-                  return (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: space[3] }}>
-                      <button onClick={() => { setSessionData(d => ({ ...d, interactions: (d.interactions || 0) + 1, reactionTimes: [...(d.reactionTimes || []), Date.now() % 1000] })); H("tap"); speak("confirmado", circadian, voiceOn); }}
-                        style={{ width: "100%", padding: `${space[3]}px ${space[4]}px`, borderRadius: radius.lg, border: `1.5px solid ${withAlpha(ac, 8)}`, background: withAlpha(ac, 2), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: space[2] }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: ac, opacity: .5 }} /><span style={ty.title(ac)}>Confirma tu presencia</span>
-                      </button>
-                    </motion.div>);
-                })()}
-
-                {/* Science — always available, collapsed by default */}
-                <button onClick={() => setShowScience(!showScience)} style={{ display: "flex", alignItems: "center", gap: space[1], marginTop: space[3], padding: `${space[1.5]}px 0`, background: "none", border: "none", cursor: "pointer" }}>
-                  <Icon name="mind" size={11} color={ac} /><span style={ty.caption(ac)}>NEUROCIENCIA</span>
-                  <span style={{ ...ty.caption(ac), transform: showScience ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>▾</span>
-                </button>
-                <AnimatePresence>
-                  {showScience && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
-                    <div style={{ marginTop: space[2], padding: `${space[3]}px ${space[3]}px`, background: withAlpha(ac, 2), borderRadius: radius.md, border: `1px solid ${withAlpha(ac, 4)}` }}>
-                      <div style={ty.body(t2)}>{ph.sc}</div>
-                      {SCIENCE_DEEP[pr.id] && <div style={{ ...ty.caption(t3), lineHeight: font.leading.relaxed, borderTop: `1px solid ${bd}`, paddingTop: space[2], marginTop: space[1] }}>{SCIENCE_DEEP[pr.id]}</div>}
-                    </div>
-                  </motion.div>}
-                </AnimatePresence>
-              </motion.div>
-
-              {/* Next phase hint */}
-              {isActive && nextPh && <div style={{ display: "flex", alignItems: "center", gap: space[1.5], padding: `${space[1.5]}px ${space[2.5]}px`, marginBottom: space[2.5], borderRadius: radius.sm, background: surface }}>
-                <Icon name="chevron" size={10} color={t3} /><span style={ty.caption(t3)}>Siguiente: {nextPh.l}</span>
-              </div>}
-
-              {/* Phase dots — full in idle, compact bar in active */}
-              {!isActive ? <div style={{ display: "flex", gap: space[1], justifyContent: "center", flexWrap: "wrap", marginBottom: space[3] }}>
+              {/* Phase progress — clean dots in idle, thin bar in active */}
+              {!isActive ? <div style={{ display: "flex", gap: space[1], justifyContent: "center", flexWrap: "wrap", marginBottom: space[4] }}>
                 {pr.ph.map((p, i) => { const sR = durMult !== 1 ? Math.round(p.s * durMult) + "–" + Math.round(p.e * durMult) + "s" : p.r; const isCurr = pi === i; const isDone = i < pi; return (
                   <motion.div key={i} animate={isCurr ? { scale: [1, 1.03, 1] } : {}} transition={isCurr ? { duration: 2, repeat: Infinity } : {}} style={{ padding: `${space[1]}px ${space[2.5]}px`, borderRadius: radius.xl, border: isCurr ? `2px solid ${ac}` : isDone ? `1.5px solid ${withAlpha(ac, 12)}` : `1px solid ${bd}`, background: isCurr ? withAlpha(ac, 4) : isDone ? withAlpha(ac, 2) : cd, color: isCurr ? ac : isDone ? ac : t3, ...ty.caption(isCurr ? ac : isDone ? ac : t3), fontWeight: isCurr ? font.weight.black : font.weight.semibold, display: "flex", alignItems: "center", gap: space[1], opacity: i <= pi ? 1 : .4, boxShadow: isCurr ? `0 2px 8px ${withAlpha(ac, 6)}` : "none", transition: "all .3s" }}>
                     <span style={{ width: isCurr ? 7 : 5, height: isCurr ? 7 : 5, borderRadius: "50%", background: isDone || isCurr ? ac : bd, transition: "all .3s", boxShadow: isCurr ? `0 0 6px ${withAlpha(ac, 14)}` : "none" }} />
                     {isCurr && <Icon name={p.ic} size={10} color={ac} />}{sR}
                   </motion.div>); })}
-              </div> : <div style={{ display: "flex", gap: 2, marginBottom: space[2] }}>
-                {pr.ph.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < pi ? ac : i === pi ? withAlpha(ac, 20) : bd, transition: "background .3s" }} />)}
-              </div>}
-
-              {/* Progress bar (active only — clean replacement for waveform) */}
-              {isActive && <div style={{ marginBottom: space[2], height: 4, borderRadius: 2, background: bd, overflow: "hidden" }}>
-                <div style={{ width: (pct * 100) + "%", height: "100%", background: `linear-gradient(90deg,${withAlpha(ac, 20)},${ac})`, transition: "width .95s linear", borderRadius: 2 }} />
-              </div>}
+              </div> : (
+                /* Active: ultra-minimal progress */
+                <div style={{ display: "flex", gap: 2, marginBottom: space[2], padding: `0 ${space[2]}px` }}>
+                  {pr.ph.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < pi ? ac : i === pi ? `linear-gradient(90deg,${ac},${withAlpha(ac, 15)})` : bd, transition: "background .5s" }} />)}
+                </div>
+              )}
 
               {/* ═══ CONTEXTUAL AI SECTION (idle only) ═══ */}
               {ts === "idle" && <>
@@ -570,7 +570,7 @@ export default function BioIgnicion() {
                   </AnimatePresence>
                 </>}
               </>}
-            </>}
+            </>
           </div>
         )}
 
@@ -581,29 +581,28 @@ export default function BioIgnicion() {
         {tab === "perfil" && <ErrorBoundary isDark={isDark}><ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={() => setShowSettings(true)} onShowHist={() => setShowHist(true)} onShowCalibration={() => setShowCalibration(true)} /></ErrorBoundary>}
       </div>
 
-      {/* ═══ BOTTOM NAV (unified — metrics integrated) ═══ */}
-      <nav role="navigation" aria-label="Navegación principal" style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: resolveTheme(isDark).overlay, backdropFilter: "blur(20px)", borderTop: `1px solid ${bd}`, padding: `0 ${space[4]}px max(10px, env(safe-area-inset-bottom))`, display: "flex", flexDirection: "column", zIndex: z.nav }}>
-        {/* Micro neural metrics — visible on Ignición tab only */}
-        {tab === "ignicion" && <div style={{ display: "flex", justifyContent: "center", gap: space[4], padding: `6px 0 2px` }}>
-          {[{ v: st.coherencia, l: "Enfoque", c: "#3B82F6" }, { v: st.resiliencia, l: "Calma", c: "#8B5CF6" }, { v: st.capacidad, l: "Energía", c: "#6366F1" }].map((m, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 5, height: 5, borderRadius: radius.full, background: m.c }} />
-              <span style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, color: m.c }}>{m.v}%</span>
-              <span style={{ fontSize: font.size.xs, color: t3, fontWeight: font.weight.semibold }}>{m.l}</span>
-            </div>))}
-        </div>}
-        {/* Tab buttons */}
-        <div style={{ display: "flex", justifyContent: "center", gap: space[1], padding: `4px 0 4px` }}>
-          {[{ id: "ignicion", lb: "Ignición", ic: "bolt", ac: ac }, { id: "dashboard", lb: "Dashboard", ic: "chart", ac: "#6366F1" }, { id: "perfil", lb: "Perfil", ic: "user", ac: t1 }].map(t => { const a = tab === t.id; return (
-            <motion.button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 44 }}>
-              {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2.5, borderRadius: "0 0 3px 3px", background: t.ac }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
-              <motion.div animate={{ scale: a ? 1 : 0.9, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 30, height: 30, borderRadius: radius.sm + 2, background: a ? withAlpha(t.ac, 6) : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .2s" }}>
-                <Icon name={t.ic} size={a ? 18 : 16} color={a ? t.ac : t3} />
-              </motion.div>
-              <span style={{ fontSize: font.size.xs, fontWeight: a ? font.weight.black : font.weight.semibold, color: a ? t.ac : t3, transition: "all .2s", letterSpacing: a ? font.tracking.wide : font.tracking.normal }}>{t.lb}</span>
-            </motion.button>); })}
+      {/* ═══ BOTTOM NAV — clean, no metric noise ═══ */}
+      <AnimatePresence>
+        {!isActive && <motion.nav role="navigation" aria-label="Navegación principal" initial={false} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.3 }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: resolveTheme(isDark).overlay, backdropFilter: "blur(24px)", borderTop: `1px solid ${withAlpha(bd, 50)}`, padding: `0 ${space[4]}px max(10px, env(safe-area-inset-bottom))`, zIndex: z.nav }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: space[1], padding: "6px 0 4px" }}>
+            {[{ id: "ignicion", lb: "Ignición", ic: "bolt", ac: ac }, { id: "dashboard", lb: "Dashboard", ic: "chart", ac: "#6366F1" }, { id: "perfil", lb: "Perfil", ic: "user", ac: t1 }].map(t => { const a = tab === t.id; return (
+              <motion.button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "6px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 48 }}>
+                {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "25%", right: "25%", height: 2, borderRadius: "0 0 2px 2px", background: t.ac }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
+                <motion.div animate={{ scale: a ? 1 : 0.88, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 32, height: 32, borderRadius: radius.sm + 2, background: a ? withAlpha(t.ac, 6) : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name={t.ic} size={a ? 18 : 16} color={a ? t.ac : t3} />
+                </motion.div>
+                <span style={{ fontSize: font.size.xs, fontWeight: a ? font.weight.black : font.weight.semibold, color: a ? t.ac : t3, letterSpacing: a ? font.tracking.wide : font.tracking.normal }}>{t.lb}</span>
+              </motion.button>); })}
+          </div>
+        </motion.nav>}
+      </AnimatePresence>
+      {/* Active session: minimal floating controls */}
+      {isActive && <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, padding: `${space[3]}px ${space[5]}px max(${space[4]}px, env(safe-area-inset-bottom))`, zIndex: z.nav, background: `linear-gradient(transparent, ${bg}E0 30%)`, pointerEvents: "none" }}>
+        <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", pointerEvents: "auto" }}>
+          <motion.button aria-label={ts === "running" ? "Pausar" : "Continuar"} whileTap={{ scale: .95 }} onClick={ts === "running" ? pa : resume} style={{ flex: 1, maxWidth: 200, padding: `${space[3]}px 0`, borderRadius: radius.full, background: ts === "paused" ? ac : `${cd}E0`, backdropFilter: "blur(12px)", border: ts === "paused" ? "none" : `1.5px solid ${withAlpha(ac, 15)}`, color: ts === "paused" ? "#fff" : ac, ...ty.button, cursor: "pointer", minHeight: 48 }}>{ts === "running" ? "PAUSAR" : "CONTINUAR"}</motion.button>
+          <motion.button aria-label="Reiniciar" whileTap={{ scale: .9 }} onClick={rs} style={{ width: 48, height: 48, borderRadius: "50%", border: `1px solid ${withAlpha(bd, 30)}`, background: `${cd}B0`, backdropFilter: "blur(12px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="reset" size={16} color={t3} /></motion.button>
         </div>
-      </nav>
+      </div>}
     </div>
   );
 }
