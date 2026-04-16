@@ -92,13 +92,13 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                   width: 28,
                   height: 28,
                   borderRadius: 7,
-                  background: (proto?.cl || "#6366F1") + "12",
+                  background: (proto?.cl || semantic.info) + "12",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 9,
                   fontWeight: 800,
-                  color: proto?.cl || "#6366F1",
+                  color: proto?.cl || semantic.info,
                   flexShrink: 0,
                 }}
               >
