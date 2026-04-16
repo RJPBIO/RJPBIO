@@ -8,7 +8,7 @@ import {
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, suggestOptimalTime, analyzeStreakChain,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius, layout } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, layout, semantic } from "../lib/theme";
 
 export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onShowHist, onShowCalibration }) {
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
@@ -39,7 +39,7 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
       <div style={{ background: `linear-gradient(145deg,${cd},${ac}05)`, borderRadius: 20, padding: "18px 16px", marginBottom: 12, border: `1px solid ${bd}`, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: ac + "06" }} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-          {[{ v: st.totalSessions, l: "Sesiones", c: ac, ic: "bolt" }, { v: `${Math.floor((st.totalTime || 0) / 3600)}h${Math.floor(((st.totalTime || 0) % 3600) / 60)}m`, l: "Tiempo", c: t1, ic: "clock" }, { v: st.streak, l: "Racha", c: "#D97706", ic: "fire" }].map((m, i) => (
+          {[{ v: st.totalSessions, l: "Sesiones", c: ac, ic: "bolt" }, { v: `${Math.floor((st.totalTime || 0) / 3600)}h${Math.floor(((st.totalTime || 0) % 3600) / 60)}m`, l: "Tiempo", c: t1, ic: "clock" }, { v: st.streak, l: "Racha", c: semantic.warning, ic: "fire" }].map((m, i) => (
             <div key={i} style={{ textAlign: "center", padding: "8px", background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: 14 }}>
               <Icon name={m.ic} size={14} color={m.c} />
               <div style={ty.metric(m.c, font.size["2xl"])}>{m.v}</div>
@@ -62,7 +62,7 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
         <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2.5] }}><Icon name="fingerprint" size={12} color={t3} /><span style={ty.label(t3)}>Tu Firma Neural</span></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
-            {[{ l: "Hora pico", v: `${fp.peakHour}:00` }, { l: "Mejor protocolo", v: fp.bestProto, c: ac }, { l: "Calidad", v: `${fp.avgQuality}%`, c: fp.avgQuality >= 70 ? "#059669" : "#D97706" }, { l: "Adaptación", v: fp.adaptationRate > 0 ? `+${fp.adaptationRate}` : `${fp.adaptationRate}`, c: fp.adaptationRate > 0 ? "#059669" : "#DC2626" }].map((d, i) => (
+            {[{ l: "Hora pico", v: `${fp.peakHour}:00` }, { l: "Mejor protocolo", v: fp.bestProto, c: ac }, { l: "Calidad", v: `${fp.avgQuality}%`, c: fp.avgQuality >= 70 ? semantic.success : semantic.warning }, { l: "Adaptación", v: fp.adaptationRate > 0 ? `+${fp.adaptationRate}` : `${fp.adaptationRate}`, c: fp.adaptationRate > 0 ? semantic.success : semantic.danger }].map((d, i) => (
               <div key={i} style={{ background: isDark ? "#1A1E28" : "#F8FAFC", borderRadius: 12, padding: "10px" }}>
                 <div style={ty.caption(t3)}>{d.l}</div>
                 <div style={ty.metric(d.c || t1, font.size.lg)}>{d.v}</div>
@@ -93,11 +93,11 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
       {/* Streak Chain Analysis */}
       {(() => { let sc; try { sc = analyzeStreakChain(st); } catch(e) { sc = null; } if (!sc) return null; return (
         <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2] }}><Icon name="fire" size={12} color="#D97706" /><span style={ty.label(t3)}>Análisis de Rachas</span></div>
+          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2] }}><Icon name="fire" size={12} color={semantic.warning} /><span style={ty.label(t3)}>Análisis de Rachas</span></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2], marginBottom: space[2] }}>
-            <div style={{ textAlign: "center" }}><div style={ty.metric("#D97706", font.size.xl)}>{sc.maxStreak}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>récord</div></div>
+            <div style={{ textAlign: "center" }}><div style={ty.metric(semantic.warning, font.size.xl)}>{sc.maxStreak}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>récord</div></div>
             <div style={{ textAlign: "center" }}><div style={ty.metric(t1, font.size.xl)}>{sc.avgStreak}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>promedio</div></div>
-            <div style={{ textAlign: "center" }}><div style={ty.metric("#6366F1", font.size.xl)}>{sc.avgBreakPoint}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>punto quiebre</div></div>
+            <div style={{ textAlign: "center" }}><div style={ty.metric(semantic.info, font.size.xl)}>{sc.avgBreakPoint}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>punto quiebre</div></div>
           </div>
           <div style={ty.body(t2)}>{sc.prediction}</div>
         </div>); })()}
@@ -114,7 +114,7 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
         </motion.button>
       </div>
       <motion.button whileTap={{ scale: .95 }} onClick={onShowCalibration} style={{ width: "100%", padding: `${space[3]}px`, borderRadius: radius.lg, border: `1.5px solid ${withAlpha(ac, 12)}`, background: `linear-gradient(135deg,${withAlpha(ac, 4)},${withAlpha(ac, 2)})`, color: ac, ...ty.title(ac), cursor: "pointer", marginBottom: space[2], display: "flex", alignItems: "center", justifyContent: "center", gap: space[1.5] }}><Icon name="radar" size={14} color={ac} />Recalibrar Baseline Neural</motion.button>
-      <button onClick={() => { if (typeof window !== "undefined" && window.confirm("¿Reiniciar todos los datos?")) { setSt({ ...DS, weekNum: getWeekNum() }); } }} style={{ width: "100%", padding: `${space[3]}px`, borderRadius: radius.lg, border: "1px solid #FEE2E2", background: isDark ? "#1A0A0A" : "#FFF5F5", color: "#DC2626", ...ty.caption("#DC2626"), cursor: "pointer" }}>Reiniciar Datos</button>
+      <button onClick={() => { if (typeof window !== "undefined" && window.confirm("¿Reiniciar todos los datos?")) { setSt({ ...DS, weekNum: getWeekNum() }); } }} style={{ width: "100%", padding: `${space[3]}px`, borderRadius: radius.lg, border: `1px solid ${withAlpha(semantic.danger, 8)}`, background: withAlpha(semantic.danger, 2), color: semantic.danger, ...ty.caption(semantic.danger), cursor: "pointer" }}>Reiniciar Datos</button>
     </div>
   );
 }
