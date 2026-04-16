@@ -138,7 +138,7 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
         </div>
 
         {/* Prediction card */}
-        <div
+        {prediction && <div
           style={{
             background:
               prediction.predictedDelta > 0
@@ -187,7 +187,7 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
           <div style={{ fontSize: 10, color: t3, marginTop: 4 }}>
             Confianza: {prediction.confidence}% · {prediction.basis}
           </div>
-        </div>
+        </div>}
 
         {/* Personal effectiveness */}
         {sensitivity && (
