@@ -9,6 +9,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
+import { font, space } from "../lib/theme";
 
 // Mapeo de tipo de fase a configuración visual
 const PHASE_CONFIGS = {
@@ -72,7 +73,7 @@ export default function BreathOrb({
         position: "relative",
         width: size,
         height: size * 0.7,
-        margin: "0 auto 8px",
+        margin: `0 auto ${space[2]}px`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -232,8 +233,8 @@ export default function BreathOrb({
           >
             <span
               style={{
-                fontSize: 11,
-                fontWeight: 800,
+                fontSize: font.size.sm,
+                fontWeight: font.weight.black,
                 letterSpacing: 4,
                 color,
                 opacity: 0.85,
@@ -242,7 +243,7 @@ export default function BreathOrb({
             >
               {breathLabel}
             </span>
-            <span style={{ fontSize: 12, fontWeight: 800, color }}>
+            <span style={{ fontSize: font.size.base, fontWeight: font.weight.black, color }}>
               {breathCount}s
             </span>
           </motion.div>
