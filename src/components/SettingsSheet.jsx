@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { SOUNDSCAPES } from "../lib/constants";
 import { exportData } from "../lib/audio";
-import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, semantic } from "../lib/theme";
 
 function Toggle({ on, onToggle, ac, bd }) {
   return (
@@ -76,14 +76,14 @@ export default function SettingsSheet({
         <motion.button aria-label="Exportar datos JSON" whileTap={{scale:.96}} onClick={handleExportJSON} style={{flex:1,padding:`${space[3]}px`,borderRadius:radius.md,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:space[2],minHeight:44}}>
           <Icon name="export" size={14} color={t2}/><span style={ty.title(t2)}>JSON</span>
         </motion.button>
-        <motion.button aria-label="Exportar informe NOM-035" whileTap={{scale:.96}} onClick={handleExportNOM035} style={{flex:1,padding:`${space[3]}px`,borderRadius:radius.md,border:"1.5px solid #059669",background:withAlpha("#059669",4),cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:space[2],minHeight:44}}>
-          <Icon name="file" size={14} color="#059669"/><span style={ty.title("#059669")}>NOM-035</span>
+        <motion.button aria-label="Exportar informe NOM-035" whileTap={{scale:.96}} onClick={handleExportNOM035} style={{flex:1,padding:`${space[3]}px`,borderRadius:radius.md,border:`1.5px solid ${semantic.success}`,background:withAlpha(semantic.success,4),cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:space[2],minHeight:44}}>
+          <Icon name="file" size={14} color={semantic.success}/><span style={ty.title(semantic.success)}>NOM-035</span>
         </motion.button>
       </div>
       {/* Export feedback toast */}
       <AnimatePresence>
-        {exportMsg && <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}} style={{textAlign:"center",marginTop:space[2],padding:`${space[2]}px`,borderRadius:radius.sm,background:exportMsg.includes("Error")?withAlpha("#DC2626",6):withAlpha("#059669",6),border:`1px solid ${exportMsg.includes("Error")?"#DC2626":"#059669"}`}}>
-          <span style={ty.caption(exportMsg.includes("Error")?"#DC2626":"#059669")}>{exportMsg}</span>
+        {exportMsg && <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}} style={{textAlign:"center",marginTop:space[2],padding:`${space[2]}px`,borderRadius:radius.sm,background:exportMsg.includes("Error")?withAlpha(semantic.danger,6):withAlpha(semantic.success,6),border:`1px solid ${exportMsg.includes("Error")?semantic.danger:semantic.success}`}}>
+          <span style={ty.caption(exportMsg.includes("Error")?semantic.danger:semantic.success)}>{exportMsg}</span>
         </motion.div>}
       </AnimatePresence>
     </motion.div></motion.div>)}
