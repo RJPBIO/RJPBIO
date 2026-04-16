@@ -9,7 +9,7 @@
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
-import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, semantic } from "../lib/theme";
 
 export default function StreakShield({ st, isDark, onQuickSession }) {
   const { border: bd, t1, t3 } = resolveTheme(isDark);
@@ -22,18 +22,18 @@ export default function StreakShield({ st, isDark, onQuickSession }) {
 
     // Urgency levels based on time remaining and streak value
     let urgency = "none";
-    let color = "#059669";
+    let color = semantic.success;
     let message = "";
     let icon = "shield";
 
     if (h >= 22) {
       urgency = "critical";
-      color = "#DC2626";
+      color = semantic.danger;
       message = `¡${st.streak} días en peligro! Sesión de 60s antes de dormir.`;
       icon = "alert-triangle";
     } else if (h >= 20) {
       urgency = "high";
-      color = "#D97706";
+      color = semantic.warning;
       message = `Tu racha de ${st.streak} días necesita una sesión hoy. Quedan ${hoursLeft}h.`;
       icon = "alert";
     } else if (h >= 18) {
