@@ -1,13 +1,15 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Icon from "./Icon";
+import AnimatedNumber from "./AnimatedNumber";
 import { MOODS, AM } from "../lib/constants";
 import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
   calcNeuralVariability,
 } from "../lib/neural";
+import { resolveTheme, withAlpha, font, space, radius, labelStyle } from "../lib/theme";
 
 const NeuralRadar = dynamic(() => import("./NeuralRadar"), { ssr: false });
 const NeuralCoach = dynamic(() => import("./NeuralCoach"), { ssr: false });
@@ -24,26 +26,8 @@ const TemporalCharts = dynamic(() => import("./TemporalCharts").then(mod => ({
   }
 })), { ssr: false });
 
-/* Animated Number */
-function AN({ value, sfx = "", color = "#0F172A", sz = 32 }) {
-  const [d, sD] = useState(0);
-  const rf = useRef(null);
-  useEffect(() => {
-    let s = d; const e = value; const t0 = performance.now();
-    function step(n) { const p = Math.min((n - t0) / 700, 1); sD(Math.round(s + (1 - Math.pow(1 - p, 3)) * (e - s))); if (p < 1) rf.current = requestAnimationFrame(step); }
-    rf.current = requestAnimationFrame(step);
-    return () => { if (rf.current) cancelAnimationFrame(rf.current); };
-  }, [value]);
-  return <span style={{ fontSize: sz, fontWeight: 800, color, fontFamily: "'Manrope',sans-serif", letterSpacing: "-1px" }}>{d}{sfx}</span>;
-}
-
 export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHist }) {
-  const bg = isDark ? "#0B0E14" : "#F1F4F9";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
+  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
   const bioSignal = useMemo(() => calcBioSignal(st), [st.coherencia, st.resiliencia, st.capacidad, st.moodLog, st.weeklyData, st.history]);
@@ -108,13 +92,13 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         <div style={{ background: `linear-gradient(145deg,${cd},${(bioSignal.score >= 70 ? "#059669" : bioSignal.score >= 45 ? "#D97706" : "#DC2626") + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${bd}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -10, right: -10, width: 40, height: 40, borderRadius: "50%", background: (bioSignal.score >= 70 ? "#059669" : "#D97706") + "08" }} />
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}><Icon name="shield" size={12} color={bioSignal.score >= 70 ? "#059669" : "#D97706"} /><span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: t3, textTransform: "uppercase" }}>BioSignal</span></div>
-          <AN value={bioSignal.score} color={bioSignal.score >= 70 ? "#059669" : bioSignal.score >= 45 ? "#D97706" : "#DC2626"} sz={28} />
+          <AnimatedNumber value={bioSignal.score} color={bioSignal.score >= 70 ? "#059669" : bioSignal.score >= 45 ? "#D97706" : "#DC2626"} size={28} />
           <div style={{ fontSize: 10, color: t2, marginTop: 6, lineHeight: 1.4 }}>{bioSignal.score >= 70 ? "Rendimiento alto" : bioSignal.score >= 45 ? "Estado funcional" : "Intervención activa"}</div>
         </div>
         <div style={{ background: `linear-gradient(145deg,${cd},${(burnout.risk === "bajo" ? "#059669" : "#DC2626") + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${burnout.risk === "crítico" || burnout.risk === "alto" ? "#DC262615" : bd}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -10, right: -10, width: 40, height: 40, borderRadius: "50%", background: (burnout.risk === "bajo" ? "#059669" : "#DC2626") + "08" }} />
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}><Icon name="alert-triangle" size={12} color={burnout.risk === "bajo" ? "#059669" : "#DC2626"} /><span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: t3, textTransform: "uppercase" }}>Burnout</span></div>
-          <AN value={burnout.index} color={burnout.risk === "bajo" ? "#059669" : burnout.risk === "moderado" ? "#D97706" : "#DC2626"} sz={28} />
+          <AnimatedNumber value={burnout.index} color={burnout.risk === "bajo" ? "#059669" : burnout.risk === "moderado" ? "#D97706" : "#DC2626"} size={28} />
           <div style={{ fontSize: 10, color: burnout.risk === "bajo" ? "#059669" : "#DC2626", fontWeight: 700, marginTop: 6 }}>Riesgo {burnout.risk}</div>
         </div>
       </div>
@@ -167,7 +151,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         {[{ l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? "+" + rD.c + "%" : "—", c: "#3B82F6", ic: "focus" }, { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? "+" + rD.r + "%" : "—", c: "#8B5CF6", ic: "calm" }, { l: "V-Cores", v: st.vCores || 0, d: "+" + (st.history?.slice(-1)[0]?.vc || 0), c: "#D97706", ic: "sparkle" }, { l: "Sesiones", v: st.totalSessions, d: st.streak + "d racha", c: "#059669", ic: "bolt" }].map((k, i) => (
           <div key={i} style={{ background: cd, borderRadius: 14, padding: "11px 10px", border: `1px solid ${bd}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><div style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name={k.ic} size={10} color={t3} /><span style={{ fontSize: 10, fontWeight: 700, color: t3 }}>{k.l}</span></div><span style={{ fontSize: 10, fontWeight: 700, color: "#059669" }}>{k.d}</span></div>
-            <AN value={k.v} sfx={k.l === "Enfoque" || k.l === "Calma" ? "%" : ""} color={k.c} sz={20} />
+            <AnimatedNumber value={k.v} suffix={k.l === "Enfoque" || k.l === "Calma" ? "%" : ""} color={k.c} size={20} />
           </div>))}
       </div>
 
