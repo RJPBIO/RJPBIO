@@ -18,7 +18,7 @@ import {
   adaptiveProtocolEngine, estimateCognitiveLoad,
 } from "../lib/neural";
 import { hap, loadVoices, speak, hapticBreath, speakNow } from "../lib/audio";
-import { resolveTheme, withAlpha, ty, font, space, radius, z, layout } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, duration, brand, semantic } from "../lib/theme";
 import { useStore } from "../store/useStore";
 import { useSessionEngine } from "../hooks/useSessionEngine";
 import Icon from "../components/Icon";
@@ -211,7 +211,7 @@ export default function BioIgnicion() {
   if (!mt) return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0B0E14", gap: space[4] }}>
       <motion.div animate={{ scale: [1, 1.06, 1], opacity: [.7, 1, .7] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
-        <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4" /></svg>
+        <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke={brand.primary} strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="16" fill="none" stroke={brand.secondary} strokeWidth="2" opacity=".3" /><circle cx="26" cy="26" r="5" fill={brand.primary} opacity=".4" /></svg>
       </motion.div>
       <div style={ty.label("#94A3B8")}>BIO-IGNICIÓN</div>
       <div style={{ ...ty.caption("#4B5568"), marginTop: -8 }}>v6.0 — Neural Engine IA</div>
@@ -219,7 +219,7 @@ export default function BioIgnicion() {
   );
 
   return (
-    <div style={{ maxWidth: layout.maxWidth, margin: "0 auto", minHeight: "100vh", background: bg, position: "relative", overflow: "hidden", fontFamily: font.family, transition: "background .8s" }}>
+    <div style={{ maxWidth: layout.maxWidth, margin: "0 auto", minHeight: "100vh", background: bg, position: "relative", overflow: "hidden", fontFamily: font.family, transition: `background ${duration.slower}` }}>
 
       {/* Background aura */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
@@ -303,7 +303,7 @@ export default function BioIgnicion() {
       </ErrorBoundary>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <div style={{ opacity: tabFade, transition: "opacity .25s cubic-bezier(.4,0,.2,1),transform .25s", transform: tabFade === 1 ? "translateY(0)" : "translateY(8px)", position: "relative", zIndex: 1 }}>
+      <div style={{ opacity: tabFade, transition: `opacity ${duration.normal} cubic-bezier(.4,0,.2,1),transform ${duration.normal}`, transform: tabFade === 1 ? "translateY(0)" : "translateY(8px)", position: "relative", zIndex: 1 }}>
 
         {/* ═══ TAB: IGNICIÓN ═══ */}
         {tab === "ignicion" && postStep === "none" && countdown === 0 && !compFlash && (
@@ -432,10 +432,10 @@ export default function BioIgnicion() {
                 {!isActive && <div style={ty.caption(t3)}>{ph.r}</div>}
               </div>
 
-              <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
-                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[1.5] }}><span style={ty.caption(ac)}>Fase {pi + 1} de {pr.ph.length}</span><span style={ty.caption(t3)}>{Math.round((pi + 1) / pr.ph.length * 100)}%</span></div>}
-                {ph.k && <div style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
-                <p style={{ ...ty.body(t2), margin: 0 }}>{ph.i}</p>
+              <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: isActive ? space[3] : space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
+                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[1] }}><span style={ty.caption(ac)}>Fase {pi + 1}/{pr.ph.length}</span></div>}
+                {ph.k && <div style={{ fontSize: isActive ? font.size.md : font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: isActive ? space[1.5] : space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
+                <p style={{ ...ty.body(t2), margin: 0, fontSize: isActive ? font.size.sm : font.size.base }}>{ph.i}</p>
 
                 {/* Anti-gaming checkpoints */}
                 {isActive && (() => {
@@ -478,7 +478,8 @@ export default function BioIgnicion() {
                     </motion.div>);
                 })()}
 
-                {/* Science */}
+                {/* Science — hidden during active session to reduce noise */}
+                {!isActive && <>
                 <button onClick={() => setShowScience(!showScience)} style={{ display: "flex", alignItems: "center", gap: space[1], marginTop: space[3], padding: `${space[1.5]}px 0`, background: "none", border: "none", cursor: "pointer" }}>
                   <Icon name="mind" size={11} color={ac} /><span style={ty.caption(ac)}>NEUROCIENCIA</span>
                   <span style={{ ...ty.caption(ac), transform: showScience ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>▾</span>
@@ -491,6 +492,7 @@ export default function BioIgnicion() {
                     </div>
                   </motion.div>}
                 </AnimatePresence>
+                </>}
               </motion.div>
 
               {/* Next phase hint */}
@@ -534,7 +536,7 @@ export default function BioIgnicion() {
                 </motion.button>
 
                 {/* AI Recommendation */}
-                {aiRec && aiRec.primary && aiRec.primary.protocol.id !== daily.proto.id && <motion.button initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} whileTap={{ scale: .97 }} onClick={() => sp(aiRec.primary.protocol)} style={{ width: "100%", padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[2.5], borderRadius: radius.md, border: `1.5px solid ${withAlpha(ac, 6)}`, background: isDark ? "#0A1A0A" : "#F0FDF4", cursor: "pointer", textAlign: "left", display: "flex", gap: space[2.5], alignItems: "center" }}>
+                {aiRec && aiRec.primary && aiRec.primary.protocol.id !== daily.proto.id && <motion.button initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} whileTap={{ scale: .97 }} onClick={() => sp(aiRec.primary.protocol)} style={{ width: "100%", padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[2.5], borderRadius: radius.md, border: `1.5px solid ${withAlpha(ac, 6)}`, background: withAlpha(semantic.success, 2), cursor: "pointer", textAlign: "left", display: "flex", gap: space[2.5], alignItems: "center" }}>
                   <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="cpu" size={13} color={ac} /></div>
                   <div style={{ flex: 1 }}><div style={{ ...ty.caption(ac), fontWeight: font.weight.bold }}>IA: {aiRec.primary.protocol.n}</div><div style={ty.caption(t3)}>{aiRec.primary.reason}</div></div>
                   <Icon name="chevron" size={12} color={ac} />
@@ -549,9 +551,9 @@ export default function BioIgnicion() {
                   </button>
                   <AnimatePresence>
                     {showMore && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
-                      {prediction && <div style={{ display: "flex", alignItems: "center", gap: space[2], padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[2.5], background: prediction.predictedDelta > 0 ? (isDark ? "#0A1A0A" : "#F0FDF4") : surface, borderRadius: radius.md, border: `1px solid ${prediction.predictedDelta > 0 ? withAlpha("#059669", 8) : bd}` }}>
-                        <Icon name="predict" size={14} color={prediction.predictedDelta > 0 ? "#059669" : "#6366F1"} />
-                        <div style={{ flex: 1 }}><div style={ty.caption(prediction.predictedDelta > 0 ? "#059669" : "#6366F1")}>{prediction.message}</div><div style={{ ...ty.caption(t3), marginTop: 1 }}>Confianza: {prediction.confidence}%</div></div>
+                      {prediction && <div style={{ display: "flex", alignItems: "center", gap: space[2], padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[2.5], background: prediction.predictedDelta > 0 ? withAlpha(semantic.success, 2) : surface, borderRadius: radius.md, border: `1px solid ${prediction.predictedDelta > 0 ? withAlpha(semantic.success, 8) : bd}` }}>
+                        <Icon name="predict" size={14} color={prediction.predictedDelta > 0 ? semantic.success : semantic.info} />
+                        <div style={{ flex: 1 }}><div style={ty.caption(prediction.predictedDelta > 0 ? semantic.success : semantic.info)}>{prediction.message}</div><div style={{ ...ty.caption(t3), marginTop: 1 }}>Confianza: {prediction.confidence}%</div></div>
                       </div>}
                       {(st.progDay || 0) < 7 && <div style={{ marginBottom: space[2.5], background: cd, borderRadius: radius.lg, padding: space[3], border: `1px solid ${bd}` }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: space[2] }}>
