@@ -22,37 +22,41 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
 
   return (
     <div style={{ padding: `14px 20px ${layout.bottomSafe}px` }}>
-      {/* Profile Hero */}
-      <div style={{ textAlign: "center", marginBottom: 20, marginTop: 8, position: "relative" }}>
-        <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle,${ac}08,transparent)`, filter: "blur(30px)", pointerEvents: "none" }} />
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200 }}>
-          <div style={{ width: 84, height: 84, borderRadius: "50%", margin: "0 auto 12px", background: `linear-gradient(135deg,${ac},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 30px ${ac}25,0 0 0 3px ${cd},0 0 0 5px ${ac}20`, position: "relative" }}>
-            <Icon name="user" size={32} color="#fff" />
-            <div style={{ position: "absolute", bottom: -3, right: -3, width: 26, height: 26, borderRadius: radius.full, background: `linear-gradient(135deg,${lv.c},${lv.c}CC)`, display: "flex", alignItems: "center", justifyContent: "center", border: `3px solid ${cd}`, boxShadow: `0 2px 8px ${lv.c}40` }}><span style={{ fontSize: font.size.sm, fontWeight: font.weight.black, color: "#fff" }}>{lv.n[0]}</span></div>
+      {/* Profile Hero — atmospheric personal space */}
+      <div style={{ textAlign: "center", marginBottom: 24, marginTop: 12, position: "relative" }}>
+        <div style={{ position: "absolute", top: -20, left: "50%", transform: "translateX(-50%)", width: 240, height: 240, borderRadius: "50%", background: `radial-gradient(circle,${ac}06,transparent 60%)`, filter: "blur(40px)", pointerEvents: "none" }} />
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 180, damping: 20 }}>
+          <div style={{ position: "relative", width: 90, height: 90, margin: "0 auto 16px" }}>
+            {/* Breathing ring around avatar */}
+            <motion.div animate={{ scale: [1, 1.06, 1], opacity: [.15, .3, .15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -8, borderRadius: "50%", border: `1px solid ${ac}` }} />
+            <div style={{ width: 90, height: 90, borderRadius: "50%", background: `linear-gradient(135deg,${ac},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 30px ${ac}20`, position: "relative" }}>
+              <Icon name="user" size={34} color="#fff" />
+              <div style={{ position: "absolute", bottom: -2, right: -2, width: 28, height: 28, borderRadius: radius.full, background: `linear-gradient(135deg,${lv.c},${lv.c}CC)`, display: "flex", alignItems: "center", justifyContent: "center", border: `3px solid ${cd}`, boxShadow: `0 2px 8px ${lv.c}30` }}><span style={{ fontSize: font.size.sm, fontWeight: font.weight.black, color: "#fff" }}>{lv.n[0]}</span></div>
+            </div>
           </div>
         </motion.div>
-        <div style={ty.heroHeading(t1)}>Operador Neural</div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: space[1.5], padding: `${space[1]}px ${space[4]}px`, background: withAlpha(nSt.color, 4), borderRadius: radius.xl, border: `1px solid ${withAlpha(nSt.color, 8)}` }}><div style={{ width: 5, height: 5, borderRadius: radius.full, background: nSt.color, animation: "shimDot 2s ease infinite" }} /><span style={ty.title(nSt.color)}>{nSt.label} · {lv.n}</span></div>
+        <div style={{ fontSize: font.size["2xl"], fontWeight: font.weight.black, color: t1, letterSpacing: "-0.5px" }}>Tu perfil neural</div>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: space[2], padding: `${space[1.5]}px ${space[4]}px`, background: withAlpha(nSt.color, 3), borderRadius: radius.xl, border: `1px solid ${withAlpha(nSt.color, 6)}` }}><div style={{ width: 5, height: 5, borderRadius: radius.full, background: nSt.color, animation: "shimDot 2s ease infinite" }} /><span style={{ fontSize: font.size.md, fontWeight: font.weight.bold, color: nSt.color }}>{nSt.label} · {lv.n}</span></div>
       </div>
 
       {/* Stats hero card */}
-      <div style={{ background: `linear-gradient(145deg,${cd},${ac}05)`, borderRadius: 20, padding: "18px 16px", marginBottom: 12, border: `1px solid ${bd}`, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: ac + "06" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+      <div style={{ background: `linear-gradient(155deg,${cd},${isDark ? ac + "04" : ac + "03"})`, borderRadius: radius["2xl"], padding: "22px 18px", marginBottom: 14, border: `1px solid ${isDark ? ac + "08" : bd}`, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -30, right: -30, width: 100, height: 100, borderRadius: "50%", background: `radial-gradient(circle,${ac}06,transparent)` }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2], marginBottom: space[4] }}>
           {[{ v: st.totalSessions, l: "Sesiones", c: ac, ic: "bolt" }, { v: `${Math.floor((st.totalTime || 0) / 3600)}h${Math.floor(((st.totalTime || 0) % 3600) / 60)}m`, l: "Tiempo", c: t1, ic: "clock" }, { v: st.streak, l: "Racha", c: semantic.warning, ic: "fire" }].map((m, i) => (
-            <div key={i} style={{ textAlign: "center", padding: "8px", background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: 14 }}>
+            <div key={i} style={{ textAlign: "center", padding: `${space[2.5]}px ${space[1]}px`, background: isDark ? "rgba(255,255,255,.02)" : "rgba(0,0,0,.015)", borderRadius: radius.md }}>
               <Icon name={m.ic} size={14} color={m.c} />
-              <div style={ty.metric(m.c, font.size["2xl"])}>{m.v}</div>
-              <div style={{ ...ty.label(t3), fontSize: font.size.xs, letterSpacing: font.tracking.wider, marginTop: 3 }}>{m.l}</div>
+              <div style={{ fontSize: font.size["2xl"], fontWeight: font.weight.black, color: m.c, letterSpacing: "-0.5px", marginTop: 4 }}>{m.v}</div>
+              <div style={{ fontSize: font.size.xs, fontWeight: font.weight.semibold, color: t3, letterSpacing: 1, textTransform: "uppercase", marginTop: 4 }}>{m.l}</div>
             </div>))}
         </div>
-        <div style={{ padding: "10px 12px", background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={ty.title(lv.c)}>{lv.n}</span>
-            <span style={ty.caption(t3)}>{nLv ? `→ ${nLv.n}` : ""} · {lPct}%</span>
+        <div style={{ padding: `${space[2.5]}px ${space[3]}px`, background: isDark ? "rgba(255,255,255,.02)" : "rgba(0,0,0,.015)", borderRadius: radius.md }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: space[1.5] }}>
+            <span style={{ fontSize: font.size.md, fontWeight: font.weight.bold, color: lv.c }}>{lv.n}</span>
+            <span style={{ fontSize: font.size.sm, fontWeight: font.weight.semibold, color: t3 }}>{nLv ? `→ ${nLv.n}` : ""} · {lPct}%</span>
           </div>
-          <div style={{ height: 6, background: bd, borderRadius: 6, overflow: "hidden" }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: lPct + "%" }} transition={{ duration: 1, ease: "easeOut" }} style={{ height: "100%", borderRadius: 6, background: `linear-gradient(90deg,${lv.c},${lv.c}BB)`, boxShadow: `0 0 8px ${lv.c}30` }} />
+          <div style={{ height: 5, background: bd, borderRadius: 4, overflow: "hidden" }}>
+            <motion.div initial={{ width: 0 }} animate={{ width: lPct + "%" }} transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ height: "100%", borderRadius: 4, background: `linear-gradient(90deg,${lv.c},${lv.c}BB)`, boxShadow: `0 0 10px ${lv.c}25` }} />
           </div>
         </div>
       </div>
