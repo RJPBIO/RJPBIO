@@ -12,13 +12,13 @@ import Icon from "./Icon";
 import { SCIENCE_DEEP } from "../lib/protocols";
 import { DIF_LABELS } from "../lib/constants";
 import { predictSessionImpact, calcProtoSensitivity } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, semantic } from "../lib/theme";
 
 const PHASE_ICONS = {
-  breath: { icon: "breath", label: "Respiración", color: "#059669" },
-  body: { icon: "heart", label: "Corporal", color: "#DC2626" },
+  breath: { icon: "breath", label: "Respiración", color: semantic.success },
+  body: { icon: "heart", label: "Corporal", color: semantic.danger },
   mind: { icon: "mind", label: "Mental", color: "#8B5CF6" },
-  focus: { icon: "focus", label: "Enfoque", color: "#6366F1" },
+  focus: { icon: "focus", label: "Enfoque", color: semantic.info },
 };
 
 export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose, durMult = 1 }) {
@@ -116,12 +116,10 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
                 style={{
                   fontSize: 10,
                   fontWeight: 700,
-                  color: protocol.dif === 1 ? "#059669" : protocol.dif === 2 ? "#D97706" : "#DC2626",
+                  color: protocol.dif === 1 ? semantic.success : protocol.dif === 2 ? semantic.warning : semantic.danger,
                   padding: "2px 8px",
                   borderRadius: 6,
-                  background:
-                    (protocol.dif === 1 ? "#059669" : protocol.dif === 2 ? "#D97706" : "#DC2626") +
-                    "10",
+                  background: withAlpha(protocol.dif === 1 ? semantic.success : protocol.dif === 2 ? semantic.warning : semantic.danger, 6),
                 }}
               >
                 {DIF_LABELS[(protocol.dif || 1) - 1]}
@@ -166,7 +164,7 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
               <Icon
                 name="predict"
                 size={13}
-                color={prediction.predictedDelta > 0 ? "#059669" : "#6366F1"}
+                color={prediction.predictedDelta > 0 ? semantic.success : semantic.info}
               />
               <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: t3, textTransform: "uppercase" }}>
                 Predicción IA
@@ -176,7 +174,7 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
               style={{
                 fontSize: 18,
                 fontWeight: 800,
-                color: prediction.predictedDelta > 0 ? "#059669" : "#6366F1",
+                color: prediction.predictedDelta > 0 ? semantic.success : semantic.info,
               }}
             >
               {prediction.predictedDelta > 0 ? "+" : ""}
@@ -206,14 +204,14 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
             <Icon
               name="fingerprint"
               size={14}
-              color={sensitivity.avgDelta > 0 ? "#059669" : "#DC2626"}
+              color={sensitivity.avgDelta > 0 ? semantic.success : semantic.danger}
             />
             <div style={{ flex: 1 }}>
               <div
                 style={{
                   fontSize: 10,
                   fontWeight: 700,
-                  color: sensitivity.avgDelta > 0 ? "#059669" : "#DC2626",
+                  color: sensitivity.avgDelta > 0 ? semantic.success : semantic.danger,
                 }}
               >
                 Tu historial: {sensitivity.avgDelta > 0 ? "+" : ""}
@@ -354,13 +352,13 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
                         marginTop: 4,
                         padding: "2px 8px",
                         borderRadius: 6,
-                        background: "#05966908",
+                        background: withAlpha(semantic.success, 4),
                         fontSize: 10,
-                        color: "#059669",
+                        color: semantic.success,
                         fontWeight: 600,
                       }}
                     >
-                      <Icon name="breath" size={10} color="#059669" />
+                      <Icon name="breath" size={10} color={semantic.success} />
                       {phase.br.in}-{phase.br.h1 || 0}-{phase.br.ex}-{phase.br.h2 || 0}
                     </div>
                   )}
