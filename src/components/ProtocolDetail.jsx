@@ -12,6 +12,7 @@ import Icon from "./Icon";
 import { SCIENCE_DEEP } from "../lib/protocols";
 import { DIF_LABELS } from "../lib/constants";
 import { predictSessionImpact, calcProtoSensitivity } from "../lib/neural";
+import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
 
 const PHASE_ICONS = {
   breath: { icon: "breath", label: "Respiración", color: "#059669" },
@@ -21,11 +22,7 @@ const PHASE_ICONS = {
 };
 
 export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose, durMult = 1 }) {
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   const prediction = useMemo(() => { try { return predictSessionImpact(st, protocol); } catch (e) { console.warn("[BIO] Prediction error:", e.message); return null; } }, [st, protocol]);
   const sensitivity = useMemo(() => { try { const s = calcProtoSensitivity(st.moodLog); return s[protocol.n] || null; } catch (e) { return null; } }, [st.moodLog, protocol.n]);
