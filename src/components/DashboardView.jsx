@@ -74,25 +74,25 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
   return (
     <div style={{ padding: `14px 20px ${layout.bottomSafe}px` }}>
       {/* Executive Summary — Apple Health-inspired hero */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ background: `linear-gradient(155deg,${isDark ? "#0D1117" : "#FFFFFF"},${isDark ? "#141820" : ac + "04"})`, borderRadius: 24, padding: "28px 22px 22px", marginBottom: 20, border: `1px solid ${isDark ? ac + "10" : ac + "08"}`, position: "relative", overflow: "hidden" }}>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ background: `linear-gradient(155deg,${isDark ? "#0C1018" : "#FFFFFF"},${isDark ? "#111520" : ac + "03"})`, borderRadius: radius["2xl"], padding: "32px 22px 24px", marginBottom: 22, border: `1px solid ${isDark ? ac + "08" : ac + "06"}`, position: "relative", overflow: "hidden" }}>
         {/* Atmospheric glow */}
-        <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: `radial-gradient(circle,${ac}0C,transparent)`, filter: "blur(30px)" }} />
-        <div style={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: `radial-gradient(circle,#818CF808,transparent)`, filter: "blur(20px)" }} />
+        <div style={{ position: "absolute", top: -50, right: -50, width: 180, height: 180, borderRadius: "50%", background: `radial-gradient(circle,${ac}0A,transparent 65%)`, filter: "blur(40px)" }} />
+        <div style={{ position: "absolute", bottom: -30, left: -30, width: 100, height: 100, borderRadius: "50%", background: `radial-gradient(circle,#818CF806,transparent)`, filter: "blur(25px)" }} />
         {/* Hero number */}
-        <div style={{ textAlign: "center", marginBottom: space[4], position: "relative" }}>
-          <div style={{ ...ty.label(t3), marginBottom: space[2], letterSpacing: 4 }}>RENDIMIENTO NEURAL</div>
+        <div style={{ textAlign: "center", marginBottom: space[5], position: "relative" }}>
+          <div style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, letterSpacing: 5, color: t3, textTransform: "uppercase", marginBottom: space[3], opacity: .6 }}>Tu estado</div>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: space[1] }}>
-            <AnimatedNumber value={perf} color={t1} size={52} />
-            <span style={{ fontSize: font.size.xl, fontWeight: font.weight.bold, color: t3, opacity: .5 }}>%</span>
+            <AnimatedNumber value={perf} color={t1} size={56} />
+            <span style={{ fontSize: font.size.lg, fontWeight: font.weight.bold, color: t3, opacity: .4 }}>%</span>
           </div>
-          <div style={{ ...ty.body(t3), marginTop: space[2], opacity: .7 }}>{perf >= 70 ? "Rendimiento alto. Mantén tu ritmo." : perf >= 50 ? "Una sesión más elevaría tu estado." : "Tu sistema necesita atención."}</div>
+          <div style={{ fontSize: font.size.md, fontWeight: font.weight.medium, color: t3, marginTop: space[2.5], lineHeight: font.leading.relaxed, maxWidth: 260, margin: `${space[2.5]}px auto 0` }}>{perf >= 70 ? "Rendimiento alto. Mantén tu ritmo." : perf >= 50 ? "Una sesión más elevaría tu estado." : "Tu sistema necesita atención."}</div>
         </div>
         {/* Secondary metrics — clean grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2] }}>
           {[{ v: st.weeklyData.reduce((a, b) => a + b, 0), l: "Semana", c: ac }, { v: bioSignal.score, l: "BioSignal", c: bioSignal.score >= 70 ? semantic.success : bioSignal.score >= 45 ? semantic.warning : semantic.danger }, { v: burnout.risk === "sin datos" ? "—" : burnout.index, l: "Burnout", c: burnout.risk === "bajo" ? semantic.success : semantic.danger }].map((m, i) => (
-            <div key={i} style={{ textAlign: "center", padding: `${space[2.5]}px ${space[1]}px`, background: isDark ? "rgba(255,255,255,.025)" : "rgba(0,0,0,.015)", borderRadius: radius.md + 2 }}>
-              <div style={ty.metric(m.c, font.size.xl)}>{m.v}</div>
-              <div style={{ ...ty.label(t3), fontSize: font.size.xs, letterSpacing: font.tracking.wider, marginTop: 3 }}>{m.l}</div>
+            <div key={i} style={{ textAlign: "center", padding: `${space[3]}px ${space[1]}px`, background: isDark ? "rgba(255,255,255,.02)" : "rgba(0,0,0,.012)", borderRadius: radius.md }}>
+              <div style={{ fontSize: font.size.xl, fontWeight: font.weight.black, color: m.c, letterSpacing: "-0.5px" }}>{m.v}</div>
+              <div style={{ fontSize: font.size.xs, fontWeight: font.weight.semibold, color: t3, letterSpacing: 1, textTransform: "uppercase", marginTop: 4 }}>{m.l}</div>
             </div>))}
         </div>
       </motion.div>
@@ -102,12 +102,16 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}><NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} /></motion.div>
 
       {/* ─── SECONDARY: Trends & patterns ─── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[3], paddingLeft: 2, letterSpacing: 4 }}>TENDENCIAS</motion.div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} style={{ marginBottom: space[2.5], marginTop: space[5], paddingLeft: 2 }}>
+        <div style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, letterSpacing: 4, color: t3, textTransform: "uppercase", opacity: .5 }}>Tendencias</div>
+      </motion.div>
       <WeeklyReport st={st} isDark={isDark} />
       <CorrelationMatrix st={st} isDark={isDark} onSelectProtocol={(p) => { sp(p); switchTab("ignicion"); }} />
 
       {/* ─── TERTIARY: Deep analytics ─── */}
-      <div style={{ ...ty.label(t3), marginBottom: space[2], marginTop: space[3], paddingLeft: 2, letterSpacing: 4 }}>ANÁLISIS PROFUNDO</div>
+      <div style={{ marginBottom: space[2.5], marginTop: space[5], paddingLeft: 2 }}>
+        <div style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, letterSpacing: 4, color: t3, textTransform: "uppercase", opacity: .5 }}>Análisis profundo</div>
+      </div>
 
       {/* Neural Variability Index */}
       {neuralVar && <div style={{ background: cd, borderRadius: 16, padding: "14px 12px", marginBottom: 14, border: `1px solid ${bd}` }}>
@@ -179,11 +183,11 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
       </div>
 
       {/* Metrics grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: space[2], marginBottom: space[4] }}>
         {[{ l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? "+" + rD.c + "%" : "—", c: "#3B82F6", ic: "focus" }, { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? "+" + rD.r + "%" : "—", c: "#8B5CF6", ic: "calm" }, { l: "V-Cores", v: st.vCores || 0, d: "+" + (st.history?.slice(-1)[0]?.vc || 0), c: semantic.warning, ic: "sparkle" }, { l: "Sesiones", v: st.totalSessions, d: st.streak + "d racha", c: semantic.success, ic: "bolt" }].map((k, i) => (
-          <div key={i} style={{ background: cd, borderRadius: 14, padding: "11px 10px", border: `1px solid ${bd}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: space[1] }}><div style={{ display: "flex", alignItems: "center", gap: 3 }}><Icon name={k.ic} size={10} color={t3} /><span style={ty.caption(t3)}>{k.l}</span></div><span style={{ ...ty.caption(semantic.success), fontWeight: font.weight.bold }}>{k.d}</span></div>
-            <AnimatedNumber value={k.v} suffix={k.l === "Enfoque" || k.l === "Calma" ? "%" : ""} color={k.c} size={20} />
+          <div key={i} style={{ background: cd, borderRadius: radius.lg, padding: `${space[3]}px ${space[3]}px`, border: `1px solid ${bd}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: space[1.5] }}><div style={{ display: "flex", alignItems: "center", gap: 4 }}><Icon name={k.ic} size={11} color={k.c} /><span style={{ fontSize: font.size.sm, fontWeight: font.weight.semibold, color: t3 }}>{k.l}</span></div><span style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, color: semantic.success }}>{k.d}</span></div>
+            <AnimatedNumber value={k.v} suffix={k.l === "Enfoque" || k.l === "Calma" ? "%" : ""} color={k.c} size={22} />
           </div>))}
       </div>
 
