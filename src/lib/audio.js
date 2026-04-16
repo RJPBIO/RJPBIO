@@ -97,6 +97,7 @@ export function stopSoundscape() {
 
 // ─── Binaural Engine ──────────────────────────────────────
 let _binauralL = null, _binauralR = null, _binauralGain = null, _binauralPan = 0;
+let _binauralRAF = null; // track RAF to cancel on stop
 export function startBinaural(type) {
   try {
     const c = gAC(); if (!c) return;
@@ -110,20 +111,33 @@ export function startBinaural(type) {
     else if (type === "calma") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 210; }
     else if (type === "reset") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 206; }
     else { _binauralL.frequency.value = 200; _binauralR.frequency.value = 210; }
-    function rotatePan() { panL.pan.value = Math.sin(_binauralPan) * 0.8; panR.pan.value = Math.cos(_binauralPan) * 0.8; _binauralPan += 0.015; if (_binauralGain) requestAnimationFrame(rotatePan); }
+    let _rafActive = true;
+    function rotatePan() {
+      if (!_rafActive) return;
+      panL.pan.value = Math.sin(_binauralPan) * 0.8;
+      panR.pan.value = Math.cos(_binauralPan) * 0.8;
+      _binauralPan += 0.015;
+      _binauralRAF = requestAnimationFrame(rotatePan);
+    }
     _binauralL.connect(panL); _binauralR.connect(panR); panL.connect(_binauralGain); panR.connect(_binauralGain);
-    _binauralL.start(); _binauralR.start(); rotatePan();
+    _binauralL.start(); _binauralR.start();
+    // Store kill switch on the gain node for stopBinaural to access
+    _binauralGain._killRAF = () => { _rafActive = false; };
+    rotatePan();
     _binauralGain.gain.linearRampToValueAtTime(0.025, c.currentTime + 4);
-  } catch (e) {}
+  } catch (e) { console.warn("[BIO] Binaural start error:", e.message); }
 }
 
 export function stopBinaural() {
   try {
+    // Kill RAF immediately
+    if (_binauralRAF) { cancelAnimationFrame(_binauralRAF); _binauralRAF = null; }
+    if (_binauralGain?._killRAF) { _binauralGain._killRAF(); }
     if (_binauralGain) { const c = gAC(); if (c) _binauralGain.gain.linearRampToValueAtTime(0, c.currentTime + 2); }
     setTimeout(() => {
       try { if (_binauralL) { _binauralL.stop(); _binauralL.disconnect(); } if (_binauralR) { _binauralR.stop(); _binauralR.disconnect(); } if (_binauralGain) _binauralGain.disconnect(); _binauralL = null; _binauralR = null; _binauralGain = null; } catch (e) {}
     }, 2500);
-  } catch (e) {}
+  } catch (e) { console.warn("[BIO] Binaural stop error:", e.message); }
 }
 
 // ─── Haptic Engine ────────────────────────────────────────
