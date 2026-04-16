@@ -10,13 +10,10 @@ import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { calcProtocolCorrelations } from "../lib/neural";
 import { P } from "../lib/protocols";
+import { resolveTheme, withAlpha, ty, font, space, radius, semantic } from "../lib/theme";
 
 export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   const correlations = useMemo(() => calcProtocolCorrelations(st), [st.moodLog, st.history]);
 
@@ -135,7 +132,7 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                       style={{
                         fontSize: 11,
                         fontWeight: 800,
-                        color: isPositive ? "#059669" : "#DC2626",
+                        color: isPositive ? semantic.success : semantic.danger,
                       }}
                     >
                       {isPositive ? "+" : ""}
@@ -161,8 +158,8 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                     style={{
                       height: "100%",
                       background: isPositive
-                        ? "linear-gradient(90deg, #059669, #0D9488)"
-                        : "linear-gradient(90deg, #DC2626, #EF4444)",
+                        ? `linear-gradient(90deg, ${semantic.success}, #0D9488)`
+                        : `linear-gradient(90deg, ${semantic.danger}, #EF4444)`,
                       borderRadius: 2,
                     }}
                   />
