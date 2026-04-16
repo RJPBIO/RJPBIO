@@ -9,7 +9,7 @@ import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
   calcNeuralVariability,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius, layout } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, layout, semantic } from "../lib/theme";
 
 const NeuralRadar = dynamic(() => import("./NeuralRadar"), { ssr: false });
 const NeuralCoach = dynamic(() => import("./NeuralCoach"), { ssr: false });
@@ -84,7 +84,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
-          {[{ v: st.weeklyData.reduce((a, b) => a + b, 0), l: "Semana", c: ac }, { v: bioSignal.score, l: "BioSignal", c: bioSignal.score >= 70 ? "#059669" : bioSignal.score >= 45 ? "#D97706" : "#DC2626" }, { v: burnout.risk === "sin datos" ? "—" : burnout.index, l: "Burnout", c: burnout.risk === "bajo" ? "#059669" : "#DC2626" }].map((m, i) => (
+          {[{ v: st.weeklyData.reduce((a, b) => a + b, 0), l: "Semana", c: ac }, { v: bioSignal.score, l: "BioSignal", c: bioSignal.score >= 70 ? semantic.success : bioSignal.score >= 45 ? semantic.warning : semantic.danger }, { v: burnout.risk === "sin datos" ? "—" : burnout.index, l: "Burnout", c: burnout.risk === "bajo" ? semantic.success : semantic.danger }].map((m, i) => (
             <div key={i} style={{ textAlign: "center", padding: `${space[2]}px ${space[1]}px`, background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: radius.md }}>
               <div style={ty.metric(m.c, font.size.xl)}>{m.v}</div>
               <div style={{ ...ty.label(t3), fontSize: font.size.xs, letterSpacing: font.tracking.wider, marginTop: 2 }}>{m.l}</div>
@@ -109,25 +109,25 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
       {neuralVar && <div style={{ background: cd, borderRadius: 16, padding: "14px 12px", marginBottom: 14, border: `1px solid ${bd}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}><Icon name="predict" size={12} color={t3} /><span style={ty.label(t3)}>Variabilidad Neural</span></div>
-          <span style={ty.metric(neuralVar.index < 10 ? "#059669" : neuralVar.index < 20 ? "#D97706" : "#DC2626", font.size.xl)}>{neuralVar.index}</span>
+          <span style={ty.metric(neuralVar.index < 10 ? semantic.success : neuralVar.index < 20 ? semantic.warning : semantic.danger, font.size.xl)}>{neuralVar.index}</span>
         </div>
         <div style={ty.body(t2)}>{neuralVar.interpretation}</div>
-        <div style={{ ...ty.caption(t3), marginTop: space[1] }}>Tendencia: <span style={{ fontWeight: font.weight.bold, color: neuralVar.trend === "ascendente" ? "#059669" : neuralVar.trend === "descendente" ? "#DC2626" : t3 }}>{neuralVar.trend}</span></div>
+        <div style={{ ...ty.caption(t3), marginTop: space[1] }}>Tendencia: <span style={{ fontWeight: font.weight.bold, color: neuralVar.trend === "ascendente" ? semantic.success : neuralVar.trend === "descendente" ? semantic.danger : t3 }}>{neuralVar.trend}</span></div>
       </div>}
 
       {/* BioSignal + Burnout */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginBottom: 14 }}>
-        <div style={{ background: `linear-gradient(145deg,${cd},${(bioSignal.score >= 70 ? "#059669" : bioSignal.score >= 45 ? "#D97706" : "#DC2626") + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${bd}`, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -10, right: -10, width: 40, height: 40, borderRadius: "50%", background: (bioSignal.score >= 70 ? "#059669" : "#D97706") + "08" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[1.5] }}><Icon name="shield" size={12} color={bioSignal.score >= 70 ? "#059669" : "#D97706"} /><span style={ty.label(t3)}>BioSignal</span></div>
-          <AnimatedNumber value={bioSignal.score} color={bioSignal.score >= 70 ? "#059669" : bioSignal.score >= 45 ? "#D97706" : "#DC2626"} size={28} />
+        <div style={{ background: `linear-gradient(145deg,${cd},${(bioSignal.score >= 70 ? semantic.success : bioSignal.score >= 45 ? semantic.warning : semantic.danger) + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${bd}`, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: -10, right: -10, width: 40, height: 40, borderRadius: "50%", background: (bioSignal.score >= 70 ? semantic.success : semantic.warning) + "08" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[1.5] }}><Icon name="shield" size={12} color={bioSignal.score >= 70 ? semantic.success : semantic.warning} /><span style={ty.label(t3)}>BioSignal</span></div>
+          <AnimatedNumber value={bioSignal.score} color={bioSignal.score >= 70 ? semantic.success : bioSignal.score >= 45 ? semantic.warning : semantic.danger} size={28} />
           <div style={{ ...ty.caption(t2), marginTop: space[1.5] }}>{bioSignal.score >= 70 ? "Rendimiento alto" : bioSignal.score >= 45 ? "Estado funcional" : "Intervención activa"}</div>
         </div>
-        <div style={{ background: `linear-gradient(145deg,${cd},${(burnout.risk === "bajo" ? "#059669" : "#DC2626") + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${burnout.risk === "crítico" || burnout.risk === "alto" ? "#DC262615" : bd}`, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -10, right: -10, width: 40, height: 40, borderRadius: "50%", background: (burnout.risk === "bajo" ? "#059669" : "#DC2626") + "08" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[1.5] }}><Icon name="alert-triangle" size={12} color={burnout.risk === "bajo" ? "#059669" : "#DC2626"} /><span style={ty.label(t3)}>Burnout</span></div>
-          <AnimatedNumber value={burnout.index} color={burnout.risk === "bajo" ? "#059669" : burnout.risk === "moderado" ? "#D97706" : "#DC2626"} size={28} />
-          <div style={{ ...ty.caption(burnout.risk === "bajo" ? "#059669" : "#DC2626"), fontWeight: font.weight.bold, marginTop: space[1.5] }}>Riesgo {burnout.risk}</div>
+        <div style={{ background: `linear-gradient(145deg,${cd},${(burnout.risk === "bajo" ? semantic.success : semantic.danger) + "06"})`, borderRadius: 18, padding: "16px 14px", border: `1px solid ${burnout.risk === "crítico" || burnout.risk === "alto" ? ${semantic.danger + "15"} : bd}`, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: -10, right: -10, width: 40, height: 40, borderRadius: "50%", background: (burnout.risk === "bajo" ? semantic.success : semantic.danger) + "08" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[1.5] }}><Icon name="alert-triangle" size={12} color={burnout.risk === "bajo" ? semantic.success : semantic.danger} /><span style={ty.label(t3)}>Burnout</span></div>
+          <AnimatedNumber value={burnout.index} color={burnout.risk === "bajo" ? semantic.success : burnout.risk === "moderado" ? semantic.warning : semantic.danger} size={28} />
+          <div style={{ ...ty.caption(burnout.risk === "bajo" ? semantic.success : semantic.danger), fontWeight: font.weight.bold, marginTop: space[1.5] }}>Riesgo {burnout.risk}</div>
         </div>
       </div>
 
@@ -162,7 +162,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 4 ? `1px solid ${bd}` : "none" }}>
             <span style={ty.caption(t1)}>{name}</span>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ ...ty.title(data.avgDelta > 0 ? "#059669" : "#DC2626"), fontWeight: font.weight.black }}>{data.avgDelta > 0 ? "+" : ""}{data.avgDelta}</span>
+              <span style={{ ...ty.title(data.avgDelta > 0 ? semantic.success : semantic.danger), fontWeight: font.weight.black }}>{data.avgDelta > 0 ? "+" : ""}{data.avgDelta}</span>
               <span style={ty.caption(t3)}>{data.sessions}x</span>
             </div>
           </div>))}
