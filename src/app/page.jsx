@@ -432,10 +432,10 @@ export default function BioIgnicion() {
                 {!isActive && <div style={ty.caption(t3)}>{ph.r}</div>}
               </div>
 
-              <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: isActive ? space[3] : space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
-                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[1] }}><span style={ty.caption(ac)}>Fase {pi + 1}/{pr.ph.length}</span></div>}
-                {ph.k && <div style={{ fontSize: isActive ? font.size.md : font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: isActive ? space[1.5] : space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
-                <p style={{ ...ty.body(t2), margin: 0, fontSize: isActive ? font.size.sm : font.size.base }}>{ph.i}</p>
+              <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
+                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[1.5] }}><span style={ty.caption(ac)}>Fase {pi + 1} de {pr.ph.length}</span><span style={ty.caption(t3)}>{Math.round((pi + 1) / pr.ph.length * 100)}%</span></div>}
+                {ph.k && <div style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
+                <p style={{ ...ty.body(t2), margin: 0 }}>{ph.i}</p>
 
                 {/* Anti-gaming checkpoints */}
                 {isActive && (() => {
@@ -478,8 +478,7 @@ export default function BioIgnicion() {
                     </motion.div>);
                 })()}
 
-                {/* Science — hidden during active session to reduce noise */}
-                {!isActive && <>
+                {/* Science — always available, collapsed by default */}
                 <button onClick={() => setShowScience(!showScience)} style={{ display: "flex", alignItems: "center", gap: space[1], marginTop: space[3], padding: `${space[1.5]}px 0`, background: "none", border: "none", cursor: "pointer" }}>
                   <Icon name="mind" size={11} color={ac} /><span style={ty.caption(ac)}>NEUROCIENCIA</span>
                   <span style={{ ...ty.caption(ac), transform: showScience ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>▾</span>
@@ -492,7 +491,6 @@ export default function BioIgnicion() {
                     </div>
                   </motion.div>}
                 </AnimatePresence>
-                </>}
               </motion.div>
 
               {/* Next phase hint */}
