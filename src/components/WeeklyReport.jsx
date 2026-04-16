@@ -9,7 +9,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { DN } from "../lib/constants";
-import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, brand, semantic } from "../lib/theme";
 
 export default function WeeklyReport({ st, isDark }) {
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
@@ -112,19 +112,19 @@ export default function WeeklyReport({ st, isDark }) {
               gap: 4,
               padding: "3px 8px",
               borderRadius: 8,
-              background: report.diff >= 0 ? "#05966910" : "#DC262610",
+              background: withAlpha(report.diff >= 0 ? semantic.success : semantic.danger, 6),
             }}
           >
             <Icon
               name={report.diff >= 0 ? "trending-up" : "trending-down"}
               size={10}
-              color={report.diff >= 0 ? "#059669" : "#DC2626"}
+              color={report.diff >= 0 ? semantic.success : semantic.danger}
             />
             <span
               style={{
                 fontSize: 10,
                 fontWeight: 800,
-                color: report.diff >= 0 ? "#059669" : "#DC2626",
+                color: report.diff >= 0 ? semantic.success : semantic.danger,
               }}
             >
               {report.diff >= 0 ? "+" : ""}
@@ -188,7 +188,7 @@ export default function WeeklyReport({ st, isDark }) {
                       report.curr[i] > 0
                         ? report.curr[i] > (report.prev[i] || 0)
                           ? ac
-                          : "#6366F1"
+                          : semantic.info
                         : bd,
                     borderRadius: 3,
                   }}
@@ -237,7 +237,7 @@ export default function WeeklyReport({ st, isDark }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
         <div
           style={{
-            background: isDark ? "#1A1E28" : "#F8FAFC",
+            background: resolveTheme(isDark).surface,
             borderRadius: 10,
             padding: "8px",
             textAlign: "center",
@@ -251,7 +251,7 @@ export default function WeeklyReport({ st, isDark }) {
         {report.moodAvg > 0 && (
           <div
             style={{
-              background: isDark ? "#1A1E28" : "#F8FAFC",
+              background: resolveTheme(isDark).surface,
               borderRadius: 10,
               padding: "8px",
               textAlign: "center",
@@ -261,7 +261,7 @@ export default function WeeklyReport({ st, isDark }) {
               style={{
                 fontSize: 14,
                 fontWeight: 800,
-                color: report.moodDelta >= 0 ? "#059669" : "#DC2626",
+                color: report.moodDelta >= 0 ? semantic.success : semantic.danger,
               }}
             >
               {report.moodAvg}
@@ -279,7 +279,7 @@ export default function WeeklyReport({ st, isDark }) {
         {report.avgC > 0 && (
           <div
             style={{
-              background: isDark ? "#1A1E28" : "#F8FAFC",
+              background: resolveTheme(isDark).surface,
               borderRadius: 10,
               padding: "8px",
               textAlign: "center",
@@ -289,7 +289,7 @@ export default function WeeklyReport({ st, isDark }) {
               style={{
                 fontSize: 14,
                 fontWeight: 800,
-                color: report.cohDelta >= 0 ? "#3B82F6" : "#DC2626",
+                color: report.cohDelta >= 0 ? "#3B82F6" : semantic.danger,
               }}
             >
               {report.avgC}%
