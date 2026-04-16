@@ -6,7 +6,7 @@
 
 import { useState, useMemo } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
-import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, brand, semantic } from "../lib/theme";
 
 export default function NeuralRadar({ st, isDark, onZoneClick }) {
   const [activeZone, setActiveZone] = useState(null);
@@ -32,8 +32,8 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
 
   const data = [
     { subject: "Enfoque", value: focus, fullMark: 100, color: "#3B82F6" },
-    { subject: "Calma", value: calm, fullMark: 100, color: "#059669" },
-    { subject: "Energía", value: energy, fullMark: 100, color: "#D97706" },
+    { subject: "Calma", value: calm, fullMark: 100, color: semantic.success },
+    { subject: "Energía", value: energy, fullMark: 100, color: semantic.warning },
     { subject: "Consistencia", value: consistency, fullMark: 100, color: "#8B5CF6" },
     { subject: "Adaptación", value: adaptability, fullMark: 100, color: "#0D9488" },
     { subject: "Resiliencia", value: Math.max(0, 100 - stress), fullMark: 100, color: "#EC4899" },
@@ -41,8 +41,8 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
 
   const zones = {
     "Enfoque": { value: focus, color: "#3B82F6", interp: focus >= 80 ? "Óptimo para decisiones críticas" : focus >= 60 ? "Funcional para trabajo profundo" : focus >= 40 ? "Disperso — sesión de enfoque recomendada" : "Bajo — Protocolo Lightning Focus sugerido" },
-    "Calma": { value: calm, color: "#059669", interp: calm >= 80 ? "Regulación excelente. Parasimpático activo" : calm >= 60 ? "Calma funcional. Buen baseline" : calm >= 40 ? "Tensión detectada. Protocolo de reset sugerido" : "Alta activación simpática. Prioriza calma" },
-    "Energía": { value: energy, color: "#D97706", interp: energy >= 80 ? "Alto rendimiento disponible" : energy >= 60 ? "Energía moderada. Suficiente para ejecutar" : energy >= 40 ? "Bajo combustible. Pulse Shift recomendado" : "Reservas agotadas. Recuperación necesaria" },
+    "Calma": { value: calm, color: semantic.success, interp: calm >= 80 ? "Regulación excelente. Parasimpático activo" : calm >= 60 ? "Calma funcional. Buen baseline" : calm >= 40 ? "Tensión detectada. Protocolo de reset sugerido" : "Alta activación simpática. Prioriza calma" },
+    "Energía": { value: energy, color: semantic.warning, interp: energy >= 80 ? "Alto rendimiento disponible" : energy >= 60 ? "Energía moderada. Suficiente para ejecutar" : energy >= 40 ? "Bajo combustible. Pulse Shift recomendado" : "Reservas agotadas. Recuperación necesaria" },
     "Consistencia": { value: consistency, color: "#8B5CF6", interp: consistency >= 80 ? "Hábito sólido. Tu cerebro ya espera la sesión" : consistency >= 50 ? "Frecuencia aceptable. Intenta no romper la cadena" : "Inconsistente. La constancia multiplica resultados" },
     "Adaptación": { value: adaptability, color: "#0D9488", interp: adaptability >= 70 ? "Alta diversidad de protocolos. Entrenamiento integral" : adaptability >= 40 ? "Diversidad moderada. Explora protocolos nuevos" : "Poca variedad. Tu cerebro necesita estímulos diferentes" },
     "Resiliencia": { value: 100 - stress, color: "#EC4899", interp: stress <= 20 ? "Estrés mínimo. Estado óptimo" : stress <= 40 ? "Estrés controlado. Sin riesgo" : stress <= 60 ? "Estrés elevado. Monitor activo" : "Estrés crítico. Intervención inmediata" },
@@ -70,8 +70,8 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: perf >= 70 ? "#059669" : perf >= 45 ? "#D97706" : "#DC2626", animation: "shimDot 2s ease infinite" }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: perf >= 70 ? "#059669" : perf >= 45 ? "#D97706" : "#DC2626" }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: perf >= 70 ? semantic.success : perf >= 45 ? semantic.warning : semantic.danger, animation: "shimDot 2s ease infinite" }} />
+          <span style={{ fontSize: 11, fontWeight: 700, color: perf >= 70 ? semantic.success : perf >= 45 ? semantic.warning : semantic.danger }}>
             {perf >= 80 ? "Óptimo" : perf >= 65 ? "Rendimiento" : perf >= 45 ? "Activación" : "Calibrando"}
           </span>
         </div>
