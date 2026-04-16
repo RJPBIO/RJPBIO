@@ -27,11 +27,8 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
   const cd = isDark ? "#141820" : "#FFFFFF";
   const bd = isDark ? "#1E2330" : "#E2E8F0";
 
-  const prediction = useMemo(() => predictSessionImpact(st, protocol), [st, protocol]);
-  const sensitivity = useMemo(() => {
-    const s = calcProtoSensitivity(st.moodLog);
-    return s[protocol.n] || null;
-  }, [st.moodLog, protocol.n]);
+  const prediction = useMemo(() => { try { return predictSessionImpact(st, protocol); } catch (e) { console.warn("[BIO] Prediction error:", e.message); return null; } }, [st, protocol]);
+  const sensitivity = useMemo(() => { try { const s = calcProtoSensitivity(st.moodLog); return s[protocol.n] || null; } catch (e) { return null; } }, [st.moodLog, protocol.n]);
 
   const totalDur = Math.round(protocol.d * durMult);
   const phaseTypes = protocol.ph.map((p) => p.ic);
