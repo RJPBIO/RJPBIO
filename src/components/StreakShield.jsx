@@ -9,11 +9,10 @@
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
+import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
 
 export default function StreakShield({ st, isDark, onQuickSession }) {
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
+  const { border: bd, t1, t3 } = resolveTheme(isDark);
 
   const shield = useMemo(() => {
     if (st.streak < 2 || (st.todaySessions || 0) > 0) return null;
