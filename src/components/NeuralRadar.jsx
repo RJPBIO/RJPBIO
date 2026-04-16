@@ -6,16 +6,18 @@
 
 import { useState, useMemo } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
+import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
 
 export default function NeuralRadar({ st, isDark, onZoneClick }) {
   const [activeZone, setActiveZone] = useState(null);
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const ac = brand.primary;
 
   const focus = st.coherencia || 50;
   const calm = st.resiliencia || 50;
   const energy = st.capacidad || 50;
   const stress = Math.max(0, 100 - Math.round((focus + calm) / 2));
 
-  // Derivar consistencia y recuperación del historial
   const consistency = useMemo(() => {
     const wd = st.weeklyData || [0,0,0,0,0,0,0];
     return Math.round((wd.filter(v => v > 0).length / 7) * 100);
@@ -45,13 +47,6 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
     "Adaptación": { value: adaptability, color: "#0D9488", interp: adaptability >= 70 ? "Alta diversidad de protocolos. Entrenamiento integral" : adaptability >= 40 ? "Diversidad moderada. Explora protocolos nuevos" : "Poca variedad. Tu cerebro necesita estímulos diferentes" },
     "Resiliencia": { value: 100 - stress, color: "#EC4899", interp: stress <= 20 ? "Estrés mínimo. Estado óptimo" : stress <= 40 ? "Estrés controlado. Sin riesgo" : stress <= 60 ? "Estrés elevado. Monitor activo" : "Estrés crítico. Intervención inmediata" },
   };
-
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const ac = "#059669";
 
   const perf = Math.round(data.reduce((a, d) => a + d.value, 0) / data.length);
 
