@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { MOODS, ENERGY_LEVELS, WORK_TAGS } from "../lib/constants";
-import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, semantic } from "../lib/theme";
 
 export default function PostSessionFlow({
   postStep, ts, ac, isDark,
@@ -63,13 +63,13 @@ export default function PostSessionFlow({
           <div style={{...ty.title(ac),marginTop:space[1]}}>{pr.n} · {Math.round(pr.d*durMult)}s</div>
           {isFirst && <div style={{...ty.body(t3),marginTop:space[2],maxWidth:280,margin:`${space[2]}px auto 0`}}>Tu cerebro acaba de registrar su primera sesión de entrenamiento neural.</div>}
         </div>
-        {st.streak>=3&&<div style={{textAlign:"center",padding:space[2.5],marginBottom:space[3],background:`linear-gradient(135deg,${withAlpha("#D97706",isDark?8:4)},${withAlpha("#D97706",isDark?4:2)})`,borderRadius:radius.lg,border:`1px solid ${withAlpha("#D97706",8)}`}}>
-          <div style={ty.title("#D97706")}><Icon name="fire" size={14} color="#D97706"/> {st.streak} días — {st.streak>=30?"IMPARABLE":st.streak>=14?"DISCIPLINADO":st.streak>=7?"CONSTANTE":"EN CONSTRUCCIÓN"}</div>
+        {st.streak>=3&&<div style={{textAlign:"center",padding:space[2.5],marginBottom:space[3],background:`linear-gradient(135deg,${withAlpha(semantic.warning,isDark?8:4)},${withAlpha(semantic.warning,isDark?4:2)})`,borderRadius:radius.lg,border:`1px solid ${withAlpha(semantic.warning,8)}`}}>
+          <div style={ty.title(semantic.warning)}><Icon name="fire" size={14} color={semantic.warning}/> {st.streak} días — {st.streak>=30?"IMPARABLE":st.streak>=14?"DISCIPLINADO":st.streak>=7?"CONSTANTE":"EN CONSTRUCCIÓN"}</div>
         </div>}
         {/* Mood delta — hero element when available */}
         {preMood>0&&checkMood>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:space[3],marginBottom:space[4],padding:`${space[4]}px ${space[4]}px`,background:`linear-gradient(135deg,${isDark?"#1A1E28":"#F1F5F9"},${isDark?"#141820":"#F8FAFC"})`,borderRadius:radius.lg}}>
           <div style={{textAlign:"center"}}><Icon name={MOODS[preMood-1].icon} size={22} color={MOODS[preMood-1].color}/><div style={{...ty.caption(t3),marginTop:3}}>Antes</div></div>
-          <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",delay:.3}} style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={ty.metric(moodDiff>0?"#059669":moodDiff<0?"#DC2626":t3,font.size["2xl"])}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={ty.caption(t3)}>puntos</div></motion.div>
+          <motion.div initial={{scale:0}} animate={{scale:1}} transition={{type:"spring",delay:.3}} style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div style={ty.metric(moodDiff>0?semantic.success:moodDiff<0?semantic.danger:t3,font.size["2xl"])}>{moodDiff>0?"+"+moodDiff:moodDiff===0?"=":moodDiff}</div><div style={ty.caption(t3)}>puntos</div></motion.div>
           <div style={{textAlign:"center"}}><Icon name={MOODS[checkMood-1].icon} size={22} color={MOODS[checkMood-1].color}/><div style={{...ty.caption(t3),marginTop:3}}>Después</div></div>
         </div>}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:space[1],marginBottom:space[3]}}>
