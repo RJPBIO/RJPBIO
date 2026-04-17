@@ -15,6 +15,7 @@ import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
 import ReadinessRing from "./ReadinessRing";
 import BioSparkline from "./BioSparkline";
+import IllustratedEmpty from "./IllustratedEmpty";
 import { MOODS, AM } from "../lib/constants";
 import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
@@ -80,31 +81,17 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
   if (noData) {
     return (
       <section role="region" aria-label="Dashboard vacío" style={{ paddingBlock: `${space[3.5] || 14}px`, paddingInline: space[5], paddingBlockEnd: 180 }}>
-        <div style={{ textAlign: "center", paddingBlock: 50, paddingInline: space[5] }}>
-          <Icon name="bolt" size={34} color={ac} aria-hidden="true" />
-          <h2 style={{ ...ty.heading(t1), marginBlockStart: space[2.5], marginBlockEnd: space[1] }}>
-            Tu dashboard te espera
-          </h2>
-          <p style={{ ...ty.body(t3), marginBlockEnd: space[5] }}>
-            Completa tu primera ignición para ver tus métricas neurales.
-          </p>
-          <motion.button
-            whileTap={reduced ? {} : { scale: .95 }}
-            onClick={() => switchTab("ignicion")}
-            aria-label="Ir a la pestaña de ignición para empezar"
-            style={{
-              paddingBlock: space[3],
-              paddingInline: space[7],
-              borderRadius: radius.full,
-              background: ac,
-              border: "none",
-              color: "#fff",
-              ...ty.button,
-            }}
-          >
-            IR A IGNICIÓN
-          </motion.button>
-        </div>
+        <IllustratedEmpty
+          illustration="baseline"
+          kicker="Señal en reposo"
+          title="Tu dashboard espera tu primera señal."
+          body="Cada ignición deja una huella biométrica. Completa una sesión y el instrumento se activa."
+          action={() => switchTab("ignicion")}
+          actionLabel="Ir a Ignición"
+          accent={ac}
+          textPrimary={t1}
+          textMuted={t3}
+        />
       </section>
     );
   }
