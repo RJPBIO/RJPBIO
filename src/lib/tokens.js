@@ -1,30 +1,33 @@
 /* ═══════════════════════════════════════════════════════════════
    BIO-IGNICIÓN — DESIGN TOKENS
    ═══════════════════════════════════════════════════════════════
-   Single source of truth for all visual values.
-   No magic numbers. Every value traces back here.
+   Clinical precision instrument.
+   Reference: Withings · Tesla dark · NEJM · elite lab report.
+   No warmth. No decoration. Every value has a function.
    ═══════════════════════════════════════════════════════════════ */
 
-// ─── Typography Scale ────────────────────────────────────
-// Modular scale, base 12px, ratio ~1.2
+// ─── Typography ──────────────────────────────────────────
+// Single family. Precision sans-serif. Never rounded, never friendly.
+// Numbers use weight 300 with wide tracking — lightness = precision.
 export const font = {
-  family: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  family: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   mono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
 
   size: {
     xs: 10,
     sm: 11,
-    base: 12,
-    md: 13,
-    lg: 15,
-    xl: 17,
-    "2xl": 22,
-    "3xl": 30,
-    "4xl": 38,
-    hero: 52,
+    base: 13,
+    md: 15,
+    lg: 17,
+    xl: 20,
+    "2xl": 24,
+    "3xl": 32,
+    "4xl": 40,
+    hero: 56,
   },
 
   weight: {
+    light: 300,
     normal: 400,
     medium: 500,
     semibold: 600,
@@ -37,21 +40,23 @@ export const font = {
     tight: 1.2,
     snug: 1.35,
     normal: 1.5,
-    relaxed: 1.7,
+    relaxed: 1.6,
+    loose: 1.7,
   },
 
   tracking: {
-    tight: "-0.5px",
+    tight: "-0.02em",
     normal: "0",
-    wide: "0.5px",
-    wider: "1px",
-    widest: "2px",
-    caps: "3px",    // for uppercase labels
+    wide: "0.04em",
+    wider: "0.08em",
+    widest: "0.12em",
+    caps: "0.12em",   // uppercase labels — the only cap spec
   },
 };
 
 // ─── Spacing Scale ───────────────────────────────────────
-// 4px base grid. Every spacing value is a multiple of 4.
+// Discipline: more space than the competitors use.
+// The value trades decoration for confidence.
 export const space = {
   0: 0,
   px: 1,
@@ -73,109 +78,117 @@ export const space = {
 };
 
 // ─── Border Radius ───────────────────────────────────────
+// Small and consistent. Large radii = toy. Small radii = instrument.
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  "2xl": 28,
-  full: 9999,
+  sm: 6,       // badges
+  md: 10,      // buttons
+  lg: 12,      // cards
+  xl: 14,
+  "2xl": 16,
+  full: 9999,  // pills
 };
 
 // ─── Shadows ─────────────────────────────────────────────
+// Elevation by contrast, not by shadow. Shadows used minimally.
 export const shadow = {
-  sm: "0 2px 8px",
-  md: "0 4px 16px",
-  lg: "0 8px 30px",
-  glow: (color) => `0 0 20px ${color}40`,
+  sm: "none",
+  md: "none",
+  lg: "none",
+  glow: (color) => `0 0 0 1px ${color}20`,
 };
 
 // ─── Brand Colors ────────────────────────────────────────
-// Fixed brand identity — does NOT change per protocol
+// Teal — the color of ignition. Used with discipline.
+// CTAs, active metrics, live session state only. Never decorative.
 export const brand = {
-  primary: "#059669",
+  primary: "#0F766E",    // deep teal — clinical, refined
   secondary: "#6366F1",
   accent: "#0D9488",
 };
 
 // ─── Semantic Colors ─────────────────────────────────────
+// Desaturated. Never aggressive. Same discipline as teal.
 export const semantic = {
-  success: "#059669",
-  warning: "#D97706",
-  danger: "#DC2626",
-  info: "#6366F1",
+  success: "#0F766E",    // teal lineage
+  warning: "#B45309",    // dark amber — never bright
+  danger:  "#B91C1C",    // desaturated red — never agressive
+  info:    "#6366F1",
 };
 
 // ─── Protocol Colors ─────────────────────────────────────
-// Only used within protocol-scoped UI (orb, phase card, protocol badge)
 export const protoColor = {
-  calma: "#059669",
+  calma:   "#0F766E",
   enfoque: "#6366F1",
-  energia: "#D97706",
-  reset: "#0D9488",
+  energia: "#B45309",
+  reset:   "#0D9488",
 };
 
 // ─── Opacity Scale ───────────────────────────────────────
-// Consistent alpha values instead of random hex suffixes
 export const alpha = {
-  0: "00",
-  2: "05",
-  4: "0A",
-  6: "0F",
-  8: "14",
-  10: "1A",
-  12: "1F",
-  15: "26",
-  20: "33",
-  25: "40",
-  30: "4D",
-  40: "66",
-  50: "80",
-  60: "99",
-  70: "B3",
-  80: "CC",
-  90: "E6",
-  95: "F2",
+  0:   "00",
+  2:   "05",
+  4:   "0A",
+  6:   "0F",
+  8:   "14",
+  10:  "1A",
+  12:  "1F",
+  15:  "26",
+  20:  "33",
+  25:  "40",
+  30:  "4D",
+  40:  "66",
+  50:  "80",
+  60:  "99",
+  70:  "B3",
+  80:  "CC",
+  90:  "E6",
+  95:  "F2",
   100: "FF",
 };
 
-// ─── Dark Theme ──────────────────────────────────────────
-// Deepened for Calm-level atmospheric immersion
-export const dark = {
-  bg:      "#080A10",
-  card:    "#111520",
-  surface: "#161B26",
-  border:  "#1C2130",
+// ─── Light Theme — clinical white, cold temperature ──────
+export const light = {
+  bg:      "#F8F9FB",   // cold near-white, not beige
+  card:    "#FFFFFF",
+  surface: "#F2F4F7",
+  border:  "#E5E7EB",   // used at opacity 12% via 0.5px stroke
   text: {
-    primary:   "#ECF0F8",
-    secondary: "#8B95A8",
-    muted:     "#3E4758",
+    primary:   "#0A0E14",   // cold black — never pure
+    secondary: "#6B7280",
+    muted:     "#9CA3AF",
   },
-  overlay: "rgba(8, 10, 16, 0.97)",
-  glass:   "rgba(17, 21, 32, 0.94)",
+  overlay: "rgba(248, 249, 251, 0.96)",
+  glass:   "rgba(255, 255, 255, 0.92)",
 };
 
-// ─── Light Theme ─────────────────────────────────────────
-export const light = {
-  bg:      "#F3F6FB",
-  card:    "#FFFFFF",
-  surface: "#F8FAFC",
-  border:  "#E2E8F0",
+// ─── Dark Theme — deep blue-black, Tesla dashboard ───────
+export const dark = {
+  bg:      "#0C0F14",   // deep blue-dark — never pure black
+  card:    "#141820",
+  surface: "#1A1E28",
+  border:  "#232836",
   text: {
-    primary:   "#0F172A",
-    secondary: "#475569",
-    muted:     "#94A3B8",
+    primary:   "#ECF0F8",
+    secondary: "#9AA3B2",
+    muted:     "#5B6472",
   },
-  overlay: "rgba(243, 246, 251, 0.97)",
-  glass:   "rgba(255, 255, 255, 0.94)",
+  overlay: "rgba(12, 15, 20, 0.96)",
+  glass:   "rgba(20, 24, 32, 0.92)",
 };
 
 // ─── Animation Durations ─────────────────────────────────
+// 280ms is the instrument tempo. Faster feels cheap. Slower feels slow.
 export const duration = {
-  fast: "0.15s",
-  normal: "0.25s",
-  slow: "0.4s",
-  slower: "0.8s",
+  instant: "0.12s",
+  fast:    "0.18s",
+  normal:  "0.28s",     // canonical — transitions, fades
+  slow:    "0.4s",
+  slower:  "0.6s",
+};
+
+export const easing = {
+  clinical: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",   // precision ease-out
+  linear:   "linear",
 };
 
 // ─── Z-Index Scale ───────────────────────────────────────
@@ -193,9 +206,12 @@ export const z = {
 // ─── Layout Constants ────────────────────────────────────
 export const layout = {
   maxWidth: 430,
-  bottomNav: 72,         // unified nav height (metrics + tabs)
-  contentPadding: 20,    // horizontal page padding
-  bottomSafe: 120,       // padding-bottom for scroll content (was 180 with double chrome)
+  bottomNav: 72,
+  contentPadding: 20,       // lateral — never 16
+  bottomSafe: 120,
+  tapMinHeight: 52,         // minimum tappable height
+  cardPadding: 24,          // interior of cards
+  sectionGap: 32,           // between sections
 };
 
 // ─── Timer Sizes ─────────────────────────────────────────
