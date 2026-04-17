@@ -3,7 +3,7 @@ import { resolveOrg } from "../../../../server/tenancy";
 import { requireMembership } from "../../../../server/rbac";
 import { db } from "../../../../server/db";
 import { mintApiKey } from "../../../../server/apikey";
-import { writeAudit } from "../../../../server/audit";
+import { auditLog } from "../../../../server/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ async function createKey(formData) {
   const name = formData.get("name");
   const scopes = (formData.get("scopes") || "read:sessions").toString().split(",").map((s) => s.trim());
   const { raw } = await mintApiKey(org.id, name, scopes);
-  await writeAudit({ orgId: org.id, actorId: session.user.id, action: "apikey.created", meta: { name, scopes } });
+  await auditLog({ orgId: org.id, actorId: session.user.id, action: "apikey.created", payload: { name, scopes } });
   return { raw };
 }
 
@@ -28,7 +28,7 @@ async function revokeKey(formData) {
   if (guard) return;
   const id = formData.get("id");
   await db().apiKey.update({ where: { id }, data: { revokedAt: new Date() } });
-  await writeAudit({ orgId: org.id, actorId: session.user.id, action: "apikey.revoked", target: id });
+  await auditLog({ orgId: org.id, actorId: session.user.id, action: "apikey.revoked", target: id });
 }
 
 export default async function ApiKeys() {
