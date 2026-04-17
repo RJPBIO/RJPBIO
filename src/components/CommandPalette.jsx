@@ -27,7 +27,7 @@ function score(label, query) {
   return 1000 - idx - (l.length - q.length);
 }
 
-export default function CommandPalette({ open, onClose, commands = [], placeholder = "Buscar acción…" }) {
+export default function CommandPalette({ open, onClose, commands = [], placeholder = "Buscar acción…", onSelect }) {
   const reduced = useReducedMotion();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
@@ -81,6 +81,7 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
         e.preventDefault();
         const cmd = filtered[selected];
         if (cmd) {
+          onSelect?.(cmd);
           cmd.action?.();
           onClose?.();
         }
@@ -243,6 +244,7 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
                         data-cmd-index={idx}
                         onMouseEnter={() => setSelected(idx)}
                         onClick={() => {
+                          onSelect?.(cmd);
                           cmd.action?.();
                           onClose?.();
                         }}
