@@ -1,12 +1,38 @@
 /* API v1 — Sesiones
    GET /api/v1/sessions      lista paginada (scope: read)
-   POST /api/v1/sessions     ingesta server-side (scope: write) */
+   POST /api/v1/sessions     ingesta server-side (scope: write)
+   Anti-abuso: Idempotency-Key (replay guard) + rate sano 12 sesiones/día/usuario */
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/server/apikey";
 import { check, limits } from "@/server/ratelimit";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { dispatchWebhooks } from "@/server/webhooks";
+
+// Idempotency store (in-memory; Upstash si hay REDIS_URL)
+const idemMem = new Map();
+async function idemSeen(key) {
+  if (process.env.REDIS_URL) {
+    const { Redis } = await import("@upstash/redis");
+    const r = new Redis({ url: process.env.REDIS_URL, token: process.env.REDIS_TOKEN });
+    const prev = await r.get(`idem:${key}`);
+    if (prev) return prev;
+    return null;
+  }
+  const now = Date.now();
+  const entry = idemMem.get(key);
+  if (entry && entry.expires > now) return entry.body;
+  return null;
+}
+async function idemStore(key, body) {
+  if (process.env.REDIS_URL) {
+    const { Redis } = await import("@upstash/redis");
+    const r = new Redis({ url: process.env.REDIS_URL, token: process.env.REDIS_TOKEN });
+    await r.set(`idem:${key}`, body, { ex: 86400 });
+    return;
+  }
+  idemMem.set(key, { body, expires: Date.now() + 86400_000 });
+}
 
 async function authed(req, scope) {
   const ctx = await verifyApiKey(req, scope);
@@ -34,6 +60,25 @@ export async function GET(req) {
 export async function POST(req) {
   const a = await authed(req, "write"); if (a.error) return a.error;
   const body = await req.json();
+
+  // Idempotency: mismo key en 24h devuelve el mismo resultado sin crear duplicado.
+  const idemKey = req.headers.get("idempotency-key");
+  if (idemKey) {
+    const prev = await idemSeen(`${a.ctx.orgId}:${idemKey}`);
+    if (prev) return NextResponse.json(prev, { status: 200, headers: { ...a.headers, "Idempotent-Replayed": "true" } });
+  }
+
+  // Rate sano por usuario: máx 12 sesiones/24h. Pedagógico, no punitivo.
+  if (body.userId) {
+    const rl = await check(`sessions:user:${body.userId}`, { limit: 12, windowMs: 24 * 60 * 60_000 });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "too_many_sessions", message: "Descansa — el exceso rompe el propósito. Máx 12 sesiones/día." },
+        { status: 429, headers: { ...a.headers, "Retry-After": String(Math.ceil((rl.reset - Date.now()) / 1000)) } }
+      );
+    }
+  }
+
   const orm = await db();
   const s = await orm.neuralSession.create({
     data: {
@@ -51,5 +96,7 @@ export async function POST(req) {
   });
   await auditLog({ orgId: a.ctx.orgId, action: "api.session.create", target: s.id });
   dispatchWebhooks(a.ctx.orgId, "session.completed", s).catch(() => {});
-  return NextResponse.json({ data: s }, { status: 201, headers: a.headers });
+  const responseBody = { data: s };
+  if (idemKey) await idemStore(`${a.ctx.orgId}:${idemKey}`, responseBody);
+  return NextResponse.json(responseBody, { status: 201, headers: a.headers });
 }
