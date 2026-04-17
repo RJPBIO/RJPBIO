@@ -1,6 +1,6 @@
 import { auth } from "../../../../../../server/auth";
 import { db } from "../../../../../../server/db";
-import { writeAudit } from "../../../../../../server/audit";
+import { auditLog } from "../../../../../../server/audit";
 import { randomUUID } from "node:crypto";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,6 @@ export async function POST(_request, { params }) {
     create: { id: randomUUID(), userId: session.user.id, orgId: inv.orgId, role: inv.role },
   });
   await client.invitation.update({ where: { token }, data: { acceptedAt: new Date() } });
-  await writeAudit({ orgId: inv.orgId, actorId: session.user.id, action: "member.joined" });
+  await auditLog({ orgId: inv.orgId, actorId: session.user.id, action: "member.joined" });
   return Response.redirect(new URL("/", process.env.AUTH_URL || "http://localhost:3000"));
 }
