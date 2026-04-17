@@ -1,8 +1,88 @@
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; padding: 0; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+/* ═══════════════════════════════════════════════════════════════
+   BIO-IGNICIÓN — GLOBAL STYLES
+   ═══════════════════════════════════════════════════════════════
+   - Logical properties (padding-inline, margin-block) for RTL.
+   - Visible focus ring for WCAG 2.4.7 / 2.4.11.
+   - prefers-reduced-motion gate on ALL keyframe animations.
+   - Safe-area insets for notched devices.
+   - Window Controls Overlay for installed desktop PWA.
+   - Selection / scrollbar / tap-highlight normalization.
+   ═══════════════════════════════════════════════════════════════ */
 
-/* Window Controls Overlay — installed PWA on desktop */
+:root {
+  --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 0 0 5px rgba(5, 150, 105, 0.15);
+  --focus-ring-inverse: 0 0 0 3px rgba(16, 185, 129, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  padding-block-start: env(safe-area-inset-top);
+  padding-block-end: env(safe-area-inset-bottom);
+  padding-inline-start: env(safe-area-inset-left);
+  padding-inline-end: env(safe-area-inset-right);
+}
+
+/* ═══ RTL aware base — components should use logical props too ═══ */
+[dir="rtl"] {
+  direction: rtl;
+}
+[dir="rtl"] .bi-flip-on-rtl {
+  transform: scaleX(-1);
+}
+
+/* ═══ FOCUS — always visible when keyboard ═══ */
+:focus { outline: none; }
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 6px;
+  transition: box-shadow 0.15s ease;
+}
+@media (prefers-color-scheme: dark) {
+  :focus-visible { box-shadow: var(--focus-ring-inverse); }
+}
+
+button, [role="button"], a[href], input, select, textarea, [tabindex]:not([tabindex="-1"]) {
+  /* ensure interactive elements receive focus ring */
+}
+
+/* ═══ BUTTON RESET — preserve focus ═══ */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* ═══ Skip-link visible on focus ═══ */
+.bi-skip-link:focus,
+.bi-skip-link:focus-visible {
+  position: fixed !important;
+  inset-block-start: 8px !important;
+  inset-inline-start: 8px !important;
+  box-shadow: var(--focus-ring);
+  z-index: 10000;
+}
+
+/* ═══ WINDOW CONTROLS OVERLAY (installed PWA desktop) ═══ */
 @media (display-mode: window-controls-overlay) {
   :root {
     --titlebar-area-x: env(titlebar-area-x, 0);
@@ -11,20 +91,30 @@ body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inse
     --titlebar-area-height: env(titlebar-area-height, 33px);
   }
   .wco-titlebar {
-    position: fixed; top: 0; left: var(--titlebar-area-x);
-    width: var(--titlebar-area-width); height: var(--titlebar-area-height);
-    -webkit-app-region: drag; app-region: drag;
-    display: flex; align-items: center; gap: 8px; padding: 0 12px;
-    background: #0B0E14; color: #E2E8F0; font: 500 13px/1 system-ui;
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline-start: var(--titlebar-area-x);
+    inline-size: var(--titlebar-area-width);
+    block-size: var(--titlebar-area-height);
+    -webkit-app-region: drag;
+    app-region: drag;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-inline: 12px;
+    background: #0B0E14;
+    color: #E2E8F0;
+    font: 500 13px/1 system-ui;
     z-index: 9999;
   }
-  .wco-titlebar .no-drag { -webkit-app-region: no-drag; app-region: no-drag; }
-  body { padding-top: var(--titlebar-area-height); }
+  .wco-titlebar .no-drag {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+  body { padding-block-start: var(--titlebar-area-height); }
 }
-button { font-family: inherit; }
-input, textarea { font-family: inherit; }
 
-/* ═══ CORE ANIMATIONS ═══ */
+/* ═══ CORE KEYFRAMES ═══ */
 @keyframes fi { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes po { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 @keyframes su { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -38,8 +128,6 @@ input, textarea { font-family: inherit; }
 @keyframes cdPulse { 0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; } }
 @keyframes wf { from { transform: translateX(-400px); } to { transform: translateX(0); } }
 @keyframes particle { 0% { opacity: 0; transform: translate(0, 0) scale(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1); } }
-
-/* Phase visual animations */
 @keyframes heartBeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.08); } 28% { transform: scale(1); } 42% { transform: scale(1.05); } 70% { transform: scale(1); } }
 @keyframes ecgDraw { 0% { opacity: 0.15; } 50% { opacity: 0.45; } 100% { opacity: 0.15; } }
 @keyframes brainPulse { 0%, 100% { opacity: 0.04; transform: scale(1); } 50% { opacity: 0.15; transform: scale(1.3); } }
@@ -49,144 +137,43 @@ input, textarea { font-family: inherit; }
 @keyframes pausePulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 @keyframes phaseSlide { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes compFlash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
-
-/* ═══ PWA SAFE AREAS ═══ */
-@supports (padding: env(safe-area-inset-top)) {
-  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-}
-
-/* ═══ SCROLLBAR ═══ */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 10px; }
-
-/* ═══ REDUCED MOTION ═══ */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
-}
-
-/* ═══ NEURAL ORB ENHANCEMENTS ═══ */
 @keyframes orbFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes neuralGlow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.15); } }
 @keyframes ringExpand { 0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.4; } 100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; } }
-
-/* ═══ COACH & INSIGHT CARDS ═══ */
 @keyframes insightSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes momentumPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+@keyframes calibrationPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); } 50% { box-shadow: 0 0 0 12px rgba(99,102,241,0); } }
+@keyframes reactionFlash { 0% { background: rgba(5,150,105,0.6); transform: scale(1.1); } 100% { background: transparent; transform: scale(1); } }
+@keyframes breathCircle { 0%, 100% { transform: scale(0.6); opacity: 0.4; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes scoreReveal { 0% { opacity: 0; transform: scale(0.5) translateY(20px); } 60% { transform: scale(1.08) translateY(-4px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes profileGlow { 0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.1); } 50% { box-shadow: 0 0 40px rgba(99,102,241,0.25); } }
+@keyframes stepProgress { from { inline-size: 0%; } to { inline-size: 100%; } }
+@keyframes phaseEnter { 0% { opacity: 0; transform: scale(0.92) translateY(8px); filter: blur(4px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
+@keyframes phaseExit { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05); filter: blur(2px); } }
+@keyframes breatheIn { 0% { transform: scale(0.7); opacity: 0.5; filter: brightness(0.9); } 100% { transform: scale(1.15); opacity: 1; filter: brightness(1.1); } }
+@keyframes breatheOut { 0% { transform: scale(1.15); opacity: 1; filter: brightness(1.1); } 100% { transform: scale(0.7); opacity: 0.5; filter: brightness(0.9); } }
+@keyframes holdBreath { 0%, 100% { transform: scale(1.15); opacity: 0.9; } 50% { transform: scale(1.12); opacity: 0.95; } }
+@keyframes bodyPulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.03); opacity: 0.85; } }
+@keyframes shieldPulse { 0%, 100% { border-color: rgba(220,38,38,0.15); } 50% { border-color: rgba(220,38,38,0.4); } }
+@keyframes urgencyGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.2); } 50% { box-shadow: 0 0 16px 4px rgba(220,38,38,0.15); } }
+@keyframes cardEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes metricCount { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes radarSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes correlationFade { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes neuralShift { 0% { filter: hue-rotate(0deg) brightness(1); } 50% { filter: hue-rotate(5deg) brightness(1.08); } 100% { filter: hue-rotate(0deg) brightness(1); } }
+@keyframes stateTransition { 0% { opacity: 0.7; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.01); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes vcoreEarn { 0% { opacity: 0; transform: translateY(10px) scale(0.5); } 50% { opacity: 1; transform: translateY(-5px) scale(1.2); } 100% { opacity: 0; transform: translateY(-20px) scale(0.8); } }
+@keyframes achievementUnlock { 0% { opacity: 0; transform: scale(0.3) rotate(-10deg); } 60% { transform: scale(1.1) rotate(2deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
+@keyframes levelUp { 0% { opacity: 0; transform: scale(0.5); filter: brightness(2); } 50% { transform: scale(1.15); filter: brightness(1.5); } 100% { opacity: 1; transform: scale(1); filter: brightness(1); } }
 
-/* ═══ NEURAL CALIBRATION ═══ */
-@keyframes calibrationPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); }
-  50% { box-shadow: 0 0 0 12px rgba(99,102,241,0); }
-}
-@keyframes reactionFlash {
-  0% { background: rgba(5,150,105,0.6); transform: scale(1.1); }
-  100% { background: transparent; transform: scale(1); }
-}
-@keyframes breathCircle {
-  0%, 100% { transform: scale(0.6); opacity: 0.4; }
-  50% { transform: scale(1); opacity: 1; }
-}
-@keyframes scoreReveal {
-  0% { opacity: 0; transform: scale(0.5) translateY(20px); }
-  60% { transform: scale(1.08) translateY(-4px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes profileGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.1); }
-  50% { box-shadow: 0 0 40px rgba(99,102,241,0.25); }
-}
-@keyframes stepProgress {
-  from { width: 0%; }
-  to { width: 100%; }
-}
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { inline-size: 3px; block-size: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 10px; }
 
-/* ═══ SESSION PHASE TRANSITIONS ═══ */
-@keyframes phaseEnter {
-  0% { opacity: 0; transform: scale(0.92) translateY(8px); filter: blur(4px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
-}
-@keyframes phaseExit {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.05); filter: blur(2px); }
-}
-@keyframes breatheIn {
-  0% { transform: scale(0.7); opacity: 0.5; filter: brightness(0.9); }
-  100% { transform: scale(1.15); opacity: 1; filter: brightness(1.1); }
-}
-@keyframes breatheOut {
-  0% { transform: scale(1.15); opacity: 1; filter: brightness(1.1); }
-  100% { transform: scale(0.7); opacity: 0.5; filter: brightness(0.9); }
-}
-@keyframes holdBreath {
-  0%, 100% { transform: scale(1.15); opacity: 0.9; }
-  50% { transform: scale(1.12); opacity: 0.95; }
-}
-@keyframes bodyPulse {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.03); opacity: 0.85; }
-}
-
-/* ═══ STREAK SHIELD ═══ */
-@keyframes shieldPulse {
-  0%, 100% { border-color: rgba(220,38,38,0.15); }
-  50% { border-color: rgba(220,38,38,0.4); }
-}
-@keyframes urgencyGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.2); }
-  50% { box-shadow: 0 0 16px 4px rgba(220,38,38,0.15); }
-}
-
-/* ═══ DASHBOARD CARDS ═══ */
-@keyframes cardEnter {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes metricCount {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes radarSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes barGrow {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-@keyframes correlationFade {
-  from { opacity: 0; transform: translateX(-6px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-/* ═══ NEURAL STATE TRANSITIONS ═══ */
-@keyframes neuralShift {
-  0% { filter: hue-rotate(0deg) brightness(1); }
-  50% { filter: hue-rotate(5deg) brightness(1.08); }
-  100% { filter: hue-rotate(0deg) brightness(1); }
-}
-@keyframes stateTransition {
-  0% { opacity: 0.7; transform: scale(0.98); }
-  50% { opacity: 1; transform: scale(1.01); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-/* ═══ COMPLETION & REWARDS ═══ */
-@keyframes vcoreEarn {
-  0% { opacity: 0; transform: translateY(10px) scale(0.5); }
-  50% { opacity: 1; transform: translateY(-5px) scale(1.2); }
-  100% { opacity: 0; transform: translateY(-20px) scale(0.8); }
-}
-@keyframes achievementUnlock {
-  0% { opacity: 0; transform: scale(0.3) rotate(-10deg); }
-  60% { transform: scale(1.1) rotate(2deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
-}
-@keyframes levelUp {
-  0% { opacity: 0; transform: scale(0.5); filter: brightness(2); }
-  50% { transform: scale(1.15); filter: brightness(1.5); }
-  100% { opacity: 1; transform: scale(1); filter: brightness(1); }
-}
+/* ═══ SELECTION ═══ */
+::selection { background: rgba(5, 150, 105, 0.15); }
 
 /* ═══ UTILITY CLASSES ═══ */
 .neural-fade-in { animation: fi 0.3s ease-out; }
@@ -194,6 +181,25 @@ input, textarea { font-family: inherit; }
 .neural-slide-up { animation: su 0.35s cubic-bezier(0.16,1,0.3,1); }
 .phase-enter { animation: phaseEnter 0.5s cubic-bezier(0.16,1,0.3,1); }
 .card-enter { animation: cardEnter 0.4s ease-out both; }
+.bi-sr-only { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
-/* ═══ SELECTION ═══ */
-::selection { background: rgba(5, 150, 105, 0.15); }
+/* ═══ REDUCED MOTION — honored everywhere ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ═══ HIGH CONTRAST ═══ */
+@media (prefers-contrast: more) {
+  :focus-visible { box-shadow: 0 0 0 3px #000, 0 0 0 6px #fff !important; }
+}
+
+/* ═══ FORCED COLORS (Windows High Contrast) ═══ */
+@media (forced-colors: active) {
+  button, [role="button"] { border: 1px solid ButtonBorder; }
+  :focus-visible { outline: 2px solid Highlight !important; outline-offset: 2px !important; }
+}
