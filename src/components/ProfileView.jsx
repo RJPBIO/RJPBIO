@@ -7,14 +7,18 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
-import { MOODS, DS } from "../lib/constants";
+import { BioGlyph } from "./BioIgnicionMark";
+import AchievementBadge from "./AchievementBadge";
+import { MOODS, DS, AM } from "../lib/constants";
 import {
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, suggestOptimalTime, analyzeStreakChain,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
+
+const ACHIEVEMENT_IDS = Object.keys(AM);
 
 export default function ProfileView({
   st, setSt, isDark, ac,
@@ -61,29 +65,29 @@ export default function ProfileView({
           transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 200 }}
         >
           <div
-            aria-label={`Nivel ${lv.n}`}
+            aria-label={`Identidad bioneural, nivel ${lv.n}`}
             style={{
-              inlineSize: 84,
-              blockSize: 84,
+              inlineSize: 96,
+              blockSize: 96,
               borderRadius: "50%",
-              margin: "0 auto 12px",
-              background: `linear-gradient(135deg,${ac},#6366F1)`,
+              margin: "0 auto 14px",
+              background: `radial-gradient(circle at 35% 30%, ${withAlpha(ac, 15)}, ${withAlpha(bioSignal.neuralViolet, 8)} 60%, transparent 80%)`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: `0 8px 30px ${withAlpha(ac, 25)},0 0 0 3px ${cd},0 0 0 5px ${withAlpha(ac, 20)}`,
+              boxShadow: `0 10px 34px ${withAlpha(ac, 25)}, 0 0 0 1px ${withAlpha(ac, 15)} inset`,
               position: "relative",
             }}
           >
-            <Icon name="user" size={32} color="#fff" aria-hidden="true" />
+            <BioGlyph size={58} color={bioSignal.phosphorCyan} spark={bioSignal.ignition} animated={!reduced} />
             <div
               aria-hidden="true"
               style={{
                 position: "absolute",
-                insetBlockEnd: -3,
-                insetInlineEnd: -3,
-                inlineSize: 26,
-                blockSize: 26,
+                insetBlockEnd: -2,
+                insetInlineEnd: -2,
+                inlineSize: 28,
+                blockSize: 28,
                 borderRadius: radius.full,
                 background: `linear-gradient(135deg,${lv.c},${lv.c}CC)`,
                 display: "flex",
@@ -213,6 +217,57 @@ export default function ProfileView({
           </div>
         </div>
       </article>
+
+      {(() => {
+        const unlocked = st.achievements || [];
+        const unlockedCount = ACHIEVEMENT_IDS.filter((id) => unlocked.includes(id)).length;
+        return (
+          <article
+            aria-label={`Logros: ${unlockedCount} de ${ACHIEVEMENT_IDS.length}`}
+            style={{
+              background: cd,
+              borderRadius: 16,
+              padding: 14,
+              marginBlockEnd: 10,
+              border: `1px solid ${bd}`,
+            }}
+          >
+            <header
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: space[1],
+                marginBlockEnd: space[3],
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
+                <Icon name="trophy" size={12} color={t3} aria-hidden="true" />
+                <h3 style={ty.label(t3)}>Insignias</h3>
+              </div>
+              <span style={{ ...ty.caption(t3), fontFamily: font.mono, letterSpacing: 1 }}>
+                {unlockedCount}/{ACHIEVEMENT_IDS.length}
+              </span>
+            </header>
+            <div
+              role="list"
+              aria-label="Cuadrícula de insignias"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill,minmax(84px,1fr))",
+                gap: space[2],
+                justifyItems: "center",
+              }}
+            >
+              {ACHIEVEMENT_IDS.map((id) => (
+                <div key={id} role="listitem">
+                  <AchievementBadge id={id} unlocked={unlocked.includes(id)} size={64} />
+                </div>
+              ))}
+            </div>
+          </article>
+        );
+      })()}
 
       {(() => {
         const fp = calcNeuralFingerprint(st);
