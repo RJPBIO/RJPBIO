@@ -5,12 +5,13 @@
    Combina Enfoque + Calma + Energía en un solo score 0–100 y lo
    representa con tres aros concéntricos superpuestos.
    - role="img" con aria-label que lee score + interpretación.
+   - Hover/tap en un anillo o en la leyenda lateral: el centro
+     revela el score específico de ese canal, el anillo engrosa.
    - Reduced-motion: sin spring, sin pulso del aura.
-   - Tokens + resolveTheme, nada hardcoded.
    ═══════════════════════════════════════════════════════════════ */
 
-import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useMemo, useState } from "react";
 import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
@@ -31,6 +32,7 @@ export default function ReadinessRing({
 }) {
   const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const [activeRing, setActiveRing] = useState(null);
 
   const overall = Math.round((focusScore + calmScore + energyScore) / 3);
   const meta = interpret(overall);
@@ -41,9 +43,16 @@ export default function ReadinessRing({
     { score: energyScore,color: "#6366F1", label: "Energía", r: size * 0.26 },
   ], [focusScore, calmScore, energyScore, size]);
 
+  const active = activeRing != null ? rings[activeRing] : null;
+
   const ariaLabel =
     `Readiness neural: ${overall}%, estado ${meta.label}. ` +
     `Enfoque ${focusScore}%, calma ${calmScore}%, energía ${energyScore}%. ${meta.tone}`;
+
+  const centerColor = active ? active.color : meta.color;
+  const centerScore = active ? active.score : overall;
+  const centerKicker = active ? active.label.toUpperCase() : "READINESS";
+  const centerSub = active ? `${active.label}` : meta.label;
 
   return (
     <article
@@ -70,9 +79,10 @@ export default function ReadinessRing({
           inlineSize: "50%",
           blockSize: "50%",
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${meta.color}14, transparent 70%)`,
+          background: `radial-gradient(circle, ${centerColor}14, transparent 70%)`,
           filter: "blur(30px)",
           pointerEvents: "none",
+          transition: "background 0.35s ease",
         }}
       />
 
@@ -87,8 +97,16 @@ export default function ReadinessRing({
           {rings.map((ring, i) => {
             const circ = 2 * Math.PI * ring.r;
             const pct = Math.max(0, Math.min(100, ring.score)) / 100;
+            const isActive = activeRing === i;
+            const isDim = activeRing != null && activeRing !== i;
             return (
-              <g key={i}>
+              <g
+                key={i}
+                onPointerEnter={() => setActiveRing(i)}
+                onPointerLeave={() => setActiveRing(null)}
+                onPointerDown={() => setActiveRing(i)}
+                style={{ cursor: "pointer" }}
+              >
                 <circle
                   cx={size / 2}
                   cy={size / 2}
@@ -103,12 +121,23 @@ export default function ReadinessRing({
                   r={ring.r}
                   fill="none"
                   stroke={ring.color}
-                  strokeWidth={7}
+                  strokeWidth={isActive ? 10 : 7}
                   strokeLinecap="round"
                   strokeDasharray={circ}
+                  opacity={isDim ? 0.35 : 1}
                   initial={{ strokeDashoffset: circ }}
                   animate={{ strokeDashoffset: circ * (1 - pct) }}
                   transition={{ duration: reduced ? 0 : 1 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ transition: "stroke-width 0.2s ease, opacity 0.2s ease" }}
+                />
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={ring.r}
+                  fill="transparent"
+                  stroke="transparent"
+                  strokeWidth={14}
+                  pointerEvents="stroke"
                 />
               </g>
             );
@@ -125,33 +154,67 @@ export default function ReadinessRing({
             pointerEvents: "none",
           }}
         >
-          <div style={{ ...ty.label(t3), fontSize: font.size.xs }}>READINESS</div>
-          <motion.div
-            initial={reduced ? { opacity: 1 } : { opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: reduced ? 0 : 0.6, delay: reduced ? 0 : 0.4 }}
-            style={{ ...ty.metric(meta.color, font.size["4xl"]), lineHeight: 1 }}
-          >
-            {overall}
-          </motion.div>
-          <div style={{ ...ty.caption(meta.color), fontWeight: font.weight.bold, marginBlockStart: 2 }}>
-            {meta.label}
+          <div style={{ ...ty.label(t3), fontSize: font.size.xs }}>{centerKicker}</div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={active ? `ring-${activeRing}` : "overall"}
+              initial={reduced ? { opacity: 1 } : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+              transition={{ duration: reduced ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
+              style={{ ...ty.metric(centerColor, font.size["4xl"]), lineHeight: 1 }}
+            >
+              {centerScore}
+            </motion.div>
+          </AnimatePresence>
+          <div style={{ ...ty.caption(centerColor), fontWeight: font.weight.bold, marginBlockStart: 2 }}>
+            {centerSub}
           </div>
         </div>
       </div>
 
       <div style={{ flex: 1, minInlineSize: 0 }}>
-        <div style={{ ...ty.body(t2), marginBlockEnd: space[3] }}>{meta.tone}</div>
+        <div style={{ ...ty.body(t2), marginBlockEnd: space[3] }}>{active ? `Canal ${active.label.toLowerCase()}.` : meta.tone}</div>
         <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: space[1.5] }}>
-          {rings.map((r) => (
-            <div key={r.label} style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-              <span aria-hidden="true" style={{
-                inlineSize: 10, blockSize: 10, borderRadius: "50%", background: r.color,
-              }} />
-              <dt style={{ ...ty.caption(t3), fontWeight: font.weight.bold, inlineSize: 64 }}>{r.label}</dt>
-              <dd style={{ ...ty.metric(t1, font.size.md), margin: 0 }}>{r.score}%</dd>
-            </div>
-          ))}
+          {rings.map((r, i) => {
+            const isActive = activeRing === i;
+            return (
+              <div
+                key={r.label}
+                onPointerEnter={() => setActiveRing(i)}
+                onPointerLeave={() => setActiveRing(null)}
+                onPointerDown={() => setActiveRing(i)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: space[2],
+                  paddingBlock: 2,
+                  paddingInline: 4,
+                  marginInline: -4,
+                  borderRadius: radius.sm,
+                  background: isActive ? withAlpha(r.color, 8) : "transparent",
+                  cursor: "pointer",
+                  transition: "background 0.18s ease",
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    inlineSize: 10,
+                    blockSize: 10,
+                    borderRadius: "50%",
+                    background: r.color,
+                    boxShadow: isActive ? `0 0 0 3px ${withAlpha(r.color, 20)}` : "none",
+                    transition: "box-shadow 0.18s ease",
+                  }}
+                />
+                <dt style={{ ...ty.caption(isActive ? r.color : t3), fontWeight: font.weight.bold, inlineSize: 64, transition: "color 0.18s ease" }}>
+                  {r.label}
+                </dt>
+                <dd style={{ ...ty.metric(t1, font.size.md), margin: 0 }}>{r.score}%</dd>
+              </div>
+            );
+          })}
         </dl>
       </div>
     </article>
