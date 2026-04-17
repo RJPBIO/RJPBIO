@@ -208,11 +208,13 @@ model StationTap {
   userId    String?      // null = identidad anónima local
   anonId    String?      // hash estable de device keypair
   slot      StationSlot
-  status    String       // "ok" | "rejected:expired" | "rejected:slot" | "rejected:sig"
+  status    String       // "ok" | "rejected:expired" | "rejected:slot" | "rejected:sig" | "rejected:replay"
+  nonce     String?      // nonce del URL firmado — UNIQUE(stationId, nonce) para replay guard
   ip        String?
   ua        String?
   ts        DateTime     @default(now())
   station   Station      @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  @@unique([stationId, nonce])
   @@index([orgId, ts])
   @@index([stationId, ts])
   @@index([orgId, userId, slot, ts])
