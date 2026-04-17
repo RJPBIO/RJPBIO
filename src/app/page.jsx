@@ -110,15 +110,20 @@ export default function BioIgnicion(){
   // ═══ VOICE ═══
   useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
 
-  // ═══ LOAD STATE (via Zustand) ═══
-  useEffect(()=>{setMt(true);store.init();const l=useStore.getState();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)store.update(l);
+  // ═══ LOAD STATE (via Zustand) — await init BEFORE reading/writing ═══
+  useEffect(()=>{let cancelled=false;(async()=>{
+    try{await store.init();}catch(e){}
+    if(cancelled)return;
+    const l=useStore.getState();
+    if(!l._loaded){setMt(true);return;}
+    setSt_(l);
+    setMt(true);
     if(l.totalSessions===0){setOnboard(true);}
     else if(!l.onboardingTourComplete){setShowTour(true);}
-    // Auto-select best protocol via adaptive engine
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
-  },[]);
+  })();return()=>{cancelled=true;};},[]);
 
-  useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){pa();}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
+  useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
   const[isDark,setIsDark]=useState(false);
   useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
@@ -139,7 +144,7 @@ export default function BioIgnicion(){
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase(),circadian,voiceOn);hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);H("tap");speakNow("Tres",circadian,voiceOn);cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);H("tap");return p-1;});},1000);}
-  function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[]});startCountdown();}
+  function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
   const pauseTRef=useRef(null);
   function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
   function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
@@ -151,9 +156,15 @@ export default function BioIgnicion(){
   const completeTour=useCallback(()=>{setShowTour(false);setSt(s=>({...s,onboardingTourComplete:true}));},[setSt]);
 
   function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
-    const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData,nfcCtx,circadian});
+    const expectedSec=sessionData.expectedSec||Math.round(pr.d*durMult);
+    const actualSec=sessionData.startedAt?Math.max(0,(Date.now()-sessionData.startedAt)/1000):expectedSec;
+    const hiddenSec=(sessionData.hiddenMs||0)/1000;
+    const activeSec=Math.max(0,actualSec-hiddenSec);
+    const completeness=expectedSec>0?Math.min(1,activeSec/expectedSec):1;
+    const sessionDataFull={...sessionData,actualSec,hiddenSec,completeness};
+    const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData:sessionDataFull,nfcCtx,circadian});
     setPostVC(result.eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
-    releaseWakeLock();speakNow(result.bioQ.quality==="alta"?"Sesión excelente":"Sesión completada",circadian,voiceOn);
+    releaseWakeLock();speakNow(result.bioQ.quality==="alta"?"Sesión excelente":result.bioQ.quality==="ligera"?"Sesión ligera registrada":"Sesión completada",circadian,voiceOn);
     setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,...result.newState});
@@ -197,7 +208,7 @@ export default function BioIgnicion(){
   </div>);
 
   return(
-  <div style={{maxWidth:layout.maxWidth,margin:"0 auto",minHeight:"100vh",background:bg,position:"relative",overflow:"hidden",fontFamily:font.family,transition:"background .8s"}}>
+  <div style={{maxWidth:layout.maxWidth,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflowX:"hidden",fontFamily:font.family,transition:"background .8s",paddingBlockEnd:"env(safe-area-inset-bottom)"}}>
 
   {/* Background aura */}
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
@@ -292,7 +303,7 @@ export default function BioIgnicion(){
 
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
     {/* Streak Shield (replaces simple streak warning) */}
-    {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}}/>}
+    {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}} onFreezeStreak={()=>{const r=store.freezeStreak();if(r.ok){setSt_(useStore.getState());announce(`Racha congelada honestamente. Te quedan ${r.remaining} pausas este mes.`,"polite");}else{announce(r.reason==="already_today"?"Ya usaste tu pausa hoy.":"Agotaste tus pausas del mes.","polite");}}}/>}
 
     {/* Cognitive Load indicator (NEW) */}
     {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[2.5]}px ${space[4]}px`,marginBottom:space[3],background:surface,borderRadius:radius.md}}>
