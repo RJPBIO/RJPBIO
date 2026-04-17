@@ -1,176 +1,189 @@
 /* ═══════════════════════════════════════════════════════════════
    BIO-IGNICIÓN — THEME RESOLVER
    ═══════════════════════════════════════════════════════════════
-   Resolves design tokens into concrete theme values.
-   Replaces all duplicated isDark ternaries across components.
+   Clinical precision instrument.
+   Typography presets tuned for NEJM-level sobriety.
+   Metrics: weight 300 + wide tracking = precision, not weight.
    ═══════════════════════════════════════════════════════════════ */
 
-import { dark, light, brand, semantic, alpha, font, space, radius, shadow, z, layout, timer, duration } from "./tokens";
+import { dark, light, brand, semantic, alpha, font, space, radius, shadow, z, layout, timer, duration, easing } from "./tokens";
 
-/**
- * Resolve theme colors for current mode.
- * Call once per component, destructure what you need.
- *
- * @param {boolean} isDark
- * @returns {object} Resolved theme object
- */
 export function resolveTheme(isDark) {
   const palette = isDark ? dark : light;
-
   return {
-    // ─── Surface colors ───────────────────────────────
     bg: palette.bg,
     card: palette.card,
     surface: palette.surface,
     border: palette.border,
-
-    // ─── Text colors ──────────────────────────────────
     t1: palette.text.primary,
     t2: palette.text.secondary,
     t3: palette.text.muted,
-
-    // ─── Overlays ─────────────────────────────────────
     overlay: palette.overlay,
     glass: palette.glass,
-    scrim: isDark ? "rgba(15,23,42,.3)" : "rgba(15,23,42,.15)",
-
-    // ─── Brand (fixed, never changes) ─────────────────
+    scrim: isDark ? "rgba(12,15,20,.72)" : "rgba(10,14,20,.48)",
     brand: brand.primary,
-
-    // ─── isDark passthrough for edge cases ─────────────
     isDark,
   };
 }
 
-// Re-export tokens for direct access alongside theme
-export { brand, semantic, alpha, font, space, radius, shadow, z, layout, timer, duration };
+export { brand, semantic, alpha, font, space, radius, shadow, z, layout, timer, duration, easing };
 
-/**
- * Apply alpha to any hex color.
- * Usage: withAlpha("#059669", 20)  → "#05966933"
- *
- * @param {string} hex - Base color (6-char hex)
- * @param {number} pct - Alpha percentage (key from alpha scale)
- * @returns {string} Color with alpha suffix
- */
 export function withAlpha(hex, pct) {
   return hex + (alpha[pct] || alpha[10]);
 }
 
-/**
- * Generate a subtle gradient for cards.
- * @param {string} base - Card background
- * @param {string} accent - Accent color
- * @param {boolean} isDark
- */
-export function cardGradient(base, accent, isDark) {
-  return `linear-gradient(145deg, ${base}, ${accent}${isDark ? "08" : "04"})`;
+// Hairline border — 0.5px is the clinical specification
+export function hairline(isDark) {
+  return isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(10,14,20,0.08)";
 }
 
 // ─── Typography Presets ──────────────────────────────────
-// Recurring patterns formalized as spreadable style objects.
-// Usage: <div style={{ ...ty.label(t3), marginBottom: 8 }}>
+// Clinical instrument specification.
+// Two weights per screen maximum.
 
 export const ty = {
   /**
-   * UPPERCASE LABEL — section headers, badge text, category names.
-   * The most overused pattern in the app. Now consistent everywhere.
-   * Before: fontSize:10, fontWeight:800, letterSpacing:2-3, textTransform:"uppercase"
+   * UPPERCASE LABEL — section headers, metric names, categories.
+   * 10–11px · 600 · tracking 0.12em · UPPERCASE.
+   * The ONLY uppercase usage in the system.
    */
   label: (color) => ({
     fontSize: font.size.sm,
-    fontWeight: font.weight.bold,
+    fontWeight: font.weight.semibold,
     letterSpacing: font.tracking.caps,
     color,
     textTransform: "uppercase",
   }),
 
   /**
-   * LARGE METRIC — hero numbers, scores, percentages.
-   * Before: fontSize:18-34, fontWeight:800, letterSpacing:"-1px"/"-2px"
+   * LARGE METRIC — the soul of the system.
+   * Weight 300 + wide tracking. Lightness communicates precision.
+   * Minimum 48px for the primary metric per screen.
    */
-  metric: (color, size = font.size["2xl"]) => ({
+  metric: (color, size = font.size["3xl"]) => ({
     fontSize: size,
-    fontWeight: font.weight.black,
+    fontWeight: font.weight.light,
     color,
     fontFamily: font.family,
+    letterSpacing: "-0.01em",
+    lineHeight: font.leading.none,
+    fontVariantNumeric: "tabular-nums",
+  }),
+
+  /**
+   * METRIC SMALL — secondary data points.
+   * Still light weight — consistency of the instrument.
+   */
+  metricSm: (color, size = font.size.xl) => ({
+    fontSize: size,
+    fontWeight: font.weight.light,
+    color,
+    letterSpacing: "-0.01em",
+    lineHeight: font.leading.none,
+    fontVariantNumeric: "tabular-nums",
+  }),
+
+  /**
+   * TITLE — card titles, protocol names, action labels.
+   * Medium weight — readable without warmth.
+   */
+  title: (color) => ({
+    fontSize: font.size.md,
+    fontWeight: font.weight.medium,
+    color,
     letterSpacing: font.tracking.tight,
   }),
 
   /**
-   * CARD TITLE — protocol names, section titles, action labels.
-   * Before: fontSize:11-13, fontWeight:700
-   */
-  title: (color) => ({
-    fontSize: font.size.md,
-    fontWeight: font.weight.bold,
-    color,
-  }),
-
-  /**
-   * BODY — descriptions, instructions, phase text.
-   * Before: fontSize:11-12, fontWeight:400-500, lineHeight:1.5-1.7
+   * BODY — descriptions, instructions that aren't session phase text.
+   * 15px / 400 / leading 1.6 — NEJM-grade body.
    */
   body: (color) => ({
-    fontSize: font.size.base,
+    fontSize: font.size.md,
     fontWeight: font.weight.normal,
     color,
     lineHeight: font.leading.relaxed,
   }),
 
   /**
-   * CAPTION — timestamps, secondary info, small badges.
-   * Before: fontSize:9-10, fontWeight:600, color:t3
+   * INSTRUCTION — session phase text.
+   * 20–24px · weight 300 · wider tracking · centered.
+   * Induces calm by form before content.
+   */
+  instruction: (color) => ({
+    fontSize: font.size.xl,
+    fontWeight: font.weight.light,
+    color,
+    letterSpacing: font.tracking.wide,
+    lineHeight: font.leading.snug,
+    textAlign: "center",
+  }),
+
+  /**
+   * CAPTION — timestamps, metadata, secondary info.
    */
   caption: (color) => ({
     fontSize: font.size.sm,
-    fontWeight: font.weight.semibold,
+    fontWeight: font.weight.normal,
     color,
     lineHeight: font.leading.snug,
   }),
 
   /**
-   * HEADING — sheet titles, modal headers.
-   * Before: fontSize:15-18, fontWeight:800
+   * HEADING — screen and sheet titles.
+   * Light weight. Precision over weight.
    */
   heading: (color) => ({
     fontSize: font.size.xl,
-    fontWeight: font.weight.black,
+    fontWeight: font.weight.light,
     color,
+    letterSpacing: font.tracking.tight,
+    lineHeight: font.leading.tight,
   }),
 
   /**
-   * HERO HEADING — page titles, big celebration text.
-   * Before: fontSize:18-20, fontWeight:800
+   * HERO HEADING — screen hero titles.
    */
   heroHeading: (color) => ({
     fontSize: font.size["2xl"],
-    fontWeight: font.weight.black,
+    fontWeight: font.weight.light,
     color,
     letterSpacing: font.tracking.tight,
+    lineHeight: font.leading.tight,
   }),
 
   /**
-   * BADGE — small inline tags (último, IA recomienda).
-   * Before: fontSize:10, fontWeight:700, padding:"1px 5px"
-   */
-  badge: (color, bg) => ({
-    fontSize: font.size.sm,
-    fontWeight: font.weight.bold,
-    color,
-    background: bg,
-    padding: "1px 6px",
-    borderRadius: radius.sm / 2,
-  }),
-
-  /**
-   * BUTTON — CTA labels, action text.
-   * Before: fontSize:10-11, fontWeight:800, letterSpacing:2, textTransform:"uppercase"
+   * BUTTON — CTA labels.
+   * 13px · 600 · tracking 0.12em · UPPERCASE.
    */
   button: {
     fontSize: font.size.base,
-    fontWeight: font.weight.black,
-    letterSpacing: font.tracking.widest,
+    fontWeight: font.weight.semibold,
+    letterSpacing: font.tracking.caps,
     textTransform: "uppercase",
   },
+
+  /**
+   * BUTTON SM — secondary buttons and links.
+   */
+  buttonSm: {
+    fontSize: font.size.sm,
+    fontWeight: font.weight.semibold,
+    letterSpacing: font.tracking.wider,
+    textTransform: "uppercase",
+  },
+
+  /**
+   * BADGE — small inline tags.
+   */
+  badge: (color, bg) => ({
+    fontSize: font.size.xs,
+    fontWeight: font.weight.semibold,
+    letterSpacing: font.tracking.wide,
+    color,
+    background: bg,
+    padding: "2px 6px",
+    borderRadius: radius.sm,
+    textTransform: "uppercase",
+  }),
 };
