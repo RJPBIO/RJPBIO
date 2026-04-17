@@ -154,6 +154,9 @@ export async function clearAll() {
   if (!isBrowser()) return;
   try { if (hasIDB()) await idbDelete(STORE_STATE, STATE_KEY); } catch {}
   try { localStorage.removeItem("bio-g2"); } catch {}
+  // El sync-token está ligado al usuario previo: si se queda, el próximo
+  // login puede mergear estado remoto ajeno. Lo eliminamos siempre.
+  try { localStorage.removeItem("bio-sync-token"); } catch {}
 }
 
 // ─── Outbox (offline queue para sync) ───────────────────
