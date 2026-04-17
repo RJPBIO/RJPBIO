@@ -36,12 +36,21 @@ async function post(path, body) {
   return r.json().catch(() => ({}));
 }
 
-export async function flushOutbox() {
+export async function flushOutbox({ currentUserId = null } = {}) {
   if (typeof navigator !== "undefined" && navigator.onLine === false) return { skipped: true };
   const entries = await outboxAll();
-  if (!entries.length) return { sent: 0 };
-  let sent = 0;
+  if (!entries.length) return { sent: 0, dropped: 0 };
+  let sent = 0, dropped = 0;
   for (const entry of entries) {
+    // Binding de identidad: si la entrada pertenece a otro usuario
+    // (se quedó en el outbox de un login anterior en este navegador),
+    // la descartamos sin enviarla — así no filtramos datos cruzados.
+    const entryUid = entry.userId ?? null;
+    if (entryUid !== null && currentUserId !== null && entryUid !== currentUserId) {
+      await outboxRemove(entry.id).catch(() => {});
+      dropped += 1;
+      continue;
+    }
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       try {
         if (ENDPOINT) await post("/events", entry);
@@ -56,16 +65,23 @@ export async function flushOutbox() {
       }
     }
   }
-  return { sent };
+  return { sent, dropped };
 }
 
-export async function pullRemote() {
+export async function pullRemote({ currentUserId = null } = {}) {
   if (!ENDPOINT) return null;
   try {
-    const r = await post("/pull", { since: 0 });
+    const r = await post("/pull", { since: 0, userId: currentUserId });
     if (r?.state) {
+      // Si el servidor devuelve estado de otro usuario (token stale), ignoramos.
+      const remoteUid = r.state._userId ?? null;
+      if (remoteUid !== null && currentUserId !== null && remoteUid !== currentUserId) {
+        logger.warn("sync.pull.mismatch", { expected: currentUserId, got: remoteUid });
+        return null;
+      }
       const local = await loadState();
       const merged = mergeStates(local, r.state);
+      merged._userId = currentUserId;
       await saveState(merged);
       return merged;
     }
@@ -102,11 +118,12 @@ function dedupe(arr, key) {
   });
 }
 
-export function wireBackgroundSync() {
+export function wireBackgroundSync({ getCurrentUserId } = {}) {
   if (typeof navigator === "undefined") return;
-  window.addEventListener("online", () => flushOutbox().catch(() => {}));
+  const flush = () => flushOutbox({ currentUserId: getCurrentUserId?.() ?? null }).catch(() => {});
+  window.addEventListener("online", flush);
   navigator.serviceWorker?.addEventListener?.("message", (e) => {
-    if (e.data?.type === "SYNC_FLUSH") flushOutbox().catch(() => {});
+    if (e.data?.type === "SYNC_FLUSH") flush();
   });
   navigator.serviceWorker?.ready?.then(async (reg) => {
     try { await reg.sync?.register("bio-sync-outbox"); } catch {}
