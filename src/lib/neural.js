@@ -933,6 +933,7 @@ export function calcSessionCompletion(st, sessionCtx) {
   nw[ad] = (nw[ad] || 0) + 1;
   const ys = new Date(Date.now() - 864e5).toDateString();
   let nsk = st.lastDate === td ? st.streak : st.lastDate === ys ? st.streak + 1 : 1;
+  // Ligeras NO avanzan racha (se recalcula más abajo tras determinar quality)
 
   const ml = st.moodLog || [];
   const hist = st.history || [];
@@ -957,8 +958,15 @@ export function calcSessionCompletion(st, sessionCtx) {
   const gamingCheck = detectGamingPattern(hist);
   if (gamingCheck.gaming) { bioQ.score = Math.min(bioQ.score, 20); bioQ.quality = "inválida"; }
 
-  const qualityMult = bioQ.quality === "alta" ? 1.5 : bioQ.quality === "media" ? 1.0 : bioQ.quality === "baja" ? 0.5 : 0.2;
+  // Partial / ligera: sesión incompleta o mucho tiempo en background.
+  // No rompe racha ni la extiende; vale 40% de vCores.
+  const completeness = typeof sessionData?.completeness === "number" ? sessionData.completeness : 1;
+  const isPartial = completeness < 0.85 || (sessionData?.hiddenSec || 0) > (protocol.d * durMult) * 0.3;
+  if (isPartial && bioQ.quality !== "inválida") { bioQ.quality = "ligera"; bioQ.score = Math.min(bioQ.score, 40); }
+
+  const qualityMult = bioQ.quality === "alta" ? 1.5 : bioQ.quality === "media" ? 1.0 : bioQ.quality === "baja" ? 0.5 : bioQ.quality === "ligera" ? 0.4 : 0.2;
   const eVC = Math.max(3, Math.round((5 + (cohBoost * 1.5) + (consistencyScore * 5) + (uniqueProtos * 0.5)) * qualityMult));
+  if (bioQ.quality === "ligera") { nsk = st.streak; }
   const vc = (st.vCores || 0) + eVC;
 
   const ach = [...st.achievements];
@@ -984,6 +992,8 @@ export function calcSessionCompletion(st, sessionCtx) {
     interactions: sessionData.interactions || 0, motionSamples: sessionData.motionSamples || 0,
     pauses: sessionData.pauses || 0, burnoutIdx: burnout.index,
     circadian: circadian?.period || "day", bioSignal: bioSignal.score,
+    partial: !!isPartial, hiddenSec: Math.round(sessionData?.hiddenSec || 0),
+    completeness: Math.round((completeness) * 100) / 100,
   }].slice(-200);
 
   return {
