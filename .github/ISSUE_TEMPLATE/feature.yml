@@ -1,0 +1,15 @@
+name: Feature request
+description: Propose a change or addition.
+title: "[feat] "
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes: { label: Problem, description: What's hard today? Who is blocked? }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Proposed solution }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Alternatives considered }
+  - type: input
+    attributes: { label: Affected roles, placeholder: OWNER, ADMIN, MEMBER, VIEWER }
