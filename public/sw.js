@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 8;
+const CACHE_VERSION = 9;
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -98,10 +98,16 @@ async function staleWhileRevalidate(req) {
 }
 
 // ─── Fetch ───────────────────────────────────────────────
+// Nunca cacheamos /api/* — las respuestas son específicas por usuario/sesión
+// (auth, v1, coach, csrf) y servir de cache cruzaría identidades entre
+// usuarios en el mismo navegador. Solo assets y navegación van a cache.
+const isApi = (u) => { try { return new URL(u).pathname.startsWith("/api/"); } catch { return false; } };
+
 self.addEventListener("fetch", (e) => {
   const { request } = e;
   if (request.method !== "GET") return;
   if (!isSameOrigin(request.url)) return;
+  if (isApi(request.url)) return; // network-only para /api/*
 
   if (request.mode === "navigate") {
     e.respondWith(networkFirst(request, e.preloadResponse));
