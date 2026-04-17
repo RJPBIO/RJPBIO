@@ -184,6 +184,25 @@ export function hapticSignature(kind) {
   } catch (e) {}
 }
 
+// ─── Pre-phase alert ──────────────────────────────────────
+// Pulso corto ~2s antes del cambio de fase. El usuario lo siente
+// como "algo viene" sin interrumpir la atención actual.
+export function hapticPreShift() {
+  if (typeof navigator === "undefined" || !navigator.vibrate) return;
+  try { navigator.vibrate([6, 40, 10]); } catch (e) {}
+}
+
+// Countdown escalado 3→2→1 con intensidad creciente. Lee el
+// tiempo como tensión que aumenta hasta la ignición.
+export function hapticCountdown(step) {
+  if (typeof navigator === "undefined" || !navigator.vibrate) return;
+  try {
+    if (step === 3) navigator.vibrate(8);
+    else if (step === 2) navigator.vibrate(16);
+    else if (step === 1) navigator.vibrate(28);
+  } catch (e) {}
+}
+
 // Ignición sonora — acorde ascendente bio-eléctrico (quinta+octava+tercera)
 // Se apila sobre la stinger existente "ok" en hap(); úsalo cuando quieras
 // enfatizar explícitamente el momento de completar (IgnitionBurst).
