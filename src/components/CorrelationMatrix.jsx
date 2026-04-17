@@ -1,19 +1,20 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   CORRELATION MATRIX — Visualización de efectividad por protocolo
-   Base: la retroalimentación sobre efectividad personal guía
-   la auto-selección óptima (Metacognitive Monitoring, Flavell 1979)
+   CORRELATION MATRIX — Protocol effectiveness, clinical rows.
+   Hairline-separated ranking, single teal bar, tabular deltas.
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import Icon from "./Icon";
 import { calcProtocolCorrelations } from "../lib/neural";
 import { P } from "../lib/protocols";
-import { resolveTheme, withAlpha, ty, font, space, radius, semantic } from "../lib/theme";
+import { resolveTheme, radius, semantic, hairline } from "../lib/theme";
+
+const CAPS = { fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" };
 
 export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
-  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const { t1, t2, t3 } = resolveTheme(isDark);
+  const teal = "#0F766E";
 
   const correlations = useMemo(() => calcProtocolCorrelations(st), [st.moodLog, st.history]);
 
@@ -23,158 +24,98 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
   const maxDelta = Math.max(...sorted.map(([, d]) => Math.abs(d.avgDelta)), 0.1);
 
   return (
-    <div
-      style={{
-        background: cd,
-        borderRadius: 18,
-        padding: "16px 14px",
-        border: `1px solid ${bd}`,
-        marginBottom: 14,
-      }}
-    >
+    <div style={{
+      background: isDark ? "#141820" : "#FFFFFF",
+      borderRadius: radius.lg,
+      border: hairline(isDark),
+      marginBottom: 14,
+      overflow: "hidden",
+    }}>
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 12,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="radar" size={12} color={t3} />
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: 3,
-              color: t3,
-              textTransform: "uppercase",
-            }}
-          >
-            Efectividad Personal
-          </span>
-        </div>
-        <span style={{ fontSize: 10, color: t3 }}>
-          {sorted.length} protocolos
+      <div style={{
+        display: "flex", alignItems: "baseline", justifyContent: "space-between",
+        padding: "16px 20px",
+        borderBottom: hairline(isDark),
+      }}>
+        <span style={{ ...CAPS, color: t3 }}>Efectividad · Protocolo</span>
+        <span style={{ ...CAPS, color: t3, fontVariantNumeric: "tabular-nums" }}>
+          {sorted.length} registrados
         </span>
       </div>
 
-      {/* Protocol bars */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {sorted.slice(0, 7).map(([name, data], i) => {
+      {/* Ranking rows */}
+      <div>
+        {sorted.slice(0, 7).map(([name, data], i, arr) => {
           const proto = P.find((p) => p.n === name);
           const isPositive = data.avgDelta > 0;
           const barWidth = Math.round((Math.abs(data.avgDelta) / maxDelta) * 100);
+          const deltaColor = isPositive ? teal : semantic.danger;
 
           return (
-            <motion.div
+            <motion.button
               key={name}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => {
-                if (onSelectProtocol && proto) onSelectProtocol(proto);
-              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.04, duration: 0.28 }}
+              onClick={() => { if (onSelectProtocol && proto) onSelectProtocol(proto); }}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 10px",
-                borderRadius: 10,
-                background: isDark ? "#1A1E28" : "#F8FAFC",
+                width: "100%",
+                display: "block",
+                padding: "14px 20px",
+                background: "transparent",
+                border: "none",
+                borderBottom: i < arr.length - 1 ? hairline(isDark) : "none",
                 cursor: proto ? "pointer" : "default",
+                textAlign: "left",
               }}
             >
-              {/* Protocol tag */}
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 7,
-                  background: (proto?.cl || semantic.info) + "12",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 9,
-                  fontWeight: 800,
-                  color: proto?.cl || semantic.info,
-                  flexShrink: 0,
-                }}
-              >
-                {proto?.tg || "?"}
-              </div>
-
-              {/* Name + bar */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 4,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: t1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
+              {/* Rank + name + delta */}
+              <div style={{
+                display: "flex", alignItems: "baseline", justifyContent: "space-between",
+                gap: 12, marginBottom: 8,
+              }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, minWidth: 0 }}>
+                  <span style={{ ...CAPS, color: t3, fontSize: 9, fontVariantNumeric: "tabular-nums" }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span style={{
+                    fontSize: 14, fontWeight: 500, color: t1, letterSpacing: "-0.01em",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>
                     {name}
                   </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: isPositive ? semantic.success : semantic.danger,
-                      }}
-                    >
-                      {isPositive ? "+" : ""}
-                      {data.avgDelta}
-                    </span>
-                    <span style={{ fontSize: 9, color: t3 }}>{data.sessions}x</span>
-                  </div>
                 </div>
-
-                {/* Delta bar */}
-                <div
-                  style={{
-                    height: 4,
-                    background: bd,
-                    borderRadius: 2,
-                    overflow: "hidden",
-                  }}
-                >
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: barWidth + "%" }}
-                    transition={{ delay: i * 0.05 + 0.2, duration: 0.4 }}
-                    style={{
-                      height: "100%",
-                      background: isPositive
-                        ? `linear-gradient(90deg, ${semantic.success}, #0D9488)`
-                        : `linear-gradient(90deg, ${semantic.danger}, #EF4444)`,
-                      borderRadius: 2,
-                    }}
-                  />
-                </div>
-
-                {/* Time of day hint */}
-                <div style={{ fontSize: 9, color: t3, marginTop: 3 }}>
-                  Mejor: {data.bestTimeOfDay} ·{" "}
-                  {data.bestTimeOfDay === "mañana"
-                    ? `+${data.morningDelta}`
-                    : `+${data.afternoonDelta}`}{" "}
-                  pts
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: 18, fontWeight: 300, color: deltaColor,
+                    letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums", lineHeight: 1,
+                  }}>
+                    {isPositive ? "+" : ""}{data.avgDelta}
+                  </span>
+                  <span style={{ ...CAPS, color: t3, fontSize: 9, fontVariantNumeric: "tabular-nums" }}>
+                    {data.sessions}×
+                  </span>
                 </div>
               </div>
-            </motion.div>
+
+              {/* Single-channel bar */}
+              <div style={{
+                height: 2, background: isDark ? "#232836" : "#E5E7EB",
+                overflow: "hidden", marginBottom: 6,
+              }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: barWidth + "%" }}
+                  transition={{ delay: i * 0.04 + 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  style={{ height: "100%", background: deltaColor }}
+                />
+              </div>
+
+              {/* Time of day hint */}
+              <div style={{ fontSize: 11, fontWeight: 400, color: t3, letterSpacing: "0.01em" }}>
+                Ventana óptima · {data.bestTimeOfDay} · +{data.bestTimeOfDay === "mañana" ? data.morningDelta : data.afternoonDelta} pts
+              </div>
+            </motion.button>
           );
         })}
       </div>
