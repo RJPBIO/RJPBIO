@@ -10,7 +10,7 @@ import { getWeekNum } from "../lib/neural";
 import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
 import { logger } from "../lib/logger";
 
-const STORE_VERSION = 7;
+const STORE_VERSION = 8;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
@@ -24,10 +24,22 @@ function migrate(data) {
     if (!Array.isArray(merged.cognitiveLog)) merged.cognitiveLog = [];
     if (!Array.isArray(merged.orgTeamResponses)) merged.orgTeamResponses = [];
     if (typeof merged.sleepTargetHours !== "number") merged.sleepTargetHours = 7.5;
+    // v8: anclar estado al userId autenticado (anti cross-user leak en mismo browser)
+    if (typeof merged._userId === "undefined") merged._userId = null;
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
   return merged;
+}
+
+// Si el dueño del estado persistido no coincide con el usuario actual
+// (ej. logout → nuevo login en mismo navegador), devolvemos estado fresco.
+// Null/undefined actual = sesión anónima; si el previo era de un user real,
+// también limpiamos para que invitados no hereden datos ajenos.
+function belongsToUser(loaded, currentUserId) {
+  const prev = loaded?._userId ?? null;
+  const curr = currentUserId ?? null;
+  return prev === curr;
 }
 
 let persistTimer = null;
@@ -43,9 +55,16 @@ export const useStore = create((set, get) => ({
   _loaded: false,
   _syncing: false,
 
-  init: async () => {
+  init: async (opts = {}) => {
     try {
-      const loaded = migrate(await loadState());
+      const userId = opts.userId ?? null;
+      let loaded = migrate(await loadState());
+      if (!belongsToUser(loaded, userId)) {
+        // Mismo navegador, otro usuario → reset local para no filtrar datos.
+        await clearAll();
+        loaded = migrate(null);
+      }
+      loaded._userId = userId;
       const cw = getWeekNum();
       if (loaded.weekNum !== null && loaded.weekNum !== cw) {
         loaded.prevWeekData = [...loaded.weeklyData];
@@ -92,7 +111,7 @@ export const useStore = create((set, get) => ({
     };
     set(update);
     scheduleSave({ ...st, ...update });
-    outboxAdd({ kind: "session", payload: r }).catch(() => {});
+    outboxAdd({ kind: "session", payload: r, userId: st._userId ?? null }).catch(() => {});
   },
 
   logMood: (moodEntry) => {
@@ -102,7 +121,7 @@ export const useStore = create((set, get) => ({
     if (moodEntry.mood === 5 && !ach.includes("mood5")) ach.push("mood5");
     set({ moodLog: ml, achievements: ach });
     scheduleSave({ ...st, moodLog: ml, achievements: ach });
-    outboxAdd({ kind: "mood", payload: moodEntry }).catch(() => {});
+    outboxAdd({ kind: "mood", payload: moodEntry, userId: st._userId ?? null }).catch(() => {});
   },
 
   setNeuralBaseline: (baseline) => {
@@ -174,7 +193,7 @@ export const useStore = create((set, get) => ({
       : st.rhrLog;
     set({ hrvLog, rhrLog });
     scheduleSave({ ...st, hrvLog, rhrLog });
-    outboxAdd({ kind: "hrv", payload: entry }).catch(() => {});
+    outboxAdd({ kind: "hrv", payload: entry, userId: st._userId ?? null }).catch(() => {});
   },
 
   logSleep: (hours) => {
@@ -191,7 +210,7 @@ export const useStore = create((set, get) => ({
   setChronotype: (ct) => {
     set({ chronotype: ct });
     scheduleSave({ ...get() });
-    outboxAdd({ kind: "chronotype", payload: ct }).catch(() => {});
+    outboxAdd({ kind: "chronotype", payload: ct, userId: get()._userId ?? null }).catch(() => {});
   },
 
   setResonanceFreq: (bpm) => {
@@ -204,7 +223,7 @@ export const useStore = create((set, get) => ({
     const nom035Results = [...(st.nom035Results || []), result].slice(-20);
     set({ nom035Results });
     scheduleSave({ ...st, nom035Results });
-    outboxAdd({ kind: "nom035", payload: result }).catch(() => {});
+    outboxAdd({ kind: "nom035", payload: result, userId: st._userId ?? null }).catch(() => {});
   },
 
   logBreathTechnique: (entry) => {
@@ -227,7 +246,7 @@ export const useStore = create((set, get) => ({
   },
 
   resetAll: async () => {
-    const fresh = { ...DS, weekNum: getWeekNum(), _v: STORE_VERSION };
+    const fresh = { ...DS, weekNum: getWeekNum(), _v: STORE_VERSION, _userId: null };
     await clearAll();
     set(fresh);
     scheduleSave(fresh);
