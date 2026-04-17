@@ -1,27 +1,150 @@
 "use client";
+/* ═══════════════════════════════════════════════════════════════
+   HISTORY SHEET — Clinical session log.
+   Group headers as 0.12em caps. Hairline rows. Tabular numerals.
+   ═══════════════════════════════════════════════════════════════ */
+
 import { motion, AnimatePresence } from "framer-motion";
-import Icon from "./Icon";
 import { MOODS } from "../lib/constants";
-import { resolveTheme, withAlpha, ty, font, space, radius, z, semantic } from "../lib/theme";
+import { resolveTheme, radius, z, semantic, hairline } from "../lib/theme";
+
+const CAPS = { fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" };
+const MICRO = { fontSize: 10, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase" };
 
 function groupHist(h) {
-  const n = new Date(); const td = n.toDateString(); const yd = new Date(Date.now() - 864e5).toDateString();
+  const n = new Date();
+  const td = n.toDateString();
+  const yd = new Date(Date.now() - 864e5).toDateString();
   const g = { hoy: [], ayer: [], antes: [] };
-  for (const x of h) { const d = new Date(x.ts).toDateString(); if (d === td) g.hoy.push(x); else if (d === yd) g.ayer.push(x); else g.antes.push(x); }
+  for (const x of h) {
+    const d = new Date(x.ts).toDateString();
+    if (d === td) g.hoy.push(x);
+    else if (d === yd) g.ayer.push(x);
+    else g.antes.push(x);
+  }
   return g;
 }
 
 export default function HistorySheet({ show, onClose, st, isDark, ac }) {
-  const { card: cd, border: bd, t1, t3 } = resolveTheme(isDark);
+  const { t1, t2, t3, bg } = resolveTheme(isDark);
+  const teal = "#0F766E";
+
+  const hist = [...(st.history || [])].reverse();
+  const g = groupHist(hist);
 
   return (
     <AnimatePresence>
-    {show&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.overlay,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,maxHeight:"75vh",background:cd,borderRadius:`${radius["2xl"]}px ${radius["2xl"]}px 0 0`,padding:`${space[5]}px ${space[5]}px ${space[10]}px`,overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-      <div style={{width:36,height:4,background:bd,borderRadius:2,margin:`0 auto ${space[5]}px`}}/><h3 style={{...ty.heading(t1),marginBottom:space[4]}}>Historial</h3>
-      {!(st.history||[]).length&&<div style={{textAlign:"center",padding:`${space[10]}px 0`}}><Icon name="chart" size={30} color={t3}/><div style={{...ty.body(t3),marginTop:space[2]}}>Tu primera sesión creará el registro.</div></div>}
-      {(()=>{const g=groupHist([...(st.history||[])].reverse());return Object.entries(g).map(([k,items])=>{if(!items.length)return null;return(<div key={k}><div style={{...ty.label(t3),marginBottom:space[2],marginTop:space[2.5]}}>{k==="hoy"?"Hoy":k==="ayer"?"Ayer":"Anteriores"}</div>{items.map((h,i)=>{const tm=new Date(h.ts).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});const ml=(st.moodLog||[]).find(m=>Math.abs(m.ts-h.ts)<10000);return(<div key={i} style={{display:"flex",alignItems:"center",gap:space[2],padding:`${space[2]}px 0`,borderBottom:`1px solid ${bd}`}}><div style={{width:30,height:30,borderRadius:radius.sm,background:withAlpha(ac,6),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div><div style={{flex:1}}><div style={ty.caption(t1)}>{h.p}</div><div style={{display:"flex",alignItems:"center",gap:3,marginTop:1}}><span style={ty.caption(t3)}>{tm}</span>{ml&&<Icon name={MOODS[(ml.mood||3)-1]?.icon||"neutral"} size={10} color={MOODS[(ml.mood||3)-1]?.color||t3}/>}{h.bioQ&&<span style={{...ty.caption(h.bioQ>=70?semantic.success:h.bioQ>=45?semantic.warning:semantic.danger),fontWeight:font.weight.bold}}>{h.bioQ}%</span>}</div></div><div style={{textAlign:"right"}}><div style={ty.title(ac)}>+{h.vc}</div></div></div>);})}</div>);});})()}
-    </motion.div></motion.div>)}
+      {show && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.28 }}
+          style={{
+            position: "fixed", inset: 0, zIndex: z.overlay,
+            background: isDark ? "rgba(12,15,20,.72)" : "rgba(10,14,20,.48)",
+            display: "flex", alignItems: "flex-end", justifyContent: "center",
+          }}
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{
+              width: "100%", maxWidth: 430, maxHeight: "82vh",
+              background: bg,
+              borderRadius: `${radius.lg}px ${radius.lg}px 0 0`,
+              overflowY: "auto",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{
+              width: 28, height: 2, background: isDark ? "#232836" : "#E5E7EB",
+              margin: "12px auto 0",
+            }} />
+
+            {/* Header */}
+            <div style={{
+              padding: "20px 20px 16px",
+              borderBottom: hairline(isDark),
+              display: "flex", alignItems: "baseline", justifyContent: "space-between",
+            }}>
+              <div>
+                <div style={{ ...CAPS, color: t3, marginBottom: 8 }}>Registros</div>
+                <div style={{ fontSize: 24, fontWeight: 300, color: t1, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                  Historial
+                </div>
+              </div>
+              <div style={{ ...MICRO, color: t3, fontVariantNumeric: "tabular-nums" }}>
+                {hist.length} total
+              </div>
+            </div>
+
+            {!hist.length && (
+              <div style={{ padding: "60px 20px", textAlign: "center" }}>
+                <div style={{ fontSize: 14, fontWeight: 400, color: t2, lineHeight: 1.6 }}>
+                  Sin registros. Tu primera sesión aparecerá aquí.
+                </div>
+              </div>
+            )}
+
+            {Object.entries(g).map(([k, items]) => {
+              if (!items.length) return null;
+              return (
+                <div key={k}>
+                  <div style={{
+                    padding: "18px 20px 10px",
+                    ...CAPS, color: t3,
+                    borderBottom: hairline(isDark),
+                    background: isDark ? "#0F131A" : "#F2F4F7",
+                  }}>
+                    {k === "hoy" ? "Hoy" : k === "ayer" ? "Ayer" : "Anteriores"}
+                    <span style={{ marginLeft: 10, fontSize: 9, color: t3, fontVariantNumeric: "tabular-nums" }}>
+                      · {items.length}
+                    </span>
+                  </div>
+                  {items.map((h, i) => {
+                    const tm = new Date(h.ts).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+                    const ml = (st.moodLog || []).find(m => Math.abs(m.ts - h.ts) < 10000);
+                    const mood = ml ? MOODS[(ml.mood || 3) - 1] : null;
+                    const qColor = h.bioQ >= 70 ? teal : h.bioQ >= 45 ? semantic.warning : semantic.danger;
+
+                    return (
+                      <div key={i} style={{
+                        display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14,
+                        padding: "16px 20px",
+                        borderBottom: hairline(isDark),
+                        minHeight: 72,
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontSize: 14, fontWeight: 500, color: t1,
+                            letterSpacing: "-0.01em", marginBottom: 6,
+                          }}>
+                            {h.p}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 10, ...MICRO, color: t3, fontVariantNumeric: "tabular-nums" }}>
+                            <span>{tm}</span>
+                            {mood && <span style={{ color: mood.color }}>{mood.label || mood.l || ""}</span>}
+                            {h.bioQ !== undefined && (
+                              <span style={{ color: qColor }}>Q {h.bioQ}%</span>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{
+                          fontSize: 18, fontWeight: 300, color: teal,
+                          letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums", lineHeight: 1,
+                          flexShrink: 0,
+                        }}>
+                          +{h.vc}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
