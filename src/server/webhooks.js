@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import "server-only";
-import { createHmac, randomBytes } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual as _timingSafeEqual } from "node:crypto";
 import { db } from "./db";
 import { logger } from "@/lib/logger";
 
@@ -75,8 +75,15 @@ export function verifyIncomingSignature({ secret, body, timestamp, id, signature
 }
 
 function timingSafeEqual(a, b) {
-  if (a.length !== b.length) return false;
-  let r = 0;
-  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return r === 0;
+  // node:crypto.timingSafeEqual requiere longitudes iguales: comparamos contra
+  // `expected` con longitud fija, pero `a` puede ser manipulado por el atacante.
+  // Hacemos padding al max length para que el early-return por length no filtre
+  // información sobre `expected`. Usamos la impl de OpenSSL (constant-time real).
+  const ab = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  const len = Math.max(ab.length, bb.length);
+  const pa = Buffer.alloc(len); ab.copy(pa);
+  const pb = Buffer.alloc(len); bb.copy(pb);
+  const eq = _timingSafeEqual(pa, pb);
+  return eq && ab.length === bb.length;
 }
