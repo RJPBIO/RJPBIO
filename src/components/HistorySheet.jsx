@@ -31,6 +31,18 @@ function bioQColor(q) {
   return semantic.danger;
 }
 
+// Sello visible de la sesión — transparencia total sobre calidad
+function qualityBadge(quality) {
+  switch (quality) {
+    case "alta":    return { label: "Plena",    icon: "check",  color: "#059669" };
+    case "media":   return { label: "Sólida",   icon: "check",  color: "#0D9488" };
+    case "baja":    return { label: "Breve",    icon: "clock",  color: "#D97706" };
+    case "ligera":  return { label: "Ligera",   icon: "clock",  color: "#94A3B8" };
+    case "inválida":return { label: "Revisar",  icon: "alert",  color: "#DC2626" };
+    default:        return { label: "Manual",   icon: "edit",   color: "#64748B" };
+  }
+}
+
 export default function HistorySheet({ show, onClose, st, isDark, ac }) {
   const reduced = useReducedMotion();
   const dialogRef = useFocusTrap(show, onClose);
@@ -190,6 +202,21 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                                   {h.bioQ}%
                                 </span>
                               )}
+                              {(() => { const b = qualityBadge(h.quality); return (
+                                <span
+                                  title={`Sello: ${b.label}${h.partial ? " · parcial" : ""}${h.hiddenSec ? ` · ${h.hiddenSec}s en segundo plano` : ""}`}
+                                  style={{
+                                    display: "inline-flex", alignItems: "center", gap: 2,
+                                    marginInlineStart: 4, paddingInline: 6, paddingBlock: 1,
+                                    borderRadius: 6, background: withAlpha(b.color, 10),
+                                    color: b.color, fontSize: 9, fontWeight: font.weight.bold,
+                                    letterSpacing: 0.3, textTransform: "uppercase",
+                                  }}
+                                >
+                                  <Icon name={b.icon} size={8} color={b.color} />
+                                  {b.label}
+                                </span>
+                              ); })()}
                             </div>
                           </div>
                           <div style={{ textAlign: "end" }} aria-hidden="true">
