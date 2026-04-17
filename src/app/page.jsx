@@ -39,6 +39,10 @@ import { useDeepLink } from "../hooks/useDeepLink";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { uiSound } from "../lib/uiSound";
 import { parseDeepLink } from "../lib/deeplink";
+import { buildCommands } from "../lib/commandPalette";
+import { computePhaseIndex, timeToNextPhase } from "../lib/phaseEngine";
+import { computeSessionMetrics, sessionQualityMessage, shouldPlayIgnitionSignature } from "../lib/sessionClose";
+import { computeBreathFrame } from "../lib/breathCycle";
 import { useReducedMotion, useFocusTrap, KEY, announce } from "../lib/a11y";
 import { semantic } from "../lib/tokens";
 
@@ -135,53 +139,17 @@ export default function BioIgnicion(){
 
   useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>{const nv=!v;uiSound[nv?"open":"close"](st.soundOn);return nv;});}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[st.soundOn]);
 
-  const cmdCommands=useMemo(()=>{
-    const actionGroup=[];
-    if(ts==="idle")actionGroup.push({id:"act-start",group:"Acciones",icon:"bolt",label:"Iniciar sesión ahora",hint:`${pr?.n||"Protocolo"} · ${Math.round((pr?.d||120)*durMult)}s`,shortcut:"⏎",action:()=>{if(tab!=="ignicion")switchTab("ignicion");setTimeout(()=>go(),50);}});
-    if(ts==="running")actionGroup.push({id:"act-pause",group:"Acciones",icon:"clock",label:"Pausar sesión",hint:"Detiene timer, conserva progreso",action:()=>pa()});
-    if(ts==="paused")actionGroup.push({id:"act-resume",group:"Acciones",icon:"bolt",label:"Reanudar sesión",hint:"Continúa donde quedaste",action:()=>{setTs("running");H("go");if(st.soundOn!==false)startBinaural(pr.int);requestWakeLock();}});
-    actionGroup.push({id:"act-theme",group:"Acciones",icon:"moon",label:`Tema: ${st.themeMode==="dark"?"oscuro":st.themeMode==="light"?"claro":"automático"}`,hint:"Ciclar auto → oscuro → claro",action:()=>{const m=st.themeMode||"auto";const next=m==="auto"?"dark":m==="dark"?"light":"auto";setSt({...st,themeMode:next});}});
-    actionGroup.push({id:"act-mood",group:"Acciones",icon:"heart",label:"Registrar ánimo ahora",hint:"Escala 1-5 rápida",action:()=>{setCheckMood(0);setPostStep("mood");}});
-
-    const navGroup=[
-      {id:"nav-ig",group:"Navegar",icon:"bolt",label:"Ir a Ignición",hint:"Selector + timer",action:()=>switchTab("ignicion")},
-      {id:"nav-db",group:"Navegar",icon:"chart",label:"Ir a Dashboard",hint:"Métricas y trayectoria",action:()=>switchTab("dashboard")},
-      {id:"nav-pf",group:"Navegar",icon:"user",label:"Ir a Perfil",hint:"Logros y ajustes personales",action:()=>switchTab("perfil")},
-    ];
-    const viewGroup=[
-      {id:"view-hist",group:"Vistas",icon:"clock",label:"Abrir historial",hint:`${(st.history||[]).length} sesiones`,action:()=>setShowHist(true)},
-      {id:"view-set",group:"Vistas",icon:"gear",label:"Abrir ajustes",action:()=>setShowSettings(true)},
-      {id:"view-cal",group:"Vistas",icon:"gauge",label:"Re-calibrar baseline",hint:"Nueva medición de 60s",action:()=>setShowCalibration(true)},
-      {id:"view-hrv",group:"Vistas",icon:"predict",label:"Medir HRV",action:()=>setShowHRV(true)},
-      {id:"view-sigh",group:"Vistas",icon:"breath",label:"Suspiro fisiológico",action:()=>setShowSigh(true)},
-      {id:"view-nsdr",group:"Vistas",icon:"moon",label:"NSDR · descanso no-sueño",action:()=>setShowNSDR(true)},
-    ];
-    const protoGroup=(P||[]).slice(0,12).map((proto,i)=>({
-      id:`proto-${i}`,
-      group:"Protocolos",
-      icon:proto.int==="calma"?"calm":proto.int==="enfoque"?"focus":proto.int==="energia"?"energy":"sparkle",
-      label:proto.n,
-      hint:`${Math.round(proto.d*durMult)}s · ${proto.int||"neural"}`,
-      action:()=>{sp(proto);switchTab("ignicion");},
-    }));
-    const recentGroup=((st.history||[]).slice(-3).reverse()).map((h,i)=>{
-      const proto=(P||[]).find(p=>p.n===h.n||p.id===h.id);
-      if(!proto)return null;
-      return{
-        id:`recent-${i}`,
-        group:"Repetir recientes",
-        icon:"refresh",
-        label:proto.n,
-        hint:`Última: ${h.date||"reciente"} · Δ${h.c!=null?(h.c>0?`+${h.c}`:h.c):"—"}`,
-        action:()=>{sp(proto);switchTab("ignicion");},
-      };
-    }).filter(Boolean);
-    const toggleGroup=[
-      {id:"tog-sound",group:"Ajustes",icon:st.soundOn!==false?"volume-on":"volume-off",label:`Sonido: ${st.soundOn!==false?"encendido":"apagado"}`,hint:"Alternar audio",action:()=>setSt({...st,soundOn:st.soundOn===false?true:false})},
-      {id:"tog-haptic",group:"Ajustes",icon:"vibrate",label:`Háptica: ${st.hapticOn!==false?"encendida":"apagada"}`,hint:"Alternar vibración",action:()=>setSt({...st,hapticOn:st.hapticOn===false?true:false})},
-    ];
-    return[...actionGroup,...navGroup,...viewGroup,...recentGroup,...protoGroup,...toggleGroup];
-  },[st,durMult,ts,pr,tab]);
+  const cmdCommands=useMemo(()=>buildCommands({
+    timerStatus:ts,tab,state:st,protocol:pr,durationMultiplier:durMult,protocols:P,
+    actions:{
+      switchTab,go,pause:pa,setTimerStatus:setTs,startBinaural,requestWakeLock,
+      playHaptic:H,setState:setSt,setCheckMood,setPostStep,
+      openHistory:()=>setShowHist(true),openSettings:()=>setShowSettings(true),
+      openCalibration:()=>setShowCalibration(true),openHRV:()=>setShowHRV(true),
+      openSigh:()=>setShowSigh(true),openNSDR:()=>setShowNSDR(true),
+      selectProtocol:sp,
+    },
+  }),[st,durMult,ts,pr,tab]);
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
@@ -195,13 +163,14 @@ export default function BioIgnicion(){
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
   const totalDur=Math.round(pr.d*durMult);
-  useEffect(()=>{const el=totalDur-sec;const scale=durMult;let idx=0;for(let i=pr.ph.length-1;i>=0;i--){if(el>=Math.round(pr.ph[i].s*scale)){idx=i;break;}}
+  useEffect(()=>{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
     if(idx!==pi){setPi(idx);if(st.hapticOn!==false)hapticPhase(pr.ph[idx].ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+pr.ph[idx].k,circadian,voiceOn);setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[idx].i,circadian,voiceOn);}catch(e){}},2500);}
-    const nxtIdx=pi<pr.ph.length-1?pi+1:null;if(nxtIdx!==null){const nxtStart=Math.round(pr.ph[nxtIdx].s*scale);const ttN=nxtStart-el;if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}}
+    const ttN=timeToNextPhase(elapsedSec,pr.ph,durMult,pi);
+    if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
   },[sec,pr,durMult]);
   useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}const b=ph.br;const cy=b.in+(b.h1||0)+b.ex+(b.h2||0);let t=0;let lastLabel="";function tk(){const p=t%cy;let lbl="";if(p<b.in){lbl="INHALA";setBS(1+.25*(p/b.in));setBCnt(b.in-p);}else if(p<b.in+(b.h1||0)){lbl="MANTÉN";setBS(1.25);setBCnt(b.in+(b.h1||0)-p);}else if(p<b.in+(b.h1||0)+b.ex){const ep=p-b.in-(b.h1||0);lbl="EXHALA";setBS(1.25-.25*(ep/b.ex));setBCnt(b.ex-ep);}else{lbl="SOSTÉN";setBS(1);setBCnt(cy-p);}setBL(lbl);if(lbl!==lastLabel){if(t%2===0||lbl==="INHALA")speak(lbl.toLowerCase(),circadian,voiceOn);hapticBreath(lbl);lastLabel=lbl;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);if(st.hapticOn!==false)hapticCountdown(3);speakNow("Tres",circadian,voiceOn);cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);if(st.hapticOn!==false)hapticCountdown(p-1);return p-1;});},1000);}
   function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
@@ -219,17 +188,11 @@ export default function BioIgnicion(){
   const completeTour=useCallback(()=>{setShowTour(false);setSt(s=>({...s,onboardingTourComplete:true}));},[setSt]);
 
   function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
-    const expectedSec=sessionData.expectedSec||Math.round(pr.d*durMult);
-    const actualSec=sessionData.startedAt?Math.max(0,(Date.now()-sessionData.startedAt)/1000):expectedSec;
-    const hiddenSec=(sessionData.hiddenMs||0)/1000;
-    const activeSec=Math.max(0,actualSec-hiddenSec);
-    const completeness=expectedSec>0?Math.min(1,activeSec/expectedSec):1;
-    const sessionDataFull={...sessionData,actualSec,hiddenSec,completeness};
+    const{sessionDataFull}=computeSessionMetrics({sessionData,protocol:pr,durMult,now:Date.now()});
     const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData:sessionDataFull,nfcCtx,circadian});
     setPostVC(result.eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
-    releaseWakeLock();speakNow(result.bioQ.quality==="alta"?"Sesión excelente":result.bioQ.quality==="ligera"?"Sesión ligera registrada":"Sesión completada",circadian,voiceOn);
-    // Ignition firma — solo cuando la sesión fue real (no "ligera"/"inválida")
-    if(result.bioQ.quality!=="ligera"&&result.bioQ.quality!=="inválida"){
+    releaseWakeLock();speakNow(sessionQualityMessage(result.bioQ.quality),circadian,voiceOn);
+    if(shouldPlayIgnitionSignature(result.bioQ.quality)){
       if(st.soundOn!==false)try{playIgnition();}catch(e){}
       if(st.hapticOn!==false)hapticSignature("ignition");
     }
