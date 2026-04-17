@@ -1,46 +1,345 @@
 "use client";
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS SHEET — bottom-sheet dialog (full a11y + tokens)
+   ═══════════════════════════════════════════════════════════════
+   - role="dialog" aria-modal + focus trap + Escape.
+   - Toggles: role="switch" aria-checked; Escenas: role="radiogroup".
+   - Reduced-motion aware. Semantic tokens, no hardcoded hex.
+   ═══════════════════════════════════════════════════════════════ */
+
+import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { SOUNDSCAPES } from "../lib/constants";
 import { exportData } from "../lib/audio";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
+import { semantic } from "../lib/tokens";
+import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
 
 export default function SettingsSheet({
   show, onClose, st, setSt, isDark, ac, voiceOn, setVoiceOn, H,
 }) {
+  const reduced = useReducedMotion();
+  const dialogRef = useFocusTrap(show, onClose);
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const titleId = useId();
+
+  const toggles = [
+    { l: "Sonido + ambiente", k: "soundOn", d: "Acordes, ruido ambiental y binaural", ic: "volume-on" },
+    { l: "Vibración", k: "hapticOn", d: "Feedback háptico neurosensorial", ic: "vibrate" },
+    { l: "Voz guiada", k: "_voice", d: "Narración de fases y respiración", ic: "mind" },
+  ];
 
   return (
     <AnimatePresence>
-    {show&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.overlay,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,background:cd,borderRadius:`${radius["2xl"]}px ${radius["2xl"]}px 0 0`,padding:`${space[5]}px ${space[5]}px ${space[10]}px`}} onClick={e=>e.stopPropagation()}>
-      <div style={{width:36,height:4,background:bd,borderRadius:2,margin:`0 auto ${space[5]}px`}}/><h3 style={{...ty.heading(t1),marginBottom:space[4]}}>Configuración</h3>
-      {[{l:"Sonido + ambiente",k:"soundOn",d:"Acordes, ruido ambiental y binaural",ic:"volume-on"},{l:"Vibración",k:"hapticOn",d:"Feedback háptico neurosensorial",ic:"vibrate"},{l:"Voz guiada",k:"_voice",d:"Narración de fases y respiración",ic:"mind"}].map(s=>(
-        <div key={s.k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[3]}px 0`,borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:space[2]}}><Icon name={s.ic} size={15} color={t3}/><div><div style={ty.title(t1)}>{s.l}</div><div style={{...ty.caption(t3),marginTop:1}}>{s.d}</div></div></div>
-          <div onClick={()=>{if(s.k==="_voice"){setVoiceOn(!voiceOn);}else setSt({...st,[s.k]:!st[s.k]});}} style={{width:42,height:24,borderRadius:12,background:s.k==="_voice"?(voiceOn?ac:bd):(st[s.k]?ac:bd),cursor:"pointer",position:"relative",transition:"background .3s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:s.k==="_voice"?(voiceOn?20:2):(st[s.k]?20:2),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></div>
-        </div>))}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[3]}px 0`,borderBottom:`1px solid ${bd}`}}><div style={{display:"flex",alignItems:"center",gap:space[2]}}><Icon name="palette" size={15} color={t3}/><div style={ty.title(t1)}>Tema</div></div><div style={{display:"flex",gap:space[1]}}>{["auto","light","dark"].map(m=>(<button key={m} onClick={()=>setSt({...st,themeMode:m})} style={{padding:`${space[1]}px ${space[3]}px`,borderRadius:radius.sm-1,border:`1px solid ${(st.themeMode||"auto")===m?ac:bd}`,background:(st.themeMode||"auto")===m?withAlpha(ac,6):cd,color:(st.themeMode||"auto")===m?ac:t3,...ty.caption((st.themeMode||"auto")===m?ac:t3),cursor:"pointer",textTransform:"capitalize"}}>{m}</button>))}</div></div>
-      {/* Soundscape Marketplace */}
-      <div style={{padding:"13px 0",borderBottom:`1px solid ${bd}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:space[2],marginBottom:space[2.5]}}><Icon name="breath" size={15} color={t3}/><div><div style={ty.title(t1)}>Paisaje sonoro</div><div style={ty.caption(t3)}>Desbloquea con V-Cores</div></div></div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-          {SOUNDSCAPES.map(s=>{const unlocked=(st.unlockedSS||["off"]).includes(s.id);const active=(st.soundscape||"off")===s.id;return<motion.button key={s.id} whileTap={{scale:.95}} onClick={()=>{if(unlocked){setSt({...st,soundscape:s.id});H("tap");}else if((st.vCores||0)>=s.cost){setSt({...st,soundscape:s.id,unlockedSS:[...(st.unlockedSS||["off"]),s.id],vCores:(st.vCores||0)-s.cost});H("ok");}}} style={{padding:"10px 8px",borderRadius:12,border:active?`2px solid ${ac}`:unlocked?`1.5px solid ${bd}`:`1.5px dashed ${bd}`,background:active?ac+"08":cd,cursor:unlocked||(st.vCores||0)>=s.cost?"pointer":"not-allowed",opacity:unlocked||(st.vCores||0)>=s.cost?1:.5,textAlign:"center"}}>
-            <div style={ty.title(active?ac:unlocked?t1:t3)}>{s.n}</div>
-            {!unlocked&&<div style={{...ty.caption(ac),fontWeight:font.weight.black,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><Icon name="sparkle" size={9} color={ac}/>{s.cost}</div>}
-            {unlocked&&active&&<div style={{fontSize:font.size.xs,fontWeight:font.weight.bold,color:ac,marginTop:2}}>ACTIVO</div>}
-            {unlocked&&!active&&<div style={{fontSize:font.size.xs,color:t3,marginTop:2}}>desbloqueado</div>}
-          </motion.button>;})}
-        </div>
-      </div>
-      <div style={{display:"flex",gap:space[1.5],marginTop:space[4]}}>
-        <motion.button whileTap={{scale:.96}} onClick={()=>exportData(st)} style={{flex:1,padding:`${space[3]}px`,borderRadius:radius.md,border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:space[2]}}>
-          <Icon name="export" size={14} color={t2}/><span style={ty.title(t2)}>JSON</span>
-        </motion.button>
-        <motion.button whileTap={{scale:.96}} onClick={()=>exportNOM035(st)} style={{flex:1,padding:`${space[3]}px`,borderRadius:radius.md,border:"1.5px solid #059669",background:withAlpha("#059669",4),cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:space[2]}}>
-          <Icon name="file" size={14} color="#059669"/><span style={ty.title("#059669")}>NOM-035</span>
-        </motion.button>
-      </div>
-    </motion.div></motion.div>)}
+      {show && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduced ? 0 : 0.2 }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: z.overlay,
+            background: "rgba(15,23,42,.3)",
+            backdropFilter: "blur(16px)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}
+          onClick={onClose}
+          aria-hidden="true"
+        >
+          <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            initial={reduced ? { opacity: 0 } : { y: "100%" }}
+            animate={reduced ? { opacity: 1 } : { y: 0 }}
+            exit={reduced ? { opacity: 0 } : { y: "100%" }}
+            transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }}
+            style={{
+              inlineSize: "100%",
+              maxInlineSize: 430,
+              background: cd,
+              borderStartStartRadius: radius["2xl"],
+              borderStartEndRadius: radius["2xl"],
+              paddingBlock: `${space[5]}px ${space[10]}px`,
+              paddingInline: space[5],
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              aria-hidden="true"
+              style={{
+                inlineSize: 36,
+                blockSize: 4,
+                background: bd,
+                borderRadius: 2,
+                margin: `0 auto ${space[5]}px`,
+              }}
+            />
+            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[4] }}>
+              Configuración
+            </h3>
+
+            {toggles.map((s) => {
+              const checked = s.k === "_voice" ? voiceOn : !!st[s.k];
+              const toggle = () => {
+                if (s.k === "_voice") setVoiceOn(!voiceOn);
+                else setSt({ ...st, [s.k]: !st[s.k] });
+              };
+              return (
+                <div
+                  key={s.k}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingBlock: space[3],
+                    borderBlockEnd: `1px solid ${bd}`,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+                    <Icon name={s.ic} size={15} color={t3} />
+                    <div>
+                      <div style={ty.title(t1)}>{s.l}</div>
+                      <div style={{ ...ty.caption(t3), marginBlockStart: 1 }}>{s.d}</div>
+                    </div>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={checked}
+                    aria-label={`${s.l}: ${checked ? "activado" : "desactivado"}`}
+                    onClick={toggle}
+                    style={{
+                      inlineSize: 42,
+                      blockSize: 24,
+                      borderRadius: 12,
+                      background: checked ? ac : bd,
+                      border: "none",
+                      cursor: "pointer",
+                      position: "relative",
+                      transition: reduced ? "none" : "background .3s",
+                      padding: 0,
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        display: "block",
+                        inlineSize: 20,
+                        blockSize: 20,
+                        borderRadius: 10,
+                        background: "#fff",
+                        position: "absolute",
+                        insetBlockStart: 2,
+                        insetInlineStart: checked ? 20 : 2,
+                        transition: reduced ? "none" : "inset-inline-start .3s",
+                        boxShadow: "0 1px 3px rgba(0,0,0,.15)",
+                      }}
+                    />
+                  </button>
+                </div>
+              );
+            })}
+
+            <div
+              role="radiogroup"
+              aria-label="Tema de la aplicación"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingBlock: space[3],
+                borderBlockEnd: `1px solid ${bd}`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+                <Icon name="palette" size={15} color={t3} />
+                <div style={ty.title(t1)}>Tema</div>
+              </div>
+              <div style={{ display: "flex", gap: space[1] }}>
+                {["auto", "light", "dark"].map((m) => {
+                  const active = (st.themeMode || "auto") === m;
+                  return (
+                    <button
+                      key={m}
+                      role="radio"
+                      aria-checked={active}
+                      aria-label={`Tema ${m}`}
+                      onClick={() => setSt({ ...st, themeMode: m })}
+                      style={{
+                        paddingBlock: space[1],
+                        paddingInline: space[3],
+                        borderRadius: radius.sm - 1,
+                        border: `1px solid ${active ? ac : bd}`,
+                        background: active ? withAlpha(ac, 6) : cd,
+                        color: active ? ac : t3,
+                        ...ty.caption(active ? ac : t3),
+                        cursor: "pointer",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <fieldset
+              style={{
+                border: "none",
+                padding: 0,
+                margin: 0,
+                paddingBlock: space[3],
+                borderBlockEnd: `1px solid ${bd}`,
+              }}
+            >
+              <legend style={{ padding: 0, marginBlockEnd: space[2.5] || 10, display: "block", inlineSize: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+                  <Icon name="breath" size={15} color={t3} />
+                  <div>
+                    <div style={ty.title(t1)}>Paisaje sonoro</div>
+                    <div style={ty.caption(t3)}>Desbloquea con V-Cores</div>
+                  </div>
+                </div>
+              </legend>
+              <div
+                role="radiogroup"
+                aria-label="Paisaje sonoro"
+                style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
+              >
+                {SOUNDSCAPES.map((s) => {
+                  const unlocked = (st.unlockedSS || ["off"]).includes(s.id);
+                  const active = (st.soundscape || "off") === s.id;
+                  const affordable = unlocked || (st.vCores || 0) >= s.cost;
+                  const onClick = () => {
+                    if (unlocked) {
+                      setSt({ ...st, soundscape: s.id });
+                      H("tap");
+                    } else if ((st.vCores || 0) >= s.cost) {
+                      setSt({
+                        ...st,
+                        soundscape: s.id,
+                        unlockedSS: [...(st.unlockedSS || ["off"]), s.id],
+                        vCores: (st.vCores || 0) - s.cost,
+                      });
+                      H("ok");
+                    }
+                  };
+                  const status = active ? "activo" : unlocked ? "desbloqueado" : `cuesta ${s.cost} V-Cores`;
+                  return (
+                    <motion.button
+                      key={s.id}
+                      role="radio"
+                      aria-checked={active}
+                      aria-label={`${s.n}, ${status}`}
+                      aria-disabled={!affordable}
+                      disabled={!affordable}
+                      whileTap={reduced ? {} : { scale: 0.95 }}
+                      onClick={onClick}
+                      style={{
+                        paddingBlock: 10,
+                        paddingInline: 8,
+                        borderRadius: 12,
+                        border: active
+                          ? `2px solid ${ac}`
+                          : unlocked
+                          ? `1.5px solid ${bd}`
+                          : `1.5px dashed ${bd}`,
+                        background: active ? withAlpha(ac, 6) : cd,
+                        cursor: affordable ? "pointer" : "not-allowed",
+                        opacity: affordable ? 1 : 0.5,
+                        textAlign: "center",
+                      }}
+                    >
+                      <div style={ty.title(active ? ac : unlocked ? t1 : t3)}>{s.n}</div>
+                      {!unlocked && (
+                        <div
+                          style={{
+                            ...ty.caption(ac),
+                            fontWeight: font.weight.black,
+                            marginBlockStart: 3,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 3,
+                          }}
+                        >
+                          <Icon name="sparkle" size={9} color={ac} aria-hidden="true" />
+                          {s.cost}
+                        </div>
+                      )}
+                      {unlocked && active && (
+                        <div
+                          style={{
+                            fontSize: font.size.xs,
+                            fontWeight: font.weight.bold,
+                            color: ac,
+                            marginBlockStart: 2,
+                          }}
+                        >
+                          ACTIVO
+                        </div>
+                      )}
+                      {unlocked && !active && (
+                        <div style={{ fontSize: font.size.xs, color: t3, marginBlockStart: 2 }}>desbloqueado</div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <div style={{ display: "flex", gap: space[1.5] || 6, marginBlockStart: space[4] }}>
+              <motion.button
+                whileTap={reduced ? {} : { scale: 0.96 }}
+                onClick={() => exportData(st)}
+                aria-label="Exportar datos como JSON"
+                style={{
+                  flex: 1,
+                  padding: space[3],
+                  borderRadius: radius.md,
+                  border: `1px solid ${bd}`,
+                  background: cd,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: space[2],
+                }}
+              >
+                <Icon name="export" size={14} color={t2} aria-hidden="true" />
+                <span style={ty.title(t2)}>JSON</span>
+              </motion.button>
+              <motion.button
+                whileTap={reduced ? {} : { scale: 0.96 }}
+                onClick={() => exportNOM035(st)}
+                aria-label="Exportar informe NOM-035"
+                style={{
+                  flex: 1,
+                  padding: space[3],
+                  borderRadius: radius.md,
+                  border: `1.5px solid ${semantic.success}`,
+                  background: withAlpha(semantic.success, 4),
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: space[2],
+                }}
+              >
+                <Icon name="file" size={14} color={semantic.success} aria-hidden="true" />
+                <span style={ty.title(semantic.success)}>NOM-035</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
