@@ -1,54 +1,52 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   STREAK SHIELD — Sistema de protección de racha con urgencia
-   visual progresiva y sugerencia de sesión rápida
-   Base: la aversión a la pérdida es 2.5x más motivadora que
-   la ganancia equivalente (Prospect Theory, Kahneman 1979)
+   STREAK SHIELD — Clinical alert strip.
+   No gradient. No pulsing icon. Hairline accent, single color.
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Icon from "./Icon";
-import { resolveTheme, withAlpha, ty, font, space, radius, semantic } from "../lib/theme";
+import { resolveTheme, radius, semantic, hairline } from "../lib/theme";
+
+const CAPS = { fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" };
 
 export default function StreakShield({ st, isDark, onQuickSession }) {
-  const { border: bd, t1, t3 } = resolveTheme(isDark);
+  const { t1, t2, t3 } = resolveTheme(isDark);
+  const teal = "#0F766E";
 
   const shield = useMemo(() => {
     if (st.streak < 2 || (st.todaySessions || 0) > 0) return null;
-
     const h = new Date().getHours();
     const hoursLeft = 24 - h;
 
-    // Urgency levels based on time remaining and streak value
-    let urgency = "none";
-    let color = semantic.success;
-    let message = "";
-    let icon = "shield";
-
     if (h >= 22) {
-      urgency = "critical";
-      color = semantic.danger;
-      message = `¡${st.streak} días en peligro! Sesión de 60s antes de dormir.`;
-      icon = "alert-triangle";
-    } else if (h >= 20) {
-      urgency = "high";
-      color = semantic.warning;
-      message = `Tu racha de ${st.streak} días necesita una sesión hoy. Quedan ${hoursLeft}h.`;
-      icon = "alert";
-    } else if (h >= 18) {
-      urgency = "medium";
-      color = "#6366F1";
-      message = `Aún no hiciste tu sesión hoy. Racha: ${st.streak} días.`;
-      icon = "clock";
-    } else {
-      return null; // Too early to warn
+      return {
+        urgency: "critical", color: semantic.danger,
+        label: "Cadena en riesgo",
+        message: `${st.streak}d · sesión de 60s antes de dormir.`,
+        hoursLeft,
+        streakValue: Math.round(st.streak * 3.5),
+      };
     }
-
-    // Calculate streak value in V-Cores (loss aversion framing)
-    const streakValue = Math.round(st.streak * 3.5);
-
-    return { urgency, color, message, icon, hoursLeft, streakValue };
+    if (h >= 20) {
+      return {
+        urgency: "high", color: semantic.warning,
+        label: "Acción requerida",
+        message: `${st.streak}d requieren una sesión. Quedan ${hoursLeft}h.`,
+        hoursLeft,
+        streakValue: Math.round(st.streak * 3.5),
+      };
+    }
+    if (h >= 18) {
+      return {
+        urgency: "medium", color: teal,
+        label: "Recordatorio",
+        message: `Sesión pendiente hoy. Cadena: ${st.streak}d.`,
+        hoursLeft,
+        streakValue: Math.round(st.streak * 3.5),
+      };
+    }
+    return null;
   }, [st.streak, st.todaySessions]);
 
   if (!shield) return null;
@@ -56,98 +54,50 @@ export default function StreakShield({ st, isDark, onQuickSession }) {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
         style={{
           marginBottom: 14,
-          borderRadius: 16,
+          borderRadius: radius.lg,
           overflow: "hidden",
-          border: `1.5px solid ${shield.color}25`,
-          background: `linear-gradient(135deg, ${shield.color}08, ${shield.color}03)`,
+          background: isDark ? "#141820" : "#FFFFFF",
+          border: hairline(isDark),
+          borderLeft: `2px solid ${shield.color}`,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "12px 14px",
-          }}
-        >
-          <motion.div
-            animate={
-              shield.urgency === "critical"
-                ? { scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }
-                : {}
-            }
-            transition={
-              shield.urgency === "critical"
-                ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
-                : {}
-            }
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 11,
-              background: shield.color + "15",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Icon name={shield.icon} size={16} color={shield.color} />
-          </motion.div>
-
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: shield.color,
-                lineHeight: 1.4,
-              }}
-            >
-              {shield.message}
-            </div>
-            <div style={{ fontSize: 10, color: t3, marginTop: 2 }}>
-              Valor de racha: ~{shield.streakValue} V-Cores acumulados
-            </div>
+        <div style={{ padding: "14px 18px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ ...CAPS, color: shield.color }}>{shield.label}</span>
+            <span style={{ ...CAPS, color: t3, fontVariantNumeric: "tabular-nums" }}>{shield.hoursLeft}h</span>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 400, color: t1, lineHeight: 1.5, letterSpacing: "-0.01em" }}>
+            {shield.message}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 400, color: t3, marginTop: 8, letterSpacing: "0.01em" }}>
+            Valor acumulado · {shield.streakValue} V-Cores
           </div>
         </div>
 
-        {/* Quick session CTA */}
         {shield.urgency === "critical" && (
-          <motion.button
-            whileTap={{ scale: 0.97 }}
+          <button
             onClick={onQuickSession}
             style={{
               width: "100%",
-              padding: "10px",
-              background: shield.color + "10",
+              padding: "14px 18px",
+              background: "transparent",
               border: "none",
-              borderTop: `1px solid ${shield.color}15`,
+              borderTop: hairline(isDark),
               cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              minHeight: 52,
+              color: teal,
+              ...CAPS,
             }}
           >
-            <Icon name="bolt" size={12} color={shield.color} />
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: shield.color,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-              }}
-            >
-              Sesión rápida 60s — Salva tu racha
-            </span>
-          </motion.button>
+            Iniciar sesión de 60s
+          </button>
         )}
       </motion.div>
     </AnimatePresence>
