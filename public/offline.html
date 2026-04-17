@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>BIO-IGNICIÓN — Sin conexión</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg"/>
+  <meta name="theme-color" content="#059669"/>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Segoe UI",Manrope,sans-serif;background:#0B0E14;color:#ECFDF5}
+    main{min-height:100dvh;display:grid;place-items:center;padding:24px}
+    .card{max-width:420px;text-align:center;padding:32px;border:1px solid #064E3B;border-radius:24px;background:rgba(5,150,105,.08);backdrop-filter:blur(12px)}
+    h1{margin:0 0 8px;font-size:22px;letter-spacing:.5px}
+    p{margin:0 0 20px;color:#A7F3D0;line-height:1.5}
+    button{appearance:none;border:0;border-radius:999px;padding:12px 22px;font-weight:700;
+      background:linear-gradient(135deg,#059669,#10B981);color:#fff;cursor:pointer;font-size:15px}
+    button:focus-visible{outline:3px solid #34D399;outline-offset:3px}
+    .orb{width:96px;height:96px;margin:0 auto 16px;border-radius:50%;
+      background:radial-gradient(circle at 50% 40%,#10B981,#064E3B 70%);
+      box-shadow:0 0 40px rgba(16,185,129,.5);animation:b 3.6s ease-in-out infinite}
+    @keyframes b{0%,100%{transform:scale(.92)}50%{transform:scale(1.06)}}
+    .muted{font-size:12px;color:#6EE7B7;margin-top:16px;opacity:.7}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card" role="alert" aria-live="polite">
+      <div class="orb" aria-hidden="true"></div>
+      <h1>Sin conexión</h1>
+      <p>Tu sesión queda en pausa. Cuando vuelvas online, sincronizaremos todo automáticamente.</p>
+      <button type="button" onclick="location.reload()" aria-label="Reintentar">Reintentar</button>
+      <div class="muted">BIO-IGNICIÓN · Modo offline activo</div>
+    </section>
+  </main>
+  <script>
+    addEventListener('online', () => location.reload());
+  </script>
+</body>
+</html>
