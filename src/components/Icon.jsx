@@ -86,7 +86,7 @@ const ICON_MAP = {
   "alert-triangle": AlertTriangle,
 };
 
-export default function Icon({ name, size = 16, color = "#64748B", className = "", strokeWidth = 1.8 }) {
+export default function Icon({ name, size = 18, color = "#64748B", className = "", strokeWidth = 1 }) {
   const Component = ICON_MAP[name];
   if (!Component) return null;
   return <Component size={size} color={color} className={className} strokeWidth={strokeWidth} />;
