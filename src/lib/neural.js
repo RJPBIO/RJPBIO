@@ -363,8 +363,10 @@ export function calcProtocolCorrelations(st) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ADVANCED NEURAL AI — Motor adaptativo v2
-   Funciones de IA avanzada para recomendación y análisis
+   MOTOR HEURÍSTICO ADAPTATIVO — v2
+   Reglas estadísticas y pesos deterministas (no modelo ML entrenado).
+   Decisiones basadas en: hora, mood, historial, ritmo circadiano,
+   burnout index y carga cognitiva estimada.
    ═══════════════════════════════════════════════════════════════ */
 
 // ─── Adaptive Protocol Engine ────────────────────────────
