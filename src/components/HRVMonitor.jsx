@@ -13,9 +13,11 @@ import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
 import { isBleSupported, createHrvSession } from "../lib/ble-hrv";
 import { hrvSummary } from "../lib/hrv";
 
-const TARGET_DURATION_SEC = 300;
+const FULL_DURATION_SEC = 300;
+const QUICK_DURATION_SEC = 60;
 
-export default function HRVMonitor({ show, isDark, onClose, onComplete }) {
+export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMode = false }) {
+  const TARGET_DURATION_SEC = quickMode ? QUICK_DURATION_SEC : FULL_DURATION_SEC;
   const reduced = useReducedMotion();
   const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const titleId = useId();
