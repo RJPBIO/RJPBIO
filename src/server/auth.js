@@ -43,10 +43,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       authorization: { params: { hd: "*" } },
     }),
-    Email({
+    ...(process.env.EMAIL_SERVER ? [Email({
       server: process.env.EMAIL_SERVER,
       from: process.env.EMAIL_FROM || "no-reply@bio-ignicion.app",
-    }),
+    })] : []),
     Credentials({
       name: "email-mfa",
       credentials: {
