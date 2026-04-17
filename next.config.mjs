@@ -15,7 +15,6 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
