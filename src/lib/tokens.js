@@ -7,9 +7,10 @@
 
 // ─── Typography Scale ────────────────────────────────────
 // Modular scale, base 12px, ratio ~1.2
+// Font families bind to next/font CSS variables declared in layout.js.
 export const font = {
-  family: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
+  family: "var(--font-sans), 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  mono: "var(--font-mono), 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
 
   size: {
     xs: 9,
@@ -98,6 +99,22 @@ export const brand = {
   accent: "#0D9488",
 };
 
+// ─── Bio-Signal Palette (identity) ───────────────────────
+// Bioluminescent accents that layer ON TOP of brand/protocol colors.
+// Used for: ignition moments, signal indicators, dataviz glow,
+// neural-spark glyph. These are what make the app look like an
+// instrument, not a wellness template.
+export const bioSignal = {
+  phosphorCyan: "#22D3EE",   // primary bio-electric signal
+  ghostCyan:    "#A5F3FC",   // pale halo
+  neuralViolet: "#8B5CF6",   // brain/cognition signal
+  plasmaPink:   "#F472B6",   // ignition peak
+  signalAmber:  "#FBBF24",   // readiness/warning
+  plasmaRed:    "#F43F5E",   // critical
+  deepField:    "#050810",   // pre-ignition void (darker than bg)
+  ignition:     "#FDE68A",   // the spark itself (pale gold)
+};
+
 // ─── Semantic Colors ─────────────────────────────────────
 export const semantic = {
   success: "#059669",
@@ -175,6 +192,21 @@ export const duration = {
   normal: "0.25s",
   slow: "0.4s",
   slower: "0.8s",
+};
+
+// ─── Motion Vocabulary (identity) ────────────────────────
+// Signature motion: everything emanates from the neural core.
+// These are the reusable springs/curves that define the app's feel.
+// Don't invent new springs in components — reach for these first.
+export const motion = {
+  // Breath-like spring: slow, organic, used for core + halos
+  breath: { type: "spring", stiffness: 30, damping: 20, mass: 1.2 },
+  // Ignition spring: firm, punctual, used for bursts + flashes
+  ignition: { type: "spring", stiffness: 220, damping: 18, mass: 0.9 },
+  // Emanation: used for ripples/rings radiating from a point
+  emanate: { duration: 1.4, ease: [0.16, 1, 0.3, 1] },
+  // Tap: micro-response for button feedback
+  tap: { type: "spring", stiffness: 500, damping: 30 },
 };
 
 // ─── Z-Index Scale ───────────────────────────────────────
