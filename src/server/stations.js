@@ -24,13 +24,22 @@ export async function processTap({ stationId, t, n, sig, userId, anonId, timezon
 
   const v = verifyTapParams({ stationId, t, n, sig, signingKey: station.signingKey });
   if (!v.ok) {
-    await logTap(orm, station, { userId, anonId, slot: SLOTS.ADHOC, status: `rejected:${v.reason}`, ip, ua });
+    await logTap(orm, station, { userId, anonId, slot: SLOTS.ADHOC, status: `rejected:${v.reason}`, nonce: n, ip, ua });
     return { ok: false, reason: v.reason, station };
+  }
+
+  // Replay guard: el mismo nonce no puede consumirse dos veces para la
+  // misma estación. Si la inserción con UNIQUE(stationId, nonce) colisiona,
+  // tratamos como replay (URL ya usada desde otro dispositivo).
+  const existing = await orm.stationTap.findFirst({ where: { stationId, nonce: n } });
+  if (existing) {
+    await logTap(orm, station, { userId, anonId, slot: SLOTS.ADHOC, status: "rejected:replay", nonce: null, ip, ua });
+    return { ok: false, reason: "replay", station };
   }
 
   const slot = detectSlot(new Date(), timezone || "America/Mexico_City");
   if (!slotAllowed(station.policy, slot)) {
-    await logTap(orm, station, { userId, anonId, slot, status: "rejected:slot", ip, ua });
+    await logTap(orm, station, { userId, anonId, slot, status: "rejected:slot", nonce: n, ip, ua });
     return { ok: false, reason: "slot_not_allowed", station, slot };
   }
 
@@ -41,23 +50,24 @@ export async function processTap({ stationId, t, n, sig, userId, anonId, timezon
       orderBy: { ts: "desc" },
     });
     if (recent) {
-      await logTap(orm, station, { userId, anonId, slot, status: "rejected:cooldown", ip, ua });
+      // nonce:null aquí — el cooldown no consume el nonce (que sigue bloqueado arriba).
+      await logTap(orm, station, { userId, anonId, slot, status: "rejected:cooldown", nonce: null, ip, ua });
       return { ok: false, reason: "cooldown", station, slot };
     }
   }
 
-  await logTap(orm, station, { userId, anonId, slot, status: "ok", ip, ua });
+  await logTap(orm, station, { userId, anonId, slot, status: "ok", nonce: n, ip, ua });
   await orm.station.update({ where: { id: station.id }, data: { lastTapAt: new Date() } });
   return { ok: true, station, slot };
 }
 
-async function logTap(orm, station, { userId, anonId, slot, status, ip, ua }) {
+async function logTap(orm, station, { userId, anonId, slot, status, nonce, ip, ua }) {
   try {
     await orm.stationTap.create({
-      data: { orgId: station.orgId, stationId: station.id, userId, anonId, slot, status, ip, ua },
+      data: { orgId: station.orgId, stationId: station.id, userId, anonId, slot, status, nonce: nonce || null, ip, ua },
     });
   } catch {
-    // No bloquear el flujo principal si el log falla.
+    // No bloquear el flujo principal si el log falla (ej. colisión unique = replay).
   }
 }
 
