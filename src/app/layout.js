@@ -1,4 +1,4 @@
-import { Manrope } from "next/font/google";
+import { Manrope, JetBrains_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
@@ -9,6 +9,15 @@ const manrope = Manrope({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
+  variable: "--font-sans",
+});
+
+// Signature mono — used for biométric numerals (countdown, V-Cores, HRV, %)
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "800"],
+  display: "swap",
+  variable: "--font-mono",
 });
 
 const RTL_LOCALES = new Set(["ar", "he", "fa", "ur"]);
@@ -77,7 +86,7 @@ export default async function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       </head>
       <body
-        className={manrope.className}
+        className={`${manrope.variable} ${jetbrains.variable} ${manrope.className}`}
         style={{ margin: 0, overscrollBehavior: "none" }}
       >
         <a
