@@ -1,4 +1,8 @@
 "use client";
+/* ═══════════════════════════════════════════════════════════════
+   PROFILE VIEW — operator identity + analytics
+   ═══════════════════════════════════════════════════════════════ */
+
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
@@ -9,8 +13,11 @@ import {
   calcNeuralFingerprint, suggestOptimalTime, analyzeStreakChain,
 } from "../lib/neural";
 import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { semantic } from "../lib/tokens";
+import { useReducedMotion } from "../lib/a11y";
 
 export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onShowHist, onShowCalibration }) {
+  const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   const lv = gL(st.totalSessions);
@@ -18,103 +25,461 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
   const nLv = nxtLv(st.totalSessions);
   const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
   const nSt = getStatus(perf);
-  const avgMood = useMemo(() => { const ml = st.moodLog || []; if (!ml.length) return 0; return +(ml.slice(-7).reduce((a, m) => a + m.mood, 0) / Math.min(ml.length, 7)).toFixed(1); }, [st.moodLog]);
+  const avgMood = useMemo(() => {
+    const ml = st.moodLog || [];
+    if (!ml.length) return 0;
+    return +(ml.slice(-7).reduce((a, m) => a + m.mood, 0) / Math.min(ml.length, 7)).toFixed(1);
+  }, [st.moodLog]);
+
+  const subtle = isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)";
 
   return (
-    <div style={{ padding: "14px 20px 180px" }}>
-      {/* Profile Hero */}
-      <div style={{ textAlign: "center", marginBottom: 20, marginTop: 8, position: "relative" }}>
-        <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle,${ac}08,transparent)`, filter: "blur(30px)", pointerEvents: "none" }} />
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200 }}>
-          <div style={{ width: 84, height: 84, borderRadius: "50%", margin: "0 auto 12px", background: `linear-gradient(135deg,${ac},#6366F1)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 30px ${ac}25,0 0 0 3px ${cd},0 0 0 5px ${ac}20`, position: "relative" }}>
-            <Icon name="user" size={32} color="#fff" />
-            <div style={{ position: "absolute", bottom: -3, right: -3, width: 26, height: 26, borderRadius: radius.full, background: `linear-gradient(135deg,${lv.c},${lv.c}CC)`, display: "flex", alignItems: "center", justifyContent: "center", border: `3px solid ${cd}`, boxShadow: `0 2px 8px ${lv.c}40` }}><span style={{ fontSize: font.size.sm, fontWeight: font.weight.black, color: "#fff" }}>{lv.n[0]}</span></div>
+    <section role="region" aria-label="Perfil del operador" style={{ paddingBlock: "14px 180px", paddingInline: 20 }}>
+      <header style={{ textAlign: "center", marginBlockEnd: 20, marginBlockStart: 8, position: "relative" }}>
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            insetBlockStart: 0,
+            insetInlineStart: "50%",
+            transform: "translateX(-50%)",
+            inlineSize: 200,
+            blockSize: 200,
+            borderRadius: "50%",
+            background: `radial-gradient(circle,${withAlpha(ac, 8)},transparent)`,
+            filter: "blur(30px)",
+            pointerEvents: "none",
+          }}
+        />
+        <motion.div
+          initial={reduced ? { opacity: 1 } : { scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 200 }}
+        >
+          <div
+            aria-label={`Nivel ${lv.n}`}
+            style={{
+              inlineSize: 84,
+              blockSize: 84,
+              borderRadius: "50%",
+              margin: "0 auto 12px",
+              background: `linear-gradient(135deg,${ac},#6366F1)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: `0 8px 30px ${withAlpha(ac, 25)},0 0 0 3px ${cd},0 0 0 5px ${withAlpha(ac, 20)}`,
+              position: "relative",
+            }}
+          >
+            <Icon name="user" size={32} color="#fff" aria-hidden="true" />
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                insetBlockEnd: -3,
+                insetInlineEnd: -3,
+                inlineSize: 26,
+                blockSize: 26,
+                borderRadius: radius.full,
+                background: `linear-gradient(135deg,${lv.c},${lv.c}CC)`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: `3px solid ${cd}`,
+                boxShadow: `0 2px 8px ${withAlpha(lv.c, 40)}`,
+              }}
+            >
+              <span style={{ fontSize: font.size.sm, fontWeight: font.weight.black, color: "#fff" }}>{lv.n[0]}</span>
+            </div>
           </div>
         </motion.div>
-        <div style={ty.heroHeading(t1)}>Operador Neural</div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: space[1.5], padding: `${space[1]}px ${space[4]}px`, background: withAlpha(nSt.color, 4), borderRadius: radius.xl, border: `1px solid ${withAlpha(nSt.color, 8)}` }}><div style={{ width: 5, height: 5, borderRadius: radius.full, background: nSt.color, animation: "shimDot 2s ease infinite" }} /><span style={ty.title(nSt.color)}>{nSt.label} · {lv.n}</span></div>
-      </div>
-
-      {/* Stats hero card */}
-      <div style={{ background: `linear-gradient(145deg,${cd},${ac}05)`, borderRadius: 20, padding: "18px 16px", marginBottom: 12, border: `1px solid ${bd}`, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: ac + "06" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-          {[{ v: st.totalSessions, l: "Sesiones", c: ac, ic: "bolt" }, { v: `${Math.floor((st.totalTime || 0) / 3600)}h${Math.floor(((st.totalTime || 0) % 3600) / 60)}m`, l: "Tiempo", c: t1, ic: "clock" }, { v: st.streak, l: "Racha", c: "#D97706", ic: "fire" }].map((m, i) => (
-            <div key={i} style={{ textAlign: "center", padding: "8px", background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: 14 }}>
-              <Icon name={m.ic} size={14} color={m.c} />
-              <div style={ty.metric(m.c, font.size["2xl"])}>{m.v}</div>
-              <div style={{ ...ty.label(t3), fontSize: font.size.xs, letterSpacing: font.tracking.wider, marginTop: 3 }}>{m.l}</div>
-            </div>))}
+        <h2 style={ty.heroHeading(t1)}>Operador Neural</h2>
+        <div
+          role="status"
+          aria-label={`Estado ${nSt.label}, nivel ${lv.n}`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            marginBlockStart: space[1.5] || 6,
+            paddingBlock: space[1],
+            paddingInline: space[4],
+            background: withAlpha(nSt.color, 4),
+            borderRadius: radius.xl,
+            border: `1px solid ${withAlpha(nSt.color, 8)}`,
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              inlineSize: 5,
+              blockSize: 5,
+              borderRadius: radius.full,
+              background: nSt.color,
+              animation: reduced ? "none" : "shimDot 2s ease infinite",
+            }}
+          />
+          <span style={ty.title(nSt.color)}>{nSt.label} · {lv.n}</span>
         </div>
-        <div style={{ padding: "10px 12px", background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)", borderRadius: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+      </header>
+
+      <article
+        aria-label={`Estadísticas: ${st.totalSessions} sesiones, racha ${st.streak} días`}
+        style={{
+          background: `linear-gradient(145deg,${cd},${withAlpha(ac, 5)})`,
+          borderRadius: 20,
+          padding: "18px 16px",
+          marginBlockEnd: 12,
+          border: `1px solid ${bd}`,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            insetBlockStart: -20,
+            insetInlineEnd: -20,
+            inlineSize: 80,
+            blockSize: 80,
+            borderRadius: "50%",
+            background: withAlpha(ac, 6),
+          }}
+        />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBlockEnd: 14 }}>
+          {[
+            { v: st.totalSessions, l: "Sesiones", c: ac, ic: "bolt" },
+            {
+              v: `${Math.floor((st.totalTime || 0) / 3600)}h${Math.floor(((st.totalTime || 0) % 3600) / 60)}m`,
+              l: "Tiempo",
+              c: t1,
+              ic: "clock",
+            },
+            { v: st.streak, l: "Racha", c: semantic.warning, ic: "fire" },
+          ].map((m, i) => (
+            <div
+              key={i}
+              role="group"
+              aria-label={`${m.l}: ${m.v}`}
+              style={{ textAlign: "center", padding: 8, background: subtle, borderRadius: 14 }}
+            >
+              <Icon name={m.ic} size={14} color={m.c} aria-hidden="true" />
+              <div style={ty.metric(m.c, font.size["2xl"])}>{m.v}</div>
+              <div
+                style={{
+                  ...ty.label(t3),
+                  fontSize: font.size.xs,
+                  letterSpacing: font.tracking.wider,
+                  marginBlockStart: 3,
+                }}
+              >
+                {m.l}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div
+          role="group"
+          aria-label={`Progreso de nivel: ${lPct}%${nLv ? ` hacia ${nLv.n}` : ""}`}
+          style={{ padding: "10px 12px", background: subtle, borderRadius: 12 }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBlockEnd: 6 }}>
             <span style={ty.title(lv.c)}>{lv.n}</span>
             <span style={ty.caption(t3)}>{nLv ? `→ ${nLv.n}` : ""} · {lPct}%</span>
           </div>
-          <div style={{ height: 6, background: bd, borderRadius: 6, overflow: "hidden" }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: lPct + "%" }} transition={{ duration: 1, ease: "easeOut" }} style={{ height: "100%", borderRadius: 6, background: `linear-gradient(90deg,${lv.c},${lv.c}BB)`, boxShadow: `0 0 8px ${lv.c}30` }} />
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={lPct}
+            style={{ blockSize: 6, background: bd, borderRadius: 6, overflow: "hidden" }}
+          >
+            <motion.div
+              initial={reduced ? { width: lPct + "%" } : { width: 0 }}
+              animate={{ width: lPct + "%" }}
+              transition={reduced ? { duration: 0 } : { duration: 1, ease: "easeOut" }}
+              style={{
+                blockSize: "100%",
+                borderRadius: 6,
+                background: `linear-gradient(90deg,${lv.c},${lv.c}BB)`,
+                boxShadow: `0 0 8px ${withAlpha(lv.c, 30)}`,
+              }}
+            />
           </div>
         </div>
-      </div>
+      </article>
 
-      {/* Neural Fingerprint */}
-      {(() => { const fp = calcNeuralFingerprint(st); if (!fp) return null; return (
-        <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2.5] }}><Icon name="fingerprint" size={12} color={t3} /><span style={ty.label(t3)}>Tu Firma Neural</span></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
-            {[{ l: "Hora pico", v: `${fp.peakHour}:00` }, { l: "Mejor protocolo", v: fp.bestProto, c: ac }, { l: "Calidad", v: `${fp.avgQuality}%`, c: fp.avgQuality >= 70 ? "#059669" : "#D97706" }, { l: "Adaptación", v: fp.adaptationRate > 0 ? `+${fp.adaptationRate}` : `${fp.adaptationRate}`, c: fp.adaptationRate > 0 ? "#059669" : "#DC2626" }].map((d, i) => (
-              <div key={i} style={{ background: isDark ? "#1A1E28" : "#F8FAFC", borderRadius: 12, padding: "10px" }}>
-                <div style={ty.caption(t3)}>{d.l}</div>
-                <div style={ty.metric(d.c || t1, font.size.lg)}>{d.v}</div>
-              </div>
-            ))}
+      {(() => {
+        const fp = calcNeuralFingerprint(st);
+        if (!fp) return null;
+        return (
+          <article
+            aria-label="Firma neural"
+            style={{
+              background: cd,
+              borderRadius: 16,
+              padding: 14,
+              marginBlockEnd: 10,
+              border: `1px solid ${bd}`,
+            }}
+          >
+            <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2.5] || 10 }}>
+              <Icon name="fingerprint" size={12} color={t3} aria-hidden="true" />
+              <h3 style={ty.label(t3)}>Tu Firma Neural</h3>
+            </header>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
+              {[
+                { l: "Hora pico", v: `${fp.peakHour}:00` },
+                { l: "Mejor protocolo", v: fp.bestProto, c: ac },
+                {
+                  l: "Calidad",
+                  v: `${fp.avgQuality}%`,
+                  c: fp.avgQuality >= 70 ? semantic.success : semantic.warning,
+                },
+                {
+                  l: "Adaptación",
+                  v: fp.adaptationRate > 0 ? `+${fp.adaptationRate}` : `${fp.adaptationRate}`,
+                  c: fp.adaptationRate > 0 ? semantic.success : semantic.danger,
+                },
+              ].map((d, i) => (
+                <div
+                  key={i}
+                  role="group"
+                  aria-label={`${d.l}: ${d.v}`}
+                  style={{ background: isDark ? "#1A1E28" : "#F8FAFC", borderRadius: 12, padding: 10 }}
+                >
+                  <div style={ty.caption(t3)}>{d.l}</div>
+                  <div style={ty.metric(d.c || t1, font.size.lg)}>{d.v}</div>
+                </div>
+              ))}
+            </div>
+          </article>
+        );
+      })()}
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBlockEnd: 10 }}>
+        <article
+          aria-label={`V-Cores: ${st.vCores || 0}`}
+          style={{
+            background: withAlpha(ac, 6),
+            borderRadius: 14,
+            padding: "14px 12px",
+            border: `1px solid ${withAlpha(ac, 10)}`,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 3, marginBlockEnd: 2 }}>
+            <Icon name="sparkle" size={10} color={ac} aria-hidden="true" />
+            <span style={ty.label(ac)}>V-Cores</span>
           </div>
-        </div>); })()}
-
-      {/* V-Cores + Mood */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 10 }}>
-        <div style={{ background: ac + "06", borderRadius: 14, padding: "14px 12px", border: `1px solid ${ac}10` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 2 }}><Icon name="sparkle" size={10} color={ac} /><span style={ty.label(ac)}>V-Cores</span></div>
           <AnimatedNumber value={st.vCores || 0} color={ac} size={24} />
-        </div>
-        <div style={{ background: cd, borderRadius: 14, padding: "14px 12px", border: `1px solid ${bd}` }}>
-          <div style={{ ...ty.label(t3), marginBottom: 2 }}>Mood</div>
-          {avgMood > 0 ? <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><Icon name={MOODS[Math.round(avgMood) - 1]?.icon || "neutral"} size={18} color={MOODS[Math.round(avgMood) - 1]?.color || t3} /><span style={ty.metric(MOODS[Math.round(avgMood) - 1]?.color || t3)}>{avgMood}</span></div> : <span style={ty.body(t3)}>Sin datos</span>}
-        </div>
+        </article>
+        <article
+          aria-label={avgMood > 0 ? `Ánimo promedio: ${avgMood} sobre 5` : "Ánimo: sin datos"}
+          style={{
+            background: cd,
+            borderRadius: 14,
+            padding: "14px 12px",
+            border: `1px solid ${bd}`,
+          }}
+        >
+          <div style={{ ...ty.label(t3), marginBlockEnd: 2 }}>Mood</div>
+          {avgMood > 0 ? (
+            <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
+              <Icon
+                name={MOODS[Math.round(avgMood) - 1]?.icon || "neutral"}
+                size={18}
+                color={MOODS[Math.round(avgMood) - 1]?.color || t3}
+                aria-hidden="true"
+              />
+              <span style={ty.metric(MOODS[Math.round(avgMood) - 1]?.color || t3)}>{avgMood}</span>
+            </div>
+          ) : (
+            <span style={ty.body(t3)}>Sin datos</span>
+          )}
+        </article>
       </div>
 
-      {/* Optimal Time Suggestion */}
-      {(() => { const ot = suggestOptimalTime(st); if (!ot || !ot.best) return null; return (
-        <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2] }}><Icon name="clock" size={12} color={t3} /><span style={ty.label(t3)}>Hora Óptima</span></div>
-          <div style={ty.body(t2)}>{ot.recommendation}</div>
-        </div>); })()}
+      {(() => {
+        const ot = suggestOptimalTime(st);
+        if (!ot || !ot.best) return null;
+        return (
+          <article
+            aria-label="Hora óptima para entrenar"
+            style={{
+              background: cd,
+              borderRadius: 16,
+              padding: 14,
+              marginBlockEnd: 10,
+              border: `1px solid ${bd}`,
+            }}
+          >
+            <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
+              <Icon name="clock" size={12} color={t3} aria-hidden="true" />
+              <h3 style={ty.label(t3)}>Hora Óptima</h3>
+            </header>
+            <p style={ty.body(t2)}>{ot.recommendation}</p>
+          </article>
+        );
+      })()}
 
-      {/* Streak Chain Analysis */}
-      {(() => { const sc = analyzeStreakChain(st); if (!sc) return null; return (
-        <div style={{ background: cd, borderRadius: 16, padding: "14px", marginBottom: 10, border: `1px solid ${bd}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBottom: space[2] }}><Icon name="fire" size={12} color="#D97706" /><span style={ty.label(t3)}>Análisis de Rachas</span></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2], marginBottom: space[2] }}>
-            <div style={{ textAlign: "center" }}><div style={ty.metric("#D97706", font.size.xl)}>{sc.maxStreak}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>récord</div></div>
-            <div style={{ textAlign: "center" }}><div style={ty.metric(t1, font.size.xl)}>{sc.avgStreak}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>promedio</div></div>
-            <div style={{ textAlign: "center" }}><div style={ty.metric("#6366F1", font.size.xl)}>{sc.avgBreakPoint}d</div><div style={{ fontSize: font.size.xs, color: t3 }}>punto quiebre</div></div>
+      {(() => {
+        const sc = analyzeStreakChain(st);
+        if (!sc) return null;
+        return (
+          <article
+            aria-label="Análisis de rachas"
+            style={{
+              background: cd,
+              borderRadius: 16,
+              padding: 14,
+              marginBlockEnd: 10,
+              border: `1px solid ${bd}`,
+            }}
+          >
+            <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
+              <Icon name="fire" size={12} color={semantic.warning} aria-hidden="true" />
+              <h3 style={ty.label(t3)}>Análisis de Rachas</h3>
+            </header>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: space[2],
+                marginBlockEnd: space[2],
+              }}
+            >
+              <div role="group" aria-label={`Récord: ${sc.maxStreak} días`} style={{ textAlign: "center" }}>
+                <div style={ty.metric(semantic.warning, font.size.xl)}>{sc.maxStreak}d</div>
+                <div style={{ fontSize: font.size.xs, color: t3 }}>récord</div>
+              </div>
+              <div role="group" aria-label={`Promedio: ${sc.avgStreak} días`} style={{ textAlign: "center" }}>
+                <div style={ty.metric(t1, font.size.xl)}>{sc.avgStreak}d</div>
+                <div style={{ fontSize: font.size.xs, color: t3 }}>promedio</div>
+              </div>
+              <div role="group" aria-label={`Punto de quiebre: ${sc.avgBreakPoint} días`} style={{ textAlign: "center" }}>
+                <div style={ty.metric("#6366F1", font.size.xl)}>{sc.avgBreakPoint}d</div>
+                <div style={{ fontSize: font.size.xs, color: t3 }}>punto quiebre</div>
+              </div>
+            </div>
+            <p style={ty.body(t2)}>{sc.prediction}</p>
+          </article>
+        );
+      })()}
+
+      <div
+        role="group"
+        aria-label="Acciones de perfil"
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBlockEnd: 10 }}
+      >
+        <motion.button
+          whileTap={reduced ? {} : { scale: 0.95 }}
+          onClick={onShowSettings}
+          aria-label="Abrir ajustes"
+          style={{
+            padding: 14,
+            borderRadius: 16,
+            border: `1px solid ${bd}`,
+            background: cd,
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              inlineSize: 36,
+              blockSize: 36,
+              borderRadius: 11,
+              background: isDark ? "#1A1E28" : "#F1F5F9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icon name="gear" size={16} color={t3} />
           </div>
-          <div style={ty.body(t2)}>{sc.prediction}</div>
-        </div>); })()}
-
-      {/* Actions grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-        <motion.button whileTap={{ scale: .95 }} onClick={onShowSettings} style={{ padding: "14px", borderRadius: 16, border: `1px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 11, background: isDark ? "#1A1E28" : "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="gear" size={16} color={t3} /></div>
           <span style={ty.caption(t2)}>Ajustes</span>
         </motion.button>
-        <motion.button whileTap={{ scale: .95 }} onClick={onShowHist} style={{ padding: `${space[4]}px`, borderRadius: radius.lg, border: `1px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: space[1.5] }}>
-          <div style={{ width: 36, height: 36, borderRadius: radius.sm + 3, background: isDark ? "#1A1E28" : "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="clock" size={16} color={t3} /></div>
+        <motion.button
+          whileTap={reduced ? {} : { scale: 0.95 }}
+          onClick={onShowHist}
+          aria-label="Abrir historial de sesiones"
+          style={{
+            padding: space[4],
+            borderRadius: radius.lg,
+            border: `1px solid ${bd}`,
+            background: cd,
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: space[1.5] || 6,
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              inlineSize: 36,
+              blockSize: 36,
+              borderRadius: radius.sm + 3,
+              background: isDark ? "#1A1E28" : "#F1F5F9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icon name="clock" size={16} color={t3} />
+          </div>
           <span style={ty.caption(t2)}>Historial</span>
         </motion.button>
       </div>
-      <motion.button whileTap={{ scale: .95 }} onClick={onShowCalibration} style={{ width: "100%", padding: `${space[3]}px`, borderRadius: radius.lg, border: `1.5px solid ${withAlpha(ac, 12)}`, background: `linear-gradient(135deg,${withAlpha(ac, 4)},${withAlpha(ac, 2)})`, color: ac, ...ty.title(ac), cursor: "pointer", marginBottom: space[2], display: "flex", alignItems: "center", justifyContent: "center", gap: space[1.5] }}><Icon name="radar" size={14} color={ac} />Recalibrar Baseline Neural</motion.button>
-      <button onClick={() => { if (typeof window !== "undefined" && window.confirm("¿Reiniciar todos los datos?")) { setSt({ ...DS, weekNum: getWeekNum() }); } }} style={{ width: "100%", padding: `${space[3]}px`, borderRadius: radius.lg, border: "1px solid #FEE2E2", background: isDark ? "#1A0A0A" : "#FFF5F5", color: "#DC2626", ...ty.caption("#DC2626"), cursor: "pointer" }}>Reiniciar Datos</button>
-    </div>
+      <motion.button
+        whileTap={reduced ? {} : { scale: 0.95 }}
+        onClick={onShowCalibration}
+        aria-label="Recalibrar baseline neural"
+        style={{
+          inlineSize: "100%",
+          padding: space[3],
+          borderRadius: radius.lg,
+          border: `1.5px solid ${withAlpha(ac, 12)}`,
+          background: `linear-gradient(135deg,${withAlpha(ac, 4)},${withAlpha(ac, 2)})`,
+          color: ac,
+          ...ty.title(ac),
+          cursor: "pointer",
+          marginBlockEnd: space[2],
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: space[1.5] || 6,
+        }}
+      >
+        <Icon name="radar" size={14} color={ac} aria-hidden="true" />
+        Recalibrar Baseline Neural
+      </motion.button>
+      <button
+        onClick={() => {
+          if (typeof window !== "undefined" && window.confirm("¿Reiniciar todos los datos?")) {
+            setSt({ ...DS, weekNum: getWeekNum() });
+          }
+        }}
+        aria-label="Reiniciar todos los datos"
+        style={{
+          inlineSize: "100%",
+          padding: space[3],
+          borderRadius: radius.lg,
+          border: `1px solid ${withAlpha(semantic.danger, 20)}`,
+          background: isDark ? "#1A0A0A" : withAlpha(semantic.danger, 4),
+          color: semantic.danger,
+          ...ty.caption(semantic.danger),
+          cursor: "pointer",
+        }}
+      >
+        Reiniciar Datos
+      </button>
+    </section>
   );
 }
