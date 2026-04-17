@@ -139,7 +139,7 @@ export default function BioIgnicion(){
     let userId=null;
     try{
       const r=await Promise.race([
-        fetch("/api/auth/session",{credentials:"same-origin"}).then(r=>r.ok?r.json():null),
+        fetch("/api/auth/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),
         new Promise((res)=>setTimeout(()=>res(null),800)),
       ]);
       userId=r?.user?.id??null;
@@ -159,6 +159,12 @@ export default function BioIgnicion(){
     else if(!l.onboardingTourComplete){setShowTour(true);}
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
   })();return()=>{cancelled=true;if(fallbackTO)clearTimeout(fallbackTO);};},[]);
+
+  // ═══ SESSION RE-CHECK EN VISIBILITY ═══
+  // Si el usuario hizo login/logout en otra pestaña mientras esta quedó en
+  // background, al volver debemos detectar el cambio de userId y re-inicializar
+  // el store para no mezclar datos de dos cuentas en la misma pestaña.
+  useEffect(()=>{if(typeof document==="undefined")return;let busy=false;async function recheck(){if(busy)return;if(document.visibilityState!=="visible")return;busy=true;try{const r=await Promise.race([fetch("/api/auth/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),1200))]);const nextId=r?.user?.id??null;const curId=useStore.getState()._userId??null;if(nextId!==curId){await store.init({userId:nextId});setSt_(useStore.getState());}}catch{}finally{busy=false;}}document.addEventListener("visibilitychange",recheck);return()=>document.removeEventListener("visibilitychange",recheck);},[]);
 
   useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>{const nv=!v;uiSound[nv?"open":"close"](st.soundOn);return nv;});}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[st.soundOn]);
 
