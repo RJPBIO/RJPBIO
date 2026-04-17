@@ -1,87 +1,73 @@
 /* ═══════════════════════════════════════════════════════════════
-   BIO-IGNICIÓN — ZUSTAND STORE v2
-   Gestión centralizada de estado con persistencia automática,
-   acciones de sesión, calibración neural y computed state
+   BIO-IGNICIÓN — ZUSTAND STORE v3
+   Persistencia: IndexedDB (cifrado) + localStorage fallback
+   Sync cloud · Outbox offline · Migraciones versionadas
    ═══════════════════════════════════════════════════════════════ */
 
 import { create } from "zustand";
 import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
+import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
+import { logger } from "../lib/logger";
 
-const STORAGE_KEY = "bio-g2";
-const STORE_VERSION = 5;
+const STORE_VERSION = 6;
 
-// ─── Persistence Layer ───────────────────────────────────
-function loadFromStorage() {
-  try {
-    if (typeof window === "undefined") return { ...DS, _v: STORE_VERSION };
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const data = { ...DS, ...parsed };
-      // Migration: add new fields from DS if they don't exist
-      if (!data._v || data._v < STORE_VERSION) {
-        data._v = STORE_VERSION;
-        data._migrated = Date.now();
-      }
-      return data;
-    }
-  } catch (e) { console.error("Store load error:", e); }
-  return { ...DS, _v: STORE_VERSION, _created: Date.now() };
+function migrate(data) {
+  if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
+  const merged = { ...DS, ...data };
+  if (!merged._v || merged._v < STORE_VERSION) {
+    merged._v = STORE_VERSION;
+    merged._migrated = Date.now();
+  }
+  return merged;
 }
 
-function saveToStorage(state) {
-  try {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-  } catch (e) { console.error("Store save error:", e); }
+let persistTimer = null;
+function scheduleSave(state) {
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    saveState(state).catch((e) => logger.error("persist.save", e));
+  }, 300);
 }
 
-// ─── Store Definition ────────────────────────────────────
 export const useStore = create((set, get) => ({
-  // ─── Core State ─────────────────────────────────────────
   ...DS,
   _loaded: false,
+  _syncing: false,
 
-  // ─── Initialization ─────────────────────────────────────
-  init: () => {
-    const loaded = loadFromStorage();
-    const cw = getWeekNum();
-
-    // Rotación semanal automática
-    if (loaded.weekNum !== null && loaded.weekNum !== cw) {
-      loaded.prevWeekData = [...loaded.weeklyData];
-      loaded.weeklyData = [0, 0, 0, 0, 0, 0, 0];
-      loaded.weekNum = cw;
+  init: async () => {
+    try {
+      const loaded = migrate(await loadState());
+      const cw = getWeekNum();
+      if (loaded.weekNum !== null && loaded.weekNum !== cw) {
+        loaded.prevWeekData = [...loaded.weeklyData];
+        loaded.weeklyData = [0, 0, 0, 0, 0, 0, 0];
+        loaded.weekNum = cw;
+      }
+      if (loaded.weekNum === null) loaded.weekNum = cw;
+      set({ ...loaded, _loaded: true });
+      scheduleSave(loaded);
+    } catch (e) {
+      logger.error("store.init", e);
+      set({ _loaded: true });
     }
-    if (loaded.weekNum === null) loaded.weekNum = cw;
-
-    set({ ...loaded, _loaded: true });
-    saveToStorage({ ...loaded });
   },
 
-  // ─── Generic Update ─────────────────────────────────────
   update: (partial) => {
     set(partial);
-    const state = get();
-    saveToStorage(state);
+    scheduleSave(get());
   },
 
-  // ─── Explicit Save ──────────────────────────────────────
-  save: () => {
-    saveToStorage(get());
-  },
+  save: () => scheduleSave(get()),
 
-  // ─── Session Completion ─────────────────────────────────
-  // Recibe el resultado calculado de la sesión y actualiza todo
-  completeSession: (sessionResult) => {
+  completeSession: (r) => {
     const st = get();
-    const { eVC, nC, nR, nE, ns, nsk, nw, newHist, ach, totalT } = sessionResult;
+    const { eVC, nC, nR, nE, ns, nsk, nw, newHist, ach, totalT } = r;
     const td = new Date().toDateString();
     const update = {
       totalSessions: ns,
       streak: nsk,
+      bestStreak: Math.max(st.bestStreak || 0, nsk),
       todaySessions: st.lastDate === td ? st.todaySessions + 1 : 1,
       lastDate: td,
       weeklyData: nw,
@@ -97,80 +83,66 @@ export const useStore = create((set, get) => ({
       progDay: Math.min((st.progDay || 0) + 1, 7),
     };
     set(update);
-    saveToStorage({ ...st, ...update });
+    scheduleSave({ ...st, ...update });
+    outboxAdd({ kind: "session", payload: r }).catch(() => {});
   },
 
-  // ─── Mood Logging ───────────────────────────────────────
   logMood: (moodEntry) => {
     const st = get();
     const ml = [...(st.moodLog || []), moodEntry].slice(-200);
     const ach = [...st.achievements];
     if (moodEntry.mood === 5 && !ach.includes("mood5")) ach.push("mood5");
     set({ moodLog: ml, achievements: ach });
-    saveToStorage({ ...st, moodLog: ml, achievements: ach });
+    scheduleSave({ ...st, moodLog: ml, achievements: ach });
+    outboxAdd({ kind: "mood", payload: moodEntry }).catch(() => {});
   },
 
-  // ─── Neural Baseline Calibration ───────────────────────
   setNeuralBaseline: (baseline) => {
-    const st = get();
     set({ neuralBaseline: baseline, onboardingComplete: true });
-    saveToStorage({ ...st, neuralBaseline: baseline, onboardingComplete: true });
+    scheduleSave({ ...get() });
   },
 
-  // ─── Toggle Favorites ──────────────────────────────────
   toggleFav: (name) => {
-    const st = get();
-    const favs = st.favs || [];
+    const favs = get().favs || [];
     const nf = favs.includes(name) ? favs.filter((f) => f !== name) : [...favs, name];
     set({ favs: nf });
-    saveToStorage({ ...st, favs: nf });
+    scheduleSave({ ...get() });
   },
 
-  // ─── Settings Update ───────────────────────────────────
   updateSettings: (settings) => {
-    const st = get();
-    const updated = { ...st, ...settings };
     set(settings);
-    saveToStorage(updated);
+    scheduleSave({ ...get() });
   },
 
-  // ─── Session Goal ───────────────────────────────────────
   setSessionGoal: (goal) => {
-    const st = get();
     set({ sessionGoal: goal });
-    saveToStorage({ ...st, sessionGoal: goal });
+    scheduleSave({ ...get() });
   },
 
-  // ─── Import Data ─────────────────────────────────────────
+  setDailyGoal: (goal) => {
+    set({ sessionGoal: goal });
+    scheduleSave({ ...get() });
+  },
+
   importData: (data) => {
     const merged = { ...DS, ...data, _v: STORE_VERSION, _imported: Date.now() };
     set(merged);
-    saveToStorage(merged);
+    scheduleSave(merged);
   },
 
-  // ─── Recalibrate Neural Baseline ───────────────────────
   recalibrate: (newBaseline) => {
     const st = get();
     const calibrationHistory = [...(st.calibrationHistory || []), {
-      ...newBaseline,
-      ts: Date.now(),
-      sessionCount: st.totalSessions,
+      ...newBaseline, ts: Date.now(), sessionCount: st.totalSessions,
     }].slice(-10);
     set({ neuralBaseline: newBaseline, calibrationHistory, onboardingComplete: true });
-    saveToStorage({ ...st, neuralBaseline: newBaseline, calibrationHistory, onboardingComplete: true });
+    scheduleSave({ ...get() });
   },
 
-  // ─── Update Session Goal ───────────────────────────────
-  setDailyGoal: (goal) => {
-    const st = get();
-    set({ sessionGoal: goal });
-    saveToStorage({ ...st, sessionGoal: goal });
-  },
-
-  // ─── Full Reset ─────────────────────────────────────────
-  resetAll: () => {
+  resetAll: async () => {
     const fresh = { ...DS, weekNum: getWeekNum(), _v: STORE_VERSION };
+    await clearAll();
     set(fresh);
-    saveToStorage(fresh);
+    scheduleSave(fresh);
   },
 }));
