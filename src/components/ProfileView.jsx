@@ -131,7 +131,10 @@ export default function ProfileView({
         </div>
       </header>
 
-      <article
+      <motion.article
+        initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: reduced ? 0 : 0.08, duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
         aria-label={`Estadísticas: ${st.totalSessions} sesiones, racha ${st.streak} días`}
         style={{
           background: `linear-gradient(145deg,${cd},${withAlpha(ac, 5)})`,
@@ -216,13 +219,16 @@ export default function ProfileView({
             />
           </div>
         </div>
-      </article>
+      </motion.article>
 
       {(() => {
         const unlocked = st.achievements || [];
         const unlockedCount = ACHIEVEMENT_IDS.filter((id) => unlocked.includes(id)).length;
         return (
-          <article
+          <motion.article
+            initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduced ? 0 : 0.16, duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
             aria-label={`Logros: ${unlockedCount} de ${ACHIEVEMENT_IDS.length}`}
             style={{
               background: cd,
@@ -265,7 +271,7 @@ export default function ProfileView({
                 </div>
               ))}
             </div>
-          </article>
+          </motion.article>
         );
       })()}
 
