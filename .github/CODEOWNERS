@@ -1,0 +1,22 @@
+# Default
+*                               @bio-ignicion/core
+
+# Security-sensitive
+/src/middleware.js              @bio-ignicion/security
+/src/server/auth.js             @bio-ignicion/security
+/src/server/rbac.js             @bio-ignicion/security
+/src/server/audit.js            @bio-ignicion/security
+/src/server/kms.js              @bio-ignicion/security
+/src/server/mfa.js              @bio-ignicion/security
+/src/server/webauthn.js         @bio-ignicion/security
+/prisma/                        @bio-ignicion/platform
+/SECURITY.md                    @bio-ignicion/security
+/COMPLIANCE.md                  @bio-ignicion/legal @bio-ignicion/security
+
+# CI/CD
+/.github/                       @bio-ignicion/platform
+/.lighthouserc.json             @bio-ignicion/platform
+
+# Docs
+/API.md                         @bio-ignicion/dx
+/OPERATIONS.md                  @bio-ignicion/platform
