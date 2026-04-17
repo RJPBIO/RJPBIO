@@ -46,7 +46,7 @@ function colorForScore(score, goodThreshold = 70, mediumThreshold = 45) {
   return semantic.danger;
 }
 
-export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHist }) {
+export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHist, bp = "mobile" }) {
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const reduced = useReducedMotion();
 
@@ -224,10 +224,17 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         </div>
       </article>
 
-      <div style={{ marginBlockEnd: 14 }}><NeuralRadar st={st} isDark={isDark} /></div>
-      <NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} />
-      <WeeklyReport st={st} isDark={isDark} />
-      <CorrelationMatrix st={st} isDark={isDark} onSelectProtocol={(p) => { sp(p); switchTab("ignicion"); }} />
+      <div
+        style={
+          bp === "desktop"
+            ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }
+            : undefined
+        }
+      >
+        <div style={{ marginBlockEnd: bp === "desktop" ? 0 : 14 }}><NeuralRadar st={st} isDark={isDark} /></div>
+        <NeuralCoach st={st} isDark={isDark} onSelectProtocol={sp} />
+        <WeeklyReport st={st} isDark={isDark} />
+        <CorrelationMatrix st={st} isDark={isDark} onSelectProtocol={(p) => { sp(p); switchTab("ignicion"); }} />
 
       {neuralVar && (
         <article
@@ -405,6 +412,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
             <AnimatedNumber value={k.v} suffix={k.suffix} color={k.c} size={20} />
           </article>
         ))}
+      </div>
       </div>
 
       <motion.button
