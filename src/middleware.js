@@ -25,7 +25,7 @@ function buildCSP(nonce) {
     "style-src": ["'self'", "'unsafe-inline'"],
     "img-src": ["'self'", "data:", "blob:", "https:"],
     "font-src": ["'self'", "data:"],
-    "connect-src": ["'self'", "https://api.anthropic.com", "https://api.stripe.com", process.env.OTEL_EXPORTER_OTLP_ENDPOINT].filter(Boolean),
+    "connect-src": ["'self'", "https://api.anthropic.com", "https://api.stripe.com", process.env.OTEL_EXPORTER_OTLP_ENDPOINT, process.env.NEXT_PUBLIC_LOG_ENDPOINT].filter(Boolean),
     "media-src": ["'self'", "blob:"],
     "worker-src": ["'self'", "blob:"],
     "manifest-src": ["'self'"],
