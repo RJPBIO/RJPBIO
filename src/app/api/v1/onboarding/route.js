@@ -1,6 +1,6 @@
 import { db } from "../../../../server/db";
 import { randomUUID } from "node:crypto";
-import { writeAudit } from "../../../../server/audit";
+import { auditLog } from "../../../../server/audit";
 import { sendWelcome } from "../../../../server/email";
 import { newTenantKey } from "../../../../server/kms";
 
@@ -16,7 +16,7 @@ export async function POST(request) {
   await client.org.create({ data: { id: orgId, name: orgName, slug: slugify(orgName) + "-" + orgId.slice(0, 6), plan, region, seats: 5, brandingJson: { encryption: { wrapped } } } });
   await client.user.create({ data: { id: userId, email, name, locale: "es" } });
   await client.membership.create({ data: { id: randomUUID(), userId, orgId, role: "OWNER" } });
-  await writeAudit({ orgId, actorId: userId, action: "org.created", meta: { plan, region } });
+  await auditLog({ orgId, actorId: userId, action: "org.created", payload: { plan, region } });
   await sendWelcome({ to: email, name }).catch(() => {});
   return Response.json({ orgId, userId }, { status: 201 });
 }
