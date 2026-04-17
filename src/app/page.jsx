@@ -483,7 +483,7 @@ export default function BioIgnicion(){
     </div>
     <div style={{display:"flex",gap:7,marginBottom:16}}>
       <motion.button whileTap={{scale:.96}} onClick={()=>setSl(true)} style={{flex:1,padding:"10px 12px",borderRadius:15,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",gap:9}}>
-        <div style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:ac}}>{pr.tg}</div>
+        <motion.div layoutId={sl||reducedMotion?undefined:`proto-glyph-${pr.id}`} transition={{type:"spring",stiffness:360,damping:32}} style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:ac}}>{pr.tg}</motion.div>
         <div style={{flex:1,textAlign:"left"}}><div style={{fontWeight:700,fontSize:11,color:t1}}>{pr.n}</div><div style={{fontSize:10,color:t3}}>{pr.ph.length} fases</div></div>
         <Icon name="chevron-down" size={12} color={t3}/>
       </motion.button>
