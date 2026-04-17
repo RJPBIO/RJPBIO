@@ -102,16 +102,24 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
       aria-label="Dashboard neural"
       style={{ paddingBlock: 14, paddingInline: space[5], paddingBlockEnd: 180 }}
     >
-      <div style={{ marginBlockEnd: space[4] }}>
+      <motion.div
+        initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: reduced ? 0 : 0.05, duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
+        style={{ marginBlockEnd: space[4] }}
+      >
         <ReadinessRing
           focusScore={st.coherencia}
           calmScore={st.resiliencia}
           energyScore={st.capacidad}
           isDark={isDark}
         />
-      </div>
+      </motion.div>
 
-      <article
+      <motion.article
+        initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: reduced ? 0 : 0.12, duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
         aria-label={`Rendimiento neural ${perf}%`}
         style={{
           background: `linear-gradient(145deg,${isDark ? "#0D1117" : "#FFFFFF"},${isDark ? "#141820" : withAlpha(ac, 4)})`,
@@ -222,9 +230,12 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
            perf >= 50 ? "Estado funcional. Una sesión más elevaría tu rendimiento." :
            "Tu sistema necesita atención. Prioriza un reset."}
         </div>
-      </article>
+      </motion.article>
 
-      <div
+      <motion.div
+        initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: reduced ? 0 : 0.18, duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
         style={
           bp === "desktop"
             ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }
@@ -413,7 +424,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           </article>
         ))}
       </div>
-      </div>
+      </motion.div>
 
       <motion.button
         whileTap={reduced ? {} : { scale: .97 }}
