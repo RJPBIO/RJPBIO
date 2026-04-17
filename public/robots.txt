@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /org/
+Disallow: /settings/
+Disallow: /coach
+Sitemap: https://bio-ignicion.app/sitemap.xml
