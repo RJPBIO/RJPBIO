@@ -10,12 +10,20 @@ import { getWeekNum } from "../lib/neural";
 import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
 import { logger } from "../lib/logger";
 
-const STORE_VERSION = 6;
+const STORE_VERSION = 7;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
   const merged = { ...DS, ...data };
   if (!merged._v || merged._v < STORE_VERSION) {
+    // v7: ensure bioneural arrays exist for users migrating from v6
+    if (!Array.isArray(merged.hrvLog)) merged.hrvLog = [];
+    if (!Array.isArray(merged.rhrLog)) merged.rhrLog = [];
+    if (!Array.isArray(merged.nom035Results)) merged.nom035Results = [];
+    if (!Array.isArray(merged.breathTechniqueLog)) merged.breathTechniqueLog = [];
+    if (!Array.isArray(merged.cognitiveLog)) merged.cognitiveLog = [];
+    if (!Array.isArray(merged.orgTeamResponses)) merged.orgTeamResponses = [];
+    if (typeof merged.sleepTargetHours !== "number") merged.sleepTargetHours = 7.5;
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -136,6 +144,67 @@ export const useStore = create((set, get) => ({
       ...newBaseline, ts: Date.now(), sessionCount: st.totalSessions,
     }].slice(-10);
     set({ neuralBaseline: newBaseline, calibrationHistory, onboardingComplete: true });
+    scheduleSave({ ...get() });
+  },
+
+  // ─── Bioneural actions (v7) ────────────────────────────
+  logHRV: (entry) => {
+    const st = get();
+    const hrvLog = [...(st.hrvLog || []), entry].slice(-365);
+    const rhrLog = entry.rhr != null
+      ? [...(st.rhrLog || []), { ts: entry.ts, rhr: entry.rhr }].slice(-365)
+      : st.rhrLog;
+    set({ hrvLog, rhrLog });
+    scheduleSave({ ...st, hrvLog, rhrLog });
+    outboxAdd({ kind: "hrv", payload: entry }).catch(() => {});
+  },
+
+  logSleep: (hours) => {
+    const st = get();
+    set({ lastSleepHours: hours });
+    scheduleSave({ ...st, lastSleepHours: hours });
+  },
+
+  setSleepTarget: (hours) => {
+    set({ sleepTargetHours: hours });
+    scheduleSave({ ...get() });
+  },
+
+  setChronotype: (ct) => {
+    set({ chronotype: ct });
+    scheduleSave({ ...get() });
+    outboxAdd({ kind: "chronotype", payload: ct }).catch(() => {});
+  },
+
+  setResonanceFreq: (bpm) => {
+    set({ resonanceFreq: bpm });
+    scheduleSave({ ...get() });
+  },
+
+  logNOM035: (result) => {
+    const st = get();
+    const nom035Results = [...(st.nom035Results || []), result].slice(-20);
+    set({ nom035Results });
+    scheduleSave({ ...st, nom035Results });
+    outboxAdd({ kind: "nom035", payload: result }).catch(() => {});
+  },
+
+  logBreathTechnique: (entry) => {
+    const st = get();
+    const breathTechniqueLog = [...(st.breathTechniqueLog || []), entry].slice(-500);
+    set({ breathTechniqueLog });
+    scheduleSave({ ...st, breathTechniqueLog });
+  },
+
+  logCognitive: (entry) => {
+    const st = get();
+    const cognitiveLog = [...(st.cognitiveLog || []), entry].slice(-200);
+    set({ cognitiveLog });
+    scheduleSave({ ...st, cognitiveLog });
+  },
+
+  setOrgMode: (enabled) => {
+    set({ orgMode: !!enabled });
     scheduleSave({ ...get() });
   },
 
