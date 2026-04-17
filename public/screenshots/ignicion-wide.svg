@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Ignición — vista wide">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B0E14"/>
+      <stop offset="100%" stop-color="#052E16"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="60%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064E3B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <g font-family="system-ui,Manrope,sans-serif" fill="#ECFDF5">
+    <text x="60" y="80" font-size="22" font-weight="700" letter-spacing="6">BIO-IGNICIÓN</text>
+    <text x="60" y="110" font-size="14" fill="#6EE7B7" opacity="0.7">Neural Performance System</text>
+    <circle cx="640" cy="380" r="180" fill="url(#orb)" opacity="0.95"/>
+    <circle cx="640" cy="380" r="210" fill="none" stroke="#10B981" stroke-width="2" opacity="0.4"/>
+    <circle cx="640" cy="380" r="260" fill="none" stroke="#10B981" stroke-width="1" opacity="0.2"/>
+    <text x="640" y="385" text-anchor="middle" font-size="64" font-weight="800">02:00</text>
+    <text x="640" y="430" text-anchor="middle" font-size="16" fill="#A7F3D0">Inhala · 4s</text>
+    <text x="640" y="640" text-anchor="middle" font-size="18" font-weight="600">Coherencia 82 · Resiliencia 74 · Capacidad 79</text>
+  </g>
+</svg>
