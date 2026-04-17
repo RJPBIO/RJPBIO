@@ -147,17 +147,9 @@ export default function BioIgnicion(){
 
   useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>{const nv=!v;uiSound[nv?"open":"close"](st.soundOn);return nv;});}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[st.soundOn]);
 
-  const cmdCommands=useMemo(()=>buildCommands({
-    timerStatus:ts,tab,state:st,protocol:pr,durationMultiplier:durMult,protocols:P,
-    actions:{
-      switchTab,go,pause:pa,setTimerStatus:setTs,startBinaural,requestWakeLock,
-      playHaptic:H,setState:setSt,setCheckMood,setPostStep,
-      openHistory:()=>setShowHist(true),openSettings:()=>setShowSettings(true),
-      openCalibration:()=>setShowCalibration(true),openHRV:()=>setShowHRV(true),
-      openSigh:()=>setShowSigh(true),openNSDR:()=>setShowNSDR(true),
-      selectProtocol:sp,
-    },
-  }),[st,durMult,ts,pr,tab]);
+  // NOTA: cmdCommands se define MÁS ABAJO, después de las function declarations
+  // que referencia (switchTab, go, pa, sp). Evita TDZ bajo React Compiler, que
+  // reemite esas function decls como const y pierde el hoisting estándar de JS.
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
@@ -194,6 +186,18 @@ export default function BioIgnicion(){
   const onTimerKey=useCallback(e=>{if(e.key===KEY.ENTER||e.key===KEY.SPACE){e.preventDefault();timerTap();}},[ts,pr.int,st.soundOn]);
   const onTabKey=useCallback((e,id,order)=>{const ids=["ignicion","dashboard","perfil"];if(e.key===KEY.RIGHT||e.key===KEY.DOWN){e.preventDefault();switchTab(ids[(order+1)%ids.length]);}else if(e.key===KEY.LEFT||e.key===KEY.UP){e.preventDefault();switchTab(ids[(order-1+ids.length)%ids.length]);}else if(e.key===KEY.HOME){e.preventDefault();switchTab(ids[0]);}else if(e.key===KEY.END){e.preventDefault();switchTab(ids[ids.length-1]);}},[]);
   const completeTour=useCallback(()=>{setShowTour(false);setSt(s=>({...s,onboardingTourComplete:true}));},[setSt]);
+
+  const cmdCommands=useMemo(()=>buildCommands({
+    timerStatus:ts,tab,state:st,protocol:pr,durationMultiplier:durMult,protocols:P,
+    actions:{
+      switchTab,go,pause:pa,setTimerStatus:setTs,startBinaural,requestWakeLock,
+      playHaptic:H,setState:setSt,setCheckMood,setPostStep,
+      openHistory:()=>setShowHist(true),openSettings:()=>setShowSettings(true),
+      openCalibration:()=>setShowCalibration(true),openHRV:()=>setShowHRV(true),
+      openSigh:()=>setShowSigh(true),openNSDR:()=>setShowNSDR(true),
+      selectProtocol:sp,
+    },
+  }),[st,durMult,ts,pr,tab]);
 
   function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
     const{sessionDataFull}=computeSessionMetrics({sessionData,protocol:pr,durMult,now:Date.now()});
