@@ -224,9 +224,13 @@ export const z = {
 // ─── Layout Constants ────────────────────────────────────
 export const layout = {
   maxWidth: 430,
+  maxWidthTablet: 720,
+  maxWidthDesktop: 1120,
   bottomNav: 68,         // bottom nav height
   metricsBar: 52,        // metrics bar height
   contentPadding: 20,    // horizontal page padding
+  contentPaddingTablet: 32,
+  contentPaddingDesktop: 48,
   bottomSafe: 180,       // padding-bottom for scroll content
 };
 
