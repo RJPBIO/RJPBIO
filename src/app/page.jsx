@@ -31,6 +31,9 @@ import {
 import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize } from "../lib/theme";
 import { useStore } from "../store/useStore";
 import Icon from "../components/Icon";
+import { useSync } from "../hooks/useSync";
+import { useDeepLink } from "../hooks/useDeepLink";
+import { parseDeepLink } from "../lib/deeplink";
 
 // Dynamic imports (code-split)
 const BreathOrb = dynamic(() => import("../components/BreathOrb"), { ssr: false });
@@ -76,12 +79,12 @@ export default function BioIgnicion(){
 
   const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);store.update(nv);},[st]);
 
-  // ═══ Service Worker Registration ═══
-  useEffect(()=>{if(typeof navigator!=="undefined"&&"serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}},[]);
+  // SW se registra desde layout.js (con nonce)
+  useSync();
 
-  // ═══ NFC/QR DEEP LINK ═══
-  useEffect(()=>{if(typeof window==="undefined")return;try{const params=new URLSearchParams(window.location.search);const c=params.get("c"),t=params.get("t"),e=params.get("e");if(c||t){setNfcCtx({company:c||"",type:t||"entrada",employee:e||""});setEntryDone(true);
-    const isExit=t==="salida"||t==="exit";const h=new Date().getHours();
+  // NFC/QR deep link validado (ver lib/deeplink.js)
+  useEffect(()=>{if(typeof window==="undefined")return;try{const params=new URLSearchParams(window.location.search);const link=parseDeepLink(params);if(link&&(link.company||link.type)){setNfcCtx({company:link.company,type:link.type,employee:link.employee});setEntryDone(true);
+    const isExit=link.type==="salida"||link.type==="exit";const h=new Date().getHours();
     let pool=isExit?P.filter(p=>p.int==="calma"||p.int==="reset"):h<12?P.filter(p=>p.int==="energia"||p.int==="enfoque"):P.filter(p=>p.int==="enfoque"||p.int==="reset");
     const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
   }}catch(e){};},[]);
