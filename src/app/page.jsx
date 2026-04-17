@@ -72,7 +72,7 @@ export default function BioIgnicion(){
   const[ts,setTs]=useState("idle");const[sec,setSec]=useState(120);const[pi,setPi]=useState(0);
   const[bL,setBL]=useState("");const[bS,setBS]=useState(1);const[bCnt,setBCnt]=useState(0);
   const[midMsg,setMidMsg]=useState("");const[showMid,setShowMid]=useState(false);
-  const[tp,setTp]=useState(false);const[tabFade,setTabFade]=useState(1);
+  const[tp,setTp]=useState(false);
   const[postStep,setPostStep]=useState("none");
   const[postVC,setPostVC]=useState(0);const[postMsg,setPostMsg]=useState("");
   const[checkMood,setCheckMood]=useState(0);const[checkEnergy,setCheckEnergy]=useState(0);const[checkTag,setCheckTag]=useState("");
@@ -80,7 +80,7 @@ export default function BioIgnicion(){
   const[countdown,setCountdown]=useState(0);
   const[compFlash,setCompFlash]=useState(false);
   const[showHist,setShowHist]=useState(false);const[showSettings,setShowSettings]=useState(false);
-  const[onboard,setOnboard]=useState(false);const[welcomeDone,setWelcomeDone]=useState(false);const[showIntent,setShowIntent]=useState(false);
+  const[onboard,setOnboard]=useState(false);const[welcomeDone,setWelcomeDone]=useState(false);const[showIntent,setShowIntent]=useState(false);const[firstIntent,setFirstIntent]=useState(null);
   const[showScience,setShowScience]=useState(false);
   const[durMult,setDurMult]=useState(1);
   const[entryDone,setEntryDone]=useState(false);
@@ -190,7 +190,7 @@ export default function BioIgnicion(){
   function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
   function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}}
-  function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>setTabFade(1),30);},180);H("tap");announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
+  function switchTab(id){if(id===tab)return;setTab(id);H("tap");announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
   const onTimerKey=useCallback(e=>{if(e.key===KEY.ENTER||e.key===KEY.SPACE){e.preventDefault();timerTap();}},[ts,pr.int,st.soundOn]);
   const onTabKey=useCallback((e,id,order)=>{const ids=["ignicion","dashboard","perfil"];if(e.key===KEY.RIGHT||e.key===KEY.DOWN){e.preventDefault();switchTab(ids[(order+1)%ids.length]);}else if(e.key===KEY.LEFT||e.key===KEY.UP){e.preventDefault();switchTab(ids[(order-1+ids.length)%ids.length]);}else if(e.key===KEY.HOME){e.preventDefault();switchTab(ids[0]);}else if(e.key===KEY.END){e.preventDefault();switchTab(ids[ids.length-1]);}},[]);
   const completeTour=useCallback(()=>{setShowTour(false);setSt(s=>({...s,onboardingTourComplete:true}));},[setSt]);
@@ -274,7 +274,7 @@ export default function BioIgnicion(){
   {/* ═══ WELCOME — Cinematic manifesto (3 screens) before calibration ═══ */}
   <AnimatePresence>
   {onboard&&!welcomeDone&&!showCalibration&&<BioIgnitionWelcome
-    onComplete={()=>setWelcomeDone(true)}
+    onComplete={(intent)=>{setFirstIntent(intent||null);setWelcomeDone(true);}}
     onSkip={()=>setWelcomeDone(true)}
   />}
   </AnimatePresence>
@@ -285,7 +285,11 @@ export default function BioIgnicion(){
     setOnboard(false);setShowCalibration(false);unlockVoice();
     const nst={...st,neuralBaseline:baseline,onboardingComplete:true,calibrationHistory:[...(st.calibrationHistory||[]),{...baseline,ts:Date.now()}].slice(-10),sessionGoal:baseline.recommendations?.sessionGoal||2};
     setSt(nst);
-    const d=getDailyIgn(nst);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}
+    const intentMap={enfoque:"enfoque",calma:"calma",energia:"energia",recuperacion:"reset"};
+    const wantedInt=firstIntent?intentMap[firstIntent]:null;
+    const intentProto=wantedInt?P.find(p=>p.int===wantedInt):null;
+    if(intentProto){setPr(intentProto);setSec(Math.round(intentProto.d*durMult));}
+    else{const d=getDailyIgn(nst);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}}
     const ach=[...nst.achievements];if(!ach.includes("calibrated")){ach.push("calibrated");setSt({...nst,achievements:ach});}
     setShowTour(true);
   }}/>}
@@ -334,7 +338,15 @@ export default function BioIgnicion(){
   <NOM035Questionnaire show={showNOM035} isDark={isDark} onClose={()=>setShowNOM035(false)} onComplete={(r)=>{store.logNOM035(r);setSt_(useStore.getState());}}/>
 
   {/* ═══ MAIN CONTENT ═══ */}
-  <div style={{opacity:tabFade,transition:"opacity .25s cubic-bezier(.4,0,.2,1),transform .25s",transform:tabFade===1?"translateY(0)":"translateY(8px)",position:"relative",zIndex:1}}>
+  <div style={{position:"relative",zIndex:1}}>
+  <AnimatePresence mode="wait" initial={false}>
+  <motion.div
+    key={tab}
+    initial={reducedMotion?{opacity:0}:{opacity:0,y:14,scale:.985}}
+    animate={reducedMotion?{opacity:1}:{opacity:1,y:0,scale:1}}
+    exit={reducedMotion?{opacity:0}:{opacity:0,y:-8,scale:.99}}
+    transition={{duration:reducedMotion?0:.32,ease:[.16,1,.3,1]}}
+  >
 
   {/* ═══ TAB: IGNICIÓN ═══ */}
   {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
@@ -599,6 +611,8 @@ export default function BioIgnicion(){
 
   {/* ═══ TAB: PERFIL ═══ */}
   {tab==="perfil"&&<ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} onShowChronotype={()=>setShowChronoTest(true)} onShowResonance={()=>setShowResonanceCal(true)} onShowNOM035={()=>setShowNOM035(true)} />}
+  </motion.div>
+  </AnimatePresence>
   </div>
 
   {/* ═══ BOTTOM METRICS BAR — living chrome: se tiñe con la coherencia actual ═══ */}
