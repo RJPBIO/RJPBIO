@@ -4,9 +4,10 @@
    Full a11y: role=dialog + focus trap, radiogroups, reduced-motion.
    ═══════════════════════════════════════════════════════════════ */
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
+import SessionShareCard from "./SessionShareCard";
 import { MOODS, ENERGY_LEVELS, WORK_TAGS } from "../lib/constants";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 import { semantic } from "../lib/tokens";
@@ -23,6 +24,9 @@ export default function PostSessionFlow({
   const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const showBreathe = postStep === "breathe" && ts === "done";
   const showSummary = postStep === "summary" && ts === "done";
+  const [showShare, setShowShare] = useState(false);
+  const lastSession = (st.history || []).slice(-1)[0];
+  const lastBioQ = lastSession?.bioQ ?? null;
 
   const breatheDialogRef = useFocusTrap(showBreathe, () => onSetPostStep("summary"));
   const summaryDialogRef = useFocusTrap(showSummary, () => {
@@ -432,9 +436,65 @@ export default function PostSessionFlow({
               >
                 <p style={{ ...ty.body(t2), fontStyle: "italic", margin: 0 }}>{postMsg}</p>
               </div>
+              <AnimatePresence initial={false}>
+                {showShare && (
+                  <motion.div
+                    key="share"
+                    initial={reduced ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                    animate={reduced ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+                    exit={reduced ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                    transition={{ duration: reduced ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ overflow: "hidden", marginBlockEnd: space[3] }}
+                  >
+                    <SessionShareCard
+                      protocolName={pr.n}
+                      durationSec={Math.round(pr.d * durMult)}
+                      bioQ={lastBioQ}
+                      vCores={postVC}
+                      moodDelta={preMood > 0 && checkMood > 0 ? moodDiff : 0}
+                      accent={ac}
+                      textPrimary={t1}
+                      textMuted={t3}
+                      onClose={() => setShowShare(false)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {!showShare && (
+                <motion.button
+                  type="button"
+                  whileTap={reduced ? {} : { scale: 0.97 }}
+                  onClick={() => setShowShare(true)}
+                  aria-label="Ver tarjeta compartible de la sesión"
+                  style={{
+                    inlineSize: "100%",
+                    paddingBlock: space[2.5] || 10,
+                    paddingInline: space[3],
+                    marginBlockEnd: space[2],
+                    borderRadius: radius.full,
+                    background: "transparent",
+                    border: `1px solid ${withAlpha(ac, 10)}`,
+                    color: ac,
+                    ...ty.caption(ac),
+                    fontWeight: font.weight.black,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: space[1],
+                  }}
+                >
+                  <Icon name="export" size={12} color={ac} />
+                  Generar tarjeta
+                </motion.button>
+              )}
+
               <motion.button
                 whileTap={reduced ? {} : { scale: 0.96 }}
-                onClick={() => { onReset(); onSetPostStep("none"); }}
+                onClick={() => { setShowShare(false); onReset(); onSetPostStep("none"); }}
                 aria-label="Continuar"
                 style={{
                   inlineSize: "100%",
