@@ -1,109 +1,97 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   NEURAL CALIBRATION — Flujo de onboarding con baseline cognitivo
-   Base: la calibración inicial personalizada mejora outcomes un 34%
-   vs protocolos genéricos (Personalised Digital Interventions,
-   Lancet Digital Health 2020)
+   NEURAL CALIBRATION — Clinical baseline workup.
+   Full-bleed clinical layout. Hairline rows. Weight-300 metrics.
+   Color discipline: single teal. Danger red only for "no toques aún".
    ═══════════════════════════════════════════════════════════════ */
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Icon from "./Icon";
-import { resolveTheme, withAlpha, ty, font, space, radius, brand, semantic } from "../lib/theme";
+import { resolveTheme, radius, semantic, hairline } from "../lib/theme";
+
+const CAPS = { fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" };
+const MICRO = { fontSize: 10, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase" };
 
 const CALIBRATION_STEPS = [
   {
     id: "welcome",
     title: "Calibración Neural",
-    subtitle: "Tu sistema se adapta a ti",
-    description: "Vamos a medir tu baseline cognitivo actual. Esto toma 60 segundos y personaliza toda tu experiencia.",
+    subtitle: "Baseline cognitivo",
+    description: "Cuatro mediciones. Sesenta segundos. Tu instrumento se adapta a tu fisiología.",
   },
   {
     id: "reaction",
     title: "Velocidad de Procesamiento",
     subtitle: "Toca cuando veas verde",
-    description: "Mide la velocidad de tu corteza prefrontal. Toca el círculo lo más rápido que puedas cuando cambie de color.",
-    science: "El tiempo de reacción visual refleja la eficiencia del procesamiento cortical prefrontal. Un RT < 300ms indica alta activación; > 500ms sugiere fatiga cognitiva.",
+    science: "Reacción visual < 300ms = activación prefrontal alta. > 500ms sugiere fatiga cognitiva.",
   },
   {
     id: "breath_hold",
     title: "Capacidad Respiratoria",
     subtitle: "Inhala profundo y sostén",
-    description: "Mide tu tono vagal basal. Inhala profundo y mantén lo más que puedas — luego exhala y toca.",
-    science: "La capacidad de retención respiratoria correlaciona con tono vagal y resiliencia al estrés. > 25s indica buen tono parasimpático.",
+    science: "Retención > 25s indica tono vagal elevado y alta resiliencia al estrés.",
   },
   {
     id: "focus",
     title: "Estabilidad Atencional",
     subtitle: "Cuenta los destellos",
-    description: "Cuenta cuántos destellos verdes ves en los próximos 10 segundos. Mide tu foco sostenido.",
-    science: "La capacidad de conteo bajo distracción refleja la integridad de la red atencional dorsal y el control ejecutivo.",
+    science: "El conteo bajo distracción refleja la integridad de la red atencional dorsal.",
   },
   {
     id: "stress",
     title: "Estado Actual",
-    subtitle: "¿Cómo te sientes ahora?",
-    description: "Tu estado subjetivo actual completa el baseline.",
+    subtitle: "Autoevaluación subjetiva",
   },
   {
     id: "result",
-    title: "Tu Baseline Neural",
+    title: "Baseline Neural",
     subtitle: "Calibración completa",
   },
 ];
 
 const STRESS_OPTIONS = [
-  { value: 1, label: "Muy tenso", color: "#EF4444", icon: "stress" },
-  { value: 2, label: "Algo agitado", color: "#F59E0B", icon: "drain" },
-  { value: 3, label: "Neutral", color: "#64748B", icon: "neutral" },
-  { value: 4, label: "Tranquilo", color: "#0D9488", icon: "sharp" },
-  { value: 5, label: "En calma", color: "#059669", icon: "peak" },
+  { value: 1, label: "Muy tenso" },
+  { value: 2, label: "Algo agitado" },
+  { value: 3, label: "Neutral" },
+  { value: 4, label: "Tranquilo" },
+  { value: 5, label: "En calma" },
 ];
 
 export default function NeuralCalibration({ onComplete, isDark }) {
   const [step, setStep] = useState(0);
   const [results, setResults] = useState({
-    reactionTimes: [],
-    breathHold: 0,
-    focusCount: 0,
-    focusActual: 0,
-    stressLevel: 3,
+    reactionTimes: [], breathHold: 0, focusCount: 0, focusActual: 0, stressLevel: 3,
   });
 
-  // Reaction test state
-  const [rtPhase, setRtPhase] = useState("waiting"); // waiting | ready | go | done
-  const [rtColor, setRtColor] = useState("#1E2330");
+  const [rtPhase, setRtPhase] = useState("waiting");
   const [rtCount, setRtCount] = useState(0);
   const rtStartRef = useRef(0);
   const rtTimerRef = useRef(null);
 
-  // Breath hold state
-  const [bhPhase, setBhPhase] = useState("ready"); // ready | holding | done
+  const [bhPhase, setBhPhase] = useState("ready");
   const [bhTime, setBhTime] = useState(0);
   const bhStartRef = useRef(0);
   const bhTimerRef = useRef(null);
 
-  // Focus test state
-  const [focusPhase, setFocusPhase] = useState("ready"); // ready | testing | input | done
+  const [focusPhase, setFocusPhase] = useState("ready");
   const [flashCount, setFlashCount] = useState(0);
   const [actualFlashes, setActualFlashes] = useState(0);
   const [flashVisible, setFlashVisible] = useState(false);
   const [userCount, setUserCount] = useState(0);
   const focusTimerRef = useRef(null);
+  const focusTimersRef = useRef([]);
 
-  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
-  const ac = brand.primary;
+  const { bg, t1, t2, t3 } = resolveTheme(isDark);
+  const teal = "#0F766E";
+  const divider = isDark ? "#232836" : "#E5E7EB";
 
   const currentStep = CALIBRATION_STEPS[step];
 
-  // ─── Reaction Time Test ────────────────────────────────
   const startReactionTest = useCallback(() => {
     setRtPhase("ready");
-    setRtColor("#DC2626");
     const delay = 1500 + Math.random() * 3000;
     rtTimerRef.current = setTimeout(() => {
       setRtPhase("go");
-      setRtColor("#059669");
       rtStartRef.current = performance.now();
     }, delay);
   }, []);
@@ -119,19 +107,15 @@ export default function NeuralCalibration({ onComplete, isDark }) {
         setTimeout(() => setStep(2), 800);
       } else {
         setRtPhase("waiting");
-        setRtColor(isDark ? "#1E2330" : "#E2E8F0");
         setTimeout(startReactionTest, 600);
       }
     } else if (rtPhase === "ready") {
-      // Too early
       if (rtTimerRef.current) clearTimeout(rtTimerRef.current);
       setRtPhase("waiting");
-      setRtColor(isDark ? "#1E2330" : "#E2E8F0");
       setTimeout(startReactionTest, 800);
     }
-  }, [rtPhase, results.reactionTimes, startReactionTest, isDark]);
+  }, [rtPhase, results.reactionTimes, startReactionTest]);
 
-  // ─── Breath Hold Test ──────────────────────────────────
   const startBreathHold = useCallback(() => {
     setBhPhase("holding");
     bhStartRef.current = Date.now();
@@ -149,12 +133,10 @@ export default function NeuralCalibration({ onComplete, isDark }) {
     setTimeout(() => setStep(3), 1200);
   }, []);
 
-  // ─── Focus Test ────────────────────────────────────────
-  const focusTimersRef = useRef([]); // track ALL recursive timeouts
   const startFocusTest = useCallback(() => {
     setFocusPhase("testing");
     let count = 0;
-    const totalFlashes = 5 + Math.floor(Math.random() * 8); // 5-12 flashes
+    const totalFlashes = 5 + Math.floor(Math.random() * 8);
     setActualFlashes(totalFlashes);
     let flashesDone = 0;
     let cancelled = false;
@@ -181,7 +163,6 @@ export default function NeuralCalibration({ onComplete, isDark }) {
       focusTimerRef.current = outerT;
       focusTimersRef.current.push(outerT);
     };
-    // Store cancel function for cleanup
     focusTimersRef.current._cancel = () => { cancelled = true; };
     flashInterval();
   }, []);
@@ -191,47 +172,30 @@ export default function NeuralCalibration({ onComplete, isDark }) {
       if (rtTimerRef.current) clearTimeout(rtTimerRef.current);
       if (bhTimerRef.current) clearInterval(bhTimerRef.current);
       if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
-      // Cancel recursive flash chain + clear all tracked timeouts
       if (focusTimersRef.current._cancel) focusTimersRef.current._cancel();
       focusTimersRef.current.forEach(t => clearTimeout(t));
       focusTimersRef.current = [];
     };
   }, []);
 
-  // ─── Score Calculation ─────────────────────────────────
   const calcBaseline = useCallback(() => {
     const rts = results.reactionTimes;
     const avgRT = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : 500;
     const rtVariance = rts.length >= 2
       ? Math.round(Math.sqrt(rts.reduce((a, t) => a + Math.pow(t - avgRT, 2), 0) / rts.length))
       : 50;
-
-    // Reaction score (0-100): faster = higher
     const rtScore = Math.max(0, Math.min(100, Math.round(120 - avgRT / 5)));
-
-    // Breath hold score (0-100): longer = higher
     const bhScore = Math.max(0, Math.min(100, Math.round(results.breathHold * 3)));
-
-    // Focus score (0-100): accuracy of count
     const focusError = Math.abs(userCount - actualFlashes);
     const focusScore = Math.max(0, Math.min(100, Math.round(100 - focusError * 15)));
-
-    // Stress baseline (inverted: calm = higher score)
     const stressScore = Math.round(results.stressLevel * 20);
-
-    // Composite baseline
     const composite = Math.round(rtScore * 0.25 + bhScore * 0.25 + focusScore * 0.25 + stressScore * 0.25);
 
     return {
-      avgRT,
-      rtVariance,
-      rtScore,
-      breathHold: results.breathHold,
-      bhScore,
-      focusAccuracy: focusScore,
-      focusError,
-      stressLevel: results.stressLevel,
-      stressScore,
+      avgRT, rtVariance, rtScore,
+      breathHold: results.breathHold, bhScore,
+      focusAccuracy: focusScore, focusError,
+      stressLevel: results.stressLevel, stressScore,
       composite,
       timestamp: Date.now(),
       profile: composite >= 75 ? "alto_rendimiento" : composite >= 55 ? "funcional" : composite >= 35 ? "en_desarrollo" : "recuperación",
@@ -245,448 +209,264 @@ export default function NeuralCalibration({ onComplete, isDark }) {
   }, [results, userCount, actualFlashes]);
 
   const handleComplete = useCallback(() => {
-    const baseline = calcBaseline();
-    onComplete(baseline);
+    onComplete(calcBaseline());
   }, [calcBaseline, onComplete]);
+
+  // Reaction circle color
+  const rtBorderColor = rtPhase === "go" ? teal : rtPhase === "ready" ? semantic.danger : divider;
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.28 }}
       style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 260,
+        position: "fixed", inset: 0, zIndex: 260,
         background: bg,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
+        display: "flex", flexDirection: "column",
+        padding: "24px 20px 40px",
         overflowY: "auto",
       }}
     >
-      {/* Progress bar */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          background: bd,
-        }}
-      >
-        <motion.div
-          animate={{ width: `${(step / (CALIBRATION_STEPS.length - 1)) * 100}%` }}
-          transition={{ duration: 0.5 }}
-          style={{ height: "100%", background: ac, borderRadius: 3 }}
-        />
-      </div>
-
-      {/* Step indicator */}
-      <div
-        style={{
-          position: "absolute",
-          top: 16,
-          right: 20,
-          fontSize: 10,
-          fontWeight: 700,
-          color: t3,
-          letterSpacing: 2,
-        }}
-      >
-        {step + 1}/{CALIBRATION_STEPS.length}
+      {/* Top progress strip */}
+      <div style={{
+        display: "flex", alignItems: "baseline", justifyContent: "space-between",
+        marginBottom: 28, paddingBottom: 16,
+        borderBottom: hairline(isDark),
+      }}>
+        <div style={{ ...CAPS, color: t3 }}>Paso {step + 1} / {CALIBRATION_STEPS.length}</div>
+        <div style={{ flex: 1, margin: "0 16px", height: 1, background: divider, position: "relative", top: 0 }}>
+          <motion.div
+            animate={{ width: `${(step / (CALIBRATION_STEPS.length - 1)) * 100}%` }}
+            transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ height: 1, background: teal }}
+          />
+        </div>
+        <div style={{ ...CAPS, color: t3, fontVariantNumeric: "tabular-nums" }}>
+          {Math.round((step / (CALIBRATION_STEPS.length - 1)) * 100)}%
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4 }}
-          style={{
-            maxWidth: 380,
-            width: "100%",
-            textAlign: "center",
-          }}
+          initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.28 }}
+          style={{ maxWidth: 380, width: "100%", margin: "0 auto" }}
         >
-          {/* ═══ STEP 0: WELCOME ═══ */}
+          {/* Step header */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ ...CAPS, color: teal, marginBottom: 12 }}>{currentStep.subtitle}</div>
+            <div style={{ fontSize: 28, fontWeight: 300, color: t1, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+              {currentStep.title}
+            </div>
+            {currentStep.description && (
+              <div style={{ fontSize: 15, fontWeight: 400, color: t2, lineHeight: 1.6, marginTop: 12 }}>
+                {currentStep.description}
+              </div>
+            )}
+          </div>
+
+          {/* STEP 0: WELCOME */}
           {step === 0 && (
             <>
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                style={{
-                  width: 72,
-                  height: 72,
-                  margin: "0 auto 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <svg width="72" height="72" viewBox="0 0 72 72">
-                  <circle cx="36" cy="36" r="32" fill="none" stroke={ac} strokeWidth="2" opacity=".4" />
-                  <circle cx="36" cy="36" r="22" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="8 4" />
-                  <circle cx="36" cy="36" r="12" fill="none" stroke="#D97706" strokeWidth="1" strokeDasharray="4 6" />
-                  <circle cx="36" cy="36" r="4" fill={ac} opacity=".5" />
-                </svg>
-              </motion.div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: t1, marginBottom: 4 }}>
-                {currentStep.title}
-              </h2>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: ac,
-                  fontWeight: 700,
-                  letterSpacing: 3,
-                  textTransform: "uppercase",
-                  marginBottom: 16,
-                }}
-              >
-                {currentStep.subtitle}
-              </div>
-              <p style={{ fontSize: 12, color: t2, lineHeight: 1.7, marginBottom: 28 }}>
-                {currentStep.description}
-              </p>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  marginBottom: 28,
-                  textAlign: "left",
-                }}
-              >
+              <div style={{
+                borderTop: hairline(isDark), borderBottom: hairline(isDark),
+                marginBottom: 32,
+              }}>
                 {[
-                  { icon: "bolt", color: ac, label: "Velocidad de procesamiento", desc: "5 pruebas de reacción" },
-                  { icon: "breath", color: "#6366F1", label: "Capacidad respiratoria", desc: "Retención de aire" },
-                  { icon: "focus", color: "#D97706", label: "Estabilidad atencional", desc: "Conteo bajo distracción" },
-                  { icon: "calm", color: "#0D9488", label: "Estado subjetivo", desc: "Autoevaluación" },
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
-                    <div
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 10,
-                        background: item.color + "10",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon name={item.icon} size={14} color={item.color} />
-                    </div>
+                  { label: "Reacción", desc: "5 pruebas visuales" },
+                  { label: "Respiración", desc: "Retención de aire" },
+                  { label: "Foco", desc: "Conteo bajo distracción" },
+                  { label: "Estado", desc: "Autoevaluación" },
+                ].map((item, i, arr) => (
+                  <div key={i} style={{
+                    display: "flex", alignItems: "baseline", justifyContent: "space-between",
+                    padding: "14px 0",
+                    borderBottom: i < arr.length - 1 ? hairline(isDark) : "none",
+                  }}>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: t1 }}>{item.label}</div>
-                      <div style={{ fontSize: 10, color: t3 }}>{item.desc}</div>
+                      <div style={{ ...CAPS, color: t3, fontVariantNumeric: "tabular-nums" }}>
+                        {String(i + 1).padStart(2, "0")}
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: t1, letterSpacing: "-0.01em", marginTop: 6 }}>
+                        {item.label}
+                      </div>
                     </div>
-                  </motion.div>
+                    <div style={{ fontSize: 12, fontWeight: 400, color: t2 }}>{item.desc}</div>
+                  </div>
                 ))}
               </div>
 
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => {
-                  setStep(1);
-                  setTimeout(startReactionTest, 800);
-                }}
+              <button
+                onClick={() => { setStep(1); setTimeout(startReactionTest, 800); }}
                 style={{
-                  width: "100%",
-                  padding: "16px",
-                  borderRadius: 50,
-                  background: `linear-gradient(135deg, ${ac}, #0D9488)`,
-                  border: "none",
-                  color: "#fff",
-                  fontSize: 13,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                  boxShadow: `0 4px 20px ${ac}30`,
+                  width: "100%", padding: "16px 20px",
+                  borderRadius: radius.md, background: teal,
+                  border: `1px solid ${teal}`, color: "#fff",
+                  ...CAPS, fontSize: 13, minHeight: 56, cursor: "pointer",
                 }}
               >
-                INICIAR CALIBRACIÓN
-              </motion.button>
+                Iniciar calibración
+              </button>
             </>
           )}
 
-          {/* ═══ STEP 1: REACTION TIME ═══ */}
+          {/* STEP 1: REACTION */}
           {step === 1 && (
-            <>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: t1, marginBottom: 4 }}>
-                {currentStep.title}
-              </h3>
-              <p style={{ fontSize: 11, color: t3, marginBottom: 20 }}>
-                {currentStep.subtitle}
-              </p>
-
-              <div style={{ marginBottom: 14, fontSize: 10, color: t3 }}>
-                Prueba {Math.min(rtCount + 1, 5)} de 5
+            <div style={{ textAlign: "center" }}>
+              <div style={{ ...MICRO, color: t3, marginBottom: 20, fontVariantNumeric: "tabular-nums" }}>
+                Prueba {Math.min(rtCount + 1, 5)} / 5
               </div>
-
-              <motion.div
-                whileTap={rtPhase === "go" ? { scale: 0.9 } : {}}
+              <div
                 onClick={handleReactionTap}
                 style={{
-                  width: 160,
-                  height: 160,
-                  borderRadius: "50%",
-                  background: rtColor,
-                  margin: "0 auto 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: 180, height: 180, borderRadius: "50%",
+                  border: `1px solid ${rtBorderColor}`,
+                  background: rtPhase === "go" ? `${teal}0F` : "transparent",
+                  margin: "0 auto 24px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   cursor: "pointer",
-                  transition: "background 0.15s",
-                  boxShadow: rtPhase === "go" ? `0 0 40px ${ac}50` : "none",
+                  transition: "all 280ms cubic-bezier(0.25,0.46,0.45,0.94)",
                 }}
               >
-                {rtPhase === "waiting" && (
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", opacity: 0.5 }}>
-                    Espera...
-                  </span>
-                )}
-                {rtPhase === "ready" && (
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", opacity: 0.8 }}>
-                    NO TOQUES AÚN
-                  </span>
-                )}
-                {rtPhase === "go" && (
-                  <motion.span
-                    initial={{ scale: 0.5 }}
-                    animate={{ scale: 1 }}
-                    style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}
-                  >
-                    ¡TOCA!
-                  </motion.span>
-                )}
-                {rtPhase === "done" && (
-                  <Icon name="check" size={32} color="#fff" />
-                )}
-              </motion.div>
+                {rtPhase === "waiting" && <span style={{ ...MICRO, color: t3 }}>Espera</span>}
+                {rtPhase === "ready" && <span style={{ ...CAPS, color: semantic.danger }}>No toques aún</span>}
+                {rtPhase === "go" && <span style={{ fontSize: 18, fontWeight: 300, color: teal, letterSpacing: "-0.01em" }}>Toca</span>}
+                {rtPhase === "done" && <span style={{ fontSize: 24, fontWeight: 300, color: teal }}>✓</span>}
+              </div>
 
               {results.reactionTimes.length > 0 && (
-                <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
-                  {results.reactionTimes.map((rt, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        padding: "4px 8px",
-                        borderRadius: 8,
-                        background: rt < 350 ? "#05966910" : rt < 500 ? "#D9770610" : "#DC262610",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: rt < 350 ? "#059669" : rt < 500 ? "#D97706" : "#DC2626",
-                      }}
-                    >
-                      {rt}ms
-                    </div>
-                  ))}
+                <div style={{
+                  display: "flex", justifyContent: "center", gap: 14,
+                  padding: "14px 0",
+                  borderTop: hairline(isDark), borderBottom: hairline(isDark),
+                  marginBottom: 14,
+                }}>
+                  {results.reactionTimes.map((rt, i) => {
+                    const c = rt < 350 ? teal : rt < 500 ? semantic.warning : semantic.danger;
+                    return (
+                      <div key={i} style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 16, fontWeight: 300, color: c, letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{rt}</div>
+                        <div style={{ ...MICRO, color: t3, fontSize: 9, marginTop: 3 }}>ms</div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
-              <div style={{ fontSize: 10, color: t3, marginTop: 12, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 12, fontWeight: 400, color: t3, lineHeight: 1.6, marginTop: 12 }}>
                 {currentStep.science}
               </div>
-            </>
+            </div>
           )}
 
-          {/* ═══ STEP 2: BREATH HOLD ═══ */}
+          {/* STEP 2: BREATH HOLD */}
           {step === 2 && (
-            <>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: t1, marginBottom: 4 }}>
-                {currentStep.title}
-              </h3>
-              <p style={{ fontSize: 11, color: t3, marginBottom: 20 }}>
-                {currentStep.subtitle}
-              </p>
-
-              <motion.div
-                animate={
-                  bhPhase === "holding"
-                    ? { scale: [1, 1.08, 1], opacity: [0.6, 1, 0.6] }
-                    : {}
-                }
-                transition={
-                  bhPhase === "holding"
-                    ? { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    : {}
-                }
-                style={{
-                  width: 160,
-                  height: 160,
-                  borderRadius: "50%",
-                  background: `radial-gradient(circle, ${
-                    bhPhase === "holding" ? "#6366F120" : bhPhase === "done" ? ac + "15" : bd
-                  }, transparent)`,
-                  margin: "0 auto 20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: `2px solid ${bhPhase === "holding" ? "#6366F140" : bhPhase === "done" ? ac + "40" : bd}`,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 36,
-                    fontWeight: 800,
-                    color: bhPhase === "done" ? ac : t1,
-                  }}
-                >
-                  {bhTime}s
+            <div style={{ textAlign: "center" }}>
+              <div style={{
+                width: 200, height: 200, borderRadius: "50%",
+                border: `1px solid ${bhPhase === "holding" ? teal : divider}`,
+                background: bhPhase === "done" ? `${teal}0F` : "transparent",
+                margin: "0 auto 24px",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                transition: "all 280ms cubic-bezier(0.25,0.46,0.45,0.94)",
+              }}>
+                <div style={{
+                  fontSize: 48, fontWeight: 200,
+                  color: bhPhase === "done" ? teal : t1,
+                  letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", lineHeight: 1,
+                }}>
+                  {bhTime}
                 </div>
-                {bhPhase === "holding" && (
-                  <div style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, marginTop: 4 }}>
-                    SOSTENIENDO
-                  </div>
-                )}
-              </motion.div>
+                <div style={{ ...MICRO, color: t3, marginTop: 8 }}>
+                  {bhPhase === "holding" ? "Sosteniendo" : "segundos"}
+                </div>
+              </div>
 
               {bhPhase === "ready" && (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
+                <button
                   onClick={startBreathHold}
                   style={{
-                    padding: "14px 32px",
-                    borderRadius: 50,
-                    background: "#6366F1",
-                    border: "none",
-                    color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    letterSpacing: 1,
+                    width: "100%", padding: "16px 20px",
+                    borderRadius: radius.md, background: teal,
+                    border: `1px solid ${teal}`, color: "#fff",
+                    ...CAPS, fontSize: 13, minHeight: 56, cursor: "pointer",
                   }}
                 >
-                  INHALA Y TOCA PARA EMPEZAR
-                </motion.button>
+                  Inhala y toca para empezar
+                </button>
               )}
               {bhPhase === "holding" && (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
+                <button
                   onClick={stopBreathHold}
                   style={{
-                    padding: "14px 32px",
-                    borderRadius: 50,
-                    background: ac,
-                    border: "none",
-                    color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    letterSpacing: 1,
+                    width: "100%", padding: "16px 20px",
+                    borderRadius: radius.md, background: "transparent",
+                    border: `1px solid ${teal}`, color: teal,
+                    ...CAPS, fontSize: 13, minHeight: 56, cursor: "pointer",
                   }}
                 >
-                  EXHALA Y TOCA
-                </motion.button>
+                  Exhala y toca
+                </button>
               )}
               {bhPhase === "done" && (
-                <div style={{ fontSize: 12, fontWeight: 700, color: ac }}>
-                  {results.breathHold >= 25
-                    ? "Excelente tono vagal"
-                    : results.breathHold >= 15
-                    ? "Tono vagal funcional"
-                    : "Oportunidad de mejora respiratoria"}
+                <div style={{ ...CAPS, color: teal, marginBottom: 14 }}>
+                  {results.breathHold >= 25 ? "Tono vagal excelente" : results.breathHold >= 15 ? "Tono vagal funcional" : "Oportunidad de mejora"}
                 </div>
               )}
 
-              <div style={{ fontSize: 10, color: t3, marginTop: 16, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 12, fontWeight: 400, color: t3, lineHeight: 1.6, marginTop: 20 }}>
                 {currentStep.science}
               </div>
-            </>
+            </div>
           )}
 
-          {/* ═══ STEP 3: FOCUS TEST ═══ */}
+          {/* STEP 3: FOCUS */}
           {step === 3 && (
-            <>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: t1, marginBottom: 4 }}>
-                {currentStep.title}
-              </h3>
-              <p style={{ fontSize: 11, color: t3, marginBottom: 20 }}>
-                {currentStep.subtitle}
-              </p>
-
+            <div style={{ textAlign: "center" }}>
               {focusPhase === "ready" && (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
+                <button
                   onClick={startFocusTest}
                   style={{
-                    padding: "14px 32px",
-                    borderRadius: 50,
-                    background: "#D97706",
-                    border: "none",
-                    color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    letterSpacing: 1,
+                    width: "100%", padding: "16px 20px",
+                    borderRadius: radius.md, background: teal,
+                    border: `1px solid ${teal}`, color: "#fff",
+                    ...CAPS, fontSize: 13, minHeight: 56, cursor: "pointer",
                     marginBottom: 20,
                   }}
                 >
-                  INICIAR TEST DE FOCO
-                </motion.button>
+                  Iniciar test de foco
+                </button>
               )}
 
               {focusPhase === "testing" && (
-                <div
-                  style={{
-                    width: 160,
-                    height: 160,
-                    borderRadius: "50%",
-                    background: flashVisible
-                      ? `radial-gradient(circle, ${ac}40, ${ac}10)`
-                      : bd,
-                    margin: "0 auto 20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "background 0.1s",
-                    border: `2px solid ${flashVisible ? ac : bd}`,
-                  }}
-                >
+                <div style={{
+                  width: 200, height: 200, borderRadius: "50%",
+                  border: `1px solid ${flashVisible ? teal : divider}`,
+                  margin: "0 auto 24px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "border-color 120ms",
+                }}>
                   {flashVisible ? (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: "50%",
-                        background: ac,
-                        boxShadow: `0 0 20px ${ac}60`,
-                      }}
-                    />
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: teal }} />
                   ) : (
-                    <span style={{ fontSize: 10, color: t3 }}>Observa...</span>
+                    <span style={{ ...MICRO, color: t3 }}>Observa</span>
                   )}
                 </div>
               )}
 
               {focusPhase === "input" && (
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: t1, marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 400, color: t1, marginBottom: 16, lineHeight: 1.5 }}>
                     ¿Cuántos destellos contaste?
                   </div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 2,
+                    border: hairline(isDark), borderRadius: radius.md, padding: 2,
+                  }}>
                     {Array.from({ length: 16 }, (_, i) => i + 3).map((n) => (
-                      <motion.button
+                      <button
                         key={n}
-                        whileTap={{ scale: 0.9 }}
                         onClick={() => {
                           setUserCount(n);
                           setResults((r) => ({ ...r, focusCount: n, focusActual: actualFlashes }));
@@ -694,347 +474,158 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                           setTimeout(() => setStep(4), 800);
                         }}
                         style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 10,
-                          border: `1.5px solid ${bd}`,
-                          background: cd,
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: t1,
+                          aspectRatio: "1", padding: 0,
+                          border: "none", background: "transparent",
+                          fontSize: 14, fontWeight: 300, color: t1,
+                          letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums",
                           cursor: "pointer",
                         }}
                       >
                         {n}
-                      </motion.button>
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
 
               {focusPhase === "done" && (
-                <div style={{ fontSize: 12, fontWeight: 700, color: ac }}>
-                  {Math.abs(userCount - actualFlashes) <= 1
-                    ? "Precisión excelente"
-                    : Math.abs(userCount - actualFlashes) <= 3
-                    ? "Foco funcional"
-                    : "Atención dispersa — los protocolos de enfoque te ayudarán"}
+                <div style={{ ...CAPS, color: teal }}>
+                  {Math.abs(userCount - actualFlashes) <= 1 ? "Precisión excelente" : Math.abs(userCount - actualFlashes) <= 3 ? "Foco funcional" : "Atención dispersa"}
                 </div>
               )}
 
-              <div style={{ fontSize: 10, color: t3, marginTop: 16, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 12, fontWeight: 400, color: t3, lineHeight: 1.6, marginTop: 20 }}>
                 {currentStep.science}
               </div>
-            </>
+            </div>
           )}
 
-          {/* ═══ STEP 4: STRESS SELF-REPORT ═══ */}
+          {/* STEP 4: STRESS SELF-REPORT */}
           {step === 4 && (
             <>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: t1, marginBottom: 4 }}>
-                {currentStep.title}
-              </h3>
-              <p style={{ fontSize: 11, color: t3, marginBottom: 24 }}>
-                {currentStep.subtitle}
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
-                {STRESS_OPTIONS.map((opt) => (
-                  <motion.button
-                    key={opt.value}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => {
-                      setResults((r) => ({ ...r, stressLevel: opt.value }));
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "14px 16px",
-                      borderRadius: 14,
-                      border:
-                        results.stressLevel === opt.value
-                          ? `2px solid ${opt.color}`
-                          : `1.5px solid ${bd}`,
-                      background:
-                        results.stressLevel === opt.value ? opt.color + "08" : cd,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Icon
-                      name={opt.icon}
-                      size={20}
-                      color={results.stressLevel === opt.value ? opt.color : t3}
-                    />
-                    <span
+              <div style={{
+                border: hairline(isDark), borderRadius: radius.lg,
+                overflow: "hidden", marginBottom: 24,
+              }}>
+                {STRESS_OPTIONS.map((opt, i, arr) => {
+                  const isActive = results.stressLevel === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setResults((r) => ({ ...r, stressLevel: opt.value }))}
                       style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color:
-                          results.stressLevel === opt.value ? opt.color : t2,
+                        width: "100%",
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "16px 20px",
+                        background: isActive ? (isDark ? "#1A1E28" : "#F2F4F7") : "transparent",
+                        border: "none",
+                        borderBottom: i < arr.length - 1 ? hairline(isDark) : "none",
+                        borderLeft: isActive ? `2px solid ${teal}` : "2px solid transparent",
+                        cursor: "pointer", minHeight: 56,
+                        textAlign: "left",
                       }}
                     >
-                      {opt.label}
-                    </span>
-                  </motion.button>
-                ))}
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                        <span style={{ ...CAPS, color: t3, fontVariantNumeric: "tabular-nums" }}>{opt.value}</span>
+                        <span style={{ fontSize: 15, fontWeight: 500, color: isActive ? teal : t1, letterSpacing: "-0.01em" }}>
+                          {opt.label}
+                        </span>
+                      </div>
+                      {isActive && <span style={{ ...CAPS, color: teal }}>Seleccionado</span>}
+                    </button>
+                  );
+                })}
               </div>
 
-              <motion.button
-                whileTap={{ scale: 0.96 }}
+              <button
                 onClick={() => setStep(5)}
                 style={{
-                  width: "100%",
-                  padding: "14px",
-                  borderRadius: 50,
-                  background: ac,
-                  border: "none",
-                  color: "#fff",
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  letterSpacing: 1,
+                  width: "100%", padding: "16px 20px",
+                  borderRadius: radius.md, background: teal,
+                  border: `1px solid ${teal}`, color: "#fff",
+                  ...CAPS, fontSize: 13, minHeight: 56, cursor: "pointer",
                 }}
               >
-                VER RESULTADOS
-              </motion.button>
+                Ver resultados
+              </button>
             </>
           )}
 
-          {/* ═══ STEP 5: RESULTS ═══ */}
-          {step === 5 && (
-            (() => {
-              const baseline = calcBaseline();
-              return (
-                <>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-                  >
-                    <svg
-                      width="64"
-                      height="64"
-                      viewBox="0 0 64 64"
-                      style={{ margin: "0 auto 16px", display: "block" }}
-                    >
-                      <circle cx="32" cy="32" r="28" fill={ac} opacity=".08" />
-                      <circle cx="32" cy="32" r="20" fill={ac} opacity=".12" />
-                      <path
-                        d="M20 32l8 8 16-16"
-                        stroke={ac}
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                    </svg>
-                  </motion.div>
-
-                  <h3 style={{ fontSize: 20, fontWeight: 800, color: t1, marginBottom: 4 }}>
-                    Calibración Completa
-                  </h3>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: ac,
-                      fontWeight: 700,
-                      letterSpacing: 2,
-                      marginBottom: 20,
-                    }}
-                  >
-                    PERFIL: {baseline.profileLabel.toUpperCase()}
+          {/* STEP 5: RESULTS */}
+          {step === 5 && (() => {
+            const baseline = calcBaseline();
+            return (
+              <>
+                <div style={{
+                  borderTop: hairline(isDark), borderBottom: hairline(isDark),
+                  padding: "24px 0", marginBottom: 24, textAlign: "left",
+                }}>
+                  <div style={{ ...CAPS, color: t3, marginBottom: 10 }}>Perfil · {baseline.profileLabel}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <span style={{ fontSize: 56, fontWeight: 200, color: teal, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                      {baseline.composite}
+                    </span>
+                    <span style={{ fontSize: 14, fontWeight: 400, color: t3 }}>baseline</span>
                   </div>
+                </div>
 
-                  {/* Score ring */}
-                  <div
-                    style={{
-                      width: 100,
-                      height: 100,
-                      margin: "0 auto 20px",
-                      position: "relative",
-                    }}
-                  >
-                    <svg width="100" height="100" viewBox="0 0 100 100">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="42"
-                        fill="none"
-                        stroke={bd}
-                        strokeWidth="6"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="42"
-                        fill="none"
-                        stroke={ac}
-                        strokeWidth="6"
-                        strokeLinecap="round"
-                        strokeDasharray={2 * Math.PI * 42}
-                        strokeDashoffset={
-                          2 * Math.PI * 42 * (1 - baseline.composite / 100)
-                        }
-                        style={{
-                          transform: "rotate(-90deg)",
-                          transformOrigin: "50% 50%",
-                          transition: "stroke-dashoffset 1s ease",
-                        }}
-                      />
-                    </svg>
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <span style={{ fontSize: 28, fontWeight: 800, color: t1 }}>
-                        {baseline.composite}
-                      </span>
-                      <span style={{ fontSize: 9, color: t3, fontWeight: 700 }}>
-                        BASELINE
-                      </span>
+                {/* Metrics table */}
+                <div style={{
+                  border: hairline(isDark), borderRadius: radius.lg,
+                  marginBottom: 24, overflow: "hidden",
+                }}>
+                  {[
+                    { label: "Reacción", value: `${baseline.avgRT}`, unit: "ms", score: baseline.rtScore },
+                    { label: "Respiración", value: `${baseline.breathHold}`, unit: "s", score: baseline.bhScore },
+                    { label: "Foco", value: `${baseline.focusAccuracy}`, unit: "%", score: baseline.focusAccuracy },
+                    { label: "Estado", value: STRESS_OPTIONS[baseline.stressLevel - 1]?.label, unit: "", score: baseline.stressScore },
+                  ].map((m, i, arr) => (
+                    <div key={i} style={{
+                      padding: "14px 20px",
+                      borderBottom: i < arr.length - 1 ? hairline(isDark) : "none",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ ...CAPS, color: t3 }}>{m.label}</span>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
+                          <span style={{ fontSize: 18, fontWeight: 300, color: t1, letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{m.value}</span>
+                          {m.unit && <span style={{ ...MICRO, color: t3 }}>{m.unit}</span>}
+                        </div>
+                      </div>
+                      <div style={{ height: 2, background: divider }}>
+                        <div style={{ width: `${m.score}%`, height: "100%", background: teal }} />
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
 
-                  {/* Metrics grid */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 8,
-                      marginBottom: 20,
-                    }}
-                  >
-                    {[
-                      {
-                        label: "Reacción",
-                        value: `${baseline.avgRT}ms`,
-                        score: baseline.rtScore,
-                        color: "#3B82F6",
-                      },
-                      {
-                        label: "Respiración",
-                        value: `${baseline.breathHold}s`,
-                        score: baseline.bhScore,
-                        color: "#6366F1",
-                      },
-                      {
-                        label: "Foco",
-                        value: `${baseline.focusAccuracy}%`,
-                        score: baseline.focusAccuracy,
-                        color: "#D97706",
-                      },
-                      {
-                        label: "Estado",
-                        value: STRESS_OPTIONS[baseline.stressLevel - 1]?.label,
-                        score: baseline.stressScore,
-                        color: "#0D9488",
-                      },
-                    ].map((m, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + i * 0.1 }}
-                        style={{
-                          background: isDark ? "#1A1E28" : "#F8FAFC",
-                          borderRadius: 12,
-                          padding: "10px",
-                          textAlign: "center",
-                        }}
-                      >
-                        <div style={{ fontSize: 10, color: t3, marginBottom: 3 }}>
-                          {m.label}
-                        </div>
-                        <div
-                          style={{ fontSize: 16, fontWeight: 800, color: m.color }}
-                        >
-                          {m.value}
-                        </div>
-                        <div
-                          style={{
-                            height: 3,
-                            background: bd,
-                            borderRadius: 3,
-                            marginTop: 6,
-                            overflow: "hidden",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: m.score + "%",
-                              height: "100%",
-                              background: m.color,
-                              borderRadius: 3,
-                            }}
-                          />
-                        </div>
-                      </motion.div>
-                    ))}
+                <div style={{
+                  padding: "18px 20px", marginBottom: 24,
+                  border: hairline(isDark), borderLeft: `2px solid ${teal}`,
+                  borderRadius: radius.md,
+                }}>
+                  <div style={{ fontSize: 14, fontWeight: 400, color: t2, lineHeight: 1.7 }}>
+                    Protocolo ideal · <span style={{ color: teal, fontWeight: 500 }}>
+                      {baseline.recommendations.primaryIntent === "calma" ? "regulación parasimpática" :
+                        baseline.recommendations.primaryIntent === "enfoque" ? "activación prefrontal" :
+                          "energización simpática controlada"}
+                    </span>. Meta diaria · {baseline.recommendations.sessionGoal} sesiones.
                   </div>
+                </div>
 
-                  <div
-                    style={{
-                      background: ac + "06",
-                      borderRadius: 12,
-                      padding: "12px",
-                      marginBottom: 20,
-                      border: `1px solid ${ac}10`,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: t2,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      Tu perfil{" "}
-                      <strong style={{ color: ac }}>
-                        {baseline.profileLabel}
-                      </strong>{" "}
-                      indica que tu protocolo ideal empieza con{" "}
-                      <strong>
-                        {baseline.recommendations.primaryIntent === "calma"
-                          ? "regulación parasimpática"
-                          : baseline.recommendations.primaryIntent === "enfoque"
-                          ? "activación prefrontal"
-                          : "energización simpática controlada"}
-                      </strong>
-                      . Meta diaria recomendada:{" "}
-                      <strong>{baseline.recommendations.sessionGoal} sesiones</strong>.
-                    </div>
-                  </div>
-
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    onClick={handleComplete}
-                    style={{
-                      width: "100%",
-                      padding: "16px",
-                      borderRadius: 50,
-                      background: `linear-gradient(135deg, ${ac}, #0D9488)`,
-                      border: "none",
-                      color: "#fff",
-                      fontSize: 13,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      letterSpacing: 2,
-                      textTransform: "uppercase",
-                      boxShadow: `0 4px 20px ${ac}30`,
-                    }}
-                  >
-                    COMENZAR MI PRIMERA IGNICIÓN
-                  </motion.button>
-                </>
-              );
-            })()
-          )}
+                <button
+                  onClick={handleComplete}
+                  style={{
+                    width: "100%", padding: "16px 20px",
+                    borderRadius: radius.md, background: teal,
+                    border: `1px solid ${teal}`, color: "#fff",
+                    ...CAPS, fontSize: 13, minHeight: 56, cursor: "pointer",
+                  }}
+                >
+                  Comenzar primera ignición
+                </button>
+              </>
+            );
+          })()}
         </motion.div>
       </AnimatePresence>
     </motion.div>
