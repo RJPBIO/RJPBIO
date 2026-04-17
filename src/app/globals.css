@@ -1,6 +1,26 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+
+/* Window Controls Overlay — installed PWA on desktop */
+@media (display-mode: window-controls-overlay) {
+  :root {
+    --titlebar-area-x: env(titlebar-area-x, 0);
+    --titlebar-area-y: env(titlebar-area-y, 0);
+    --titlebar-area-width: env(titlebar-area-width, 100%);
+    --titlebar-area-height: env(titlebar-area-height, 33px);
+  }
+  .wco-titlebar {
+    position: fixed; top: 0; left: var(--titlebar-area-x);
+    width: var(--titlebar-area-width); height: var(--titlebar-area-height);
+    -webkit-app-region: drag; app-region: drag;
+    display: flex; align-items: center; gap: 8px; padding: 0 12px;
+    background: #0B0E14; color: #E2E8F0; font: 500 13px/1 system-ui;
+    z-index: 9999;
+  }
+  .wco-titlebar .no-drag { -webkit-app-region: no-drag; app-region: no-drag; }
+  body { padding-top: var(--titlebar-area-height); }
+}
 button { font-family: inherit; }
 input, textarea { font-family: inherit; }
 
