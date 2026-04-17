@@ -37,6 +37,7 @@ import Icon from "../components/Icon";
 import { useSync } from "../hooks/useSync";
 import { useDeepLink } from "../hooks/useDeepLink";
 import { useBreakpoint } from "../hooks/useBreakpoint";
+import { uiSound } from "../lib/uiSound";
 import { parseDeepLink } from "../lib/deeplink";
 import { useReducedMotion, useFocusTrap, KEY, announce } from "../lib/a11y";
 import { semantic } from "../lib/tokens";
@@ -132,9 +133,16 @@ export default function BioIgnicion(){
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
   })();return()=>{cancelled=true;};},[]);
 
-  useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>!v);}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[]);
+  useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>{const nv=!v;uiSound[nv?"open":"close"](st.soundOn);return nv;});}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[st.soundOn]);
 
   const cmdCommands=useMemo(()=>{
+    const actionGroup=[];
+    if(ts==="idle")actionGroup.push({id:"act-start",group:"Acciones",icon:"bolt",label:"Iniciar sesión ahora",hint:`${pr?.n||"Protocolo"} · ${Math.round((pr?.d||120)*durMult)}s`,shortcut:"⏎",action:()=>{if(tab!=="ignicion")switchTab("ignicion");setTimeout(()=>go(),50);}});
+    if(ts==="running")actionGroup.push({id:"act-pause",group:"Acciones",icon:"clock",label:"Pausar sesión",hint:"Detiene timer, conserva progreso",action:()=>pa()});
+    if(ts==="paused")actionGroup.push({id:"act-resume",group:"Acciones",icon:"bolt",label:"Reanudar sesión",hint:"Continúa donde quedaste",action:()=>{setTs("running");H("go");if(st.soundOn!==false)startBinaural(pr.int);requestWakeLock();}});
+    actionGroup.push({id:"act-theme",group:"Acciones",icon:"moon",label:`Tema: ${st.themeMode==="dark"?"oscuro":st.themeMode==="light"?"claro":"automático"}`,hint:"Ciclar auto → oscuro → claro",action:()=>{const m=st.themeMode||"auto";const next=m==="auto"?"dark":m==="dark"?"light":"auto";setSt({...st,themeMode:next});}});
+    actionGroup.push({id:"act-mood",group:"Acciones",icon:"heart",label:"Registrar ánimo ahora",hint:"Escala 1-5 rápida",action:()=>{setCheckMood(0);setPostStep("mood");}});
+
     const navGroup=[
       {id:"nav-ig",group:"Navegar",icon:"bolt",label:"Ir a Ignición",hint:"Selector + timer",action:()=>switchTab("ignicion")},
       {id:"nav-db",group:"Navegar",icon:"chart",label:"Ir a Dashboard",hint:"Métricas y trayectoria",action:()=>switchTab("dashboard")},
@@ -156,12 +164,24 @@ export default function BioIgnicion(){
       hint:`${Math.round(proto.d*durMult)}s · ${proto.int||"neural"}`,
       action:()=>{sp(proto);switchTab("ignicion");},
     }));
+    const recentGroup=((st.history||[]).slice(-3).reverse()).map((h,i)=>{
+      const proto=(P||[]).find(p=>p.n===h.n||p.id===h.id);
+      if(!proto)return null;
+      return{
+        id:`recent-${i}`,
+        group:"Repetir recientes",
+        icon:"refresh",
+        label:proto.n,
+        hint:`Última: ${h.date||"reciente"} · Δ${h.c!=null?(h.c>0?`+${h.c}`:h.c):"—"}`,
+        action:()=>{sp(proto);switchTab("ignicion");},
+      };
+    }).filter(Boolean);
     const toggleGroup=[
       {id:"tog-sound",group:"Ajustes",icon:st.soundOn!==false?"volume-on":"volume-off",label:`Sonido: ${st.soundOn!==false?"encendido":"apagado"}`,hint:"Alternar audio",action:()=>setSt({...st,soundOn:st.soundOn===false?true:false})},
       {id:"tog-haptic",group:"Ajustes",icon:"vibrate",label:`Háptica: ${st.hapticOn!==false?"encendida":"apagada"}`,hint:"Alternar vibración",action:()=>setSt({...st,hapticOn:st.hapticOn===false?true:false})},
     ];
-    return[...navGroup,...viewGroup,...protoGroup,...toggleGroup];
-  },[st,durMult]);
+    return[...actionGroup,...navGroup,...viewGroup,...recentGroup,...protoGroup,...toggleGroup];
+  },[st,durMult,ts,pr,tab]);
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
@@ -190,7 +210,7 @@ export default function BioIgnicion(){
   function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
   function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}}
-  function switchTab(id){if(id===tab)return;setTab(id);H("tap");announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
+  function switchTab(id){if(id===tab)return;setTab(id);H("tap");uiSound.nav(st.soundOn);announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
   const onTimerKey=useCallback(e=>{if(e.key===KEY.ENTER||e.key===KEY.SPACE){e.preventDefault();timerTap();}},[ts,pr.int,st.soundOn]);
   const onTabKey=useCallback((e,id,order)=>{const ids=["ignicion","dashboard","perfil"];if(e.key===KEY.RIGHT||e.key===KEY.DOWN){e.preventDefault();switchTab(ids[(order+1)%ids.length]);}else if(e.key===KEY.LEFT||e.key===KEY.UP){e.preventDefault();switchTab(ids[(order-1+ids.length)%ids.length]);}else if(e.key===KEY.HOME){e.preventDefault();switchTab(ids[0]);}else if(e.key===KEY.END){e.preventDefault();switchTab(ids[ids.length-1]);}},[]);
   const completeTour=useCallback(()=>{setShowTour(false);setSt(s=>({...s,onboardingTourComplete:true}));},[setSt]);
@@ -299,7 +319,7 @@ export default function BioIgnicion(){
   <OnboardingTour show={showTour&&!onboard&&!showCalibration} isDark={isDark} onClose={completeTour}/>
 
   {/* ═══ COMMAND PALETTE — ⌘K/Ctrl+K ═══ */}
-  <CommandPalette open={showCmd} onClose={()=>setShowCmd(false)} commands={cmdCommands}/>
+  <CommandPalette open={showCmd} onClose={()=>{uiSound.close(st.soundOn);setShowCmd(false);}} commands={cmdCommands} onSelect={()=>uiSound.select(st.soundOn)}/>
 
   {/* ═══ PROTOCOL DETAIL VIEW ═══ */}
   <AnimatePresence>
