@@ -1,0 +1,14 @@
+name: Security report (PUBLIC)
+description: Use ONLY if the issue is already public. Otherwise email security@bio-ignicion.app.
+title: "[security] "
+labels: [security]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **⚠️ If this is not public, STOP and email security@bio-ignicion.app.**
+  - type: textarea
+    attributes: { label: Issue }
+    validations: { required: true }
+  - type: dropdown
+    attributes: { label: Severity, options: [Low, Medium, High, Critical] }
