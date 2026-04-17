@@ -11,9 +11,9 @@ export default async function Onboarding() {
   const hasApiKey = (await client.apiKey.count({ where: { orgId: org.id } })) > 0;
 
   const steps = [
-    { id: "branding", label: "Configura marca y dominio custom", href: "/admin/branding", done: !!org.brandingJson?.logo },
-    { id: "sso", label: "Conecta SSO (Okta / Azure AD / Google)", href: "/admin/sso", done: !!org.brandingJson?.sso },
-    { id: "scim", label: "Habilita SCIM 2.0 para aprovisionamiento", href: "/admin/scim", done: !!org.brandingJson?.scim },
+    { id: "branding", label: "Configura marca y dominio custom", href: "/admin/branding", done: !!org.branding?.logo },
+    { id: "sso", label: "Conecta SSO (Okta / Azure AD / Google)", href: "/admin/sso", done: !!org.branding?.sso },
+    { id: "scim", label: "Habilita SCIM 2.0 para aprovisionamiento", href: "/admin/scim", done: !!org.branding?.scim },
     { id: "members", label: `Invita a tu equipo (${memberCount} miembros)`, href: "/admin/members", done: memberCount > 1 },
     { id: "api", label: "Crea una API key", href: "/admin/api-keys", done: hasApiKey },
     { id: "hook", label: "Registra un webhook", href: "/admin/webhooks", done: hasWebhook },
