@@ -1,8 +1,7 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   CORRELATION MATRIX — Visualización de efectividad por protocolo
-   Base: la retroalimentación sobre efectividad personal guía
-   la auto-selección óptima (Metacognitive Monitoring, Flavell 1979)
+   CORRELATION MATRIX — efectividad por protocolo
+   Base: Metacognitive Monitoring (Flavell 1979).
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
@@ -10,13 +9,13 @@ import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { calcProtocolCorrelations } from "../lib/neural";
 import { P } from "../lib/protocols";
+import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
+import { semantic } from "../lib/tokens";
+import { useReducedMotion, onActivate } from "../lib/a11y";
 
 export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
+  const reduced = useReducedMotion();
+  const { card: cd, border: bd, t1, t3 } = resolveTheme(isDark);
 
   const correlations = useMemo(() => calcProtocolCorrelations(st), [st.moodLog, st.history]);
 
@@ -26,59 +25,73 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
   const maxDelta = Math.max(...sorted.map(([, d]) => Math.abs(d.avgDelta)), 0.1);
 
   return (
-    <div
+    <section
+      aria-label="Efectividad personal por protocolo"
       style={{
         background: cd,
         borderRadius: 18,
         padding: "16px 14px",
         border: `1px solid ${bd}`,
-        marginBottom: 14,
+        marginBlockEnd: 14,
       }}
     >
-      {/* Header */}
-      <div
+      <header
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 12,
+          marginBlockEnd: 12,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="radar" size={12} color={t3} />
-          <span
+          <Icon name="radar" size={12} color={t3} aria-hidden="true" />
+          <h3
             style={{
               fontSize: 10,
-              fontWeight: 800,
+              fontWeight: font.weight.black,
               letterSpacing: 3,
               color: t3,
               textTransform: "uppercase",
+              margin: 0,
             }}
           >
             Efectividad Personal
-          </span>
+          </h3>
         </div>
-        <span style={{ fontSize: 10, color: t3 }}>
-          {sorted.length} protocolos
-        </span>
-      </div>
+        <span style={{ fontSize: 10, color: t3 }}>{sorted.length} protocolos</span>
+      </header>
 
-      {/* Protocol bars */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <ul
+        style={{
+          listStyle: "none",
+          padding: 0,
+          margin: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
         {sorted.slice(0, 7).map(([name, data], i) => {
           const proto = P.find((p) => p.n === name);
           const isPositive = data.avgDelta > 0;
           const barWidth = Math.round((Math.abs(data.avgDelta) / maxDelta) * 100);
+          const protoColor = proto?.cl || "#6366F1";
+          const interactive = !!proto && !!onSelectProtocol;
+          const onClick = interactive ? () => onSelectProtocol(proto) : undefined;
+          const ariaLabel =
+            `${name}, ${isPositive ? "+" : ""}${data.avgDelta} puntos promedio en ${data.sessions} sesiones. Mejor hora: ${data.bestTimeOfDay}.`;
 
           return (
-            <motion.div
+            <motion.li
               key={name}
-              initial={{ opacity: 0, x: -8 }}
+              initial={reduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => {
-                if (onSelectProtocol && proto) onSelectProtocol(proto);
-              }}
+              transition={reduced ? { duration: 0 } : { delay: i * 0.05 }}
+              role={interactive ? "button" : "listitem"}
+              tabIndex={interactive ? 0 : undefined}
+              aria-label={ariaLabel}
+              onClick={onClick}
+              onKeyDown={interactive ? onActivate(onClick) : undefined}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -86,36 +99,35 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                 padding: "8px 10px",
                 borderRadius: 10,
                 background: isDark ? "#1A1E28" : "#F8FAFC",
-                cursor: proto ? "pointer" : "default",
+                cursor: interactive ? "pointer" : "default",
               }}
             >
-              {/* Protocol tag */}
               <div
+                aria-hidden="true"
                 style={{
-                  width: 28,
-                  height: 28,
+                  inlineSize: 28,
+                  blockSize: 28,
                   borderRadius: 7,
-                  background: (proto?.cl || "#6366F1") + "12",
+                  background: withAlpha(protoColor, 12),
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 9,
-                  fontWeight: 800,
-                  color: proto?.cl || "#6366F1",
+                  fontWeight: font.weight.black,
+                  color: protoColor,
                   flexShrink: 0,
                 }}
               >
                 {proto?.tg || "?"}
               </div>
 
-              {/* Name + bar */}
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minInlineSize: 0 }}>
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBottom: 4,
+                    marginBlockEnd: 4,
                   }}
                 >
                   <span
@@ -134,8 +146,8 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                     <span
                       style={{
                         fontSize: 11,
-                        fontWeight: 800,
-                        color: isPositive ? "#059669" : "#DC2626",
+                        fontWeight: font.weight.black,
+                        color: isPositive ? semantic.success : semantic.danger,
                       }}
                     >
                       {isPositive ? "+" : ""}
@@ -145,31 +157,33 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                   </div>
                 </div>
 
-                {/* Delta bar */}
                 <div
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={barWidth}
                   style={{
-                    height: 4,
+                    blockSize: 4,
                     background: bd,
                     borderRadius: 2,
                     overflow: "hidden",
                   }}
                 >
                   <motion.div
-                    initial={{ width: 0 }}
+                    initial={reduced ? { width: barWidth + "%" } : { width: 0 }}
                     animate={{ width: barWidth + "%" }}
-                    transition={{ delay: i * 0.05 + 0.2, duration: 0.4 }}
+                    transition={reduced ? { duration: 0 } : { delay: i * 0.05 + 0.2, duration: 0.4 }}
                     style={{
-                      height: "100%",
+                      blockSize: "100%",
                       background: isPositive
-                        ? "linear-gradient(90deg, #059669, #0D9488)"
-                        : "linear-gradient(90deg, #DC2626, #EF4444)",
+                        ? `linear-gradient(90deg, ${semantic.success}, ${brand.secondary})`
+                        : `linear-gradient(90deg, ${semantic.danger}, #EF4444)`,
                       borderRadius: 2,
                     }}
                   />
                 </div>
 
-                {/* Time of day hint */}
-                <div style={{ fontSize: 9, color: t3, marginTop: 3 }}>
+                <div style={{ fontSize: 9, color: t3, marginBlockStart: 3 }}>
                   Mejor: {data.bestTimeOfDay} ·{" "}
                   {data.bestTimeOfDay === "mañana"
                     ? `+${data.morningDelta}`
@@ -177,10 +191,10 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                   pts
                 </div>
               </div>
-            </motion.div>
+            </motion.li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
