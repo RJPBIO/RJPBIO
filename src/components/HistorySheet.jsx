@@ -7,6 +7,7 @@ import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import BioSparkline from "./BioSparkline";
+import IllustratedEmpty from "./IllustratedEmpty";
 import { MOODS } from "../lib/constants";
 import { resolveTheme, withAlpha, ty, font, space, radius, z, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
@@ -152,12 +153,15 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
             )}
 
             {!total && (
-              <div style={{ textAlign: "center", paddingBlock: space[10] }}>
-                <Icon name="chart" size={30} color={t3} aria-hidden="true" />
-                <div style={{ ...ty.body(t3), marginBlockStart: space[2] }}>
-                  Sin señal aún. La primera sesión inicia tu registro biométrico.
-                </div>
-              </div>
+              <IllustratedEmpty
+                illustration="history"
+                kicker="Registro en blanco"
+                title="Sin señal aún."
+                body="La primera sesión inicia tu registro biométrico. Cada ignición añade un nodo a tu constelación."
+                accent={ac}
+                textPrimary={t1}
+                textMuted={t3}
+              />
             )}
 
             {Object.entries(grouped).map(([k, gi]) => {
