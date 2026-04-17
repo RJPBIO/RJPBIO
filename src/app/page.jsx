@@ -49,6 +49,13 @@ const SettingsSheet = dynamic(() => import("../components/SettingsSheet"), { ssr
 const HistorySheet = dynamic(() => import("../components/HistorySheet"), { ssr: false });
 const ProtocolSelector = dynamic(() => import("../components/ProtocolSelector"), { ssr: false });
 const OnboardingTour = dynamic(() => import("../components/OnboardingTour"), { ssr: false });
+const HRVMonitor = dynamic(() => import("../components/HRVMonitor"), { ssr: false });
+const PhysiologicalSigh = dynamic(() => import("../components/PhysiologicalSigh"), { ssr: false });
+const NSDR = dynamic(() => import("../components/NSDR"), { ssr: false });
+const ChronotypeTest = dynamic(() => import("../components/ChronotypeTest"), { ssr: false });
+const ResonanceCalibration = dynamic(() => import("../components/ResonanceCalibration"), { ssr: false });
+const NOM035Questionnaire = dynamic(() => import("../components/NOM035Questionnaire"), { ssr: false });
+const ReadinessScore = dynamic(() => import("../components/ReadinessScore"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -79,6 +86,12 @@ export default function BioIgnicion(){
   const[showProtoDetail,setShowProtoDetail]=useState(false);
   const[showMore,setShowMore]=useState(false);
   const[showTour,setShowTour]=useState(false);
+  const[showHRV,setShowHRV]=useState(false);
+  const[showSigh,setShowSigh]=useState(false);
+  const[showNSDR,setShowNSDR]=useState(false);
+  const[showChronoTest,setShowChronoTest]=useState(false);
+  const[showResonanceCal,setShowResonanceCal]=useState(false);
+  const[showNOM035,setShowNOM035]=useState(false);
   const reducedMotion=useReducedMotion();
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
@@ -248,6 +261,14 @@ export default function BioIgnicion(){
   {/* ═══ HISTORY ═══ */}
   <HistorySheet show={showHist} onClose={()=>setShowHist(false)} st={st} isDark={isDark} ac={ac}/>
 
+  {/* ═══ BIONEURAL MODALS ═══ */}
+  <HRVMonitor show={showHRV} isDark={isDark} onClose={()=>setShowHRV(false)} onComplete={(entry)=>{store.logHRV(entry);setSt_(useStore.getState());}}/>
+  <PhysiologicalSigh show={showSigh} isDark={isDark} onClose={()=>setShowSigh(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
+  <NSDR show={showNSDR} isDark={isDark} onClose={()=>setShowNSDR(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
+  <ChronotypeTest show={showChronoTest} isDark={isDark} onClose={()=>setShowChronoTest(false)} onComplete={(ct)=>{store.setChronotype(ct);setSt_(useStore.getState());}}/>
+  <ResonanceCalibration show={showResonanceCal} isDark={isDark} onClose={()=>setShowResonanceCal(false)} onComplete={(res)=>{store.setResonanceFreq(res.bpm);setSt_(useStore.getState());}}/>
+  <NOM035Questionnaire show={showNOM035} isDark={isDark} onClose={()=>setShowNOM035(false)} onComplete={(r)=>{store.logNOM035(r);setSt_(useStore.getState());}}/>
+
   {/* ═══ MAIN CONTENT ═══ */}
   <div style={{opacity:tabFade,transition:"opacity .25s cubic-bezier(.4,0,.2,1),transform .25s",transform:tabFade===1?"translateY(0)":"translateY(8px)",position:"relative",zIndex:1}}>
 
@@ -285,6 +306,28 @@ export default function BioIgnicion(){
           <div style={{width:Math.min(100,(st.todaySessions||0)/(st.sessionGoal||2)*100)+"%",height:"100%",background:ac,borderRadius:radius.sm/2,transition:"width .3s"}}/>
         </div>
       </div>
+    </div>}
+
+    {/* Readiness Score — bioneural composite */}
+    {ts==="idle"&&<ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRV(true)}/>}
+
+    {/* Bioneural quick actions — evidence-based rescue protocols */}
+    {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <Icon name="calm" size={14} color="#059669"/>
+        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
+        <span style={{fontSize:8,color:t3}}>60s · calma</span>
+      </motion.button>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRV(true);H("tap");}} aria-label="Medir HRV con sensor Bluetooth" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <Icon name="predict" size={14} color="#6366F1"/>
+        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
+        <span style={{fontSize:8,color:t3}}>5 min · BLE</span>
+      </motion.button>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <Icon name="mind" size={14} color="#0D9488"/>
+        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>
+        <span style={{fontSize:8,color:t3}}>10 min · reset</span>
+      </motion.button>
     </div>}
 
     {/* Daily Ignición with AI reasoning */}
@@ -483,7 +526,7 @@ export default function BioIgnicion(){
   {tab==="dashboard"&&<DashboardView st={st} isDark={isDark} ac={ac} switchTab={switchTab} sp={sp} onShowHist={()=>setShowHist(true)} />}
 
   {/* ═══ TAB: PERFIL ═══ */}
-  {tab==="perfil"&&<ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} />}
+  {tab==="perfil"&&<ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} onShowChronotype={()=>setShowChronoTest(true)} onShowResonance={()=>setShowResonanceCal(true)} onShowNOM035={()=>setShowNOM035(true)} />}
   </div>
 
   {/* ═══ BOTTOM METRICS BAR ═══ */}
