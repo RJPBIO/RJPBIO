@@ -125,9 +125,17 @@ export default function BioIgnicion(){
   useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
 
   // ═══ LOAD STATE (via Zustand) — await init BEFORE reading/writing ═══
-  useEffect(()=>{let cancelled=false;(async()=>{
-    try{await store.init();}catch(e){}
+  // iOS Safari + Home Screen PWA: IndexedDB a veces cuelga en modo privado o
+  // primer arranque. Usamos timeout duro para que la UI siempre aparezca.
+  useEffect(()=>{let cancelled=false;let fallbackTO=null;(async()=>{
+    fallbackTO=setTimeout(()=>{if(!cancelled)setMt(true);},2500);
+    const initWithTimeout=Promise.race([
+      store.init(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error("store.init timeout")),2000)),
+    ]);
+    try{await initWithTimeout;}catch(e){}
     if(cancelled)return;
+    if(fallbackTO){clearTimeout(fallbackTO);fallbackTO=null;}
     const l=useStore.getState();
     if(!l._loaded){setMt(true);return;}
     setSt_(l);
@@ -135,7 +143,7 @@ export default function BioIgnicion(){
     if(l.totalSessions===0){setOnboard(true);}
     else if(!l.onboardingTourComplete){setShowTour(true);}
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
-  })();return()=>{cancelled=true;};},[]);
+  })();return()=>{cancelled=true;if(fallbackTO)clearTimeout(fallbackTO);};},[]);
 
   useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>{const nv=!v;uiSound[nv?"open":"close"](st.soundOn);return nv;});}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[st.soundOn]);
 
