@@ -245,7 +245,9 @@ export default function ProtocolSelector({
                           background: p.cl,
                         }}
                       />
-                      <div
+                      <motion.div
+                        layoutId={reduced ? undefined : `proto-glyph-${p.id}`}
+                        transition={{ type: "spring", stiffness: 360, damping: 32 }}
                         aria-hidden="true"
                         style={{
                           inlineSize: 40, blockSize: 40,
@@ -259,7 +261,7 @@ export default function ProtocolSelector({
                         }}
                       >
                         {p.tg}
-                      </div>
+                      </motion.div>
                       <div style={{ flex: 1 }}>
                         <div style={{ ...ty.title(t1), display: "flex", alignItems: "center", gap: space[1], flexWrap: "wrap" }}>
                           {p.n}
