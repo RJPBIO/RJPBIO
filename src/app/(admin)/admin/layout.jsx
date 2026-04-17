@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/api-keys", label: "API Keys" },
   { href: "/admin/webhooks", label: "Webhooks" },
   { href: "/admin/integrations", label: "Integraciones" },
+  { href: "/admin/stations", label: "Estaciones" },
   { href: "/admin/audit", label: "Auditoría" },
 ];
 
