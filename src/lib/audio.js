@@ -5,6 +5,10 @@
 
 let _aC = null;
 export function gAC() {
+  // Si el contexto quedó "closed" (iOS en low-power, o cierre explícito),
+  // lo descartamos y creamos uno nuevo; si no, cualquier llamada posterior
+  // lanza InvalidStateError y el audio queda muerto hasta recargar la app.
+  if (_aC && _aC.state === "closed") { _aC = null; _audioUnlocked = false; }
   if (!_aC && typeof window !== "undefined") {
     try { _aC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
   }
@@ -172,7 +176,20 @@ export function startBinaural(type) {
     else if (type === "calma") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 210; }
     else if (type === "reset") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 206; }
     else { _binauralL.frequency.value = 200; _binauralR.frequency.value = 210; }
-    function rotatePan() { panL.pan.value = Math.sin(_binauralPan) * 0.8; panR.pan.value = Math.cos(_binauralPan) * 0.8; _binauralPan += 0.015; if (_binauralGain) requestAnimationFrame(rotatePan); }
+    // rAF captura el gain propio de ESTA invocación: si startBinaural se vuelve
+    // a llamar antes de que stopBinaural nule _binauralGain (2.5s de fade), el
+    // rAF viejo debe terminar para no escribir en panL/panR muertos ni pelearse
+    // con el nuevo. También evitamos trabajo si el tab está hidden (rAF ya se
+    // pausa pero el check es barato y documenta la intención).
+    const myGain = _binauralGain;
+    function rotatePan() {
+      if (_binauralGain !== myGain) return;
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") { requestAnimationFrame(rotatePan); return; }
+      panL.pan.value = Math.sin(_binauralPan) * 0.8;
+      panR.pan.value = Math.cos(_binauralPan) * 0.8;
+      _binauralPan += 0.015;
+      requestAnimationFrame(rotatePan);
+    }
     _binauralL.connect(panL); _binauralR.connect(panR); panL.connect(_binauralGain); panR.connect(_binauralGain);
     _binauralL.start(); _binauralR.start(); rotatePan();
     _binauralGain.gain.linearRampToValueAtTime(0.025, c.currentTime + 4);
