@@ -23,6 +23,10 @@ export default function TrustCenter() {
     <article style={wrap}>
       <h1 style={{ fontSize: 32, margin: 0 }}>Trust Center</h1>
       <p style={{ color: "#A7F3D0" }}>Seguridad, privacidad y resiliencia operativa. Todo a la vista.</p>
+      <p style={{ color: "#94A3B8", fontSize: 13, marginTop: 0 }}>
+        Transparencia: ninguna certificación se declara hasta contar con reporte auditado disponible. Las
+        fechas listadas son objetivos públicos, no estado vigente. Última revisión: 2026-04.
+      </p>
 
       <section>
         <h2>Certificaciones y marcos</h2>
