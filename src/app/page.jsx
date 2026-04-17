@@ -23,12 +23,15 @@ import {
   calcSessionCompletion,
 } from "../lib/neural";
 import {
-  hap, hapticPhase, hapticBreath, startAmbient, stopAmbient,
+  hap, hapticPhase, hapticBreath, hapticSignature, playIgnition,
+  startAmbient, stopAmbient,
   startSoundscape, stopSoundscape, startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
 } from "../lib/audio";
-import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal } from "../lib/theme";
+import BioIgnicionMark, { BioGlyph } from "../components/BioIgnicionMark";
+import IgnitionBurst from "../components/IgnitionBurst";
 import { useStore } from "../store/useStore";
 import Icon from "../components/Icon";
 import { useSync } from "../hooks/useSync";
@@ -164,7 +167,12 @@ export default function BioIgnicion(){
     const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData:sessionDataFull,nfcCtx,circadian});
     setPostVC(result.eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
     releaseWakeLock();speakNow(result.bioQ.quality==="alta"?"Sesión excelente":result.bioQ.quality==="ligera"?"Sesión ligera registrada":"Sesión completada",circadian,voiceOn);
-    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},800);
+    // Ignition firma — solo cuando la sesión fue real (no "ligera"/"inválida")
+    if(result.bioQ.quality!=="ligera"&&result.bioQ.quality!=="inválida"){
+      if(st.soundOn!==false)try{playIgnition();}catch(e){}
+      if(st.hapticOn!==false)hapticSignature("ignition");
+    }
+    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},1600);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,...result.newState});
   }
@@ -197,13 +205,10 @@ export default function BioIgnicion(){
   const{bg,card:cd,surface,border:bd,t1,t2,t3,scrim}=resolveTheme(isDark);
   const ac=pr.cl;
 
-  // ─── Loading screen ─────────────────────────────────────
-  if(!mt)return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#0B0E14",gap:space[4]}}>
-    <motion.div animate={{scale:[1,1.06,1],opacity:[.7,1,.7]}} transition={{duration:1.8,repeat:Infinity,ease:"easeInOut"}}>
-      <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="#059669" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="16" fill="none" stroke="#6366F1" strokeWidth="2" opacity=".3"/><circle cx="26" cy="26" r="5" fill="#059669" opacity=".4"/></svg>
-    </motion.div>
-    <div style={{fontSize:font.size.sm,fontWeight:font.weight.black,color:"#94A3B8",letterSpacing:6,textTransform:"uppercase"}}>BIO-IGNICIÓN</div>
-    <div style={{fontSize:font.size.sm,color:"#4B5568",marginTop:-8}}>v5.0 — Neural Engine IA</div>
+  // ─── Loading screen — identidad BIO-IGNICIÓN ─────────────
+  if(!mt)return(<div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:bioSignal.deepField,gap:space[5],paddingInline:space[5]}}>
+    <BioIgnicionMark layout="stack" glyphSize={76} textColor="#E8ECF4" signalColor={bioSignal.phosphorCyan} animated letterSpacing={6}/>
+    <div style={{fontSize:font.size.sm,color:"#4B5568",letterSpacing:2,textTransform:"uppercase",fontWeight:font.weight.semibold}}>Neural Performance System</div>
   </div>);
 
   return(
@@ -226,7 +231,7 @@ export default function BioIgnicion(){
   </motion.div>}
   </AnimatePresence>
 
-  {compFlash&&<div style={{position:"fixed",inset:0,zIndex:z.flash,background:`${ac}12`,animation:"compFlash .8s ease forwards",pointerEvents:"none"}}/>}
+  <IgnitionBurst show={compFlash} accent={ac} onDone={()=>{}}/>
 
   {/* ═══ ONBOARDING — Neural Calibration Flow ═══ */}
   <AnimatePresence>
@@ -449,7 +454,7 @@ export default function BioIgnicion(){
           <Icon name={ph.ic} size={9} color={ac} aria-hidden="true"/>
           <span aria-hidden="true" style={{fontSize:9,fontWeight:800,color:ac,letterSpacing:1.5,textTransform:"uppercase"}}>Fase {pi+1}/{pr.ph.length} · {ph.l}</span>
         </motion.div>}
-        <div style={{fontSize:isActive?font.size.hero:56,fontWeight:font.weight.black,color:t1,lineHeight:font.leading.none,letterSpacing:"-3px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
+        <div style={{...ty.biometric(t1,isActive?font.size.hero:56),lineHeight:font.leading.none,letterSpacing:"-2px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
         {isActive&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:4,opacity:.75,letterSpacing:2}}>{sessPct}%</div>}
         <AnimatePresence mode="wait">
           {isBr&&bL&&<motion.div key={bL} initial={reducedMotion?{opacity:1}:{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={reducedMotion?{opacity:0}:{opacity:0,y:-6}} transition={{duration:reducedMotion?0:.3}} style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
@@ -547,13 +552,20 @@ export default function BioIgnicion(){
   {tab==="perfil"&&<ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} onShowChronotype={()=>setShowChronoTest(true)} onShowResonance={()=>setShowResonanceCal(true)} onShowNOM035={()=>setShowNOM035(true)} />}
   </div>
 
-  {/* ═══ BOTTOM METRICS BAR ═══ */}
-  <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:resolveTheme(isDark).glass,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
-    {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
-      <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
-      <div><div style={{...ty.metric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
-    </div>)}
-  </aside>
+  {/* ═══ BOTTOM METRICS BAR — living chrome: se tiñe con la coherencia actual ═══ */}
+  {(()=>{
+    const neural=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
+    // Tinta fosforescente cuando estás "en la zona" (≥70); neutra si no
+    const vitalTint=neural>=70?bioSignal.phosphorCyan:neural>=50?bioSignal.neuralViolet:"transparent";
+    const tintOpacity=neural>=70?(isDark?0.07:0.05):neural>=50?(isDark?0.05:0.035):0;
+    const barAlpha=Math.round(tintOpacity*255).toString(16).padStart(2,"0");
+    return <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:`linear-gradient(180deg, ${vitalTint}${barAlpha}, ${vitalTint}00), ${resolveTheme(isDark).glass}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${neural>=70?bioSignal.phosphorCyan+"22":bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}${neural>=70?`, 0 0 28px ${bioSignal.phosphorCyan}14`:""}`,transition:"background .8s ease, border-color .8s ease, box-shadow .8s ease"}}>
+      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
+        <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
+        <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
+      </div>)}
+    </aside>;
+  })()}
 
   {/* ═══ BOTTOM NAV ═══ */}
   <nav role="tablist" aria-label="Navegación principal" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:layout.maxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:`6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav}}>
