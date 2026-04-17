@@ -207,33 +207,19 @@ export default function BioIgnicion() {
   const { bg, card: cd, surface, border: bd, t1, t2, t3, scrim } = resolveTheme(isDark);
   const ac = pr.cl;
 
-  // ─── Loading screen — atmospheric first impression ─────
+  // ─── Loading screen — clinical calibration ─────────────
   if (!mt) return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#080A10", position: "relative", overflow: "hidden" }}>
-      {/* Ambient glow */}
-      <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%,-50%)", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle,${brand.primary}0A,transparent 70%)`, filter: "blur(60px)", animation: "ambientDrift 8s ease-in-out infinite" }} />
-      <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: space[5], position: "relative" }}>
-        <div style={{ position: "relative", width: 80, height: 80 }}>
-          <motion.div animate={{ scale: [1, 1.12, 1], opacity: [.15, .35, .15] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -20, borderRadius: "50%", background: `radial-gradient(circle,${brand.primary}12,transparent 65%)` }} />
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `1px solid ${brand.primary}0C` }} />
-          <motion.div animate={{ opacity: [.2, .7, .2] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 12, height: 12, borderRadius: "50%", background: brand.primary, boxShadow: `0 0 20px ${brand.primary}30, 0 0 40px ${brand.primary}15` }} />
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, letterSpacing: 6, color: "#8B95A8", textTransform: "uppercase", opacity: .7 }}>BIO-IGNICIÓN</div>
-        </div>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0C0F14", fontFamily: font.family }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
+        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} style={{ width: 6, height: 6, borderRadius: "50%", background: brand.primary }} />
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.24em", color: "#5B6472", textTransform: "uppercase" }}>BIO — IGNICIÓN</div>
       </motion.div>
     </div>
   );
 
   return (
-    <div className={isActive ? "session-active" : ""} style={{ maxWidth: layout.maxWidth, margin: "0 auto", minHeight: "100vh", background: bg, position: "relative", overflow: "hidden", fontFamily: font.family, transition: `background ${duration.slower}` }}>
-
-      {/* Atmospheric depth layers — Calm-inspired */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "-20%", right: "-20%", width: "60%", height: "60%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, isDark ? 8 : 5)},transparent 70%)`, animation: "ambientDrift 40s ease-in-out infinite", filter: "blur(60px)" }} />
-        <div style={{ position: "absolute", bottom: "-15%", left: "-15%", width: "50%", height: "50%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha("#818CF8", isDark ? 5 : 3)},transparent 70%)`, animation: "ambientDrift 50s ease-in-out infinite reverse", filter: "blur(55px)" }} />
-        {isActive && <div style={{ position: "absolute", top: "30%", left: "20%", width: "60%", height: "60%", borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, 4)},transparent 60%)`, animation: "breathGlow 6s ease-in-out infinite", filter: "blur(80px)" }} />}
-      </div>
+    <div className={isActive ? "session-active" : ""} style={{ maxWidth: layout.maxWidth, margin: "0 auto", minHeight: "100vh", background: bg, position: "relative", overflow: "hidden", fontFamily: font.family, transition: `background ${duration.normal} ${duration && "ease-out"}` }}>
+      {/* No ambient blobs. No radial glows. The instrument breathes through data, not decoration. */}
 
       {/* Mid-session message */}
       <AnimatePresence>
@@ -326,10 +312,13 @@ export default function BioIgnicion() {
               </div>
             </div>}
 
-            {/* Atmospheric greeting — auto-dismisses, no gate */}
-            {!entryDone && ts === "idle" && st.totalSessions > 0 && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 1.4, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ textAlign: "center", padding: `${space[5]}px 0 ${space[3]}px` }} onClick={() => setEntryDone(true)}>
-              <div style={{ fontSize: font.size.lg, fontWeight: font.weight.medium, lineHeight: font.leading.relaxed, maxWidth: 280, margin: "0 auto", color: t2, opacity: 0.9 }}>{daily.phrase}</div>
-              {st.streak >= 3 && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: space[1.5], marginTop: space[2.5] }}><Icon name="fire" size={12} color={semantic.warning} /><span style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: semantic.warning, letterSpacing: 1 }}>{st.streak} días</span></div>}
+            {/* Clinical header line — no warmth, factual */}
+            {ts === "idle" && st.totalSessions > 0 && <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ padding: `${space[4]}px 0 ${space[2]}px` }}>
+              <div style={{ fontSize: 15, fontWeight: 300, lineHeight: 1.6, color: t2, maxWidth: 320, letterSpacing: "0.005em" }}>{daily.phrase}</div>
+              {st.streak >= 3 && <div style={{ marginTop: space[2], display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 4, height: 4, borderRadius: "50%", background: semantic.warning }} />
+                <span style={{ fontSize: 10, fontWeight: 600, color: semantic.warning, letterSpacing: "0.12em", textTransform: "uppercase" }}>Cadena {st.streak}d</span>
+              </div>}
             </motion.div>}
 
             {/* Always show main content — no entry gate */}
@@ -337,50 +326,41 @@ export default function BioIgnicion() {
 
               {/* ═══ TIMER-FIRST LAYOUT ═══ */}
 
-              {/* Status bar (compact — neural state + level + session progress) */}
-              {ts === "idle" && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[2] }}>
-                <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><div style={{ width: 5, height: 5, borderRadius: radius.full, background: nSt.color, animation: "shimDot 2s ease infinite" }} /><span style={ty.caption(nSt.color)}>{nSt.label}</span></div>
-                <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-                  <span style={{ ...ty.caption(cogLoad.color), display: "flex", alignItems: "center", gap: 3 }}><Icon name="bolt" size={9} color={cogLoad.color} />{st.todaySessions || 0}/{st.sessionGoal || 2}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: space[1] }}><span style={ty.caption(lv.c)}>{lv.n}</span><div style={{ width: 32, height: 3, borderRadius: 2, background: bd, overflow: "hidden" }}><div style={{ width: lPct + "%", height: "100%", borderRadius: 2, background: lv.c }} /></div></div>
+              {/* Status line — clinical state summary, monospaced rhythm */}
+              {ts === "idle" && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: space[5], paddingBottom: space[3], borderBottom: `0.5px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(10,14,20,0.06)"}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: nSt.color, animation: "shimDot 2.4s ease-in-out infinite" }} />
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: t2 }}>{nSt.label}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: t3 }}>{st.todaySessions || 0} / {st.sessionGoal || 2}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: t3 }}>{lv.n} · {lPct}%</span>
                 </div>
               </div>}
 
-              {/* ═══ CORE TIMER — Hero in idle, compact in active ═══ */}
+              {/* ═══ CORE TIMER — clinical instrument ═══ */}
               {!isActive ? (
-                <div onClick={timerTap} role="button" aria-label="Iniciar sesión" onMouseDown={() => setTp(true)} onMouseUp={() => setTp(false)} onMouseLeave={() => setTp(false)} onTouchStart={() => setTp(true)} onTouchEnd={() => setTp(false)} style={{ position: "relative", width: 260, height: 260, margin: `${space[2]}px auto ${space[4]}px`, cursor: "pointer", transform: tp ? "scale(0.93)" : "scale(1)", transition: "all .6s cubic-bezier(.34,1.56,.64,1)", userSelect: "none" }}>
-                  {/* Ambient glow */}
-                  <motion.div animate={{ scale: [1, 1.08, 1], opacity: [.2, .5, .2] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -14, borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(ac, 5)},transparent 65%)`, filter: "blur(8px)" }} />
-                  {/* Outer breathing ring */}
-                  <motion.div animate={{ scale: [1, 1.02, 1] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -6, borderRadius: "50%", border: `1px solid ${withAlpha(ac, 5)}` }} />
+                <div onClick={timerTap} role="button" aria-label="Iniciar sesión" onMouseDown={() => setTp(true)} onMouseUp={() => setTp(false)} onMouseLeave={() => setTp(false)} onTouchStart={() => setTp(true)} onTouchEnd={() => setTp(false)} style={{ position: "relative", width: 260, height: 260, margin: `${space[4]}px auto ${space[6]}px`, cursor: "pointer", transform: tp ? "scale(0.98)" : "scale(1)", transition: "transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)", userSelect: "none" }}>
                   <svg width="260" height="260" viewBox="0 0 260 260" style={{ transform: "rotate(-90deg)" }}>
-                    <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth="3" opacity=".3" />
-                    <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth="5" strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={0} style={{ filter: `drop-shadow(0 0 6px ${ac}30)` }} />
-                    <circle cx="130" cy="130" r="100" fill="none" stroke={bd} strokeWidth=".4" strokeDasharray="3 10" style={{ animation: "innerRing 30s linear infinite" }} />
-                    <circle cx="130" cy="130" r="115" fill="url(#timerGrad)" opacity=".03" />
-                    <defs><radialGradient id="timerGrad"><stop offset="0%" stopColor={ac} /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
+                    <circle cx="130" cy="130" r="118" fill="none" stroke={isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"} strokeWidth="0.5" />
+                    <circle cx="130" cy="130" r="118" fill="none" stroke={ac} strokeWidth="1.5" strokeLinecap="butt" strokeDasharray={CI} strokeDashoffset={0} />
                   </svg>
-                  {/* Neural center dot */}
-                  <motion.div animate={{ opacity: [.2, .6, .2], boxShadow: [`0 0 10px ${ac}20`, `0 0 24px ${ac}40`, `0 0 10px ${ac}20`] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 10, height: 10, borderRadius: "50%", background: ac, pointerEvents: "none" }} />
-                  {/* Center content */}
-                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none", zIndex: 2 }}>
-                    <div aria-label={`${sec} segundos`} style={{ fontSize: 58, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-3px" }}>{sec}</div>
-                    <div style={{ ...ty.label(t3), fontWeight: font.weight.semibold, marginTop: space[1.5], opacity: .7 }}>segundos</div>
-                    <motion.div animate={{ opacity: [.4, .9, .4], y: [0, -2, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ marginTop: space[4], display: "flex", flexDirection: "column", alignItems: "center", gap: space[1] }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg,${ac},#0D9488)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 6px 20px ${withAlpha(ac, 14)}` }}><Icon name="bolt" size={17} color="#fff" /></div>
-                      <span style={{ ...ty.label(ac), letterSpacing: 2 }}>INICIAR</span>
-                    </motion.div>
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none" }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.18em", color: t3, textTransform: "uppercase", marginBottom: 12 }}>Duración</div>
+                    <div aria-label={`${sec} segundos`} style={{ fontSize: 96, fontWeight: 200, color: t1, lineHeight: 1, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }}>{sec}</div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: t3, marginTop: 4, letterSpacing: "0.04em" }}>segundos</div>
+                    <div style={{ marginTop: 20, fontSize: 10, fontWeight: 600, letterSpacing: "0.18em", color: ac, textTransform: "uppercase" }}>Tocar para iniciar</div>
                   </div>
-                  {tp && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "100%", height: "100%", borderRadius: "50%", border: `2px solid ${withAlpha(ac, 8)}`, animation: "cdPulse .6s ease forwards", pointerEvents: "none" }} />}
+                  {tp && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "100%", height: "100%", borderRadius: "50%", border: `0.5px solid ${ac}`, animation: "cdPulse .6s ease forwards", pointerEvents: "none" }} />}
                 </div>
               ) : (
-                /* Active: compact timer above hero BreathOrb */
-                <div onClick={timerTap} role="button" aria-label={ts === "running" ? "Pausar sesión" : "Reanudar sesión"} style={{ textAlign: "center", margin: `${space[3]}px 0 ${space[1]}px`, cursor: "pointer", userSelect: "none" }}>
-                  <div aria-live="polite" aria-atomic="true" style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: space[1.5] }}>
-                    <span style={{ fontSize: font.size["4xl"], fontWeight: font.weight.black, color: t1, lineHeight: font.leading.none, letterSpacing: "-2px", textShadow: `0 0 24px ${withAlpha(ac, 8)}` }}>{sec}</span>
-                    <span style={{ ...ty.caption(t3), opacity: .6 }}>/ {totalDur}s</span>
+                /* Active session — timer as pure number */
+                <div onClick={timerTap} role="button" aria-label={ts === "running" ? "Pausar sesión" : "Reanudar sesión"} style={{ textAlign: "center", margin: `${space[4]}px 0 ${space[2]}px`, cursor: "pointer", userSelect: "none" }}>
+                  <div aria-live="polite" aria-atomic="true" style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8 }}>
+                    <span style={{ fontSize: 56, fontWeight: 200, color: t1, lineHeight: 1, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums" }}>{sec}</span>
+                    <span style={{ fontSize: 13, fontWeight: 400, color: t3, letterSpacing: "0.04em" }}>/ {totalDur}s</span>
                   </div>
-                  {ts === "paused" && <motion.div animate={{ opacity: [.4, 1, .4] }} transition={{ duration: 2, repeat: Infinity }} style={{ marginTop: space[1] }}><span style={{ ...ty.label(ac), letterSpacing: 4 }}>EN PAUSA</span></motion.div>}
+                  {ts === "paused" && <div style={{ marginTop: 10, fontSize: 10, fontWeight: 600, letterSpacing: "0.24em", color: ac, textTransform: "uppercase" }}>En pausa</div>}
                 </div>
               )}
 
@@ -389,78 +369,80 @@ export default function BioIgnicion() {
                 <BreathOrb type={ph.ic} color={ac} breathScale={bS} breathLabel={bL} breathCount={bCnt} active={isActive} sessionProgress={pct} size={isActive ? 280 : 200} />
               </ErrorBoundary>
 
-              {/* ═══ SESSION CONFIG (idle only) ═══ */}
+              {/* ═══ SESSION CONFIG — clinical rows ═══ */}
               {ts === "idle" && <>
-                {/* ─── Protocolo ─── */}
-                <div style={{ marginBottom: space[4] }}>
-                  <div style={{ display: "flex", gap: space[1.5] }}>
-                    <motion.button aria-label={`Protocolo: ${pr.n}`} whileTap={{ scale: .96 }} onClick={() => setSl(true)} style={{ flex: 1, padding: `${space[3]}px ${space[3]}px`, borderRadius: radius.lg, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", gap: space[2.5] }}>
-                      <div style={{ width: 38, height: 38, borderRadius: radius.md, background: withAlpha(ac, 5), display: "flex", alignItems: "center", justifyContent: "center", ...ty.caption(ac), fontWeight: font.weight.black, fontSize: font.size.md }}>{pr.tg}</div>
-                      <div style={{ flex: 1, textAlign: "left" }}><div style={{ ...ty.title(t1), fontSize: font.size.lg }}>{pr.n}</div><div style={{ ...ty.caption(t3), marginTop: 2 }}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div></div>
-                      <Icon name="chevron-down" size={12} color={t3} />
-                    </motion.button>
-                    <div style={{ display: "flex", flexDirection: "column", gap: space[1] }}>
-                      <motion.button aria-label="Detalle del protocolo" whileTap={{ scale: .93 }} onClick={() => setShowProtoDetail(true)} style={{ width: 42, height: 42, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={14} color={t3} /></motion.button>
+                {/* ─── Protocolo row ─── */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "18px 0", borderBottom: `0.5px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(10,14,20,0.06)"}` }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", color: t3, textTransform: "uppercase", width: 78, flexShrink: 0 }}>Protocolo</div>
+                  <button aria-label={`Protocolo: ${pr.n}`} onClick={() => setSl(true)} style={{ flex: 1, padding: 0, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 36 }}>
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: 15, fontWeight: 500, color: t1, letterSpacing: "-0.01em" }}>{pr.n}</div>
+                      <div style={{ fontSize: 11, fontWeight: 400, color: t3, marginTop: 2 }}>{pr.ph.length} fases · {Math.round(pr.d * durMult)}s</div>
                     </div>
+                    <Icon name="chevron" size={14} color={t3} />
+                  </button>
+                  <button aria-label="Detalle del protocolo" onClick={() => setShowProtoDetail(true)} style={{ width: 36, height: 36, borderRadius: radius.md, border: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="info" size={14} color={t3} /></button>
+                </div>
+
+                {/* ─── Duración row ─── */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "18px 0", borderBottom: `0.5px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(10,14,20,0.06)"}` }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", color: t3, textTransform: "uppercase", width: 78, flexShrink: 0 }}>Duración</div>
+                  <div style={{ flex: 1, display: "flex", gap: 6 }}>
+                    {[{ v: .5, l: "Corta" }, { v: 1, l: "Normal" }, { v: 1.5, l: "Larga" }].map(d => {
+                      const active = durMult === d.v;
+                      return (
+                        <button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={active} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ flex: 1, padding: "10px 0", borderRadius: radius.md, border: active ? `1px solid ${ac}` : `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}`, background: active ? withAlpha(ac, 4) : "transparent", cursor: "pointer", transition: "all 0.18s ease-out", fontFamily: font.family, textAlign: "center" }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: active ? ac : t1, letterSpacing: "-0.005em" }}>{d.l}</div>
+                          <div style={{ fontSize: 10, fontWeight: 400, color: active ? ac : t3, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{Math.round(pr.d * d.v)}s</div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* ─── Duration + Intent row ─── */}
-                <div style={{ display: "flex", gap: space[1.5], marginBottom: space[4] }}>
-                  {[{ v: .5, l: "Corta", sub: `${Math.round(pr.d * .5)}s` }, { v: 1, l: "Normal", sub: `${Math.round(pr.d)}s` }, { v: 1.5, l: "Larga", sub: `${Math.round(pr.d * 1.5)}s` }].map(d => (
-                    <motion.button key={d.v} aria-label={`Duración ${d.l}`} aria-pressed={durMult === d.v} whileTap={{ scale: .93 }} onClick={() => { setDurMult(d.v); setSec(Math.round(pr.d * d.v)); H("tap"); }} style={{ flex: 1, padding: `${space[2]}px ${space[1]}px`, borderRadius: radius.md, border: durMult === d.v ? `2px solid ${ac}` : `1.5px solid ${bd}`, background: durMult === d.v ? withAlpha(ac, 4) : cd, cursor: "pointer", transition: "all .2s", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, minHeight: 48 }}>
-                      <span style={{ fontSize: font.size.md, fontWeight: durMult === d.v ? font.weight.black : font.weight.bold, color: durMult === d.v ? ac : t1 }}>{d.l}</span>
-                      <span style={{ fontSize: font.size.xs, fontWeight: font.weight.semibold, color: durMult === d.v ? ac : t3, opacity: .7 }}>{d.sub}</span>
-                    </motion.button>
-                  ))}
-                  <motion.button aria-label="Seleccionar intención" whileTap={{ scale: .93 }} onClick={() => setShowIntent(true)} style={{ width: 48, height: 48, borderRadius: radius.md, border: `1.5px solid ${bd}`, background: cd, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, alignSelf: "center" }}><Icon name="target" size={16} color={t3} /></motion.button>
-                </div>
-
-                {/* ─── Mood pre-check ─── */}
-                <div style={{ marginBottom: space[5] }}>
-                  <div style={{ display: "flex", gap: space[1.5] }}>
-                    {MOODS.map(m => (
-                      <motion.button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={preMood === m.value} whileTap={{ scale: .9 }} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ flex: 1, padding: `${space[2]}px ${space[1]}px`, borderRadius: radius.md, border: preMood === m.value ? `2px solid ${m.color}` : `1.5px solid ${bd}`, background: preMood === m.value ? withAlpha(m.color, 5) : cd, cursor: "pointer", transition: "all .25s", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, minHeight: 52 }}>
-                        <Icon name={m.icon} size={18} color={preMood === m.value ? m.color : t3} />
-                        <span style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, color: preMood === m.value ? m.color : t3, opacity: preMood === m.value ? 1 : .6 }}>{m.label}</span>
-                      </motion.button>))}
+                {/* ─── Estado row ─── */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "18px 0", marginBottom: space[6], borderBottom: `0.5px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(10,14,20,0.06)"}` }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", color: t3, textTransform: "uppercase", width: 78, flexShrink: 0 }}>Estado</div>
+                  <div style={{ flex: 1, display: "flex", gap: 4 }}>
+                    {MOODS.map(m => {
+                      const active = preMood === m.value;
+                      return (
+                        <button key={m.id} aria-label={`Estado: ${m.label}`} aria-pressed={active} onClick={() => { setPreMood(m.value); H("tap"); }} style={{ flex: 1, height: 44, borderRadius: radius.md, border: active ? `1px solid ${m.color}` : `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}`, background: active ? withAlpha(m.color, 6) : "transparent", cursor: "pointer", transition: "all 0.18s ease-out", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Icon name={m.icon} size={16} color={active ? m.color : t3} />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* ─── START CTA — the moment of commitment ─── */}
-                <div style={{ position: "relative", maxWidth: 340, margin: `0 auto ${space[6]}px` }}>
-                  <motion.div animate={{ scale: [1, 1.04, 1], opacity: [.3, .5, .3] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", inset: -6, borderRadius: radius.full, background: `linear-gradient(135deg,${withAlpha(ac, 6)},${withAlpha("#0D9488", 4)})`, filter: "blur(8px)" }} />
-                  <motion.button aria-label="Iniciar sesión" whileTap={{ scale: .95 }} whileHover={{ scale: 1.01 }} onClick={go} style={{ width: "100%", display: "flex", padding: `${space[4]}px 0`, borderRadius: radius.full, background: `linear-gradient(135deg,${ac},#0D9488)`, border: "none", color: "#fff", ...ty.button, cursor: "pointer", alignItems: "center", justifyContent: "center", gap: space[2], boxShadow: `0 8px 30px ${withAlpha(ac, 15)}, 0 2px 8px ${withAlpha(ac, 10)}`, minHeight: 56, fontSize: font.size.md, letterSpacing: 2, position: "relative" }}><Icon name="bolt" size={16} color="#fff" />INICIAR SESIÓN</motion.button>
-                </div>
+                {/* ─── START CTA — clinical teal, disciplined ─── */}
+                <button aria-label="Iniciar sesión" onClick={go} style={{ width: "100%", padding: "18px 0", borderRadius: radius.md, background: ac, border: "1px solid " + ac, color: "#fff", fontFamily: font.family, fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", minHeight: 56, marginBottom: space[6], transition: "all 0.18s ease-out" }}>Iniciar sesión</button>
               </>}
 
               {/* Session controls moved to floating bottom bar */}
 
-              {/* Phase info — minimal during active, detailed in idle */}
-              <div style={{ textAlign: "center", marginBottom: isActive ? space[1] : space[2.5] }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: space[1.5] }}>
-                  <Icon name={ph.ic} size={isActive ? 10 : 13} color={ac} />
-                  <span style={{ ...ty.title(t1), fontSize: isActive ? font.size.xs : font.size.md }}>{ph.l}</span>
-                  {isActive && <span style={{ ...ty.caption(t3), opacity: .5 }}>· {pi + 1}/{pr.ph.length}</span>}
+              {/* Phase info — minimal during active, clinical label in idle */}
+              <div style={{ textAlign: "center", marginBottom: isActive ? space[2] : space[3] }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.18em", color: ac, textTransform: "uppercase" }}>{ph.l}</span>
+                  {isActive && <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: "0.12em", color: t3, fontVariantNumeric: "tabular-nums" }}>· {pi + 1}/{pr.ph.length}</span>}
                 </div>
-                {!isActive && <div style={ty.caption(t3)}>{ph.r}</div>}
               </div>
 
-              {/* Phase card — full in idle, collapsed during active session */}
+              {/* Phase card — idle only */}
               {!isActive ? (
-                <motion.div key={pi} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .3 }} style={{ background: cd, borderRadius: radius.lg, padding: space[4], marginBottom: space[2.5], border: `1px solid ${bd}` }}>
-                  {ph.k && <div style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: t1, lineHeight: font.leading.normal, marginBottom: space[2.5], letterSpacing: font.tracking.tight }}>{ph.k}</div>}
-                  <p style={{ ...ty.body(t2), margin: 0 }}>{ph.i}</p>
-                  {/* Science — collapsed by default */}
-                  <button onClick={() => setShowScience(!showScience)} style={{ display: "flex", alignItems: "center", gap: space[1], marginTop: space[3], padding: `${space[1.5]}px 0`, background: "none", border: "none", cursor: "pointer" }}>
-                    <Icon name="mind" size={11} color={ac} /><span style={ty.caption(ac)}>NEUROCIENCIA</span>
-                    <span style={{ ...ty.caption(ac), transform: showScience ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>▾</span>
+                <motion.div key={pi} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ background: cd, borderRadius: radius.lg, padding: 24, marginBottom: space[3], border: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}` }}>
+                  {ph.k && <div style={{ fontSize: 20, fontWeight: 300, color: t1, lineHeight: 1.35, marginBottom: 12, letterSpacing: "0.005em" }}>{ph.k}</div>}
+                  <p style={{ fontSize: 15, fontWeight: 400, color: t2, lineHeight: 1.6, margin: 0 }}>{ph.i}</p>
+                  <button onClick={() => setShowScience(!showScience)} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 16, padding: 0, background: "none", border: "none", cursor: "pointer" }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.18em", color: ac, textTransform: "uppercase" }}>Neurociencia</span>
+                    <span style={{ fontSize: 10, color: ac, transform: showScience ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.18s ease-out" }}>▾</span>
                   </button>
                   <AnimatePresence>
-                    {showScience && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
-                      <div style={{ marginTop: space[2], padding: `${space[3]}px ${space[3]}px`, background: withAlpha(ac, 2), borderRadius: radius.md, border: `1px solid ${withAlpha(ac, 4)}` }}>
-                        <div style={ty.body(t2)}>{ph.sc}</div>
-                        {SCIENCE_DEEP[pr.id] && <div style={{ ...ty.caption(t3), lineHeight: font.leading.relaxed, borderTop: `1px solid ${bd}`, paddingTop: space[2], marginTop: space[1] }}>{SCIENCE_DEEP[pr.id]}</div>}
+                    {showScience && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ overflow: "hidden" }}>
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}` }}>
+                        <div style={{ fontSize: 13, fontWeight: 400, color: t2, lineHeight: 1.6 }}>{ph.sc}</div>
+                        {SCIENCE_DEEP[pr.id] && <div style={{ fontSize: 11, fontWeight: 400, color: t3, lineHeight: 1.6, marginTop: 8 }}>{SCIENCE_DEEP[pr.id]}</div>}
                       </div>
                     </motion.div>}
                   </AnimatePresence>
@@ -511,17 +493,14 @@ export default function BioIgnicion() {
                 </div>
               )}
 
-              {/* Phase progress — clean dots in idle, thin bar in active */}
-              {!isActive ? <div style={{ display: "flex", gap: space[1], justifyContent: "center", flexWrap: "wrap", marginBottom: space[4] }}>
-                {pr.ph.map((p, i) => { const sR = durMult !== 1 ? Math.round(p.s * durMult) + "–" + Math.round(p.e * durMult) + "s" : p.r; const isCurr = pi === i; const isDone = i < pi; return (
-                  <motion.div key={i} animate={isCurr ? { scale: [1, 1.03, 1] } : {}} transition={isCurr ? { duration: 2, repeat: Infinity } : {}} style={{ padding: `${space[1]}px ${space[2.5]}px`, borderRadius: radius.xl, border: isCurr ? `2px solid ${ac}` : isDone ? `1.5px solid ${withAlpha(ac, 12)}` : `1px solid ${bd}`, background: isCurr ? withAlpha(ac, 4) : isDone ? withAlpha(ac, 2) : cd, color: isCurr ? ac : isDone ? ac : t3, ...ty.caption(isCurr ? ac : isDone ? ac : t3), fontWeight: isCurr ? font.weight.black : font.weight.semibold, display: "flex", alignItems: "center", gap: space[1], opacity: i <= pi ? 1 : .4, boxShadow: isCurr ? `0 2px 8px ${withAlpha(ac, 6)}` : "none", transition: "all .3s" }}>
-                    <span style={{ width: isCurr ? 7 : 5, height: isCurr ? 7 : 5, borderRadius: "50%", background: isDone || isCurr ? ac : bd, transition: "all .3s", boxShadow: isCurr ? `0 0 6px ${withAlpha(ac, 14)}` : "none" }} />
-                    {isCurr && <Icon name={p.ic} size={10} color={ac} />}{sR}
-                  </motion.div>); })}
+              {/* Phase progress — clinical hairline segments */}
+              {!isActive ? <div style={{ display: "flex", gap: 4, marginBottom: space[5] }}>
+                {pr.ph.map((_, i) => (
+                  <div key={i} style={{ flex: 1, height: 2, background: i < pi ? ac : i === pi ? ac : (isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"), opacity: i === pi ? 0.5 : 1, transition: "all 0.28s ease-out" }} />
+                ))}
               </div> : (
-                /* Active: ultra-minimal progress */
-                <div style={{ display: "flex", gap: 2, marginBottom: space[2], padding: `0 ${space[2]}px` }}>
-                  {pr.ph.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < pi ? ac : i === pi ? `linear-gradient(90deg,${ac},${withAlpha(ac, 15)})` : bd, transition: "background .5s" }} />)}
+                <div style={{ display: "flex", gap: 2, marginBottom: space[3], padding: "0 20px" }}>
+                  {pr.ph.map((_, i) => <div key={i} style={{ flex: 1, height: 1.5, background: i <= pi ? ac : (isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"), opacity: i === pi ? 0.5 : 1, transition: "all 0.28s ease-out" }} />)}
                 </div>
               )}
 
@@ -532,26 +511,28 @@ export default function BioIgnicion() {
                   <StreakShield st={st} isDark={isDark} onQuickSession={() => { setDurMult(0.5); const calmP = P.find(p => p.int === "calma" && p.dif === 1) || P[0]; setPr(calmP); setSec(Math.round(calmP.d * 0.5)); go(); }} />
                 </ErrorBoundary>
 
-                {/* Daily Ignición — personalized recommendation */}
-                <motion.button whileTap={{ scale: .97 }} onClick={() => sp(daily.proto)} style={{ width: "100%", padding: `${space[3.5]}px ${space[3.5]}px`, marginBottom: space[2.5], borderRadius: radius.xl, border: `1px solid ${withAlpha(daily.proto.cl, 6)}`, background: `linear-gradient(145deg,${cd},${withAlpha(daily.proto.cl, 2)})`, cursor: "pointer", textAlign: "left", display: "flex", gap: space[3], alignItems: "center", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: -30, right: -30, width: 100, height: 100, borderRadius: "50%", background: `radial-gradient(circle,${withAlpha(daily.proto.cl, 4)},transparent)` }} />
-                  <div style={{ width: 44, height: 44, borderRadius: radius.md, background: withAlpha(daily.proto.cl, 5), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: font.size.lg, fontWeight: font.weight.black, color: daily.proto.cl }}>{daily.proto.tg}</span>
+                {/* Daily Ignición — clinical recommendation row */}
+                <button onClick={() => sp(daily.proto)} style={{ width: "100%", padding: 20, marginBottom: space[2.5], borderRadius: radius.lg, border: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}`, background: cd, cursor: "pointer", textAlign: "left", display: "flex", gap: 16, alignItems: "center", fontFamily: font.family, transition: "border-color 0.18s ease-out" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: radius.md, border: `0.5px solid ${daily.proto.cl}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: 15, fontWeight: 400, color: daily.proto.cl, letterSpacing: "0.02em" }}>{daily.proto.tg}</span>
                   </div>
-                  <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
-                    <div style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, letterSpacing: 2, color: daily.proto.cl, textTransform: "uppercase", opacity: .8 }}>Tu ignición de hoy</div>
-                    <div style={{ fontSize: font.size.md, fontWeight: font.weight.black, color: t1, marginTop: 2 }}>{daily.proto.n}</div>
-                    <div style={{ ...ty.caption(t3), fontStyle: "italic", lineHeight: font.leading.snug, marginTop: 2 }}>{daily.phrase}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", color: t3, textTransform: "uppercase" }}>Ignición del día</div>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: t1, marginTop: 4, letterSpacing: "-0.005em" }}>{daily.proto.n}</div>
                   </div>
-                  <Icon name="chevron" size={12} color={daily.proto.cl} />
-                </motion.button>
+                  <Icon name="chevron" size={14} color={t3} />
+                </button>
 
                 {/* AI Recommendation */}
-                {aiRec && aiRec.primary && aiRec.primary.protocol.id !== daily.proto.id && <motion.button initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} whileTap={{ scale: .97 }} onClick={() => sp(aiRec.primary.protocol)} style={{ width: "100%", padding: `${space[2.5]}px ${space[3]}px`, marginBottom: space[2.5], borderRadius: radius.md, border: `1.5px solid ${withAlpha(ac, 6)}`, background: withAlpha(semantic.success, 2), cursor: "pointer", textAlign: "left", display: "flex", gap: space[2.5], alignItems: "center" }}>
-                  <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: withAlpha(ac, 6), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="cpu" size={13} color={ac} /></div>
-                  <div style={{ flex: 1 }}><div style={{ ...ty.caption(ac), fontWeight: font.weight.bold }}>IA: {aiRec.primary.protocol.n}</div><div style={ty.caption(t3)}>{aiRec.primary.reason}</div></div>
-                  <Icon name="chevron" size={12} color={ac} />
-                </motion.button>}
+                {aiRec && aiRec.primary && aiRec.primary.protocol.id !== daily.proto.id && <button onClick={() => sp(aiRec.primary.protocol)} style={{ width: "100%", padding: 16, marginBottom: space[2.5], borderRadius: radius.lg, border: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}`, background: "transparent", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "center", fontFamily: font.family }}>
+                  <div style={{ width: 4, height: 4, borderRadius: "50%", background: ac, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", color: ac, textTransform: "uppercase" }}>IA recomienda</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: t1, marginTop: 3 }}>{aiRec.primary.protocol.n}</div>
+                    <div style={{ fontSize: 11, fontWeight: 400, color: t3, marginTop: 2, lineHeight: 1.5 }}>{aiRec.primary.reason}</div>
+                  </div>
+                  <Icon name="chevron" size={12} color={t3} />
+                </button>}
 
                 {/* Expandable secondary */}
                 {(prediction || (st.progDay || 0) < 7) && <>
@@ -594,27 +575,30 @@ export default function BioIgnicion() {
         {tab === "perfil" && <ErrorBoundary isDark={isDark}><ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={() => setShowSettings(true)} onShowHist={() => setShowHist(true)} onShowCalibration={() => setShowCalibration(true)} /></ErrorBoundary>}
       </div>
 
-      {/* ═══ BOTTOM NAV — glass morphism ═══ */}
+      {/* ═══ BOTTOM NAV — clinical hairline ═══ */}
       <AnimatePresence>
-        {!isActive && <motion.nav role="navigation" aria-label="Navegación principal" initial={false} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: isDark ? "rgba(8,10,16,.92)" : "rgba(243,246,251,.92)", backdropFilter: "blur(24px) saturate(1.5)", borderTop: `1px solid ${withAlpha(bd, isDark ? 30 : 50)}`, padding: `0 ${space[4]}px max(10px, env(safe-area-inset-bottom))`, zIndex: z.nav }}>
-          <div style={{ display: "flex", justifyContent: "center", gap: space[1], padding: "8px 0 6px" }}>
-            {[{ id: "ignicion", lb: "Ignición", ic: "bolt", ac: ac }, { id: "dashboard", lb: "Dashboard", ic: "chart", ac: "#6366F1" }, { id: "perfil", lb: "Perfil", ic: "user", ac: t1 }].map(t => { const a = tab === t.id; return (
-              <motion.button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} whileTap={{ scale: .92 }} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 0 4px", border: "none", cursor: "pointer", background: "transparent", borderRadius: radius.md, position: "relative", minHeight: 50 }}>
-                {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: 0, left: "25%", right: "25%", height: 2.5, borderRadius: "0 0 3px 3px", background: t.ac, boxShadow: `0 1px 6px ${withAlpha(t.ac, 12)}` }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
-                <motion.div animate={{ scale: a ? 1 : 0.88, y: a ? -1 : 0 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} style={{ width: 34, height: 34, borderRadius: radius.sm + 3, background: a ? withAlpha(t.ac, 5) : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Icon name={t.ic} size={a ? 18 : 16} color={a ? t.ac : t3} />
-                </motion.div>
-                <span style={{ fontSize: font.size.xs, fontWeight: a ? font.weight.black : font.weight.semibold, color: a ? t.ac : t3, letterSpacing: a ? font.tracking.wide : font.tracking.normal }}>{t.lb}</span>
-              </motion.button>); })}
+        {!isActive && <motion.nav role="navigation" aria-label="Navegación principal" initial={false} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, background: isDark ? "rgba(12,15,20,0.96)" : "rgba(248,249,251,0.96)", backdropFilter: "blur(18px)", borderTop: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(10,14,20,0.08)"}`, padding: `0 ${space[4]}px max(8px, env(safe-area-inset-bottom))`, zIndex: z.nav }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0 6px" }}>
+            {[{ id: "ignicion", lb: "Ignición", ic: "bolt" }, { id: "dashboard", lb: "Estado", ic: "chart" }, { id: "perfil", lb: "Perfil", ic: "user" }].map(t => {
+              const a = tab === t.id;
+              const col = a ? ac : t3;
+              return (
+                <button key={t.id} aria-label={t.lb} aria-current={a ? "page" : undefined} onClick={() => switchTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 0 2px", border: "none", cursor: "pointer", background: "transparent", position: "relative", minHeight: 52, fontFamily: font.family }}>
+                  {a && <motion.div layoutId="navIndicator" style={{ position: "absolute", top: -1, left: "30%", right: "30%", height: 1.5, background: ac }} transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
+                  <Icon name={t.ic} size={18} color={col} />
+                  <span style={{ fontSize: 10, fontWeight: a ? 600 : 500, color: col, letterSpacing: "0.12em", textTransform: "uppercase" }}>{t.lb}</span>
+                </button>
+              );
+            })}
           </div>
         </motion.nav>}
       </AnimatePresence>
-      {/* Active session: atmospheric floating controls */}
+      {/* Active session: clinical floating controls */}
       <AnimatePresence>
-        {isActive && <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ type: "spring", stiffness: 200, damping: 25 }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, padding: `${space[3]}px ${space[5]}px max(${space[4]}px, env(safe-area-inset-bottom))`, zIndex: z.nav, background: `linear-gradient(transparent, ${bg}D0 25%, ${bg}F0)`, pointerEvents: "none" }}>
-          <div style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", pointerEvents: "auto" }}>
-            <motion.button aria-label={ts === "running" ? "Pausar" : "Continuar"} whileTap={{ scale: .95 }} onClick={ts === "running" ? pa : resume} style={{ flex: 1, maxWidth: 200, padding: `${space[3]}px 0`, borderRadius: radius.full, background: ts === "paused" ? `linear-gradient(135deg,${ac},#0D9488)` : `${cd}E0`, backdropFilter: "blur(16px)", border: ts === "paused" ? "none" : `1px solid ${withAlpha(ac, 10)}`, color: ts === "paused" ? "#fff" : ac, ...ty.button, cursor: "pointer", minHeight: 50, boxShadow: ts === "paused" ? `0 4px 20px ${withAlpha(ac, 12)}` : "none" }}>{ts === "running" ? "PAUSAR" : "CONTINUAR"}</motion.button>
-            <motion.button aria-label="Reiniciar" whileTap={{ scale: .9 }} onClick={rs} style={{ width: 50, height: 50, borderRadius: "50%", border: `1px solid ${withAlpha(bd, 20)}`, background: `${cd}A0`, backdropFilter: "blur(16px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="reset" size={16} color={t3} /></motion.button>
+        {isActive && <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }} transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }} style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: layout.maxWidth, padding: `20px 20px max(20px, env(safe-area-inset-bottom))`, zIndex: z.nav, background: `linear-gradient(transparent, ${bg} 40%)`, pointerEvents: "none" }}>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", alignItems: "center", pointerEvents: "auto" }}>
+            <button aria-label={ts === "running" ? "Pausar" : "Continuar"} onClick={ts === "running" ? pa : resume} style={{ flex: 1, maxWidth: 220, padding: "16px 0", borderRadius: radius.md, background: ts === "paused" ? ac : "transparent", border: `1px solid ${ac}`, color: ts === "paused" ? "#fff" : ac, fontFamily: font.family, fontSize: 12, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", minHeight: 52, transition: "all 0.18s ease-out" }}>{ts === "running" ? "Pausar" : "Continuar"}</button>
+            <button aria-label="Reiniciar" onClick={rs} style={{ width: 52, height: 52, borderRadius: radius.md, border: `0.5px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(10,14,20,0.12)"}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="reset" size={16} color={t3} /></button>
           </div>
         </motion.div>}
       </AnimatePresence>
