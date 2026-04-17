@@ -2,7 +2,9 @@
   "name": "bio-ignicion",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=20.11" },
+  "engines": {
+    "node": ">=20.11"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -25,7 +27,7 @@
     "postinstall": "prisma generate || true"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.34.0",
+    "@anthropic-ai/sdk": "^0.90.0",
     "@auth/prisma-adapter": "^2.7.4",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.55.0",
@@ -43,6 +45,7 @@
     "lucide-react": "^0.577.0",
     "next": "16.2.1",
     "next-auth": "5.0.0-beta.25",
+    "nodemailer": "^8.0.5",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.1",
@@ -55,6 +58,7 @@
     "@cyclonedx/cyclonedx-npm": "^2.0.0",
     "@playwright/test": "^1.49.1",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.5",
