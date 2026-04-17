@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 6;
+const CACHE_VERSION = 7;
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -144,6 +144,16 @@ self.addEventListener("notificationclick", (e) => {
       if (c.url.includes(self.location.origin)) { c.focus(); c.navigate(url); return; }
     }
     await self.clients.openWindow(url);
+    try { if ("clearAppBadge" in self.navigator) self.navigator.clearAppBadge(); } catch {}
+  })());
+});
+
+self.addEventListener("pushsubscriptionchange", (e) => {
+  e.waitUntil((async () => {
+    try {
+      const sub = await self.registration.pushManager.subscribe({ userVisibleOnly: true });
+      await fetch("/api/push/resubscribe", { method: "POST", body: JSON.stringify(sub), headers: { "Content-Type": "application/json" } });
+    } catch {}
   })());
 });
 
