@@ -162,8 +162,60 @@ model NeuralSession {
   moodPost      Int?
   completedAt   DateTime
   clientVersion String?
+  stationId     String?
+  slot          StationSlot?
+  station       Station? @relation(fields: [stationId], references: [id])
   @@index([orgId, completedAt])
   @@index([orgId, teamId, completedAt])
+  @@index([orgId, stationId, completedAt])
+  @@index([orgId, slot, completedAt])
+}
+
+// ─── Tap-to-Ignite: estaciones físicas (QR + NFC) ───────
+enum StationSlot {
+  MORNING
+  EVENING
+  ADHOC
+}
+
+enum StationPolicy {
+  ANY
+  ENTRY_EXIT
+  MORNING_ONLY
+  EVENING_ONLY
+}
+
+model Station {
+  id            String         @id @default(cuid())
+  orgId         String
+  label         String
+  location      String?        // texto libre: "Recepción piso 3", "Escritorio María"
+  policy        StationPolicy  @default(ENTRY_EXIT)
+  signingKey    String         // HMAC secret por estación (rotable)
+  active        Boolean        @default(true)
+  lastTapAt     DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  taps          StationTap[]
+  sessions      NeuralSession[]
+  @@index([orgId, active])
+}
+
+model StationTap {
+  id        BigInt       @id @default(autoincrement())
+  orgId     String
+  stationId String
+  userId    String?      // null = identidad anónima local
+  anonId    String?      // hash estable de device keypair
+  slot      StationSlot
+  status    String       // "ok" | "rejected:expired" | "rejected:slot" | "rejected:sig"
+  ip        String?
+  ua        String?
+  ts        DateTime     @default(now())
+  station   Station      @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  @@index([orgId, ts])
+  @@index([stationId, ts])
+  @@index([orgId, userId, slot, ts])
 }
 
 // ─── Billing ─────────────────────────────────────────────
