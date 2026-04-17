@@ -1,14 +1,12 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   NEURAL COACH — Panel de coaching IA dinámico
-   Genera insights accionables basados en el estado neural completo
-   Base: el coaching adaptativo mejora la adherencia un 47% vs
-   feedback estático (Michie et al., 2017)
+   NEURAL COACH — Clinical IA recommendation panel.
+   Flat hierarchy, hairline rows, weight-300 metrics.
+   No pills, no gradient accent tiles, no colored backgrounds.
    ═══════════════════════════════════════════════════════════════ */
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Icon from "./Icon";
 import {
   generateCoachingInsights,
   calcNeuralMomentum,
@@ -17,7 +15,25 @@ import {
   calcProtocolDiversity,
   calcSessionQualityTrend,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius, semantic, brand } from "../lib/theme";
+import { resolveTheme, radius, semantic, hairline } from "../lib/theme";
+
+const CAPS = { fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" };
+
+function MiniStat({ label, value, unit, sub, color, t3, borderLeft, isDark }) {
+  return (
+    <div style={{
+      padding: "16px 14px",
+      borderLeft: borderLeft ? hairline(isDark) : "none",
+    }}>
+      <div style={{ ...CAPS, color: t3, marginBottom: 8 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <span style={{ fontSize: 20, fontWeight: 300, color, letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{value}</span>
+        {unit && <span style={{ fontSize: 10, fontWeight: 500, color: t3, letterSpacing: "0.06em" }}>{unit}</span>}
+      </div>
+      {sub && <div style={{ fontSize: 11, fontWeight: 400, color: t3, marginTop: 6, letterSpacing: "0.01em" }}>{sub}</div>}
+    </div>
+  );
+}
 
 export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
   const [expanded, setExpanded] = useState(null);
@@ -30,428 +46,181 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
   const diversity = calcProtocolDiversity(st.history);
   const qualityTrend = calcSessionQualityTrend(st.history);
 
-  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const { t1, t2, t3 } = resolveTheme(isDark);
+  const teal = "#0F766E";
+
+  const momColor = momentum.score > 10 ? teal : momentum.score < -10 ? semantic.danger : t1;
 
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div style={{
+      background: isDark ? "#141820" : "#FFFFFF",
+      border: hairline(isDark),
+      borderRadius: radius.lg,
+      overflow: "hidden",
+    }}>
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 10,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="cpu" size={13} color={brand.primary} />
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: 3,
-              color: t3,
-              textTransform: "uppercase",
-            }}
-          >
-            Coach Neural IA
-          </span>
+      <div style={{
+        display: "flex", alignItems: "baseline", justifyContent: "space-between",
+        padding: "16px 20px",
+        borderBottom: hairline(isDark),
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 4, height: 4, borderRadius: "50%", background: teal }} />
+          <span style={{ ...CAPS, color: t3 }}>IA · Recomendación</span>
         </div>
         <button
           onClick={() => setShowDetail(!showDetail)}
           style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: brand.primary,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px 6px",
+            ...CAPS, color: teal,
+            background: "none", border: "none", cursor: "pointer",
           }}
         >
-          {showDetail ? "Menos" : "Detalle"}
+          {showDetail ? "Ocultar" : "Detalle"}
         </button>
       </div>
 
-      {/* Momentum + Load mini-bar */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 6,
-          marginBottom: 10,
-        }}
-      >
-        {/* Momentum */}
-        <div
-          style={{
-            background: cd,
-            borderRadius: 12,
-            padding: "10px",
-            border: `1px solid ${bd}`,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 4,
-            }}
-          >
-            <span style={{ fontSize: 10, color: t3, fontWeight: 700 }}>
-              Momentum
-            </span>
-            <Icon
-              name={
-                momentum.direction === "ascendente"
-                  ? "trending-up"
-                  : momentum.direction === "descendente"
-                  ? "trending-down"
-                  : "minus"
-              }
-              size={12}
-              color={
-                momentum.direction === "ascendente"
-                  ? semantic.success
-                  : momentum.direction === "descendente"
-                  ? semantic.danger
-                  : t3
-              }
-            />
-          </div>
-          <div
-            style={{
-              fontSize: 18,
-              fontWeight: 800,
-              color:
-                momentum.score > 10
-                  ? semantic.success
-                  : momentum.score < -10
-                  ? semantic.danger
-                  : t1,
-            }}
-          >
-            {momentum.score > 0 ? "+" : ""}
-            {momentum.score}
-          </div>
-          <div style={{ fontSize: 10, color: t3, marginTop: 2 }}>
-            {momentum.direction}
-          </div>
-        </div>
-
-        {/* Carga Cognitiva */}
-        <div
-          style={{
-            background: cd,
-            borderRadius: 12,
-            padding: "10px",
-            border: `1px solid ${bd}`,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 4,
-            }}
-          >
-            <span style={{ fontSize: 10, color: t3, fontWeight: 700 }}>
-              Carga
-            </span>
-            <Icon name="gauge" size={12} color={load.color} />
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: load.color }}>
-            {load.load}%
-          </div>
-          <div style={{ fontSize: 10, color: t3, marginTop: 2 }}>
-            {load.level}
-          </div>
-        </div>
+      {/* Momentum + Load — 2 columns flat */}
+      <div style={{
+        display: "grid", gridTemplateColumns: "1fr 1fr",
+        borderBottom: hairline(isDark),
+      }}>
+        <MiniStat
+          label="Momentum"
+          value={`${momentum.score > 0 ? "+" : ""}${momentum.score}`}
+          sub={momentum.direction}
+          color={momColor}
+          t3={t3} isDark={isDark}
+        />
+        <MiniStat
+          label="Carga"
+          value={load.load}
+          unit="%"
+          sub={load.level}
+          color={load.color}
+          t3={t3} isDark={isDark} borderLeft
+        />
       </div>
 
-      {/* Insights list */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <AnimatePresence>
-          {insights.slice(0, showDetail ? 6 : 3).map((insight, i) => (
-            <motion.div
-              key={insight.type + i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
-            >
-              <button
-                onClick={() =>
-                  setExpanded(expanded === insight.type ? null : insight.type)
-                }
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "flex-start",
-                  padding: "11px 12px",
-                  background:
-                    expanded === insight.type
-                      ? `${insight.color}08`
-                      : cd,
-                  borderRadius: 12,
-                  border:
-                    expanded === insight.type
-                      ? `1.5px solid ${insight.color}20`
-                      : `1px solid ${bd}`,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all .2s",
-                }}
+      {/* Insights — hairline-separated rows */}
+      <div>
+        <AnimatePresence initial={false}>
+          {insights.slice(0, showDetail ? 6 : 3).map((insight, i, arr) => {
+            const isOpen = expanded === insight.type;
+            return (
+              <motion.div
+                key={insight.type + i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.28 }}
               >
-                <div
+                <button
+                  onClick={() => setExpanded(isOpen ? null : insight.type)}
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: `${insight.color}10`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    width: "100%",
+                    display: "flex", gap: 14, alignItems: "flex-start",
+                    padding: "16px 20px",
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: i < arr.length - 1 ? hairline(isDark) : "none",
+                    cursor: "pointer", textAlign: "left",
                   }}
                 >
-                  <Icon
-                    name={insight.icon}
-                    size={13}
-                    color={insight.color}
-                  />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: insight.color,
-                      marginBottom: 2,
-                    }}
-                  >
-                    {insight.title}
+                  {/* Priority dot */}
+                  <div style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: insight.priority === 0 ? teal : t3,
+                    opacity: insight.priority === 0 ? 1 : 0.4,
+                    marginTop: 7, flexShrink: 0,
+                  }} />
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase",
+                      color: t3, marginBottom: 6,
+                    }}>
+                      {insight.title}
+                    </div>
+                    <div style={{
+                      fontSize: 14, fontWeight: 400, color: t1,
+                      lineHeight: 1.5, letterSpacing: "-0.01em",
+                    }}>
+                      {insight.message}
+                    </div>
+                    {isOpen && insight.action && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.28 }}
+                        style={{
+                          marginTop: 12,
+                          paddingTop: 10,
+                          borderTop: hairline(isDark),
+                          fontSize: 12, fontWeight: 500, color: teal, letterSpacing: "0.02em",
+                        }}
+                      >
+                        → {insight.action}
+                      </motion.div>
+                    )}
                   </div>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: t2,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {insight.message}
-                  </div>
-                  {expanded === insight.type && insight.action && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      style={{
-                        marginTop: 6,
-                        padding: "6px 8px",
-                        background: `${insight.color}08`,
-                        borderRadius: 8,
-                        fontSize: 10,
-                        fontWeight: 600,
-                        color: insight.color,
-                      }}
-                    >
-                      → {insight.action}
-                    </motion.div>
-                  )}
-                </div>
-                <div
-                  style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: "50%",
-                    background: insight.color,
-                    opacity: insight.priority === 0 ? 1 : 0.3,
-                    flexShrink: 0,
-                    marginTop: 4,
-                  }}
-                />
-              </button>
-            </motion.div>
-          ))}
+                </button>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
 
-      {/* Detail panel: rhythm + diversity + quality */}
+      {/* Detail panel */}
       <AnimatePresence>
         {showDetail && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            style={{ overflow: "hidden" }}
+            transition={{ duration: 0.28 }}
+            style={{ overflow: "hidden", borderTop: hairline(isDark) }}
           >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 6,
-                marginTop: 10,
-              }}
-            >
-              {/* Diversidad */}
-              <div
-                style={{
-                  background: cd,
-                  borderRadius: 12,
-                  padding: "10px",
-                  border: `1px solid ${bd}`,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: t3,
-                    fontWeight: 700,
-                    marginBottom: 4,
-                  }}
-                >
-                  Diversidad
-                </div>
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 800,
-                    color:
-                      diversity.score >= 50 ? semantic.success : semantic.warning,
-                  }}
-                >
-                  {diversity.uniqueCount}/{diversity.totalAvailable}
-                </div>
-                <div style={{ fontSize: 10, color: t3, marginTop: 2 }}>
-                  protocolos
-                </div>
-              </div>
-
-              {/* Ritmo */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+            }}>
+              <MiniStat
+                label="Diversidad"
+                value={diversity.uniqueCount}
+                sub={`de ${diversity.totalAvailable} protocolos`}
+                color={diversity.score >= 50 ? teal : semantic.warning}
+                t3={t3} isDark={isDark}
+              />
               {rhythm && (
-                <div
-                  style={{
-                    background: cd,
-                    borderRadius: 12,
-                    padding: "10px",
-                    border: `1px solid ${bd}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: t3,
-                      fontWeight: 700,
-                      marginBottom: 4,
-                    }}
-                  >
-                    Hora Pico
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: semantic.info }}>
-                    {rhythm.peakWindow
-                      ? `${rhythm.peakWindow.start}:00`
-                      : "—"}
-                  </div>
-                  <div style={{ fontSize: 10, color: t3, marginTop: 2 }}>
-                    {rhythm.pattern}
-                  </div>
-                </div>
+                <MiniStat
+                  label="Hora Pico"
+                  value={rhythm.peakWindow ? `${rhythm.peakWindow.start}` : "—"}
+                  unit={rhythm.peakWindow ? ":00" : ""}
+                  sub={rhythm.pattern}
+                  color={t1}
+                  t3={t3} isDark={isDark} borderLeft
+                />
               )}
-
-              {/* Calidad de sesión */}
               {qualityTrend && (
-                <div
-                  style={{
-                    background: cd,
-                    borderRadius: 12,
-                    padding: "10px",
-                    border: `1px solid ${bd}`,
-                    gridColumn: rhythm ? "auto" : "span 2",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: t3,
-                      fontWeight: 700,
-                      marginBottom: 4,
-                    }}
-                  >
-                    Calidad sesión
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 800,
-                        color:
-                          qualityTrend.direction === "mejorando"
-                            ? semantic.success
-                            : qualityTrend.direction === "deteriorando"
-                            ? semantic.danger
-                            : t1,
-                      }}
-                    >
-                      {qualityTrend.current}%
-                    </span>
-                    {qualityTrend.trend !== 0 && (
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          color:
-                            qualityTrend.trend > 0
-                              ? semantic.success
-                              : semantic.danger,
-                        }}
-                      >
-                        {qualityTrend.trend > 0 ? "+" : ""}
-                        {qualityTrend.trend}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 10, color: t3, marginTop: 2 }}>
-                    {qualityTrend.direction}
-                  </div>
+                <div style={{ gridColumn: rhythm ? "auto" : "span 2", borderTop: hairline(isDark) }}>
+                  <MiniStat
+                    label="Calidad · Sesión"
+                    value={qualityTrend.current}
+                    unit="%"
+                    sub={`${qualityTrend.trend !== 0 ? (qualityTrend.trend > 0 ? "+" : "") + qualityTrend.trend + " · " : ""}${qualityTrend.direction}`}
+                    color={qualityTrend.direction === "mejorando" ? teal : qualityTrend.direction === "deteriorando" ? semantic.danger : t1}
+                    t3={t3} isDark={isDark}
+                  />
                 </div>
               )}
-
-              {/* Mejor día */}
               {rhythm && (
-                <div
-                  style={{
-                    background: cd,
-                    borderRadius: 12,
-                    padding: "10px",
-                    border: `1px solid ${bd}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: t3,
-                      fontWeight: 700,
-                      marginBottom: 4,
-                    }}
-                  >
-                    Mejor día
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: t1 }}>
-                    {rhythm.bestDay}
-                  </div>
-                  <div style={{ fontSize: 10, color: t3, marginTop: 2 }}>
-                    {rhythm.consistency}% consistencia
-                  </div>
+                <div style={{ borderTop: hairline(isDark) }}>
+                  <MiniStat
+                    label="Mejor día"
+                    value={rhythm.bestDay}
+                    sub={`${rhythm.consistency}% consistencia`}
+                    color={t1}
+                    t3={t3} isDark={isDark} borderLeft
+                  />
                 </div>
               )}
             </div>
