@@ -21,12 +21,16 @@ async function requireAdmin(orgId) {
   return session;
 }
 
-function currentOrigin() {
-  return headers().then((h) => {
-    const proto = h.get("x-forwarded-proto") || "https";
-    const host = h.get("host") || "localhost:3000";
-    return `${proto}://${host}`;
-  });
+async function currentOrigin() {
+  // Prioriza env confiable (NEXT_PUBLIC_BASE_URL/AUTH_URL); solo si falta,
+  // acepta x-forwarded-host / host. Evita que un atacante cree estaciones
+  // con tapUrls apuntando a su dominio vía Host header injection.
+  const env = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL;
+  if (env) return env.replace(/\/+$/, "");
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") || "https";
+  const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
+  return `${proto}://${host}`;
 }
 
 export async function GET(req) {
