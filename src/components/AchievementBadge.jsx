@@ -1,0 +1,338 @@
+"use client";
+/* ═══════════════════════════════════════════════════════════════
+   ACHIEVEMENT BADGE — insignias ilustradas por logro
+   ═══════════════════════════════════════════════════════════════
+   Apple "close the ring" y Duolingo demostraron que un logro
+   debe verse como un objeto, no como texto en una lista. Cada
+   archetype aquí es una escena SVG única con paleta y tier.
+   ═══════════════════════════════════════════════════════════════ */
+
+import { motion } from "framer-motion";
+import { bioSignal, font, space, radius } from "../lib/theme";
+import { useReducedMotion } from "../lib/a11y";
+
+const TIERS = {
+  bronze: { primary: "#D97706", secondary: "#92400E", glow: "#FBBF24" },
+  silver: { primary: "#94A3B8", secondary: "#64748B", glow: "#E2E8F0" },
+  gold:   { primary: bioSignal.ignition, secondary: "#D97706", glow: "#FEF3C7" },
+  cyan:   { primary: bioSignal.phosphorCyan, secondary: "#0891B2", glow: "#A5F3FC" },
+  violet: { primary: bioSignal.neuralViolet, secondary: "#6D28D9", glow: "#C4B5FD" },
+  rose:   { primary: bioSignal.plasmaPink, secondary: "#DB2777", glow: "#FBCFE8" },
+};
+
+const META = {
+  streak7:      { archetype: "flame",   tier: "bronze", label: "Chispa", caption: "7 días" },
+  streak14:     { archetype: "flame",   tier: "silver", label: "Brasa",  caption: "14 días" },
+  streak30:     { archetype: "flame",   tier: "gold",   label: "Fuego",  caption: "30 días" },
+  streak60:     { archetype: "flame",   tier: "gold",   label: "Ignición", caption: "60 días" },
+  sessions50:   { archetype: "rings",   tier: "cyan",   label: "50",     caption: "Sesiones" },
+  sessions100:  { archetype: "rings",   tier: "violet", label: "100",    caption: "Centurión" },
+  sessions250:  { archetype: "rings",   tier: "gold",   label: "250",    caption: "Arquitecto" },
+  time60:       { archetype: "arc",     tier: "cyan",   label: "1h",     caption: "Tiempo" },
+  time300:      { archetype: "arc",     tier: "violet", label: "5h",     caption: "Tiempo" },
+  coherencia90: { archetype: "spark",   tier: "cyan",   label: "90%",    caption: "Coherencia" },
+  bioSignal80:  { archetype: "spark",   tier: "gold",   label: "80+",    caption: "BioSignal" },
+  mood5:        { archetype: "spark",   tier: "rose",   label: "Pico",   caption: "Ánimo 5/5" },
+  moodRecovery: { archetype: "spark",   tier: "violet", label: "↑",      caption: "Recuperación" },
+  earlyBird:    { archetype: "sun",     tier: "gold",   label: "AM",     caption: "Antes 7am" },
+  nightOwl:     { archetype: "moon",    tier: "violet", label: "PM",     caption: "Después 10pm" },
+  calibrated:   { archetype: "target",  tier: "cyan",   label: "Base",   caption: "Calibrado" },
+  weekPerfect:  { archetype: "week",    tier: "gold",   label: "7/7",    caption: "Semana perfecta" },
+  allProtos:    { archetype: "grid",    tier: "violet", label: "14",     caption: "Todos" },
+};
+
+const svgCommon = { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 64 64" };
+
+function FrameHex({ color, locked }) {
+  return (
+    <polygon
+      points="32,4 56,18 56,46 32,60 8,46 8,18"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.5"
+      opacity={locked ? 0.3 : 0.7}
+    />
+  );
+}
+
+function FrameRing({ color, locked }) {
+  return (
+    <circle
+      cx="32"
+      cy="32"
+      r="28"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.5"
+      opacity={locked ? 0.3 : 0.7}
+      strokeDasharray="1 4"
+    />
+  );
+}
+
+function FlameGlyph({ t }) {
+  return (
+    <g>
+      <path d="M32 16 Q38 26, 38 34 Q38 44, 32 48 Q26 44, 26 34 Q26 26, 32 16Z" fill={t.primary} />
+      <path d="M32 26 Q35 32, 35 37 Q35 43, 32 45 Q29 43, 29 37 Q29 32, 32 26Z" fill={t.glow} opacity="0.9" />
+      <circle cx="32" cy="40" r="2" fill="#FFFFFF" />
+    </g>
+  );
+}
+
+function RingsGlyph({ t }) {
+  return (
+    <g>
+      <circle cx="32" cy="32" r="18" fill="none" stroke={t.primary} strokeWidth="1.5" opacity="0.4" />
+      <circle cx="32" cy="32" r="13" fill="none" stroke={t.primary} strokeWidth="1.5" opacity="0.7" />
+      <circle cx="32" cy="32" r="8" fill={t.primary} opacity="0.6" />
+      <circle cx="32" cy="32" r="4" fill={t.glow} />
+    </g>
+  );
+}
+
+function ArcGlyph({ t }) {
+  return (
+    <g>
+      <path d="M16 42 A 16 16 0 0 1 48 42" fill="none" stroke={t.primary} strokeWidth="2" strokeLinecap="round" />
+      <path d="M20 42 A 12 12 0 0 1 44 42" fill="none" stroke={t.primary} strokeWidth="1" strokeDasharray="1.5 2" opacity="0.5" />
+      <line x1="32" y1="42" x2="42" y2="28" stroke={t.primary} strokeWidth="2" strokeLinecap="round" />
+      <circle cx="32" cy="42" r="3" fill={t.primary} />
+      <circle cx="42" cy="28" r="2.2" fill={t.glow} />
+    </g>
+  );
+}
+
+function SparkGlyph({ t }) {
+  const pts = [
+    { x: 32, y: 14, r: 3 },
+    { x: 48, y: 28, r: 2 },
+    { x: 32, y: 50, r: 2.5 },
+    { x: 16, y: 28, r: 1.8 },
+    { x: 42, y: 44, r: 1.5 },
+  ];
+  return (
+    <g>
+      {pts.map((p, i) => (
+        <line key={i} x1="32" y1="32" x2={p.x} y2={p.y} stroke={t.primary} strokeWidth="0.8" opacity="0.35" />
+      ))}
+      {pts.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={t.primary} />
+      ))}
+      <circle cx="32" cy="32" r="5" fill={t.glow} />
+      <circle cx="32" cy="32" r="2" fill="#FFFFFF" />
+    </g>
+  );
+}
+
+function SunGlyph({ t }) {
+  return (
+    <g>
+      <circle cx="32" cy="38" r="8" fill={t.primary} />
+      <circle cx="32" cy="38" r="4" fill={t.glow} />
+      {[-3, -2, -1, 0, 1, 2, 3].map((i) => (
+        <line
+          key={i}
+          x1={32 + i * 4}
+          y1={22}
+          x2={32 + i * 4}
+          y2={18}
+          stroke={t.primary}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          opacity={1 - Math.abs(i) * 0.2}
+        />
+      ))}
+      <line x1="10" y1="48" x2="54" y2="48" stroke={t.primary} strokeWidth="1.2" opacity="0.6" />
+    </g>
+  );
+}
+
+function MoonGlyph({ t }) {
+  return (
+    <g>
+      <path
+        d="M38 18 A 16 16 0 1 0 44 46 A 12 12 0 0 1 38 18 Z"
+        fill={t.primary}
+      />
+      <circle cx="16" cy="14" r="1" fill={t.glow} />
+      <circle cx="48" cy="24" r="1.3" fill={t.glow} />
+      <circle cx="14" cy="34" r="0.8" fill={t.glow} opacity="0.7" />
+      <circle cx="52" cy="44" r="0.8" fill={t.glow} opacity="0.7" />
+    </g>
+  );
+}
+
+function TargetGlyph({ t }) {
+  return (
+    <g>
+      <circle cx="32" cy="32" r="14" fill="none" stroke={t.primary} strokeWidth="1.2" opacity="0.45" />
+      <circle cx="32" cy="32" r="9" fill="none" stroke={t.primary} strokeWidth="1.2" opacity="0.7" />
+      <circle cx="32" cy="32" r="4" fill={t.primary} />
+      <line x1="32" y1="14" x2="32" y2="18" stroke={t.primary} strokeWidth="1.5" />
+      <line x1="32" y1="46" x2="32" y2="50" stroke={t.primary} strokeWidth="1.5" />
+      <line x1="14" y1="32" x2="18" y2="32" stroke={t.primary} strokeWidth="1.5" />
+      <line x1="46" y1="32" x2="50" y2="32" stroke={t.primary} strokeWidth="1.5" />
+      <circle cx="32" cy="32" r="1.5" fill={t.glow} />
+    </g>
+  );
+}
+
+function WeekGlyph({ t }) {
+  return (
+    <g>
+      {Array.from({ length: 7 }).map((_, i) => {
+        const x = 10 + i * 7.3;
+        return (
+          <g key={i}>
+            <circle cx={x} cy="32" r="3" fill={t.primary} />
+            <circle cx={x} cy="32" r="1.3" fill={t.glow} />
+          </g>
+        );
+      })}
+      <path d="M6 40 Q 32 46, 58 40" stroke={t.primary} strokeWidth="1.2" fill="none" opacity="0.4" />
+    </g>
+  );
+}
+
+function GridGlyph({ t }) {
+  const cells = [];
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      const idx = r * 4 + c;
+      if (idx >= 14) continue;
+      const x = 16 + c * 8;
+      const y = 16 + r * 8;
+      cells.push({ x, y, k: idx });
+    }
+  }
+  return (
+    <g>
+      {cells.map((cell) => (
+        <rect
+          key={cell.k}
+          x={cell.x}
+          y={cell.y}
+          width="5"
+          height="5"
+          rx="1.2"
+          fill={t.primary}
+          opacity={0.55 + (cell.k % 3) * 0.15}
+        />
+      ))}
+    </g>
+  );
+}
+
+const ARCHETYPES = {
+  flame: { glyph: FlameGlyph, frame: FrameHex },
+  rings: { glyph: RingsGlyph, frame: FrameRing },
+  arc: { glyph: ArcGlyph, frame: FrameHex },
+  spark: { glyph: SparkGlyph, frame: FrameRing },
+  sun: { glyph: SunGlyph, frame: FrameHex },
+  moon: { glyph: MoonGlyph, frame: FrameHex },
+  target: { glyph: TargetGlyph, frame: FrameRing },
+  week: { glyph: WeekGlyph, frame: FrameHex },
+  grid: { glyph: GridGlyph, frame: FrameHex },
+};
+
+export function achievementMeta(id) {
+  return META[id] || { archetype: "spark", tier: "cyan", label: "?", caption: id };
+}
+
+export default function AchievementBadge({ id, unlocked = false, size = 72, showCaption = true }) {
+  const reduced = useReducedMotion();
+  const meta = META[id] || { archetype: "spark", tier: "cyan", label: "?", caption: id };
+  const t = TIERS[meta.tier] || TIERS.cyan;
+  const arch = ARCHETYPES[meta.archetype] || ARCHETYPES.spark;
+  const Frame = arch.frame;
+  const Glyph = arch.glyph;
+
+  const ariaLabel = `${meta.label} · ${meta.caption}${unlocked ? "" : " (bloqueado)"}`;
+
+  return (
+    <motion.div
+      role="img"
+      aria-label={ariaLabel}
+      whileHover={reduced || !unlocked ? {} : { scale: 1.05 }}
+      whileTap={reduced || !unlocked ? {} : { scale: 0.96 }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: space[1],
+        filter: unlocked ? "none" : "grayscale(1) brightness(0.6)",
+        opacity: unlocked ? 1 : 0.55,
+        transition: "all 0.3s",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          inlineSize: size,
+          blockSize: size,
+        }}
+      >
+        {unlocked && !reduced && (
+          <motion.div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: -2,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${t.glow}, transparent 70%)`,
+              filter: "blur(8px)",
+              opacity: 0.35,
+            }}
+            animate={{ opacity: [0.2, 0.5, 0.2] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
+        <svg
+          {...svgCommon}
+          width={size}
+          height={size}
+          style={{ position: "relative", display: "block" }}
+        >
+          <Frame color={t.primary} locked={!unlocked} />
+          <Glyph t={t} />
+          {!unlocked && (
+            <g opacity="0.85">
+              <rect x="27" y="30" width="10" height="14" rx="1.5" fill="rgba(15,23,42,0.9)" stroke={t.primary} strokeWidth="0.8" />
+              <path d="M29 30 L 29 26 A 3 3 0 0 1 35 26 L 35 30" fill="none" stroke={t.primary} strokeWidth="1" />
+              <circle cx="32" cy="37" r="1.2" fill={t.primary} />
+            </g>
+          )}
+        </svg>
+      </div>
+      {showCaption && (
+        <div style={{ textAlign: "center", maxInlineSize: size + 16 }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: font.weight.black,
+              color: unlocked ? t.primary : "rgba(148,163,184,0.8)",
+              letterSpacing: 1.2,
+              textTransform: "uppercase",
+              fontFamily: font.mono,
+              lineHeight: 1.2,
+            }}
+          >
+            {meta.label}
+          </div>
+          <div
+            style={{
+              fontSize: 9,
+              color: "rgba(148,163,184,0.6)",
+              letterSpacing: 0.5,
+              marginBlockStart: 2,
+              lineHeight: 1.3,
+            }}
+          >
+            {meta.caption}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
