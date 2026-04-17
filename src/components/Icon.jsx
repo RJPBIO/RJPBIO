@@ -86,8 +86,28 @@ const ICON_MAP = {
   "alert-triangle": AlertTriangle,
 };
 
-export default function Icon({ name, size = 16, color = "#64748B", className = "", strokeWidth = 1.8 }) {
+export default function Icon({
+  name,
+  size = 16,
+  color = "#64748B",
+  className = "",
+  strokeWidth = 1.8,
+  "aria-label": ariaLabel,
+  "aria-hidden": ariaHiddenProp,
+}) {
   const Component = ICON_MAP[name];
   if (!Component) return null;
-  return <Component size={size} color={color} className={className} strokeWidth={strokeWidth} />;
+  const ariaHidden = ariaHiddenProp ?? !ariaLabel;
+  return (
+    <Component
+      size={size}
+      color={color}
+      className={className}
+      strokeWidth={strokeWidth}
+      aria-label={ariaLabel}
+      aria-hidden={ariaHidden ? "true" : undefined}
+      role={ariaLabel ? "img" : undefined}
+      focusable="false"
+    />
+  );
 }
