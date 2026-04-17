@@ -1,22 +1,21 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   WEEKLY REPORT — Comparación semanal con análisis delta
-   Base: feedback de progreso temporal aumenta motivación intrínseca
-   un 41% (Self-Determination Theory, Deci & Ryan 2000)
+   WEEKLY REPORT — comparación semanal con delta
+   Base: Self-Determination Theory (Deci & Ryan 2000).
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { DN } from "../lib/constants";
+import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
+import { semantic } from "../lib/tokens";
+import { useReducedMotion } from "../lib/a11y";
 
 export default function WeeklyReport({ st, isDark }) {
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const ac = "#059669";
+  const reduced = useReducedMotion();
+  const { card: cd, border: bd, t2, t3 } = resolveTheme(isDark);
+  const ac = brand.primary;
 
   const report = useMemo(() => {
     const curr = st.weeklyData || [0, 0, 0, 0, 0, 0, 0];
@@ -27,7 +26,6 @@ export default function WeeklyReport({ st, isDark }) {
     const activeDaysCurr = curr.filter((v) => v > 0).length;
     const activeDaysPrev = prev.filter((v) => v > 0).length;
 
-    // Mood analysis for the week
     const ml = st.moodLog || [];
     const weekMoods = ml.filter((m) => Date.now() - m.ts < 7 * 86400000);
     const prevWeekMoods = ml.filter(
@@ -41,7 +39,6 @@ export default function WeeklyReport({ st, isDark }) {
       : 0;
     const moodDelta = moodAvg && prevMoodAvg ? +(moodAvg - prevMoodAvg).toFixed(1) : 0;
 
-    // Coherence delta
     const hist = st.history || [];
     const weekHist = hist.filter((h) => Date.now() - h.ts < 7 * 86400000);
     const prevWeekHist = hist.filter(
@@ -73,83 +70,95 @@ export default function WeeklyReport({ st, isDark }) {
   if (!report.hasPrev && report.currTotal === 0) return null;
 
   const maxVal = Math.max(...report.curr, ...report.prev, 1);
+  const diffColor = report.diff >= 0 ? semantic.success : semantic.danger;
+
+  const ariaLabel =
+    `Reporte semanal. ${report.currTotal} sesiones esta semana` +
+    (report.hasPrev ? `, ${report.diff >= 0 ? "+" : ""}${report.diff} vs semana anterior` : "") +
+    `. ${report.activeDaysCurr} de 7 días activos.` +
+    (report.moodAvg ? ` Ánimo promedio ${report.moodAvg}.` : "") +
+    (report.avgC ? ` Coherencia ${report.avgC}%.` : "");
 
   return (
-    <div
+    <section
+      aria-label={ariaLabel}
       style={{
         background: cd,
         borderRadius: 18,
         padding: "16px 14px",
         border: `1px solid ${bd}`,
-        marginBottom: 14,
+        marginBlockEnd: 14,
       }}
     >
-      {/* Header */}
-      <div
+      <header
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 12,
+          marginBlockEnd: 12,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="chart" size={12} color={t3} />
-          <span
+          <Icon name="chart" size={12} color={t3} aria-hidden="true" />
+          <h3
             style={{
               fontSize: 10,
-              fontWeight: 800,
+              fontWeight: font.weight.black,
               letterSpacing: 3,
               color: t3,
               textTransform: "uppercase",
+              margin: 0,
             }}
           >
             Reporte Semanal
-          </span>
+          </h3>
         </div>
         {report.hasPrev && (
           <div
+            role="status"
+            aria-label={`Diferencia: ${report.diff >= 0 ? "+" : ""}${report.diff} sesiones`}
             style={{
               display: "flex",
               alignItems: "center",
               gap: 4,
               padding: "3px 8px",
               borderRadius: 8,
-              background: report.diff >= 0 ? "#05966910" : "#DC262610",
+              background: withAlpha(diffColor, 10),
             }}
           >
             <Icon
               name={report.diff >= 0 ? "trending-up" : "trending-down"}
               size={10}
-              color={report.diff >= 0 ? "#059669" : "#DC2626"}
+              color={diffColor}
+              aria-hidden="true"
             />
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: report.diff >= 0 ? "#059669" : "#DC2626",
-              }}
-            >
+            <span style={{ fontSize: 10, fontWeight: font.weight.black, color: diffColor }}>
               {report.diff >= 0 ? "+" : ""}
               {report.diff}
             </span>
           </div>
         )}
-      </div>
+      </header>
 
-      {/* Bar chart comparison */}
       <div
+        aria-hidden="true"
         style={{
           display: "flex",
           gap: 6,
           alignItems: "flex-end",
-          height: 70,
-          marginBottom: 10,
+          blockSize: 70,
+          marginBlockEnd: 10,
         }}
       >
         {DN.map((d, i) => {
           const currH = Math.max(2, (report.curr[i] / maxVal) * 60);
           const prevH = Math.max(2, (report.prev[i] / maxVal) * 60);
+          const barColor =
+            report.curr[i] > 0
+              ? report.curr[i] > (report.prev[i] || 0)
+                ? ac
+                : "#6366F1"
+              : bd;
           return (
             <div
               key={i}
@@ -161,40 +170,20 @@ export default function WeeklyReport({ st, isDark }) {
                 gap: 2,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  gap: 2,
-                  alignItems: "flex-end",
-                  height: 60,
-                }}
-              >
+              <div style={{ display: "flex", gap: 2, alignItems: "flex-end", blockSize: 60 }}>
                 {report.hasPrev && (
                   <motion.div
-                    initial={{ height: 0 }}
+                    initial={reduced ? { height: prevH } : { height: 0 }}
                     animate={{ height: prevH }}
-                    transition={{ delay: i * 0.05, duration: 0.4 }}
-                    style={{
-                      width: 6,
-                      background: bd,
-                      borderRadius: 3,
-                    }}
+                    transition={reduced ? { duration: 0 } : { delay: i * 0.05, duration: 0.4 }}
+                    style={{ inlineSize: 6, background: bd, borderRadius: 3 }}
                   />
                 )}
                 <motion.div
-                  initial={{ height: 0 }}
+                  initial={reduced ? { height: currH } : { height: 0 }}
                   animate={{ height: currH }}
-                  transition={{ delay: i * 0.05 + 0.1, duration: 0.4 }}
-                  style={{
-                    width: 10,
-                    background:
-                      report.curr[i] > 0
-                        ? report.curr[i] > (report.prev[i] || 0)
-                          ? ac
-                          : "#6366F1"
-                        : bd,
-                    borderRadius: 3,
-                  }}
+                  transition={reduced ? { duration: 0 } : { delay: i * 0.05 + 0.1, duration: 0.4 }}
+                  style={{ inlineSize: 10, background: barColor, borderRadius: 3 }}
                 />
               </div>
               <span
@@ -211,60 +200,54 @@ export default function WeeklyReport({ st, isDark }) {
         })}
       </div>
 
-      {/* Legend */}
       {report.hasPrev && (
         <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 16,
-            marginBottom: 10,
-          }}
+          aria-hidden="true"
+          style={{ display: "flex", justifyContent: "center", gap: 16, marginBlockEnd: 10 }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div
-              style={{ width: 8, height: 8, borderRadius: 2, background: ac }}
-            />
+            <div style={{ inlineSize: 8, blockSize: 8, borderRadius: 2, background: ac }} />
             <span style={{ fontSize: 9, color: t3 }}>Esta semana ({report.currTotal})</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div
-              style={{ width: 8, height: 8, borderRadius: 2, background: bd }}
-            />
+            <div style={{ inlineSize: 8, blockSize: 8, borderRadius: 2, background: bd }} />
             <span style={{ fontSize: 9, color: t3 }}>Anterior ({report.prevTotal})</span>
           </div>
         </div>
       )}
 
-      {/* Metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
         <div
+          role="group"
+          aria-label={`Días activos: ${report.activeDaysCurr} de 7`}
           style={{
             background: isDark ? "#1A1E28" : "#F8FAFC",
             borderRadius: 10,
-            padding: "8px",
+            padding: 8,
             textAlign: "center",
           }}
         >
-          <div style={{ fontSize: 14, fontWeight: 800, color: ac }}>
+          <div style={{ fontSize: 14, fontWeight: font.weight.black, color: ac }}>
             {report.activeDaysCurr}/7
           </div>
           <div style={{ fontSize: 9, color: t3 }}>días activos</div>
         </div>
         {report.moodAvg > 0 && (
           <div
+            role="group"
+            aria-label={`Ánimo promedio: ${report.moodAvg}${report.moodDelta ? `, delta ${report.moodDelta > 0 ? "+" : ""}${report.moodDelta}` : ""}`}
             style={{
               background: isDark ? "#1A1E28" : "#F8FAFC",
               borderRadius: 10,
-              padding: "8px",
+              padding: 8,
               textAlign: "center",
             }}
           >
             <div
               style={{
                 fontSize: 14,
-                fontWeight: 800,
-                color: report.moodDelta >= 0 ? "#059669" : "#DC2626",
+                fontWeight: font.weight.black,
+                color: report.moodDelta >= 0 ? semantic.success : semantic.danger,
               }}
             >
               {report.moodAvg}
@@ -281,18 +264,20 @@ export default function WeeklyReport({ st, isDark }) {
         )}
         {report.avgC > 0 && (
           <div
+            role="group"
+            aria-label={`Coherencia promedio: ${report.avgC}%${report.cohDelta ? `, delta ${report.cohDelta > 0 ? "+" : ""}${report.cohDelta}` : ""}`}
             style={{
               background: isDark ? "#1A1E28" : "#F8FAFC",
               borderRadius: 10,
-              padding: "8px",
+              padding: 8,
               textAlign: "center",
             }}
           >
             <div
               style={{
                 fontSize: 14,
-                fontWeight: 800,
-                color: report.cohDelta >= 0 ? "#3B82F6" : "#DC2626",
+                fontWeight: font.weight.black,
+                color: report.cohDelta >= 0 ? "#3B82F6" : semantic.danger,
               }}
             >
               {report.avgC}%
@@ -308,6 +293,6 @@ export default function WeeklyReport({ st, isDark }) {
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }
