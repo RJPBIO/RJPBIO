@@ -2,7 +2,7 @@ import { auth } from "../../../../server/auth";
 import { resolveOrg } from "../../../../server/tenancy";
 import { requireMembership } from "../../../../server/rbac";
 import { db } from "../../../../server/db";
-import { writeAudit } from "../../../../server/audit";
+import { auditLog } from "../../../../server/audit";
 import { randomUUID, randomBytes } from "node:crypto";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ async function createHook(formData) {
       active: true,
     },
   });
-  await writeAudit({ orgId: org.id, actorId: session.user.id, action: "webhook.created" });
+  await auditLog({ orgId: org.id, actorId: session.user.id, action: "webhook.created" });
 }
 
 async function toggle(formData) {
