@@ -100,15 +100,24 @@ export default function BioSparkline({
       ? (formatValue ? formatValue(activeValue, activeIdx) : String(Math.round(activeValue)))
       : null;
 
+  const trend = useMemo(() => {
+    if (data.length < 2) return null;
+    const first = data[0];
+    const last = data[data.length - 1];
+    const diff = last - first;
+    if (Math.abs(diff) < Math.abs(first) * 0.05) return "estable";
+    return diff > 0 ? "ascendente" : "descendente";
+  }, [data]);
+
   return (
-    <div style={{ position: "relative", display: "inline-block", lineHeight: 0 }}>
+    <figure role={ariaLabel ? "figure" : "presentation"} aria-label={ariaLabel ? `${ariaLabel}. Tendencia ${trend || "única"}.` : undefined} style={{ position: "relative", display: "inline-block", lineHeight: 0, margin: 0 }}>
       <svg
         ref={svgRef}
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        role={ariaLabel ? "img" : "presentation"}
-        aria-label={ariaLabel}
+        role="presentation"
+        aria-hidden="true"
         style={{ display: "block", overflow: "visible", touchAction: interactive ? "none" : undefined, cursor: interactive ? "crosshair" : undefined }}
         onPointerMove={interactive ? handleMove : undefined}
         onPointerDown={interactive ? handleMove : undefined}
@@ -208,6 +217,6 @@ export default function BioSparkline({
           {tooltipText}
         </div>
       )}
-    </div>
+    </figure>
   );
 }
