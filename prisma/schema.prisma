@@ -55,7 +55,13 @@ model User {
   neuralState  Json?         // cifrado server-side si decide sync
 }
 
-enum Role { OWNER ADMIN MANAGER MEMBER VIEWER }
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  VIEWER
+}
 
 model Membership {
   id        String   @id @default(cuid())
@@ -160,8 +166,19 @@ model NeuralSession {
 }
 
 // ─── Billing ─────────────────────────────────────────────
-enum Plan { FREE STARTER GROWTH ENTERPRISE }
-enum Region { US EU APAC LATAM }
+enum Plan {
+  FREE
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+enum Region {
+  US
+  EU
+  APAC
+  LATAM
+}
 
 // ─── Webhooks ────────────────────────────────────────────
 model Webhook {
