@@ -11,6 +11,38 @@ export function gAC() {
   return _aC;
 }
 
+// ─── Audio unlock (iOS/Android) ───────────────────────────
+// iOS Safari mantiene el AudioContext en "suspended" hasta que un
+// gesto del usuario (touch/click) llame a resume() DENTRO de ese call
+// stack. Esta función debe ejecutarse desde un handler de evento.
+let _audioUnlocked = false;
+export function unlockAudio() {
+  if (_audioUnlocked) return true;
+  try {
+    const c = gAC(); if (!c) return false;
+    if (c.state === "suspended") c.resume().catch(() => {});
+    // Oscilador mudo para "calentar" el grafo en iOS.
+    const o = c.createOscillator(); const g = c.createGain();
+    g.gain.value = 0; o.connect(g); g.connect(c.destination);
+    o.start(0); o.stop(c.currentTime + 0.02);
+    _audioUnlocked = true;
+    return true;
+  } catch { return false; }
+}
+
+// Enlaza el desbloqueo al primer gesto global. Idempotente.
+// Usa `{ once: true, capture: true }` para no duplicar listeners.
+let _unlockWired = false;
+export function wireAudioUnlock() {
+  if (_unlockWired || typeof window === "undefined") return;
+  _unlockWired = true;
+  const onGesture = () => { unlockAudio(); };
+  const opts = { once: true, capture: true, passive: true };
+  window.addEventListener("pointerdown", onGesture, opts);
+  window.addEventListener("touchstart", onGesture, opts);
+  window.addEventListener("keydown", onGesture, opts);
+}
+
 export function playChord(f, d, v) {
   try {
     const c = gAC(); if (!c) return;
@@ -26,23 +58,48 @@ export function playChord(f, d, v) {
   } catch (e) {}
 }
 
+// ─── Noise buffers (pre-generados) ────────────────────────
+// Reemplazamos createScriptProcessor (deprecado, inestable en iOS/Android)
+// por un AudioBuffer estático reproducido en loop. Más portable, sin
+// worklet file, y el buffer es suficientemente largo para que el loop
+// no se perciba (4 s de ruido filtrado ≈ indistinguible).
+function makeNoiseBuffer(ctx, kind) {
+  const seconds = 4;
+  const sr = ctx.sampleRate || 44100;
+  const len = Math.floor(sr * seconds);
+  const buf = ctx.createBuffer(1, len, sr);
+  const data = buf.getChannelData(0);
+  let last = 0;
+  if (kind === "brown") {
+    for (let i = 0; i < len; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      data[i] = last * 3.5;
+    }
+  } else { // "wind" — un poco más suave
+    for (let i = 0; i < len; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.01 * w) / 1.01;
+      data[i] = last * 2.5;
+    }
+  }
+  return buf;
+}
+
 // ─── Brown noise ambient ──────────────────────────────────
 let _ambNode = null, _ambGain = null;
 export function startAmbient() {
   try {
     const c = gAC(); if (!c) return;
-    if (c.state === "suspended") c.resume();
+    if (c.state === "suspended") c.resume().catch(() => {});
     if (_ambNode) return;
-    const bs = 4096;
-    _ambNode = c.createScriptProcessor ? c.createScriptProcessor(bs, 1, 1) : null;
-    if (!_ambNode) return;
     _ambGain = c.createGain(); _ambGain.gain.value = 0;
-    _ambGain.connect(c.destination); _ambNode.connect(_ambGain);
-    let last = 0;
-    _ambNode.onaudioprocess = (e) => {
-      const o = e.outputBuffer.getChannelData(0);
-      for (let i = 0; i < o.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; o[i] = last * 3.5; }
-    };
+    _ambGain.connect(c.destination);
+    _ambNode = c.createBufferSource();
+    _ambNode.buffer = makeNoiseBuffer(c, "brown");
+    _ambNode.loop = true;
+    _ambNode.connect(_ambGain);
+    _ambNode.start(0);
     _ambGain.gain.linearRampToValueAtTime(0.12, c.currentTime + 2);
   } catch (e) {}
 }
@@ -50,7 +107,10 @@ export function startAmbient() {
 export function stopAmbient() {
   try {
     if (_ambGain) { const c = gAC(); if (c) _ambGain.gain.linearRampToValueAtTime(0, c.currentTime + 1); }
-    setTimeout(() => { if (_ambNode) { _ambNode.disconnect(); _ambNode = null; } if (_ambGain) { _ambGain.disconnect(); _ambGain = null; } }, 1200);
+    setTimeout(() => {
+      try { if (_ambNode) { _ambNode.stop(); _ambNode.disconnect(); _ambNode = null; } } catch {}
+      try { if (_ambGain) { _ambGain.disconnect(); _ambGain = null; } } catch {}
+    }, 1200);
   } catch (e) {}
 }
 
@@ -63,12 +123,14 @@ export function startSoundscape(type) {
     stopSoundscape();
     _ssGain = c.createGain(); _ssGain.gain.value = 0; _ssGain.connect(c.destination);
     if (type === "wind") {
-      const bs = 4096;
-      _ssNode = c.createScriptProcessor ? c.createScriptProcessor(bs, 1, 1) : null;
-      if (!_ssNode) return;
-      let last = 0;
-      _ssNode.onaudioprocess = (e) => { const o = e.outputBuffer.getChannelData(0); for (let i = 0; i < o.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.01 * w) / 1.01; o[i] = last * 2.5; } };
-      _ssNode.connect(_ssGain); _ssGain.gain.linearRampToValueAtTime(0.08, c.currentTime + 3);
+      const src = c.createBufferSource();
+      src.buffer = makeNoiseBuffer(c, "wind");
+      src.loop = true;
+      src.connect(_ssGain);
+      src.start(0);
+      // Envolvemos para que stopSoundscape() lo pare correctamente.
+      _ssNode = { disconnect: () => { try { src.stop(); } catch {} try { src.disconnect(); } catch {} } };
+      _ssGain.gain.linearRampToValueAtTime(0.08, c.currentTime + 3);
     } else if (type === "drone") {
       const o = c.createOscillator(); const o2 = c.createOscillator();
       o.type = "sine"; o.frequency.value = 60; o2.type = "sine"; o2.frequency.value = 90;
@@ -251,11 +313,46 @@ export function releaseWakeLock() {
 // ─── Voice Guidance ───────────────────────────────────────
 let _voices = [];
 let _voiceUnlocked = false;
+let _voiceListenerWired = false;
 
+// Las voces del sistema cargan async en Chrome/Android/iOS; si llamamos
+// speak() antes de que lleguen, el motor cae al default (robótico). Nos
+// suscribimos a `voiceschanged` y re-cacheamos cada vez que dispare.
 export function loadVoices() {
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    _voices = window.speechSynthesis.getVoices();
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  _voices = window.speechSynthesis.getVoices() || [];
+  if (!_voiceListenerWired) {
+    _voiceListenerWired = true;
+    try {
+      window.speechSynthesis.addEventListener("voiceschanged", () => {
+        _voices = window.speechSynthesis.getVoices() || [];
+      });
+    } catch {
+      // Safari antiguo expone `onvoiceschanged` como propiedad, no addEventListener.
+      try {
+        window.speechSynthesis.onvoiceschanged = () => {
+          _voices = window.speechSynthesis.getVoices() || [];
+        };
+      } catch {}
+    }
   }
+}
+
+// Preferimos voces NATIVAS (localService) por encima de remotas, y españoles
+// en orden: es-MX → es-US → es-ES → cualquier es-*. La voz remota de
+// Google suena más "robótica" en móviles antiguos que la local del OS.
+function pickSpanishVoice() {
+  if (!_voices.length) return null;
+  const byLang = (tag) => _voices.filter((v) => v.lang === tag);
+  const byPrefix = (p) => _voices.filter((v) => v.lang?.startsWith(p));
+  const prefer = (list) => list.find((v) => v.localService) || list[0];
+  return (
+    prefer(byLang("es-MX")) ||
+    prefer(byLang("es-US")) ||
+    prefer(byLang("es-ES")) ||
+    prefer(byPrefix("es")) ||
+    null
+  );
 }
 
 export function unlockVoice() {
@@ -266,10 +363,12 @@ export function unlockVoice() {
 export function speak(text, circadian, voiceOn = true) {
   if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
   try {
+    // Si aún no tenemos voces cacheadas, intentamos cargarlas ahora.
+    if (!_voices.length) loadVoices();
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "es-MX"; u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
-    const v = _voices.find((v) => v.lang === "es-MX") || _voices.find((v) => v.lang === "es-ES") || _voices.find((v) => v.lang.startsWith("es"));
+    const v = pickSpanishVoice();
     if (v) u.voice = v;
     window.speechSynthesis.speak(u);
   } catch (e) {}
@@ -278,11 +377,12 @@ export function speak(text, circadian, voiceOn = true) {
 export function speakNow(text, circadian, voiceOn = true) {
   if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
   try {
+    if (!_voices.length) loadVoices();
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "es-MX"; u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
-    const v = _voices.find((v) => v.lang === "es-MX") || _voices.find((v) => v.lang === "es-ES") || _voices.find((v) => v.lang.startsWith("es"));
+    const v = pickSpanishVoice();
     if (v) u.voice = v;
     window.speechSynthesis.speak(u);
   } catch (e) {}
