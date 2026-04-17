@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# BIO-IGNICIÓN · Neural Performance PWA
 
-## Getting Started
+Plataforma de optimización humana basada en sesiones de 60–180 s con protocolos neurales, feedback sensorial (audio, haptics, binaural, voz) y telemetría local cifrada.
 
-First, run the development server:
+![Neural Performance](public/screenshots/ignicion-wide.svg)
+
+## ⚡ Stack
+
+- **Next.js 16** (App Router, React Compiler, standalone output)
+- **React 19**, **Zustand 5**, **Framer Motion 12**, **Recharts 3**, **Tailwind 4**
+- **Vitest 4** con jsdom + Testing Library + cobertura v8
+- **PWA**: Service Worker v6, manifest rich, Push, Background Sync, Periodic Sync
+
+## 🚀 Desarrollo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
+npm run test         # vitest
+npm run test:coverage
+npm run build        # output: standalone
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🗺️ Estructura
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```
+src/
+├── app/              # Next App Router (layout, page, /privacy)
+├── components/       # UI modular
+├── hooks/            # Hooks desacoplados (timer, deeplink, sync, wakelock, t)
+├── lib/              # neural, protocols, audio, storage, sync, push, i18n, deeplink, logger
+├── store/            # Zustand store con persistencia async
+└── middleware.js     # CSP con nonce + rate-limit
+public/
+├── sw.js             # Service Worker v6
+├── offline.html      # Fallback offline
+├── manifest.json     # Manifest rich (shortcuts, share_target, protocol_handlers)
+├── icon*.svg         # Iconos (any, maskable, monochrome)
+└── screenshots/      # Screenshots para PWA install UI
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔐 Privacidad y seguridad
 
-## Learn More
+- **Local-first**: estado cifrado **AES-GCM 256** en IndexedDB con fallback `localStorage`.
+- **CSP con nonce** por request emitido desde `middleware.js`.
+- **Sin PII** en logs; sampling configurable vía `NEXT_PUBLIC_LOG_SAMPLE`.
+- **Consent banner** y página `/privacy` conforme a GDPR/LFPDPPP.
+- **Deep links NFC/QR** validados y opcionalmente firmados con HMAC-SHA256.
 
-To learn more about Next.js, take a look at the following resources:
+## 🌐 PWA · Características
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Capacidad | Estado |
+|---|:---:|
+| Instalable (iOS/Android/Desktop) | ✅ |
+| Offline fallback | ✅ (`/offline.html`) |
+| Shortcuts (3) | ✅ |
+| Screenshots wide + narrow | ✅ |
+| Share Target | ✅ |
+| Protocol Handlers (`web+bioign://…`) | ✅ |
+| Edge Side Panel | ✅ |
+| Web Push + VAPID | ✅ (requiere `NEXT_PUBLIC_VAPID_PUBLIC_KEY`) |
+| Background Sync | ✅ |
+| Periodic Sync | ✅ |
+| Navigation Preload | ✅ |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔧 Variables de entorno
 
-## Deploy on Vercel
+```env
+NEXT_PUBLIC_BASE_URL=https://bio-ignicion.app
+NEXT_PUBLIC_SYNC_ENDPOINT=https://api.example.com
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+NEXT_PUBLIC_DEEPLINK_SECRET=...
+NEXT_PUBLIC_LOG_ENDPOINT=https://log.example.com/ingest
+NEXT_PUBLIC_LOG_SAMPLE=0.1
+NEXT_PUBLIC_LOG_LEVEL=warn
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🧪 Tests
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Cobertura mínima exigida: **70% líneas / funciones / statements**, 60% ramas.
+
+```bash
+npm run test:coverage
+```
+
+## 📚 Documentación adicional
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — decisiones de arquitectura
+- [CLAUDE.md](CLAUDE.md) — guía para trabajo asistido por Claude
+
+## 📝 Licencia
+
+Propietaria. © BIO-IGNICIÓN
