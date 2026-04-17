@@ -7,8 +7,9 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
+import BioSparkline from "./BioSparkline";
 import { DN } from "../lib/constants";
-import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
+import { resolveTheme, withAlpha, font, brand, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
@@ -51,6 +52,11 @@ export default function WeeklyReport({ st, isDark }) {
       ? Math.round(prevWeekHist.reduce((a, h) => a + (h.c || 50), 0) / prevWeekHist.length)
       : 0;
 
+    const weekCurve = weekHist
+      .slice()
+      .sort((a, b) => a.ts - b.ts)
+      .map((h) => h.bioQ || h.c || 50);
+
     return {
       curr,
       prev,
@@ -64,6 +70,7 @@ export default function WeeklyReport({ st, isDark }) {
       avgC,
       cohDelta: avgC && prevAvgC ? avgC - prevAvgC : 0,
       hasPrev: prevTotal > 0,
+      weekCurve,
     };
   }, [st.weeklyData, st.prevWeekData, st.moodLog, st.history]);
 
@@ -139,6 +146,31 @@ export default function WeeklyReport({ st, isDark }) {
           </div>
         )}
       </header>
+
+      {report.weekCurve.length >= 3 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBlockEnd: 10,
+            paddingInline: 2,
+          }}
+        >
+          <span style={{ fontSize: 9, letterSpacing: 1.5, color: t3, textTransform: "uppercase", flexShrink: 0 }}>
+            Señal
+          </span>
+          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+            <BioSparkline
+              data={report.weekCurve}
+              width={220}
+              height={26}
+              color={bioSignal.phosphorCyan}
+              ariaLabel={`Curva de calidad biométrica de ${report.weekCurve.length} sesiones esta semana`}
+            />
+          </div>
+        </div>
+      )}
 
       <div
         aria-hidden="true"
