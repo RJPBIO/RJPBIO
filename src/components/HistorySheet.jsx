@@ -113,7 +113,7 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
               <div style={{ textAlign: "center", paddingBlock: space[10] }}>
                 <Icon name="chart" size={30} color={t3} aria-hidden="true" />
                 <div style={{ ...ty.body(t3), marginBlockStart: space[2] }}>
-                  Tu primera sesión creará el registro.
+                  Sin señal aún. La primera sesión inicia tu registro biométrico.
                 </div>
               </div>
             )}
@@ -195,7 +195,7 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                               {h.bioQ && (
                                 <span
                                   style={{
-                                    ...ty.caption(bioQColor(h.bioQ)),
+                                    ...ty.biometric(bioQColor(h.bioQ), font.size.sm),
                                     fontWeight: font.weight.bold,
                                   }}
                                 >
