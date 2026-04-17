@@ -16,7 +16,11 @@ import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
-export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onShowHist, onShowCalibration }) {
+export default function ProfileView({
+  st, setSt, isDark, ac,
+  onShowSettings, onShowHist, onShowCalibration,
+  onShowChronotype, onShowResonance, onShowNOM035,
+}) {
   const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
@@ -437,6 +441,92 @@ export default function ProfileView({ st, setSt, isDark, ac, onShowSettings, onS
           <span style={ty.caption(t2)}>Historial</span>
         </motion.button>
       </div>
+      {(onShowChronotype || onShowResonance || onShowNOM035) && (
+        <article
+          aria-label="Perfil bioneural"
+          style={{
+            background: cd,
+            borderRadius: 16,
+            padding: 14,
+            marginBlockEnd: 10,
+            border: `1px solid ${bd}`,
+          }}
+        >
+          <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
+            <Icon name="fingerprint" size={12} color={t3} aria-hidden="true" />
+            <h3 style={ty.label(t3)}>Perfil Bioneural</h3>
+          </header>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {onShowChronotype && (
+              <button
+                onClick={onShowChronotype}
+                aria-label="Test de cronotipo MEQ-SA"
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+                  paddingBlock: 10, paddingInline: 12,
+                  background: isDark ? "#1A1E28" : "#F8FAFC",
+                  border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
+                }}
+              >
+                <Icon name="clock" size={14} color="#D97706" aria-hidden="true" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...ty.title(t1) }}>Cronotipo (MEQ-SA)</div>
+                  <div style={ty.caption(t3)}>
+                    {st.chronotype ? st.chronotype.label : "5 preguntas · calibra tu ritmo circadiano"}
+                  </div>
+                </div>
+                <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
+              </button>
+            )}
+            {onShowResonance && (
+              <button
+                onClick={onShowResonance}
+                aria-label="Calibrar frecuencia resonante con sensor de HR"
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+                  paddingBlock: 10, paddingInline: 12,
+                  background: isDark ? "#1A1E28" : "#F8FAFC",
+                  border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
+                }}
+              >
+                <Icon name="predict" size={14} color="#6366F1" aria-hidden="true" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...ty.title(t1) }}>Frecuencia Resonante</div>
+                  <div style={ty.caption(t3)}>
+                    {st.resonanceFreq ? `${st.resonanceFreq} rpm` : "5 ensayos con banda BLE · máximo HRV"}
+                  </div>
+                </div>
+                <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
+              </button>
+            )}
+            {onShowNOM035 && (
+              <button
+                onClick={onShowNOM035}
+                aria-label="Evaluación NOM-035"
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+                  paddingBlock: 10, paddingInline: 12,
+                  background: isDark ? "#1A1E28" : "#F8FAFC",
+                  border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
+                }}
+              >
+                <Icon name="shield" size={14} color="#059669" aria-hidden="true" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...ty.title(t1) }}>NOM-035 · Riesgo psicosocial</div>
+                  <div style={ty.caption(t3)}>
+                    {(() => {
+                      const last = (st.nom035Results || []).slice(-1)[0];
+                      return last ? `Último: ${last.level?.label || "—"}` : "46 ítems oficiales · Guía II";
+                    })()}
+                  </div>
+                </div>
+                <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </article>
+      )}
+
       <motion.button
         whileTap={reduced ? {} : { scale: 0.95 }}
         onClick={onShowCalibration}
