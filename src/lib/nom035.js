@@ -112,7 +112,14 @@ export function scoreNOM035({ answers, items = NOM035_ITEMS_GUIA_II }) {
 
 /**
  * Risk level classification per Anexo III, Guía II (46 ítems).
- * Official cutoffs from NOM-035-STPS-2018:
+ * Fuente oficial: NOM-035-STPS-2018, DOF 23-octubre-2018, Anexo III,
+ * tabla "Calificación final del cuestionario de la Guía de Referencia II":
+ *   Nulo o despreciable: Cfinal < 50
+ *   Bajo:                50 ≤ Cfinal < 75
+ *   Medio:               75 ≤ Cfinal < 99
+ *   Alto:                99 ≤ Cfinal < 140
+ *   Muy alto:            Cfinal ≥ 140
+ * https://www.dof.gob.mx/nota_detalle.php?codigo=5541828
  */
 export function riskLevel(total) {
   if (total < 50) return { key: "null_or_low", label: "Nulo o despreciable", priority: 0 };
