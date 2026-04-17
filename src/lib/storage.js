@@ -17,9 +17,17 @@ const hasIDB = () => isBrowser() && "indexedDB" in window;
 const hasCrypto = () => isBrowser() && window.crypto?.subtle;
 
 // ─── IndexedDB primitives ────────────────────────────────
+// Safari iOS (modo privado / Home Screen PWA) a veces deja open() en pending
+// sin disparar onsuccess/onerror. Timeout duro evita que toda la app se cuelgue.
 function openDB() {
   return new Promise((resolve, reject) => {
     if (!hasIDB()) return reject(new Error("IndexedDB not available"));
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error("IndexedDB open timeout"));
+    }, 1500);
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
@@ -27,8 +35,18 @@ function openDB() {
       if (!db.objectStoreNames.contains(STORE_OUTBOX)) db.createObjectStore(STORE_OUTBOX, { keyPath: "id", autoIncrement: true });
       if (!db.objectStoreNames.contains(STORE_META)) db.createObjectStore(STORE_META);
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      if (settled) { try { req.result.close(); } catch {} return; }
+      settled = true; clearTimeout(timer); resolve(req.result);
+    };
+    req.onerror = () => {
+      if (settled) return;
+      settled = true; clearTimeout(timer); reject(req.error);
+    };
+    req.onblocked = () => {
+      if (settled) return;
+      settled = true; clearTimeout(timer); reject(new Error("IndexedDB blocked"));
+    };
   });
 }
 
