@@ -22,6 +22,13 @@ import Icon from "./Icon";
 import { bioSignal, font, space, radius, ty } from "../lib/theme";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 
+const INTENTS = [
+  { id: "enfoque",       label: "Enfoque",        desc: "Cortar ruido mental. Entrar en flow.",     icon: "focus",   color: "#3B82F6" },
+  { id: "calma",         label: "Calma",          desc: "Bajar activación. Soltar tensión.",        icon: "calm",    color: "#8B5CF6" },
+  { id: "energia",       label: "Energía",        desc: "Encender el sistema. Activar el día.",     icon: "energy",  color: "#D97706" },
+  { id: "recuperacion",  label: "Recuperación",   desc: "Descomprimir. Reparar carga acumulada.",   icon: "shield",  color: "#059669" },
+];
+
 const SCREENS = [
   {
     id: "manifest",
@@ -42,6 +49,13 @@ const SCREENS = [
     ],
   },
   {
+    id: "intent",
+    kicker: "¿QUÉ VIENES A RESOLVER?",
+    title: "Tu primer protocolo",
+    titleAccent: "lo elige tu señal.",
+    intents: INTENTS,
+  },
+  {
     id: "ignite",
     kicker: "TU PRIMERA SEÑAL",
     title: "Cada sesión es una medición.",
@@ -53,17 +67,20 @@ const SCREENS = [
 export default function BioIgnitionWelcome({ onComplete, onSkip }) {
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
+  const [intent, setIntent] = useState(null);
   const [bursting, setBursting] = useState(false);
   const dialogRef = useFocusTrap(true);
   const titleId = useId();
 
   const current = SCREENS[step];
   const isLast = step === SCREENS.length - 1;
+  const isIntentStep = current.id === "intent";
+  const canAdvance = !isIntentStep || !!intent;
 
   useEffect(() => {
     function onKey(e) {
       if (e.key === "ArrowRight" || e.key === "Enter") {
-        if (!isLast) setStep((s) => Math.min(s + 1, SCREENS.length - 1));
+        if (!isLast && canAdvance) setStep((s) => Math.min(s + 1, SCREENS.length - 1));
       } else if (e.key === "ArrowLeft") {
         setStep((s) => Math.max(s - 1, 0));
       } else if (e.key === "Escape") {
@@ -72,19 +89,20 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isLast, onSkip]);
+  }, [isLast, onSkip, canAdvance]);
 
   function handlePrimary() {
     if (!isLast) {
+      if (!canAdvance) return;
       setStep((s) => s + 1);
       return;
     }
     if (reduced) {
-      onComplete?.();
+      onComplete?.(intent);
       return;
     }
     setBursting(true);
-    setTimeout(() => onComplete?.(), 900);
+    setTimeout(() => onComplete?.(intent), 900);
   }
 
   return (
@@ -252,8 +270,85 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
             </span>
           </h1>
 
-          {/* Body or pillars */}
-          {current.pillars ? (
+          {/* Body, pillars, or intent grid */}
+          {current.intents ? (
+            <div
+              role="radiogroup"
+              aria-label="Selecciona tu intención"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: space[2],
+                inlineSize: "100%",
+                marginBlockStart: space[1],
+              }}
+            >
+              {current.intents.map((opt, i) => {
+                const active = intent === opt.id;
+                return (
+                  <motion.button
+                    key={opt.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setIntent(opt.id)}
+                    whileTap={reduced ? {} : { scale: 0.97 }}
+                    initial={reduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: reduced ? 0 : 0.12 + i * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: space[1],
+                      paddingBlock: space[3],
+                      paddingInline: space[3],
+                      background: active ? `${opt.color}1A` : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${active ? opt.color : "rgba(34,211,238,0.12)"}`,
+                      borderRadius: radius.lg,
+                      cursor: "pointer",
+                      textAlign: "start",
+                      color: "#E8ECF4",
+                      boxShadow: active ? `0 0 0 1px ${opt.color}40 inset, 0 8px 24px -10px ${opt.color}` : "none",
+                      transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
+                    }}
+                  >
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        inlineSize: 32,
+                        blockSize: 32,
+                        borderRadius: radius.md,
+                        background: active ? `${opt.color}26` : "rgba(255,255,255,0.05)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: `1px solid ${active ? `${opt.color}55` : "rgba(255,255,255,0.06)"}`,
+                        marginBlockEnd: space[0.5] || 2,
+                      }}
+                    >
+                      <Icon name={opt.icon} size={16} color={active ? opt.color : "rgba(232,236,244,0.75)"} />
+                    </div>
+                    <div
+                      style={{
+                        fontSize: font.size.sm,
+                        fontWeight: font.weight.black,
+                        color: active ? opt.color : "#E8ECF4",
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        fontFamily: font.mono,
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: font.size.xs, color: "rgba(232,236,244,0.65)", lineHeight: 1.35 }}>
+                      {opt.desc}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          ) : current.pillars ? (
             <div
               style={{
                 display: "flex",
@@ -346,25 +441,30 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
       >
         <motion.button
           type="button"
-          whileTap={reduced ? {} : { scale: 0.97 }}
+          whileTap={reduced || !canAdvance ? {} : { scale: 0.97 }}
           onClick={handlePrimary}
+          disabled={!canAdvance}
+          aria-disabled={!canAdvance}
           style={{
             inlineSize: "100%",
             paddingBlock: space[4],
             paddingInline: space[5],
             borderRadius: radius.full,
             border: "none",
-            background: `linear-gradient(135deg, ${bioSignal.phosphorCyan}, ${bioSignal.neuralViolet})`,
-            color: "#050810",
+            background: canAdvance
+              ? `linear-gradient(135deg, ${bioSignal.phosphorCyan}, ${bioSignal.neuralViolet})`
+              : "rgba(255,255,255,0.06)",
+            color: canAdvance ? "#050810" : "rgba(232,236,244,0.45)",
             fontSize: font.size.base || 15,
             fontWeight: font.weight.black,
             letterSpacing: 1.5,
             textTransform: "uppercase",
-            cursor: "pointer",
-            boxShadow: `0 8px 32px -8px ${bioSignal.phosphorCyan}`,
+            cursor: canAdvance ? "pointer" : "not-allowed",
+            boxShadow: canAdvance ? `0 8px 32px -8px ${bioSignal.phosphorCyan}` : "none",
             fontFamily: font.family,
+            transition: "background 0.25s, color 0.25s, box-shadow 0.25s",
           }}
-          aria-label={isLast ? "Empezar calibración" : "Siguiente"}
+          aria-label={isLast ? "Empezar calibración" : isIntentStep && !intent ? "Elige una intención primero" : "Siguiente"}
         >
           {isLast ? "Empezar" : "Siguiente"}
         </motion.button>
