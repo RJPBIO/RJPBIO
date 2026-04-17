@@ -110,6 +110,24 @@ export const useStore = create((set, get) => ({
     scheduleSave({ ...get() });
   },
 
+  // Streak freeze — pausa honesta: congela racha 1 día sin falsear
+  // Máx 2/mes. Resetea mensualmente. Mejor que mentir bajo presión social.
+  freezeStreak: () => {
+    const st = get();
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+    const sf = st.streakFreezes || { usedThisMonth: [], lastFreezeMonth: null };
+    const used = sf.lastFreezeMonth === monthKey ? sf.usedThisMonth : [];
+    if (used.length >= 2) return { ok: false, reason: "limit_reached", remaining: 0 };
+    const td = now.toDateString();
+    if (used.includes(td)) return { ok: false, reason: "already_today", remaining: 2 - used.length };
+    const newUsed = [...used, td];
+    const streakFreezes = { usedThisMonth: newUsed, lastFreezeMonth: monthKey };
+    set({ streakFreezes, lastDate: td });
+    scheduleSave({ ...get() });
+    return { ok: true, remaining: 2 - newUsed.length };
+  },
+
   toggleFav: (name) => {
     const favs = get().favs || [];
     const nf = favs.includes(name) ? favs.filter((f) => f !== name) : [...favs, name];
