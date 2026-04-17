@@ -28,6 +28,7 @@ import {
   startSoundscape, stopSoundscape, startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
+  wireAudioUnlock,
 } from "../lib/audio";
 import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal } from "../lib/theme";
 import BioIgnicionMark, { BioGlyph } from "../components/BioIgnicionMark";
@@ -121,16 +122,30 @@ export default function BioIgnicion(){
     const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
   }}catch(e){};},[]);
 
-  // ═══ VOICE ═══
-  useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
+  // ═══ VOICE + AUDIO UNLOCK ═══
+  // iOS Safari / Android Chrome: el AudioContext queda suspended hasta que
+  // un gesto DENTRO de su call stack llame a resume(). wireAudioUnlock()
+  // engancha el primer pointer/touch/key y desbloquea todo el grafo.
+  useEffect(()=>{wireAudioUnlock();if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();},[]);
 
   // ═══ LOAD STATE (via Zustand) — await init BEFORE reading/writing ═══
   // iOS Safari + Home Screen PWA: IndexedDB a veces cuelga en modo privado o
   // primer arranque. Usamos timeout duro para que la UI siempre aparezca.
   useEffect(()=>{let cancelled=false;let fallbackTO=null;(async()=>{
     fallbackTO=setTimeout(()=>{if(!cancelled)setMt(true);},2500);
+    // Intentamos resolver el userId actual con timeout corto. Si falla,
+    // tratamos al usuario como anónimo (null). Esto evita que el store
+    // herede datos del usuario previo en el mismo navegador.
+    let userId=null;
+    try{
+      const r=await Promise.race([
+        fetch("/api/auth/session",{credentials:"same-origin"}).then(r=>r.ok?r.json():null),
+        new Promise((res)=>setTimeout(()=>res(null),800)),
+      ]);
+      userId=r?.user?.id??null;
+    }catch{}
     const initWithTimeout=Promise.race([
-      store.init(),
+      store.init({userId}),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error("store.init timeout")),2000)),
     ]);
     try{await initWithTimeout;}catch(e){}
