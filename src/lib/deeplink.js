@@ -8,12 +8,13 @@ const SAFE = /^[A-Za-z0-9_\-.:@ ]{1,128}$/;
 const ALLOWED_T = new Set(["entrada", "salida", "exit", "mid", "break"]);
 
 export function parseDeepLink(searchParams) {
-  const c = (searchParams.get("c") || "").slice(0, MAX_LEN);
-  const t = (searchParams.get("t") || "").slice(0, MAX_LEN);
-  const e = (searchParams.get("e") || "").slice(0, MAX_LEN);
+  const c = searchParams.get("c") || "";
+  const t = searchParams.get("t") || "";
+  const e = searchParams.get("e") || "";
   const sig = searchParams.get("sig") || "";
   const ts = Number(searchParams.get("ts") || 0);
 
+  if (c.length > MAX_LEN || e.length > MAX_LEN || t.length > MAX_LEN) return null;
   if (c && !SAFE.test(c)) return null;
   if (t && !ALLOWED_T.has(t)) return null;
   if (e && !SAFE.test(e)) return null;
