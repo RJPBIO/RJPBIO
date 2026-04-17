@@ -1,6 +1,6 @@
 import { auth } from "../../../../../server/auth";
 import { db } from "../../../../../server/db";
-import { writeAudit } from "../../../../../server/audit";
+import { auditLog } from "../../../../../server/audit";
 import { requireCsrf } from "../../../../../server/csrf";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export async function DELETE(request) {
   await client.user.update({ where: { id: userId }, data: { deletedAt: new Date(), email: `deleted-${userId}@bio-ignicion.local`, name: null, image: null } });
   const memberships = await client.membership.findMany({ where: { userId } });
   for (const m of memberships) {
-    await writeAudit({ orgId: m.orgId, actorId: userId, action: "user.deletion.requested", target: userId, meta: { graceDays: 30 } });
+    await auditLog({ orgId: m.orgId, actorId: userId, action: "user.deletion.requested", target: userId, payload: { graceDays: 30 } });
   }
   return Response.json({ status: "scheduled", hardDeleteAt: new Date(Date.now() + 30 * 86400_000).toISOString() });
 }
