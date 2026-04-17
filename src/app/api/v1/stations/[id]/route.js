@@ -54,6 +54,16 @@ export async function DELETE(_req, { params }) {
   }
 }
 
+async function currentOrigin() {
+  // Prioriza env confiable para evitar host header injection (tapUrls a dominio atacante).
+  const env = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL;
+  if (env) return env.replace(/\/+$/, "");
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") || "https";
+  const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
+  return `${proto}://${host}`;
+}
+
 export async function POST(req, { params }) {
   try {
     const { id } = await params;
@@ -65,8 +75,7 @@ export async function POST(req, { params }) {
     const signingKey = generateSigningKey();
     await orm.station.update({ where: { id: st.id }, data: { signingKey } });
     await auditLog({ orgId: st.orgId, action: "station.rotate", target: st.id });
-    const h = await headers();
-    const origin = `${h.get("x-forwarded-proto") || "https"}://${h.get("host") || "localhost:3000"}`;
+    const origin = await currentOrigin();
     const tapUrl = buildTapUrl({ origin, stationId: st.id, signingKey });
     return NextResponse.json({ tapUrl, warning: "Claves antiguas invalidadas. Re-imprime tags." });
   } catch (e) {
