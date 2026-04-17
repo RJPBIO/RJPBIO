@@ -12,9 +12,17 @@ import { resolveTheme, withAlpha, font, space, radius } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
-export default function StreakShield({ st, isDark, onQuickSession }) {
+export default function StreakShield({ st, isDark, onQuickSession, onFreezeStreak }) {
   const reduced = useReducedMotion();
   const { t3 } = resolveTheme(isDark);
+
+  const freezesLeft = useMemo(() => {
+    const sf = st.streakFreezes || { usedThisMonth: [], lastFreezeMonth: null };
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+    const used = sf.lastFreezeMonth === monthKey ? sf.usedThisMonth.length : 0;
+    return Math.max(0, 2 - used);
+  }, [st.streakFreezes]);
 
   const shield = useMemo(() => {
     if (st.streak < 2 || (st.todaySessions || 0) > 0) return null;
@@ -109,36 +117,41 @@ export default function StreakShield({ st, isDark, onQuickSession }) {
         </div>
 
         {shield.urgency === "critical" && (
-          <motion.button
-            whileTap={reduced ? {} : { scale: 0.97 }}
-            onClick={onQuickSession}
-            aria-label="Iniciar sesión rápida de 60 segundos para salvar la racha"
-            style={{
-              inlineSize: "100%",
-              padding: 10,
-              background: withAlpha(shield.color, 10),
-              border: "none",
-              borderBlockStart: `1px solid ${withAlpha(shield.color, 15)}`,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-            }}
-          >
-            <Icon name="bolt" size={12} color={shield.color} aria-hidden="true" />
-            <span
+          <div style={{ display: "flex", borderBlockStart: `1px solid ${withAlpha(shield.color, 15)}` }}>
+            <motion.button
+              whileTap={reduced ? {} : { scale: 0.97 }}
+              onClick={onQuickSession}
+              aria-label="Iniciar sesión rápida de 60 segundos"
               style={{
-                fontSize: 10,
-                fontWeight: font.weight.black,
-                color: shield.color,
-                letterSpacing: 1,
-                textTransform: "uppercase",
+                flex: 1, padding: 10, background: withAlpha(shield.color, 10),
+                border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
               }}
             >
-              Sesión rápida 60s — Salva tu racha
-            </span>
-          </motion.button>
+              <Icon name="bolt" size={12} color={shield.color} aria-hidden="true" />
+              <span style={{ fontSize: 10, fontWeight: font.weight.black, color: shield.color, letterSpacing: 1, textTransform: "uppercase" }}>
+                Sesión rápida 60s
+              </span>
+            </motion.button>
+            {onFreezeStreak && freezesLeft > 0 && (
+              <motion.button
+                whileTap={reduced ? {} : { scale: 0.97 }}
+                onClick={onFreezeStreak}
+                aria-label={`Pausa honesta — congela la racha por hoy sin hacer sesión. Te quedan ${freezesLeft} este mes.`}
+                title="No mentir bajo presión. Congela tu racha honestamente."
+                style={{
+                  flex: 1, padding: 10, background: "transparent",
+                  border: "none", borderInlineStart: `1px solid ${withAlpha(shield.color, 15)}`, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                }}
+              >
+                <Icon name="shield" size={12} color={t3} aria-hidden="true" />
+                <span style={{ fontSize: 10, fontWeight: font.weight.bold, color: t3, letterSpacing: 1, textTransform: "uppercase" }}>
+                  Pausa honesta · {freezesLeft}
+                </span>
+              </motion.button>
+            )}
+          </div>
         )}
       </motion.aside>
     </AnimatePresence>
