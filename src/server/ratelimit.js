@@ -32,8 +32,17 @@ async function redisCheck(key, limit, windowMs) {
   return { ok: count <= limit, remaining: Math.max(0, limit - count), reset: (Math.floor(nowSec / (windowMs / 1000)) + 1) * windowMs };
 }
 
+let _prodWarned = false;
 export async function check(key, { limit = 120, windowMs = 60_000 } = {}) {
   if (process.env.REDIS_URL) return redisCheck(key, limit, windowMs);
+  // Producción sin Redis es un bug de despliegue: la memoria local no se
+  // comparte entre instancias serverless, así que el rate limit efectivo
+  // es N veces mayor al configurado. Log ruidoso (una sola vez) para que
+  // pegue en cualquier agregador de logs en lugar de fallar en silencio.
+  if (process.env.NODE_ENV === "production" && !_prodWarned) {
+    _prodWarned = true;
+    console.warn("[ratelimit] REDIS_URL no definido en producción: rate limit degrada a memoria local por-instancia (ineficaz en multi-instancia).");
+  }
   return memCheck(key, limit, windowMs);
 }
 
