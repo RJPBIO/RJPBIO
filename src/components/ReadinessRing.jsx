@@ -11,7 +11,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
@@ -48,6 +48,15 @@ export default function ReadinessRing({
   const ariaLabel =
     `Readiness neural: ${overall}%, estado ${meta.label}. ` +
     `Enfoque ${focusScore}%, calma ${calmScore}%, energía ${energyScore}%. ${meta.tone}`;
+
+  const lastTier = useRef(meta.label);
+  const [liveMsg, setLiveMsg] = useState("");
+  useEffect(() => {
+    if (lastTier.current !== meta.label) {
+      lastTier.current = meta.label;
+      setLiveMsg(`Readiness ${meta.label.toLowerCase()}: ${overall}%. ${meta.tone}`);
+    }
+  }, [meta.label, overall, meta.tone]);
 
   const centerColor = active ? active.color : meta.color;
   const centerScore = active ? active.score : overall;
@@ -102,10 +111,15 @@ export default function ReadinessRing({
             return (
               <g
                 key={i}
+                role="button"
+                tabIndex={0}
+                aria-label={`${ring.label}: ${ring.score}%`}
                 onPointerEnter={() => setActiveRing(i)}
                 onPointerLeave={() => setActiveRing(null)}
                 onPointerDown={() => setActiveRing(i)}
-                style={{ cursor: "pointer" }}
+                onFocus={() => setActiveRing(i)}
+                onBlur={() => setActiveRing(null)}
+                style={{ cursor: "pointer", outline: "none" }}
               >
                 <circle
                   cx={size / 2}
@@ -171,6 +185,24 @@ export default function ReadinessRing({
             {centerSub}
           </div>
         </div>
+      </div>
+
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+          whiteSpace: "nowrap",
+          border: 0,
+        }}
+      >
+        {liveMsg}
       </div>
 
       <div style={{ flex: 1, minInlineSize: 0 }}>
