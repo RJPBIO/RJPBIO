@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
 import ReadinessRing from "./ReadinessRing";
+import BioSparkline from "./BioSparkline";
 import { MOODS, AM } from "../lib/constants";
 import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
@@ -66,6 +67,11 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
       c: h.slice(-1)[0].c - (h.length >= 5 ? h[h.length - 5] : h[0]).c,
       r: h.slice(-1)[0].r - (h.length >= 5 ? h[h.length - 5] : h[0]).r,
     };
+  }, [st.history]);
+  const perfTrend = useMemo(() => {
+    const h = (st.history || []).slice(-14);
+    if (h.length < 3) return [];
+    return h.map((s) => Math.round(((s.c ?? 50) + (s.r ?? 50)) / 2));
   }, [st.history]);
   const noData = st.totalSessions === 0;
   const bioColor = colorForScore(bioSignal.score, 70, 45);
@@ -191,6 +197,30 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
             </div>
           ))}
         </div>
+        {perfTrend.length >= 3 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: space[2],
+              marginBlockEnd: space[2],
+              paddingInline: space[1],
+            }}
+          >
+            <span style={{ ...ty.label(t3), fontSize: font.size.xs, flexShrink: 0 }}>
+              Trayectoria
+            </span>
+            <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+              <BioSparkline
+                data={perfTrend}
+                width={200}
+                height={28}
+                color={bioColor}
+                ariaLabel={`Trayectoria de rendimiento últimas ${perfTrend.length} sesiones`}
+              />
+            </div>
+          </div>
+        )}
         <div
           style={{
             ...ty.body(t2),
