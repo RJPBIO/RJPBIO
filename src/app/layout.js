@@ -3,12 +3,23 @@ import { headers } from "next/headers";
 import "./globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
 import ConsentBanner from "../components/ConsentBanner";
+import { LocaleProvider } from "../lib/locale-context";
 
 const manrope = Manrope({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
+
+const RTL_LOCALES = new Set(["ar", "he", "fa", "ur"]);
+const SUPPORTED = ["es", "en", "pt", "fr", "de", "it", "nl", "ja", "ko", "zh", "ar", "he"];
+
+function detectLocale(acceptLanguage) {
+  if (!acceptLanguage) return "es";
+  const head = acceptLanguage.split(",")[0]?.trim().toLowerCase() || "es";
+  const short = head.split("-")[0];
+  return SUPPORTED.includes(short) ? short : "es";
+}
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
@@ -51,10 +62,11 @@ export const viewport = {
 export default async function RootLayout({ children }) {
   const h = await headers();
   const nonce = h.get("x-nonce") || undefined;
-  const locale = h.get("accept-language")?.split(",")[0]?.startsWith("en") ? "en" : "es";
+  const locale = detectLocale(h.get("accept-language"));
+  const dir = RTL_LOCALES.has(locale) ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -70,21 +82,31 @@ export default async function RootLayout({ children }) {
       >
         <a
           href="#main"
+          className="bi-skip-link"
           style={{
-            position: "absolute", left: "-9999px", top: 8, padding: "8px 12px",
-            background: "#059669", color: "#fff", borderRadius: 8, zIndex: 9999,
+            position: "absolute",
+            insetInlineStart: "-9999px",
+            insetBlockStart: 8,
+            padding: "8px 12px",
+            background: "#059669",
+            color: "#fff",
+            borderRadius: 8,
+            zIndex: 9999,
+            fontWeight: 700,
           }}
-          onFocus={(e) => { e.currentTarget.style.left = "8px"; }}
-          onBlur={(e) => { e.currentTarget.style.left = "-9999px"; }}
         >
           Saltar al contenido
         </a>
-        <ErrorBoundary>
-          <main id="main" role="main" aria-label="Aplicación BIO-IGNICIÓN">
-            {children}
-          </main>
-        </ErrorBoundary>
-        <ConsentBanner />
+        <div aria-live="polite" className="bi-sr-only" id="bi-live-polite" />
+        <div aria-live="assertive" className="bi-sr-only" id="bi-live-assertive" />
+        <LocaleProvider initialLocale={locale}>
+          <ErrorBoundary>
+            <main id="main" role="main" aria-label="Aplicación BIO-IGNICIÓN" tabIndex={-1}>
+              {children}
+            </main>
+          </ErrorBoundary>
+          <ConsentBanner />
+        </LocaleProvider>
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
