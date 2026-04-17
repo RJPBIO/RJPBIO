@@ -80,6 +80,18 @@ export async function POST(req) {
   }
 
   const orm = await db();
+
+  // Si viene stationId, validamos pertenencia al org y (opcionalmente) slot.
+  let stationId = null, slot = null;
+  if (body.stationId) {
+    const st = await orm.station.findUnique({ where: { id: String(body.stationId) } });
+    if (st && st.orgId === a.ctx.orgId && st.active) {
+      stationId = st.id;
+      const allowed = ["MORNING", "EVENING", "ADHOC"];
+      if (body.slot && allowed.includes(String(body.slot))) slot = String(body.slot);
+    }
+  }
+
   const s = await orm.neuralSession.create({
     data: {
       orgId: a.ctx.orgId,
@@ -92,6 +104,8 @@ export async function POST(req) {
       moodPost: body.moodPost ?? null,
       completedAt: new Date(body.completedAt || Date.now()),
       clientVersion: body.clientVersion || null,
+      stationId,
+      slot,
     },
   });
   await auditLog({ orgId: a.ctx.orgId, action: "api.session.create", target: s.id });
