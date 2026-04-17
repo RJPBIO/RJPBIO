@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { font } from "../lib/tokens";
 
 /**
- * AnimatedNumber — Counts up/down with easeOutCubic.
- * Shared primitive used by Dashboard, Profile, and summary screens.
+ * AnimatedNumber — Clinical instrument digit.
+ * Weight 300 + tabular nums + tight tracking. Lightness = precision.
  */
-export default function AnimatedNumber({ value, suffix = "", color = "#0F172A", size = 32 }) {
+export default function AnimatedNumber({ value, suffix = "", color = "#0A0E14", size = 32, weight = font.weight.light }) {
   const [displayed, setDisplayed] = useState(0);
   const raf = useRef(null);
 
@@ -28,10 +28,12 @@ export default function AnimatedNumber({ value, suffix = "", color = "#0F172A", 
   return (
     <span style={{
       fontSize: size,
-      fontWeight: font.weight.black,
+      fontWeight: weight,
       color,
       fontFamily: font.family,
-      letterSpacing: "-1px",
+      letterSpacing: "-0.01em",
+      lineHeight: 1,
+      fontVariantNumeric: "tabular-nums",
     }}>
       {displayed}{suffix}
     </span>
