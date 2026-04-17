@@ -6,9 +6,12 @@
    Lancet Digital Health 2020)
    ═══════════════════════════════════════════════════════════════ */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
+import { resolveTheme, brand, font } from "../lib/theme";
+import { semantic } from "../lib/tokens";
+import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 
 const CALIBRATION_STEPS = [
   {
@@ -55,8 +58,8 @@ const STRESS_OPTIONS = [
   { value: 1, label: "Muy tenso", color: "#EF4444", icon: "stress" },
   { value: 2, label: "Algo agitado", color: "#F59E0B", icon: "drain" },
   { value: 3, label: "Neutral", color: "#64748B", icon: "neutral" },
-  { value: 4, label: "Tranquilo", color: "#0D9488", icon: "sharp" },
-  { value: 5, label: "En calma", color: "#059669", icon: "peak" },
+  { value: 4, label: "Tranquilo", color: brand.secondary, icon: "sharp" },
+  { value: 5, label: "En calma", color: semantic.success, icon: "peak" },
 ];
 
 export default function NeuralCalibration({ onComplete, isDark }) {
@@ -71,7 +74,7 @@ export default function NeuralCalibration({ onComplete, isDark }) {
 
   // Reaction test state
   const [rtPhase, setRtPhase] = useState("waiting"); // waiting | ready | go | done
-  const [rtColor, setRtColor] = useState("#1E2330");
+  const [rtColor, setRtColor] = useState(isDark ? "#1E2330" : "#E2E8F0");
   const [rtCount, setRtCount] = useState(0);
   const rtStartRef = useRef(0);
   const rtTimerRef = useRef(null);
@@ -90,24 +93,21 @@ export default function NeuralCalibration({ onComplete, isDark }) {
   const [userCount, setUserCount] = useState(0);
   const focusTimerRef = useRef(null);
 
-  const t1 = isDark ? "#E8ECF4" : "#0F172A";
-  const t2 = isDark ? "#8B95A8" : "#475569";
-  const t3 = isDark ? "#4B5568" : "#94A3B8";
-  const cd = isDark ? "#141820" : "#FFFFFF";
-  const bd = isDark ? "#1E2330" : "#E2E8F0";
-  const ac = "#059669";
-  const bg = isDark ? "#0B0E14" : "#F1F4F9";
+  const reduced = useReducedMotion();
+  const titleId = useId();
+  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const ac = brand.primary;
 
   const currentStep = CALIBRATION_STEPS[step];
 
   // ─── Reaction Time Test ────────────────────────────────
   const startReactionTest = useCallback(() => {
     setRtPhase("ready");
-    setRtColor("#DC2626");
+    setRtColor(semantic.danger);
     const delay = 1500 + Math.random() * 3000;
     rtTimerRef.current = setTimeout(() => {
       setRtPhase("go");
-      setRtColor("#059669");
+      setRtColor(semantic.success);
       rtStartRef.current = performance.now();
     }, delay);
   }, []);
@@ -242,9 +242,13 @@ export default function NeuralCalibration({ onComplete, isDark }) {
 
   return (
     <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: reduced ? 0 : 0.2 }}
       style={{
         position: "fixed",
         inset: 0,
@@ -258,21 +262,25 @@ export default function NeuralCalibration({ onComplete, isDark }) {
         overflowY: "auto",
       }}
     >
-      {/* Progress bar */}
       <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={CALIBRATION_STEPS.length - 1}
+        aria-valuenow={step}
+        aria-label={`Calibración: paso ${step + 1} de ${CALIBRATION_STEPS.length}`}
         style={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
+          insetBlockStart: 0,
+          insetInlineStart: 0,
+          insetInlineEnd: 0,
+          blockSize: 3,
           background: bd,
         }}
       >
         <motion.div
           animate={{ width: `${(step / (CALIBRATION_STEPS.length - 1)) * 100}%` }}
-          transition={{ duration: 0.5 }}
-          style={{ height: "100%", background: ac, borderRadius: 3 }}
+          transition={reduced ? { duration: 0 } : { duration: 0.5 }}
+          style={{ blockSize: "100%", background: ac, borderRadius: 3 }}
         />
       </div>
 
@@ -326,7 +334,7 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   <circle cx="36" cy="36" r="4" fill={ac} opacity=".5" />
                 </svg>
               </motion.div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: t1, marginBottom: 4 }}>
+              <h2 id={titleId} style={{ fontSize: 24, fontWeight: 800, color: t1, marginBottom: 4 }}>
                 {currentStep.title}
               </h2>
               <div
@@ -399,7 +407,7 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   width: "100%",
                   padding: "16px",
                   borderRadius: 50,
-                  background: `linear-gradient(135deg, ${ac}, #0D9488)`,
+                  background: `linear-gradient(135deg, ${ac}, ${brand.secondary})`,
                   border: "none",
                   color: "#fff",
                   fontSize: 13,
@@ -478,10 +486,10 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                       style={{
                         padding: "4px 8px",
                         borderRadius: 8,
-                        background: rt < 350 ? "#05966910" : rt < 500 ? "#D9770610" : "#DC262610",
+                        background: rt < 350 ? `${semantic.success}10` : rt < 500 ? `${semantic.warning}10` : `${semantic.danger}10`,
                         fontSize: 10,
                         fontWeight: 700,
-                        color: rt < 350 ? "#059669" : rt < 500 ? "#D97706" : "#DC2626",
+                        color: rt < 350 ? semantic.success : rt < 500 ? semantic.warning : semantic.danger,
                       }}
                     >
                       {rt}ms
@@ -1009,7 +1017,7 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                       width: "100%",
                       padding: "16px",
                       borderRadius: 50,
-                      background: `linear-gradient(135deg, ${ac}, #0D9488)`,
+                      background: `linear-gradient(135deg, ${ac}, ${brand.secondary})`,
                       border: "none",
                       color: "#fff",
                       fontSize: 13,
