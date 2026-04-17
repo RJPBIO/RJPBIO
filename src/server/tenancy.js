@@ -40,6 +40,8 @@ export async function requireOrg() {
   return org;
 }
 
+export const resolveOrg = requireOrg;
+
 export function resolveRegion(country) {
   if (!country) return "US";
   const EU = ["DE","FR","ES","IT","PT","NL","BE","IE","SE","NO","DK","FI","PL","AT","CH"];
