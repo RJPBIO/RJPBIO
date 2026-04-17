@@ -9,13 +9,55 @@ import Icon from "./Icon";
 import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { aggregateTeam, NOM035_CATEGORIES } from "../lib/nom035";
+import { aggregateHrvDeltas } from "../lib/hrvDelta";
+import { computeProtocolEffectiveness } from "../lib/effectiveness";
+import { computeRecoveredHours, computeRoiValue } from "../lib/roi";
+import { aggregateInstrument } from "../lib/instruments";
 
 const MIN_K = 5;
 
-export default function OrgDashboard({ teamResponses = [], sessions = [], isDark }) {
+export default function OrgDashboard({
+  teamResponses = [],
+  sessions = [],
+  hrvDeltas = [],
+  instrumentResponses = [],
+  isDark,
+  hourlyLoadedCost,
+  currency,
+}) {
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   const agg = useMemo(() => aggregateTeam(teamResponses, { minK: MIN_K }), [teamResponses]);
+
+  const hrvAgg = useMemo(
+    () => aggregateHrvDeltas(hrvDeltas, { minK: MIN_K }),
+    [hrvDeltas]
+  );
+
+  const effectiveness = useMemo(
+    () => computeProtocolEffectiveness(sessions, { minN: MIN_K }),
+    [sessions]
+  );
+
+  const roi = useMemo(() => {
+    const hours = computeRecoveredHours({ sessions });
+    if (hours.insufficient) return { insufficient: true, n: hours.n, minRequired: hours.minRequired };
+    const value = computeRoiValue({
+      recoveredHours: hours.recoveredHours,
+      hourlyLoadedCost,
+      currency,
+    });
+    return { insufficient: false, ...hours, value };
+  }, [sessions, hourlyLoadedCost, currency]);
+
+  const pssAgg = useMemo(
+    () => aggregateInstrument(instrumentResponses, "pss-4", { minK: MIN_K }),
+    [instrumentResponses]
+  );
+  const wemwbsAgg = useMemo(
+    () => aggregateInstrument(instrumentResponses, "wemwbs-7", { minK: MIN_K }),
+    [instrumentResponses]
+  );
 
   const engagement = useMemo(() => {
     const n = sessions.length;
@@ -71,6 +113,23 @@ export default function OrgDashboard({ teamResponses = [], sessions = [], isDark
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBlockEnd: 24 }}>
+        <RoiCard roi={roi} isDark={isDark} />
+        <HrvDeltaCard agg={hrvAgg} isDark={isDark} />
+        <EffectivenessCard eff={effectiveness} isDark={isDark} />
+        <InstrumentCard
+          agg={pssAgg}
+          title="Estrés percibido (PSS-4)"
+          reference="Cohen & Williamson 1988"
+          scale="0-16"
+          isDark={isDark}
+        />
+        <InstrumentCard
+          agg={wemwbsAgg}
+          title="Bienestar (SWEMWBS)"
+          reference="Stewart-Brown 2009"
+          scale="7-35"
+          isDark={isDark}
+        />
         <NOMCard agg={agg} isDark={isDark} />
         <EngagementCard eng={engagement} isDark={isDark} />
       </div>
@@ -193,6 +252,10 @@ function ComplianceCard({ isDark }) {
       </h3>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
         <ComplianceRow ok label="NOM-035-STPS-2018 Guía II (46 ítems)" />
+        <ComplianceRow ok label="PSS-4 (Cohen & Williamson 1988) — estrés percibido" />
+        <ComplianceRow ok label="SWEMWBS (Stewart-Brown 2009) — bienestar mental" />
+        <ComplianceRow ok label="PHQ-2 (Kroenke et al. 2003) — screening depresión" />
+        <ComplianceRow ok label="HRV RMSSD (Task Force 1996, Shaffer 2017) con MDC95" />
         <ComplianceRow ok label="k-anonimato k≥5 en todas las agregaciones" />
         <ComplianceRow ok label="LFPDPPP — datos despersonalizados antes del agregado" />
         <ComplianceRow ok label="GDPR Art. 89 — fines estadísticos con medidas técnicas" />
@@ -207,6 +270,191 @@ function ComplianceRow({ ok, label }) {
       <Icon name="check" size={14} color={ok ? brand.primary : "#999"} aria-hidden="true" />
       <span>{label}</span>
     </li>
+  );
+}
+
+function RoiCard({ roi, isDark }) {
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  if (roi.insufficient) {
+    return (
+      <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
+        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+          ROI · Horas de foco
+        </h3>
+        <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
+          {roi.n}/{roi.minRequired} sesiones para reporte (modelo requiere muestra mínima).
+        </p>
+      </article>
+    );
+  }
+  const hasValue = roi.value && roi.value.totalValue > 0;
+  return (
+    <article
+      role="region"
+      aria-label="Retorno de inversión"
+      style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
+    >
+      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+        ROI · Horas de foco recuperadas
+      </h3>
+      <div style={{ fontSize: 32, fontWeight: font.weight.black, color: t1 }}>
+        {roi.recoveredHours}
+        <span style={{ fontSize: 14, color: t3, marginInlineStart: 6 }}>h</span>
+      </div>
+      {hasValue && (
+        <div style={{ fontSize: 14, fontWeight: 700, color: brand.primary, marginBlockStart: 4 }}>
+          ≈ {roi.value.currency} {roi.value.totalValue.toLocaleString()}
+        </div>
+      )}
+      <div style={{ marginBlockStart: 12, fontSize: 10, color: t3, lineHeight: 1.6 }}>
+        {roi.n} sesiones · lift observado {(roi.observedLift * 100).toFixed(1)}% (cap {(roi.effectSizeCap * 100).toFixed(0)}%) · factor residual {roi.residualFactor}×
+      </div>
+      <a
+        href="/trust#roi"
+        style={{ display: "inline-block", marginBlockStart: 10, fontSize: 10, color: brand.primary, textDecoration: "underline" }}
+      >
+        Ver metodología
+      </a>
+    </article>
+  );
+}
+
+function HrvDeltaCard({ agg, isDark }) {
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  if (agg.insufficient) {
+    return (
+      <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
+        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+          HRV · Δ RMSSD pre/post
+        </h3>
+        <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
+          {agg.n}/{agg.minK} mediciones emparejadas con sesión. Anima al equipo a conectar un sensor BLE.
+        </p>
+      </article>
+    );
+  }
+  const liftColor = agg.meanDelta > 0 ? semantic.success : agg.meanDelta < 0 ? semantic.danger : t2;
+  return (
+    <article
+      role="region"
+      aria-label="Variación de HRV pre y post sesión"
+      style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
+    >
+      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+        HRV · Δ RMSSD pre/post
+      </h3>
+      <div style={{ fontSize: 32, fontWeight: font.weight.black, color: liftColor }}>
+        {agg.meanDelta > 0 ? "+" : ""}{agg.meanDelta}
+        <span style={{ fontSize: 14, color: t3, marginInlineStart: 6 }}>ms</span>
+      </div>
+      <div style={{ fontSize: 11, color: t3, marginBlockStart: 4 }}>
+        IC95% [{agg.ci95Lo}, {agg.ci95Hi}] · σ={agg.sd}
+      </div>
+      <div style={{ marginBlockStart: 12, display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+        <span style={{ color: t2 }}>% con lift vagal</span>
+        <span style={{ color: t1, fontWeight: 700 }}>{agg.positivePct}%</span>
+      </div>
+      <p style={{ color: t3, fontSize: 10, marginBlockStart: 12, lineHeight: 1.5 }}>
+        N = {agg.n} · filtro MDC95 (Haley & Fragala-Pinkham 2006) para descartar ruido
+      </p>
+    </article>
+  );
+}
+
+function EffectivenessCard({ eff, isDark }) {
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  if (eff.insufficient) {
+    return (
+      <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
+        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+          Efectividad · lift pre/post
+        </h3>
+        <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
+          {eff.n}/{eff.minN} check-ins post-sesión con pre/post. Se requiere n ≥ {eff.minN}.
+        </p>
+      </article>
+    );
+  }
+  const sigColor = eff.significant ? semantic.success : t3;
+  const magLabel = {
+    "no-effect": "sin efecto detectable",
+    small: "efecto pequeño",
+    moderate: "efecto moderado",
+    large: "efecto grande",
+  }[eff.magnitude];
+  return (
+    <article
+      role="region"
+      aria-label="Efectividad pre y post sesión"
+      style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
+    >
+      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+        Efectividad · lift de estado
+      </h3>
+      <div style={{ fontSize: 32, fontWeight: font.weight.black, color: t1 }}>
+        {eff.meanLift > 0 ? "+" : ""}{eff.meanLift}
+      </div>
+      <div style={{ fontSize: 11, color: t3, marginBlockStart: 4 }}>
+        IC95% [{eff.ci95Lo}, {eff.ci95Hi}] · d={eff.cohensD}
+      </div>
+      <div style={{ marginBlockStart: 12, fontSize: 11, color: sigColor, fontWeight: 700 }}>
+        {magLabel}
+      </div>
+      <div style={{ marginBlockStart: 8, display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+        <span style={{ color: t2 }}>% positivos</span>
+        <span style={{ color: t1, fontWeight: 700 }}>{eff.positivePct}%</span>
+      </div>
+      <p style={{ color: t3, fontSize: 10, marginBlockStart: 12 }}>
+        N = {eff.n} pares pre/post · Cohen 1988
+      </p>
+    </article>
+  );
+}
+
+function InstrumentCard({ agg, title, reference, scale, isDark }) {
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  if (agg.insufficient) {
+    return (
+      <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
+        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+          {title}
+        </h3>
+        <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
+          {agg.n}/{agg.minK} respuestas. Invita al equipo a completar la evaluación.
+        </p>
+      </article>
+    );
+  }
+  return (
+    <article
+      role="region"
+      aria-label={title}
+      style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
+    >
+      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+        {title}
+      </h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div>
+          <div style={{ fontSize: 32, fontWeight: font.weight.black, color: t1 }}>{agg.mean}</div>
+          <div style={{ fontSize: 10, color: t3, letterSpacing: 1, textTransform: "uppercase" }}>
+            promedio (σ={agg.sd})
+          </div>
+        </div>
+        <div style={{ textAlign: "end", color: t3, fontSize: 10 }}>escala {scale}</div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBlockStart: 14 }}>
+        {Object.entries(agg.distribution).map(([level, count]) => (
+          <div key={level} style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+            <span style={{ color: t2, textTransform: "capitalize" }}>{level}</span>
+            <span style={{ color: t1, fontWeight: 700 }}>{count}</span>
+          </div>
+        ))}
+      </div>
+      <p style={{ color: t3, fontSize: 10, marginBlockStart: 14 }}>
+        N = {agg.n} · {reference} · k-anónimo
+      </p>
+    </article>
   );
 }
 
