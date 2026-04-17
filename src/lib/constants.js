@@ -176,6 +176,8 @@ export const DS = {
   cognitiveLog: [],
   orgMode: false,
   orgTeamResponses: [],
+  // Streak freeze — pausa honesta (máx 2/mes, no miente)
+  streakFreezes: { usedThisMonth: [], lastFreezeMonth: null },
 };
 
 // ─── Neural State Color Mapping ──────────────────────────
