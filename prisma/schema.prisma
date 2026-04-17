@@ -1,0 +1,218 @@
+// BIO-IGNICIÓN — multi-tenant schema
+// Postgres con Row-Level Security a nivel app (tenant_id en todas las tablas).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Tenancy ────────────────────────────────────────────
+model Org {
+  id             String        @id @default(cuid())
+  name           String
+  slug           String        @unique
+  region         Region        @default(US)
+  plan           Plan          @default(FREE)
+  ssoDomain      String?       @unique
+  ssoProvider    String?       // okta | azure | google | saml
+  ssoMetadata    Json?
+  branding       Json?         // logo, colors, customDomain
+  stripeCustomer String?       @unique
+  stripeSub      String?
+  seats          Int           @default(5)
+  seatsUsed      Int           @default(0)
+  dpaAccepted    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  memberships    Membership[]
+  invitations    Invitation[]
+  auditLogs      AuditLog[]
+  webhooks       Webhook[]
+  apiKeys        ApiKey[]
+  integrations   Integration[]
+  @@index([region])
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  emailVerified DateTime?
+  name         String?
+  image        String?
+  locale       String        @default("es")
+  timezone     String        @default("America/Mexico_City")
+  mfaEnabled   Boolean       @default(false)
+  mfaSecret    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  memberships  Membership[]
+  sessions     Session[]
+  accounts     Account[]
+  neuralState  Json?         // cifrado server-side si decide sync
+}
+
+enum Role { OWNER ADMIN MANAGER MEMBER VIEWER }
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  orgId     String
+  role      Role     @default(MEMBER)
+  teamId    String?
+  scimId    String?  @unique
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  team      Team?    @relation(fields: [teamId], references: [id])
+  @@unique([userId, orgId])
+  @@index([orgId, role])
+}
+
+model Team {
+  id        String       @id @default(cuid())
+  orgId     String
+  name      String
+  managerId String?
+  members   Membership[]
+  @@unique([orgId, name])
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  orgId     String
+  email     String
+  role      Role     @default(MEMBER)
+  token     String   @unique
+  expiresAt DateTime
+  acceptedAt DateTime?
+  createdAt DateTime @default(now())
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  @@index([orgId, email])
+}
+
+// ─── Auth (Auth.js compatible) ───────────────────────────
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  ip           String?
+  ua           String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+// ─── Auditoría (append-only, hash chain) ────────────────
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  orgId      String
+  actorId    String?
+  actorEmail String?
+  action     String   // "session.complete", "user.invite", "billing.subscribe"
+  target     String?
+  ip         String?
+  ua         String?
+  payload    Json?
+  prevHash   String?
+  hash       String
+  ts         DateTime @default(now())
+  org        Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  @@index([orgId, ts])
+  @@index([action])
+}
+
+// ─── Sesiones neurales agregadas (para dashboards) ──────
+model NeuralSession {
+  id            String   @id @default(cuid())
+  orgId         String
+  userId        String
+  teamId        String?
+  protocolId    String
+  durationSec   Int
+  coherenciaDelta Float?
+  moodPre       Int?
+  moodPost      Int?
+  completedAt   DateTime
+  clientVersion String?
+  @@index([orgId, completedAt])
+  @@index([orgId, teamId, completedAt])
+}
+
+// ─── Billing ─────────────────────────────────────────────
+enum Plan { FREE STARTER GROWTH ENTERPRISE }
+enum Region { US EU APAC LATAM }
+
+// ─── Webhooks ────────────────────────────────────────────
+model Webhook {
+  id         String   @id @default(cuid())
+  orgId      String
+  url        String
+  secret     String
+  events     String[] // ["session.completed", "member.added", …]
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  deliveries WebhookDelivery[]
+  org        Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model WebhookDelivery {
+  id         String   @id @default(cuid())
+  webhookId  String
+  event      String
+  payload    Json
+  status     Int?
+  attempts   Int      @default(0)
+  nextRetry  DateTime?
+  deliveredAt DateTime?
+  error      String?
+  createdAt  DateTime @default(now())
+  webhook    Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  @@index([nextRetry])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  orgId      String
+  name       String
+  hash       String    @unique
+  prefix     String
+  scopes     String[]
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+  org        Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  @@index([orgId])
+}
+
+// ─── Integrations (Slack, Teams, etc.) ──────────────────
+model Integration {
+  id        String   @id @default(cuid())
+  orgId     String
+  provider  String   // "slack" | "teams" | "okta" | "workday"
+  config    Json
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  @@unique([orgId, provider])
+}
