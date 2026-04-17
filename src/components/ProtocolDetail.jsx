@@ -14,6 +14,8 @@ import { predictSessionImpact, calcProtoSensitivity } from "../lib/neural";
 import { resolveTheme, withAlpha, ty, font, space, radius, z, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
+import { evidenceForProtocol } from "../lib/evidence";
+import EvidenceCard from "./EvidenceCard";
 
 const PHASE_ICONS = {
   breath: { icon: "breath", label: "Respiración", color: brand.primary },
@@ -50,6 +52,7 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
 
   const predictionPositive = prediction.predictedDelta > 0;
   const predictionColor = predictionPositive ? semantic.success : "#6366F1";
+  const evidence = useMemo(() => evidenceForProtocol(protocol), [protocol]);
 
   return (
     <motion.div
@@ -403,6 +406,8 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
             </p>
           </section>
         )}
+
+        {evidence && <EvidenceCard evidence={evidence} isDark={isDark} />}
 
         <motion.button
           whileTap={reduced ? {} : { scale: 0.96 }}
