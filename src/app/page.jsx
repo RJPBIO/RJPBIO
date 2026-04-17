@@ -43,6 +43,7 @@ import { semantic } from "../lib/tokens";
 // Dynamic imports (code-split)
 const NeuralCalibration = dynamic(() => import("../components/NeuralCalibration"), { ssr: false });
 const BioIgnitionWelcome = dynamic(() => import("../components/BioIgnitionWelcome"), { ssr: false });
+const CommandPalette = dynamic(() => import("../components/CommandPalette"), { ssr: false });
 const ProtocolDetail = dynamic(() => import("../components/ProtocolDetail"), { ssr: false });
 const StreakShield = dynamic(() => import("../components/StreakShield"), { ssr: false });
 const DashboardView = dynamic(() => import("../components/DashboardView"), { ssr: false });
@@ -95,6 +96,7 @@ export default function BioIgnicion(){
   const[showChronoTest,setShowChronoTest]=useState(false);
   const[showResonanceCal,setShowResonanceCal]=useState(false);
   const[showNOM035,setShowNOM035]=useState(false);
+  const[showCmd,setShowCmd]=useState(false);
   const reducedMotion=useReducedMotion();
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
@@ -125,6 +127,37 @@ export default function BioIgnicion(){
     else if(!l.onboardingTourComplete){setShowTour(true);}
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
   })();return()=>{cancelled=true;};},[]);
+
+  useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>!v);}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[]);
+
+  const cmdCommands=useMemo(()=>{
+    const navGroup=[
+      {id:"nav-ig",group:"Navegar",icon:"bolt",label:"Ir a Ignición",hint:"Selector + timer",action:()=>switchTab("ignicion")},
+      {id:"nav-db",group:"Navegar",icon:"chart",label:"Ir a Dashboard",hint:"Métricas y trayectoria",action:()=>switchTab("dashboard")},
+      {id:"nav-pf",group:"Navegar",icon:"user",label:"Ir a Perfil",hint:"Logros y ajustes personales",action:()=>switchTab("perfil")},
+    ];
+    const viewGroup=[
+      {id:"view-hist",group:"Vistas",icon:"clock",label:"Abrir historial",hint:`${(st.history||[]).length} sesiones`,action:()=>setShowHist(true)},
+      {id:"view-set",group:"Vistas",icon:"gear",label:"Abrir ajustes",action:()=>setShowSettings(true)},
+      {id:"view-cal",group:"Vistas",icon:"gauge",label:"Re-calibrar baseline",hint:"Nueva medición de 60s",action:()=>setShowCalibration(true)},
+      {id:"view-hrv",group:"Vistas",icon:"predict",label:"Medir HRV",action:()=>setShowHRV(true)},
+      {id:"view-sigh",group:"Vistas",icon:"breath",label:"Suspiro fisiológico",action:()=>setShowSigh(true)},
+      {id:"view-nsdr",group:"Vistas",icon:"moon",label:"NSDR · descanso no-sueño",action:()=>setShowNSDR(true)},
+    ];
+    const protoGroup=(P||[]).slice(0,12).map((proto,i)=>({
+      id:`proto-${i}`,
+      group:"Protocolos",
+      icon:proto.int==="calma"?"calm":proto.int==="enfoque"?"focus":proto.int==="energia"?"energy":"sparkle",
+      label:proto.n,
+      hint:`${Math.round(proto.d*durMult)}s · ${proto.int||"neural"}`,
+      action:()=>{sp(proto);switchTab("ignicion");},
+    }));
+    const toggleGroup=[
+      {id:"tog-sound",group:"Ajustes",icon:st.soundOn!==false?"volume-on":"volume-off",label:`Sonido: ${st.soundOn!==false?"encendido":"apagado"}`,hint:"Alternar audio",action:()=>setSt({...st,soundOn:st.soundOn===false?true:false})},
+      {id:"tog-haptic",group:"Ajustes",icon:"vibrate",label:`Háptica: ${st.hapticOn!==false?"encendida":"apagada"}`,hint:"Alternar vibración",action:()=>setSt({...st,hapticOn:st.hapticOn===false?true:false})},
+    ];
+    return[...navGroup,...viewGroup,...protoGroup,...toggleGroup];
+  },[st,durMult]);
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
@@ -256,6 +289,9 @@ export default function BioIgnicion(){
 
   {/* ═══ ONBOARDING TOUR — 3-step guided intro ═══ */}
   <OnboardingTour show={showTour&&!onboard&&!showCalibration} isDark={isDark} onClose={completeTour}/>
+
+  {/* ═══ COMMAND PALETTE — ⌘K/Ctrl+K ═══ */}
+  <CommandPalette open={showCmd} onClose={()=>setShowCmd(false)} commands={cmdCommands}/>
 
   {/* ═══ PROTOCOL DETAIL VIEW ═══ */}
   <AnimatePresence>
