@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
    BIO-IGNICIÓN v5.0 — NEURAL OPTIMIZATION PLATFORM
    ═══════════════════════════════════════════════════════════════
    Modular Architecture · Zustand · Recharts · Framer Motion
-   Lucide Icons · Enhanced Neural AI · Adaptive Coaching
+   Lucide Icons · Motor heurístico adaptativo · Coach LLM opcional
    ═══════════════════════════════════════════════════════════════ */
 
 // ─── Imports from modules ─────────────────────────────────
