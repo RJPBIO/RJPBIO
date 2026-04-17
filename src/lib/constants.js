@@ -164,6 +164,18 @@ export const DS = {
   // v5 fields
   calibrationHistory: [],
   bestStreak: 0,
+  // v7 — bioneural: HRV, RHR, sleep, chronotype, resonance, NOM-035, evidence
+  hrvLog: [],
+  rhrLog: [],
+  lastSleepHours: null,
+  sleepTargetHours: 7.5,
+  chronotype: null,
+  resonanceFreq: null,
+  nom035Results: [],
+  breathTechniqueLog: [],
+  cognitiveLog: [],
+  orgMode: false,
+  orgTeamResponses: [],
 };
 
 // ─── Neural State Color Mapping ──────────────────────────
