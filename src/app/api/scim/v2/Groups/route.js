@@ -1,0 +1,50 @@
+import { requireScimAuth } from "../../../../../server/scim";
+import { db } from "../../../../../server/db";
+import { randomUUID } from "node:crypto";
+
+export const dynamic = "force-dynamic";
+
+function toScimGroup(team, members = []) {
+  return {
+    schemas: ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+    id: team.id,
+    displayName: team.name,
+    members: members.map((m) => ({ value: m.userId, display: m.userId, type: "User" })),
+    meta: { resourceType: "Group", created: team.createdAt, location: `/scim/v2/Groups/${team.id}` },
+  };
+}
+
+export async function GET(request) {
+  const auth = await requireScimAuth(request);
+  if (auth instanceof Response) return auth;
+  const { searchParams } = new URL(request.url);
+  const startIndex = Math.max(1, Number(searchParams.get("startIndex") || 1));
+  const count = Math.min(100, Number(searchParams.get("count") || 25));
+  const client = db();
+  const teams = await client.team.findMany({ where: { orgId: auth.orgId }, skip: startIndex - 1, take: count });
+  const total = await client.team.count({ where: { orgId: auth.orgId } });
+  const Resources = await Promise.all(teams.map(async (t) => {
+    const members = await client.membership.findMany({ where: { orgId: auth.orgId, teamId: t.id } });
+    return toScimGroup(t, members);
+  }));
+  return Response.json({
+    schemas: ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+    totalResults: total, startIndex, itemsPerPage: Resources.length, Resources,
+  });
+}
+
+export async function POST(request) {
+  const auth = await requireScimAuth(request);
+  if (auth instanceof Response) return auth;
+  const body = await request.json();
+  const client = db();
+  const team = await client.team.create({
+    data: { id: randomUUID(), orgId: auth.orgId, name: body.displayName || "Unnamed" },
+  });
+  if (Array.isArray(body.members)) {
+    for (const m of body.members) {
+      await client.membership.update({ where: { userId_orgId: { userId: m.value, orgId: auth.orgId } }, data: { teamId: team.id } }).catch(() => {});
+    }
+  }
+  return Response.json(toScimGroup(team, body.members || []), { status: 201 });
+}
