@@ -42,6 +42,7 @@ import { semantic } from "../lib/tokens";
 
 // Dynamic imports (code-split)
 const NeuralCalibration = dynamic(() => import("../components/NeuralCalibration"), { ssr: false });
+const BioIgnitionWelcome = dynamic(() => import("../components/BioIgnitionWelcome"), { ssr: false });
 const ProtocolDetail = dynamic(() => import("../components/ProtocolDetail"), { ssr: false });
 const StreakShield = dynamic(() => import("../components/StreakShield"), { ssr: false });
 const DashboardView = dynamic(() => import("../components/DashboardView"), { ssr: false });
@@ -77,7 +78,7 @@ export default function BioIgnicion(){
   const[countdown,setCountdown]=useState(0);
   const[compFlash,setCompFlash]=useState(false);
   const[showHist,setShowHist]=useState(false);const[showSettings,setShowSettings]=useState(false);
-  const[onboard,setOnboard]=useState(false);const[showIntent,setShowIntent]=useState(false);
+  const[onboard,setOnboard]=useState(false);const[welcomeDone,setWelcomeDone]=useState(false);const[showIntent,setShowIntent]=useState(false);
   const[showScience,setShowScience]=useState(false);
   const[durMult,setDurMult]=useState(1);
   const[entryDone,setEntryDone]=useState(false);
@@ -233,9 +234,17 @@ export default function BioIgnicion(){
 
   <IgnitionBurst show={compFlash} accent={ac} onDone={()=>{}}/>
 
+  {/* ═══ WELCOME — Cinematic manifesto (3 screens) before calibration ═══ */}
+  <AnimatePresence>
+  {onboard&&!welcomeDone&&!showCalibration&&<BioIgnitionWelcome
+    onComplete={()=>setWelcomeDone(true)}
+    onSkip={()=>setWelcomeDone(true)}
+  />}
+  </AnimatePresence>
+
   {/* ═══ ONBOARDING — Neural Calibration Flow ═══ */}
   <AnimatePresence>
-  {(onboard||showCalibration)&&<NeuralCalibration isDark={isDark} onComplete={(baseline)=>{
+  {((onboard&&welcomeDone)||showCalibration)&&<NeuralCalibration isDark={isDark} onComplete={(baseline)=>{
     setOnboard(false);setShowCalibration(false);unlockVoice();
     const nst={...st,neuralBaseline:baseline,onboardingComplete:true,calibrationHistory:[...(st.calibrationHistory||[]),{...baseline,ts:Date.now()}].slice(-10),sessionGoal:baseline.recommendations?.sessionGoal||2};
     setSt(nst);
