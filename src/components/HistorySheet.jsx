@@ -6,8 +6,9 @@
 import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
+import BioSparkline from "./BioSparkline";
 import { MOODS } from "../lib/constants";
-import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 
@@ -51,6 +52,10 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
   const items = [...(st.history || [])].reverse();
   const grouped = groupHist(items);
   const total = items.length;
+  const trendData = (st.history || [])
+    .slice(-14)
+    .map((h) => h.bioQ || h.c || 50)
+    .filter((n) => typeof n === "number");
 
   return (
     <AnimatePresence>
@@ -105,9 +110,46 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                 margin: `0 auto ${space[5]}px`,
               }}
             />
-            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[4] }}>
+            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[3] }}>
               Historial
             </h3>
+
+            {trendData.length >= 3 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: space[2],
+                  paddingBlock: space[2],
+                  paddingInline: space[2.5],
+                  marginBlockEnd: space[3],
+                  borderRadius: radius.md,
+                  background: withAlpha(ac, 4),
+                  border: `1px solid ${withAlpha(ac, 8)}`,
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ ...ty.label(t3), fontSize: 9, letterSpacing: 1.5 }}>
+                    Señal · {trendData.length} sesiones
+                  </span>
+                  <span
+                    style={{
+                      ...ty.biometric(bioQColor(trendData[trendData.length - 1]), font.size.lg),
+                    }}
+                  >
+                    {trendData[trendData.length - 1]}%
+                  </span>
+                </div>
+                <BioSparkline
+                  data={trendData}
+                  width={150}
+                  height={32}
+                  color={bioSignal.phosphorCyan}
+                  ariaLabel={`Curva de calidad biométrica últimas ${trendData.length} sesiones`}
+                />
+              </div>
+            )}
 
             {!total && (
               <div style={{ textAlign: "center", paddingBlock: space[10] }}>
