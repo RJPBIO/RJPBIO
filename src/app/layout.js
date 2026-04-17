@@ -78,7 +78,7 @@ export default async function RootLayout({ children }) {
       </head>
       <body
         className={manrope.className}
-        style={{ margin: 0, padding: 0, overscrollBehavior: "none" }}
+        style={{ margin: 0, overscrollBehavior: "none" }}
       >
         <a
           href="#main"
