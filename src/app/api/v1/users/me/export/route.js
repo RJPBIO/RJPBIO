@@ -1,6 +1,6 @@
-import { auth } from "../../../../../server/auth";
-import { db } from "../../../../../server/db";
-import { writeAudit } from "../../../../../server/audit";
+import { auth } from "../../../../../../server/auth";
+import { db } from "../../../../../../server/db";
+import { auditLog } from "../../../../../../server/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export async function GET() {
     disclaimer: "Generated per GDPR Art. 15 / LFPDPPP Art. 22. Valid 30 days.",
   };
   for (const m of memberships) {
-    await writeAudit({ orgId: m.orgId, actorId: userId, action: "user.data.exported", target: userId });
+    await auditLog({ orgId: m.orgId, actorId: userId, action: "user.data.exported", target: userId });
   }
   return new Response(JSON.stringify(bundle, null, 2), {
     headers: {
