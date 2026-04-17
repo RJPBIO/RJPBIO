@@ -7,16 +7,27 @@ import { newTenantKey } from "../../../../server/kms";
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
-  const { email, name, orgName, plan = "STARTER", region = "US" } = await request.json();
+  const body = await request.json().catch(() => ({}));
+  const { email, name, orgName, plan = "STARTER", region = "US", dpaAccepted } = body;
   if (!email || !orgName) return new Response("invalid", { status: 422 });
+  if (!dpaAccepted) return new Response("dpa_required", { status: 422 });
   const client = db();
   const orgId = randomUUID();
   const userId = randomUUID();
   const { wrapped } = await newTenantKey();
-  await client.org.create({ data: { id: orgId, name: orgName, slug: slugify(orgName) + "-" + orgId.slice(0, 6), plan, region, seats: 5, brandingJson: { encryption: { wrapped } } } });
+  await client.org.create({
+    data: {
+      id: orgId,
+      name: orgName,
+      slug: slugify(orgName) + "-" + orgId.slice(0, 6),
+      plan, region, seats: 5,
+      dpaAccepted: new Date(dpaAccepted),
+      brandingJson: { encryption: { wrapped } },
+    },
+  });
   await client.user.create({ data: { id: userId, email, name, locale: "es" } });
   await client.membership.create({ data: { id: randomUUID(), userId, orgId, role: "OWNER" } });
-  await auditLog({ orgId, actorId: userId, action: "org.created", payload: { plan, region } });
+  await auditLog({ orgId, actorId: userId, action: "org.created", payload: { plan, region, dpaAccepted } });
   await sendWelcome({ to: email, name }).catch(() => {});
   return Response.json({ orgId, userId }, { status: 201 });
 }
