@@ -5,7 +5,7 @@
    Replaces all duplicated isDark ternaries across components.
    ═══════════════════════════════════════════════════════════════ */
 
-import { dark, light, brand, alpha, font, space, radius, shadow, z, layout, timer, duration } from "./tokens";
+import { dark, light, brand, bioSignal, alpha, font, space, radius, shadow, z, layout, timer, duration, motion } from "./tokens";
 
 /**
  * Resolve theme colors for current mode.
@@ -43,7 +43,7 @@ export function resolveTheme(isDark) {
 }
 
 // Re-export tokens for direct access alongside theme
-export { brand, alpha, font, space, radius, shadow, z, layout, timer, duration };
+export { brand, bioSignal, alpha, font, space, radius, shadow, z, layout, timer, duration, motion };
 
 /**
  * Apply alpha to any hex color.
@@ -95,6 +95,23 @@ export const ty = {
     color,
     fontFamily: font.family,
     letterSpacing: font.tracking.tight,
+  }),
+
+  /**
+   * BIOMETRIC — signature numerals for bio-data (countdown, V-Cores,
+   * HRV, %). Uses the JetBrains Mono variable via --font-mono with
+   * tabular-nums so digits never jitter during live updates.
+   * This is the app's primary identity cue: numbers read as
+   * "instrument readouts", not "UI labels".
+   */
+  biometric: (color, size = font.size["2xl"]) => ({
+    fontSize: size,
+    fontWeight: font.weight.black,
+    color,
+    fontFamily: font.mono,
+    fontVariantNumeric: "tabular-nums",
+    letterSpacing: font.tracking.tight,
+    fontFeatureSettings: "'tnum' 1, 'zero' 1",
   }),
 
   /**
