@@ -5,7 +5,10 @@
 
 import crypto from "node:crypto";
 
-export const SIG_TTL_SEC = 180;
+// 10 min: 180s era demasiado agresivo para clocks desincronizados (móviles
+// con ntp drift, modo avión reciente) y para la ventana entre que el usuario
+// obtiene la URL y la abre. La réplica sigue bloqueada por el UNIQUE(stationId,nonce).
+export const SIG_TTL_SEC = 600;
 export const SIG_LEN = 32;
 
 function b64url(buf) {
