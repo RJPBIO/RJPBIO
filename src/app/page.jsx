@@ -34,6 +34,8 @@ import Icon from "../components/Icon";
 import { useSync } from "../hooks/useSync";
 import { useDeepLink } from "../hooks/useDeepLink";
 import { parseDeepLink } from "../lib/deeplink";
+import { useReducedMotion, useFocusTrap, KEY, announce } from "../lib/a11y";
+import { semantic } from "../lib/tokens";
 
 // Dynamic imports (code-split)
 const BreathOrb = dynamic(() => import("../components/BreathOrb"), { ssr: false });
@@ -46,6 +48,7 @@ const PostSessionFlow = dynamic(() => import("../components/PostSessionFlow"), {
 const SettingsSheet = dynamic(() => import("../components/SettingsSheet"), { ssr: false });
 const HistorySheet = dynamic(() => import("../components/HistorySheet"), { ssr: false });
 const ProtocolSelector = dynamic(() => import("../components/ProtocolSelector"), { ssr: false });
+const OnboardingTour = dynamic(() => import("../components/OnboardingTour"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -75,6 +78,8 @@ export default function BioIgnicion(){
   const[showCalibration,setShowCalibration]=useState(false);
   const[showProtoDetail,setShowProtoDetail]=useState(false);
   const[showMore,setShowMore]=useState(false);
+  const[showTour,setShowTour]=useState(false);
+  const reducedMotion=useReducedMotion();
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);
 
   const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);store.update(nv);},[st]);
@@ -93,7 +98,9 @@ export default function BioIgnicion(){
   useEffect(()=>{if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();window.speechSynthesis.addEventListener("voiceschanged",loadVoices);return()=>{try{window.speechSynthesis.removeEventListener("voiceschanged",loadVoices);}catch(e){}};},[]);
 
   // ═══ LOAD STATE (via Zustand) ═══
-  useEffect(()=>{setMt(true);store.init();const l=useStore.getState();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)store.update(l);if(l.totalSessions===0)setOnboard(true);
+  useEffect(()=>{setMt(true);store.init();const l=useStore.getState();const cw=getWeekNum();let mod=false;if(l.weekNum!==null&&l.weekNum!==cw){l.prevWeekData=[...l.weeklyData];l.weeklyData=[0,0,0,0,0,0,0];l.weekNum=cw;mod=true;}if(l.weekNum===null){l.weekNum=cw;mod=true;}setSt_(l);if(mod)store.update(l);
+    if(l.totalSessions===0){setOnboard(true);}
+    else if(!l.onboardingTourComplete){setShowTour(true);}
     // Auto-select best protocol via adaptive engine
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
   },[]);
@@ -125,7 +132,10 @@ export default function BioIgnicion(){
   function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
   function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused"){if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}}
-  function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>setTabFade(1),30);},180);H("tap");}
+  function switchTab(id){if(id===tab)return;setTabFade(0);setTimeout(()=>{setTab(id);setTimeout(()=>setTabFade(1),30);},180);H("tap");announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
+  const onTimerKey=useCallback(e=>{if(e.key===KEY.ENTER||e.key===KEY.SPACE){e.preventDefault();timerTap();}},[ts,pr.int,st.soundOn]);
+  const onTabKey=useCallback((e,id,order)=>{const ids=["ignicion","dashboard","perfil"];if(e.key===KEY.RIGHT||e.key===KEY.DOWN){e.preventDefault();switchTab(ids[(order+1)%ids.length]);}else if(e.key===KEY.LEFT||e.key===KEY.UP){e.preventDefault();switchTab(ids[(order-1+ids.length)%ids.length]);}else if(e.key===KEY.HOME){e.preventDefault();switchTab(ids[0]);}else if(e.key===KEY.END){e.preventDefault();switchTab(ids[ids.length-1]);}},[]);
+  const completeTour=useCallback(()=>{setShowTour(false);setSt(s=>({...s,onboardingTourComplete:true}));},[setSt]);
 
   function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
     const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData,nfcCtx,circadian});
@@ -203,8 +213,12 @@ export default function BioIgnicion(){
     setSt(nst);
     const d=getDailyIgn(nst);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}
     const ach=[...nst.achievements];if(!ach.includes("calibrated")){ach.push("calibrated");setSt({...nst,achievements:ach});}
+    setShowTour(true);
   }}/>}
   </AnimatePresence>
+
+  {/* ═══ ONBOARDING TOUR — 3-step guided intro ═══ */}
+  <OnboardingTour show={showTour&&!onboard&&!showCalibration} isDark={isDark} onClose={completeTour}/>
 
   {/* ═══ PROTOCOL DETAIL VIEW ═══ */}
   <AnimatePresence>
@@ -356,7 +370,7 @@ export default function BioIgnicion(){
     </div>}
 
     {/* ═══ CORE DE IGNICIÓN ═══ */}
-    <div onClick={timerTap} role="button" aria-label={ts==="idle"?"Iniciar sesión":ts==="running"?"Pausar sesión":"Reanudar sesión"} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:250,height:isActive?200:250,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
+    <div onClick={timerTap} role="button" tabIndex={0} aria-label={ts==="idle"?`Iniciar sesión de ${pr.n}, duración ${sec} segundos`:ts==="running"?`Pausar sesión. Fase ${ph.l}, ${sec} segundos restantes`:`Reanudar sesión. ${sec} segundos restantes`} aria-pressed={ts==="running"} onKeyDown={onTimerKey} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?200:250,height:isActive?200:250,margin:"0 auto 14px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:reducedMotion?"none":"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
       {/* Glow exterior pulsante */}
       <motion.div animate={ts==="idle"?{scale:[1,1.06,1],opacity:[.3,.6,.3]}:isActive?{scale:[1,1.04,1],opacity:[.4,.7,.4]}:{}} transition={{duration:ts==="idle"?3.5:2.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:isActive?-16:-10,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"12":"08"},transparent 65%)`,filter:"blur(6px)"}}/>
       {/* Anillo de respiración exterior */}
@@ -473,22 +487,22 @@ export default function BioIgnicion(){
   </div>
 
   {/* ═══ BOTTOM METRICS BAR ═══ */}
-  <div style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:resolveTheme(isDark).glass,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
-    {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
-      <div style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
-      <div><div style={{...ty.metric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:"#059669",fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
+  <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:resolveTheme(isDark).glass,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}`}}>
+    {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
+      <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
+      <div><div style={{...ty.metric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
     </div>)}
-  </div>
+  </aside>
 
   {/* ═══ BOTTOM NAV ═══ */}
-  <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:layout.maxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:`6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav}}>
-    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:"#6366F1"},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map(t=>{const a=tab===t.id;return(<motion.button key={t.id} whileTap={{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",cursor:"pointer",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
-      {a&&<motion.div layoutId="navIndicator" style={{position:"absolute",top:0,left:"20%",right:"20%",height:3,borderRadius:"0 0 3px 3px",background:t.ac}} transition={{type:"spring",stiffness:400,damping:30}}/>}
-      <motion.div animate={{scale:a?1:0.9,y:a?-1:0}} transition={{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
+  <nav role="tablist" aria-label="Navegación principal" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:layout.maxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:`6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav}}>
+    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:"#6366F1"},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map((t,order)=>{const a=tab===t.id;return(<motion.button key={t.id} role="tab" aria-selected={a} aria-controls={`tab-${t.id}-panel`} id={`tab-${t.id}`} tabIndex={a?0:-1} onKeyDown={e=>onTabKey(e,t.id,order)} whileTap={reducedMotion?{}:{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
+      {a&&<motion.div layoutId="navIndicator" aria-hidden="true" style={{position:"absolute",top:0,left:"20%",right:"20%",height:3,borderRadius:"0 0 3px 3px",background:t.ac}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:400,damping:30}}/>}
+      <motion.div aria-hidden="true" animate={reducedMotion?{}:{scale:a?1:0.9,y:a?-1:0}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
         <Icon name={t.ic} size={a?19:17} color={a?t.ac:t3}/>
       </motion.div>
       <span style={{fontSize:font.size.sm,fontWeight:a?font.weight.black:font.weight.semibold,color:a?t.ac:t3,transition:"all .2s",letterSpacing:a?font.tracking.wide:font.tracking.normal}}>{t.lb}</span>
     </motion.button>);})}
-  </div>
+  </nav>
   </div>);
 }
