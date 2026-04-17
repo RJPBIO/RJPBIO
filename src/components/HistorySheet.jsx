@@ -1,27 +1,210 @@
 "use client";
+/* ═══════════════════════════════════════════════════════════════
+   HISTORY SHEET — dialog with grouped session log
+   ═══════════════════════════════════════════════════════════════ */
+
+import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { MOODS } from "../lib/constants";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
+import { semantic } from "../lib/tokens";
+import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 
 function groupHist(h) {
-  const n = new Date(); const td = n.toDateString(); const yd = new Date(Date.now() - 864e5).toDateString();
+  const n = new Date();
+  const td = n.toDateString();
+  const yd = new Date(Date.now() - 864e5).toDateString();
   const g = { hoy: [], ayer: [], antes: [] };
-  for (const x of h) { const d = new Date(x.ts).toDateString(); if (d === td) g.hoy.push(x); else if (d === yd) g.ayer.push(x); else g.antes.push(x); }
+  for (const x of h) {
+    const d = new Date(x.ts).toDateString();
+    if (d === td) g.hoy.push(x);
+    else if (d === yd) g.ayer.push(x);
+    else g.antes.push(x);
+  }
   return g;
 }
 
+function bioQColor(q) {
+  if (q >= 70) return semantic.success;
+  if (q >= 45) return semantic.warning;
+  return semantic.danger;
+}
+
 export default function HistorySheet({ show, onClose, st, isDark, ac }) {
+  const reduced = useReducedMotion();
+  const dialogRef = useFocusTrap(show, onClose);
   const { card: cd, border: bd, t1, t3 } = resolveTheme(isDark);
+  const titleId = useId();
+  const items = [...(st.history || [])].reverse();
+  const grouped = groupHist(items);
+  const total = items.length;
 
   return (
     <AnimatePresence>
-    {show&&(<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.overlay,background:"rgba(15,23,42,.3)",backdropFilter:"blur(16px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <motion.div initial={{y:"100%"}} animate={{y:0}} exit={{y:"100%"}} transition={{type:"spring",stiffness:300,damping:30}} style={{width:"100%",maxWidth:430,maxHeight:"75vh",background:cd,borderRadius:`${radius["2xl"]}px ${radius["2xl"]}px 0 0`,padding:`${space[5]}px ${space[5]}px ${space[10]}px`,overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-      <div style={{width:36,height:4,background:bd,borderRadius:2,margin:`0 auto ${space[5]}px`}}/><h3 style={{...ty.heading(t1),marginBottom:space[4]}}>Historial</h3>
-      {!(st.history||[]).length&&<div style={{textAlign:"center",padding:`${space[10]}px 0`}}><Icon name="chart" size={30} color={t3}/><div style={{...ty.body(t3),marginTop:space[2]}}>Tu primera sesión creará el registro.</div></div>}
-      {(()=>{const g=groupHist([...(st.history||[])].reverse());return Object.entries(g).map(([k,items])=>{if(!items.length)return null;return(<div key={k}><div style={{...ty.label(t3),marginBottom:space[2],marginTop:space[2.5]}}>{k==="hoy"?"Hoy":k==="ayer"?"Ayer":"Anteriores"}</div>{items.map((h,i)=>{const tm=new Date(h.ts).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});const ml=(st.moodLog||[]).find(m=>Math.abs(m.ts-h.ts)<10000);return(<div key={i} style={{display:"flex",alignItems:"center",gap:space[2],padding:`${space[2]}px 0`,borderBottom:`1px solid ${bd}`}}><div style={{width:30,height:30,borderRadius:radius.sm,background:withAlpha(ac,6),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div><div style={{flex:1}}><div style={ty.caption(t1)}>{h.p}</div><div style={{display:"flex",alignItems:"center",gap:3,marginTop:1}}><span style={ty.caption(t3)}>{tm}</span>{ml&&<Icon name={MOODS[(ml.mood||3)-1]?.icon||"neutral"} size={10} color={MOODS[(ml.mood||3)-1]?.color||t3}/>}{h.bioQ&&<span style={{...ty.caption(h.bioQ>=70?"#059669":h.bioQ>=45?"#D97706":"#DC2626"),fontWeight:font.weight.bold}}>{h.bioQ}%</span>}</div></div><div style={{textAlign:"right"}}><div style={ty.title(ac)}>+{h.vc}</div></div></div>);})}</div>);});})()}
-    </motion.div></motion.div>)}
+      {show && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduced ? 0 : 0.2 }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: z.overlay,
+            background: "rgba(15,23,42,.3)",
+            backdropFilter: "blur(16px)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}
+          onClick={onClose}
+          aria-hidden="true"
+        >
+          <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            initial={reduced ? { opacity: 0 } : { y: "100%" }}
+            animate={reduced ? { opacity: 1 } : { y: 0 }}
+            exit={reduced ? { opacity: 0 } : { y: "100%" }}
+            transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }}
+            style={{
+              inlineSize: "100%",
+              maxInlineSize: 430,
+              maxBlockSize: "75vh",
+              background: cd,
+              borderStartStartRadius: radius["2xl"],
+              borderStartEndRadius: radius["2xl"],
+              paddingBlock: `${space[5]}px ${space[10]}px`,
+              paddingInline: space[5],
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              aria-hidden="true"
+              style={{
+                inlineSize: 36,
+                blockSize: 4,
+                background: bd,
+                borderRadius: 2,
+                margin: `0 auto ${space[5]}px`,
+              }}
+            />
+            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[4] }}>
+              Historial
+            </h3>
+
+            {!total && (
+              <div style={{ textAlign: "center", paddingBlock: space[10] }}>
+                <Icon name="chart" size={30} color={t3} aria-hidden="true" />
+                <div style={{ ...ty.body(t3), marginBlockStart: space[2] }}>
+                  Tu primera sesión creará el registro.
+                </div>
+              </div>
+            )}
+
+            {Object.entries(grouped).map(([k, gi]) => {
+              if (!gi.length) return null;
+              const groupLabel = k === "hoy" ? "Hoy" : k === "ayer" ? "Ayer" : "Anteriores";
+              return (
+                <section key={k} aria-label={`${groupLabel}: ${gi.length} sesiones`}>
+                  <h4
+                    style={{
+                      ...ty.label(t3),
+                      marginBlockEnd: space[2],
+                      marginBlockStart: space[2.5] || 10,
+                    }}
+                  >
+                    {groupLabel}
+                  </h4>
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                    {gi.map((h, i) => {
+                      const tm = new Date(h.ts).toLocaleTimeString("es", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                      const ml = (st.moodLog || []).find((m) => Math.abs(m.ts - h.ts) < 10000);
+                      const moodIcon = ml ? MOODS[(ml.mood || 3) - 1]?.icon || "neutral" : null;
+                      const moodLabel = ml ? MOODS[(ml.mood || 3) - 1]?.label || "neutral" : "";
+                      const itemAria =
+                        `${h.p}, ${tm}` +
+                        (h.bioQ ? `, calidad ${h.bioQ}%` : "") +
+                        (ml ? `, ánimo ${moodLabel}` : "") +
+                        `, +${h.vc} V-Cores`;
+                      return (
+                        <li
+                          key={i}
+                          aria-label={itemAria}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: space[2],
+                            paddingBlock: space[2],
+                            borderBlockEnd: `1px solid ${bd}`,
+                          }}
+                        >
+                          <div
+                            aria-hidden="true"
+                            style={{
+                              inlineSize: 30,
+                              blockSize: 30,
+                              borderRadius: radius.sm,
+                              background: withAlpha(ac, 6),
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Icon name="bolt" size={12} color={ac} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={ty.caption(t1)}>{h.p}</div>
+                            <div
+                              aria-hidden="true"
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 3,
+                                marginBlockStart: 1,
+                              }}
+                            >
+                              <span style={ty.caption(t3)}>{tm}</span>
+                              {moodIcon && (
+                                <Icon
+                                  name={moodIcon}
+                                  size={10}
+                                  color={MOODS[(ml.mood || 3) - 1]?.color || t3}
+                                />
+                              )}
+                              {h.bioQ && (
+                                <span
+                                  style={{
+                                    ...ty.caption(bioQColor(h.bioQ)),
+                                    fontWeight: font.weight.bold,
+                                  }}
+                                >
+                                  {h.bioQ}%
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "end" }} aria-hidden="true">
+                            <div style={ty.title(ac)}>+{h.vc}</div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            })}
+          </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
