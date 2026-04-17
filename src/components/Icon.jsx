@@ -14,6 +14,7 @@ import {
   Play, Pause, Square, ChevronRight, Info, X, Cpu, Gauge,
   Compass, Lightbulb, Fingerprint, CircleDot, Loader2,
 } from "lucide-react";
+import { BIO_ICONS } from "./BioIcons";
 
 const ICON_MAP = {
   // Mood states
@@ -95,6 +96,10 @@ export default function Icon({
   "aria-label": ariaLabel,
   "aria-hidden": ariaHiddenProp,
 }) {
+  const BioComponent = BIO_ICONS[name];
+  if (BioComponent) {
+    return <BioComponent size={size} color={color} strokeWidth={strokeWidth} aria={ariaLabel} />;
+  }
   const Component = ICON_MAP[name];
   if (!Component) return null;
   const ariaHidden = ariaHiddenProp ?? !ariaLabel;
