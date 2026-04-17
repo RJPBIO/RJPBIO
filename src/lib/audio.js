@@ -166,6 +166,40 @@ export function hapticBreath(label) {
   } catch (e) {}
 }
 
+// ─── Haptic Firma ─────────────────────────────────────────
+// Patrones hápticos firmados que el usuario aprende a reconocer
+// sin mirar. Cada uno tiene una "silueta rítmica" única:
+//   ignition: crescendo + golpe + cola (explosión controlada)
+//   checkpoint: doble tap largo (verificación deliberada)
+//   phaseShift: rampa corta (algo cambió)
+//   award: Morse-like corto-corto-largo (reconocimiento)
+export function hapticSignature(kind) {
+  if (typeof navigator === "undefined" || !navigator.vibrate) return;
+  try {
+    if (kind === "ignition") navigator.vibrate([18, 30, 26, 20, 40, 40, 100]);
+    else if (kind === "checkpoint") navigator.vibrate([50, 50, 50]);
+    else if (kind === "phaseShift") navigator.vibrate([12, 18, 24]);
+    else if (kind === "award") navigator.vibrate([30, 40, 30, 40, 90]);
+    else navigator.vibrate(15);
+  } catch (e) {}
+}
+
+// Ignición sonora — acorde ascendente bio-eléctrico (quinta+octava+tercera)
+// Se apila sobre la stinger existente "ok" en hap(); úsalo cuando quieras
+// enfatizar explícitamente el momento de completar (IgnitionBurst).
+export function playIgnition() {
+  try {
+    const c = gAC(); if (!c) return;
+    if (c.state === "suspended") c.resume();
+    // Ataque: chispa aguda corta
+    playChord([1320, 1760], 0.25, 0.05);
+    // Núcleo: acorde perfecto que sostiene
+    setTimeout(() => playChord([528, 792, 1056, 1320], 1.6, 0.055), 180);
+    // Cola: base que se desvanece
+    setTimeout(() => playChord([264, 396], 1.8, 0.04), 520);
+  } catch (e) {}
+}
+
 // ─── Motion Detection ─────────────────────────────────────
 export function setupMotionDetection(cb) {
   if (typeof window === "undefined") return null;
