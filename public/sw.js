@@ -1,156 +1,183 @@
 /* ═══════════════════════════════════════════════════════════════
-   BIO-IGNICIÓN — SERVICE WORKER v5
-   Offline-first PWA con estrategia stale-while-revalidate,
-   precaching inteligente y gestión de caché por tipo
+   BIO-IGNICIÓN — SERVICE WORKER v6
+   Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 6;
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
-const OFFLINE_URL = "/";
+const OFFLINE_URL = "/offline.html";
+const MAX_DYNAMIC = 100;
 
-// Assets críticos que se precachean en install
-const PRECACHE_ASSETS = [
+const PRECACHE = [
   "/",
+  "/offline.html",
   "/manifest.json",
+  "/icon.svg",
+  "/icon-maskable.svg",
+  "/apple-touch-icon.svg",
 ];
 
-// Máximo de entradas en caché dinámica
-const MAX_DYNAMIC_ENTRIES = 80;
-
-// TTL por tipo de recurso (ms)
-const TTL = {
-  page: 60 * 60 * 1000,        // 1 hora
-  asset: 7 * 24 * 60 * 60 * 1000, // 7 días
-  api: 5 * 60 * 1000,           // 5 minutos
-};
-
 // ─── Install ─────────────────────────────────────────────
-self.addEventListener("install", (event) => {
-  event.waitUntil(
+self.addEventListener("install", (e) => {
+  e.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .then((c) => c.addAll(PRECACHE))
       .then(() => self.skipWaiting())
   );
 });
 
-// ─── Activate: limpiar cachés antiguos ───────────────────
-self.addEventListener("activate", (event) => {
-  const validCaches = [STATIC_CACHE, DYNAMIC_CACHE];
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(
-        keys.filter((k) => !validCaches.includes(k)).map((k) => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
-  );
+// ─── Activate ────────────────────────────────────────────
+self.addEventListener("activate", (e) => {
+  const valid = [STATIC_CACHE, DYNAMIC_CACHE];
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((k) => !valid.includes(k)).map((k) => caches.delete(k)));
+    if ("navigationPreload" in self.registration) {
+      try { await self.registration.navigationPreload.enable(); } catch {}
+    }
+    await self.clients.claim();
+  })());
 });
 
 // ─── Helpers ─────────────────────────────────────────────
-function isAsset(url) {
-  return /\.(js|css|png|jpg|jpeg|webp|avif|svg|ico|woff2?|ttf)(\?.*)?$/.test(url);
-}
+const isAsset = (u) => /\.(js|css|png|jpg|jpeg|webp|avif|svg|ico|woff2?|ttf)(\?.*)?$/.test(u);
+const isNextStatic = (u) => u.includes("/_next/static/");
+const isSameOrigin = (u) => { try { return new URL(u).origin === self.location.origin; } catch { return false; } };
 
-function isNextData(url) {
-  return url.includes("/_next/data/") || url.includes("/_next/static/");
-}
-
-async function trimCache(cacheName, maxItems) {
-  const cache = await caches.open(cacheName);
+async function trim(name, max) {
+  const cache = await caches.open(name);
   const keys = await cache.keys();
-  if (keys.length > maxItems) {
-    await Promise.all(keys.slice(0, keys.length - maxItems).map((k) => cache.delete(k)));
+  if (keys.length > max) {
+    await Promise.all(keys.slice(0, keys.length - max).map((k) => cache.delete(k)));
   }
 }
 
-// Stale-while-revalidate: sirve caché inmediato, actualiza en background
-async function staleWhileRevalidate(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-
-  const fetchPromise = fetch(request).then((response) => {
-    if (response.ok) {
-      cache.put(request, response.clone());
-      trimCache(cacheName, MAX_DYNAMIC_ENTRIES);
-    }
-    return response;
-  }).catch(() => null);
-
-  return cached || await fetchPromise;
-}
-
-// Network-first con fallback a caché
-async function networkFirst(request, cacheName) {
+async function networkFirst(req, preload) {
   try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, response.clone());
+    const fresh = (await preload) || await fetch(req);
+    if (fresh && fresh.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(req, fresh.clone());
+      trim(DYNAMIC_CACHE, MAX_DYNAMIC);
     }
-    return response;
+    return fresh;
   } catch {
-    const cached = await caches.match(request);
-    return cached || new Response("Offline", { status: 503, statusText: "Offline" });
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    return caches.match(OFFLINE_URL);
   }
 }
 
-// Cache-first con revalidación en background
-async function cacheFirst(request, cacheName) {
-  const cached = await caches.match(request);
+async function cacheFirst(req, cacheName) {
+  const cached = await caches.match(req);
   if (cached) {
-    // Revalidar en background (no bloquea)
-    fetch(request).then((response) => {
-      if (response.ok) {
-        caches.open(cacheName).then((cache) => cache.put(request, response));
-      }
-    }).catch(() => {});
+    fetch(req).then((r) => { if (r.ok) caches.open(cacheName).then((c) => c.put(req, r)); }).catch(() => {});
     return cached;
   }
-  const response = await fetch(request);
-  if (response.ok) {
-    const cache = await caches.open(cacheName);
-    cache.put(request, response.clone());
+  try {
+    const r = await fetch(req);
+    if (r.ok) {
+      const c = await caches.open(cacheName);
+      c.put(req, r.clone());
+    }
+    return r;
+  } catch {
+    return caches.match(OFFLINE_URL);
   }
-  return response;
 }
 
-// ─── Fetch Handler ───────────────────────────────────────
-self.addEventListener("fetch", (event) => {
-  const { request } = event;
+async function staleWhileRevalidate(req) {
+  const cache = await caches.open(DYNAMIC_CACHE);
+  const cached = await cache.match(req);
+  const fetchP = fetch(req).then((r) => {
+    if (r && r.ok) { cache.put(req, r.clone()); trim(DYNAMIC_CACHE, MAX_DYNAMIC); }
+    return r;
+  }).catch(() => null);
+  return cached || (await fetchP) || caches.match(OFFLINE_URL);
+}
 
-  // Skip non-GET y extensiones del navegador
+// ─── Fetch ───────────────────────────────────────────────
+self.addEventListener("fetch", (e) => {
+  const { request } = e;
   if (request.method !== "GET") return;
-  if (request.url.startsWith("chrome-extension")) return;
-  if (request.url.includes("/api/")) return; // No cachear APIs externas
+  if (!isSameOrigin(request.url)) return;
 
-  // Navegación: network-first con fallback offline
   if (request.mode === "navigate") {
-    event.respondWith(networkFirst(request, DYNAMIC_CACHE));
+    e.respondWith(networkFirst(request, e.preloadResponse));
     return;
   }
-
-  // Next.js build assets (_next/static): cache-first (inmutables)
-  if (isNextData(request.url)) {
-    event.respondWith(cacheFirst(request, STATIC_CACHE));
+  if (isNextStatic(request.url) || isAsset(request.url)) {
+    e.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
   }
-
-  // Assets estáticos: cache-first con revalidación
-  if (isAsset(request.url)) {
-    event.respondWith(cacheFirst(request, STATIC_CACHE));
-    return;
-  }
-
-  // Todo lo demás: stale-while-revalidate
-  event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE));
+  e.respondWith(staleWhileRevalidate(request));
 });
 
-// ─── Background Sync (futuro) ────────────────────────────
-self.addEventListener("message", (event) => {
-  if (event.data === "skipWaiting") {
-    self.skipWaiting();
+// ─── Push Notifications ─────────────────────────────────
+self.addEventListener("push", (e) => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch { data = { body: e.data && e.data.text() }; }
+  const title = data.title || "BIO-IGNICIÓN";
+  const opts = {
+    body: data.body || "Tu sistema está listo para una sesión.",
+    icon: "/icon.svg",
+    badge: "/icon-monochrome.svg",
+    vibrate: [80, 40, 80],
+    tag: data.tag || "bio-reminder",
+    renotify: true,
+    data: { url: data.url || "/?source=push" },
+    actions: [
+      { action: "start", title: "Iniciar 2 min" },
+      { action: "later", title: "Recordar luego" },
+    ],
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = (e.action === "start" ? "/?t=entrada&source=push" : e.notification.data?.url) || "/";
+  e.waitUntil((async () => {
+    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const c of clients) {
+      if (c.url.includes(self.location.origin)) { c.focus(); c.navigate(url); return; }
+    }
+    await self.clients.openWindow(url);
+  })());
+});
+
+// ─── Background Sync (flush outbox) ─────────────────────
+self.addEventListener("sync", (e) => {
+  if (e.tag === "bio-sync-outbox") {
+    e.waitUntil(flushOutbox());
   }
-  if (event.data === "clearCache") {
-    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
+});
+
+self.addEventListener("periodicsync", (e) => {
+  if (e.tag === "bio-daily-reminder") {
+    e.waitUntil(self.registration.showNotification("BIO-IGNICIÓN", {
+      body: "120 segundos pueden cambiar las próximas 4 horas.",
+      icon: "/icon.svg", badge: "/icon-monochrome.svg", tag: "daily",
+    }));
+  }
+  if (e.tag === "bio-sync-outbox") {
+    e.waitUntil(flushOutbox());
+  }
+});
+
+async function flushOutbox() {
+  try {
+    const clients = await self.clients.matchAll({ includeUncontrolled: true });
+    clients.forEach((c) => c.postMessage({ type: "SYNC_FLUSH" }));
+  } catch {}
+}
+
+// ─── Message Channel ────────────────────────────────────
+self.addEventListener("message", (e) => {
+  const data = e.data || {};
+  if (data === "skipWaiting" || data.type === "SKIP_WAITING") self.skipWaiting();
+  if (data === "clearCache" || data.type === "CLEAR_CACHE") {
+    caches.keys().then((k) => Promise.all(k.map((n) => caches.delete(n))));
   }
 });
