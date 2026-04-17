@@ -48,7 +48,20 @@ export function requireCsrf(request) {
 
 function parseCookie(raw) {
   if (!raw) return {};
-  return Object.fromEntries(raw.split(";").map((p) => p.trim().split("=").map(decodeURIComponent)));
+  // Split solo en el primer '=' — los valores base64 terminan en '=' de padding
+  // y partirían mal si hacemos split sin límite.
+  const out = {};
+  for (const p of raw.split(";")) {
+    const s = p.trim();
+    const i = s.indexOf("=");
+    if (i <= 0) continue;
+    try {
+      out[decodeURIComponent(s.slice(0, i))] = decodeURIComponent(s.slice(i + 1));
+    } catch {
+      out[s.slice(0, i)] = s.slice(i + 1);
+    }
+  }
+  return out;
 }
 
 export const CSRF = { COOKIE, HEADER };
