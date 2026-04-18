@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useT } from "../../hooks/useT";
 import { cssVar, space, font, radius } from "./tokens";
 
@@ -24,6 +24,11 @@ export default function CommandPalette() {
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
   const router = useRouter();
+  const pathname = usePathname();
+  // App core (page.jsx) monta su propio palette con comandos de sesión.
+  // Cedemos Cmd/Ctrl+K en esa ruta; el botón del header y el evento
+  // "bio-cmd:open" siguen disponibles para invocarnos explícitamente.
+  const yieldGlobalKey = pathname === "/";
   const { t, setLocale } = useT();
   const inputRef = useRef(null);
   const listRef = useRef(null);
@@ -34,7 +39,7 @@ export default function CommandPalette() {
   useEffect(() => {
     const onKey = (e) => {
       const k = e.key?.toLowerCase();
-      if ((e.metaKey || e.ctrlKey) && k === "k") {
+      if (!yieldGlobalKey && (e.metaKey || e.ctrlKey) && k === "k") {
         e.preventDefault();
         setOpen((v) => !v);
         return;
@@ -48,7 +53,7 @@ export default function CommandPalette() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("bio-cmd:open", onOpen);
     };
-  }, [open, close]);
+  }, [open, close, yieldGlobalKey]);
 
   // Focus input al abrir + locked body scroll.
   useEffect(() => {
