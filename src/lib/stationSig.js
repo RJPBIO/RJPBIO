@@ -1,13 +1,21 @@
 /* ═══════════════════════════════════════════════════════════════
-   Tap-to-Ignite — firma HMAC de URLs de estación.
-   Módulo puro: sin server-only ni DB. Testeable aislado.
+   Tap-to-Ignite — URLs de estación.
+
+   Diseño:
+   - QR/NFC impreso: URL estable `/q?s=<stationId>`. El servidor
+     firma internamente en cada scan (nonce fresco). Único camino
+     válido para tags físicos.
+   - URL firmada efímera (email, shortlink): `buildSignedTapUrl`
+     + `verifyTapParams`. Útil si alguna vez se comparte por canal
+     digital con TTL controlado.
+
+   La cripto pura vive aquí (sin server-only ni DB) para ser testeable.
    ═══════════════════════════════════════════════════════════════ */
 
 import crypto from "node:crypto";
 
-// 10 min: 180s era demasiado agresivo para clocks desincronizados (móviles
-// con ntp drift, modo avión reciente) y para la ventana entre que el usuario
-// obtiene la URL y la abre. La réplica sigue bloqueada por el UNIQUE(stationId,nonce).
+// TTL generoso para URLs firmadas efímeras (no aplica al QR estático).
+// Margen por drift de NTP en móvil y por el tiempo entre emisión y apertura.
 export const SIG_TTL_SEC = 600;
 export const SIG_LEN = 32;
 
@@ -28,7 +36,23 @@ export function generateSigningKey() {
   return b64url(crypto.randomBytes(32));
 }
 
-export function buildTapUrl({ origin, stationId, signingKey, ts = Math.floor(Date.now() / 1000) }) {
+/**
+ * URL estable para imprimir en QR o grabar en NFC.
+ * No lleva timestamp ni firma: el servidor firma en cada scan con
+ * nonce fresco. El signingKey JAMÁS viaja al cliente por este camino.
+ */
+export function buildTapUrl({ origin, stationId }) {
+  if (!stationId) throw new Error("stationId required");
+  const base = (origin || "").replace(/\/+$/, "");
+  const qs = new URLSearchParams({ s: stationId });
+  return `${base}/q?${qs.toString()}`;
+}
+
+/**
+ * URL firmada efímera — solo para canales digitales (email, sms, shortlink).
+ * TTL corto + nonce único. NO usar para tags físicos.
+ */
+export function buildSignedTapUrl({ origin, stationId, signingKey, ts = Math.floor(Date.now() / 1000) }) {
   if (!stationId || !signingKey) throw new Error("stationId and signingKey required");
   const n = b64url(crypto.randomBytes(9));
   const sig = hmacShort(signingKey, `${stationId}|${ts}|${n}`);
