@@ -1,46 +1,53 @@
 /* ═══════════════════════════════════════════════════════════════
    CSRF — double-submit cookie pattern (RFC 6749 §10.12 aligned).
-   Emit token on GET via cookie + header echo; verify on mutating
-   requests. Stateless; HMAC-signed with AUTH_SECRET.
+   Token aleatorio opaco (sin firma): la seguridad del patrón viene
+   del browser same-origin policy — un atacante no puede leer la
+   cookie víctima, por lo tanto no puede replicar el header echo.
+   Edge-compatible: solo Web Crypto API (getRandomValues). Sin
+   node:crypto para que el middleware Edge pueda importarlo.
    ═══════════════════════════════════════════════════════════════ */
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 const COOKIE = "bio-csrf";
 const HEADER = "x-csrf-token";
-const TTL_MS = 8 * 3600_000;
+const TOKEN_BYTES = 32;
 
-function sign(value) {
-  const secret = process.env.AUTH_SECRET || "dev-only-secret";
-  return createHmac("sha256", secret).update(value).digest("base64url");
+function b64url(bytes) {
+  let s = "";
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 export function issueToken() {
-  const nonce = randomBytes(16).toString("base64url");
-  const exp = Date.now() + TTL_MS;
-  const payload = `${nonce}.${exp}`;
-  return `${payload}.${sign(payload)}`;
+  const buf = new Uint8Array(TOKEN_BYTES);
+  globalThis.crypto.getRandomValues(buf);
+  return b64url(buf);
 }
 
 export function verifyToken(token) {
+  // Un token opaco solo se valida por forma: presente, longitud esperada,
+  // charset base64url. La frescura la da el maxAge del cookie.
   if (!token || typeof token !== "string") return false;
-  const [nonce, expStr, sig] = token.split(".");
-  if (!nonce || !expStr || !sig) return false;
-  if (Date.now() > Number(expStr)) return false;
-  const expected = sign(`${nonce}.${expStr}`);
-  try {
-    return timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
-  } catch {
-    return false;
-  }
+  if (token.length < 40 || token.length > 64) return false;
+  return /^[A-Za-z0-9_-]+$/.test(token);
+}
+
+function constantTimeEq(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  if (a.length !== b.length) return false;
+  let r = 0;
+  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
 }
 
 export function requireCsrf(request) {
   if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return null;
-  // Bearer API keys are exempt (server-to-server)
+  // Bearer API keys exento (server-to-server).
   if (request.headers.get("authorization")?.startsWith("Bearer ")) return null;
   const headerTok = request.headers.get(HEADER);
-  const cookieTok = request.cookies?.get?.(COOKIE)?.value || parseCookie(request.headers.get("cookie"))[COOKIE];
-  if (!headerTok || !cookieTok || headerTok !== cookieTok || !verifyToken(headerTok)) {
+  const cookieTok =
+    request.cookies?.get?.(COOKIE)?.value ||
+    parseCookie(request.headers.get("cookie"))[COOKIE];
+  if (!headerTok || !cookieTok || !verifyToken(headerTok) || !constantTimeEq(headerTok, cookieTok)) {
     return new Response("CSRF validation failed", { status: 403 });
   }
   return null;
@@ -48,8 +55,8 @@ export function requireCsrf(request) {
 
 function parseCookie(raw) {
   if (!raw) return {};
-  // Split solo en el primer '=' — los valores base64 terminan en '=' de padding
-  // y partirían mal si hacemos split sin límite.
+  // Split solo en el primer '=' — los valores base64 pueden terminar en '='
+  // de padding, y partirían mal si hacemos split sin límite.
   const out = {};
   for (const p of raw.split(";")) {
     const s = p.trim();
