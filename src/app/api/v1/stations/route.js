@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { requireMembership } from "@/server/rbac";
+import { requireCsrf } from "@/server/csrf";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { generateSigningKey, buildTapUrl } from "@/server/stations";
@@ -53,6 +54,8 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
+    const csrf = requireCsrf(req);
+    if (csrf) return csrf;
     const body = await req.json();
     const orgId = String(body.orgId || "");
     if (!orgId) return NextResponse.json({ error: "orgId required" }, { status: 400 });
@@ -65,6 +68,8 @@ export async function POST(req) {
     const policy = ["ANY", "ENTRY_EXIT", "MORNING_ONLY", "EVENING_ONLY"].includes(body.policy)
       ? body.policy : "ENTRY_EXIT";
 
+    // signingKey se genera y guarda para el flujo de URLs firmadas efímeras
+    // (email/shortlink). El QR estático NO la usa; firma server-side por scan.
     const signingKey = generateSigningKey();
     const orm = await db();
     const st = await orm.station.create({
@@ -74,7 +79,7 @@ export async function POST(req) {
     await auditLog({ orgId, action: "station.create", target: st.id, payload: { label, policy } });
 
     const origin = await currentOrigin();
-    const url = buildTapUrl({ origin, stationId: st.id, signingKey });
+    const url = buildTapUrl({ origin, stationId: st.id });
 
     return NextResponse.json({
       data: {
@@ -82,8 +87,7 @@ export async function POST(req) {
         active: st.active, createdAt: st.createdAt,
       },
       tapUrl: url,
-      // signingKey NO se devuelve al cliente después de la creación.
-      warning: "Imprime y distribuye la URL. No se podrá recuperar la signingKey.",
+      // URL estable: no expira y puede imprimirse / grabarse en NFC una vez.
     }, { status: 201 });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: e.status || 500 });
