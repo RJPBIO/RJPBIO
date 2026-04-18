@@ -19,10 +19,11 @@ import {
 import {
   gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
   calcProtoSensitivity, predictSessionImpact,
-  adaptiveProtocolEngine, estimateCognitiveLoad,
+  estimateCognitiveLoad,
   calcSessionCompletion,
 } from "../lib/neural";
-import { calcReadiness } from "../lib/readiness";
+import { useReadiness, computeReadiness } from "../hooks/useReadiness";
+import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "../hooks/useAdaptiveRecommendation";
 import {
   hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition,
   startAmbient, stopAmbient,
@@ -46,6 +47,7 @@ import { uiSound } from "../lib/uiSound";
 import { buildCommands } from "../lib/commandPalette";
 import { computePhaseIndex, timeToNextPhase } from "../lib/phaseEngine";
 import { computeSessionMetrics, sessionQualityMessage, shouldPlayIgnitionSignature } from "../lib/sessionClose";
+import { buildCheckinEntry } from "../lib/sessionCheckin";
 import { computeBreathFrame } from "../lib/breathCycle";
 import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "../lib/nom35/recommend";
 import { useReducedMotion, useFocusTrap, KEY, announce } from "../lib/a11y";
@@ -172,18 +174,8 @@ export default function BioIgnicion(){
       const raw=typeof window!=="undefined"?window.localStorage.getItem("bio-nom35-dominios"):null;
       if(raw){domLocal=JSON.parse(raw);setNom35Dominios(domLocal);}
     }catch{}
-    try{
-      let initReadiness=null;
-      try{
-        const hrvHistory=(l.hrvLog||[]).map(h=>({ts:h.ts,lnRmssd:h.lnRmssd??h.lnrmssd??null})).filter(h=>typeof h.lnRmssd==="number");
-        const rhrHistory=(l.rhrLog||[]).map(h=>({ts:h.ts,rhr:h.rhr}));
-        const last=(l.hrvLog||[]).slice(-1)[0]||null;
-        const currentHRV=last?{lnRmssd:last.lnRmssd??last.lnrmssd??null,rhr:last.rhr??null}:null;
-        initReadiness=calcReadiness({hrvHistory,rhrHistory,sleepHours:l.lastSleepHours??null,sleepTarget:l.sleepTargetHours??7.5,moodLog:l.moodLog||[],sessions:l.history||[],currentHRV});
-      }catch{}
-      const rec=adaptiveProtocolEngine(l,{chronotype:l.chronotype||null,banditArms:l.banditArms||null,porDominio:domLocal,readiness:initReadiness});
-      if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}
-    }catch(e){}
+    const rec=computeAdaptiveRecommendation(l,{nom35Dominios:domLocal,readiness:computeReadiness(l)});
+    if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}
     // NOM-035: si la última evaluación reporta riesgo medio/alto, sugerimos protocolo acorde.
     try{
       const nivel=readStoredNom35Level();
@@ -277,23 +269,17 @@ export default function BioIgnicion(){
     setSt({...st,...result.newState});
   }
   function submitCheckin(){
-    if(checkMood>0){
-      const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:checkMood,energy:checkEnergy||2,tag:checkTag,proto:pr.n,pre:preMood||0}].slice(-100);
-      const ach=[...st.achievements];
-      if(checkMood===5&&!ach.includes("mood5"))ach.push("mood5");
-      setSt({...st,moodLog:ml,achievements:ach});
-      // Alimenta el bandit + residuales del motor neural.
-      // Solo registramos si tenemos ambos extremos (pre y post).
-      if(preMood>0){
-        try{
-          store.recordSessionOutcome({
-            intent:pr.int,
-            protocol:pr.n,
-            deltaMood:checkMood-preMood,
-            predictedDelta:typeof prediction?.predictedDelta==="number"?prediction.predictedDelta:null,
-          });
-          setSt_(useStore.getState());
-        }catch{}
+    const built=buildCheckinEntry({
+      checkMood,checkEnergy,checkTag,preMood,
+      protocol:pr,
+      existingMoodLog:st.moodLog||[],
+      existingAchievements:st.achievements||[],
+      predictedDelta:typeof prediction?.predictedDelta==="number"?prediction.predictedDelta:null,
+    });
+    if(!built.skipped){
+      setSt({...st,moodLog:built.moodLog,achievements:built.achievements});
+      if(built.outcome){
+        try{store.recordSessionOutcome(built.outcome);setSt_(useStore.getState());}catch{}
       }
     }
     setPostStep("summary");
@@ -313,14 +299,8 @@ export default function BioIgnicion(){
   const favs=st.favs||[];
   const toggleFav=useCallback((name)=>{setSt(s=>{const nf=(s.favs||[]).includes(name)?(s.favs||[]).filter(f=>f!==name):[...(s.favs||[]),name];return{...s,favs:nf};});},[setSt]);
   // Adaptive AI recommendation (replaces old smartPick)
-  const readiness=useMemo(()=>{try{
-    const hrvHistory=(st.hrvLog||[]).map(h=>({ts:h.ts,lnRmssd:h.lnRmssd??h.lnrmssd??null})).filter(h=>typeof h.lnRmssd==="number");
-    const rhrHistory=(st.rhrLog||[]).map(h=>({ts:h.ts,rhr:h.rhr}));
-    const last=(st.hrvLog||[]).slice(-1)[0]||null;
-    const currentHRV=last?{lnRmssd:last.lnRmssd??last.lnrmssd??null,rhr:last.rhr??null}:null;
-    return calcReadiness({hrvHistory,rhrHistory,sleepHours:st.lastSleepHours??null,sleepTarget:st.sleepTargetHours??7.5,moodLog:st.moodLog||[],sessions:st.history||[],currentHRV});
-  }catch{return null;}},[st.hrvLog,st.rhrLog,st.lastSleepHours,st.sleepTargetHours,st.moodLog,st.history]);
-  const aiRec=useMemo(()=>{try{return adaptiveProtocolEngine(st,{chronotype:st.chronotype||null,banditArms:st.banditArms||null,porDominio:nom35Dominios,readiness});}catch(e){return null;}},[st.moodLog,st.history,st.weeklyData,st.chronotype,st.banditArms,nom35Dominios,readiness]);
+  const readiness=useReadiness(st);
+  const aiRec=useAdaptiveRecommendation(st,{nom35Dominios,readiness});
   const smartPick=aiRec?.primary?.protocol||null;
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
