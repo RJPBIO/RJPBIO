@@ -59,7 +59,7 @@ function corsHeaders(origin) {
 }
 
 const PROTECTED = [/^\/admin(\/|$)/, /^\/org(\/|$)/, /^\/api\/v1\//, /^\/api\/scim\//, /^\/coach(\/|$)/, /^\/settings(\/|$)/];
-const PUBLIC_API = [/^\/api\/health$/, /^\/api\/ready$/, /^\/api\/csp-report$/, /^\/api\/vitals$/, /^\/api\/openapi$/, /^\/api\/auth\//, /^\/api\/billing\/webhook$/, /^\/q$/];
+const PUBLIC_API = [/^\/api\/health$/, /^\/api\/ready$/, /^\/api\/csp-report$/, /^\/api\/vitals$/, /^\/api\/openapi$/, /^\/api\/auth\//, /^\/api\/billing\/webhook$/, /^\/api\/v1\/leads$/, /^\/q$/];
 
 export function middleware(request) {
   const url = new URL(request.url);
@@ -146,6 +146,6 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json|offline.html|icon.*|apple-touch-icon.*|screenshots/|robots.txt|sitemap.xml).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json|offline.html|icon.*|apple-touch-icon.*|screenshots/|robots.txt|sitemap.xml|humans.txt|\\.well-known/).*)",
   ],
 };
