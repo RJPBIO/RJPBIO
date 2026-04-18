@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
+import NotificationsBell from "@/components/ui/NotificationsBell";
 
 export const metadata = { title: "Admin" };
 
@@ -53,7 +54,12 @@ export default async function AdminLayout({ children }) {
           {session.user.email}
         </div>
       </aside>
-      <section style={{ padding: "28px 36px" }}>{children}</section>
+      <section style={{ padding: "28px 36px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <NotificationsBell />
+        </div>
+        {children}
+      </section>
     </div>
   );
 }

@@ -68,6 +68,19 @@ async function sendWithRetry({ id, url, body, ts, sig, deliveryId, attempt = 0 }
   }
 }
 
+export async function retryDelivery(deliveryId) {
+  const orm = await db();
+  const d = await orm.webhookDelivery.findUnique({ where: { id: deliveryId }, include: { webhook: true } });
+  if (!d || !d.webhook) return false;
+  const id = `msg_${randomBytes(12).toString("base64url")}`;
+  const body = JSON.stringify({ id, type: d.event, timestamp: new Date().toISOString(), data: d.payload, retry: true });
+  const ts = Math.floor(Date.now() / 1000);
+  const sig = sign(d.webhook.secret, body, ts, id);
+  await orm.webhookDelivery.update({ where: { id: d.id }, data: { nextRetry: new Date(), error: null } });
+  sendWithRetry({ id, url: d.webhook.url, body, ts, sig, deliveryId: d.id }).catch(() => {});
+  return true;
+}
+
 export function verifyIncomingSignature({ secret, body, timestamp, id, signatureHeader }) {
   const expected = sign(secret, body, timestamp, id);
   const provided = signatureHeader?.split(" ") || [];
