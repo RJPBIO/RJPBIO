@@ -9,6 +9,7 @@ import { getServerLocale } from "@/lib/locale-server";
 
 const NAV_ITEMS = [
   { href: "/pricing",   key: "nav.pricing" },
+  { href: "/learn",     key: "nav.learn",     fallback: "Aprende" },
   { href: "/docs",      key: "nav.docs" },
   { href: "/changelog", key: "nav.changelog" },
   { href: "/trust",     key: "nav.trust" },
@@ -19,6 +20,8 @@ const FOOTER_LINKS = {
   product: [
     { href: "/pricing",        labelKey: "nav.pricing",    fallback: "Precios" },
     { href: "/demo",           labelKey: "nav.demo",       fallback: "Demo" },
+    { href: "/learn",          labelKey: "nav.learn",      fallback: "Aprende" },
+    { href: "/evidencia",      labelKey: null,             fallback: "Evidencia" },
     { href: "/roi-calculator", labelKey: "nav.roi",        fallback: "ROI" },
     { href: "/changelog",      labelKey: "nav.changelog",  fallback: "Changelog" },
   ],
@@ -88,7 +91,7 @@ export async function PublicShell({ children, activePath }) {
                     paddingBlock: 2,
                   }}
                 >
-                  {T(n.key)}
+                  {T(n.key, n.fallback)}
                 </Link>
               );
             })}
