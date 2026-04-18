@@ -188,11 +188,13 @@ export default function BioIgnicion(){
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
   const totalDur=Math.round(pr.d*durMult);
   useEffect(()=>{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
-    if(idx!==pi){setPi(idx);if(st.hapticOn!==false)hapticPhase(pr.ph[idx].ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+pr.ph[idx].k,circadian,voiceOn);setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[idx].i,circadian,voiceOn);}catch(e){}},2500);}
+    let speakTO=null;
+    if(idx!==pi){setPi(idx);if(st.hapticOn!==false)hapticPhase(pr.ph[idx].ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+pr.ph[idx].k,circadian,voiceOn);speakTO=setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[idx].i,circadian,voiceOn);}catch(e){}},2500);}
     const ttN=timeToNextPhase(elapsedSec,pr.ph,durMult,pi);
     if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
+    return()=>{if(speakTO)clearTimeout(speakTO);};
   },[sec,pr,durMult]);
-  useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
+  useEffect(()=>{if(ts!=="running")return;let to=null;if(sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);to=setTimeout(()=>setShowMid(false),3500);}else if(sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);to=setTimeout(()=>setShowMid(false),3000);}return()=>{if(to)clearTimeout(to);};},[sec,ts]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
