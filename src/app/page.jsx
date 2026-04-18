@@ -107,6 +107,7 @@ export default function BioIgnicion(){
   const[showResonanceCal,setShowResonanceCal]=useState(false);
   const[showNOM035,setShowNOM035]=useState(false);
   const[nom35Hint,setNom35Hint]=useState(null);
+  const[nom35Dominios,setNom35Dominios]=useState(null);
   const[showCmd,setShowCmd]=useState(false);
   const reducedMotion=useReducedMotion();
   const bp=useBreakpoint();
@@ -163,7 +164,17 @@ export default function BioIgnicion(){
     setMt(true);
     if(l.totalSessions===0){setOnboard(true);}
     else if(!l.onboardingTourComplete){setShowTour(true);}
-    try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
+    // Cargamos dominios NOM-035 antes del motor para que el sesgo psicosocial
+    // participe en la primera recomendación.
+    let domLocal=null;
+    try{
+      const raw=typeof window!=="undefined"?window.localStorage.getItem("bio-nom35-dominios"):null;
+      if(raw){domLocal=JSON.parse(raw);setNom35Dominios(domLocal);}
+    }catch{}
+    try{
+      const rec=adaptiveProtocolEngine(l,{chronotype:l.chronotype||null,banditArms:l.banditArms||null,porDominio:domLocal});
+      if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}
+    }catch(e){}
     // NOM-035: si la última evaluación reporta riesgo medio/alto, sugerimos protocolo acorde.
     try{
       const nivel=readStoredNom35Level();
@@ -257,7 +268,25 @@ export default function BioIgnicion(){
     setSt({...st,...result.newState});
   }
   function submitCheckin(){
-    if(checkMood>0){const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:checkMood,energy:checkEnergy||2,tag:checkTag,proto:pr.n,pre:preMood||0}].slice(-100);const ach=[...st.achievements];if(checkMood===5&&!ach.includes("mood5"))ach.push("mood5");setSt({...st,moodLog:ml,achievements:ach});}
+    if(checkMood>0){
+      const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:checkMood,energy:checkEnergy||2,tag:checkTag,proto:pr.n,pre:preMood||0}].slice(-100);
+      const ach=[...st.achievements];
+      if(checkMood===5&&!ach.includes("mood5"))ach.push("mood5");
+      setSt({...st,moodLog:ml,achievements:ach});
+      // Alimenta el bandit + residuales del motor neural.
+      // Solo registramos si tenemos ambos extremos (pre y post).
+      if(preMood>0){
+        try{
+          store.recordSessionOutcome({
+            intent:pr.int,
+            protocol:pr.n,
+            deltaMood:checkMood-preMood,
+            predictedDelta:typeof prediction?.predictedDelta==="number"?prediction.predictedDelta:null,
+          });
+          setSt_(useStore.getState());
+        }catch{}
+      }
+    }
     setPostStep("summary");
   }
 
@@ -275,7 +304,7 @@ export default function BioIgnicion(){
   const favs=st.favs||[];
   const toggleFav=useCallback((name)=>{setSt(s=>{const nf=(s.favs||[]).includes(name)?(s.favs||[]).filter(f=>f!==name):[...(s.favs||[]),name];return{...s,favs:nf};});},[setSt]);
   // Adaptive AI recommendation (replaces old smartPick)
-  const aiRec=useMemo(()=>{try{return adaptiveProtocolEngine(st);}catch(e){return null;}},[st.moodLog,st.history,st.weeklyData]);
+  const aiRec=useMemo(()=>{try{return adaptiveProtocolEngine(st,{chronotype:st.chronotype||null,banditArms:st.banditArms||null,porDominio:nom35Dominios});}catch(e){return null;}},[st.moodLog,st.history,st.weeklyData,st.chronotype,st.banditArms,nom35Dominios]);
   const smartPick=aiRec?.primary?.protocol||null;
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];

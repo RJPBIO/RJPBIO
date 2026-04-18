@@ -743,7 +743,7 @@ describe("generateCoachingInsights", () => {
     vi.setSystemTime(new Date("2026-04-16T10:00:00"));
     const r = generateCoachingInsights({ streak: 30, history: [], moodLog: [], weeklyData: [] });
     const streakIns = r.find((x) => x.type === "streak");
-    expect(streakIns.message).toMatch(/ganglios basales/);
+    expect(streakIns.message).toMatch(/Un mes/);
   });
   it("burnout crítico genera insight burnout", () => {
     vi.setSystemTime(new Date("2026-04-16T10:00:00"));

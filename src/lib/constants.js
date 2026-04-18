@@ -178,6 +178,11 @@ export const DS = {
   orgTeamResponses: [],
   // Streak freeze — pausa honesta (máx 2/mes, no miente)
   streakFreezes: { usedThisMonth: [], lastFreezeMonth: null },
+  // v9 — learning state para el motor neural
+  // banditArms: UCB1-Normal por intent ({ calma|reset|energia|enfoque }: { n, sum, sumsq })
+  // predictionResiduals: rolling log predicho vs real para calibrar delta
+  banditArms: {},
+  predictionResiduals: { history: [] },
 };
 
 // ─── Neural State Color Mapping ──────────────────────────

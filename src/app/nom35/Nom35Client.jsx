@@ -125,8 +125,14 @@ export default function Nom35Client() {
       } else {
         setSubmittedAt(Date.now());
       }
-      // Guardar nivel en perfil local de BIO
-      try { localStorage.setItem("bio-nom35-level", result.nivel); } catch {}
+      // Guardar nivel + dominios crudos en perfil local de BIO para que el
+      // motor neural pueda sesgar protocolos según el dominio dominante.
+      try {
+        localStorage.setItem("bio-nom35-level", result.nivel);
+        if (result.porDominio) {
+          localStorage.setItem("bio-nom35-dominios", JSON.stringify(result.porDominio));
+        }
+      } catch {}
     } catch (e) {
       setSubmitError(e?.message || "No se pudo enviar");
     } finally {

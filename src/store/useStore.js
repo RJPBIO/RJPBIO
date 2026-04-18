@@ -9,8 +9,10 @@ import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
 import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
 import { logger } from "../lib/logger";
+import { updateArm } from "../lib/neural/bandit";
+import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 8;
+const STORE_VERSION = 9;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
@@ -26,6 +28,11 @@ function migrate(data) {
     if (typeof merged.sleepTargetHours !== "number") merged.sleepTargetHours = 7.5;
     // v8: anclar estado al userId autenticado (anti cross-user leak en mismo browser)
     if (typeof merged._userId === "undefined") merged._userId = null;
+    // v9: aprendizaje del motor neural — bandit UCB y residuales de predicción
+    if (!merged.banditArms || typeof merged.banditArms !== "object") merged.banditArms = {};
+    if (!merged.predictionResiduals || !Array.isArray(merged.predictionResiduals.history)) {
+      merged.predictionResiduals = { history: [] };
+    }
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -243,6 +250,28 @@ export const useStore = create((set, get) => ({
   setOrgMode: (enabled) => {
     set({ orgMode: !!enabled });
     scheduleSave({ ...get() });
+  },
+
+  // ─── Neural learning (v9) ──────────────────────────────
+  // Cada sesión con mood pre/post alimenta el bandit (UCB) por intent
+  // y deja un residual para calibrar futuras predicciones.
+  recordSessionOutcome: ({ intent, protocol, deltaMood, predictedDelta = null }) => {
+    const st = get();
+    const delta = Number(deltaMood);
+    if (!Number.isFinite(delta)) return;
+    const arms = st.banditArms || {};
+    const nextArms = intent ? { ...arms, [intent]: updateArm(arms[intent], delta) } : arms;
+    const nextResiduals =
+      typeof predictedDelta === "number"
+        ? logResidualEntry(st.predictionResiduals || { history: [] }, {
+            predicted: predictedDelta,
+            actual: delta,
+            armId: intent || null,
+          })
+        : (st.predictionResiduals || { history: [] });
+    const update = { banditArms: nextArms, predictionResiduals: nextResiduals };
+    set(update);
+    scheduleSave({ ...st, ...update });
   },
 
   resetAll: async () => {
