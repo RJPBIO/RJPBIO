@@ -98,7 +98,7 @@ function corsHeaders(origin) {
   };
 }
 
-const PROTECTED = [/^\/admin(\/|$)/, /^\/org(\/|$)/, /^\/api\/v1\//, /^\/api\/scim\//, /^\/coach(\/|$)/, /^\/settings(\/|$)/];
+const PROTECTED = [/^\/admin(\/|$)/, /^\/org(\/|$)/, /^\/api\/v1\//, /^\/api\/scim\//, /^\/coach(\/|$)/, /^\/settings(\/|$)/, /^\/nom35(\/|$)/];
 const PUBLIC_API = [/^\/api\/health$/, /^\/api\/ready$/, /^\/api\/csp-report$/, /^\/api\/vitals$/, /^\/api\/openapi$/, /^\/api\/auth\//, /^\/api\/billing\/webhook$/, /^\/api\/v1\/leads$/, /^\/q$/];
 // Rutas /api/v1/* que aceptan Bearer API key (validación real en el handler).
 // Fuera de esta lista, el middleware rechaza con 401 si solo hay Bearer sin cookie.

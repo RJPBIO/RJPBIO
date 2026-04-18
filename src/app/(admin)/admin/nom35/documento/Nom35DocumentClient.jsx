@@ -61,10 +61,12 @@ export default function Nom35DocumentClient({
 
   function set(k, v) { setForm((f) => ({ ...f, [k]: v })); }
 
+  const isDofVerified = process.env.NEXT_PUBLIC_NOM35_DOF_VERIFIED === "true";
   const alertas = [];
   if (!form.razonSocial) alertas.push("Falta la razón social.");
   if (!form.representanteLegal) alertas.push("Falta el representante legal.");
   if (aggregate.suppressed) alertas.push(`Muestra insuficiente (${aggregate.n || 0}/${totalMembers}). El documento incluirá la política pero no cifras agregadas.`);
+  if (!isDofVerified) alertas.push("Los 72 ítems están alineados estructuralmente con la Guía III, pero su texto literal debe contrastarse contra el DOF 23-oct-2018 antes de usar este PDF como evidencia formal ante STPS. Una vez validado, define NEXT_PUBLIC_NOM35_DOF_VERIFIED=true para ocultar este aviso y la marca de BORRADOR.");
 
   return (
     <>
@@ -120,7 +122,7 @@ export default function Nom35DocumentClient({
       </div>
 
       {/* Documento imprimible */}
-      <article className="print-doc" style={docStyle}>
+      <article className={`print-doc${isDofVerified ? "" : " draft-mark"}`} style={docStyle}>
         <PoliciaSection org={{ razonSocial: form.razonSocial, rfc: form.rfc, domicilio: form.domicilio }} />
         <PageBreak />
         <ActaSection
@@ -136,13 +138,36 @@ export default function Nom35DocumentClient({
 
       <style jsx global>{`
         @media print {
-          body { background: white !important; color: black !important; }
+          @page { size: Letter; margin: 1.5cm; }
+          html, body {
+            background: white !important; color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
           .no-print { display: none !important; }
-          .print-doc { background: white !important; color: black !important; }
-          .print-doc h1, .print-doc h2, .print-doc h3 { color: black !important; }
+          .print-doc {
+            background: white !important; color: black !important;
+            box-shadow: none !important; border: 0 !important;
+            padding: 0 !important; margin: 0 !important;
+            max-width: 100% !important;
+          }
+          .print-doc h1, .print-doc h2, .print-doc h3 { color: black !important; break-after: avoid; page-break-after: avoid; }
+          .print-doc p, .print-doc li { orphans: 3; widows: 3; }
+          .print-doc table, .print-doc tr, .print-doc .keep { break-inside: avoid; page-break-inside: avoid; }
           .print-doc a { color: black !important; text-decoration: none; }
-          .page-break { break-after: page; page-break-after: always; }
+          .page-break { break-before: page; page-break-before: always; }
           aside[aria-label="Secciones de administración"] { display: none !important; }
+          /* Marca de agua BORRADOR — sólo si el flag DOF no está verificado */
+          .draft-mark { position: relative; }
+          .draft-mark::before {
+            content: "BORRADOR — VERIFICAR ÍTEMS VS DOF";
+            position: fixed; top: 45%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-28deg);
+            font-size: 60pt; font-weight: 900;
+            color: rgba(200, 0, 0, 0.14);
+            letter-spacing: 6px; white-space: nowrap;
+            pointer-events: none; z-index: 9999;
+          }
         }
       `}</style>
     </>
