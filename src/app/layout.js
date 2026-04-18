@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
 import ConsentBanner from "../components/ConsentBanner";
+import GlobalChrome from "../components/GlobalChrome";
 import { LocaleProvider } from "../lib/locale-context";
 import { getServerLocale } from "../lib/locale-server";
 import { tLocale } from "../lib/i18n";
@@ -117,6 +118,7 @@ export default async function RootLayout({ children }) {
             </main>
           </ErrorBoundary>
           <ConsentBanner />
+          <GlobalChrome />
         </LocaleProvider>
         <script
           nonce={nonce}

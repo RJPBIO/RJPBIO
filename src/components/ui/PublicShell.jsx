@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
+import CommandPaletteTrigger from "./CommandPaletteTrigger";
 import { Container } from "./Container";
 import { cssVar, radius, space, font } from "./tokens";
 import { tLocale } from "@/lib/i18n";
@@ -92,6 +93,7 @@ export async function PublicShell({ children, activePath }) {
               );
             })}
           </nav>
+          <CommandPaletteTrigger />
           <LocaleSelect variant="compact" />
           <ThemeToggle />
           <Link
