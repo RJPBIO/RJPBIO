@@ -1,0 +1,10 @@
+/* TEAM */
+Project: BIO-IGNICIÓN
+Contact: hello [at] bio-ignicion.app
+Security: security [at] bio-ignicion.app
+
+/* SITE */
+Standards: HTML5, CSS, ES2023, WAI-ARIA
+Components: Next.js, React, Zustand, Framer Motion, Prisma
+Platform: PWA (local-first)
+License: Proprietary
