@@ -177,7 +177,8 @@ export default function BioIgnicion(){
   // reemite esas function decls como const y pierde el hoisting estándar de JS.
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
-  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
+  const stRef=useRef(st);useEffect(()=>{stRef.current=st;},[st]);
+  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(stRef.current);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")save();};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt]);
   const isDark=useThemeDark({ready:mt,mode:st.themeMode||"auto"});
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
 
