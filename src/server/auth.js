@@ -79,6 +79,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const orm = await db();
       const memberships = await orm.membership.findMany({ where: { userId: user.id } });
       session.user.id = user.id;
+      session.user.locale = user.locale || "es";
+      session.user.timezone = user.timezone || "America/Mexico_City";
       session.memberships = memberships;
       return session;
     },
