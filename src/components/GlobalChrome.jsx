@@ -7,6 +7,9 @@ import dynamic from "next/dynamic";
 const CommandPalette = dynamic(() => import("./ui/CommandPalette"), { ssr: false });
 const ToastHost = dynamic(() => import("./ui/Toast"), { ssr: false });
 const AuthBadge = dynamic(() => import("./AuthBadge"), { ssr: false });
+const InstallBanner = dynamic(() => import("./InstallBanner"), { ssr: false });
+const OfflineChip = dynamic(() => import("./OfflineChip"), { ssr: false });
+const SWUpdateNotifier = dynamic(() => import("./SWUpdateNotifier"), { ssr: false });
 
 export default function GlobalChrome() {
   return (
@@ -14,6 +17,9 @@ export default function GlobalChrome() {
       <CommandPalette />
       <ToastHost />
       <AuthBadge />
+      <InstallBanner />
+      <OfflineChip />
+      <SWUpdateNotifier />
     </>
   );
 }

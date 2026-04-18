@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 12;
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -18,12 +18,15 @@ const PRECACHE = [
 ];
 
 // ─── Install ─────────────────────────────────────────────
+// NOTE: no auto-skipWaiting aquí. Dejamos el nuevo SW en estado `waiting`
+// para que la UI pueda mostrar un toast "nueva versión — recargar" y el
+// usuario decida cuándo tomar control. El mensaje SKIP_WAITING lo activa.
 self.addEventListener("install", (e) => {
-  e.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((c) => c.addAll(PRECACHE))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil(caches.open(STATIC_CACHE).then((c) => c.addAll(PRECACHE)));
+});
+
+self.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 // ─── Activate ────────────────────────────────────────────

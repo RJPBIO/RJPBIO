@@ -183,6 +183,10 @@ export const DS = {
   // predictionResiduals: rolling log predicho vs real para calibrar delta
   banditArms: {},
   predictionResiduals: { history: [] },
+  // v10 — recordatorios diarios (opt-in)
+  remindersEnabled: false,
+  reminderHour: 9,
+  reminderMinute: 0,
 };
 
 // ─── Neural State Color Mapping ──────────────────────────

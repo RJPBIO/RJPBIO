@@ -16,7 +16,10 @@ import AnimatedNumber from "./AnimatedNumber";
 import ReadinessRing from "./ReadinessRing";
 import BioSparkline from "./BioSparkline";
 import IllustratedEmpty from "./IllustratedEmpty";
+import CalibrationPlan from "./CalibrationPlan";
+import StreakCalendar from "./StreakCalendar";
 import { MOODS, AM } from "../lib/constants";
+import { P } from "../lib/protocols";
 import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
   calcNeuralVariability,
@@ -77,9 +80,28 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
     return h.map((s) => Math.round(((s.c ?? 50) + (s.r ?? 50)) / 2));
   }, [st.history]);
   const noData = st.totalSessions === 0;
+  const calibrating = st.totalSessions < 3;
   const bioColor = colorForScore(bioSignal.score, 70, 45);
   const burnoutColor = burnout.risk === "bajo" ? semantic.success : burnout.risk === "moderado" ? semantic.warning : semantic.danger;
 
+  if (calibrating) {
+    return (
+      <CalibrationPlan
+        totalSessions={st.totalSessions || 0}
+        isDark={isDark}
+        ac={ac}
+        onStart={(intent) => {
+          switchTab("ignicion");
+          if (typeof sp === "function") {
+            const proto = (P || []).find((p) => p.int === intent);
+            if (proto) sp(proto);
+          }
+        }}
+      />
+    );
+  }
+
+  // Reservado por si en el futuro queremos un empty state distinto al plan.
   if (noData) {
     return (
       <section role="region" aria-label="Dashboard vacío" style={{ paddingBlock: `${space[3.5] || 14}px`, paddingInline: space[5], paddingBlockEnd: 180 }}>
@@ -459,6 +481,10 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         <div style={{ ...ty.label(t3), marginBlockEnd: space[2] }}>Esta Semana</div>
         <TemporalCharts type="weekly" weeklyData={st.weeklyData} isDark={isDark} ac={ac} />
       </article>
+
+      <div style={{ marginBlockEnd: 14 }}>
+        <StreakCalendar history={st.history} isDark={isDark} accent={ac} weeks={12} />
+      </div>
 
       <div
         role="group"

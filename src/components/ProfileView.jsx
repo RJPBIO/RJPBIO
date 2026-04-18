@@ -17,6 +17,7 @@ import {
 import { resolveTheme, withAlpha, ty, font, space, radius, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
+import RemindersCard from "./RemindersCard";
 
 const ACHIEVEMENT_IDS = Object.keys(AM);
 
@@ -501,6 +502,9 @@ export default function ProfileView({
           </div>
           <span style={ty.caption(t2)}>Historial</span>
         </motion.button>
+      </div>
+      <div style={{ marginBlockEnd: 10 }}>
+        <RemindersCard />
       </div>
       {(onShowChronotype || onShowResonance || onShowNOM035) && (
         <article

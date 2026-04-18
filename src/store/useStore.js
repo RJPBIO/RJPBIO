@@ -12,7 +12,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 9;
+const STORE_VERSION = 10;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
@@ -33,6 +33,10 @@ function migrate(data) {
     if (!merged.predictionResiduals || !Array.isArray(merged.predictionResiduals.history)) {
       merged.predictionResiduals = { history: [] };
     }
+    // v10: recordatorios diarios (push/local). Default apagado — opt-in explícito.
+    if (typeof merged.remindersEnabled !== "boolean") merged.remindersEnabled = false;
+    if (typeof merged.reminderHour !== "number") merged.reminderHour = 9;
+    if (typeof merged.reminderMinute !== "number") merged.reminderMinute = 0;
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
