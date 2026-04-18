@@ -4,6 +4,7 @@ import { auth } from "@/server/auth";
 import NotificationsBell from "@/components/ui/NotificationsBell";
 
 export const metadata = { title: "Admin" };
+export const dynamic = "force-dynamic";
 
 const GROUPS = [
   { label: "General", items: [

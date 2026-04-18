@@ -4,6 +4,7 @@ import { anonymize } from "@/server/analytics";
 import { redirect } from "next/navigation";
 
 export const metadata = { title: "Equipo" };
+export const dynamic = "force-dynamic";
 
 export default async function TeamPage({ searchParams }) {
   const session = await auth();

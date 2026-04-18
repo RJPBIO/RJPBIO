@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import MembersClient from "./MembersClient";

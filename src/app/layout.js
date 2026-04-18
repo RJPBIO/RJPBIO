@@ -25,6 +25,8 @@ const jetbrains = JetBrains_Mono({
 
 const RTL_LOCALES = new Set(["ar", "he", "fa", "ur"]);
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
   title: { default: "BIO-IGNICIÓN", template: "%s · BIO-IGNICIÓN" },

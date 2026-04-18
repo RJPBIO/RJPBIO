@@ -6,12 +6,14 @@ import dynamic from "next/dynamic";
 
 const CommandPalette = dynamic(() => import("./ui/CommandPalette"), { ssr: false });
 const ToastHost = dynamic(() => import("./ui/Toast"), { ssr: false });
+const AuthBadge = dynamic(() => import("./AuthBadge"), { ssr: false });
 
 export default function GlobalChrome() {
   return (
     <>
       <CommandPalette />
       <ToastHost />
+      <AuthBadge />
     </>
   );
 }
