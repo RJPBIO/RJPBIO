@@ -25,6 +25,10 @@ const GROUPS = [
     { href: "/admin/webhooks", label: "Webhooks" },
     { href: "/admin/stations", label: "Estaciones" },
   ]},
+  { label: "Cumplimiento", items: [
+    { href: "/admin/nom35", label: "NOM-035" },
+    { href: "/admin/nom35/documento", label: "Documento oficial" },
+  ]},
   { label: "Cuenta", items: [
     { href: "/admin/billing", label: "Facturación" },
   ]},
