@@ -25,7 +25,7 @@ async function adapter() {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: await adapter().catch(() => undefined),
   session: { strategy: "database", maxAge: 8 * 60 * 60 },
-  pages: { signIn: "/signin", error: "/signin?error=1" },
+  pages: { signIn: "/signin", error: "/signin" },
   trustHost: process.env.AUTH_TRUST_HOST === "1" || process.env.NODE_ENV !== "production",
   providers: [
     Okta({
