@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    Tap-to-Ignite — landing pública del tap (QR / NFC).
-   GET /q?s=<stationId>&t=<ts>&n=<nonce>&sig=<hmac>
+   GET /q?s=<stationId>                       (QR estático — caso normal)
+   GET /q?s=<stationId>&t=&n=&sig=            (URL firmada efímera)
    ═══════════════════════════════════════════════════════════════ */
 
 import { NextResponse } from "next/server";
@@ -9,6 +10,17 @@ import { processTap } from "@/server/stations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Vendor → IANA TZ. Adaptadores típicos. Si no encaja, cae a CDMX.
+function resolveTimezone(req) {
+  return (
+    req.headers.get("x-vercel-ip-timezone") ||
+    req.headers.get("cf-timezone") ||
+    req.headers.get("x-forwarded-timezone") ||
+    process.env.DEFAULT_TIMEZONE ||
+    "America/Mexico_City"
+  );
+}
 
 export async function GET(req) {
   const url = new URL(req.url);
@@ -24,7 +36,7 @@ export async function GET(req) {
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
   const ua = req.headers.get("user-agent") || null;
-  const timezone = req.headers.get("x-vercel-ip-timezone") || "America/Mexico_City";
+  const timezone = resolveTimezone(req);
 
   const result = await processTap({ stationId, t, n, sig, userId, anonId, timezone, ip, ua });
 
@@ -45,10 +57,14 @@ export async function GET(req) {
   const res = NextResponse.redirect(dest);
 
   // Si no hay identidad local, emitir una anónima estable.
+  // `secure` solo en prod: en dev HTTP el browser ignora la cookie con secure=true.
   if (!userId && !anonId) {
     const fresh = crypto.randomUUID().replace(/-/g, "");
     res.cookies.set("bio-anon", fresh, {
-      httpOnly: true, sameSite: "lax", secure: true, path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
       maxAge: 60 * 60 * 24 * 365,
     });
   }
