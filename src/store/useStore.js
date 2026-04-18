@@ -12,7 +12,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 10;
+const STORE_VERSION = 11;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
@@ -37,6 +37,8 @@ function migrate(data) {
     if (typeof merged.remindersEnabled !== "boolean") merged.remindersEnabled = false;
     if (typeof merged.reminderHour !== "number") merged.reminderHour = 9;
     if (typeof merged.reminderMinute !== "number") merged.reminderMinute = 0;
+    // v11: historial de instrumentos psicométricos (PSS-4, SWEMWBS-7, PHQ-2).
+    if (!Array.isArray(merged.instruments)) merged.instruments = [];
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -235,6 +237,18 @@ export const useStore = create((set, get) => ({
     set({ nom035Results });
     scheduleSave({ ...st, nom035Results });
     outboxAdd({ kind: "nom035", payload: result, userId: st._userId ?? null }).catch(() => {});
+  },
+
+  // Registra un resultado de instrumento psicométrico (PSS-4, SWEMWBS-7, PHQ-2).
+  // El `entry` debe incluir `instrumentId`, `score`, `level`, `ts`.
+  logInstrument: (entry) => {
+    const st = get();
+    if (!entry || !entry.instrumentId || typeof entry.score !== "number") return;
+    const withTs = { ...entry, ts: typeof entry.ts === "number" ? entry.ts : Date.now() };
+    const instruments = [...(st.instruments || []), withTs].slice(-200);
+    set({ instruments });
+    scheduleSave({ ...st, instruments });
+    outboxAdd({ kind: "instrument", payload: withTs, userId: st._userId ?? null }).catch(() => {});
   },
 
   logBreathTechnique: (entry) => {

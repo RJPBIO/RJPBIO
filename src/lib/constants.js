@@ -187,6 +187,8 @@ export const DS = {
   remindersEnabled: false,
   reminderHour: 9,
   reminderMinute: 0,
+  // v11 — historial de instrumentos psicométricos (PSS-4, SWEMWBS, PHQ-2)
+  instruments: [],
 };
 
 // ─── Neural State Color Mapping ──────────────────────────

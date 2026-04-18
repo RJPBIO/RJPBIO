@@ -18,6 +18,7 @@ import BioSparkline from "./BioSparkline";
 import IllustratedEmpty from "./IllustratedEmpty";
 import CalibrationPlan from "./CalibrationPlan";
 import StreakCalendar from "./StreakCalendar";
+import InstrumentDueCard from "./InstrumentDueCard";
 import { MOODS, AM } from "../lib/constants";
 import { P } from "../lib/protocols";
 import {
@@ -126,6 +127,8 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
       aria-label="Dashboard neural"
       style={{ paddingBlock: 14, paddingInline: space[5], paddingBlockEnd: 180 }}
     >
+      <InstrumentDueCard isDark={isDark} ac={ac} />
+
       <motion.div
         initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
