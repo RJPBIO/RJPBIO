@@ -1,6 +1,11 @@
 "use client";
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { DataTable } from "@/components/ui/Table";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 function csrfHeader() {
   const c = document.cookie.split("; ").find((r) => r.startsWith("bio-csrf="));
@@ -67,84 +72,90 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
     } catch (err) { toast.error(err.message); }
   }
 
+  const columns = [
+    {
+      key: "name", label: "Equipo",
+      render: (t) => editing === t.id
+        ? <Input value={name} onChange={(e) => setName(e.target.value)} style={{ minHeight: 32, padding: `${space[1]}px ${space[2]}px`, fontSize: font.size.md }} />
+        : <span style={{ fontWeight: font.weight.semibold, color: cssVar.text }}>{t.name}</span>,
+    },
+    { key: "members", label: "Miembros", width: 100, render: (t) => <span style={{ fontFamily: cssVar.fontMono }}>{t._members || 0}</span> },
+    {
+      key: "manager", label: "Manager",
+      render: (t) => editing === t.id
+        ? <Input type="email" value={managerEmail} onChange={(e) => setManagerEmail(e.target.value)} placeholder="email@…" style={{ minHeight: 32, padding: `${space[1]}px ${space[2]}px`, fontSize: font.size.md }} />
+        : (managersById[t.managerId] || (t.managerId ? <code style={{ fontFamily: cssVar.fontMono, color: cssVar.textMuted }}>{t.managerId.slice(0, 8) + "…"}</code> : "—")),
+    },
+    {
+      key: "k", label: "k-anonymity", width: 180,
+      render: (t) => {
+        const n = t._members || 0;
+        return n >= 5
+          ? <Badge variant="success" size="sm">✓ cohorte visible</Badge>
+          : <Badge variant="warn" size="sm">faltan {5 - n}</Badge>;
+      },
+    },
+    {
+      key: "__actions", label: "", align: "right", width: 200,
+      render: (t) => editing === t.id ? (
+        <span style={{ display: "inline-flex", gap: space[1] }}>
+          <Button size="sm" variant="primary" onClick={() => saveEdit(t.id)}>Guardar</Button>
+          <Button size="sm" variant="ghost"   onClick={() => setEditing(null)}>Cancelar</Button>
+        </span>
+      ) : (
+        <span style={{ display: "inline-flex", gap: space[1] }}>
+          <Button size="sm" variant="ghost"  onClick={() => startEdit(t)}>Editar</Button>
+          <Button size="sm" variant="danger" onClick={() => removeTeam(t)}>Eliminar</Button>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
-      <form onSubmit={createTeam} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginTop: 16, marginBottom: 16 }}>
-        <input name="name" placeholder="Nombre (ej. Operaciones)" required maxLength={60} style={input} />
-        <input name="managerEmail" placeholder="Email del manager (opcional)" type="email" style={input} />
-        <button disabled={creating} style={{ ...btn, opacity: creating ? 0.6 : 1 }}>{creating ? "Creando…" : "Crear equipo"}</button>
+      <form
+        onSubmit={createTeam}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: space[2],
+          padding: space[4], marginBottom: space[4],
+          background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.md,
+          alignItems: "end",
+        }}
+      >
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Nombre</span>
+          <Input name="name" placeholder="ej. Operaciones" required maxLength={60} />
+        </label>
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Manager (opcional)</span>
+          <Input name="managerEmail" placeholder="email@empresa.com" type="email" />
+        </label>
+        <Button type="submit" variant="primary" disabled={creating}>
+          {creating ? "Creando…" : "Crear equipo"}
+        </Button>
       </form>
 
-      <div className="bi-table-wrap">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <thead>
-            <tr>
-              <th style={th}>Equipo</th>
-              <th style={th}>Miembros</th>
-              <th style={th}>Manager</th>
-              <th style={th}>k-anonymity</th>
-              <th style={th}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.length === 0 && (
-              <tr><td colSpan={5} style={{ padding: 24, color: "#6B7280", textAlign: "center" }}>
-                Sin equipos todavía. Crea el primero arriba.
-              </td></tr>
-            )}
-            {teams.map((t) => {
-              const n = t._members || 0;
-              const isEdit = editing === t.id;
-              return (
-                <tr key={t.id} style={{ borderTop: "1px solid #1F2937" }}>
-                  <td style={td}>
-                    {isEdit
-                      ? <input value={name} onChange={(e) => setName(e.target.value)} style={inlineInput} />
-                      : t.name}
-                  </td>
-                  <td style={td}>{n}</td>
-                  <td style={td}>
-                    {isEdit
-                      ? <input value={managerEmail} onChange={(e) => setManagerEmail(e.target.value)} placeholder="email@…" style={inlineInput} />
-                      : (managersById[t.managerId] || (t.managerId ? t.managerId.slice(0, 8) + "…" : "—"))}
-                  </td>
-                  <td style={{ ...td, color: n >= 5 ? "#34D399" : "#F59E0B" }}>
-                    {n >= 5 ? "✓ cohorte visible" : `faltan ${5 - n} para reporte`}
-                  </td>
-                  <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
-                    {isEdit ? (
-                      <>
-                        <button onClick={() => saveEdit(t.id)} style={btnMini}>Guardar</button>
-                        <button onClick={() => setEditing(null)} style={btnMiniGhost}>Cancelar</button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => startEdit(t)} style={btnMiniGhost}>Editar</button>
-                        <button onClick={() => removeTeam(t)} style={{ ...btnMiniGhost, color: "#FCA5A5", borderColor: "#7F1D1D" }}>Eliminar</button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={teams}
+        getKey={(t) => t.id}
+        emptyTitle="Sin equipos todavía"
+        emptyDescription="Crea el primer equipo usando el formulario de arriba."
+      />
 
       {unassigned > 0 && (
-        <p style={{ marginTop: 12, fontSize: 12, color: "#6EE7B7" }}>
+        <p style={{ marginTop: space[3], fontSize: font.size.sm, color: cssVar.textDim }}>
           {unassigned} miembro{unassigned === 1 ? "" : "s"} sin equipo asignado.
-          Asigna desde <a href="/admin/members" style={{ color: "#A7F3D0" }}>Miembros</a>.
+          Asigna desde <a href="/admin/members" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>Miembros</a>.
         </p>
       )}
     </>
   );
 }
 
-const input = { padding: "10px 12px", borderRadius: 10, background: "#052E16", color: "#ECFDF5", border: "1px solid #064E3B", fontSize: 14 };
-const inlineInput = { ...input, padding: "6px 8px", fontSize: 13, width: "100%" };
-const btn = { ...input, background: "linear-gradient(135deg,#059669,#10B981)", border: 0, cursor: "pointer", fontWeight: 700 };
-const th = { textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6EE7B7", borderBottom: "1px solid #064E3B" };
-const td = { padding: "10px", fontSize: 13 };
-const btnMini = { padding: "4px 10px", marginInlineEnd: 6, background: "linear-gradient(135deg,#059669,#10B981)", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600 };
-const btnMiniGhost = { padding: "4px 10px", marginInlineEnd: 6, background: "transparent", color: "#A7F3D0", border: "1px solid #064E3B", borderRadius: 8, cursor: "pointer", fontSize: 12 };
+const labelStyle = {
+  display: "block", fontSize: 12, color: "var(--bi-text-dim)",
+  fontWeight: 600, marginBottom: 4,
+};

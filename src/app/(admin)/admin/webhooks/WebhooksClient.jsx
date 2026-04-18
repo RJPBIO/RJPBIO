@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { DataTable } from "@/components/ui/Table";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Dialog } from "@/components/ui/Dialog";
+import { Alert } from "@/components/ui/Alert";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const ALL_EVENTS = [
   "session.completed", "session.started",
@@ -15,23 +22,31 @@ function csrfHeader() {
 
 function RevealSecret({ secret, onClose }) {
   return (
-    <div role="dialog" aria-modal="true" style={overlay}>
-      <div style={modal}>
-        <h2 style={{ margin: 0, fontSize: 18 }}>Secret HMAC — guárdalo ahora</h2>
-        <p style={{ color: "#FBBF24", fontSize: 13, marginTop: 8 }}>
-          Úsalo para verificar firmas <code>webhook-signature</code> en tu receptor. No se vuelve a mostrar completo.
-        </p>
-        <pre style={pre}>{secret}</pre>
-        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-          <button onClick={() => navigator.clipboard?.writeText(secret).then(() => toast.success("Copiado")).catch(() => {})} style={btnPrimary}>Copiar</button>
-          <button onClick={onClose} style={btnGhost}>Ya lo guardé</button>
-        </div>
-      </div>
-    </div>
+    <Dialog
+      open={!!secret}
+      onClose={onClose}
+      size="lg"
+      title="Secret HMAC"
+      description="Úsalo para verificar la cabecera webhook-signature. No se vuelve a mostrar completo."
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Ya lo guardé</Button>
+          <Button variant="primary" onClick={() => navigator.clipboard?.writeText(secret).then(() => toast.success("Copiado")).catch(() => {})}>Copiar</Button>
+        </>
+      }
+    >
+      <Alert kind="warn">El secret no se guarda en claro. Si lo pierdes, rótalo.</Alert>
+      <pre style={{
+        marginTop: space[4], padding: space[4],
+        background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.sm,
+        fontFamily: cssVar.fontMono, fontSize: font.size.sm, color: cssVar.accent,
+        wordBreak: "break-all", whiteSpace: "pre-wrap",
+      }}>{secret}</pre>
+    </Dialog>
   );
 }
 
-function DeliveriesPanel({ hookId, onClose }) {
+function DeliveriesDialog({ hookId, onClose }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(null);
@@ -45,7 +60,7 @@ function DeliveriesPanel({ hookId, onClose }) {
     } finally { setLoading(false); }
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [hookId]);
+  useEffect(() => { if (hookId) load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [hookId]);
 
   async function retry(did) {
     setRetrying(did);
@@ -62,53 +77,54 @@ function DeliveriesPanel({ hookId, onClose }) {
     finally { setRetrying(null); }
   }
 
+  const columns = [
+    { key: "event", label: "Evento", render: (d) => <code style={{ fontFamily: cssVar.fontMono, color: cssVar.accent, fontSize: font.size.sm }}>{d.event}</code> },
+    {
+      key: "status", label: "Status", width: 90,
+      render: (d) => {
+        if (!d.status) return <Badge variant="soft" size="sm">—</Badge>;
+        const ok = d.status >= 200 && d.status < 300;
+        return <Badge variant={ok ? "success" : "danger"} size="sm">{d.status}</Badge>;
+      },
+    },
+    { key: "attempts", label: "Intentos", width: 80, render: (d) => <span style={{ fontFamily: cssVar.fontMono }}>{d.attempts}</span> },
+    { key: "createdAt", label: "Creado", render: (d) => new Date(d.createdAt).toLocaleString() },
+    { key: "deliveredAt", label: "Entregado", render: (d) => d.deliveredAt ? new Date(d.deliveredAt).toLocaleString() : "—" },
+    { key: "error", label: "Error", render: (d) => d.error ? <span title={d.error} style={{ color: cssVar.danger, maxWidth: 220, display: "inline-block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.error.slice(0, 60)}</span> : "" },
+    {
+      key: "__actions", label: "", align: "right", width: 120,
+      render: (d) => !d.deliveredAt && (
+        <Button size="sm" variant="ghost" onClick={() => retry(d.id)} disabled={retrying === d.id}>
+          {retrying === d.id ? "…" : "Reintentar"}
+        </Button>
+      ),
+    },
+  ];
+
   return (
-    <div role="dialog" aria-modal="true" style={overlay}>
-      <div style={{ ...modal, width: "min(900px, 100%)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>Últimas entregas</h2>
-          <div>
-            <button onClick={load} style={btnMiniGhost}>Refrescar</button>
-            <button onClick={onClose} style={btnMiniGhost}>Cerrar</button>
-          </div>
-        </div>
-        <div style={{ maxHeight: 500, overflow: "auto", marginTop: 12 }}>
-          {loading && <p style={{ color: "#94A3B8", fontSize: 13 }}>Cargando…</p>}
-          {!loading && rows.length === 0 && <p style={{ color: "#94A3B8", fontSize: 13 }}>Sin entregas aún. Prueba con "Test ping".</p>}
-          {!loading && rows.length > 0 && (
-            <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
-              <thead><tr style={{ textAlign: "left", color: "#6EE7B7" }}>
-                <th style={th}>Evento</th><th style={th}>Status</th><th style={th}>Intentos</th>
-                <th style={th}>Creado</th><th style={th}>Entregado</th><th style={th}>Error</th><th style={th}></th>
-              </tr></thead>
-              <tbody>
-                {rows.map((d) => (
-                  <tr key={d.id} style={{ borderTop: "1px solid #1E293B" }}>
-                    <td style={td}>{d.event}</td>
-                    <td style={{ ...td, color: d.status >= 200 && d.status < 300 ? "#34D399" : d.status ? "#FCA5A5" : "#94A3B8" }}>
-                      {d.status ?? "—"}
-                    </td>
-                    <td style={td}>{d.attempts}</td>
-                    <td style={td}>{new Date(d.createdAt).toLocaleString()}</td>
-                    <td style={td}>{d.deliveredAt ? new Date(d.deliveredAt).toLocaleString() : "—"}</td>
-                    <td style={{ ...td, color: "#FCA5A5", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }} title={d.error || ""}>
-                      {d.error ? d.error.slice(0, 60) : ""}
-                    </td>
-                    <td style={td}>
-                      {!d.deliveredAt && (
-                        <button onClick={() => retry(d.id)} disabled={retrying === d.id} style={btnMiniGhost}>
-                          {retrying === d.id ? "…" : "Reintentar"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-    </div>
+    <Dialog
+      open={!!hookId}
+      onClose={onClose}
+      size="lg"
+      title="Últimas entregas"
+      footer={
+        <>
+          <Button variant="ghost" onClick={load}>Refrescar</Button>
+          <Button variant="secondary" onClick={onClose}>Cerrar</Button>
+        </>
+      }
+    >
+      <DataTable
+        columns={columns}
+        rows={rows}
+        loading={loading}
+        skeletonRows={4}
+        getKey={(d) => d.id}
+        dense
+        emptyTitle="Sin entregas aún"
+        emptyDescription='Prueba con "Test ping" para generar una.'
+      />
+    </Dialog>
   );
 }
 
@@ -196,60 +212,86 @@ export default function WebhooksClient({ initial }) {
 
   return (
     <>
-      <form onSubmit={create} style={{ display: "grid", gap: 10, margin: "16px 0 20px", padding: 14, border: "1px solid #1E293B", borderRadius: 12, background: "#020617" }}>
-        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://tu-endpoint.com/hook" required style={inp} />
+      <form
+        onSubmit={create}
+        style={{
+          display: "grid", gap: space[3],
+          padding: space[4], marginBottom: space[4],
+          background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.md,
+        }}
+      >
+        <label>
+          <span style={labelStyle}>URL del endpoint</span>
+          <Input value={url} onChange={(e) => setUrl(e.target.value)} type="url" placeholder="https://tu-endpoint.com/hook" required />
+        </label>
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend style={{ fontSize: 12, color: "#94A3B8" }}>Eventos</legend>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 6, marginTop: 6 }}>
+          <legend style={{ ...labelStyle, padding: 0, marginBottom: space[2] }}>Eventos</legend>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: space[2] }}>
             {ALL_EVENTS.map((e) => (
-              <label key={e} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#E2E8F0", cursor: "pointer" }}>
-                <input type="checkbox" checked={events.has(e)} onChange={() => toggleEvent(e)} />
-                <code style={{ fontSize: 12 }}>{e}</code>
+              <label key={e} style={{
+                display: "flex", alignItems: "center", gap: space[2],
+                padding: `${space[2]}px ${space[3]}px`,
+                background: events.has(e) ? cssVar.accentSoft : cssVar.surface,
+                border: `1px solid ${events.has(e) ? cssVar.accent : cssVar.border}`,
+                borderRadius: radius.sm, cursor: "pointer",
+                transition: "background .12s ease, border-color .12s ease",
+              }}>
+                <input type="checkbox" checked={events.has(e)} onChange={() => toggleEvent(e)} style={{ accentColor: "var(--bi-accent)" }} />
+                <code style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, color: cssVar.text }}>{e}</code>
               </label>
             ))}
           </div>
         </fieldset>
-        <button disabled={busy || !url || events.size === 0} style={{ ...btnPrimary, justifySelf: "start", opacity: busy ? 0.6 : 1 }}>
+        <Button type="submit" variant="primary" disabled={busy || !url || events.size === 0} style={{ justifySelf: "start" }}>
           {busy ? "Creando…" : "Crear webhook"}
-        </button>
+        </Button>
       </form>
 
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {hooks.length === 0 && <li style={{ padding: 24, color: "#6B7280", textAlign: "center" }}>Sin webhooks todavía.</li>}
-        {hooks.map((h) => (
-          <li key={h.id} style={{ padding: 14, border: "1px solid #1E293B", borderRadius: 10, marginBottom: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-              <span style={{ fontFamily: "ui-monospace", fontSize: 13, wordBreak: "break-all" }}>{h.url}</span>
-              <span style={{ fontSize: 11, color: h.active ? "#34D399" : "#F59E0B" }}>
-                {h.active ? "● Activo" : "● Pausado"}
-              </span>
-            </div>
-            <div style={{ color: "#64748B", fontSize: 12, marginTop: 4 }}>
-              {(h.events || []).join(" · ")} · secret …{h.secretTail}
-            </div>
-            <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button onClick={() => toggle(h)} style={btnMiniGhost}>{h.active ? "Pausar" : "Reactivar"}</button>
-              <button onClick={() => testPing(h)} style={btnMiniGhost}>Test ping</button>
-              <button onClick={() => setDeliveriesFor(h.id)} style={btnMiniGhost}>Ver entregas</button>
-              <button onClick={() => rotate(h)} style={btnMiniGhost}>Rotar secret</button>
-              <button onClick={() => remove(h)} style={{ ...btnMiniGhost, color: "#FCA5A5", borderColor: "#7F1D1D" }}>Eliminar</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {hooks.length === 0 ? (
+        <div style={emptyStyle}>
+          <div style={{ fontSize: font.size.lg, fontWeight: font.weight.bold, color: cssVar.text }}>Sin webhooks</div>
+          <div style={{ fontSize: font.size.sm, color: cssVar.textMuted, marginTop: space[1] }}>Crea el primero con el formulario de arriba.</div>
+        </div>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
+          {hooks.map((h) => (
+            <li key={h.id} style={{
+              padding: space[4],
+              background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: space[2], alignItems: "center" }}>
+                <span style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, wordBreak: "break-all", color: cssVar.text }}>{h.url}</span>
+                <Badge variant={h.active ? "success" : "warn"} size="sm">{h.active ? "Activo" : "Pausado"}</Badge>
+              </div>
+              <div style={{ marginTop: space[2], display: "flex", flexWrap: "wrap", gap: space[1] }}>
+                {(h.events || []).map((e) => <Badge key={e} variant="soft" size="sm">{e}</Badge>)}
+                <Badge variant="neutral" size="sm">secret …{h.secretTail}</Badge>
+              </div>
+              <div style={{ marginTop: space[3], display: "flex", gap: space[1], flexWrap: "wrap" }}>
+                <Button size="sm" variant="ghost" onClick={() => toggle(h)}>{h.active ? "Pausar" : "Reactivar"}</Button>
+                <Button size="sm" variant="ghost" onClick={() => testPing(h)}>Test ping</Button>
+                <Button size="sm" variant="ghost" onClick={() => setDeliveriesFor(h.id)}>Ver entregas</Button>
+                <Button size="sm" variant="ghost" onClick={() => rotate(h)}>Rotar secret</Button>
+                <Button size="sm" variant="danger" onClick={() => remove(h)}>Eliminar</Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
-      {revealed && <RevealSecret secret={revealed} onClose={() => setRevealed(null)} />}
-      {deliveriesFor && <DeliveriesPanel hookId={deliveriesFor} onClose={() => setDeliveriesFor(null)} />}
+      <RevealSecret secret={revealed} onClose={() => setRevealed(null)} />
+      <DeliveriesDialog hookId={deliveriesFor} onClose={() => setDeliveriesFor(null)} />
     </>
   );
 }
 
-const inp = { padding: "8px 10px", background: "#020617", border: "1px solid #334155", borderRadius: 8, color: "#E2E8F0", fontSize: 14 };
-const btnPrimary = { padding: "8px 14px", background: "linear-gradient(135deg,#059669,#10B981)", border: "none", borderRadius: 8, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 };
-const btnGhost = { padding: "8px 14px", background: "transparent", color: "#A7F3D0", border: "1px solid #334155", borderRadius: 8, cursor: "pointer", fontSize: 13 };
-const btnMiniGhost = { padding: "4px 10px", background: "transparent", color: "#A7F3D0", border: "1px solid #334155", borderRadius: 8, cursor: "pointer", fontSize: 12 };
-const th = { textAlign: "left", padding: "6px 8px", fontSize: 11, color: "#6EE7B7", borderBottom: "1px solid #1E293B" };
-const td = { padding: "6px 8px" };
-const overlay = { position: "fixed", inset: 0, background: "rgba(2,6,23,.85)", display: "grid", placeItems: "center", zIndex: 100, padding: 20 };
-const modal = { width: "min(560px, 100%)", background: "#0F172A", border: "1px solid #1E293B", borderRadius: 16, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,.4)" };
-const pre = { marginTop: 14, padding: 14, background: "#020617", border: "1px solid #065F46", borderRadius: 10, fontFamily: "ui-monospace", fontSize: 13, color: "#6EE7B7", wordBreak: "break-all", whiteSpace: "pre-wrap", margin: 0 };
+const labelStyle = {
+  display: "block", fontSize: 12, color: "var(--bi-text-dim)",
+  fontWeight: 600, marginBottom: 4,
+};
+const emptyStyle = {
+  padding: "40px 20px", textAlign: "center",
+  background: "var(--bi-surface)",
+  border: `1px solid var(--bi-border)`,
+  borderRadius: 12, color: "var(--bi-text-muted)",
+};

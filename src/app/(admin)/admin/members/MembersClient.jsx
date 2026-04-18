@@ -1,9 +1,12 @@
 "use client";
 import { useMemo, useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { DataTable, TableToolbar } from "@/components/ui/Table";
+import { Input, Select, Textarea } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
-/* Client-side members table: search, role filter, status filter,
-   pagination y export CSV. Recibe rows precalculadas del server. */
 const PAGE = 25;
 
 function toCSV(rows) {
@@ -24,6 +27,8 @@ function download(filename, content, mime = "text/csv;charset=utf-8") {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+const ROLE_VARIANT = { OWNER: "warn", ADMIN: "danger", MANAGER: "accent", MEMBER: "success", VIEWER: "soft" };
+
 export default function MembersClient({ initialRows, orgId }) {
   const [rows] = useState(initialRows);
   const [q, setQ] = useState("");
@@ -32,6 +37,7 @@ export default function MembersClient({ initialRows, orgId }) {
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState(() => new Set());
   const [busy, setBusy] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -77,6 +83,7 @@ export default function MembersClient({ initialRows, orgId }) {
       const j = await res.json();
       toast.success(`${j.invited} invitación(es) enviadas${j.skipped ? ` · ${j.skipped} omitidas` : ""}`);
       e.currentTarget.reset();
+      setInviteOpen(false);
       setTimeout(() => location.reload(), 600);
     } catch (err) {
       toast.error(err.message || "No se pudo invitar");
@@ -102,120 +109,140 @@ export default function MembersClient({ initialRows, orgId }) {
     } finally { setBusy(false); }
   }
 
+  const columns = [
+    {
+      key: "__check", label: (
+        <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="Seleccionar todos" style={{ accentColor: "var(--bi-accent)" }} />
+      ), width: 40,
+      render: (r) => (
+        <input
+          type="checkbox"
+          checked={selected.has(r.id)}
+          onChange={() => toggle(r.id)}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Seleccionar ${r.email}`}
+          style={{ accentColor: "var(--bi-accent)" }}
+        />
+      ),
+    },
+    { key: "email", label: "Email", render: (r) => <span style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, color: cssVar.text }}>{r.email}</span> },
+    { key: "name",  label: "Nombre", render: (r) => r.name || "—" },
+    { key: "role",  label: "Rol", width: 120, render: (r) => <Badge variant={ROLE_VARIANT[r.role] || "soft"} size="sm">{r.role}</Badge> },
+    { key: "createdAt", label: "Desde", width: 140, render: (r) => new Date(r.createdAt).toLocaleDateString() },
+    { key: "scim",  label: "SCIM", width: 80, render: (r) => r.scimId ? <Badge variant="success" size="sm">✓</Badge> : "—" },
+  ];
+
   return (
     <>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-        <h1 style={{ margin: 0 }}>Miembros <small style={{ color: "#6EE7B7", fontSize: 14, fontWeight: 400 }}>({filtered.length} de {rows.length})</small></h1>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => download(`members-${Date.now()}.csv`, toCSV(filtered))} style={btnGhost}>Exportar CSV</button>
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: space[4], flexWrap: "wrap", marginBottom: space[4] }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
+            Miembros
+          </h1>
+          <p style={{ margin: `${space[1]}px 0 0`, color: cssVar.textMuted, fontSize: font.size.sm }}>
+            {filtered.length} de {rows.length}
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: space[2] }}>
+          <Button variant="secondary" size="sm" onClick={() => setInviteOpen((v) => !v)}>
+            {inviteOpen ? "Cerrar invitación" : "Invitar miembros"}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => download(`members-${Date.now()}.csv`, toCSV(filtered))}>
+            Exportar CSV
+          </Button>
         </div>
       </header>
 
-      <details style={{ marginTop: 14, padding: 12, background: "#052E16", borderRadius: 12, border: "1px solid #064E3B" }}>
-        <summary style={{ cursor: "pointer", fontWeight: 600 }}>Invitar (individual o bulk)</summary>
-        <form onSubmit={bulkInvite} style={{ display: "grid", gap: 8, marginTop: 10 }}>
-          <textarea
-            name="emails" required rows={3}
-            placeholder="Pega una lista de correos separados por coma, espacio o salto de línea"
-            style={{ ...input, fontFamily: "monospace", fontSize: 13 }}
-          />
-          <div style={{ display: "flex", gap: 8 }}>
-            <select name="role" style={input} defaultValue="MEMBER">
-              <option value="MEMBER">Member</option>
-              <option value="MANAGER">Manager</option>
-              <option value="ADMIN">Admin</option>
-              <option value="VIEWER">Viewer</option>
-            </select>
-            <button disabled={busy} style={btn}>{busy ? "Enviando…" : "Enviar invitaciones"}</button>
+      {inviteOpen && (
+        <form
+          onSubmit={bulkInvite}
+          style={{
+            display: "grid", gap: space[3], padding: space[4],
+            background: cssVar.surface2, borderRadius: radius.md, border: `1px solid ${cssVar.border}`,
+            marginBottom: space[4],
+          }}
+        >
+          <label style={{ display: "block" }}>
+            <span style={{ display: "block", fontSize: font.size.sm, color: cssVar.textDim, fontWeight: font.weight.semibold, marginBottom: space[1] }}>Correos</span>
+            <Textarea
+              name="emails" required rows={3}
+              placeholder="Pega una lista de correos separados por coma, espacio o salto de línea"
+              style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm }}
+            />
+          </label>
+          <div style={{ display: "flex", gap: space[2], alignItems: "flex-end" }}>
+            <div style={{ flex: "0 0 180px" }}>
+              <span style={{ display: "block", fontSize: font.size.sm, color: cssVar.textDim, fontWeight: font.weight.semibold, marginBottom: space[1] }}>Rol</span>
+              <Select name="role" defaultValue="MEMBER">
+                <option value="MEMBER">Member</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+                <option value="VIEWER">Viewer</option>
+              </Select>
+            </div>
+            <Button type="submit" variant="primary" disabled={busy}>
+              {busy ? "Enviando…" : "Enviar invitaciones"}
+            </Button>
           </div>
         </form>
-      </details>
+      )}
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "18px 0 12px" }}>
-        <input
-          type="search" placeholder="Buscar por email o nombre…" value={q}
-          onChange={(e) => { setQ(e.target.value); setPage(0); }}
-          style={{ ...input, flex: 1, minWidth: 220 }}
-        />
-        <select value={roleF} onChange={(e) => { setRoleF(e.target.value); setPage(0); }} style={input}>
-          <option value="ALL">Todos los roles</option>
-          <option value="OWNER">Owner</option>
-          <option value="ADMIN">Admin</option>
-          <option value="MANAGER">Manager</option>
-          <option value="MEMBER">Member</option>
-          <option value="VIEWER">Viewer</option>
-        </select>
-        <select value={statusF} onChange={(e) => { setStatusF(e.target.value); setPage(0); }} style={input}>
-          <option value="ALL">Todos</option>
-          <option value="SCIM">Sincronizados (SCIM)</option>
-          <option value="MANUAL">Manuales (no SCIM)</option>
-        </select>
-      </div>
+      <TableToolbar>
+        <div style={{ flex: "1 1 240px", minWidth: 200 }}>
+          <Input type="search" value={q} placeholder="Buscar por email o nombre…"
+            onChange={(e) => { setQ(e.target.value); setPage(0); }} />
+        </div>
+        <div style={{ minWidth: 160 }}>
+          <Select value={roleF} onChange={(e) => { setRoleF(e.target.value); setPage(0); }} aria-label="Rol">
+            <option value="ALL">Todos los roles</option>
+            <option value="OWNER">Owner</option>
+            <option value="ADMIN">Admin</option>
+            <option value="MANAGER">Manager</option>
+            <option value="MEMBER">Member</option>
+            <option value="VIEWER">Viewer</option>
+          </Select>
+        </div>
+        <div style={{ minWidth: 200 }}>
+          <Select value={statusF} onChange={(e) => { setStatusF(e.target.value); setPage(0); }} aria-label="Provisionamiento">
+            <option value="ALL">Todos</option>
+            <option value="SCIM">Sincronizados (SCIM)</option>
+            <option value="MANUAL">Manuales (no SCIM)</option>
+          </Select>
+        </div>
+      </TableToolbar>
 
       {selected.size > 0 && (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: 10, background: "rgba(16,185,129,0.08)", border: "1px solid #10B981", borderRadius: 10, marginBottom: 10 }}>
-          <span style={{ fontWeight: 600 }}>{selected.size} seleccionado(s)</span>
-          <button onClick={() => bulkAction("remove")} style={{ ...btnGhost, borderColor: "#F87171", color: "#FCA5A5" }}>Eliminar</button>
-          <button onClick={() => setSelected(new Set())} style={{ ...btnGhost, marginLeft: "auto" }}>Deseleccionar</button>
+        <div style={{
+          display: "flex", gap: space[2], alignItems: "center",
+          padding: space[3], background: cssVar.accentSoft,
+          border: `1px solid ${cssVar.accent}`, borderRadius: radius.md,
+          marginBottom: space[3],
+        }}>
+          <span style={{ fontWeight: font.weight.bold, color: cssVar.text }}>{selected.size} seleccionado(s)</span>
+          <Button variant="danger" size="sm" onClick={() => bulkAction("remove")}>Eliminar</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} style={{ marginInlineStart: "auto" }}>Deseleccionar</Button>
         </div>
       )}
 
-      {filtered.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: "#6EE7B7", border: "1px dashed #064E3B", borderRadius: 12 }}>
-          No hay miembros que coincidan con los filtros.
-        </div>
-      ) : (
-        <>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: "#6EE7B7" }}>
-                <th style={th}><input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="Seleccionar todos" /></th>
-                <th style={th}>Email</th>
-                <th style={th}>Nombre</th>
-                <th style={th}>Rol</th>
-                <th style={th}>Desde</th>
-                <th style={th}>SCIM</th>
-              </tr>
-            </thead>
-            <tbody>
-              {slice.map((r) => (
-                <tr key={r.id} style={{ borderBlockStart: "1px solid #064E3B" }}>
-                  <td style={td}><input type="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Seleccionar ${r.email}`} /></td>
-                  <td style={td}>{r.email}</td>
-                  <td style={td}>{r.name || "—"}</td>
-                  <td style={td}><span style={rolePill(r.role)}>{r.role}</span></td>
-                  <td style={td}>{new Date(r.createdAt).toLocaleDateString()}</td>
-                  <td style={td}>{r.scimId ? "✓" : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <DataTable
+        columns={columns}
+        rows={slice}
+        getKey={(r) => r.id}
+        emptyTitle="Sin miembros"
+        emptyDescription="No hay miembros que coincidan con los filtros actuales."
+      />
 
-          {pageCount > 1 && (
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
-              <button onClick={() => setPage(0)} disabled={page === 0} style={btnGhost}>«</button>
-              <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} style={btnGhost}>‹</button>
-              <span style={{ padding: "8px 12px", color: "#A7F3D0" }}>
-                {page + 1} de {pageCount}
-              </span>
-              <button onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1} style={btnGhost}>›</button>
-              <button onClick={() => setPage(pageCount - 1)} disabled={page >= pageCount - 1} style={btnGhost}>»</button>
-            </div>
-          )}
-        </>
+      {pageCount > 1 && (
+        <nav aria-label="Paginación" style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginTop: space[4] }}>
+          <Button size="sm" variant="ghost" onClick={() => setPage(0)}                                         disabled={page === 0}>«</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.max(0, p - 1))}                 disabled={page === 0}>‹</Button>
+          <span style={{ color: cssVar.textDim, fontSize: font.size.sm, padding: `0 ${space[2]}px`, fontFamily: cssVar.fontMono }}>
+            {page + 1} / {pageCount}
+          </span>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}     disabled={page >= pageCount - 1}>›</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage(pageCount - 1)}                              disabled={page >= pageCount - 1}>»</Button>
+        </nav>
       )}
     </>
   );
 }
-
-const input = { padding: "10px 12px", borderRadius: 10, background: "#052E16", color: "#ECFDF5", border: "1px solid #064E3B", fontSize: 13 };
-const btn = { ...input, background: "linear-gradient(135deg,#059669,#10B981)", border: 0, cursor: "pointer", fontWeight: 700, color: "#fff" };
-const btnGhost = { ...input, background: "transparent", cursor: "pointer", fontWeight: 600 };
-const th = { padding: "8px 10px", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 };
-const td = { padding: "10px" };
-const rolePill = (role) => ({
-  padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 700,
-  background: role === "OWNER" ? "rgba(250,204,21,0.15)" : role === "ADMIN" ? "rgba(244,114,182,0.12)" : "rgba(16,185,129,0.1)",
-  color: role === "OWNER" ? "#FACC15" : role === "ADMIN" ? "#F472B6" : "#34D399",
-  border: `1px solid ${role === "OWNER" ? "#FACC15" : role === "ADMIN" ? "#F472B6" : "#10B981"}33`,
-});

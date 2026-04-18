@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Alert } from "@/components/ui/Alert";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export default function IntegrationsClient({ orgId, catalog, installed }) {
   const [testing, setTesting] = useState(null);
@@ -21,46 +25,64 @@ export default function IntegrationsClient({ orgId, catalog, installed }) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginTop: 20 }}>
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+      gap: space[3],
+      marginTop: space[4],
+    }}>
       {catalog.map((p) => {
         const inst = installed[p.id];
         const enabled = inst?.enabled;
         const test1 = lastResult[p.id];
         return (
-          <div key={p.id} style={{
-            padding: 18, borderRadius: 14,
-            border: `1px solid ${enabled ? "#10B981" : "#064E3B"}`,
-            background: enabled ? "rgba(16,185,129,.08)" : "transparent",
-            display: "flex", flexDirection: "column", gap: 10,
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ margin: 0, fontSize: 16 }}>{p.name}</h2>
+          <article
+            key={p.id}
+            style={{
+              padding: space[4],
+              borderRadius: radius.md,
+              border: `1px solid ${enabled ? cssVar.accent : cssVar.border}`,
+              background: enabled ? cssVar.accentSoft : cssVar.surface2,
+              display: "flex",
+              flexDirection: "column",
+              gap: space[3],
+              transition: "border-color .15s ease, background .15s ease",
+            }}
+          >
+            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: space[2] }}>
+              <h2 style={{
+                margin: 0,
+                fontSize: font.size.lg,
+                fontWeight: font.weight.bold,
+                color: cssVar.text,
+                letterSpacing: font.tracking.tight,
+              }}>
+                {p.name}
+              </h2>
               {inst && (
-                <span style={{ fontSize: 11, color: enabled ? "#34D399" : "#F59E0B" }}>
-                  {enabled ? "● Activa" : "● Pausada"}
-                </span>
+                enabled
+                  ? <Badge variant="success" size="sm">Activa</Badge>
+                  : <Badge variant="warn" size="sm">Pausada</Badge>
               )}
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: "#A7F3D0" }}>{p.desc}</p>
+            </header>
+
+            <p style={{ margin: 0, fontSize: font.size.sm, color: cssVar.textMuted, lineHeight: 1.5 }}>
+              {p.desc}
+            </p>
 
             {inst && inst.lastSyncAt && (
-              <div style={{ fontSize: 11, color: "#6EE7B7" }}>
+              <div style={{ fontSize: font.size.xs, color: cssVar.textDim, fontFamily: cssVar.fontMono }}>
                 Última sync: {new Date(inst.lastSyncAt).toLocaleString()}
               </div>
             )}
 
             {test1 && (
-              <div style={{
-                fontSize: 12, padding: 8, borderRadius: 8,
-                background: test1.ok ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                color: test1.ok ? "#34D399" : "#FCA5A5",
-                border: `1px solid ${test1.ok ? "#10B981" : "#EF4444"}`,
-              }}>
-                {test1.ok ? "✓" : "✗"} {test1.detail}
-              </div>
+              <Alert kind={test1.ok ? "success" : "danger"}>
+                {test1.detail}
+              </Alert>
             )}
 
-            <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
+            <div style={{ marginTop: "auto", display: "flex", gap: space[2] }}>
               <form
                 action={inst ? `/api/v1/integrations/${inst.id}` : "/api/v1/integrations"}
                 method="post"
@@ -69,25 +91,29 @@ export default function IntegrationsClient({ orgId, catalog, installed }) {
                 <input type="hidden" name="orgId" value={orgId} />
                 <input type="hidden" name="provider" value={p.id} />
                 {inst && <input type="hidden" name="_method" value={enabled ? "PAUSE" : "RESUME"} />}
-                <button style={btn}>{inst ? (enabled ? "Pausar" : "Reactivar") : "Conectar"}</button>
+                <Button
+                  type="submit"
+                  variant={inst ? (enabled ? "secondary" : "primary") : "primary"}
+                  size="sm"
+                  style={{ width: "100%" }}
+                >
+                  {inst ? (enabled ? "Pausar" : "Reactivar") : "Conectar"}
+                </Button>
               </form>
               {inst && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => test(p.id)}
                   disabled={testing === p.id}
-                  style={{ ...btnGhost, opacity: testing === p.id ? 0.5 : 1 }}
                 >
                   {testing === p.id ? "Probando…" : "Probar"}
-                </button>
+                </Button>
               )}
             </div>
-          </div>
+          </article>
         );
       })}
     </div>
   );
 }
-
-const btn = { padding: "8px 14px", borderRadius: 10, background: "linear-gradient(135deg,#059669,#10B981)", color: "#fff", border: 0, fontWeight: 700, cursor: "pointer", fontSize: 13, width: "100%" };
-const btnGhost = { padding: "8px 14px", borderRadius: 10, background: "transparent", color: "#A7F3D0", border: "1px solid #064E3B", fontWeight: 600, cursor: "pointer", fontSize: 13 };

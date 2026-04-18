@@ -1,6 +1,13 @@
 "use client";
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { DataTable } from "@/components/ui/Table";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Dialog } from "@/components/ui/Dialog";
+import { Alert } from "@/components/ui/Alert";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const ALL_SCOPES = [
   { id: "read:sessions",  label: "Leer sesiones" },
@@ -23,19 +30,35 @@ function Reveal({ token, onClose }) {
     catch { toast.error("No se pudo copiar"); }
   }
   return (
-    <div role="dialog" aria-modal="true" style={overlay}>
-      <div style={modal}>
-        <h2 style={{ margin: 0, fontSize: 18 }}>Guarda esta clave — solo se muestra una vez</h2>
-        <p style={{ color: "#FBBF24", fontSize: 13, marginTop: 8 }}>
-          Bio-Ignición no la almacena en claro. Si la pierdes, tendrás que rotarla.
-        </p>
-        <pre style={pre}>{token}</pre>
-        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-          <button onClick={copy} style={btnPrimary}>{copied ? "¡Copiado!" : "Copiar al portapapeles"}</button>
-          <button onClick={onClose} style={btnGhost}>Ya la guardé</button>
-        </div>
-      </div>
-    </div>
+    <Dialog
+      open={!!token}
+      onClose={onClose}
+      size="lg"
+      title="Guarda esta clave"
+      description="Solo se muestra una vez — no la volverás a ver."
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Ya la guardé</Button>
+          <Button variant="primary" onClick={copy}>{copied ? "¡Copiado!" : "Copiar"}</Button>
+        </>
+      }
+    >
+      <Alert kind="warn" title="Sin backup en servidor">
+        Bio-Ignición no almacena la clave en claro. Si la pierdes, tendrás que rotarla.
+      </Alert>
+      <pre style={{
+        marginTop: space[4], padding: space[4],
+        background: cssVar.surface2,
+        border: `1px solid ${cssVar.border}`,
+        borderRadius: radius.sm,
+        fontFamily: cssVar.fontMono, fontSize: font.size.sm,
+        color: cssVar.accent,
+        wordBreak: "break-all", whiteSpace: "pre-wrap",
+        margin: `${space[4]}px 0 0`,
+      }}>
+        {token}
+      </pre>
+    </Dialog>
   );
 }
 
@@ -105,76 +128,83 @@ export default function ApiKeysClient({ initial }) {
     } catch (err) { toast.error(err.message); }
   }
 
+  const columns = [
+    { key: "name",   label: "Nombre", render: (k) => <span style={{ fontWeight: font.weight.semibold, color: cssVar.text }}>{k.name}</span> },
+    { key: "prefix", label: "Prefix", width: 130, render: (k) => <code style={{ fontFamily: cssVar.fontMono, color: cssVar.textMuted, fontSize: font.size.sm }}>{k.prefix}…</code> },
+    {
+      key: "scopes", label: "Scopes",
+      render: (k) => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: space[1] }}>
+          {(k.scopes || []).map((s) => <Badge key={s} variant="soft" size="sm">{s}</Badge>)}
+        </div>
+      ),
+    },
+    { key: "createdAt", label: "Creada", width: 120, render: (k) => new Date(k.createdAt).toLocaleDateString() },
+    { key: "lastUsedAt", label: "Último uso", width: 160, render: (k) => k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : <span style={{ color: cssVar.textMuted }}>nunca</span> },
+    { key: "state", label: "Estado", width: 110, render: (k) => k.revokedAt ? <Badge variant="danger" size="sm">Revocada</Badge> : <Badge variant="success" size="sm">Activa</Badge> },
+    {
+      key: "__actions", label: "", align: "right", width: 170,
+      render: (k) => !k.revokedAt && (
+        <span style={{ display: "inline-flex", gap: space[1] }}>
+          <Button size="sm" variant="ghost"  onClick={() => rotate(k)}>Rotar</Button>
+          <Button size="sm" variant="danger" onClick={() => revoke(k)}>Revocar</Button>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
-      <form onSubmit={create} style={{ display: "grid", gap: 10, margin: "16px 0 20px", padding: 14, border: "1px solid #1E293B", borderRadius: 12, background: "#020617" }}>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (ej. Zapier prod)" required maxLength={80} style={inp} />
+      <form
+        onSubmit={create}
+        style={{
+          display: "grid", gap: space[3],
+          padding: space[4], marginBottom: space[4],
+          background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.md,
+        }}
+      >
+        <label>
+          <span style={labelStyle}>Nombre</span>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Zapier prod" required maxLength={80} />
+        </label>
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend style={{ fontSize: 12, color: "#94A3B8", padding: 0 }}>Permisos (scopes)</legend>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 6, marginTop: 6 }}>
+          <legend style={{ ...labelStyle, padding: 0, marginBottom: space[2] }}>Permisos (scopes)</legend>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: space[2] }}>
             {ALL_SCOPES.map((s) => (
-              <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#E2E8F0", cursor: "pointer" }}>
-                <input type="checkbox" checked={scopes.has(s.id)} onChange={() => toggleScope(s.id)} />
+              <label key={s.id} style={{
+                display: "flex", alignItems: "center", gap: space[2],
+                padding: `${space[2]}px ${space[3]}px`,
+                background: scopes.has(s.id) ? cssVar.accentSoft : cssVar.surface,
+                border: `1px solid ${scopes.has(s.id) ? cssVar.accent : cssVar.border}`,
+                borderRadius: radius.sm,
+                fontSize: font.size.sm, color: cssVar.text, cursor: "pointer",
+                transition: "background .12s ease, border-color .12s ease",
+              }}>
+                <input type="checkbox" checked={scopes.has(s.id)} onChange={() => toggleScope(s.id)} style={{ accentColor: "var(--bi-accent)" }} />
                 <span>{s.label}</span>
               </label>
             ))}
           </div>
         </fieldset>
-        <button disabled={busy || !name.trim() || scopes.size === 0} style={{ ...btnPrimary, justifySelf: "start", opacity: busy ? 0.6 : 1 }}>
+        <Button type="submit" variant="primary" disabled={busy || !name.trim() || scopes.size === 0} style={{ justifySelf: "start" }}>
           {busy ? "Creando…" : "Crear clave"}
-        </button>
+        </Button>
       </form>
 
-      <p style={{ color: "#64748B", fontSize: 12 }}>La clave solo se muestra una vez al crearse. Guárdala en tu gestor de secretos.</p>
-      <div className="bi-table-wrap">
-        <table style={{ width: "100%", marginTop: 12, borderCollapse: "collapse", fontSize: 14 }}>
-          <thead><tr style={{ textAlign: "left", color: "#6EE7B7", fontSize: 12 }}>
-            <th style={th}>Nombre</th><th style={th}>Prefix</th><th style={th}>Scopes</th>
-            <th style={th}>Creada</th><th style={th}>Último uso</th><th style={th}>Estado</th><th style={th}></th>
-          </tr></thead>
-          <tbody>
-            {keys.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 24, color: "#6B7280", textAlign: "center" }}>
-                Sin API keys. Crea la primera arriba.
-              </td></tr>
-            )}
-            {keys.map((k) => (
-              <tr key={k.id} style={{ borderTop: "1px solid #1E293B" }}>
-                <td style={td}>{k.name}</td>
-                <td style={{ ...td, fontFamily: "ui-monospace", color: "#94A3B8" }}>{k.prefix}…</td>
-                <td style={{ ...td, color: "#94A3B8", fontSize: 12 }}>{(k.scopes || []).join(", ")}</td>
-                <td style={td}>{new Date(k.createdAt).toLocaleDateString()}</td>
-                <td style={{ ...td, color: k.lastUsedAt ? "#E2E8F0" : "#64748B" }}>
-                  {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : "nunca"}
-                </td>
-                <td style={{ ...td, color: k.revokedAt ? "#F87171" : "#34D399" }}>
-                  {k.revokedAt ? "Revocada" : "Activa"}
-                </td>
-                <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
-                  {!k.revokedAt && (
-                    <>
-                      <button onClick={() => rotate(k)} style={btnMiniGhost}>Rotar</button>
-                      <button onClick={() => revoke(k)} style={{ ...btnMiniGhost, color: "#FCA5A5", borderColor: "#7F1D1D" }}>Revocar</button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={keys}
+        getKey={(k) => k.id}
+        emptyTitle="Sin API keys"
+        emptyDescription="Crea la primera con el formulario de arriba. Solo se muestra la clave una vez; guárdala en tu gestor de secretos."
+      />
 
-      {revealed && <Reveal token={revealed} onClose={() => setRevealed(null)} />}
+      <Reveal token={revealed} onClose={() => setRevealed(null)} />
     </>
   );
 }
 
-const inp = { padding: "8px 10px", background: "#020617", border: "1px solid #334155", borderRadius: 8, color: "#E2E8F0", fontSize: 14 };
-const btnPrimary = { padding: "8px 14px", background: "linear-gradient(135deg,#059669,#10B981)", border: "none", borderRadius: 8, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 };
-const btnGhost = { padding: "8px 14px", background: "transparent", color: "#A7F3D0", border: "1px solid #334155", borderRadius: 8, cursor: "pointer", fontSize: 13 };
-const btnMiniGhost = { padding: "4px 10px", marginInlineEnd: 6, background: "transparent", color: "#A7F3D0", border: "1px solid #334155", borderRadius: 8, cursor: "pointer", fontSize: 12 };
-const th = { textAlign: "left", padding: "8px 10px", fontSize: 12, color: "#6EE7B7", borderBottom: "1px solid #1E293B" };
-const td = { padding: "10px" };
-const overlay = { position: "fixed", inset: 0, background: "rgba(2,6,23,.85)", display: "grid", placeItems: "center", zIndex: 100, padding: 20 };
-const modal = { width: "min(560px, 100%)", background: "#0F172A", border: "1px solid #1E293B", borderRadius: 16, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,.4)" };
-const pre = { marginTop: 14, padding: 14, background: "#020617", border: "1px solid #065F46", borderRadius: 10, fontFamily: "ui-monospace", fontSize: 13, color: "#6EE7B7", wordBreak: "break-all", whiteSpace: "pre-wrap", margin: 0 };
+const labelStyle = {
+  display: "block", fontSize: 12, color: "var(--bi-text-dim)",
+  fontWeight: 600, marginBottom: 4,
+};
