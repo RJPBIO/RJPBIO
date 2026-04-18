@@ -19,6 +19,12 @@ import { scoreAnswers } from "@/lib/nom35/scoring";
 
 const STORAGE_KEY = "bio-nom35-draft-v1";
 
+function csrfHeader() {
+  if (typeof document === "undefined") return {};
+  const m = document.cookie.match(/(?:^|; )bio-csrf=([^;]+)/);
+  return m ? { "x-csrf-token": decodeURIComponent(m[1]) } : {};
+}
+
 // Orden de presentación por dominio (mismo orden que categorías oficiales)
 const ORDER = [
   "condiciones", "carga", "falta_control",
@@ -108,7 +114,7 @@ export default function Nom35Client() {
       const body = { answers, submittedAt: new Date().toISOString() };
       const r = await fetch("/api/v1/nom35/responses", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeader() },
         body: JSON.stringify(body),
       });
       // API aún puede no existir: tratamos 404 como "no persistido, sólo local"

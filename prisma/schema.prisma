@@ -42,6 +42,7 @@ model Org {
   supportTickets SupportTicket[]
   impersonations Impersonation[]
   wearableEvents WearableEvent[]
+  nom35Responses Nom35Response[]
   @@index([region])
   @@index([dunningState])
 }
@@ -67,6 +68,7 @@ model User {
   supportTickets SupportTicket[]
   impersonatedBy Impersonation[] @relation("ImpersonationTarget")
   impersonationsAsActor Impersonation[] @relation("ImpersonationActor")
+  nom35Responses Nom35Response[]
 }
 
 enum Role {
@@ -355,6 +357,25 @@ model Impersonation {
   @@index([orgId, startedAt])
   @@index([actorId, startedAt])
   @@index([targetId, startedAt])
+}
+
+// ─── NOM-035 — Factores de riesgo psicosocial (MX) ──────
+model Nom35Response {
+  id           String   @id @default(cuid())
+  orgId        String
+  userId       String
+  guia         String   @default("III")  // "I" | "II" | "III"
+  answers      Json                        // { "1": 0..4, ... }
+  total        Int
+  nivel        String                      // nulo|bajo|medio|alto|muy_alto
+  porDominio   Json
+  porCategoria Json
+  completedAt  DateTime @default(now())
+  org          Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([orgId, completedAt])
+  @@index([orgId, nivel, completedAt])
+  @@index([userId, completedAt])
 }
 
 // ─── Wearable ingress (Whoop, Oura, Garmin, Apple Health) ──
