@@ -27,7 +27,7 @@ async function getKmsClient() {
   if (!_kmsClientPromise) {
     _kmsClientPromise = (async () => {
       try {
-        const { KMSClient, EncryptCommand, DecryptCommand } = await import("@aws-sdk/client-kms");
+        const { KMSClient, EncryptCommand, DecryptCommand } = await import(/* webpackIgnore: true */ "@aws-sdk/client-kms");
         return { client: new KMSClient({}), EncryptCommand, DecryptCommand };
       } catch { return null; }
     })();

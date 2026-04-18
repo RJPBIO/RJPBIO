@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")  // pooled (PgBouncer) — Vercel runtime
+  directUrl = env("DIRECT_URL")    // direct connection — migrations only
 }
 
 // ─── Tenancy ────────────────────────────────────────────
