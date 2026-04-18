@@ -12,7 +12,75 @@
 :root {
   --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 0 0 5px rgba(5, 150, 105, 0.15);
   --focus-ring-inverse: 0 0 0 3px rgba(16, 185, 129, 0.5);
+
+  /* ═══ Theme tokens — light defaults; dark overrides below ═══ */
+  --bi-bg: #F1F4F9;
+  --bi-surface: #FFFFFF;
+  --bi-surface-2: #F8FAFC;
+  --bi-border: #E2E8F0;
+  --bi-border-strong: #CBD5E1;
+  --bi-text: #0F172A;
+  --bi-text-dim: #475569;
+  --bi-text-muted: #64748B;
+  --bi-accent: #059669;
+  --bi-accent-soft: rgba(5, 150, 105, 0.08);
+  --bi-accent-ink: #FFFFFF;
+  --bi-danger: #DC2626;
+  --bi-warn: #D97706;
+  --bi-focus-ring: var(--focus-ring);
 }
+
+/* System dark */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bi-bg: #0B0E14;
+    --bi-surface: #141820;
+    --bi-surface-2: rgba(16, 185, 129, 0.08);
+    --bi-border: #1E2330;
+    --bi-border-strong: #2A3040;
+    --bi-text: #E8ECF4;
+    --bi-text-dim: #A7F3D0;
+    --bi-text-muted: #8B95A8;
+    --bi-accent: #10B981;
+    --bi-accent-soft: rgba(16, 185, 129, 0.12);
+    --bi-accent-ink: #052E16;
+    --bi-focus-ring: var(--focus-ring-inverse);
+  }
+}
+
+/* Explicit overrides from ThemeToggle */
+html.theme-light {
+  --bi-bg: #F1F4F9;
+  --bi-surface: #FFFFFF;
+  --bi-surface-2: #F8FAFC;
+  --bi-border: #E2E8F0;
+  --bi-border-strong: #CBD5E1;
+  --bi-text: #0F172A;
+  --bi-text-dim: #475569;
+  --bi-text-muted: #64748B;
+  --bi-accent: #059669;
+  --bi-accent-soft: rgba(5, 150, 105, 0.08);
+  --bi-accent-ink: #FFFFFF;
+  --bi-focus-ring: var(--focus-ring);
+}
+
+html.theme-dark {
+  --bi-bg: #0B0E14;
+  --bi-surface: #141820;
+  --bi-surface-2: rgba(16, 185, 129, 0.08);
+  --bi-border: #1E2330;
+  --bi-border-strong: #2A3040;
+  --bi-text: #E8ECF4;
+  --bi-text-dim: #A7F3D0;
+  --bi-text-muted: #8B95A8;
+  --bi-accent: #10B981;
+  --bi-accent-soft: rgba(16, 185, 129, 0.12);
+  --bi-accent-ink: #052E16;
+  --bi-focus-ring: var(--focus-ring-inverse);
+}
+
+html { background: var(--bi-bg); color: var(--bi-text); }
+body { background: var(--bi-bg); color: var(--bi-text); }
 
 * {
   box-sizing: border-box;
@@ -182,6 +250,44 @@ input, textarea, select {
 .phase-enter { animation: phaseEnter 0.5s cubic-bezier(0.16,1,0.3,1); }
 .card-enter { animation: cardEnter 0.4s ease-out both; }
 .bi-sr-only { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* ═══ UI primitive hover/focus/active ═══ */
+.bi-btn:hover:not(:disabled):not([aria-disabled="true"]) { filter: brightness(1.08); }
+.bi-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: scale(0.98); }
+.bi-btn:focus-visible { box-shadow: var(--bi-focus-ring); outline: none; }
+.bi-btn-primary:hover:not(:disabled) { box-shadow: 0 8px 24px -12px var(--bi-accent); }
+
+a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: none;
+  box-shadow: var(--bi-focus-ring);
+  border-radius: 6px;
+}
+
+/* ═══ Table overflow helper (StationsClient, etc.) ═══ */
+.bi-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.bi-table-wrap table { min-width: 560px; }
+
+/* ═══ Responsive grid utility used by marketing pages ═══ */
+.bi-split {
+  display: grid;
+  gap: 32px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .bi-split { grid-template-columns: 1fr 1fr; }
+}
+.bi-split-5-7 { display: grid; gap: 28px; grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .bi-split-5-7 { grid-template-columns: 5fr 7fr; }
+}
+
+/* Marketing h1/h2 rhythm */
+.bi-prose h1 { font-size: clamp(28px, 4.2vw, 40px); font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+.bi-prose h2 { font-size: clamp(20px, 2.6vw, 26px); font-weight: 700; line-height: 1.25; }
+.bi-prose p  { line-height: 1.65; color: var(--bi-text-dim); }
+.bi-prose code { background: color-mix(in srgb, var(--bi-surface) 60%, transparent); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--bi-border); font-size: 0.9em; }
+.bi-prose pre { background: var(--bi-surface); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--bi-border); font-size: 12.5px; overflow: auto; line-height: 1.6; }
+.bi-prose a { color: var(--bi-accent); text-decoration: underline; text-underline-offset: 2px; }
 
 /* ═══ REDUCED MOTION — honored everywhere ═══ */
 @media (prefers-reduced-motion: reduce) {
