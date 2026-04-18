@@ -4,6 +4,8 @@ import "./globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
 import ConsentBanner from "../components/ConsentBanner";
 import { LocaleProvider } from "../lib/locale-context";
+import { getServerLocale } from "../lib/locale-server";
+import { tLocale } from "../lib/i18n";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -21,20 +23,12 @@ const jetbrains = JetBrains_Mono({
 });
 
 const RTL_LOCALES = new Set(["ar", "he", "fa", "ur"]);
-const SUPPORTED = ["es", "en", "pt", "fr", "de", "it", "nl", "ja", "ko", "zh", "ar", "he"];
-
-function detectLocale(acceptLanguage) {
-  if (!acceptLanguage) return "es";
-  const head = acceptLanguage.split(",")[0]?.trim().toLowerCase() || "es";
-  const short = head.split("-")[0];
-  return SUPPORTED.includes(short) ? short : "es";
-}
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
   title: { default: "BIO-IGNICIÓN", template: "%s · BIO-IGNICIÓN" },
   description: "Plataforma de Optimización Humana — Neural Performance System",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   applicationName: "BIO-IGNICIÓN",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "BIO-IGNICIÓN" },
   formatDetection: { telephone: false, email: false, address: false },
@@ -71,8 +65,9 @@ export const viewport = {
 export default async function RootLayout({ children }) {
   const h = await headers();
   const nonce = h.get("x-nonce") || undefined;
-  const locale = detectLocale(h.get("accept-language"));
+  const locale = await getServerLocale();
   const dir = RTL_LOCALES.has(locale) ? "rtl" : "ltr";
+  const skipLabel = tLocale(locale, "shell.skipContent");
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
@@ -84,6 +79,13 @@ export default async function RootLayout({ children }) {
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="color-scheme" content="light dark" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {/* Theme + locale init antes de paint. Nonce requerido por CSP. */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: `try{var d=document.documentElement;var m=localStorage.getItem('bio-theme');if(m==='light')d.classList.add('theme-light');else if(m==='dark')d.classList.add('theme-dark');var l=localStorage.getItem('bio-locale');if(l){d.lang=l;d.dir=['ar','he','fa','ur'].indexOf(l)>-1?'rtl':'ltr';if(!document.cookie.match(/(?:^|; )bio-locale=/))document.cookie='bio-locale='+l+'; Path=/; Max-Age=31536000; SameSite=Lax';}}catch(e){}`,
+          }}
+        />
       </head>
       <body
         className={`${manrope.variable} ${jetbrains.variable} ${manrope.className}`}
@@ -104,7 +106,7 @@ export default async function RootLayout({ children }) {
             fontWeight: 700,
           }}
         >
-          Saltar al contenido
+          {skipLabel}
         </a>
         <div aria-live="polite" className="bi-sr-only" id="bi-live-polite" />
         <div aria-live="assertive" className="bi-sr-only" id="bi-live-assertive" />
