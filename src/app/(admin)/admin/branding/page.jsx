@@ -4,6 +4,7 @@ import { auth } from "@/server/auth";
 import { revalidatePath } from "next/cache";
 import { auditLog } from "@/server/audit";
 import BrandingClient from "./BrandingClient";
+import { cssVar, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Branding · Admin" };
 
@@ -40,11 +41,24 @@ export default async function BrandingPage() {
 
   return (
     <>
-      <h1 style={{ margin: 0 }}>Branding</h1>
-      <p style={{ color: "#A7F3D0", marginTop: 4, fontSize: 13 }}>
+      <h1 style={{
+        margin: 0,
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        letterSpacing: font.tracking.tight,
+        color: cssVar.text,
+      }}>
+        Branding
+      </h1>
+      <p style={{
+        color: cssVar.textMuted,
+        marginTop: space[1],
+        fontSize: font.size.sm,
+        lineHeight: 1.5,
+      }}>
         Personaliza logo, colores y tono del coach. El preview refleja cómo verá la app un miembro de tu org.
       </p>
-      <div style={{ marginTop: 20 }}>
+      <div style={{ marginTop: space[5] }}>
         <BrandingClient initial={b} saveAction={save} resetAction={reset} />
       </div>
     </>

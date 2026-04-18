@@ -1,6 +1,7 @@
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { anonymize } from "@/server/analytics";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const PERIODS = {
   "7":  { days: 7,  label: "7 días"  },
@@ -32,22 +33,59 @@ export default async function AdminHome({ searchParams }) {
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        flexWrap: "wrap",
+        gap: space[3],
+      }}>
         <div>
-          <h1 style={{ fontSize: 26, margin: "0 0 4px" }}>{org?.name}</h1>
-          <p style={{ color: "#A7F3D0", marginTop: 0, fontSize: 13 }}>
-            Plan: <strong>{org?.plan}</strong> · Región: {org?.region || "—"}
+          <h1 style={{
+            fontSize: font.size["2xl"],
+            fontWeight: font.weight.black,
+            letterSpacing: font.tracking.tight,
+            margin: 0,
+            color: cssVar.text,
+          }}>
+            {org?.name}
+          </h1>
+          <p style={{
+            color: cssVar.textMuted,
+            marginTop: space[1],
+            fontSize: font.size.sm,
+          }}>
+            Plan: <strong style={{ color: cssVar.text }}>{org?.plan}</strong> · Región: {org?.region || "—"}
           </p>
         </div>
-        <nav aria-label="Periodo" style={{ display: "flex", gap: 4, background: "#052E16", padding: 4, borderRadius: 999, border: "1px solid #064E3B" }}>
+        <nav
+          aria-label="Periodo"
+          style={{
+            display: "flex",
+            gap: space[0.5],
+            background: cssVar.surface2,
+            padding: space[0.5],
+            borderRadius: radius.full,
+            border: `1px solid ${cssVar.border}`,
+          }}
+        >
           {Object.entries(PERIODS).map(([k, p]) => {
             const active = k === periodKey;
             return (
-              <a key={k} href={`/admin?period=${k}`} style={{
-                padding: "6px 14px", borderRadius: 999, fontSize: 12, fontWeight: 700, textDecoration: "none",
-                color: active ? "#052E16" : "#A7F3D0",
-                background: active ? "linear-gradient(135deg,#34D399,#10B981)" : "transparent",
-              }}>
+              <a
+                key={k}
+                href={`/admin?period=${k}`}
+                style={{
+                  padding: `${space[1.5]}px ${space[3]}px`,
+                  borderRadius: radius.full,
+                  fontSize: font.size.xs,
+                  fontWeight: font.weight.bold,
+                  textDecoration: "none",
+                  color: active ? cssVar.accentInk : cssVar.textDim,
+                  background: active ? cssVar.accent : "transparent",
+                  transition: "background .15s ease, color .15s ease",
+                }}
+              >
                 {p.label}
               </a>
             );
@@ -55,7 +93,7 @@ export default async function AdminHome({ searchParams }) {
         </nav>
       </div>
 
-      <div style={grid}>
+      <section style={grid}>
         <Card title="Miembros" value={members} sub={`de ${org?.seats || 0} asientos`} />
         <Card
           title={`Sesiones (${days}d)`}
@@ -69,35 +107,49 @@ export default async function AdminHome({ searchParams }) {
           value={members > 0 ? (sessions.length / members).toFixed(1) : "0"}
           sub="sesiones/miembro"
         />
-      </div>
+      </section>
 
-      <h2 style={{ fontSize: 18, marginTop: 32 }}>Actividad por día (cohortes ≥5)</h2>
+      <h2 style={{
+        fontSize: font.size.lg,
+        fontWeight: font.weight.bold,
+        letterSpacing: font.tracking.tight,
+        marginTop: space[6],
+      }}>
+        Actividad por día (cohortes ≥5)
+      </h2>
+
       {agg.buckets.length === 0 ? (
-        <p style={{ color: "#94A3B8", fontSize: 13 }}>
+        <p style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>
           Sin datos suficientes para el periodo seleccionado. Prueba un rango más amplio.
         </p>
       ) : (
-        <div className="bi-table-wrap">
-          <table style={table}>
+        <div style={{
+          marginTop: space[3],
+          background: cssVar.surface,
+          border: `1px solid ${cssVar.border}`,
+          borderRadius: radius.md,
+          overflow: "hidden",
+        }}>
+          <table style={tableStyle}>
             <thead>
-              <tr style={{ color: "#6EE7B7" }}>
-                <th style={th}>Día</th>
-                <th style={th}>Equipo</th>
-                <th style={th}>Usuarios</th>
-                <th style={th}>Sesiones</th>
-                <th style={th}>Δ Coherencia</th>
-                <th style={th}>Δ Mood</th>
+              <tr style={{ background: cssVar.surface2 }}>
+                <th style={thStyle}>Día</th>
+                <th style={thStyle}>Equipo</th>
+                <th style={thStyle}>Usuarios</th>
+                <th style={thStyle}>Sesiones</th>
+                <th style={thStyle}>Δ Coherencia</th>
+                <th style={thStyle}>Δ Mood</th>
               </tr>
             </thead>
             <tbody>
               {agg.buckets.slice(-14).map((b, i) => (
-                <tr key={i} style={{ borderTop: "1px solid #064E3B" }}>
-                  <td style={td}>{b.day}</td>
-                  <td style={td}>{b.teamId || "org"}</td>
-                  <td style={td}>{b.uniqueUsers}</td>
-                  <td style={td}>{b.sessions}</td>
-                  <td style={td}>{b.avgCoherenciaDelta?.toFixed(1) ?? "—"}</td>
-                  <td style={td}>{b.avgMoodDelta?.toFixed(2) ?? "—"}</td>
+                <tr key={i} style={{ borderBlockStart: `1px solid ${cssVar.border}` }}>
+                  <td style={tdStyle}>{b.day}</td>
+                  <td style={{ ...tdStyle, color: cssVar.textMuted }}>{b.teamId || "org"}</td>
+                  <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.uniqueUsers}</td>
+                  <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.sessions}</td>
+                  <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.avgCoherenciaDelta?.toFixed(1) ?? "—"}</td>
+                  <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.avgMoodDelta?.toFixed(2) ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -109,18 +161,61 @@ export default async function AdminHome({ searchParams }) {
 }
 
 function Card({ title, value, sub, tone }) {
-  const color = tone === "up" ? "#34D399" : tone === "down" ? "#FBBF24" : "#A7F3D0";
+  const subColor = tone === "up" ? cssVar.accent : tone === "down" ? cssVar.warn : cssVar.textMuted;
   return (
-    <div style={card}>
-      <div style={{ fontSize: 12, color: "#6EE7B7", textTransform: "uppercase", letterSpacing: 2 }}>{title}</div>
-      <div style={{ fontSize: 32, fontWeight: 800, margin: "6px 0" }}>{value}</div>
-      <div style={{ fontSize: 12, color }}>{sub}</div>
+    <div style={{
+      padding: space[4],
+      borderRadius: radius.md,
+      background: cssVar.accentSoft,
+      border: `1px solid ${cssVar.border}`,
+    }}>
+      <div style={{
+        fontSize: font.size.xs,
+        color: cssVar.textDim,
+        textTransform: "uppercase",
+        letterSpacing: font.tracking.wide,
+        fontWeight: font.weight.semibold,
+      }}>
+        {title}
+      </div>
+      <div style={{
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        margin: `${space[1]}px 0`,
+        color: cssVar.text,
+        fontFamily: cssVar.fontMono,
+      }}>
+        {value}
+      </div>
+      <div style={{ fontSize: font.size.xs, color: subColor }}>{sub}</div>
     </div>
   );
 }
 
-const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginTop: 20 };
-const card = { padding: 18, borderRadius: 16, background: "rgba(5,150,105,.08)", border: "1px solid #064E3B" };
-const table = { width: "100%", borderCollapse: "collapse", marginTop: 12, fontSize: 13 };
-const th = { textAlign: "left", padding: "8px 10px", fontSize: 12, borderBottom: "1px solid #064E3B" };
-const td = { padding: "10px" };
+const grid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+  gap: space[3],
+  marginTop: space[5],
+};
+
+const tableStyle = {
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: font.size.sm,
+};
+
+const thStyle = {
+  textAlign: "left",
+  padding: `${space[3]}px ${space[4]}px`,
+  fontSize: font.size.xs,
+  color: cssVar.textDim,
+  fontWeight: font.weight.semibold,
+  textTransform: "uppercase",
+  letterSpacing: font.tracking.wide,
+};
+
+const tdStyle = {
+  padding: `${space[3]}px ${space[4]}px`,
+  color: cssVar.text,
+};

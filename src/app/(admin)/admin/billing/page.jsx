@@ -2,6 +2,10 @@ export const dynamic = "force-dynamic";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { listInvoices } from "@/server/billing";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Progress } from "@/components/ui/Progress";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Facturación · Admin" };
 
@@ -42,25 +46,47 @@ export default async function BillingPage() {
 
   return (
     <>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+      <header style={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: space[3],
+      }}>
         <div>
-          <h1 style={{ margin: 0 }}>Facturación</h1>
-          <p style={{ margin: "4px 0 0", color: "#A7F3D0", fontSize: 13 }}>
-            Plan actual: <strong style={{ color: "#fff" }}>{plan}</strong> · {limits.price}
+          <h1 style={{
+            margin: 0,
+            fontSize: font.size["2xl"],
+            fontWeight: font.weight.black,
+            letterSpacing: font.tracking.tight,
+            color: cssVar.text,
+          }}>
+            Facturación
+          </h1>
+          <p style={{
+            margin: `${space[1]}px 0 0`,
+            color: cssVar.textMuted,
+            fontSize: font.size.sm,
+          }}>
+            Plan actual: <strong style={{ color: cssVar.text }}>{plan}</strong> · {limits.price}
           </p>
         </div>
         <form action="/api/billing/portal" method="post">
           <input type="hidden" name="orgId" value={orgId} />
-          <button style={btn}>Abrir portal de facturación</button>
+          <Button type="submit" variant="primary">Abrir portal de facturación</Button>
         </form>
       </header>
 
-      <section style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
+      <section style={{
+        marginTop: space[5],
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: space[3],
+      }}>
         <UsageCard
           title="Asientos"
           used={seatsUsed}
           total={limits.seats}
-          unit=""
           hint={seatPct >= 80 ? "Cerca del límite — considera upgrade" : "Saludable"}
           danger={seatPct >= 90}
         />
@@ -68,81 +94,229 @@ export default async function BillingPage() {
           title="Sesiones este mes"
           used={sessionsThisMonth}
           total={limits.sessions}
-          unit=""
-          hint={sessionPct >= 80 ? "Alto consumo — monitorea" : `Resetea el día 1 de cada mes`}
+          hint={sessionPct >= 80 ? "Alto consumo — monitorea" : "Resetea el día 1 de cada mes"}
           danger={sessionPct >= 90}
         />
       </section>
 
-      <h2 style={{ marginTop: 32, fontSize: 18 }}>Planes</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginTop: 10 }}>
+      <h2 style={{
+        marginTop: space[6],
+        fontSize: font.size.lg,
+        fontWeight: font.weight.bold,
+        letterSpacing: font.tracking.tight,
+      }}>
+        Planes
+      </h2>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: space[3],
+        marginTop: space[2],
+      }}>
         {["STARTER", "GROWTH", "ENTERPRISE"].map((p) => (
-          <Tier key={p} name={p} plan={p} price={PLAN_LIMITS[p].price} features={PLAN_FEATURES[p]} current={plan === p} orgId={org.id} />
+          <Tier
+            key={p}
+            name={p}
+            plan={p}
+            price={PLAN_LIMITS[p].price}
+            features={PLAN_FEATURES[p]}
+            current={plan === p}
+            orgId={org.id}
+          />
         ))}
       </div>
 
-      <h2 style={{ marginTop: 32, fontSize: 18 }}>Historial reciente</h2>
+      <h2 style={{
+        marginTop: space[6],
+        fontSize: font.size.lg,
+        fontWeight: font.weight.bold,
+        letterSpacing: font.tracking.tight,
+      }}>
+        Historial reciente
+      </h2>
       {invoices.length === 0 ? (
-        <p style={{ color: "#A7F3D0", fontSize: 13 }}>
+        <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[2] }}>
           Sin facturas todavía. Abre el <em>portal de facturación</em> para ver recibos, métodos de pago e impuestos.
         </p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: 8 }}>
-          <thead><tr style={{ textAlign: "left", color: "#6EE7B7" }}><th>Fecha</th><th>Monto</th><th>Estado</th><th>Recibo</th></tr></thead>
-          <tbody>
-            {invoices.slice(0, 12).map((inv) => (
-              <tr key={inv.id} style={{ borderBlockStart: "1px solid #064E3B" }}>
-                <td>{new Date(inv.date).toLocaleDateString()}</td>
-                <td>${(inv.amount / 100).toFixed(2)} {inv.currency?.toUpperCase()}</td>
-                <td>{inv.status}</td>
-                <td>{inv.pdf ? <a href={inv.pdf} style={{ color: "#A7F3D0" }}>PDF</a> : "—"}</td>
+        <div style={{
+          marginTop: space[3],
+          background: cssVar.surface,
+          border: `1px solid ${cssVar.border}`,
+          borderRadius: radius.md,
+          overflow: "hidden",
+        }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: font.size.sm }}>
+            <thead>
+              <tr style={{ background: cssVar.surface2 }}>
+                <th style={thStyle}>Fecha</th>
+                <th style={thStyle}>Monto</th>
+                <th style={thStyle}>Estado</th>
+                <th style={thStyle}>Recibo</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {invoices.slice(0, 12).map((inv) => (
+                <tr key={inv.id} style={{ borderBlockStart: `1px solid ${cssVar.border}` }}>
+                  <td style={tdStyle}>{new Date(inv.date).toLocaleDateString()}</td>
+                  <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>
+                    ${(inv.amount / 100).toFixed(2)} {inv.currency?.toUpperCase()}
+                  </td>
+                  <td style={tdStyle}>
+                    <Badge
+                      variant={inv.status === "paid" ? "success" : inv.status === "open" ? "warn" : "soft"}
+                      size="sm"
+                    >
+                      {inv.status}
+                    </Badge>
+                  </td>
+                  <td style={tdStyle}>
+                    {inv.pdf
+                      ? <a href={inv.pdf} style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>PDF ↗</a>
+                      : <span style={{ color: cssVar.textMuted }}>—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </>
   );
 }
 
 function UsageCard({ title, used, total, hint, danger }) {
-  const pct = total === Infinity ? 0 : Math.min(100, Math.round((used / Math.max(1, total)) * 100));
+  const unlimited = total === Infinity;
+  const pct = unlimited ? 0 : Math.min(100, Math.round((used / Math.max(1, total)) * 100));
   return (
-    <div style={{ padding: 18, borderRadius: 14, border: `1px solid ${danger ? "#F59E0B" : "#064E3B"}`, background: danger ? "rgba(245,158,11,0.06)" : "#052E16" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#6EE7B7" }}>
-        <span style={{ textTransform: "uppercase", letterSpacing: 1 }}>{title}</span>
-        <span>{total === Infinity ? "Ilimitado" : `${pct}%`}</span>
+    <div style={{
+      padding: space[4],
+      borderRadius: radius.md,
+      border: `1px solid ${danger ? cssVar.warn : cssVar.border}`,
+      background: danger
+        ? "color-mix(in srgb, var(--bi-warn) 8%, transparent)"
+        : cssVar.surface2,
+    }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        fontSize: font.size.xs,
+        color: cssVar.textDim,
+      }}>
+        <span style={{
+          textTransform: "uppercase",
+          letterSpacing: font.tracking.wide,
+          fontWeight: font.weight.semibold,
+        }}>
+          {title}
+        </span>
+        <span style={{ fontFamily: cssVar.fontMono }}>
+          {unlimited ? "Ilimitado" : `${pct}%`}
+        </span>
       </div>
-      <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800, fontFamily: "var(--font-mono, monospace)" }}>
-        {used.toLocaleString()}{total !== Infinity && <span style={{ fontSize: 14, color: "#6EE7B7", marginInlineStart: 6 }}>/ {total.toLocaleString()}</span>}
+      <div style={{
+        marginTop: space[2],
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        fontFamily: cssVar.fontMono,
+        color: cssVar.text,
+      }}>
+        {used.toLocaleString()}
+        {!unlimited && (
+          <span style={{
+            fontSize: font.size.md,
+            color: cssVar.textMuted,
+            marginInlineStart: space[2],
+            fontWeight: font.weight.medium,
+          }}>
+            / {total.toLocaleString()}
+          </span>
+        )}
       </div>
-      {total !== Infinity && (
-        <div style={{ marginTop: 10, height: 6, background: "#064E3B", borderRadius: 3, overflow: "hidden" }} aria-hidden="true">
-          <div style={{ width: `${pct}%`, height: "100%", background: danger ? "linear-gradient(90deg, #F59E0B, #EF4444)" : "linear-gradient(90deg, #10B981, #22D3EE)", transition: "width 0.3s" }} />
+      {!unlimited && (
+        <div style={{ marginTop: space[2] }}>
+          <Progress value={pct} tone={danger ? "warn" : "accent"} size="sm" />
         </div>
       )}
-      {hint && <p style={{ fontSize: 12, margin: "10px 0 0", color: danger ? "#FBBF24" : "#6EE7B7" }}>{hint}</p>}
+      {hint && (
+        <p style={{
+          fontSize: font.size.xs,
+          margin: `${space[2]}px 0 0`,
+          color: danger ? cssVar.warn : cssVar.textMuted,
+        }}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
 
 function Tier({ name, price, features, current, plan, orgId }) {
   return (
-    <div style={{ padding: 20, borderRadius: 16, border: `2px solid ${current ? "#10B981" : "#064E3B"}`, background: current ? "rgba(16,185,129,.1)" : "transparent", display: "flex", flexDirection: "column" }}>
-      <h3 style={{ margin: 0 }}>{name}</h3>
-      <p style={{ color: "#A7F3D0", margin: "6px 0 14px" }}>{price}</p>
-      <ul style={{ paddingLeft: 18, fontSize: 13, lineHeight: 1.6, flex: 1 }}>{features.map((f) => <li key={f}>{f}</li>)}</ul>
-      {current ? (
-        <span style={{ marginTop: 12, textAlign: "center", padding: 8, fontSize: 12, color: "#34D399", fontWeight: 700 }}>● Tu plan actual</span>
-      ) : (
-        <form action="/api/billing/checkout" method="post" style={{ marginTop: 12 }}>
+    <div style={{
+      padding: space[5],
+      borderRadius: radius.md,
+      border: `2px solid ${current ? cssVar.accent : cssVar.border}`,
+      background: current ? cssVar.accentSoft : cssVar.surface,
+      display: "flex",
+      flexDirection: "column",
+    }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: space[2],
+      }}>
+        <h3 style={{
+          margin: 0,
+          fontSize: font.size.lg,
+          fontWeight: font.weight.bold,
+          color: cssVar.text,
+          letterSpacing: font.tracking.tight,
+        }}>
+          {name}
+        </h3>
+        {current && <Badge variant="success" size="sm">Actual</Badge>}
+      </div>
+      <p style={{
+        color: cssVar.textMuted,
+        margin: `${space[1]}px 0 ${space[3]}px`,
+        fontSize: font.size.sm,
+      }}>
+        {price}
+      </p>
+      <ul style={{
+        paddingInlineStart: space[5],
+        fontSize: font.size.sm,
+        lineHeight: 1.6,
+        flex: 1,
+        color: cssVar.text,
+      }}>
+        {features.map((f) => <li key={f}>{f}</li>)}
+      </ul>
+      {!current && (
+        <form action="/api/billing/checkout" method="post" style={{ marginTop: space[3] }}>
           <input type="hidden" name="orgId" value={orgId} />
           <input type="hidden" name="plan" value={plan} />
-          <button style={btn}>Elegir {name}</button>
+          <Button type="submit" variant="primary" block>Elegir {name}</Button>
         </form>
       )}
     </div>
   );
 }
 
-const btn = { padding: "10px 18px", borderRadius: 999, fontWeight: 700, background: "linear-gradient(135deg,#059669,#10B981)", color: "#fff", border: 0, cursor: "pointer", width: "100%" };
+const thStyle = {
+  textAlign: "left",
+  padding: `${space[3]}px ${space[4]}px`,
+  fontSize: font.size.xs,
+  color: cssVar.textDim,
+  fontWeight: font.weight.semibold,
+  textTransform: "uppercase",
+  letterSpacing: font.tracking.wide,
+};
+
+const tdStyle = {
+  padding: `${space[3]}px ${space[4]}px`,
+  color: cssVar.text,
+};

@@ -1,5 +1,7 @@
 import { resolveOrg } from "../../../../server/tenancy";
 import { db } from "../../../../server/db";
+import { Progress } from "@/components/ui/Progress";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,7 @@ export default async function Onboarding() {
   ]);
   const providerIds = new Set(integrations.map((i) => i.provider));
   const hasSso = ["okta", "azure-ad", "google-workspace"].some((p) => providerIds.has(p));
-  const hasScim = org.ssoDomain != null && providerIds.has("okta"); // SCIM se configura desde la integración
+  const hasScim = org.ssoDomain != null && providerIds.has("okta");
   const branding = org.branding || {};
   const hasBranding = !!(branding.logoUrl || branding.primaryColor);
 
@@ -30,17 +32,91 @@ export default async function Onboarding() {
   const done = steps.filter((s) => s.done).length;
 
   return (
-    <article style={{ maxWidth: 760, margin: "0 auto", padding: "36px 24px", color: "#E2E8F0", fontFamily: "system-ui" }}>
-      <h1>Configuración inicial</h1>
-      <p style={{ color: "#94A3B8" }}>{done}/{steps.length} completados</p>
-      <div style={{ height: 6, background: "#1E293B", borderRadius: 3, marginTop: 8 }}>
-        <div style={{ width: `${(done / steps.length) * 100}%`, height: "100%", background: "#10B981", borderRadius: 3, transition: "width 0.3s" }} />
+    <article style={{
+      maxWidth: 760,
+      margin: "0 auto",
+      padding: `${space[6]}px ${space[4]}px`,
+      color: cssVar.text,
+      fontFamily: cssVar.fontSans,
+    }}>
+      <h1 style={{
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        letterSpacing: font.tracking.tight,
+        margin: 0,
+      }}>
+        Configuración inicial
+      </h1>
+      <p style={{
+        color: cssVar.textMuted,
+        fontSize: font.size.sm,
+        marginTop: space[2],
+      }}>
+        {done}/{steps.length} completados
+      </p>
+
+      <div style={{ marginTop: space[3] }}>
+        <Progress value={done} max={steps.length} tone="accent" size="md" />
       </div>
-      <ol style={{ listStyle: "none", padding: 0, marginTop: 24 }}>
+
+      <ol style={{
+        listStyle: "none",
+        padding: 0,
+        margin: `${space[5]}px 0 0`,
+        display: "grid",
+        gap: space[2],
+      }}>
         {steps.map((s) => (
-          <li key={s.id} style={{ padding: 14, border: "1px solid #1E293B", borderRadius: 10, marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: s.done ? "#34D399" : "#E2E8F0" }}>{s.done ? "✓ " : "○ "}{s.label}</span>
-            <a href={s.href} style={{ color: "#10B981" }}>{s.done ? "Revisar" : "Ir"}</a>
+          <li
+            key={s.id}
+            style={{
+              padding: space[3],
+              border: `1px solid ${s.done ? cssVar.accent : cssVar.border}`,
+              borderRadius: radius.md,
+              background: s.done ? cssVar.accentSoft : cssVar.surface,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: space[3],
+            }}
+          >
+            <span style={{
+              color: s.done ? cssVar.accent : cssVar.text,
+              fontWeight: font.weight.medium,
+              display: "flex",
+              alignItems: "center",
+              gap: space[2],
+            }}>
+              <span aria-hidden style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 22,
+                height: 22,
+                borderRadius: radius.full,
+                background: s.done ? cssVar.accent : "transparent",
+                color: s.done ? cssVar.accentInk : cssVar.textMuted,
+                border: s.done ? "none" : `1px solid ${cssVar.border}`,
+                fontSize: 12,
+                fontWeight: font.weight.bold,
+                flexShrink: 0,
+              }}>
+                {s.done ? "✓" : ""}
+              </span>
+              {s.label}
+            </span>
+            <a
+              href={s.href}
+              style={{
+                color: cssVar.accent,
+                fontWeight: font.weight.semibold,
+                fontSize: font.size.sm,
+                textDecoration: "none",
+                flexShrink: 0,
+              }}
+            >
+              {s.done ? "Revisar →" : "Ir →"}
+            </a>
           </li>
         ))}
       </ol>
