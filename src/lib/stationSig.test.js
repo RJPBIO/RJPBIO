@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  buildTapUrl, verifyTapParams, generateSigningKey, hmacShort, SIG_TTL_SEC,
+  buildTapUrl, buildSignedTapUrl, verifyTapParams, generateSigningKey, hmacShort, SIG_TTL_SEC,
 } from "./stationSig.js";
 
 describe("generateSigningKey", () => {
@@ -32,13 +32,32 @@ describe("hmacShort", () => {
   });
 });
 
-describe("buildTapUrl + verifyTapParams (round-trip)", () => {
+describe("buildTapUrl (QR estático)", () => {
+  it("URL solo contiene stationId — sin ts/n/sig", () => {
+    const url = buildTapUrl({ origin: "https://bio.test", stationId: "stn_abc" });
+    const p = new URL(url);
+    expect(p.pathname).toBe("/q");
+    expect(p.searchParams.get("s")).toBe("stn_abc");
+    expect(p.searchParams.get("t")).toBe(null);
+    expect(p.searchParams.get("n")).toBe(null);
+    expect(p.searchParams.get("sig")).toBe(null);
+  });
+  it("acepta origin con o sin trailing slash", () => {
+    expect(buildTapUrl({ origin: "https://x.test",  stationId: "id" })).toBe("https://x.test/q?s=id");
+    expect(buildTapUrl({ origin: "https://x.test/", stationId: "id" })).toBe("https://x.test/q?s=id");
+  });
+  it("lanza si falta stationId", () => {
+    expect(() => buildTapUrl({ origin: "https://x", stationId: "" })).toThrow();
+  });
+});
+
+describe("buildSignedTapUrl + verifyTapParams (URL firmada efímera)", () => {
   const key = generateSigningKey();
   const stationId = "stn_abc123";
   const origin = "https://bio.test";
 
   it("firma válida verifica ok", () => {
-    const url = buildTapUrl({ origin, stationId, signingKey: key });
+    const url = buildSignedTapUrl({ origin, stationId, signingKey: key });
     const p = new URL(url);
     expect(p.pathname).toBe("/q");
     const r = verifyTapParams({
@@ -52,7 +71,7 @@ describe("buildTapUrl + verifyTapParams (round-trip)", () => {
   });
 
   it("clave distinta → bad_sig", () => {
-    const url = buildTapUrl({ origin, stationId, signingKey: key });
+    const url = buildSignedTapUrl({ origin, stationId, signingKey: key });
     const p = new URL(url);
     const r = verifyTapParams({
       stationId,
@@ -67,7 +86,7 @@ describe("buildTapUrl + verifyTapParams (round-trip)", () => {
 
   it("expira pasado SIG_TTL_SEC", () => {
     const oldTs = Math.floor(Date.now() / 1000) - SIG_TTL_SEC - 5;
-    const url = buildTapUrl({ origin, stationId, signingKey: key, ts: oldTs });
+    const url = buildSignedTapUrl({ origin, stationId, signingKey: key, ts: oldTs });
     const p = new URL(url);
     const r = verifyTapParams({
       stationId,
@@ -93,7 +112,7 @@ describe("buildTapUrl + verifyTapParams (round-trip)", () => {
   });
 
   it("stationId manipulado → bad_sig (firma incluye id)", () => {
-    const url = buildTapUrl({ origin, stationId, signingKey: key });
+    const url = buildSignedTapUrl({ origin, stationId, signingKey: key });
     const p = new URL(url);
     const r = verifyTapParams({
       stationId: "stn_otro",
@@ -107,7 +126,7 @@ describe("buildTapUrl + verifyTapParams (round-trip)", () => {
   });
 
   it("nonce manipulado → bad_sig", () => {
-    const url = buildTapUrl({ origin, stationId, signingKey: key });
+    const url = buildSignedTapUrl({ origin, stationId, signingKey: key });
     const p = new URL(url);
     const r = verifyTapParams({
       stationId,
@@ -120,15 +139,8 @@ describe("buildTapUrl + verifyTapParams (round-trip)", () => {
     expect(r.reason).toBe("bad_sig");
   });
 
-  it("buildTapUrl acepta origin con o sin /", () => {
-    const a = buildTapUrl({ origin: "https://x.test",  stationId: "id", signingKey: key, ts: 1000 });
-    const b = buildTapUrl({ origin: "https://x.test/", stationId: "id", signingKey: key, ts: 1000 });
-    expect(new URL(a).pathname).toBe("/q");
-    expect(new URL(b).pathname).toBe("/q");
-  });
-
-  it("buildTapUrl sin args requeridos lanza", () => {
-    expect(() => buildTapUrl({ origin: "https://x", stationId: "", signingKey: "k" })).toThrow();
-    expect(() => buildTapUrl({ origin: "https://x", stationId: "id", signingKey: "" })).toThrow();
+  it("buildSignedTapUrl sin args requeridos lanza", () => {
+    expect(() => buildSignedTapUrl({ origin: "https://x", stationId: "", signingKey: "k" })).toThrow();
+    expect(() => buildSignedTapUrl({ origin: "https://x", stationId: "id", signingKey: "" })).toThrow();
   });
 });
