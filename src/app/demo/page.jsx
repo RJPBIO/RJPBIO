@@ -1,49 +1,91 @@
 import DemoForm from "./DemoForm";
+import { PublicShell } from "@/components/ui/PublicShell";
+import { Container } from "@/components/ui/Container";
+import { Card } from "@/components/ui/Card";
+import { cssVar, space, font } from "@/components/ui/tokens";
+import { getServerLocale } from "@/lib/locale-server";
 
 export const metadata = {
-  title: "Demo · BIO-IGNICIÓN",
+  title: "Demo",
   description: "30 minutos con un especialista. Protocolo en vivo + dashboard de equipo con datos simulados.",
+  openGraph: {
+    title: "BIO-IGNICIÓN · Demo 1:1",
+    description: "Ve un protocolo neural en vivo. Sin slides.",
+    images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
+  },
 };
 
-export default function DemoPage() {
-  return (
-    <main style={page}>
-      <div style={split}>
-        <section>
-          <div style={{ fontSize: 12, color: "#6EE7B7", textTransform: "uppercase", letterSpacing: 2 }}>Demo 1:1</div>
-          <h1 style={{ fontSize: 34, fontWeight: 800, margin: "8px 0 12px" }}>
-            30 minutos para ver si BIO-IGNICIÓN le sirve a tu equipo
-          </h1>
-          <p style={{ color: "#A7F3D0", lineHeight: 1.6, marginBottom: 18 }}>
-            No es una presentación de slides. Corremos un protocolo neural en vivo contigo, te mostramos
-            el panel de equipo con datos simulados y respondemos preguntas de seguridad / compliance.
-          </p>
-          <ul style={{ paddingLeft: 20, color: "#D1FAE5", lineHeight: 1.8, fontSize: 14 }}>
-            <li>Sesión neural en vivo (breath + audio + binaural).</li>
-            <li>Panel de equipo con k-anonymity ≥5.</li>
-            <li>Q&amp;A de SSO, SCIM, DPA, residencia de datos.</li>
-            <li>ROI estimado según tu tamaño de equipo.</li>
-          </ul>
-          <div style={{ marginTop: 22, padding: 14, background: "rgba(5,150,105,.06)", border: "1px solid #064E3B", borderRadius: 12 }}>
-            <div style={{ fontSize: 12, color: "#6EE7B7", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Referencias</div>
-            <p style={{ color: "#D1FAE5", fontSize: 13, lineHeight: 1.6, margin: "6px 0 0" }}>
-              Revisa el <a href="/trust" style={link}>Trust Center</a>, la{" "}
-              <a href="/trust/dpa" style={link}>DPA</a> y nuestros{" "}
-              <a href="/trust/subprocessors" style={link}>subprocesadores</a> antes de hablar.
-            </p>
-          </div>
-        </section>
+const COPY = {
+  es: {
+    eyebrow: "Demo 1:1",
+    h1: "30 minutos para ver si BIO-IGNICIÓN le sirve a tu equipo",
+    p: "No es una presentación de slides. Corremos un protocolo neural en vivo contigo, te mostramos el panel de equipo con datos simulados y respondemos preguntas de seguridad y compliance.",
+    bullets: [
+      "Sesión neural en vivo (breath + audio + binaural).",
+      "Panel de equipo con k-anonymity ≥5.",
+      <>Q&amp;A de SSO, SCIM, DPA, residencia de datos.</>,
+      "ROI estimado según tu tamaño de equipo.",
+    ],
+    refs: "Referencias",
+    refsBody: (
+      <>
+        Revisa el <a href="/trust">Trust Center</a>, la <a href="/trust/dpa">DPA</a> y nuestros{" "}
+        <a href="/trust/subprocessors">subprocesadores</a> antes de hablar.
+      </>
+    ),
+    formTitle: "Reserva un horario",
+  },
+  en: {
+    eyebrow: "1:1 demo",
+    h1: "30 minutes to see if BIO-IGNITION fits your team",
+    p: "It's not a slide deck. We run a live neural protocol with you, show the team panel with simulated data, and answer security & compliance questions.",
+    bullets: [
+      "Live neural session (breath + audio + binaural).",
+      "Team panel with k-anonymity ≥5.",
+      <>Q&amp;A on SSO, SCIM, DPA, data residency.</>,
+      "Estimated ROI based on your team size.",
+    ],
+    refs: "References",
+    refsBody: (
+      <>
+        Check the <a href="/trust">Trust Center</a>, the <a href="/trust/dpa">DPA</a> and our{" "}
+        <a href="/trust/subprocessors">subprocessors</a> before we talk.
+      </>
+    ),
+    formTitle: "Book a slot",
+  },
+};
 
-        <section style={formCard}>
-          <h2 style={{ margin: "0 0 18px", fontSize: 20, fontWeight: 700 }}>Reserva un horario</h2>
-          <DemoForm source="demo" />
-        </section>
-      </div>
-    </main>
+export default async function DemoPage() {
+  const locale = await getServerLocale();
+  const c = COPY[locale === "en" ? "en" : "es"];
+  return (
+    <PublicShell activePath="/demo">
+      <Container size="lg" className="bi-prose">
+        <div className="bi-split">
+          <section>
+            <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
+              {c.eyebrow}
+            </div>
+            <h1 style={{ margin: `${space[2]}px 0 ${space[3]}px` }}>{c.h1}</h1>
+            <p>{c.p}</p>
+            <ul style={{ paddingInlineStart: 20, lineHeight: 1.8, fontSize: 14 }}>
+              {c.bullets.map((b, i) => <li key={i}>{b}</li>)}
+            </ul>
+            <Card as="aside" style={{ marginTop: space[5] }}>
+              <div style={{ fontSize: font.size.sm, color: cssVar.accent, fontWeight: font.weight.bold, textTransform: "uppercase", letterSpacing: "1px" }}>
+                {c.refs}
+              </div>
+              <p style={{ margin: `${space[1.5]}px 0 0`, fontSize: 13 }}>{c.refsBody}</p>
+            </Card>
+          </section>
+
+          <Card as="section" padding={7} aria-labelledby="demo-form-title">
+            <h2 id="demo-form-title" style={{ margin: `0 0 ${space[4]}px` }}>{c.formTitle}</h2>
+            <DemoForm source="demo" />
+          </Card>
+        </div>
+      </Container>
+    </PublicShell>
   );
 }
-
-const page = { minHeight: "100dvh", background: "#0B0E14", color: "#ECFDF5", padding: "48px 24px" };
-const split = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, maxWidth: 1040, margin: "0 auto" };
-const formCard = { padding: 28, background: "rgba(5,150,105,.08)", border: "1px solid #064E3B", borderRadius: 18 };
-const link = { color: "#6EE7B7", textDecoration: "underline" };
