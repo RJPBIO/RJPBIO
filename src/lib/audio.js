@@ -4,10 +4,12 @@
    ═══════════════════════════════════════════════════════════════ */
 
 let _aC = null;
+let _audioUnlocked = false;
 export function gAC() {
   // Si el contexto quedó "closed" (iOS en low-power, o cierre explícito),
   // lo descartamos y creamos uno nuevo; si no, cualquier llamada posterior
   // lanza InvalidStateError y el audio queda muerto hasta recargar la app.
+  // Reseteamos también el flag de unlock: el AC nuevo arranca "suspended".
   if (_aC && _aC.state === "closed") { _aC = null; _audioUnlocked = false; }
   if (!_aC && typeof window !== "undefined") {
     try { _aC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
@@ -19,11 +21,10 @@ export function gAC() {
 // iOS Safari mantiene el AudioContext en "suspended" hasta que un
 // gesto del usuario (touch/click) llame a resume() DENTRO de ese call
 // stack. Esta función debe ejecutarse desde un handler de evento.
-let _audioUnlocked = false;
 export function unlockAudio() {
-  if (_audioUnlocked) return true;
   try {
     const c = gAC(); if (!c) return false;
+    if (_audioUnlocked && c.state === "running") return true;
     if (c.state === "suspended") c.resume().catch(() => {});
     // Oscilador mudo para "calentar" el grafo en iOS.
     const o = c.createOscillator(); const g = c.createGain();
@@ -34,14 +35,15 @@ export function unlockAudio() {
   } catch { return false; }
 }
 
-// Enlaza el desbloqueo al primer gesto global. Idempotente.
-// Usa `{ once: true, capture: true }` para no duplicar listeners.
+// Listeners permanentes (no `once:true`): si el AC se cierra a mitad de
+// sesión y gAC() lo recrea, necesitamos otra oportunidad de resume en
+// gesto del usuario. unlockAudio es idempotente y barato.
 let _unlockWired = false;
 export function wireAudioUnlock() {
   if (_unlockWired || typeof window === "undefined") return;
   _unlockWired = true;
   const onGesture = () => { unlockAudio(); };
-  const opts = { once: true, capture: true, passive: true };
+  const opts = { capture: true, passive: true };
   window.addEventListener("pointerdown", onGesture, opts);
   window.addEventListener("touchstart", onGesture, opts);
   window.addEventListener("keydown", onGesture, opts);
