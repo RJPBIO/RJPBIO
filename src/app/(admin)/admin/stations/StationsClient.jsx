@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
+import { fmtDate } from "@/lib/i18n";
 
 const POLICIES = [
   { v: "ENTRY_EXIT",   l: "Entrada + Salida (recomendado)" },
@@ -122,46 +123,48 @@ export default function StationsClient({ orgId, origin, initial }) {
         </div>
       )}
 
-      <table style={tableStyle}>
-        <thead>
-          <tr>
-            <th style={thStyle}>Etiqueta</th>
-            <th style={thStyle}>Ubicación</th>
-            <th style={thStyle}>Política</th>
-            <th style={thStyle}>Estado</th>
-            <th style={thStyle}>Último tap</th>
-            <th style={thStyle}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 && (
-            <tr><td colSpan={6} style={{ padding: 24, color: "#6B7280", textAlign: "center" }}>
-              Sin estaciones todavía. Crea la primera arriba.
-            </td></tr>
-          )}
-          {rows.map((s) => (
-            <tr key={s.id} style={{ borderTop: "1px solid #1F2937" }}>
-              <td style={tdStyle}>{s.label}</td>
-              <td style={tdStyle}>{s.location || "—"}</td>
-              <td style={tdStyle}>{s.policy}</td>
-              <td style={tdStyle}>
-                <span style={{ color: s.active ? "#34D399" : "#F87171" }}>
-                  {s.active ? "Activa" : "Inactiva"}
-                </span>
-              </td>
-              <td style={tdStyle}>{s.lastTapAt ? new Date(s.lastTapAt).toLocaleString() : "—"}</td>
-              <td style={tdStyle}>
-                <button onClick={() => toggleActive(s.id, s.active)} style={smallBtnGhost}>
-                  {s.active ? "Desactivar" : "Activar"}
-                </button>
-                <button onClick={() => rotate(s.id)} style={{ ...smallBtnGhost, marginLeft: 6 }}>
-                  Rotar
-                </button>
-              </td>
+      <div className="bi-table-wrap">
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Etiqueta</th>
+              <th style={thStyle}>Ubicación</th>
+              <th style={thStyle}>Política</th>
+              <th style={thStyle}>Estado</th>
+              <th style={thStyle}>Último tap</th>
+              <th style={thStyle}>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr><td colSpan={6} style={{ padding: 24, color: "#6B7280", textAlign: "center" }}>
+                Sin estaciones todavía. Crea la primera arriba.
+              </td></tr>
+            )}
+            {rows.map((s) => (
+              <tr key={s.id} style={{ borderTop: "1px solid #1F2937" }}>
+                <td style={tdStyle}>{s.label}</td>
+                <td style={tdStyle}>{s.location || "—"}</td>
+                <td style={tdStyle}>{s.policy}</td>
+                <td style={tdStyle}>
+                  <span style={{ color: s.active ? "#34D399" : "#F87171" }}>
+                    {s.active ? "Activa" : "Inactiva"}
+                  </span>
+                </td>
+                <td style={tdStyle}>{s.lastTapAt ? fmtDate(s.lastTapAt, { dateStyle: "short", timeStyle: "short" }) : "—"}</td>
+                <td style={tdStyle}>
+                  <button onClick={() => toggleActive(s.id, s.active)} style={smallBtnGhost}>
+                    {s.active ? "Desactivar" : "Activar"}
+                  </button>
+                  <button onClick={() => rotate(s.id)} style={{ ...smallBtnGhost, marginLeft: 6 }}>
+                    Rotar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <details style={{ marginTop: 24, padding: 12, background: "#052E16", borderRadius: 8, fontSize: 13 }}>
         <summary style={{ cursor: "pointer", fontWeight: 600 }}>¿Cómo desplegarlas?</summary>
@@ -186,7 +189,7 @@ export default function StationsClient({ orgId, origin, initial }) {
   );
 }
 
-const formStyle   = { display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr auto", gap: 8, marginTop: 16, marginBottom: 16 };
+const formStyle   = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginTop: 16, marginBottom: 16 };
 const inputStyle  = { background: "#0B0E14", color: "#ECFDF5", border: "1px solid #064E3B", borderRadius: 8, padding: "8px 10px", fontSize: 14 };
 const btnStyle    = { background: "#10B981", color: "#052E16", border: 0, borderRadius: 8, padding: "8px 14px", fontWeight: 700, cursor: "pointer" };
 const bannerStyle = { padding: 12, background: "#064E3B", border: "1px solid #10B981", borderRadius: 8, marginBottom: 16 };
