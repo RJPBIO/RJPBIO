@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { requireMembership } from "@/server/rbac";
+import { requireCsrf } from "@/server/csrf";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { generateSigningKey, buildTapUrl } from "@/server/stations";
@@ -26,6 +27,8 @@ async function loadAndAuthorize(id) {
 
 export async function PATCH(req, { params }) {
   try {
+    const csrf = requireCsrf(req);
+    if (csrf) return csrf;
     const { id } = await params;
     const { orm, st } = await loadAndAuthorize(id);
     const body = await req.json();
@@ -42,8 +45,10 @@ export async function PATCH(req, { params }) {
   }
 }
 
-export async function DELETE(_req, { params }) {
+export async function DELETE(req, { params }) {
   try {
+    const csrf = requireCsrf(req);
+    if (csrf) return csrf;
     const { id } = await params;
     const { orm, st } = await loadAndAuthorize(id);
     await orm.station.update({ where: { id: st.id }, data: { active: false } });
@@ -66,18 +71,22 @@ async function currentOrigin() {
 
 export async function POST(req, { params }) {
   try {
+    const csrf = requireCsrf(req);
+    if (csrf) return csrf;
     const { id } = await params;
     const url = new URL(req.url);
     if (url.searchParams.get("action") !== "rotate") {
       return NextResponse.json({ error: "unknown action" }, { status: 400 });
     }
     const { orm, st } = await loadAndAuthorize(id);
+    // Rotar la signingKey solo afecta URLs firmadas efímeras emitidas antes.
+    // El QR estático NO contiene firma, así que los tags impresos siguen vivos.
     const signingKey = generateSigningKey();
     await orm.station.update({ where: { id: st.id }, data: { signingKey } });
     await auditLog({ orgId: st.orgId, action: "station.rotate", target: st.id });
     const origin = await currentOrigin();
-    const tapUrl = buildTapUrl({ origin, stationId: st.id, signingKey });
-    return NextResponse.json({ tapUrl, warning: "Claves antiguas invalidadas. Re-imprime tags." });
+    const tapUrl = buildTapUrl({ origin, stationId: st.id });
+    return NextResponse.json({ tapUrl, warning: "URLs firmadas previas invalidadas. Los QR estáticos siguen funcionando." });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: e.status || 500 });
   }
