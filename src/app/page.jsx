@@ -46,6 +46,7 @@ import { buildCommands } from "../lib/commandPalette";
 import { computePhaseIndex, timeToNextPhase } from "../lib/phaseEngine";
 import { computeSessionMetrics, sessionQualityMessage, shouldPlayIgnitionSignature } from "../lib/sessionClose";
 import { computeBreathFrame } from "../lib/breathCycle";
+import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "../lib/nom35/recommend";
 import { useReducedMotion, useFocusTrap, KEY, announce } from "../lib/a11y";
 import { semantic } from "../lib/tokens";
 
@@ -105,6 +106,7 @@ export default function BioIgnicion(){
   const[showChronoTest,setShowChronoTest]=useState(false);
   const[showResonanceCal,setShowResonanceCal]=useState(false);
   const[showNOM035,setShowNOM035]=useState(false);
+  const[nom35Hint,setNom35Hint]=useState(null);
   const[showCmd,setShowCmd]=useState(false);
   const reducedMotion=useReducedMotion();
   const bp=useBreakpoint();
@@ -162,6 +164,19 @@ export default function BioIgnicion(){
     if(l.totalSessions===0){setOnboard(true);}
     else if(!l.onboardingTourComplete){setShowTour(true);}
     try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
+    // NOM-035: si la última evaluación reporta riesgo medio/alto, sugerimos protocolo acorde.
+    try{
+      const nivel=readStoredNom35Level();
+      const banner=bannerForNivel(nivel);
+      if(banner){
+        const dismissed=(()=>{try{return window.localStorage.getItem("bio-nom35-hint-dismissed")===nivel;}catch{return false;}})();
+        if(!dismissed){
+          const recP=recommendProtocolForNivel(nivel,P);
+          if(recP){setPr(recP);setSec(Math.round(recP.d*durMult));}
+          setNom35Hint({...banner,protocol:recP||null});
+        }
+      }
+    }catch(e){}
   })();return()=>{cancelled=true;if(fallbackTO)clearTimeout(fallbackTO);};},[]);
 
   // ═══ SESSION RE-CHECK EN VISIBILITY ═══
@@ -402,6 +417,22 @@ export default function BioIgnicion(){
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
     {/* Streak Shield (replaces simple streak warning) */}
     {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}} onFreezeStreak={()=>{const r=store.freezeStreak();if(r.ok){setSt_(useStore.getState());announce(`Racha congelada honestamente. Te quedan ${r.remaining} pausas este mes.`,"polite");}else{announce(r.reason==="already_today"?"Ya usaste tu pausa hoy.":"Agotaste tus pausas del mes.","polite");}}}/>}
+
+    {/* NOM-035 hint — solo si hay un nivel medio/alto guardado y no fue descartado */}
+    {ts==="idle"&&nom35Hint&&(
+      <div role="status" aria-live="polite" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:space[3],padding:`${space[3]}px ${space[4]}px`,marginBottom:space[3],background:withAlpha(nom35Hint.intent==="calma"?"#DC2626":"#F59E0B",12),border:`1px solid ${withAlpha(nom35Hint.intent==="calma"?"#DC2626":"#F59E0B",30)}`,borderRadius:radius.md}}>
+        <div style={{display:"flex",alignItems:"center",gap:space[2],minWidth:0}}>
+          <Icon name="shield" size={14} color={nom35Hint.intent==="calma"?"#DC2626":"#F59E0B"}/>
+          <div style={{minWidth:0}}>
+            <div style={{...ty.body(t1),fontWeight:font.weight.semibold}}>{nom35Hint.text}</div>
+            {nom35Hint.protocol&&<div style={{...ty.caption(t3),marginTop:2}}>Sugerido: {nom35Hint.protocol.n} · {Math.round((nom35Hint.protocol.d||0)/60)} min</div>}
+          </div>
+        </div>
+        <button type="button" aria-label="Descartar sugerencia" onClick={()=>{try{window.localStorage.setItem("bio-nom35-hint-dismissed",nom35Hint.nivel);}catch{}setNom35Hint(null);}} style={{background:"transparent",border:"none",color:t2,cursor:"pointer",padding:space[1],borderRadius:radius.sm}}>
+          <Icon name="close" size={14} color={t2}/>
+        </button>
+      </div>
+    )}
 
     {/* Cognitive Load indicator (NEW) */}
     {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[2.5]}px ${space[4]}px`,marginBottom:space[3],background:surface,borderRadius:radius.md}}>
