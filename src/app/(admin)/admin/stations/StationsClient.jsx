@@ -8,6 +8,14 @@ const POLICIES = [
   { v: "EVENING_ONLY", l: "Solo tarde" },
 ];
 
+// Lee la cookie bio-csrf emitida por el middleware para re-enviarla como
+// header en mutaciones (patrón double-submit). Si falta, el server rechaza 403.
+function csrfHeaders() {
+  if (typeof document === "undefined") return {};
+  const m = document.cookie.match(/(?:^|; )bio-csrf=([^;]+)/);
+  return m ? { "x-csrf-token": decodeURIComponent(m[1]) } : {};
+}
+
 export default function StationsClient({ orgId, origin, initial }) {
   const [rows, setRows] = useState(initial || []);
   const [draft, setDraft] = useState({ label: "", location: "", policy: "ENTRY_EXIT" });
@@ -21,7 +29,7 @@ export default function StationsClient({ orgId, origin, initial }) {
     try {
       const r = await fetch("/api/v1/stations", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ orgId, ...draft }),
       });
       const j = await r.json();
@@ -39,7 +47,7 @@ export default function StationsClient({ orgId, origin, initial }) {
   const toggleActive = useCallback(async (id, active) => {
     const r = await fetch(`/api/v1/stations/${id}`, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...csrfHeaders() },
       body: JSON.stringify({ active: !active }),
     });
     if (r.ok) setRows((x) => x.map((s) => s.id === id ? { ...s, active: !active } : s));
@@ -47,7 +55,7 @@ export default function StationsClient({ orgId, origin, initial }) {
 
   const rotate = useCallback(async (id) => {
     if (!confirm("Rotar clave invalidará los tags impresos. ¿Continuar?")) return;
-    const r = await fetch(`/api/v1/stations/${id}?action=rotate`, { method: "POST" });
+    const r = await fetch(`/api/v1/stations/${id}?action=rotate`, { method: "POST", headers: csrfHeaders() });
     const j = await r.json();
     if (r.ok) setJustCreated({ id, label: rows.find((s) => s.id === id)?.label || "", tapUrl: j.tapUrl, rotated: true });
     else alert("Falló: " + j.error);
