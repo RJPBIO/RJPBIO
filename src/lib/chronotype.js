@@ -148,7 +148,15 @@ function scheduleRecommendation(type) {
  * @param {string} type - chronotype key
  * @param {Date} [date]
  */
+const KNOWN_CHRONOTYPES = new Set([
+  "definite_morning", "moderate_morning", "intermediate", "moderate_evening", "definite_evening",
+]);
+
 export function isInDeepWorkWindow(type, date = new Date()) {
+  // Sin chronotype conocido no se infiere ventana; scheduleRecommendation
+  // cae a `intermediate` como default general, pero esa ventana no aplica
+  // al usuario hasta que haga el test MEQ.
+  if (!KNOWN_CHRONOTYPES.has(type)) return false;
   const rec = scheduleRecommendation(type);
   if (!rec.deepWork) return false;
   const hour = date.getHours() + date.getMinutes() / 60;
