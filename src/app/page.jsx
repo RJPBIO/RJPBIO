@@ -14,7 +14,7 @@ import dynamic from "next/dynamic";
 import { P, SCIENCE_DEEP } from "../lib/protocols";
 import {
   MOODS, INTENTS,
-  MID_MSGS, POST_MSGS, PROG_7, DS,
+  POST_MSGS, PROG_7, DS,
 } from "../lib/constants";
 import {
   gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
@@ -24,10 +24,13 @@ import {
 } from "../lib/neural";
 import { useReadiness, computeReadiness } from "../hooks/useReadiness";
 import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "../hooks/useAdaptiveRecommendation";
+import { useCommandKey } from "../hooks/useCommandKey";
+import { useAutoSave } from "../hooks/useAutoSave";
+import { useSessionAudio } from "../hooks/useSessionAudio";
+import { useMidSessionMessages } from "../hooks/useMidSessionMessages";
 import {
   hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition,
-  startAmbient, stopAmbient,
-  startSoundscape, stopSoundscape, startBinaural, stopBinaural,
+  startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
   wireAudioUnlock,
@@ -197,7 +200,7 @@ export default function BioIgnicion(){
   // el store para no mezclar datos de dos cuentas en la misma pestaña.
   useEffect(()=>{if(typeof document==="undefined")return;let busy=false;async function recheck(){if(busy)return;if(document.visibilityState!=="visible")return;busy=true;try{const r=await Promise.race([fetch("/api/auth/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),1200))]);const nextId=r?.user?.id??null;const curId=useStore.getState()._userId??null;if(nextId!==curId){await store.init({userId:nextId});setSt_(useStore.getState());}}catch{}finally{busy=false;}}document.addEventListener("visibilitychange",recheck);return()=>document.removeEventListener("visibilitychange",recheck);},[]);
 
-  useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>{const nv=!v;uiSound[nv?"open":"close"](st.soundOn);return nv;});}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[st.soundOn]);
+  useCommandKey(setShowCmd, st.soundOn);
 
   // NOTA: cmdCommands se define MÁS ABAJO, después de las function declarations
   // que referencia (switchTab, go, pa, sp). Evita TDZ bajo React Compiler, que
@@ -205,13 +208,13 @@ export default function BioIgnicion(){
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
   const stRef=useRef(st);useEffect(()=>{stRef.current=st;},[st]);
-  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(stRef.current);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")save();};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt]);
+  useAutoSave(mt, useCallback(()=>store.update(stRef.current),[]));
   const isDark=useThemeDark({ready:mt,mode:st.themeMode||"auto"});
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
   const hapRef=useRef(H);useEffect(()=>{hapRef.current=H;},[H]);
 
   const motionRef=useRef(null);const circadian=useMemo(()=>getCircadian(),[]);
-  useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();startBinaural(pr.int);}else{stopAmbient();stopSoundscape();stopBinaural();}return()=>{stopAmbient();stopSoundscape();stopBinaural();};},[ts]);
+  useSessionAudio({timerStatus:ts,soundOn:st.soundOn,soundscape:st.soundscape,intent:pr.int});
   useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection(({samples,stability})=>{setSessionData(d=>({...d,motionSamples:samples,stability:stability}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");hapRef.current("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>hapRef.current("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
@@ -223,7 +226,7 @@ export default function BioIgnicion(){
     if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
     return()=>{if(speakTO)clearTimeout(speakTO);};
   },[sec,pr,durMult]);
-  useEffect(()=>{if(ts!=="running")return;let to=null;if(sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);to=setTimeout(()=>setShowMid(false),3500);}else if(sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);to=setTimeout(()=>setShowMid(false),3000);}return()=>{if(to)clearTimeout(to);};},[sec,ts]);
+  useMidSessionMessages({timerStatus:ts,secondsRemaining:sec,setMidMsg,setShowMid});
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
