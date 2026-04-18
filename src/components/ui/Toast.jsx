@@ -96,7 +96,19 @@ function ToastItem({ toast: t, onClose }) {
         animation: "bi-toast-in 0.18s cubic-bezier(0.16,1,0.3,1)",
       }}
     >
-      <span aria-hidden style={{ color, fontSize: 16, lineHeight: 1, marginBlockStart: 2 }}>
+      <span
+        aria-hidden
+        style={{
+          color, fontSize: 12, lineHeight: 1, marginBlockStart: 2,
+          width: 22, height: 22, borderRadius: 999,
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          background: `color-mix(in srgb, ${color} 18%, transparent)`,
+          border: `1px solid ${color}`,
+          fontWeight: font.weight.bold,
+          flexShrink: 0,
+          animation: "bi-ionize 0.7s ease-out",
+        }}
+      >
         {ICON[t.variant] || ICON.info}
       </span>
       <div style={{ flex: 1, minInlineSize: 0 }}>

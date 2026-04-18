@@ -1,5 +1,11 @@
 "use client";
 import { useMemo, useState } from "react";
+import { DataTable, TableToolbar } from "@/components/ui/Table";
+import { Input, Select } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Dialog } from "@/components/ui/Dialog";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const PAGE = 50;
 
@@ -55,122 +61,116 @@ export default function AuditClient({ rows, chain }) {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const slice = filtered.slice(page * PAGE, page * PAGE + PAGE);
 
+  const columns = [
+    { key: "ts",     label: "Fecha",   width: 180, render: (r) => new Date(r.ts).toLocaleString() },
+    { key: "actor",  label: "Actor",   render: (r) => r.actorEmail || r.actorId || "—" },
+    { key: "action", label: "Acción",  render: (r) => <code style={{ color: cssVar.accent, fontFamily: cssVar.fontMono, fontSize: font.size.sm }}>{r.action}</code> },
+    { key: "target", label: "Target",  render: (r) => r.target || "—" },
+    { key: "ip",     label: "IP",      render: (r) => r.ip || "—" },
+    { key: "hash",   label: "Hash",    render: (r) => <code title={r.hash} style={{ fontFamily: cssVar.fontMono, color: cssVar.textDim, fontSize: font.size.sm }}>{r.hash?.slice(0, 10)}…</code> },
+  ];
+
   return (
     <>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: space[4], flexWrap: "wrap", marginBottom: space[4] }}>
         <div>
-          <h1 style={{ margin: 0 }}>Auditoría</h1>
-          <p style={{ fontSize: 13, margin: "4px 0 0", color: chain.ok ? "#10B981" : "#EF4444" }}>
-            {chain.ok ? `● Hash chain verificado · ${chain.entries} entradas` : `● Hash chain ROTO en ${chain.brokenAt}`}
-          </p>
+          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>Auditoría</h1>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: space[2], marginTop: space[1] }}>
+            <Badge variant={chain.ok ? "success" : "danger"} size="sm">
+              {chain.ok ? "Cadena verificada" : "Cadena ROTA"}
+            </Badge>
+            <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>
+              {chain.ok ? `${chain.entries} entradas` : `roto en ${chain.brokenAt}`}
+            </span>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => download(`audit-${fmtDate(new Date())}.csv`, toCSV(filtered))} style={btnGhost}>Exportar CSV</button>
-          <button onClick={() => download(`audit-${fmtDate(new Date())}.json`, JSON.stringify(filtered, null, 2), "application/json")} style={btnGhost}>Exportar JSON</button>
+        <div style={{ display: "flex", gap: space[2] }}>
+          <Button onClick={() => download(`audit-${fmtDate(new Date())}.csv`, toCSV(filtered))} variant="secondary" size="sm">Exportar CSV</Button>
+          <Button onClick={() => download(`audit-${fmtDate(new Date())}.json`, JSON.stringify(filtered, null, 2), "application/json")} variant="secondary" size="sm">Exportar JSON</Button>
         </div>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "2fr repeat(3, 1fr)", gap: 8, marginTop: 16 }}>
-        <input
-          type="search" placeholder="Buscar actor, acción, target, IP…"
-          value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }}
-          style={input}
-        />
-        <select value={action} onChange={(e) => { setAction(e.target.value); setPage(0); }} style={input}>
-          <option value="">Todas las acciones</option>
-          {actions.map((a) => <option key={a} value={a}>{a}</option>)}
-        </select>
-        <input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(0); }} style={input} aria-label="Desde" />
-        <input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(0); }} style={input} aria-label="Hasta" />
-      </div>
+      <TableToolbar>
+        <div style={{ flex: "1 1 240px", minWidth: 200 }}>
+          <Input
+            type="search" value={q} placeholder="Buscar actor, acción, target, IP…"
+            onChange={(e) => { setQ(e.target.value); setPage(0); }}
+          />
+        </div>
+        <div style={{ minWidth: 160 }}>
+          <Select value={action} onChange={(e) => { setAction(e.target.value); setPage(0); }} aria-label="Filtrar por acción">
+            <option value="">Todas las acciones</option>
+            {actions.map((a) => <option key={a} value={a}>{a}</option>)}
+          </Select>
+        </div>
+        <Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(0); }} aria-label="Desde" style={{ maxWidth: 160 }} />
+        <Input type="date" value={toDate}   onChange={(e) => { setToDate(e.target.value); setPage(0); }}   aria-label="Hasta" style={{ maxWidth: 160 }} />
+      </TableToolbar>
 
-      <p style={{ fontSize: 12, color: "#6EE7B7", marginTop: 8 }}>
+      <p style={{ fontSize: font.size.sm, color: cssVar.textMuted, margin: `0 0 ${space[3]}px` }}>
         {filtered.length} de {rows.length} entradas
       </p>
 
-      {filtered.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: "#6EE7B7", border: "1px dashed #064E3B", borderRadius: 12 }}>
-          Sin entradas que coincidan.
-        </div>
-      ) : (
-        <>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: "#6EE7B7" }}>
-                <th style={th}>Fecha</th>
-                <th style={th}>Actor</th>
-                <th style={th}>Acción</th>
-                <th style={th}>Target</th>
-                <th style={th}>IP</th>
-                <th style={th}>Hash</th>
-              </tr>
-            </thead>
-            <tbody>
-              {slice.map((r) => (
-                <tr
-                  key={String(r.id)}
-                  onClick={() => setSelected(r)}
-                  style={{ cursor: "pointer", borderBlockStart: "1px solid #064E3B" }}
-                >
-                  <td style={td}>{new Date(r.ts).toLocaleString()}</td>
-                  <td style={td}>{r.actorEmail || r.actorId || "—"}</td>
-                  <td style={td}><code style={{ color: "#A7F3D0" }}>{r.action}</code></td>
-                  <td style={td}>{r.target || "—"}</td>
-                  <td style={td}>{r.ip || "—"}</td>
-                  <td style={td} title={r.hash}><code>{r.hash?.slice(0, 10)}…</code></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <DataTable
+        columns={columns}
+        rows={slice}
+        getKey={(r) => String(r.id)}
+        onRowClick={(r) => setSelected(r)}
+        emptyTitle="Sin entradas"
+        emptyDescription="No hay eventos que coincidan con los filtros actuales."
+      />
 
-          {pageCount > 1 && (
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
-              <button onClick={() => setPage(0)} disabled={page === 0} style={btnGhost}>«</button>
-              <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} style={btnGhost}>‹</button>
-              <span style={{ padding: "8px 12px", color: "#A7F3D0" }}>
-                {page + 1} de {pageCount}
-              </span>
-              <button onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1} style={btnGhost}>›</button>
-              <button onClick={() => setPage(pageCount - 1)} disabled={page >= pageCount - 1} style={btnGhost}>»</button>
-            </div>
-          )}
-        </>
+      {pageCount > 1 && (
+        <nav aria-label="Paginación" style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginTop: space[4] }}>
+          <Button size="sm" variant="ghost" onClick={() => setPage(0)}                             disabled={page === 0}>«</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.max(0, p - 1))}     disabled={page === 0}>‹</Button>
+          <span style={{ color: cssVar.textDim, fontSize: font.size.sm, padding: `0 ${space[2]}px`, fontFamily: cssVar.fontMono }}>
+            {page + 1} / {pageCount}
+          </span>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1}>›</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage(pageCount - 1)}                          disabled={page >= pageCount - 1}>»</Button>
+        </nav>
       )}
 
-      {selected && (
-        <div
-          role="dialog" aria-modal="true" aria-label="Detalle de evento"
-          onClick={() => setSelected(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 200, display: "grid", placeItems: "center", padding: 24 }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "min(680px, 100%)", maxHeight: "80vh", overflow: "auto", padding: 24, background: "#0B0E14", border: "1px solid #064E3B", borderRadius: 16 }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h2 style={{ margin: 0, fontSize: 18 }}>Evento auditado</h2>
-              <button onClick={() => setSelected(null)} style={{ ...btnGhost, padding: "4px 10px" }}>Cerrar</button>
-            </div>
-            <dl style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "6px 14px", fontSize: 13 }}>
-              <dt style={dt}>Fecha</dt><dd style={dd}>{new Date(selected.ts).toISOString()}</dd>
-              <dt style={dt}>Acción</dt><dd style={dd}><code>{selected.action}</code></dd>
-              <dt style={dt}>Actor</dt><dd style={dd}>{selected.actorEmail || selected.actorId || "—"}</dd>
-              <dt style={dt}>Target</dt><dd style={dd}>{selected.target || "—"}</dd>
-              <dt style={dt}>IP</dt><dd style={dd}>{selected.ip || "—"}</dd>
-              <dt style={dt}>Hash</dt><dd style={{ ...dd, wordBreak: "break-all" }}><code>{selected.hash}</code></dd>
-              {selected.prevHash && (<><dt style={dt}>Hash anterior</dt><dd style={{ ...dd, wordBreak: "break-all" }}><code>{selected.prevHash}</code></dd></>)}
-              {selected.meta && (<><dt style={dt}>Metadata</dt><dd style={dd}><pre style={{ margin: 0, fontSize: 11, color: "#A7F3D0", background: "#052E16", padding: 10, borderRadius: 6, overflow: "auto" }}>{JSON.stringify(selected.meta, null, 2)}</pre></dd></>)}
-            </dl>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title="Evento auditado"
+        description={selected ? new Date(selected.ts).toISOString() : undefined}
+        size="lg"
+        footer={<Button onClick={() => setSelected(null)} variant="secondary" size="sm">Cerrar</Button>}
+      >
+        {selected && (
+          <dl style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: `${space[2]}px ${space[3]}px`, margin: 0, fontSize: font.size.md }}>
+            <DtDd label="Acción"><code style={{ fontFamily: cssVar.fontMono, color: cssVar.accent }}>{selected.action}</code></DtDd>
+            <DtDd label="Actor">{selected.actorEmail || selected.actorId || "—"}</DtDd>
+            <DtDd label="Target">{selected.target || "—"}</DtDd>
+            <DtDd label="IP">{selected.ip || "—"}</DtDd>
+            <DtDd label="Hash"><code style={{ fontFamily: cssVar.fontMono, wordBreak: "break-all" }}>{selected.hash}</code></DtDd>
+            {selected.prevHash && <DtDd label="Hash anterior"><code style={{ fontFamily: cssVar.fontMono, wordBreak: "break-all" }}>{selected.prevHash}</code></DtDd>}
+            {selected.meta && (
+              <DtDd label="Metadata">
+                <pre style={{
+                  margin: 0, fontSize: font.size.sm, color: cssVar.textDim,
+                  background: cssVar.surface2, padding: space[3], borderRadius: radius.sm,
+                  border: `1px solid ${cssVar.border}`, overflow: "auto",
+                }}>
+                  {JSON.stringify(selected.meta, null, 2)}
+                </pre>
+              </DtDd>
+            )}
+          </dl>
+        )}
+      </Dialog>
     </>
   );
 }
 
-const input = { padding: "10px 12px", borderRadius: 10, background: "#052E16", color: "#ECFDF5", border: "1px solid #064E3B", fontSize: 13 };
-const btnGhost = { ...input, background: "transparent", cursor: "pointer", fontWeight: 600 };
-const th = { padding: "8px 10px", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 };
-const td = { padding: "8px 10px" };
-const dt = { color: "#6EE7B7", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 };
-const dd = { margin: 0, color: "#ECFDF5" };
+function DtDd({ label, children }) {
+  return (
+    <>
+      <dt style={{ color: cssVar.textMuted, fontSize: font.size.xs, textTransform: "uppercase", letterSpacing: font.tracking.caps, fontWeight: font.weight.bold }}>{label}</dt>
+      <dd style={{ margin: 0, color: cssVar.text }}>{children}</dd>
+    </>
+  );
+}

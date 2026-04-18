@@ -10,8 +10,9 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 0 0 5px rgba(5, 150, 105, 0.15);
-  --focus-ring-inverse: 0 0 0 3px rgba(16, 185, 129, 0.5);
+  /* Focus ring — capa interna accent + halo bioSignal cyan para profundidad */
+  --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 0 0 5px rgba(34, 211, 238, 0.2), 0 0 18px rgba(34, 211, 238, 0.15);
+  --focus-ring-inverse: 0 0 0 3px rgba(16, 185, 129, 0.5), 0 0 0 5px rgba(34, 211, 238, 0.22), 0 0 20px rgba(34, 211, 238, 0.18);
 
   /* ═══ Theme tokens — light defaults; dark overrides below ═══ */
   --bi-bg: #F1F4F9;
@@ -239,6 +240,8 @@ input, textarea, select {
 @keyframes vcoreEarn { 0% { opacity: 0; transform: translateY(10px) scale(0.5); } 50% { opacity: 1; transform: translateY(-5px) scale(1.2); } 100% { opacity: 0; transform: translateY(-20px) scale(0.8); } }
 @keyframes achievementUnlock { 0% { opacity: 0; transform: scale(0.3) rotate(-10deg); } 60% { transform: scale(1.1) rotate(2deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
 @keyframes levelUp { 0% { opacity: 0; transform: scale(0.5); filter: brightness(2); } 50% { transform: scale(1.15); filter: brightness(1.5); } 100% { opacity: 1; transform: scale(1); filter: brightness(1); } }
+@keyframes bi-indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+@keyframes bi-ionize { 0% { box-shadow: 0 0 0 0 currentColor, 0 0 0 0 currentColor; opacity: 1; } 100% { box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 20%, transparent), 0 0 0 16px color-mix(in srgb, currentColor 0%, transparent); opacity: 0.6; } }
 
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { inline-size: 3px; block-size: 3px; }
