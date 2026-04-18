@@ -2,6 +2,7 @@ import { auth } from "@/server/auth";
 import { resolveOrg } from "@/server/tenancy";
 import { db } from "@/server/db";
 import WebhooksClient from "./WebhooksClient";
+import { cssVar, space, font } from "@/components/ui/tokens";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Webhooks · Admin" };
@@ -22,9 +23,26 @@ export default async function Webhooks() {
     createdAt: h.createdAt.toISOString(),
   }));
   return (
-    <article style={{ maxWidth: 960, margin: "0 auto", padding: "36px 24px", color: "#E2E8F0", fontFamily: "system-ui" }}>
-      <h1 style={{ margin: 0 }}>Webhooks</h1>
-      <p style={{ color: "#A7F3D0", marginTop: 4, fontSize: 13 }}>
+    <article style={{
+      maxWidth: 960,
+      margin: "0 auto",
+      padding: `${space[6]}px ${space[4]}px`,
+      color: cssVar.text,
+      fontFamily: cssVar.fontSans,
+    }}>
+      <h1 style={{
+        margin: 0,
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        letterSpacing: font.tracking.tight,
+      }}>
+        Webhooks
+      </h1>
+      <p style={{
+        color: cssVar.textMuted,
+        marginTop: space[1],
+        fontSize: font.size.sm,
+      }}>
         Recibe eventos firmados (HMAC-SHA256, Standard Webhooks). Hasta 8 reintentos con backoff exponencial.
       </p>
       <WebhooksClient initial={initial} />

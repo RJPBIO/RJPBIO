@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import IntegrationsClient from "./IntegrationsClient";
+import { cssVar, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Integraciones · Admin" };
 
@@ -24,15 +25,35 @@ export default async function IntegrationsPage() {
 
   return (
     <>
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Integraciones</h1>
-      <p style={{ color: "#A7F3D0", marginTop: 4, fontSize: 13 }}>
+      <h1 style={{
+        margin: 0,
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        letterSpacing: font.tracking.tight,
+        color: cssVar.text,
+      }}>
+        Integraciones
+      </h1>
+      <p style={{
+        color: cssVar.textMuted,
+        marginTop: space[1],
+        fontSize: font.size.sm,
+        lineHeight: 1.5,
+      }}>
         Conecta BIO-IGNICIÓN con el stack de tu organización. Cada integración corre con
         credenciales mínimas y revocables desde aquí.
       </p>
       <IntegrationsClient orgId={orgId} catalog={CATALOG} installed={byProvider} />
-      <p style={{ marginTop: 24, fontSize: 12, color: "#6EE7B7" }}>
-        ¿No ves tu herramienta? Usa <a href="/admin/webhooks" style={{ color: "#A7F3D0" }}>Webhooks</a> para
-        conectar cualquier sistema con eventos <code>session.completed</code> y <code>status.incident</code>.
+      <p style={{
+        marginTop: space[5],
+        fontSize: font.size.xs,
+        color: cssVar.textMuted,
+      }}>
+        ¿No ves tu herramienta? Usa{" "}
+        <a href="/admin/webhooks" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>Webhooks</a>{" "}
+        para conectar cualquier sistema con eventos{" "}
+        <code style={{ fontFamily: cssVar.fontMono, color: cssVar.text }}>session.completed</code> y{" "}
+        <code style={{ fontFamily: cssVar.fontMono, color: cssVar.text }}>status.incident</code>.
       </p>
     </>
   );
