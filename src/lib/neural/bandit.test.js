@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   updateArm, armStats, scoreArm, selectArm, armCI, topArms,
-  armKey, timeBucket,
+  armKey, timeBucket, compositeReward,
 } from "./bandit";
 
 describe("armKey / timeBucket", () => {
@@ -168,6 +168,40 @@ describe("topArms", () => {
     };
     const top = topArms(state, 3);
     expect(top.map((t) => t.id)).toEqual(["d", "a", "b"]);
+  });
+});
+
+describe("compositeReward", () => {
+  it("sin extras devuelve mood delta al completarse 100%", () => {
+    expect(compositeReward({ moodDelta: 1 })).toBe(1);
+    expect(compositeReward({ moodDelta: -2 })).toBe(-2);
+  });
+  it("energía y HRV aportan señal secundaria", () => {
+    // mood +1, energía +2 (pre 1 → post 3), hrv +0.2
+    // base = 1 + 0.3*2 + 1.5*0.2 = 1 + 0.6 + 0.3 = 1.9
+    expect(compositeReward({
+      moodDelta: 1, energyDelta: 2, hrvDeltaLnRmssd: 0.2,
+    })).toBeCloseTo(1.9, 3);
+  });
+  it("completionRatio degrada linealmente (mín 0.5, no anula)", () => {
+    expect(compositeReward({ moodDelta: 2, completionRatio: 1 })).toBe(2);
+    expect(compositeReward({ moodDelta: 2, completionRatio: 0.5 })).toBe(1.5);
+    expect(compositeReward({ moodDelta: 2, completionRatio: 0 })).toBe(1);
+  });
+  it("completionRatio fuera de [0,1] se clampa", () => {
+    expect(compositeReward({ moodDelta: 2, completionRatio: 5 })).toBe(2);
+    expect(compositeReward({ moodDelta: 2, completionRatio: -1 })).toBe(1);
+    expect(compositeReward({ moodDelta: 2, completionRatio: NaN })).toBe(2);
+  });
+  it("mood no-finito → null", () => {
+    expect(compositeReward({ moodDelta: NaN })).toBeNull();
+    expect(compositeReward({ moodDelta: "abc" })).toBeNull();
+    expect(compositeReward({})).toBeNull();
+  });
+  it("energía/HRV no-finitos se ignoran sin romper", () => {
+    expect(compositeReward({
+      moodDelta: 1, energyDelta: NaN, hrvDeltaLnRmssd: null,
+    })).toBe(1);
   });
 });
 

@@ -21,6 +21,7 @@ import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
   calcNeuralVariability,
 } from "../lib/neural";
+import { topArms } from "../lib/neural/bandit";
 import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
@@ -53,6 +54,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
   const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
   const bioSignal = useMemo(() => calcBioSignal(st), [st.coherencia, st.resiliencia, st.capacidad, st.moodLog, st.weeklyData, st.history]);
   const burnout = useMemo(() => calcBurnoutIndex(st.moodLog, st.history), [st.moodLog, st.history]);
+  const learnedArms = useMemo(() => topArms(st.banditArms || {}, 3), [st.banditArms]);
   const protoSens = useMemo(() => calcProtoSensitivity(st.moodLog), [st.moodLog]);
   const neuralVar = useMemo(() => calcNeuralVariability(st.history), [st.history]);
   const moodTrend = useMemo(() => (st.moodLog || []).slice(-14).map(m => m.mood), [st.moodLog]);
@@ -320,6 +322,67 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           </div>
         </article>
       </div>
+
+      {burnout.components && (burnout.components.exhaustion?.value > 0 || burnout.components.disengage?.value > 0) && (
+        <article
+          aria-label="Desglose Maslach del burnout"
+          style={{ background: cd, borderRadius: radius.lg, padding: space[3], marginBlockEnd: 14, border: `1px solid ${bd}` }}
+        >
+          <div style={{ ...ty.label(t3), marginBlockEnd: space[2] }}>Desglose Maslach</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2] }}>
+            {[
+              { k: "exhaustion", label: "Agotamiento", v: burnout.components.exhaustion?.value ?? 0 },
+              { k: "disengage", label: "Despersonalización", v: burnout.components.disengage?.value ?? 0 },
+              { k: "efficacy", label: "Baja eficacia", v: burnout.components.efficacy?.value ?? 0 },
+            ].map((row) => {
+              const v = Math.max(0, Math.min(100, Math.round(row.v)));
+              const color = v >= 60 ? semantic.danger : v >= 35 ? semantic.warning : semantic.success;
+              return (
+                <div key={row.k} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <div style={{ ...ty.caption(t3), fontSize: 10 }}>{row.label}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ ...ty.title(color), fontWeight: font.weight.bold, fontSize: 18 }}>{v}</span>
+                    <span style={{ ...ty.caption(t3), fontSize: 9 }}>/100</span>
+                  </div>
+                  <div style={{ height: 3, borderRadius: 2, background: withAlpha(color, 15), position: "relative" }}>
+                    <div style={{ position: "absolute", inset: 0, width: `${v}%`, background: color, borderRadius: 2 }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </article>
+      )}
+
+      {learnedArms.length >= 2 && (
+        <article
+          aria-label="Aprendizaje del motor neural"
+          style={{ background: cd, borderRadius: radius.lg, padding: space[3], marginBlockEnd: 14, border: `1px solid ${bd}` }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
+            <Icon name="predict" size={12} color={ac} aria-hidden="true" />
+            <span style={ty.label(t3)}>Aprendizaje del motor</span>
+          </div>
+          <div style={{ ...ty.caption(t3), marginBlockEnd: space[2], fontSize: 10 }}>
+            Brazos con mejor Δmood observado (intervalo 90% y muestras).
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: space[1.5] }}>
+            {learnedArms.map((arm) => {
+              const pos = arm.mean > 0;
+              const color = pos ? semantic.success : arm.mean < -0.2 ? semantic.danger : t2;
+              return (
+                <div key={arm.id} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: space[2], alignItems: "center" }}>
+                  <div>
+                    <div style={{ ...ty.body(t1), fontSize: 12, fontWeight: font.weight.semibold }}>{arm.id}</div>
+                    <div style={{ ...ty.caption(t3), fontSize: 9 }}>{arm.n} obs · rango {arm.lower > 0 ? "+" : ""}{arm.lower} a {arm.upper > 0 ? "+" : ""}{arm.upper}</div>
+                  </div>
+                  <div style={{ ...ty.title(color), fontSize: 16, fontWeight: font.weight.bold }}>{pos ? "+" : ""}{arm.mean}</div>
+                </div>
+              );
+            })}
+          </div>
+        </article>
+      )}
 
       {moodTrend.length >= 2 && (
         <article

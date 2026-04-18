@@ -131,6 +131,37 @@ export function armCI(arm, confidence = 0.9) {
   };
 }
 
+/**
+ * Recompensa compuesta del bandit. Mood es el canal primario; energía y
+ * HRV (lnRMSSD) aportan señal secundaria cuando están disponibles. El
+ * completionRatio castiga sesiones abandonadas (señal de que el protocolo
+ * no es viable en este contexto, incluso si cuando se completa es bueno).
+ *
+ * Pesos defendibles:
+ *   - mood  : 1.0 (primario, escala Likert ±4)
+ *   - energy: 0.3 (escala 1-3 → ±2, así que aporta ≤ ±0.6)
+ *   - HRV   : 1.5 sobre Δ lnRMSSD (~±0.3 típico post-respiración lenta)
+ *   - completionRatio=1 → factor 1; 0.5 → 0.75; 0 → 0.5 (no anula)
+ */
+export function compositeReward({
+  moodDelta,
+  energyDelta = null,
+  hrvDeltaLnRmssd = null,
+  completionRatio = 1,
+} = {}) {
+  const m = Number(moodDelta);
+  if (!Number.isFinite(m)) return null;
+  let r = m;
+  if (typeof energyDelta === "number" && Number.isFinite(energyDelta)) {
+    r += 0.3 * energyDelta;
+  }
+  if (typeof hrvDeltaLnRmssd === "number" && Number.isFinite(hrvDeltaLnRmssd)) {
+    r += 1.5 * hrvDeltaLnRmssd;
+  }
+  const ratio = Math.max(0, Math.min(1, Number.isFinite(completionRatio) ? completionRatio : 1));
+  return +(r * (0.5 + 0.5 * ratio)).toFixed(3);
+}
+
 /** Snapshot para UI/debug: top-k brazos por media con CI. */
 export function topArms(armsState, k = 3) {
   const entries = Object.entries(armsState || {}).filter(([, a]) => a?.n >= 2);

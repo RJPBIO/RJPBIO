@@ -9,7 +9,7 @@ import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
 import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
 import { logger } from "../lib/logger";
-import { updateArm, armKey, timeBucket } from "../lib/neural/bandit";
+import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
 const STORE_VERSION = 9;
@@ -257,10 +257,29 @@ export const useStore = create((set, get) => ({
   // (intent × bucket temporal) y el log de residuales para calibrar
   // predicciones. El decay del bandit hace que observaciones nuevas
   // pesen más que las viejas (~33 obs de vida media).
-  recordSessionOutcome: ({ intent, protocol, deltaMood, predictedDelta = null, at = null }) => {
+  recordSessionOutcome: ({
+    intent,
+    protocol,
+    deltaMood,
+    predictedDelta = null,
+    at = null,
+    energyDelta = null,
+    hrvDelta = null,
+    completionRatio = 1,
+  }) => {
     const st = get();
     const delta = Number(deltaMood);
     if (!Number.isFinite(delta) || !intent) return;
+    // El bandit aprende del reward compuesto (mood + energía + HRV +
+    // completitud). Los residuales siguen calibrando contra mood puro —
+    // que es lo que predecimos en la UI.
+    const reward = compositeReward({
+      moodDelta: delta,
+      energyDelta,
+      hrvDeltaLnRmssd: hrvDelta,
+      completionRatio,
+    });
+    if (reward === null) return;
     const bucket = timeBucket(at || new Date());
     const arms = st.banditArms || {};
     // Actualizamos DOS brazos: contextual (intent:bucket) y global (intent).
@@ -269,8 +288,8 @@ export const useStore = create((set, get) => ({
     const keyGlb = armKey(intent);
     const nextArms = {
       ...arms,
-      [keyCtx]: updateArm(arms[keyCtx], delta),
-      [keyGlb]: updateArm(arms[keyGlb], delta),
+      [keyCtx]: updateArm(arms[keyCtx], reward),
+      [keyGlb]: updateArm(arms[keyGlb], reward),
     };
     const nextResiduals =
       typeof predictedDelta === "number"

@@ -516,8 +516,9 @@ export function calcProtocolCorrelations(st) {
 //   - chronotype: resultado de MEQ-SA → desplaza el reloj circadiano
 //   - banditArms: estado UCB1 por intent ({ calma, reset, energia, enfoque })
 //   - porDominio: sumatorios crudos NOM-035 por dominio → aplica sesgo
+//   - readiness: output de calcReadiness(...) — z-scores de HRV/RHR/sueño
 export function adaptiveProtocolEngine(st, options = {}) {
-  const { chronotype = null, banditArms = null, porDominio = null } = options;
+  const { chronotype = null, banditArms = null, porDominio = null, readiness = null } = options;
   const now = new Date();
   const h = now.getHours();
   // Reloj circadiano personalizado por chronotype (fallback al real).
@@ -537,6 +538,11 @@ export function adaptiveProtocolEngine(st, options = {}) {
 
   // Override por burnout
   if (burnout.risk === "crítico" || burnout.risk === "alto") {
+    primaryNeed = "calma";
+  }
+  // Override por readiness crítico: HRV/RHR/sueño fisiológicos mandan sobre
+  // preferencias. "recover" → calma forzada; "primed" → permite activación.
+  else if (readiness && readiness.score !== null && readiness.interpretation === "recover") {
     primaryNeed = "calma";
   }
   // Override por NOM-35 urgente (violencia) — tiene prioridad por sobre
@@ -603,11 +609,25 @@ export function adaptiveProtocolEngine(st, options = {}) {
       if (Number.isFinite(ucb)) score += ucb * 4;
     }
 
+    // Readiness (HRV+RHR+sueño) alinea la activación fisiológica esperada:
+    // - primed/ready: bonus a activación; calma pierde relevancia
+    // - recover: bonus a calma; energía/enfoque penalizan
+    // Solo se aplica cuando hay score real (insufficient data → skip).
+    if (readiness && typeof readiness.score === "number") {
+      if (readiness.interpretation === "recover") {
+        if (p.int === "calma") score += 10;
+        else if (p.int === "energia" || p.int === "enfoque") score -= 8;
+      } else if (readiness.interpretation === "primed") {
+        if (p.int === "energia" || p.int === "enfoque") score += 8;
+        else if (p.int === "calma") score -= 4;
+      }
+    }
+
     // Sesgo NOM-035 (dominio psicosocial dominante → intent preferido)
     if (nom35Bias) score = applyBiasToScore(score, p, nom35Bias);
 
     // Generar razón contextual (prioriza NOM-35 si aplica)
-    const reason = _generateReason(p, primaryNeed, sens, burnout, momentum, nom35Bias);
+    const reason = _generateReason(p, primaryNeed, sens, burnout, momentum, nom35Bias, readiness);
 
     return { protocol: p, score: +score.toFixed(2), reason };
   });
@@ -630,13 +650,22 @@ export function adaptiveProtocolEngine(st, options = {}) {
       nom35Bias: nom35Bias
         ? { dominio: nom35Bias.dominio, intent: nom35Bias.intent, urgent: !!nom35Bias.urgent }
         : null,
+      readiness: readiness && typeof readiness.score === "number"
+        ? { score: readiness.score, interpretation: readiness.interpretation }
+        : null,
     },
   };
 }
 
-function _generateReason(protocol, need, sensitivity, burnout, momentum, nom35Bias) {
+function _generateReason(protocol, need, sensitivity, burnout, momentum, nom35Bias, readiness) {
   if (burnout.risk === "crítico" || burnout.risk === "alto") {
     return "Prioridad: reducir riesgo de agotamiento sostenido";
+  }
+  if (readiness && readiness.interpretation === "recover") {
+    return "Readiness bajo (HRV/sueño): prioriza recuperación parasimpática";
+  }
+  if (readiness && readiness.interpretation === "primed" && (protocol.int === "energia" || protocol.int === "enfoque")) {
+    return `Readiness elevado (${readiness.score}): ventana para trabajo cognitivo exigente`;
   }
   if (nom35Bias && nom35Bias.urgent) {
     return "Prioridad: indicadores NOM-035 de violencia laboral requieren intervención formal";
@@ -753,6 +782,21 @@ export function estimateCognitiveLoad(st) {
   if (lastMood <= 2) base += 15;
   else if (lastMood >= 4) base -= 10;
 
+  // Deuda de sueño: horas de la última noche contra target personal.
+  // +6 de carga por cada hora faltante (capado a +20). Evidencia: deprivación
+  // parcial de sueño reduce memoria de trabajo y control inhibitorio
+  // (Lim & Dinges 2010, Psychol Bull 136:375).
+  const sleepHours = typeof st.lastSleepHours === "number" ? st.lastSleepHours : null;
+  const sleepTarget = typeof st.sleepTargetHours === "number" ? st.sleepTargetHours : 7.5;
+  let sleepDebtUsed = false;
+  if (sleepHours !== null && sleepHours > 0) {
+    const deficit = Math.max(0, sleepTarget - sleepHours);
+    if (deficit > 0) {
+      base += Math.min(20, deficit * 6);
+      sleepDebtUsed = true;
+    }
+  }
+
   const load = Math.max(0, Math.min(100, Math.round(base)));
 
   return {
@@ -765,7 +809,8 @@ export function estimateCognitiveLoad(st) {
       "Carga máxima — sesión corta de reset antes de seguir",
     optimalDuration: load < 45 ? 1.5 : load < 65 ? 1 : 0.5,
     color: load < 25 ? "#059669" : load < 45 ? "#6366F1" : load < 65 ? "#D97706" : "#DC2626",
-    personalized: rhythm != null || hist.length >= 14,
+    personalized: rhythm != null || hist.length >= 14 || sleepDebtUsed,
+    sleepDebt: sleepDebtUsed ? +Math.max(0, sleepTarget - sleepHours).toFixed(1) : 0,
   };
 }
 
