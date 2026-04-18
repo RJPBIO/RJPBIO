@@ -1,10 +1,12 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Field, inputStyle } from "@/components/ui/Field";
+import { Kpi } from "@/components/ui/Kpi";
+import { Button } from "@/components/ui/Button";
+import { cssVar, space, font } from "@/components/ui/tokens";
+import { useT } from "@/hooks/useT";
+import { fmtNumber } from "@/lib/i18n";
 
-/* Modelo simplificado para la calculadora pública: extrapola horas
-   recuperadas por empleado al año asumiendo cumplimiento del 60% sobre
-   2 sesiones de 3 min por día laboral (≈220 días/año). Aplica el mismo
-   effectSizeCap y residualFactor conservadores que lib/roi.js. */
 const DEFAULTS = {
   effectSizeCap: 0.35,
   residualFactor: 2.0,
@@ -16,16 +18,34 @@ const DEFAULTS = {
 };
 
 const PLAN_PRICE = { starter: 9, growth: 19, enterprise: 29 };
+const STORAGE_KEY = "bio-roi-inputs";
 
-function fmtMoney(n, curr = "USD") {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n);
+function fmtMoney(n, curr, locale) {
+  return new Intl.NumberFormat(locale, { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n);
 }
 
 export default function RoiCalc() {
-  const [employees, setEmployees] = useState(120);
-  const [hourlyCost, setHourlyCost] = useState(60);
-  const [plan, setPlan] = useState("growth");
-  const [currency, setCurrency] = useState("USD");
+  const { t, locale } = useT();
+  const [inputs, setInputs] = useState({ employees: 120, hourlyCost: 60, plan: "growth", currency: "USD" });
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setInputs((prev) => ({ ...prev, ...saved }));
+      }
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs)); } catch {}
+  }, [inputs, hydrated]);
+
+  const { employees, hourlyCost, plan, currency } = inputs;
 
   const result = useMemo(() => {
     const lift = Math.min(DEFAULTS.observedLift, DEFAULTS.effectSizeCap);
@@ -39,74 +59,95 @@ export default function RoiCalc() {
     return { recoveredHoursPerEmp, totalRecoveredHours, grossValue, annualLicenseCost, netValue, roiMultiple };
   }, [employees, hourlyCost, plan]);
 
+  const reset = () => setInputs({ employees: 120, hourlyCost: 60, plan: "growth", currency: "USD" });
+
   return (
-    <div style={wrap}>
-      <div style={inputCol}>
-        <Field label="Empleados" hint="Personal cubierto por la licencia.">
-          <input type="number" min={1} max={100000} value={employees}
-            onChange={(e) => setEmployees(Math.max(1, +e.target.value || 0))} style={inp} />
+    <div className="bi-split-5-7">
+      <aside
+        aria-labelledby="roi-inputs-heading"
+        style={{ padding: space[5], background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: 14 }}
+      >
+        <h2 id="roi-inputs-heading" style={{ margin: 0, fontSize: 18, fontWeight: font.weight.bold }}>{t("roi.yourData") !== "roi.yourData" ? t("roi.yourData") : (locale === "en" ? "Your data" : "Tus datos")}</h2>
+
+        <Field label={t("roi.employees")} hint={locale === "en" ? "Staff covered by the license." : "Personal cubierto por la licencia."}>
+
+          {(p) => (
+            <input
+              {...p}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={100000}
+              value={employees}
+              onChange={(e) => setInputs({ ...inputs, employees: Math.max(1, +e.target.value || 0) })}
+              style={inputStyle}
+            />
+          )}
         </Field>
-        <Field label={`Costo cargado / hora (${currency})`} hint="Salario + beneficios + overhead por hora.">
-          <input type="number" min={5} max={500} value={hourlyCost}
-            onChange={(e) => setHourlyCost(Math.max(5, +e.target.value || 0))} style={inp} />
+
+        <Field label={`${t("roi.hourlyCost")} (${currency})`} hint={locale === "en" ? "Salary + benefits + overhead per hour." : "Salario + beneficios + overhead por hora."}>
+          {(p) => (
+            <input
+              {...p}
+              type="number"
+              inputMode="decimal"
+              min={5}
+              max={500}
+              value={hourlyCost}
+              onChange={(e) => setInputs({ ...inputs, hourlyCost: Math.max(5, +e.target.value || 0) })}
+              style={inputStyle}
+            />
+          )}
         </Field>
-        <Field label="Plan" hint="Precio por usuario / mes.">
-          <select value={plan} onChange={(e) => setPlan(e.target.value)} style={inp}>
-            <option value="starter">Starter · $9 / mes</option>
-            <option value="growth">Growth · $19 / mes</option>
-            <option value="enterprise">Enterprise · $29 / mes (aprox.)</option>
-          </select>
+
+        <Field label={t("roi.plan")} hint={locale === "en" ? "Price per user / month." : "Precio por usuario / mes."}>
+          {(p) => (
+            <select {...p} value={plan} onChange={(e) => setInputs({ ...inputs, plan: e.target.value })} style={inputStyle}>
+              <option value="starter">Starter · $9 / {locale === "en" ? "mo" : "mes"}</option>
+              <option value="growth">Growth · $19 / {locale === "en" ? "mo" : "mes"}</option>
+              <option value="enterprise">Enterprise · $29 / {locale === "en" ? "mo (approx.)" : "mes (aprox.)"}</option>
+            </select>
+          )}
         </Field>
-        <Field label="Moneda">
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} style={inp}>
-            <option value="USD">USD</option>
-            <option value="MXN">MXN</option>
-            <option value="EUR">EUR</option>
-          </select>
+
+        <Field label={t("roi.currency")}>
+          {(p) => (
+            <select {...p} value={currency} onChange={(e) => setInputs({ ...inputs, currency: e.target.value })} style={inputStyle}>
+              <option value="USD">USD</option>
+              <option value="MXN">MXN</option>
+              <option value="EUR">EUR</option>
+            </select>
+          )}
         </Field>
-        <div style={{ marginTop: 12, padding: 10, background: "#0B0E14", border: "1px dashed #064E3B", borderRadius: 8, fontSize: 11, color: "#9CA3AF", lineHeight: 1.6 }}>
-          Supuestos conservadores: 2 sesiones × 3 min, 60 % cumplimiento,
-          effect-size capado en 0.35, persistencia 2×. Ver{" "}
-          <a href="/docs#roi-model" style={{ color: "#6EE7B7" }}>modelo completo</a>.
+
+        <Button variant="ghost" size="sm" onClick={reset} type="button">{t("roi.reset")}</Button>
+
+        <p style={{ marginTop: space[4], padding: space[2.5], background: cssVar.bg, border: `1px dashed ${cssVar.border}`, borderRadius: 8, fontSize: 11, color: cssVar.textMuted, lineHeight: 1.6 }}>
+          {locale === "en"
+            ? "Assumptions: 2 sessions × 3 min, 60% compliance, effect-size capped at 0.35, 2× persistence. Everything is computed in your browser; we don't store inputs server-side. "
+            : "Supuestos: 2 sesiones × 3 min, 60 % cumplimiento, effect-size capado en 0.35, persistencia 2×. Todo se calcula en tu navegador; no guardamos los inputs en servidor. "}
+          <a href="/docs#roi-model">{locale === "en" ? "See model." : "Ver modelo."}</a>
+        </p>
+      </aside>
+
+      <section aria-labelledby="roi-out-heading" style={{ padding: space[1] }}>
+        <h2 id="roi-out-heading" className="bi-sr-only">{locale === "en" ? "Results" : "Resultados"}</h2>
+        <Kpi live label={locale === "en" ? "Recovered hours / employee / year" : "Horas recuperadas / empleado / año"} value={result.recoveredHoursPerEmp.toFixed(1)} />
+        <Kpi live label={locale === "en" ? "Recovered hours (annual total)" : "Horas recuperadas (total anual)"} value={fmtNumber(Math.round(result.totalRecoveredHours))} />
+        <Kpi live label={locale === "en" ? "Annual gross value" : "Valor bruto anual"} value={fmtMoney(result.grossValue, currency, locale)} accent />
+        <Kpi
+          live
+          label={locale === "en" ? "Annual license cost" : "Costo de licencia anual"}
+          value={fmtMoney(result.annualLicenseCost, currency, locale)}
+          sub={`${employees} × $${PLAN_PRICE[plan]} × 12`}
+        />
+        <Kpi live label={locale === "en" ? "Annual net value" : "Valor neto anual"} value={fmtMoney(result.netValue, currency, locale)} accent={result.netValue > 0} />
+        <Kpi live label={locale === "en" ? "ROI multiple" : "Múltiplo de ROI"} value={result.roiMultiple ? `${result.roiMultiple.toFixed(1)}×` : "—"} />
+
+        <div style={{ marginTop: space[3] }}>
+          <Button href="/demo">{locale === "en" ? "Book a demo with these numbers" : "Agenda demo con estos números"}</Button>
         </div>
-      </div>
-
-      <div style={outCol}>
-        <Kpi label="Horas recuperadas / empleado / año" value={result.recoveredHoursPerEmp.toFixed(1)} />
-        <Kpi label="Horas recuperadas (total anual)" value={Math.round(result.totalRecoveredHours).toLocaleString()} />
-        <Kpi label="Valor bruto anual" value={fmtMoney(result.grossValue, currency)} accent />
-        <Kpi label="Costo de licencia anual" value={fmtMoney(result.annualLicenseCost, currency)} sub={`${employees} × $${PLAN_PRICE[plan]} × 12`} />
-        <Kpi label="Valor neto anual" value={fmtMoney(result.netValue, currency)} accent={result.netValue > 0} />
-        <Kpi label="Múltiplo de ROI" value={result.roiMultiple ? `${result.roiMultiple.toFixed(1)}×` : "—"} />
-
-        <a href="/demo" style={cta}>Agenda demo con estos números</a>
-      </div>
+      </section>
     </div>
   );
 }
-
-function Field({ label, hint, children }) {
-  return (
-    <label style={{ display: "block", marginBottom: 14 }}>
-      <div style={{ fontSize: 12, color: "#A7F3D0", marginBottom: 4, fontWeight: 600 }}>{label}</div>
-      {children}
-      {hint && <div style={{ fontSize: 11, color: "#6B7280", marginTop: 3 }}>{hint}</div>}
-    </label>
-  );
-}
-
-function Kpi({ label, value, sub, accent }) {
-  return (
-    <div style={{ padding: 16, borderRadius: 12, background: accent ? "rgba(16,185,129,.12)" : "rgba(5,150,105,.06)", border: `1px solid ${accent ? "#10B981" : "#064E3B"}`, marginBottom: 10 }}>
-      <div style={{ fontSize: 11, color: "#6EE7B7", textTransform: "uppercase", letterSpacing: 1.5 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 800, margin: "4px 0" }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: "#A7F3D0" }}>{sub}</div>}
-    </div>
-  );
-}
-
-const wrap = { display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 28, alignItems: "start" };
-const inputCol = { padding: 22, background: "rgba(5,150,105,.06)", border: "1px solid #064E3B", borderRadius: 14 };
-const outCol = { padding: 4 };
-const inp = { display: "block", width: "100%", background: "#0B0E14", color: "#ECFDF5", border: "1px solid #064E3B", borderRadius: 8, padding: "8px 10px", fontSize: 14 };
-const cta = { display: "inline-block", marginTop: 12, background: "#10B981", color: "#052E16", padding: "12px 20px", borderRadius: 10, textDecoration: "none", fontWeight: 700 };
