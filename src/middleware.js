@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { issueToken, verifyToken, CSRF } from "@/server/csrf";
 
 /* ═══════════════════════════════════════════════════════════════
    BIO-IGNICIÓN — Edge Middleware
@@ -106,6 +107,24 @@ export function middleware(request) {
   reqHeaders.set("x-csp", csp);
 
   const res = NextResponse.next({ request: { headers: reqHeaders } });
+
+  // Emisión de token CSRF (double-submit): cookie legible por JS + header echo.
+  // Solo para navegaciones GET — las requests autenticadas de API/mutación
+  // reusan la cookie existente. Renovamos si falta o expiró.
+  if (request.method === "GET" && !path.startsWith("/api/")) {
+    const existing = request.cookies.get(CSRF.COOKIE)?.value;
+    if (!existing || !verifyToken(existing)) {
+      const tok = issueToken();
+      res.cookies.set(CSRF.COOKIE, tok, {
+        httpOnly: false, // el cliente debe leerla para re-enviar en header
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 8 * 3600,
+      });
+    }
+  }
+
   res.headers.set("Content-Security-Policy", csp);
   res.headers.set("x-nonce", nonce);
   res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
