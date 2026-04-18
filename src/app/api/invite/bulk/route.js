@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
+import { sendInvite } from "@/server/email";
 
 const EXP_DAYS = 7;
 const MAX_BATCH = 200;
@@ -43,18 +44,28 @@ export async function POST(request) {
     : [];
   const alreadyMembers = new Set(existingUsers.map((u) => (u.email || "").toLowerCase()));
 
+  const org = await orm.org.findUnique({ where: { id: orgId } });
+  const orgName = org?.name || "tu equipo";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const inviterName = session.user.name || session.user.email;
+
   const expiresAt = new Date(Date.now() + EXP_DAYS * 86400000);
   let invited = 0;
   for (const email of uniq) {
     if (pending.has(email) || alreadyMembers.has(email)) continue;
     try {
-      await orm.invitation.create({
-        data: {
-          orgId, email, role,
-          token: crypto.randomBytes(32).toString("base64url"),
-          expiresAt,
-        },
-      });
+      const token = crypto.randomBytes(32).toString("base64url");
+      await orm.invitation.create({ data: { orgId, email, role, token, expiresAt } });
+      try {
+        await sendInvite({
+          to: email,
+          orgName,
+          acceptUrl: `${baseUrl}/accept-invite/${token}`,
+          inviterName,
+        });
+      } catch (mailErr) {
+        console.error("[invite/bulk] email failed for", email, mailErr?.message);
+      }
       invited += 1;
     } catch { /* ignore individual failures */ }
   }

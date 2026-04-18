@@ -43,9 +43,9 @@ export default function IntegrationsClient({ orgId, catalog, installed }) {
             </div>
             <p style={{ margin: 0, fontSize: 13, color: "#A7F3D0" }}>{p.desc}</p>
 
-            {inst && (
+            {inst && inst.lastSyncAt && (
               <div style={{ fontSize: 11, color: "#6EE7B7" }}>
-                Última sync: {inst.lastSyncAt ? new Date(inst.lastSyncAt).toLocaleString() : "—"}
+                Última sync: {new Date(inst.lastSyncAt).toLocaleString()}
               </div>
             )}
 

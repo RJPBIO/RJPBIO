@@ -1,5 +1,6 @@
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
+import { listInvoices } from "@/server/billing";
 
 export const metadata = { title: "Facturación · Admin" };
 
@@ -36,7 +37,7 @@ export default async function BillingPage() {
   const seatPct = limits.seats === Infinity ? 0 : Math.min(100, Math.round((seatsUsed / limits.seats) * 100));
   const sessionPct = limits.sessions === Infinity ? 0 : Math.min(100, Math.round((sessionsThisMonth / limits.sessions) * 100));
 
-  const invoices = (org.stripeCustomer && Array.isArray(org.invoices)) ? org.invoices : [];
+  const invoices = await listInvoices(org.stripeCustomer, 12);
 
   return (
     <>

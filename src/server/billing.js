@@ -58,3 +58,23 @@ export async function portalSession(org, returnUrl) {
   const stripe = await getStripe();
   return stripe.billingPortal.sessions.create({ customer: org.stripeCustomer, return_url: returnUrl });
 }
+
+/* Lista las últimas N facturas para el customer. No-op seguro sin Stripe. */
+export async function listInvoices(customerId, limit = 12) {
+  if (!process.env.STRIPE_SECRET_KEY || !customerId) return [];
+  try {
+    const stripe = await getStripe();
+    const res = await stripe.invoices.list({ customer: customerId, limit });
+    return (res.data || []).map((i) => ({
+      id: i.id,
+      date: (i.created || 0) * 1000,
+      amount: i.amount_paid ?? i.total ?? 0,
+      currency: i.currency,
+      status: i.status,
+      pdf: i.invoice_pdf || i.hosted_invoice_url || null,
+    }));
+  } catch (e) {
+    console.error("[billing] listInvoices failed:", e?.message);
+    return [];
+  }
+}

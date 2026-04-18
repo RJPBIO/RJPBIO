@@ -46,8 +46,11 @@ export default function Recover() {
 
         <div>
           <label style={label}>Perdí mi dispositivo con TOTP/passkey</label>
-          <p style={hint}>Usa un código de recuperación pre-emitido o contacta al admin de tu organización.</p>
-          <a href="/mfa-reset" style={btnLink}>Usar código de recuperación</a>
+          <p style={hint}>
+            Tu administrador puede reiniciar el segundo factor desde <code>/admin/members</code>,
+            o contacta a soporte con tu correo corporativo.
+          </p>
+          <a href="mailto:soporte@bio-ignicion.app?subject=Reset%20MFA" style={btnLink}>Pedir reset de MFA</a>
         </div>
 
         <hr style={divider} />
