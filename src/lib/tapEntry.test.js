@@ -96,15 +96,37 @@ describe("resolveTapEntry — legacy deep-link (NFC/QR)", () => {
     expect(r.protocol.int).toMatch(/calma|reset/);
   });
 
-  it("quirk documentado: URL vacía dispara rama deeplink porque parseDeepLink defaultea type='entrada'", () => {
+  it("URL vacía NO dispara nada (kind:null)", () => {
     const r = resolveTapEntry(new URLSearchParams(""), opts({ random: () => 0 }));
+    expect(r.kind).toBe(null);
+  });
+
+  it("t explícito sin company/employee sí dispara deeplink", () => {
+    const r = resolveTapEntry(new URLSearchParams("t=entrada"), opts({ random: () => 0 }));
     expect(r.kind).toBe("deeplink");
     expect(r.context.type).toBe("entrada");
+  });
+
+  it("sólo employee dispara deeplink", () => {
+    const r = resolveTapEntry(new URLSearchParams("e=u42"), opts({ random: () => 0 }));
+    expect(r.kind).toBe("deeplink");
+    expect(r.context.employee).toBe("u42");
+  });
+
+  it("sólo company dispara deeplink", () => {
+    const r = resolveTapEntry(new URLSearchParams("c=Acme"), opts({ random: () => 0 }));
+    expect(r.kind).toBe("deeplink");
+    expect(r.context.company).toBe("Acme");
   });
 
   it("returns kind:null si parseDeepLink rechaza la URL (params inválidos)", () => {
     const longUnsafe = "c=" + "@".repeat(200); // excede MAX_LEN
     const r = resolveTapEntry(new URLSearchParams(longUnsafe), opts());
+    expect(r.kind).toBe(null);
+  });
+
+  it("ignora sig/ts solos (no cuentan como params reales)", () => {
+    const r = resolveTapEntry(new URLSearchParams("sig=abc&ts=1700000000"), opts());
     expect(r.kind).toBe(null);
   });
 });

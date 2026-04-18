@@ -55,11 +55,11 @@ export function resolveTapEntry(params, opts) {
   }
 
   const link = parseDeepLink(params);
-  // NOTA: parseDeepLink siempre devuelve type="entrada" por defecto, así que
-  // link.type es truthy incluso sin params. Preservamos el comportamiento
-  // actual: este branch dispara en cualquier URL (banner "SESIÓN DE ENTRADA"
-  // aparece en carga normal). Ver docstring del commit para contexto.
-  if (link && (link.company || link.type)) {
+  // Dispara solo si hay evidencia real de un NFC/QR: company, employee, o t
+  // explícito. parseDeepLink defaultea type a "entrada", así que checar
+  // link.type directamente haría disparar el banner en toda carga normal.
+  const hasRealParams = link && (link.company || link.employee || params.get("t"));
+  if (hasRealParams) {
     const isExit = link.type === "salida" || link.type === "exit";
     const pool = pickPool(protocols, { isExit, morning: hour < 12 });
     const pick = pool[Math.floor(random() * pool.length)] || protocols[0];
