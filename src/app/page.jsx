@@ -38,6 +38,7 @@ import Icon from "../components/Icon";
 import { useSync } from "../hooks/useSync";
 import { useDeepLink } from "../hooks/useDeepLink";
 import { useBreakpoint } from "../hooks/useBreakpoint";
+import { useThemeDark } from "../hooks/useThemeDark";
 import { uiSound } from "../lib/uiSound";
 import { parseDeepLink } from "../lib/deeplink";
 import { buildCommands } from "../lib/commandPalette";
@@ -206,8 +207,7 @@ export default function BioIgnicion(){
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
   useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
-  const[isDark,setIsDark]=useState(false);
-  useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
+  const isDark=useThemeDark({ready:mt,mode:st.themeMode||"auto"});
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
 
   const motionRef=useRef(null);const circadian=useMemo(()=>getCircadian(),[]);
