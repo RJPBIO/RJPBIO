@@ -31,7 +31,7 @@ const GROUPS = [
 
 export default async function AdminLayout({ children }) {
   const session = await auth();
-  if (!session?.user) redirect("/auth/signin?callbackUrl=/admin");
+  if (!session?.user) redirect("/signin?next=/admin");
   const adminOrgs = (session.memberships || []).filter((m) => ["OWNER", "ADMIN"].includes(m.role));
   if (!adminOrgs.length) redirect("/");
   return (

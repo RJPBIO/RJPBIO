@@ -7,7 +7,7 @@ export const metadata = { title: "Equipo" };
 
 export default async function TeamPage({ searchParams }) {
   const session = await auth();
-  if (!session?.user) redirect("/auth/signin?callbackUrl=/team");
+  if (!session?.user) redirect("/signin?next=/team");
   const mgr = session.memberships.find((m) => ["OWNER","ADMIN","MANAGER"].includes(m.role));
   if (!mgr) redirect("/");
   const sp = await searchParams;

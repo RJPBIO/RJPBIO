@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function StationsPage() {
   const session = await auth();
-  if (!session?.user) redirect("/auth/signin?callbackUrl=/admin/stations");
+  if (!session?.user) redirect("/signin?next=/admin/stations");
   const adminOrgs = (session.memberships || []).filter((m) => ["OWNER", "ADMIN"].includes(m.role));
   if (!adminOrgs.length) redirect("/");
 

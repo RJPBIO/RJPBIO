@@ -29,6 +29,46 @@ export default function NotificationsBell() {
 
   useEffect(() => { setItems(load()); }, []);
 
+  const sync = useCallback(async () => {
+    try {
+      const since = Number(localStorage.getItem("bio-notifications-since") || 0);
+      const url = since
+        ? `/api/notifications/recent?since=${since}`
+        : "/api/notifications/recent";
+      const r = await fetch(url, { credentials: "same-origin" });
+      if (!r.ok) return;
+      const { items: serverItems = [] } = await r.json();
+      if (!serverItems.length) return;
+      setItems((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        const additions = serverItems
+          .filter((s) => !seen.has(`srv_${s.id}`))
+          .map((s) => ({
+            id: `srv_${s.id}`,
+            title: s.title,
+            body: s.body || "",
+            href: s.href || null,
+            level: s.level || "info",
+            at: s.at,
+            read: false,
+          }));
+        if (!additions.length) return prev;
+        const next = [...additions, ...prev].slice(0, MAX);
+        save(next);
+        const latest = Math.max(...additions.map((a) => a.at));
+        try { localStorage.setItem("bio-notifications-since", String(latest + 1)); } catch { /* empty */ }
+        return next;
+      });
+    } catch { /* empty */ }
+  }, []);
+
+  useEffect(() => {
+    sync();
+    function onVis() { if (!document.hidden) sync(); }
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [sync]);
+
   const add = useCallback((n) => {
     const item = {
       id: n.id || `n_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
