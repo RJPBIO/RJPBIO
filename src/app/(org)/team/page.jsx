@@ -2,6 +2,8 @@ import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { anonymize } from "@/server/analytics";
 import { redirect } from "next/navigation";
+import { Badge } from "@/components/ui/Badge";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Equipo" };
 export const dynamic = "force-dynamic";
@@ -22,47 +24,173 @@ export default async function TeamPage({ searchParams }) {
   const agg = anonymize(sessions, { k: 5, epsilon: 1.0 });
 
   return (
-    <main style={{ padding: "28px 24px", color: "#ECFDF5", background: "#0B0E14", minHeight: "100dvh" }}>
-      <h1>Panel de equipo</h1>
-      <p style={{ color: "#A7F3D0", fontSize: 13 }}>
-        Datos agregados con k-anonymity ≥5 y noise diferencial (ε=1.0). Nunca se identifican individuos.
-      </p>
-      <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
-        {teams.map((t) => (
-          <a key={t.id} href={`/team?team=${t.id}`} style={{ padding: "8px 14px", borderRadius: 999, border: "1px solid #064E3B", color: t.id === teamId ? "#10B981" : "#A7F3D0", textDecoration: "none" }}>
-            {t.name}
-          </a>
-        ))}
-      </div>
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
+    <main style={{
+      padding: `${space[6]}px ${space[4]}px`,
+      color: cssVar.text,
+      background: cssVar.bg,
+      minHeight: "100dvh",
+      fontFamily: cssVar.fontSans,
+    }}>
+      <header style={{ marginBottom: space[4] }}>
+        <h1 style={{
+          margin: 0,
+          fontSize: font.size["2xl"],
+          fontWeight: font.weight.black,
+          letterSpacing: font.tracking.tight,
+        }}>
+          Panel de equipo
+        </h1>
+        <p style={{
+          color: cssVar.textMuted,
+          fontSize: font.size.sm,
+          marginTop: space[1],
+          lineHeight: 1.5,
+        }}>
+          Datos agregados con k-anonymity ≥5 y noise diferencial (ε=1.0). Nunca se identifican individuos.
+        </p>
+      </header>
+
+      {teams.length > 0 && (
+        <div style={{
+          display: "flex",
+          gap: space[2],
+          margin: `${space[3]}px 0 ${space[4]}px`,
+          flexWrap: "wrap",
+        }}>
+          {teams.map((t) => {
+            const active = t.id === teamId;
+            return (
+              <a
+                key={t.id}
+                href={`/team?team=${t.id}`}
+                style={{
+                  padding: `${space[2]}px ${space[4]}px`,
+                  borderRadius: radius.full,
+                  border: `1px solid ${active ? cssVar.accent : cssVar.border}`,
+                  background: active ? cssVar.accentSoft : "transparent",
+                  color: active ? cssVar.accent : cssVar.textDim,
+                  textDecoration: "none",
+                  fontSize: font.size.sm,
+                  fontWeight: font.weight.semibold,
+                  transition: "background .15s ease, border-color .15s ease",
+                }}
+              >
+                {t.name}
+              </a>
+            );
+          })}
+        </div>
+      )}
+
+      <section style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: space[4],
+      }}>
         <Stat label="Sesiones (30d)" v={sessions.length} />
         <Stat label="Cohortes visibles" v={agg.buckets.length} />
         <Stat label="Suprimidas" v={agg.suppressed} sub="<5 usuarios" />
         <Stat label="k" v={agg.k} sub="anonymity" />
       </section>
-      <h2 style={{ marginTop: 28, fontSize: 16 }}>Tendencias por día</h2>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-        <thead><tr><th>Día</th><th>Usuarios</th><th>Sesiones</th><th>Δ coherencia</th><th>Δ mood</th></tr></thead>
-        <tbody>
-          {agg.buckets.map((b, i) => (
-            <tr key={i}>
-              <td>{b.day}</td><td>{b.uniqueUsers}</td><td>{b.sessions}</td>
-              <td>{b.avgCoherenciaDelta?.toFixed(1) ?? "—"}</td>
-              <td>{b.avgMoodDelta?.toFixed(2) ?? "—"}</td>
+
+      <h2 style={{
+        marginTop: space[6],
+        fontSize: font.size.lg,
+        fontWeight: font.weight.bold,
+        letterSpacing: font.tracking.tight,
+      }}>
+        Tendencias por día
+      </h2>
+
+      <div style={{
+        marginTop: space[3],
+        background: cssVar.surface,
+        border: `1px solid ${cssVar.border}`,
+        borderRadius: radius.md,
+        overflow: "hidden",
+      }}>
+        <table style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: font.size.sm,
+        }}>
+          <thead>
+            <tr style={{ background: cssVar.surface2 }}>
+              <th style={thStyle}>Día</th>
+              <th style={thStyle}>Usuarios</th>
+              <th style={thStyle}>Sesiones</th>
+              <th style={thStyle}>Δ coherencia</th>
+              <th style={thStyle}>Δ mood</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {agg.buckets.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ padding: space[6], textAlign: "center", color: cssVar.textMuted }}>
+                  Sin cohortes visibles todavía. Se requieren ≥5 usuarios por día.
+                </td>
+              </tr>
+            )}
+            {agg.buckets.map((b, i) => (
+              <tr key={i} style={{ borderBlockStart: `1px solid ${cssVar.border}` }}>
+                <td style={tdStyle}>{b.day}</td>
+                <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.uniqueUsers}</td>
+                <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.sessions}</td>
+                <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.avgCoherenciaDelta?.toFixed(1) ?? "—"}</td>
+                <td style={{ ...tdStyle, fontFamily: cssVar.fontMono }}>{b.avgMoodDelta?.toFixed(2) ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
 }
 
 function Stat({ label, v, sub }) {
   return (
-    <div style={{ padding: 18, borderRadius: 16, background: "rgba(5,150,105,.08)", border: "1px solid #064E3B" }}>
-      <div style={{ fontSize: 12, color: "#6EE7B7", textTransform: "uppercase", letterSpacing: 2 }}>{label}</div>
-      <div style={{ fontSize: 32, fontWeight: 800, margin: "6px 0" }}>{v}</div>
-      {sub && <div style={{ fontSize: 12, color: "#A7F3D0" }}>{sub}</div>}
+    <div style={{
+      padding: space[4],
+      borderRadius: radius.md,
+      background: cssVar.accentSoft,
+      border: `1px solid ${cssVar.border}`,
+    }}>
+      <div style={{
+        fontSize: font.size.xs,
+        color: cssVar.textDim,
+        textTransform: "uppercase",
+        letterSpacing: font.tracking.wide,
+        fontWeight: font.weight.semibold,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        margin: `${space[1]}px 0`,
+        color: cssVar.text,
+        fontFamily: cssVar.fontMono,
+      }}>
+        {v}
+      </div>
+      {sub && (
+        <div style={{ fontSize: font.size.xs, color: cssVar.textMuted }}>{sub}</div>
+      )}
     </div>
   );
 }
+
+const thStyle = {
+  textAlign: "left",
+  padding: `${space[3]}px ${space[4]}px`,
+  fontSize: font.size.xs,
+  color: cssVar.textDim,
+  fontWeight: font.weight.semibold,
+  textTransform: "uppercase",
+  letterSpacing: font.tracking.wide,
+};
+
+const tdStyle = {
+  padding: `${space[3]}px ${space[4]}px`,
+  color: cssVar.text,
+};
