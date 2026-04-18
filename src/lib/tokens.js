@@ -6,23 +6,25 @@
    ═══════════════════════════════════════════════════════════════ */
 
 // ─── Typography Scale ────────────────────────────────────
-// Modular scale, base 12px, ratio ~1.2
+// Modular scale, base 14px, ratio ~1.2. Benchmark: Linear (14), Stripe (14),
+// Apple HIG body (17). La escala previa arrancaba en 9-11 — anti-legibilidad
+// en mobile. xs/sm se reservan para captions, kbd y eyebrows en caps.
 // Font families bind to next/font CSS variables declared in layout.js.
 export const font = {
   family: "var(--font-sans), 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   mono: "var(--font-mono), 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
 
   size: {
-    xs: 9,
-    sm: 10,
-    base: 11,
-    md: 12,
-    lg: 14,
-    xl: 16,
-    "2xl": 20,
-    "3xl": 28,
-    "4xl": 36,
-    hero: 48,
+    xs: 11,
+    sm: 12,
+    base: 14,
+    md: 15,
+    lg: 16,
+    xl: 18,
+    "2xl": 22,
+    "3xl": 30,
+    "4xl": 40,
+    hero: 56,
   },
 
   weight: {
