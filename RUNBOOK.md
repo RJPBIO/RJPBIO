@@ -51,6 +51,72 @@ Fix: confirm Upstash creds. Without Redis, expect rate-limit leakage between ser
 - Stripe webhook secret: regenerate in Stripe, update env, redeploy.
 - API keys: `/admin/api-keys` — revoke and reissue. Token values are hashed; original is shown once.
 
+## Incident lifecycle (SEV1 / SEV2)
+
+1. **Declare** — one person owns comms (Incident Commander). Post in `#incidents` with severity + symptom.
+2. **Contain** — stop the bleed before fixing the cause. Toggle the feature flag, roll back the deploy, block the bad actor.
+3. **Communicate** — first customer-facing update within 15 min on `/status` + status email. Every 30 min until resolved.
+4. **Resolve** — declared only when metrics return to baseline for ≥ 15 min.
+5. **Postmortem** — blameless, within 5 business days. Template below.
+
+### Comms templates
+
+**Initial (status page + email):**
+> We are investigating reports of [symptom] affecting [scope]. Sessions/data are not at risk. Updates every 30 minutes at /status.
+
+**Resolved:**
+> The issue with [symptom] is resolved as of [UTC timestamp]. Duration: [X] min. Root cause: [1-line]. Full postmortem in [Y] business days.
+
+### Postmortem template
+
+```
+# Postmortem — [date] [title]
+Severity: SEV[1|2]  ·  Duration: [start]–[end] UTC  ·  IC: [name]
+
+## Impact
+- Users affected: [N]  ·  Orgs affected: [N]  ·  Requests failed: [N]
+- Data loss: [yes/no]  ·  Data exposure: [yes/no]
+
+## Timeline (UTC)
+- HH:MM — first alert fired
+- HH:MM — IC declared SEV[N]
+- HH:MM — mitigation applied
+- HH:MM — metrics returned to baseline
+
+## Root cause
+[What actually broke, in mechanical terms — not "human error".]
+
+## Why now
+[What changed recently that enabled this.]
+
+## Action items (owner, due date)
+- [ ] Prevention: [...]
+- [ ] Detection: [...]
+- [ ] Response: [...]
+```
+
+## Backup / restore
+
+- **Backups**: Postgres provider-managed, daily + PITR. S3/GCS snapshot nightly (`BACKUP_URL`).
+- **Verify weekly**: `npm run verify:backup` (restores latest snapshot to `RESTORE_DB_URL`, checks row counts, walks audit chain). Failure → SEV2 auto-page.
+- **RTO**: 1 h.  **RPO**: 5 min (PITR).
+- **Restore runbook**:
+  1. Provision ephemeral DB.
+  2. `pg_restore --dbname=$RESTORE_DB_URL --clean latest.dump`.
+  3. Verify row counts against last known prod metrics.
+  4. Cut over `DATABASE_URL` in Vercel; redeploy.
+  5. Force sign-out-all via `Clear-Site-Data` toggle.
+  6. Rotate all API keys and webhook secrets.
+
+## Admin impersonation (support)
+
+Platform staff can assume a user's session for debugging:
+
+1. Add operator email to `PLATFORM_ADMINS` env.
+2. `POST /api/admin/impersonate` with `{ targetUserId, reason, minutes }`.
+3. Open the returned `consumeUrl` in a **private window** (keeps your real session intact).
+4. Session is capped at 60 min server-side, one-shot token, fully audited (`Impersonation` + `AuditLog`).
+
 ## Who to call
 
 Escalation is configured in PagerDuty / on-call rota (outside this repo). Do not page LLM-generated contacts.
