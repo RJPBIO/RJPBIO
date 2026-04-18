@@ -528,10 +528,10 @@ export default function BioIgnicion(){
     <AnimatePresence>
     {showMore&&<motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
       {/* Prediction */}
-      {prediction&&(()=>{const pos=prediction.predictedDelta>0;const tone=pos?brand.primary:brand.secondary;return(
+      {prediction&&(()=>{const pos=prediction.predictedDelta>0;const tone=pos?brand.primary:brand.secondary;const hasCI=typeof prediction.lower==="number"&&typeof prediction.upper==="number";const fmt=(v)=>(v>=0?"+":"")+v.toFixed(1);return(
         <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:10,background:pos?withAlpha(brand.primary,isDark?8:4):surface,borderRadius:14,border:`1px solid ${pos?withAlpha(brand.primary,20):bd}`}}>
           <Icon name="predict" size={14} color={tone}/>
-          <div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:tone}}>{prediction.message}</div><div style={{fontSize:10,color:t3,marginTop:1}}>Confianza: {prediction.confidence}%</div></div>
+          <div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:tone}}>{prediction.message}</div><div style={{fontSize:10,color:t3,marginTop:1}}>Confianza: {prediction.confidence}%{hasCI?` · rango ${fmt(prediction.lower)} a ${fmt(prediction.upper)}`:""}</div></div>
         </div>);})()}
       {/* 7-Day Program */}
       {(st.progDay||0)<7&&<div style={{marginBottom:10,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`}}>

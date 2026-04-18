@@ -9,7 +9,7 @@ import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
 import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
 import { logger } from "../lib/logger";
-import { updateArm } from "../lib/neural/bandit";
+import { updateArm, armKey, timeBucket } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
 const STORE_VERSION = 9;
@@ -253,20 +253,31 @@ export const useStore = create((set, get) => ({
   },
 
   // ─── Neural learning (v9) ──────────────────────────────
-  // Cada sesión con mood pre/post alimenta el bandit (UCB) por intent
-  // y deja un residual para calibrar futuras predicciones.
-  recordSessionOutcome: ({ intent, protocol, deltaMood, predictedDelta = null }) => {
+  // Cada sesión con mood pre/post alimenta el bandit contextual
+  // (intent × bucket temporal) y el log de residuales para calibrar
+  // predicciones. El decay del bandit hace que observaciones nuevas
+  // pesen más que las viejas (~33 obs de vida media).
+  recordSessionOutcome: ({ intent, protocol, deltaMood, predictedDelta = null, at = null }) => {
     const st = get();
     const delta = Number(deltaMood);
-    if (!Number.isFinite(delta)) return;
+    if (!Number.isFinite(delta) || !intent) return;
+    const bucket = timeBucket(at || new Date());
     const arms = st.banditArms || {};
-    const nextArms = intent ? { ...arms, [intent]: updateArm(arms[intent], delta) } : arms;
+    // Actualizamos DOS brazos: contextual (intent:bucket) y global (intent).
+    // El global da fallback cuando el bucket actual no tiene datos.
+    const keyCtx = armKey(intent, bucket);
+    const keyGlb = armKey(intent);
+    const nextArms = {
+      ...arms,
+      [keyCtx]: updateArm(arms[keyCtx], delta),
+      [keyGlb]: updateArm(arms[keyGlb], delta),
+    };
     const nextResiduals =
       typeof predictedDelta === "number"
         ? logResidualEntry(st.predictionResiduals || { history: [] }, {
             predicted: predictedDelta,
             actual: delta,
-            armId: intent || null,
+            armId: intent,
           })
         : (st.predictionResiduals || { history: [] });
     const update = { banditArms: nextArms, predictionResiduals: nextResiduals };

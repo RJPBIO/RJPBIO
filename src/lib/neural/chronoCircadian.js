@@ -8,7 +8,7 @@
    El retorno es compatible con `getCircadian()` original.
    ═══════════════════════════════════════════════════════════════ */
 
-/** Offset horario (h) que aplicamos según tipo. */
+/** Offset horario (h) por tipo discreto (fallback si no hay score). */
 const OFFSET_BY_TYPE = Object.freeze({
   definite_morning:  -2,
   moderate_morning:  -1,
@@ -17,8 +17,45 @@ const OFFSET_BY_TYPE = Object.freeze({
   definite_evening:   2,
 });
 
+/**
+ * Interpolación continua del offset a partir del score MEQ-SA reducido
+ * (rango 4–25; mayor = más matutino). Anclas = punto medio de cada banda
+ * (Adan & Almirall 1991), con interpolación lineal entre anclas.
+ *
+ * Permite resoluciones intermedias — p. ej. dos usuarios clasificados
+ * como "moderate_morning" (score 17 vs 18) ya no reciben el mismo offset.
+ */
+const SCORE_ANCHORS = Object.freeze([
+  [5.5,  2],   // medio de definite_evening (4–7)
+  [9.5,  1],   // medio de moderate_evening (8–11)
+  [14,   0],   // medio de intermediate (12–16)
+  [17.5, -1],  // medio de moderate_morning (17–18)
+  [22,  -2],   // medio de definite_morning (19–25)
+]);
+
+function offsetFromScore(score) {
+  const s = Number(score);
+  if (!Number.isFinite(s)) return null;
+  if (s <= SCORE_ANCHORS[0][0]) return SCORE_ANCHORS[0][1];
+  const last = SCORE_ANCHORS[SCORE_ANCHORS.length - 1];
+  if (s >= last[0]) return last[1];
+  for (let i = 0; i < SCORE_ANCHORS.length - 1; i++) {
+    const [x0, y0] = SCORE_ANCHORS[i];
+    const [x1, y1] = SCORE_ANCHORS[i + 1];
+    if (s >= x0 && s <= x1) {
+      const t = (s - x0) / (x1 - x0);
+      return +(y0 + t * (y1 - y0)).toFixed(3);
+    }
+  }
+  return 0;
+}
+
 export function chronotypeOffset(chronotype) {
-  const t = chronotype?.type;
+  if (!chronotype) return 0;
+  // Preferimos el score numérico cuando existe: más resolución que los 5 tipos.
+  const fromScore = offsetFromScore(chronotype.score);
+  if (fromScore !== null) return fromScore;
+  const t = chronotype.type;
   if (!t) return 0;
   const v = OFFSET_BY_TYPE[t];
   return typeof v === "number" ? v : 0;

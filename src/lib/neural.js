@@ -5,8 +5,9 @@
 
 import { P } from "./protocols";
 import { LVL, STATUS_MSGS, DAILY_PHRASES } from "./constants";
-import { scoreArm } from "./neural/bandit";
+import { scoreArm, armKey, timeBucket } from "./neural/bandit";
 import { getCircadianPersonalized } from "./neural/chronoCircadian";
+import { calibratePrediction } from "./neural/residuals";
 import { protocolBiasFromDomain, applyBiasToScore } from "./nom35/protocolBias";
 
 // ─── Level System ─────────────────────────────────────────
@@ -86,28 +87,116 @@ export function calcBioQuality(sd) {
   return { score, quality, iScore: Math.round(iScore * 100), mScore: Math.round(mScore * 100), tScore: Math.round(tScore * 100) };
 }
 
-// ─── Burnout Prediction Index ─────────────────────────────
-export function calcBurnoutIndex(ml, hist) {
-  ml = ml || []; hist = hist || [];
-  if (ml.length < 5) return { index: 0, risk: "sin datos", trend: "neutral", prediction: "", avgMood: 3 };
+// ─── Burnout Index ─────────────────────────────────────────
+// Inspirado en los 3 componentes del Maslach Burnout Inventory
+// (MBI-GS, Schaufeli 2002), adaptado a lo que podemos observar sin
+// cuestionario:
+//   1. Agotamiento emocional → tendencia negativa del mood reciente.
+//   2. Distanciamiento / cinismo → varianza de mood comprimida
+//      (respuestas "uniformes" = posible desengagement).
+//   3. Realización reducida → caída en calidad de sesión (bioQ).
+//
+// Cada subíndice es 0..100. El índice agregado los combina con pesos
+// iguales (MBI también los trata separadamente). No es diagnóstico:
+// es un indicador interno que el motor usa para sesgar protocolos.
+function _burnoutExhaustion(ml) {
+  if (ml.length < 5) return { value: 0, reason: "datos insuficientes" };
   const last7 = ml.slice(-7);
   const prev7 = ml.slice(-14, -7);
   const avgR = last7.reduce((a, m) => a + m.mood, 0) / last7.length;
   const avgP = prev7.length >= 3 ? prev7.reduce((a, m) => a + m.mood, 0) / prev7.length : avgR;
-  const trend = avgR - avgP;
-  const lowC = last7.filter((m) => m.mood <= 2).length;
-  const sessW = hist.filter((s) => Date.now() - s.ts < 7 * 86400000).length;
-  const raw = Math.max(0, Math.min(100, 50 - trend * 15 + lowC * 10 - sessW * 2 + (avgR < 2.5 ? 20 : 0)));
-  const idx = Math.round(raw);
-  const flatAffect = ml.length >= 7 && ml.slice(-7).every((m) => m.mood === 3);
-  const risk = flatAffect ? "moderado" : idx >= 70 ? "crítico" : idx >= 50 ? "alto" : idx >= 30 ? "moderado" : "bajo";
-  const pred = flatAffect
-    ? "Patrón de respuesta uniforme detectado. Posible desengagement. Variar protocolos recomendado."
-    : idx >= 70 ? "Riesgo de agotamiento en 48h. Protocolo OMEGA recomendado."
-    : idx >= 50 ? "Tendencia descendente detectada. Aumentar frecuencia de sesiones."
+  const trend = avgR - avgP; // + = mejorando, − = empeorando
+  // Escalón por nivel absoluto: mood sostenido muy bajo es la señal
+  // más fuerte de exhaustion (independiente del trend).
+  const baseLow =
+    avgR < 1.5 ? 80 :
+    avgR < 2.0 ? 55 :
+    avgR < 2.5 ? 35 :
+    avgR < 3.0 ? 15 : 0;
+  // −1.0 de trend → +20 al índice; +1.0 → −20.
+  const trendPenalty = Math.max(-20, Math.min(30, -trend * 25));
+  return {
+    value: Math.max(0, Math.min(100, Math.round(baseLow + trendPenalty + 10))),
+    trend: +trend.toFixed(2),
+    avgR: +avgR.toFixed(2),
+  };
+}
+
+function _burnoutDisengagement(ml) {
+  if (ml.length < 7) return { value: 0, reason: "datos insuficientes" };
+  const last7 = ml.slice(-7).map((m) => m.mood);
+  const avg = last7.reduce((a, b) => a + b, 0) / last7.length;
+  const variance = last7.reduce((a, m) => a + (m - avg) * (m - avg), 0) / last7.length;
+  // Solo contamos como "flat" (desengagement) si la varianza es 0 Y la
+  // media está en la zona neutra (~3). Varianza 0 con mood muy bajo no
+  // es disengagement — es exhaustion sostenida, y la capturamos ahí.
+  const neutral = avg >= 2.5 && avg <= 3.5;
+  const flat = variance < 0.1 && neutral;
+  if (variance < 0.1) {
+    // Uniforme en mood no-neutro: se considera señal del componente
+    // de exhaustion, no de disengagement.
+    return { value: neutral ? 80 : 15, variance: +variance.toFixed(2), flat };
+  }
+  if (variance < 0.4) return { value: 50, variance: +variance.toFixed(2), flat: false };
+  if (variance < 0.8) return { value: 25, variance: +variance.toFixed(2), flat: false };
+  return { value: 10, variance: +variance.toFixed(2), flat: false };
+}
+
+function _burnoutReducedEfficacy(hist) {
+  if (hist.length < 6) return { value: 0, reason: "datos insuficientes" };
+  const last5 = hist.slice(-5).filter((h) => typeof h.bioQ === "number");
+  const prev5 = hist.slice(-10, -5).filter((h) => typeof h.bioQ === "number");
+  if (last5.length < 3 || prev5.length < 3) return { value: 0, reason: "datos insuficientes" };
+  const qR = last5.reduce((a, h) => a + h.bioQ, 0) / last5.length;
+  const qP = prev5.reduce((a, h) => a + h.bioQ, 0) / prev5.length;
+  const drop = qP - qR; // positivo = cayendo la calidad
+  const baseFromLow = qR < 40 ? 30 : qR < 55 ? 15 : 0;
+  const dropPenalty = Math.max(0, Math.min(40, drop));
+  return {
+    value: Math.max(0, Math.min(100, Math.round(baseFromLow + dropPenalty))),
+    qualityRecent: Math.round(qR),
+    qualityDrop: Math.round(drop),
+  };
+}
+
+export function calcBurnoutIndex(ml, hist) {
+  ml = ml || []; hist = hist || [];
+  if (ml.length < 5) return { index: 0, risk: "sin datos", trend: "neutral", prediction: "", avgMood: 3, components: null };
+  const exhaustion = _burnoutExhaustion(ml);
+  const disengage = _burnoutDisengagement(ml);
+  const efficacy = _burnoutReducedEfficacy(hist);
+  // Pesos iguales salvo que la señal de eficacia sea insuficiente:
+  // entonces redistribuimos su peso a las otras dos.
+  // Pesos: exhaustion domina porque es la señal más interpretable y
+  // es la que dispara la intervención más clara (bajar carga). Si no
+  // tenemos datos de eficacia, su peso se reparte hacia exhaustion.
+  const hasEfficacy = efficacy.value > 0 || efficacy.qualityRecent != null;
+  const idx = Math.round(
+    hasEfficacy
+      ? exhaustion.value * 0.5 + disengage.value * 0.2 + efficacy.value * 0.3
+      : exhaustion.value * 0.75 + disengage.value * 0.25
+  );
+  const risk = disengage.flat ? "moderado"
+    : idx >= 70 ? "crítico"
+    : idx >= 50 ? "alto"
+    : idx >= 30 ? "moderado"
+    : "bajo";
+  const pred = disengage.flat
+    ? "Respuestas uniformes detectadas. Posible desengagement. Variar protocolos ayuda a reactivar."
+    : idx >= 70 ? "Carga sostenida alta. Prioriza protocolos de calma y reduce exigencia esta semana."
+    : idx >= 50 ? "Tendencia de fatiga detectada. Aumentar frecuencia de sesiones cortas."
     : idx >= 30 ? "Estado estable con margen de mejora."
-    : "Sistema en buen estado. Mantener ritmo.";
-  return { index: idx, risk, trend: trend > 0.3 ? "mejorando" : trend < -0.3 ? "deteriorando" : "estable", prediction: pred, avgMood: +avgR.toFixed(1) };
+    : "Estado dentro de rango saludable. Mantener ritmo.";
+  const trendWord =
+    exhaustion.trend > 0.3 ? "mejorando" : exhaustion.trend < -0.3 ? "deteriorando" : "estable";
+  return {
+    index: idx,
+    risk,
+    trend: trendWord,
+    prediction: pred,
+    avgMood: exhaustion.avgR ?? 3,
+    components: { exhaustion, disengage, efficacy },
+  };
 }
 
 // ─── BioSignal Score ──────────────────────────────────────
@@ -255,20 +344,6 @@ export function genIns(st) {
   return r;
 }
 
-// ─── Smart Suggest ────────────────────────────────────────
-export function smartSuggest(st) {
-  const h = new Date().getHours();
-  const lastMood = (st.moodLog || []).slice(-1)[0]?.mood || 3;
-  const lastP = (st.history || []).slice(-1)[0]?.p || "";
-  let intent = "calma";
-  if (h >= 6 && h < 10) intent = lastMood <= 2 ? "reset" : "energia";
-  else if (h >= 10 && h < 14) intent = "enfoque";
-  else if (h >= 14 && h < 18) intent = lastMood <= 2 ? "calma" : "enfoque";
-  else intent = "calma";
-  const opts = P.filter((p) => p.int === intent && p.n !== lastP);
-  return opts.length ? opts[Math.floor(Math.random() * opts.length)] : P[0];
-}
-
 // ─── Records ──────────────────────────────────────────────
 export function getRecords(st) {
   const h = st.history || [];
@@ -314,13 +389,44 @@ function _ciBand(deltas) {
   return { mean, lower: mean - margin, upper: mean + margin, se };
 }
 
+// Aplica calibración por residuales al final de cualquier predicción.
+// Además ensancha el CI si detecta drift (últimas 5 entradas vs las 5
+// previas cambian el signo del bias) — señal de no-estacionariedad.
+function _applyResidualCalibration(raw, st, protocol) {
+  const residuals = st?.predictionResiduals;
+  if (!residuals || !Array.isArray(residuals.history) || residuals.history.length < 5) {
+    return raw;
+  }
+  const calibrated = calibratePrediction(residuals, raw, { armId: protocol.int });
+  if (!calibrated || !calibrated.calibrated) return raw;
+  // Detectar drift: bias reciente vs bias antiguo.
+  const hist = residuals.history;
+  if (hist.length >= 10) {
+    const recent = hist.slice(-5).map(h => h.residual);
+    const prev = hist.slice(-10, -5).map(h => h.residual);
+    const mR = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const mP = prev.reduce((a, b) => a + b, 0) / prev.length;
+    if (Math.sign(mR) !== Math.sign(mP) && Math.abs(mR - mP) > 0.8) {
+      // Drift: ensanchamos banda y bajamos confianza.
+      const widen = Math.abs(mR - mP) * 0.5;
+      calibrated.lower = +(calibrated.lower - widen).toFixed(2);
+      calibrated.upper = +(calibrated.upper + widen).toFixed(2);
+      calibrated.confidence = Math.max(10, (calibrated.confidence || 0) - 15);
+      calibrated.drift = true;
+    }
+  }
+  calibrated.predictedDelta = +Number(calibrated.predictedDelta).toFixed(1);
+  return calibrated;
+}
+
 export function predictSessionImpact(st, protocol) {
   const ml = st.moodLog || [];
   const withProto = ml.filter(m => m.proto === protocol.n && m.pre > 0);
+  let raw;
   if (withProto.length >= 2) {
     const deltas = withProto.map(m => m.mood - m.pre);
     const { mean, lower, upper } = _ciBand(deltas);
-    return {
+    raw = {
       predictedDelta: +mean.toFixed(1),
       lower: +lower.toFixed(2),
       upper: +upper.toFixed(2),
@@ -329,33 +435,36 @@ export function predictSessionImpact(st, protocol) {
       basis: "historial personal",
       message: mean > 0 ? `+${mean.toFixed(1)} puntos estimados basado en ${withProto.length} sesiones anteriores` : "Protocolo sin mejora demostrada. Considera cambiar."
     };
+  } else {
+    const intentSessions = ml.filter(m => {
+      const p = P.find(pp => pp.n === m.proto);
+      return p && p.int === protocol.int && m.pre > 0;
+    });
+    if (intentSessions.length >= 2) {
+      const deltas = intentSessions.map(m => m.mood - m.pre);
+      const { mean, lower, upper } = _ciBand(deltas);
+      raw = {
+        predictedDelta: +mean.toFixed(1),
+        lower: +lower.toFixed(2),
+        upper: +upper.toFixed(2),
+        confidence: Math.min(70, 30 + intentSessions.length * 4),
+        sampleSize: intentSessions.length,
+        basis: "protocolos similares",
+        message: `+${mean.toFixed(1)} estimado basado en protocolos de ${protocol.int}`
+      };
+    } else {
+      raw = {
+        predictedDelta: 0.8,
+        lower: -0.7,
+        upper: 2.3,
+        confidence: 20,
+        sampleSize: 0,
+        basis: "promedio global",
+        message: "Primera sesión con este protocolo. Impacto promedio: +0.8"
+      };
+    }
   }
-  const intentSessions = ml.filter(m => {
-    const p = P.find(pp => pp.n === m.proto);
-    return p && p.int === protocol.int && m.pre > 0;
-  });
-  if (intentSessions.length >= 2) {
-    const deltas = intentSessions.map(m => m.mood - m.pre);
-    const { mean, lower, upper } = _ciBand(deltas);
-    return {
-      predictedDelta: +mean.toFixed(1),
-      lower: +lower.toFixed(2),
-      upper: +upper.toFixed(2),
-      confidence: Math.min(70, 30 + intentSessions.length * 4),
-      sampleSize: intentSessions.length,
-      basis: "protocolos similares",
-      message: `+${mean.toFixed(1)} estimado basado en protocolos de ${protocol.int}`
-    };
-  }
-  return {
-    predictedDelta: 0.8,
-    lower: -0.7,
-    upper: 2.3,
-    confidence: 20,
-    sampleSize: 0,
-    basis: "promedio global",
-    message: "Primera sesión con este protocolo. Impacto promedio: +0.8"
-  };
+  return _applyResidualCalibration(raw, st, protocol);
 }
 
 // ─── Correlation Engine (NEW) ────────────────────────────
@@ -450,7 +559,8 @@ export function adaptiveProtocolEngine(st, options = {}) {
   let candidates = P.filter((p) => p.int === primaryNeed);
   if (!candidates.length) candidates = [...P];
 
-  // Total pulls por arm (para UCB)
+  // Bucket temporal actual (contexto del bandit) y total de pulls.
+  const bucket = timeBucket(now);
   const armsTotal = banditArms
     ? Object.values(banditArms).reduce((a, arm) => a + (arm?.n || 0), 0)
     : 0;
@@ -484,18 +594,13 @@ export function adaptiveProtocolEngine(st, options = {}) {
     // Bonus favoritos (+8)
     if ((st.favs || []).includes(p.n)) score += 8;
 
-    // Bandit UCB1: premia brazo con mejor media + bonus exploración.
-    // Solo aplica si tenemos al menos 2 pulls globales por arm del intent.
-    if (banditArms && banditArms[p.int] && armsTotal >= 2) {
-      const ucb = scoreArm(banditArms[p.int], armsTotal, 0.6);
-      if (Number.isFinite(ucb)) {
-        // ucb está en la misma escala que Δmood (aprox. -4..+4); amplificamos
-        // suave para que modifique sin dominar sobre circadiano ni NOM-35.
-        score += ucb * 4;
-      } else {
-        // arm con pocos pulls → favorecer exploración moderada
-        score += 5;
-      }
+    // Bandit UCB1 contextual: mira primero el brazo (intent:bucket);
+    // si está vacío, cae al brazo global (intent). El prior poblacional
+    // hace que siempre devuelva un score finito, sin empates triviales.
+    if (banditArms) {
+      const ctxArm = banditArms[armKey(p.int, bucket)] || banditArms[p.int] || null;
+      const ucb = scoreArm(ctxArm, armsTotal, 0.6);
+      if (Number.isFinite(ucb)) score += ucb * 4;
     }
 
     // Sesgo NOM-035 (dominio psicosocial dominante → intent preferido)
@@ -521,6 +626,7 @@ export function adaptiveProtocolEngine(st, options = {}) {
       momentumDir: momentum.direction,
       chronotype: chronotype?.type || null,
       subjectiveHour: circadian.subjectiveHour ?? null,
+      timeBucket: bucket,
       nom35Bias: nom35Bias
         ? { dominio: nom35Bias.dominio, intent: nom35Bias.intent, urgent: !!nom35Bias.urgent }
         : null,
@@ -590,28 +696,62 @@ export function calcNeuralMomentum(st) {
 }
 
 // ─── Cognitive Load Estimator ────────────────────────────
-// Estima la carga cognitiva actual del usuario basándose en
-// hora del día, sesiones realizadas, mood y patrones temporales
+// Estima la carga cognitiva actual combinando señales genéricas
+// (hora, día, mood) con datos del propio usuario (sus horas pico
+// históricas y su patrón por día de la semana). Si existe suficiente
+// historial, este componente personal pesa más que las heurísticas.
 export function estimateCognitiveLoad(st) {
-  const h = new Date().getHours();
+  const now = new Date();
+  const h = now.getHours();
+  const dow = now.getDay();
   const todaySessions = st.todaySessions || 0;
   const ml = st.moodLog || [];
+  const hist = st.history || [];
   const lastMood = ml.slice(-1)[0]?.mood || 3;
 
-  // Carga base por hora (recursos cognitivos se depletan durante el día)
+  // Curva base por hora: recursos cognitivos se depletan durante el día.
   let base = h < 8 ? 15 : h < 10 ? 25 : h < 13 ? 40 : h < 15 ? 55 : h < 18 ? 60 : h < 21 ? 70 : 80;
 
-  // Cada sesión reduce carga temporalmente (efecto de claridad post-sesión)
+  // Señal personal 1: estamos dentro de la ventana pico histórica del
+  // usuario (donde ha entrenado con mejor coherencia). En esa ventana
+  // el rendimiento es demostrablemente mejor, así que bajamos carga.
+  const rhythm = hist.length >= 8 ? analyzeNeuralRhythm(st) : null;
+  if (rhythm?.isInPeakNow) base -= 12;
+  else if (rhythm?.peakWindow) {
+    const dist = Math.min(
+      Math.abs(h - rhythm.peakWindow.start),
+      Math.abs(h - (rhythm.peakWindow.end || rhythm.peakWindow.start + 2))
+    );
+    if (dist <= 1) base -= 6; // borde de la ventana
+  }
+
+  // Señal personal 2: densidad histórica por día de la semana. Si un
+  // día tiene muchas sesiones es porque ahí el usuario ha tenido capacidad
+  // (observado) → menor carga esperada. Si casi nunca entrena ese día,
+  // probablemente está más cargado.
+  if (hist.length >= 14) {
+    const dayCounts = Array(7).fill(0);
+    for (const x of hist) {
+      const d = new Date(x.ts).getDay();
+      dayCounts[d === 0 ? 6 : d - 1]++;
+    }
+    const todayIdx = dow === 0 ? 6 : dow - 1;
+    const avgPerDay = dayCounts.reduce((a, b) => a + b, 0) / 7;
+    const diff = dayCounts[todayIdx] - avgPerDay;
+    // +1 sesión vs promedio → −4 de carga; −1 → +4 (acotado a ±12).
+    base -= Math.max(-12, Math.min(12, diff * 4));
+  } else {
+    // Fallback heurístico cuando no tenemos historial suficiente.
+    if (dow === 1) base += 8; // Lunes
+    if (dow === 5) base += 5; // Viernes
+  }
+
+  // Cada sesión hoy reduce carga (claridad post-sesión).
   base -= todaySessions * 10;
 
-  // Ajuste por mood reciente
+  // Ajuste por mood reciente (observable).
   if (lastMood <= 2) base += 15;
   else if (lastMood >= 4) base -= 10;
-
-  // Ajuste por día de semana (lunes y viernes mayor carga)
-  const dow = new Date().getDay();
-  if (dow === 1) base += 8;
-  if (dow === 5) base += 5;
 
   const load = Math.max(0, Math.min(100, Math.round(base)));
 
@@ -622,9 +762,10 @@ export function estimateCognitiveLoad(st) {
       load < 25 ? "Capacidad disponible — ideal para protocolos de enfoque o avanzados" :
       load < 45 ? "Carga moderada — protocolos de activación funcionarán bien" :
       load < 65 ? "Carga alta — prioriza reset o calma para desbloquear rendimiento" :
-      "Carga máxima — sesión de descarga parasimpática necesaria",
+      "Carga máxima — sesión corta de reset antes de seguir",
     optimalDuration: load < 45 ? 1.5 : load < 65 ? 1 : 0.5,
     color: load < 25 ? "#059669" : load < 45 ? "#6366F1" : load < 65 ? "#D97706" : "#DC2626",
+    personalized: rhythm != null || hist.length >= 14,
   };
 }
 

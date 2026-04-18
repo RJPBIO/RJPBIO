@@ -22,6 +22,41 @@ describe("chronotypeOffset", () => {
   it("tipo desconocido → 0", () => {
     expect(chronotypeOffset({ type: "xxx" })).toBe(0);
   });
+  it("usa score MEQ-SA para interpolación continua", () => {
+    // Anclas exactas
+    expect(chronotypeOffset({ score: 5.5 })).toBe(2);
+    expect(chronotypeOffset({ score: 9.5 })).toBe(1);
+    expect(chronotypeOffset({ score: 14 })).toBe(0);
+    expect(chronotypeOffset({ score: 17.5 })).toBe(-1);
+    expect(chronotypeOffset({ score: 22 })).toBe(-2);
+  });
+  it("interpola entre anclas", () => {
+    // Punto medio entre (9.5,1) y (14,0) → score 11.75 → offset 0.5
+    expect(chronotypeOffset({ score: 11.75 })).toBeCloseTo(0.5, 3);
+    // Punto medio entre (14,0) y (17.5,-1) → score 15.75 → offset -0.5
+    expect(chronotypeOffset({ score: 15.75 })).toBeCloseTo(-0.5, 3);
+  });
+  it("clampa fuera de rango", () => {
+    expect(chronotypeOffset({ score: 4 })).toBe(2);
+    expect(chronotypeOffset({ score: 25 })).toBe(-2);
+    expect(chronotypeOffset({ score: -999 })).toBe(2);
+    expect(chronotypeOffset({ score: 999 })).toBe(-2);
+  });
+  it("score tiene prioridad sobre type", () => {
+    // type dice "intermediate" (offset 0) pero score 22 es extremo matutino (-2)
+    expect(chronotypeOffset({ type: "intermediate", score: 22 })).toBe(-2);
+  });
+  it("score no-numérico cae a type", () => {
+    expect(chronotypeOffset({ type: "definite_evening", score: "bad" })).toBe(2);
+    expect(chronotypeOffset({ type: "moderate_morning", score: NaN })).toBe(-1);
+  });
+  it("dos usuarios moderate_morning con scores distintos dan offsets distintos", () => {
+    // score 17 y 18 ambos son moderate_morning en el discreto,
+    // pero con continuous el de 18 es más matutino.
+    const o17 = chronotypeOffset({ type: "moderate_morning", score: 17 });
+    const o18 = chronotypeOffset({ type: "moderate_morning", score: 18 });
+    expect(o18).toBeLessThan(o17);
+  });
 });
 
 describe("subjectiveHour", () => {

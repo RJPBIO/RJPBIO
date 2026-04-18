@@ -10,7 +10,7 @@ import {
   predictSessionImpact,
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, calcCognitiveEntropy, estimateCoherence,
-  calcRecoveryIndex, genIns, smartSuggest, getRecords,
+  calcRecoveryIndex, genIns, getRecords,
   getDailyIgn, getCircadian, calcNeuralVariability,
   calcProtocolCorrelations, calcNeuralMomentum, estimateCognitiveLoad,
   analyzeNeuralRhythm, generateCoachingInsights, calcProtocolDiversity,
@@ -501,37 +501,6 @@ describe("genIns", () => {
   it("mismo protocolo 3 veces → sugiere diversidad", () => {
     const r = genIns({ totalSessions: 5, coherencia: 64, resiliencia: 66, streak: 0, totalTime: 100, moodLog: [], history: [{ p: "A" }, { p: "A" }, { p: "A" }], weeklyData: [] });
     expect(r.some((x) => x.t === "rec")).toBe(true);
-  });
-});
-
-describe("smartSuggest", () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
-  it("retorna un protocolo", () => {
-    const r = smartSuggest({ moodLog: [], history: [] });
-    expect(r).toBeDefined();
-    expect(r.n).toBeDefined();
-    expect(r.int).toBeDefined();
-  });
-  it("mañana con mood bajo → reset", () => {
-    vi.setSystemTime(new Date("2026-04-16T07:00:00"));
-    const r = smartSuggest({ moodLog: [{ mood: 1 }], history: [] });
-    expect(r.int).toBe("reset");
-  });
-  it("mañana con mood normal → energia", () => {
-    vi.setSystemTime(new Date("2026-04-16T07:00:00"));
-    const r = smartSuggest({ moodLog: [{ mood: 4 }], history: [] });
-    expect(r.int).toBe("energia");
-  });
-  it("medio día → enfoque", () => {
-    vi.setSystemTime(new Date("2026-04-16T11:00:00"));
-    const r = smartSuggest({ moodLog: [], history: [] });
-    expect(r.int).toBe("enfoque");
-  });
-  it("noche → calma", () => {
-    vi.setSystemTime(new Date("2026-04-16T22:00:00"));
-    const r = smartSuggest({ moodLog: [], history: [] });
-    expect(r.int).toBe("calma");
   });
 });
 
