@@ -1,7 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════
-   Auth — Auth.js (NextAuth v5) con OIDC, SAML, Credenciales, MFA
-   Proveedores: Okta, Azure AD, Google Workspace, GitHub, Email,
-   SAML genérico (Auth.js providers/saml-jackson) y TOTP.
+   Auth — Auth.js (NextAuth v5). Proveedores: Okta, Azure AD,
+   Google Workspace, Email (magic link). Passkeys: flujo propio
+   en /api/webauthn/*. MFA TOTP: /api/auth/mfa/verify (step-up).
+   NO hay CredentialsProvider: password puro fue removido por
+   auth-bypass (authorize no validaba hash).
    ═══════════════════════════════════════════════════════════════ */
 
 import "server-only";
@@ -9,12 +11,10 @@ import NextAuth from "next-auth";
 import Okta from "next-auth/providers/okta";
 import AzureAD from "next-auth/providers/azure-ad";
 import Google from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
 import Email from "next-auth/providers/email";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "./db";
 import { auditLog } from "./audit";
-import { verifyTOTP } from "./mfa";
 
 async function adapter() {
   if (!process.env.DATABASE_URL) return undefined;
@@ -26,7 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: await adapter().catch(() => undefined),
   session: { strategy: "database", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/signin", error: "/signin?error=1" },
-  trustHost: true,
+  trustHost: process.env.AUTH_TRUST_HOST === "1" || process.env.NODE_ENV !== "production",
   providers: [
     Okta({
       clientId: process.env.OKTA_CLIENT_ID,
@@ -47,25 +47,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       server: process.env.EMAIL_SERVER,
       from: process.env.EMAIL_FROM || "no-reply@bio-ignicion.app",
     })] : []),
-    Credentials({
-      name: "email-mfa",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-        totp: { label: "MFA code", type: "text" },
-      },
-      async authorize(creds) {
-        if (!creds?.email || !creds?.password) return null;
-        const orm = await db();
-        const user = await orm.user.findUnique({ where: { email: creds.email } });
-        if (!user) return null;
-        if (user.mfaEnabled) {
-          const ok = await verifyTOTP(user.mfaSecret, creds.totp);
-          if (!ok) return null;
-        }
-        return { id: user.id, email: user.email, name: user.name };
-      },
-    }),
   ],
   callbacks: {
     async signIn({ user, account }) {

@@ -10,7 +10,7 @@ const RATE_LIMIT = { windowMs: 60_000, max: 120 };
 const AUTH_RATE = { windowMs: 60_000, max: 10 };
 const buckets = new Map();
 
-function hit(key, cfg) {
+function hitLocal(key, cfg) {
   const now = Date.now();
   const b = buckets.get(key) || { count: 0, reset: now + cfg.windowMs };
   if (now > b.reset) { b.count = 0; b.reset = now + cfg.windowMs; }
@@ -19,11 +19,46 @@ function hit(key, cfg) {
   return { ok: b.count <= cfg.max, remaining: Math.max(0, cfg.max - b.count), reset: b.reset };
 }
 
+let _redisPromise;
+async function getRedis() {
+  if (!process.env.REDIS_URL) return null;
+  if (!_redisPromise) {
+    _redisPromise = (async () => {
+      try {
+        const { Redis } = await import("@upstash/redis");
+        return new Redis({ url: process.env.REDIS_URL, token: process.env.REDIS_TOKEN });
+      } catch { return null; }
+    })();
+  }
+  return _redisPromise;
+}
+
+async function hit(key, cfg) {
+  const redis = await getRedis();
+  if (!redis) return hitLocal(key, cfg);
+  try {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const slot = Math.floor(nowSec / (cfg.windowMs / 1000));
+    const bucket = `mw:${key}:${slot}`;
+    const count = await redis.incr(bucket);
+    if (count === 1) await redis.expire(bucket, cfg.windowMs / 1000);
+    const reset = (slot + 1) * cfg.windowMs;
+    return { ok: count <= cfg.max, remaining: Math.max(0, cfg.max - count), reset };
+  } catch {
+    return hitLocal(key, cfg);
+  }
+}
+
 function buildCSP(nonce) {
   const d = {
     "default-src": ["'self'"],
-    "script-src": ["'self'", `'nonce-${nonce}'`],
-    "style-src": ["'self'", "'unsafe-inline'"],
+    "script-src": ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"],
+    "script-src-attr": ["'none'"],
+    // `style-src-attr 'unsafe-hashes'` permite `style="..."` inline que
+    // Framer Motion inyecta; mantenemos style-src sin unsafe-inline para
+    // que no se puedan cargar <style> arbitrarios de atacantes.
+    "style-src": ["'self'", `'nonce-${nonce}'`],
+    "style-src-attr": ["'unsafe-hashes'", "'unsafe-inline'"],
     "img-src": ["'self'", "data:", "blob:", "https:"],
     "font-src": ["'self'", "data:"],
     "connect-src": ["'self'", "https://api.anthropic.com", "https://api.stripe.com", process.env.OTEL_EXPORTER_OTLP_ENDPOINT, process.env.NEXT_PUBLIC_LOG_ENDPOINT].filter(Boolean),
@@ -42,16 +77,21 @@ function buildCSP(nonce) {
   return Object.entries(d).map(([k, v]) => (v.length ? `${k} ${v.join(" ")}` : k)).join("; ");
 }
 
-const CORS_ALLOW = (process.env.CORS_ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
+const CORS_ALLOW = (process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",").map((s) => s.trim()).filter(Boolean);
+
+// Con credenciales NO se puede usar wildcard: cada origin debe ser explícito.
+// Si la env contiene "*", lo tratamos como "nadie" para evitar downgrade.
+const HAS_WILDCARD = CORS_ALLOW.includes("*");
 
 function corsHeaders(origin) {
-  if (!origin) return {};
-  const allowed = CORS_ALLOW.includes("*") || CORS_ALLOW.includes(origin);
-  if (!allowed) return {};
+  if (!origin || HAS_WILDCARD) return {};
+  if (!CORS_ALLOW.includes(origin)) return {};
   return {
     "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, Idempotency-Key, webhook-id, webhook-signature, webhook-timestamp",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, Idempotency-Key, X-CSRF-Token, webhook-id, webhook-signature, webhook-timestamp",
     "Access-Control-Expose-Headers": "RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset, Retry-After",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
@@ -60,15 +100,17 @@ function corsHeaders(origin) {
 
 const PROTECTED = [/^\/admin(\/|$)/, /^\/org(\/|$)/, /^\/api\/v1\//, /^\/api\/scim\//, /^\/coach(\/|$)/, /^\/settings(\/|$)/];
 const PUBLIC_API = [/^\/api\/health$/, /^\/api\/ready$/, /^\/api\/csp-report$/, /^\/api\/vitals$/, /^\/api\/openapi$/, /^\/api\/auth\//, /^\/api\/billing\/webhook$/, /^\/api\/v1\/leads$/, /^\/q$/];
+// Rutas /api/v1/* que aceptan Bearer API key (validación real en el handler).
+// Fuera de esta lista, el middleware rechaza con 401 si solo hay Bearer sin cookie.
+const BEARER_ALLOWED = [/^\/api\/v1\/sessions(\/|$)/, /^\/api\/v1\/analytics(\/|$)/, /^\/api\/v1\/members(\/|$)/, /^\/api\/scim\//];
 
-export function middleware(request) {
+export async function middleware(request) {
   const url = new URL(request.url);
   const path = url.pathname;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
 
-  // Stricter limit for auth
   const cfg = path.startsWith("/api/auth") || path === "/signin" ? AUTH_RATE : RATE_LIMIT;
-  const r = hit(`${ip}:${cfg === AUTH_RATE ? "auth" : "gen"}`, cfg);
+  const r = await hit(`${ip}:${cfg === AUTH_RATE ? "auth" : "gen"}`, cfg);
   if (!r.ok) {
     return new NextResponse("Rate limit exceeded", {
       status: 429,
@@ -81,20 +123,18 @@ export function middleware(request) {
     });
   }
 
-  // CORS preflight
   if (request.method === "OPTIONS" && path.startsWith("/api/")) {
     const origin = request.headers.get("origin") || "";
     return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
   }
 
-  // Auth guard for protected routes (presence of session cookie is the lightweight signal;
-  // real verification happens in route handlers via `auth()`).
   const isProtected = PROTECTED.some((rx) => rx.test(path));
   const isPublicApi = PUBLIC_API.some((rx) => rx.test(path));
   if (isProtected && !isPublicApi) {
     const hasSession = request.cookies.get("authjs.session-token") || request.cookies.get("__Secure-authjs.session-token");
-    const hasApiKey = request.headers.get("authorization")?.startsWith("Bearer ");
-    if (!hasSession && !hasApiKey) {
+    const hasBearer = request.headers.get("authorization")?.startsWith("Bearer ");
+    const bearerAllowed = hasBearer && BEARER_ALLOWED.some((rx) => rx.test(path));
+    if (!hasSession && !bearerAllowed) {
       if (path.startsWith("/api/")) return new NextResponse("Unauthorized", { status: 401 });
       return NextResponse.redirect(new URL(`/signin?next=${encodeURIComponent(path)}`, request.url));
     }
@@ -109,14 +149,12 @@ export function middleware(request) {
   const res = NextResponse.next({ request: { headers: reqHeaders } });
 
   // Emisión de token CSRF (double-submit): cookie legible por JS + header echo.
-  // Solo para navegaciones GET — las requests autenticadas de API/mutación
-  // reusan la cookie existente. Renovamos si falta o expiró.
   if (request.method === "GET" && !path.startsWith("/api/")) {
     const existing = request.cookies.get(CSRF.COOKIE)?.value;
     if (!existing || !verifyToken(existing)) {
       const tok = issueToken();
       res.cookies.set(CSRF.COOKIE, tok, {
-        httpOnly: false, // el cliente debe leerla para re-enviar en header
+        httpOnly: false,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
@@ -130,10 +168,12 @@ export function middleware(request) {
   res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("X-XSS-Protection", "0");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(self)");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(self), interest-cohort=()");
   res.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   res.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  res.headers.set("Cross-Origin-Embedder-Policy", "credentialless");
   res.headers.set("RateLimit-Limit", String(cfg.max));
   res.headers.set("RateLimit-Remaining", String(r.remaining));
   res.headers.set("RateLimit-Reset", String(Math.ceil(r.reset / 1000)));

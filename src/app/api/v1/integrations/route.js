@@ -1,6 +1,8 @@
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
+import { requireCsrf } from "@/server/csrf";
+import { requireMembership } from "@/server/rbac";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +25,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const csrf = requireCsrf(request);
+  if (csrf) return csrf;
+
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
 
@@ -34,19 +39,23 @@ export async function POST(request) {
   const provider = String(data.provider || "").toLowerCase();
   if (!VALID_PROVIDERS.includes(provider)) return new Response("proveedor inválido", { status: 400 });
 
-  const admin = (session.memberships || []).find(
-    (m) => ["OWNER", "ADMIN"].includes(m.role) && (!data.orgId || m.orgId === data.orgId)
-  );
-  if (!admin) return new Response("forbidden", { status: 403 });
+  const orgId = String(data.orgId || "") || session.memberships?.[0]?.orgId;
+  if (!orgId) return new Response("forbidden", { status: 403 });
+
+  try {
+    await requireMembership(session, orgId, "integration.manage");
+  } catch (e) {
+    return new Response(e.message, { status: e.status || 403 });
+  }
 
   const orm = await db();
   const existing = await orm.integration.findUnique({
-    where: { orgId_provider: { orgId: admin.orgId, provider } },
+    where: { orgId_provider: { orgId, provider } },
   }).catch(() => null);
 
   if (existing) {
     await auditLog({
-      orgId: admin.orgId, actorId: session.user.id,
+      orgId, actorId: session.user.id,
       action: "integration.exists", payload: { provider },
     }).catch(() => {});
     revalidatePath("/admin/integrations");
@@ -58,10 +67,10 @@ export async function POST(request) {
 
   const config = typeof data.config === "object" && data.config !== null ? data.config : {};
   const inst = await orm.integration.create({
-    data: { orgId: admin.orgId, provider, config, enabled: true },
+    data: { orgId, provider, config, enabled: true },
   });
   await auditLog({
-    orgId: admin.orgId, actorId: session.user.id,
+    orgId, actorId: session.user.id,
     action: "integration.install", payload: { provider },
   }).catch(() => {});
   revalidatePath("/admin/integrations");

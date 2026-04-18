@@ -1,17 +1,19 @@
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
+import { requireCsrf } from "@/server/csrf";
+import { requireMembership } from "@/server/rbac";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
-async function requireAdmin(session, orgId) {
-  return (session.memberships || []).find(
-    (m) => ["OWNER", "ADMIN"].includes(m.role) && m.orgId === orgId
-  );
+async function assertAdmin(session, orgId) {
+  await requireMembership(session, orgId, "integration.manage");
 }
 
 export async function POST(request, { params }) {
+  const csrf = requireCsrf(request);
+  if (csrf) return csrf;
   const { id } = await params;
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
@@ -25,7 +27,8 @@ export async function POST(request, { params }) {
   const orm = await db();
   const inst = await orm.integration.findUnique({ where: { id } });
   if (!inst) return new Response("no encontrada", { status: 404 });
-  if (!(await requireAdmin(session, inst.orgId))) return new Response("forbidden", { status: 403 });
+  try { await assertAdmin(session, inst.orgId); }
+  catch (e) { return new Response(e.message, { status: e.status || 403 }); }
 
   if (method === "DELETE") {
     await orm.integration.delete({ where: { id } });
@@ -60,6 +63,8 @@ export async function POST(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const csrf = requireCsrf(request);
+  if (csrf) return csrf;
   const { id } = await params;
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
@@ -68,7 +73,8 @@ export async function PATCH(request, { params }) {
   const orm = await db();
   const inst = await orm.integration.findUnique({ where: { id } });
   if (!inst) return new Response("no encontrada", { status: 404 });
-  if (!(await requireAdmin(session, inst.orgId))) return new Response("forbidden", { status: 403 });
+  try { await assertAdmin(session, inst.orgId); }
+  catch (e) { return new Response(e.message, { status: e.status || 403 }); }
 
   const patch = {};
   if (typeof body.enabled === "boolean") patch.enabled = body.enabled;
@@ -84,7 +90,9 @@ export async function PATCH(request, { params }) {
   return Response.json({ id: updated.id, enabled: updated.enabled });
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
+  const csrf = requireCsrf(request);
+  if (csrf) return csrf;
   const { id } = await params;
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
@@ -92,7 +100,8 @@ export async function DELETE(_request, { params }) {
   const orm = await db();
   const inst = await orm.integration.findUnique({ where: { id } });
   if (!inst) return new Response("no encontrada", { status: 404 });
-  if (!(await requireAdmin(session, inst.orgId))) return new Response("forbidden", { status: 403 });
+  try { await assertAdmin(session, inst.orgId); }
+  catch (e) { return new Response(e.message, { status: e.status || 403 }); }
 
   await orm.integration.delete({ where: { id } });
   await auditLog({
