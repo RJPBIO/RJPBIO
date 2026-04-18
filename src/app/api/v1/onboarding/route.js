@@ -17,7 +17,13 @@ export async function POST(request) {
   const { email, name, orgName, plan = "STARTER", region = "US", dpaAccepted } = body;
   if (!email || !orgName) return new Response("invalid", { status: 422 });
   if (!dpaAccepted) return new Response("dpa_required", { status: 422 });
-  const client = db();
+  // Locale del body > cookie > Accept-Language > "es"
+  const cookieLocale = request.cookies?.get?.("bio-locale")?.value;
+  const acceptLocale = (request.headers.get("accept-language") || "").split(",")[0]?.split("-")[0]?.toLowerCase() || "";
+  const supported = ["es", "en", "pt", "fr", "de", "it", "nl", "ja", "ko", "zh", "ar", "he"];
+  const locale = [body.locale, cookieLocale, acceptLocale, "es"].find((l) => supported.includes(l)) || "es";
+
+  const client = await db();
   const orgId = randomUUID();
   const userId = randomUUID();
   const { wrapped } = await newTenantKey();
@@ -31,10 +37,10 @@ export async function POST(request) {
       branding: { encryption: { wrapped } },
     },
   });
-  await client.user.create({ data: { id: userId, email, name, locale: "es" } });
+  await client.user.create({ data: { id: userId, email, name, locale } });
   await client.membership.create({ data: { id: randomUUID(), userId, orgId, role: "OWNER" } });
   await auditLog({ orgId, actorId: userId, action: "org.created", payload: { plan, region, dpaAccepted } });
-  await sendWelcome({ to: email, name }).catch(() => {});
+  await sendWelcome({ to: email, name, locale }).catch(() => {});
   return Response.json({ orgId, userId }, { status: 201 });
 }
 
