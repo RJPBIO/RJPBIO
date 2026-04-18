@@ -357,21 +357,42 @@ export function loadVoices() {
   }
 }
 
-// Preferimos voces NATIVAS (localService) por encima de remotas, y españoles
-// en orden: es-MX → es-US → es-ES → cualquier es-*. La voz remota de
-// Google suena más "robótica" en móviles antiguos que la local del OS.
-function pickSpanishVoice() {
+// Preferimos voces NATIVAS (localService) por encima de remotas; para cada
+// locale probamos tags regionales comunes antes de caer al prefijo de idioma.
+// La voz remota de Google suena más "robótica" en móviles antiguos.
+const VOICE_PREFS = {
+  es: ["es-MX", "es-US", "es-ES", "es-AR", "es-CO"],
+  en: ["en-US", "en-GB", "en-AU", "en-CA"],
+  pt: ["pt-BR", "pt-PT"],
+  fr: ["fr-FR", "fr-CA"],
+  de: ["de-DE", "de-AT"],
+  it: ["it-IT"],
+  nl: ["nl-NL", "nl-BE"],
+  ja: ["ja-JP"],
+  ko: ["ko-KR"],
+  zh: ["zh-CN", "zh-TW", "zh-HK"],
+  ar: ["ar-SA", "ar-EG"],
+  he: ["he-IL"],
+};
+
+function pickVoice(locale = "es") {
   if (!_voices.length) return null;
+  const prefix = (locale || "es").slice(0, 2).toLowerCase();
+  const tags = VOICE_PREFS[prefix] || [];
   const byLang = (tag) => _voices.filter((v) => v.lang === tag);
-  const byPrefix = (p) => _voices.filter((v) => v.lang?.startsWith(p));
+  const byPrefix = (p) => _voices.filter((v) => v.lang?.toLowerCase().startsWith(p));
   const prefer = (list) => list.find((v) => v.localService) || list[0];
-  return (
-    prefer(byLang("es-MX")) ||
-    prefer(byLang("es-US")) ||
-    prefer(byLang("es-ES")) ||
-    prefer(byPrefix("es")) ||
-    null
-  );
+  for (const tag of tags) {
+    const hit = prefer(byLang(tag));
+    if (hit) return hit;
+  }
+  return prefer(byPrefix(prefix)) || null;
+}
+
+function voiceLangTag(locale = "es") {
+  const prefix = (locale || "es").slice(0, 2).toLowerCase();
+  const tags = VOICE_PREFS[prefix];
+  return tags?.[0] || prefix;
 }
 
 export function unlockVoice() {
@@ -379,29 +400,40 @@ export function unlockVoice() {
   try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; window.speechSynthesis.speak(u); _voiceUnlocked = true; } catch (e) {}
 }
 
-export function speak(text, circadian, voiceOn = true) {
+function resolveLocale(locale) {
+  if (locale) return locale;
+  if (typeof document !== "undefined" && document.documentElement?.lang) return document.documentElement.lang;
+  if (typeof localStorage !== "undefined") {
+    try { const l = localStorage.getItem("bio-locale"); if (l) return l; } catch {}
+  }
+  return "es";
+}
+
+export function speak(text, circadian, voiceOn = true, locale) {
   if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     // Si aún no tenemos voces cacheadas, intentamos cargarlas ahora.
     if (!_voices.length) loadVoices();
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    const loc = resolveLocale(locale);
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "es-MX"; u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
-    const v = pickSpanishVoice();
+    u.lang = voiceLangTag(loc); u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
+    const v = pickVoice(loc);
     if (v) u.voice = v;
     window.speechSynthesis.speak(u);
   } catch (e) {}
 }
 
-export function speakNow(text, circadian, voiceOn = true) {
+export function speakNow(text, circadian, voiceOn = true, locale) {
   if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     if (!_voices.length) loadVoices();
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     window.speechSynthesis.cancel();
+    const loc = resolveLocale(locale);
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "es-MX"; u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
-    const v = pickSpanishVoice();
+    u.lang = voiceLangTag(loc); u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
+    const v = pickVoice(loc);
     if (v) u.voice = v;
     window.speechSynthesis.speak(u);
   } catch (e) {}
