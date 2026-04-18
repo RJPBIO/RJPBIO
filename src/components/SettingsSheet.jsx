@@ -10,11 +10,13 @@
 import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
+import LocaleSelect from "./ui/LocaleSelect";
 import { SOUNDSCAPES } from "../lib/constants";
 import { exportData } from "../lib/audio";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
+import { useT } from "../hooks/useT";
 
 export default function SettingsSheet({
   show, onClose, st, setSt, isDark, ac, voiceOn, setVoiceOn, H,
@@ -23,11 +25,12 @@ export default function SettingsSheet({
   const dialogRef = useFocusTrap(show, onClose);
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const titleId = useId();
+  const { t } = useT();
 
   const toggles = [
-    { l: "Sonido + ambiente", k: "soundOn", d: "Acordes, ruido ambiental y binaural", ic: "volume-on" },
-    { l: "Vibración", k: "hapticOn", d: "Feedback háptico neurosensorial", ic: "vibrate" },
-    { l: "Voz guiada", k: "_voice", d: "Narración de fases y respiración", ic: "mind" },
+    { l: t("settings.sound"),   k: "soundOn",  d: t("settings.soundDesc"),   ic: "volume-on" },
+    { l: t("settings.vibrate"), k: "hapticOn", d: t("settings.vibrateDesc"), ic: "vibrate" },
+    { l: t("settings.voice"),   k: "_voice",   d: t("settings.voiceDesc"),   ic: "mind" },
   ];
 
   return (
@@ -82,7 +85,7 @@ export default function SettingsSheet({
               }}
             />
             <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[4] }}>
-              Configuración
+              {t("settings.title")}
             </h3>
 
             {toggles.map((s) => {
@@ -112,7 +115,7 @@ export default function SettingsSheet({
                   <button
                     role="switch"
                     aria-checked={checked}
-                    aria-label={`${s.l}: ${checked ? "activado" : "desactivado"}`}
+                    aria-label={`${s.l}: ${checked ? t("settings.on") : t("settings.off")}`}
                     onClick={toggle}
                     style={{
                       inlineSize: 42,
@@ -148,7 +151,7 @@ export default function SettingsSheet({
 
             <div
               role="radiogroup"
-              aria-label="Tema de la aplicación"
+              aria-label={t("settings.themeLabel")}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -159,18 +162,22 @@ export default function SettingsSheet({
             >
               <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
                 <Icon name="palette" size={15} color={t3} />
-                <div style={ty.title(t1)}>Tema</div>
+                <div style={ty.title(t1)}>{t("settings.theme")}</div>
               </div>
               <div style={{ display: "flex", gap: space[1] }}>
-                {["auto", "light", "dark"].map((m) => {
-                  const active = (st.themeMode || "auto") === m;
+                {[
+                  { id: "auto",  label: t("settings.themeAuto") },
+                  { id: "light", label: t("settings.themeLight") },
+                  { id: "dark",  label: t("settings.themeDark") },
+                ].map((m) => {
+                  const active = (st.themeMode || "auto") === m.id;
                   return (
                     <button
-                      key={m}
+                      key={m.id}
                       role="radio"
                       aria-checked={active}
-                      aria-label={`Tema ${m}`}
-                      onClick={() => setSt({ ...st, themeMode: m })}
+                      aria-label={`${t("settings.theme")}: ${m.label}`}
+                      onClick={() => setSt({ ...st, themeMode: m.id })}
                       style={{
                         paddingBlock: space[1],
                         paddingInline: space[3],
@@ -180,14 +187,29 @@ export default function SettingsSheet({
                         color: active ? ac : t3,
                         ...ty.caption(active ? ac : t3),
                         cursor: "pointer",
-                        textTransform: "capitalize",
                       }}
                     >
-                      {m}
+                      {m.label}
                     </button>
                   );
                 })}
               </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingBlock: space[3],
+                borderBlockEnd: `1px solid ${bd}`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+                <Icon name="mind" size={15} color={t3} />
+                <div style={ty.title(t1)}>{t("settings.language")}</div>
+              </div>
+              <LocaleSelect variant="radiogroup" />
             </div>
 
             <fieldset
@@ -203,14 +225,14 @@ export default function SettingsSheet({
                 <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
                   <Icon name="breath" size={15} color={t3} />
                   <div>
-                    <div style={ty.title(t1)}>Paisaje sonoro</div>
-                    <div style={ty.caption(t3)}>Desbloquea con V-Cores</div>
+                    <div style={ty.title(t1)}>{t("settings.soundscape")}</div>
+                    <div style={ty.caption(t3)}>{t("settings.soundscapeDesc")}</div>
                   </div>
                 </div>
               </legend>
               <div
                 role="radiogroup"
-                aria-label="Paisaje sonoro"
+                aria-label={t("settings.soundscape")}
                 style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
               >
                 {SOUNDSCAPES.map((s) => {
@@ -231,7 +253,11 @@ export default function SettingsSheet({
                       H("ok");
                     }
                   };
-                  const status = active ? "activo" : unlocked ? "desbloqueado" : `cuesta ${s.cost} V-Cores`;
+                  const status = active
+                    ? t("settings.active")
+                    : unlocked
+                      ? t("settings.unlocked")
+                      : t("settings.costHint", { cost: s.cost });
                   return (
                     <motion.button
                       key={s.id}
@@ -283,11 +309,11 @@ export default function SettingsSheet({
                             marginBlockStart: 2,
                           }}
                         >
-                          ACTIVO
+                          {t("settings.active")}
                         </div>
                       )}
                       {unlocked && !active && (
-                        <div style={{ fontSize: font.size.xs, color: t3, marginBlockStart: 2 }}>desbloqueado</div>
+                        <div style={{ fontSize: font.size.xs, color: t3, marginBlockStart: 2 }}>{t("settings.unlocked")}</div>
                       )}
                     </motion.button>
                   );
@@ -299,7 +325,7 @@ export default function SettingsSheet({
               <motion.button
                 whileTap={reduced ? {} : { scale: 0.96 }}
                 onClick={() => exportData(st)}
-                aria-label="Exportar datos como JSON"
+                aria-label={t("settings.exportJsonLabel")}
                 style={{
                   flex: 1,
                   padding: space[3],
@@ -314,12 +340,12 @@ export default function SettingsSheet({
                 }}
               >
                 <Icon name="export" size={14} color={t2} aria-hidden="true" />
-                <span style={ty.title(t2)}>JSON</span>
+                <span style={ty.title(t2)}>{t("settings.exportJson")}</span>
               </motion.button>
               <motion.button
                 whileTap={reduced ? {} : { scale: 0.96 }}
                 onClick={() => exportNOM035(st)}
-                aria-label="Exportar informe NOM-035"
+                aria-label={t("settings.exportNomLabel")}
                 style={{
                   flex: 1,
                   padding: space[3],
@@ -334,7 +360,7 @@ export default function SettingsSheet({
                 }}
               >
                 <Icon name="file" size={14} color={semantic.success} aria-hidden="true" />
-                <span style={ty.title(semantic.success)}>NOM-035</span>
+                <span style={ty.title(semantic.success)}>{t("settings.exportNom")}</span>
               </motion.button>
             </div>
           </motion.div>
