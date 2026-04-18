@@ -122,6 +122,38 @@ export default function BioIgnicion(){
     const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
   }}catch(e){};},[]);
 
+  // Tap-to-Ignite: /q verificó la firma y nos redirigió con slot resuelto.
+  // Selecciona un protocolo apropiado al slot y marca el contexto de estación.
+  // No auto-arranca: iOS requiere gesto para audio; el usuario tapea el timer.
+  useEffect(()=>{if(typeof window==="undefined")return;try{
+    const params=new URLSearchParams(window.location.search);
+    if(params.get("source")!=="tap") return;
+    const stationId=params.get("station")||"";
+    const slot=params.get("slot")||"ADHOC";
+    setNfcCtx({company:null,type:slot==="MORNING"?"entrada":slot==="EVENING"?"salida":"tap",employee:null,station:stationId});
+    setEntryDone(true);
+    const isExit=slot==="EVENING";
+    let pool=isExit?P.filter(p=>p.int==="calma"||p.int==="reset")
+      :slot==="MORNING"?P.filter(p=>p.int==="energia"||p.int==="enfoque")
+      :P.filter(p=>p.int==="enfoque"||p.int==="reset");
+    const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];
+    setPr(pick);setSec(Math.round(pick.d*durMult));
+  }catch(e){}},[]);
+
+  // Tap con error (firma inválida, slot no permitido, replay): notifica.
+  useEffect(()=>{if(typeof window==="undefined")return;try{
+    const params=new URLSearchParams(window.location.search);
+    if(params.get("tap")!=="error") return;
+    const reason=params.get("reason")||"unknown";
+    const msg=reason==="slot_not_allowed"?"Fuera de ventana permitida para esta estación."
+      :reason==="cooldown"?"Ya registraste un tap reciente."
+      :reason==="replay"?"Este enlace ya fue usado."
+      :reason==="expired"?"El enlace firmado expiró."
+      :reason==="not_found"?"Estación desconocida o inactiva."
+      :"No se pudo validar el tap.";
+    announce(msg,"assertive");
+  }catch(e){}},[]);
+
   // ═══ VOICE + AUDIO UNLOCK ═══
   // iOS Safari / Android Chrome: el AudioContext queda suspended hasta que
   // un gesto DENTRO de su call stack llame a resume(). wireAudioUnlock()
