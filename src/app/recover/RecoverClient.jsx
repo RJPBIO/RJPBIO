@@ -30,7 +30,7 @@ export default function RecoverClient() {
       subtitle="Elige la opción que mejor describa tu situación."
       footer={
         <span>
-          <Link href="/signin" style={{ color: cssVar.accent, fontWeight: font.weight.semibold, textDecoration: "none" }}>Volver a entrar</Link>
+          <Link href="/signin" className="bi-auth-link" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>Volver a entrar</Link>
         </span>
       }
     >

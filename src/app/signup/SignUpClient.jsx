@@ -38,7 +38,7 @@ export default function SignUpClient() {
       subtitle="Una cuenta por organización. Invita al equipo desde el panel de admin después."
       footer={
         <span>
-          ¿Ya tienes cuenta? <Link href="/signin" style={{ color: cssVar.accent, fontWeight: font.weight.semibold, textDecoration: "none" }}>Entrar</Link>
+          ¿Ya tienes cuenta? <Link href="/signin" className="bi-auth-link" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>Entrar</Link>
         </span>
       }
     >
@@ -84,9 +84,9 @@ export default function SignUpClient() {
         }}>
           <input type="checkbox" checked={dpa} onChange={(e) => setDpa(e.target.checked)} style={{ marginTop: 3, accentColor: "var(--bi-accent)" }} />
           <span>
-            Acepto el <Link href="/trust/dpa" target="_blank" style={linkStyle}>Data Processing Agreement</Link>,
-            la <Link href="/privacy" target="_blank" style={linkStyle}>Política de Privacidad</Link> y los{" "}
-            <Link href="/terms" target="_blank" style={linkStyle}>Términos</Link>.
+            Acepto el <Link href="/trust/dpa" target="_blank" rel="noopener" className="bi-auth-link" style={linkStyle}>Data Processing Agreement</Link>,
+            la <Link href="/privacy" target="_blank" rel="noopener" className="bi-auth-link" style={linkStyle}>Política de Privacidad</Link> y los{" "}
+            <Link href="/terms" target="_blank" rel="noopener" className="bi-auth-link" style={linkStyle}>Términos</Link>.
           </span>
         </label>
 
@@ -100,4 +100,4 @@ export default function SignUpClient() {
   );
 }
 
-const linkStyle = { color: "var(--bi-accent)", textDecoration: "none", fontWeight: 600 };
+const linkStyle = { color: "var(--bi-accent)", fontWeight: 600 };

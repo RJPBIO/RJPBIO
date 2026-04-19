@@ -131,7 +131,12 @@ export default function InstrumentRunner({
         <button
           onClick={onClose}
           aria-label="Cerrar evaluación"
-          style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer" }}
+          style={{
+            inlineSize: 44, blockSize: 44,
+            border: "none", background: "transparent", color: t2,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer",
+          }}
         >
           <Icon name="close" size={20} color={t2} aria-hidden="true" />
         </button>

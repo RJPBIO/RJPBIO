@@ -158,6 +158,8 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                 kicker="Registro en blanco"
                 title="Sin señal aún."
                 body="La primera sesión inicia tu registro biométrico. Cada ignición añade un nodo a tu constelación."
+                action={onClose}
+                actionLabel="Empezar primera sesión"
                 accent={ac}
                 textPrimary={t1}
                 textMuted={t3}

@@ -10,7 +10,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import Icon from "./Icon";
 import { CATS, INTENTS, DIF_LABELS } from "../lib/constants";
 import { predictSessionImpact } from "../lib/neural";
@@ -25,6 +25,13 @@ export default function ProtocolSelector({
   const reduced = useReducedMotion();
   const dialogRef = useFocusTrap(show, onClose);
   const listRef = useRef(null);
+
+  useEffect(() => {
+    if (!show || typeof document === "undefined") return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [show]);
 
   const sortedProtocols = [...fl].sort(
     (a, b) => (favs.includes(b.n) ? 1 : 0) - (favs.includes(a.n) ? 1 : 0)
@@ -97,12 +104,13 @@ export default function ProtocolSelector({
                 onClick={onClose}
                 aria-label="Cerrar selector de protocolos"
                 style={{
-                  inlineSize: 32, blockSize: 32, borderRadius: radius.full,
+                  inlineSize: 40, blockSize: 40, borderRadius: radius.full,
                   border: `1px solid ${bd}`, background: cd,
                   display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer",
                 }}
               >
-                <Icon name="x" size={14} color={t2} />
+                <Icon name="x" size={16} color={t2} />
               </button>
             </div>
 

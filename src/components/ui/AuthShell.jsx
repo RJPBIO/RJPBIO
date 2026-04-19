@@ -121,9 +121,9 @@ export function AuthShell({ children, title, subtitle, footer, size = "md", side
       >
         {footer || (
           <span>
-            <Link href="/privacy" style={{ color: cssVar.textMuted, marginInline: space[2] }}>Privacidad</Link>·
-            <Link href="/terms"   style={{ color: cssVar.textMuted, marginInline: space[2] }}>Términos</Link>·
-            <Link href="/trust"   style={{ color: cssVar.textMuted, marginInline: space[2] }}>Confianza</Link>
+            <Link href="/privacy" className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>Privacidad</Link>·
+            <Link href="/terms"   className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>Términos</Link>·
+            <Link href="/trust"   className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>Confianza</Link>
           </span>
         )}
       </footer>

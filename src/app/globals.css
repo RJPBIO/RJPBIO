@@ -324,6 +324,11 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visibl
   .bi-row-link:hover { transform: none; }
 }
 
+/* Auth form links — subtle underline on hover, accent-tinted */
+.bi-auth-link { transition: color 0.15s ease, text-decoration-color 0.15s ease; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; text-decoration-thickness: 1px; }
+.bi-auth-link:hover { text-decoration-color: currentColor; color: var(--bi-accent); }
+.bi-auth-link:focus-visible { outline: none; box-shadow: var(--bi-focus-ring); border-radius: 4px; }
+
 /* ═══ REDUCED MOTION — honored everywhere ═══ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

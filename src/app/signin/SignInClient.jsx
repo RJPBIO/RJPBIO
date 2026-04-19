@@ -95,7 +95,8 @@ export default function SignInClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (!optsR.ok) throw new Error("No hay passkey para este correo");
+      if (optsR.status === 404) throw new Error("No hay passkey registrado para este correo. Usa el enlace mágico.");
+      if (!optsR.ok) throw new Error("No pudimos iniciar el passkey. Intenta de nuevo.");
       const opts = await optsR.json();
       const { startAuthentication } = await import("@simplewebauthn/browser");
       const assertion = await startAuthentication({ optionsJSON: opts });
@@ -107,7 +108,10 @@ export default function SignInClient() {
       if (!verifyR.ok) throw new Error((await verifyR.text()) || "Falló la verificación");
       try { localStorage.setItem("bio-last-signin", "passkey"); } catch {}
       location.href = callbackUrl;
-    } catch (e) { setErr(e.message || "Error con passkey"); } finally { setSubmitting(false); }
+    } catch (e) {
+      const msg = e?.name === "NotAllowedError" ? "Cancelaste el passkey o no está disponible." : (e.message || "Error con passkey");
+      setErr(msg);
+    } finally { setSubmitting(false); }
   }
 
   function startIdp(provider, url) {
@@ -125,7 +129,7 @@ export default function SignInClient() {
       subtitle="Te enviaremos un enlace mágico, usa tu passkey o SSO corporativo."
       footer={
         <span>
-          ¿Primera vez? <Link href="/signup" style={{ color: cssVar.accent, fontWeight: font.weight.semibold, textDecoration: "none" }}>Crea tu organización</Link>
+          ¿Primera vez? <Link href="/signup" className="bi-auth-link" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>Crea tu organización</Link>
         </span>
       }
     >
@@ -223,7 +227,7 @@ export default function SignInClient() {
         </div>
 
         <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[5], textAlign: "center" }}>
-          <Link href="/recover" style={{ color: cssVar.textDim, textDecoration: "none" }}>¿Problemas para entrar?</Link>
+          <Link href="/recover" className="bi-auth-link" style={{ color: cssVar.textDim }}>¿Problemas para entrar?</Link>
         </p>
       </form>
     </AuthShell>

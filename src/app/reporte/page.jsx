@@ -157,11 +157,21 @@ export default function ReportePage() {
         .footnote { font-size: 11px; color: #64748B; margin-block-start: 24px; }
 
         @media print {
+          @page { margin: 14mm; }
           body { background: #FFFFFF; }
           .actions { display: none; }
-          .page { padding: 0; max-width: none; }
-          h2 { page-break-after: avoid; }
-          .card, table { page-break-inside: avoid; }
+          .page { padding: 0; max-width: none; font-size: 12px; }
+          h1 { font-size: 22px; }
+          h2 { page-break-after: avoid; break-after: avoid-page; margin-top: 18px; }
+          .card, table, .warn { page-break-inside: avoid; break-inside: avoid; }
+          tr, tbody, thead { page-break-inside: avoid; break-inside: avoid; }
+          thead { display: table-header-group; }
+          .chip, .chip-good, .chip-bad, .chip-muted, .warn, .warn.high, .card {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          a[href]::after { content: ""; }
+          .footnote { page-break-before: avoid; }
         }
       `}</style>
 

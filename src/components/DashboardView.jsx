@@ -105,7 +105,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
   // Reservado por si en el futuro queremos un empty state distinto al plan.
   if (noData) {
     return (
-      <section role="region" aria-label="Dashboard vacío" style={{ paddingBlock: `${space[3.5] || 14}px`, paddingInline: space[5], paddingBlockEnd: 180 }}>
+      <section role="region" aria-label="Dashboard vacío" style={{ paddingBlock: 14, paddingInline: space[5], paddingBlockEnd: 180 }}>
         <IllustratedEmpty
           illustration="baseline"
           kicker="Señal en reposo"
