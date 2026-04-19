@@ -41,7 +41,7 @@ export default async function ChangelogPage() {
           <h1 style={{ margin: `${space[2]}px 0` }}>{T("changelog.heading", "Qué hay de nuevo")}</h1>
           <p>
             {T("changelog.description", "Historial público de cambios. RSS disponible.")} ·{" "}
-            <a href="https://semver.org" rel="noopener noreferrer">SemVer</a> · RSS:{" "}
+            <a href="https://semver.org" target="_blank" rel="noopener noreferrer">SemVer</a> · RSS:{" "}
             <a href="/changelog.xml">/changelog.xml</a> · <a href="/docs">/docs</a>
           </p>
         </header>

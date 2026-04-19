@@ -10,7 +10,9 @@
    debe poder auditar la ciencia sin crear cuenta.
    ═══════════════════════════════════════════════════════════════ */
 
-import Link from "next/link";
+import { PublicShell } from "@/components/ui/PublicShell";
+import { Container } from "@/components/ui/Container";
+import { cssVar, space, font, radius } from "@/components/ui/tokens";
 import { EVIDENCE } from "../../lib/evidence";
 
 export const metadata = {
@@ -31,6 +33,12 @@ const LEVEL_COLOR = {
   limited: "#D97706",
 };
 
+const PILL_VARIANT = {
+  high: { bg: "#DCFCE7", fg: "#166534" },
+  moderate: { bg: "#E0E7FF", fg: "#3730A3" },
+  limited: { bg: "#FEF3C7", fg: "#854D0E" },
+};
+
 export default function EvidenciaPage() {
   const entries = Object.values(EVIDENCE);
   const counts = entries.reduce(
@@ -43,118 +51,147 @@ export default function EvidenciaPage() {
   const totalStudies = entries.reduce((n, e) => n + (e.studies?.length || 0), 0);
 
   return (
-    <main className="page">
-      <style>{`
-        :root { color-scheme: light dark; }
-        .page {
-          max-width: 820px;
-          margin: 0 auto;
-          padding: 32px 24px 64px;
-          font-family: "Inter", system-ui, sans-serif;
-          color: #0F172A;
-          line-height: 1.5;
-        }
-        @media (prefers-color-scheme: dark) {
-          .page { color: #E2E8F0; }
-          .card, .entry { background: #0F172A; border-color: #1E293B; }
-          .muted { color: #94A3B8; }
-          .kicker { color: #94A3B8; }
-          .pills .pill { background: #1E293B; }
-        }
-        h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; }
-        .sub { color: #64748B; font-size: 14px; margin: 0 0 28px; max-width: 60ch; }
-        .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; }
-        .pill { background: #F1F5F9; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-        .kicker { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
-        .entry {
-          background: #FFFFFF;
-          border: 1px solid #E2E8F0;
-          border-radius: 14px;
-          padding: 18px;
-          margin-block-end: 14px;
-        }
-        .entry h2 { font-size: 18px; font-weight: 800; margin: 0 0 2px; }
-        .entry .mechanism { font-size: 13px; color: #334155; margin: 10px 0 14px; }
-        .entry .block-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #64748B; font-weight: 700; margin: 10px 0 4px; }
-        .entry .expect, .entry .limitation { font-size: 12px; }
-        .entry .limitation { color: #64748B; font-style: italic; }
-        .study {
-          border-inline-start: 2px solid #CBD5E1;
-          padding: 2px 0 2px 12px;
-          margin-block-end: 10px;
-          font-size: 12px;
-        }
-        .study .authors { font-weight: 700; }
-        .study .journal { color: #64748B; font-style: italic; font-size: 11px; }
-        .study .effect { margin-block-start: 6px; background: #F1F5F9; padding: 6px 10px; border-radius: 6px; font-size: 12px; }
-        .study .doi { color: #64748B; font-size: 10px; font-family: "JetBrains Mono", monospace; margin-block-start: 4px; }
-        .nav { margin-block-end: 24px; font-size: 13px; }
-        .nav a { color: #475569; text-decoration: none; transition: color 0.15s ease; }
-        .nav a:hover { color: #059669; text-decoration: underline; text-underline-offset: 2px; }
-      `}</style>
+    <PublicShell activePath="/evidencia">
+      <Container size="md" className="bi-prose">
+        <header style={{ marginBlockEnd: space[6] }}>
+          <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
+            Biblioteca
+          </div>
+          <h1 style={{ margin: `${space[2]}px 0` }}>Evidencia científica</h1>
+          <p style={{ color: cssVar.textDim, maxWidth: "60ch" }}>
+            Cada protocolo se apoya en literatura publicada y revisada por pares.
+            Esta biblioteca lista mecanismos, estudios, tamaños de muestra y
+            efectos reportados. Los niveles están auto-clasificados de forma
+            conservadora — revisamos y degradamos cuando la evidencia no
+            justifica lo que una app suele prometer.
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: space[2], marginBlockStart: space[4] }}>
+            <Pill>{entries.length} protocolos</Pill>
+            <Pill>{totalStudies} estudios</Pill>
+            <Pill variant={PILL_VARIANT.high}>{counts.high} · evidencia alta</Pill>
+            <Pill variant={PILL_VARIANT.moderate}>{counts.moderate} · moderada</Pill>
+            <Pill variant={PILL_VARIANT.limited}>{counts.limited} · limitada</Pill>
+          </div>
+        </header>
 
-      <nav className="nav"><Link href="/">← BIO-IGNICIÓN</Link></nav>
+        <div style={{ display: "grid", gap: space[3] }}>
+          {entries.map((e) => {
+            const color = LEVEL_COLOR[e.evidenceLevel] || cssVar.textDim;
+            return (
+              <article
+                key={e.id}
+                aria-label={e.title}
+                style={{
+                  background: cssVar.surface,
+                  border: `1px solid ${cssVar.border}`,
+                  borderRadius: radius.md,
+                  padding: space[4],
+                }}
+              >
+                <p style={{
+                  margin: 0,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  fontWeight: font.weight.black,
+                  color,
+                }}>
+                  {LEVEL_LABEL[e.evidenceLevel] || "—"}
+                </p>
+                <h2 style={{ fontSize: 18, fontWeight: font.weight.black, margin: `2px 0 0`, color: cssVar.text }}>{e.title}</h2>
+                <p style={{ fontSize: 13, color: cssVar.textDim, margin: `${space[2]}px 0 ${space[3]}px` }}>{e.mechanism}</p>
 
-      <header>
-        <h1>Evidencia científica</h1>
-        <p className="sub">
-          Cada protocolo se apoya en literatura publicada y revisada por pares.
-          Esta biblioteca lista mecanismos, estudios, tamaños de muestra y
-          efectos reportados. Los niveles están auto-clasificados de forma
-          conservadora — revisamos y degradamos cuando la evidencia no
-          justifica lo que una app suele prometer.
-        </p>
-        <div className="pills">
-          <span className="pill">{entries.length} protocolos</span>
-          <span className="pill">{totalStudies} estudios</span>
-          <span className="pill" style={{ background: "#DCFCE7", color: "#166534" }}>
-            {counts.high} · evidencia alta
-          </span>
-          <span className="pill" style={{ background: "#E0E7FF", color: "#3730A3" }}>
-            {counts.moderate} · moderada
-          </span>
-          <span className="pill" style={{ background: "#FEF3C7", color: "#854D0E" }}>
-            {counts.limited} · limitada
-          </span>
+                <BlockLabel>Qué esperar</BlockLabel>
+                <p style={{ fontSize: 12, margin: 0, color: cssVar.text }}>{e.expect}</p>
+
+                <BlockLabel>Limitación</BlockLabel>
+                <p style={{ fontSize: 12, margin: 0, color: cssVar.textDim, fontStyle: "italic" }}>{e.limitation}</p>
+
+                <BlockLabel>Estudios ({e.studies.length})</BlockLabel>
+                <ol role="list" style={{ paddingInlineStart: 0, listStyle: "none", margin: 0 }}>
+                  {e.studies.map((s, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        borderInlineStart: `2px solid ${cssVar.border}`,
+                        padding: `2px 0 2px 12px`,
+                        marginBlockEnd: space[2],
+                        fontSize: 12,
+                      }}
+                    >
+                      <div style={{ fontWeight: font.weight.bold, color: cssVar.text }}>{s.authors} ({s.year})</div>
+                      <div style={{ color: cssVar.text }}>{s.title}</div>
+                      <div style={{ color: cssVar.textMuted, fontStyle: "italic", fontSize: 11 }}>
+                        {s.journal}{s.n ? ` · N=${s.n}` : ""}
+                      </div>
+                      {s.effect && (
+                        <div style={{
+                          marginBlockStart: 6,
+                          background: cssVar.surface2,
+                          padding: "6px 10px",
+                          borderRadius: 6,
+                          color: cssVar.text,
+                        }}>
+                          {s.effect}
+                        </div>
+                      )}
+                      {s.doi && (
+                        <div style={{
+                          color: cssVar.textMuted,
+                          fontSize: 10,
+                          fontFamily: cssVar.fontMono,
+                          marginBlockStart: 4,
+                        }}>
+                          DOI: {s.doi}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </article>
+            );
+          })}
         </div>
-      </header>
 
-      {entries.map((e) => {
-        const color = LEVEL_COLOR[e.evidenceLevel] || "#475569";
-        return (
-          <article key={e.id} className="entry" aria-label={e.title}>
-            <p className="kicker" style={{ color }}>{LEVEL_LABEL[e.evidenceLevel] || "—"}</p>
-            <h2>{e.title}</h2>
-            <p className="mechanism">{e.mechanism}</p>
+        <p style={{ marginBlockStart: space[6], color: cssVar.textMuted, fontSize: font.size.sm, maxWidth: "60ch" }}>
+          ¿Falta un estudio o ves un claim mal calibrado? Abre un issue en el
+          repositorio público. Esta página se genera desde el mismo archivo
+          (<code>src/lib/evidence.js</code>) que consume el producto — corregir
+          aquí corrige la app.
+        </p>
+      </Container>
+    </PublicShell>
+  );
+}
 
-            <p className="block-label">Qué esperar</p>
-            <p className="expect">{e.expect}</p>
+function Pill({ children, variant }) {
+  const bg = variant?.bg ?? cssVar.surface2;
+  const fg = variant?.fg ?? cssVar.text;
+  return (
+    <span style={{
+      background: bg,
+      color: fg,
+      padding: "6px 12px",
+      borderRadius: 999,
+      fontSize: 12,
+      fontWeight: font.weight.bold,
+    }}>
+      {children}
+    </span>
+  );
+}
 
-            <p className="block-label">Limitación</p>
-            <p className="limitation">{e.limitation}</p>
-
-            <p className="block-label">Estudios ({e.studies.length})</p>
-            <ol role="list" style={{ paddingInlineStart: 0, listStyle: "none", margin: 0 }}>
-              {e.studies.map((s, i) => (
-                <li key={i} className="study">
-                  <div className="authors">{s.authors} ({s.year})</div>
-                  <div>{s.title}</div>
-                  <div className="journal">{s.journal}{s.n ? ` · N=${s.n}` : ""}</div>
-                  {s.effect && <div className="effect">{s.effect}</div>}
-                  {s.doi && <div className="doi">DOI: {s.doi}</div>}
-                </li>
-              ))}
-            </ol>
-          </article>
-        );
-      })}
-
-      <p className="sub" style={{ marginBlockStart: 32 }}>
-        ¿Falta un estudio o ves un claim mal calibrado? Abre un issue en el
-        repositorio público. Esta página se genera desde el mismo archivo
-        (<code>src/lib/evidence.js</code>) que consume el producto — corregir
-        aquí corrige la app.
-      </p>
-    </main>
+function BlockLabel({ children }) {
+  return (
+    <p style={{
+      fontSize: 10,
+      letterSpacing: 2,
+      textTransform: "uppercase",
+      color: cssVar.textMuted,
+      fontWeight: font.weight.bold,
+      margin: `${space[3]}px 0 ${space[1]}px`,
+    }}>
+      {children}
+    </p>
   );
 }
