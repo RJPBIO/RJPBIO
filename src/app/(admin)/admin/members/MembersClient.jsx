@@ -90,9 +90,11 @@ export default function MembersClient({ initialRows, orgId }) {
     } finally { setBusy(false); }
   }
 
+  const ACTION_LABEL = { remove: "Eliminar" };
   async function bulkAction(action) {
     if (!selected.size) return;
-    if (!confirm(`Aplicar "${action}" a ${selected.size} miembro(s)?`)) return;
+    const label = ACTION_LABEL[action] || action;
+    if (!confirm(`¿${label} a ${selected.size} miembro(s)?`)) return;
     setBusy(true);
     try {
       const res = await fetch("/api/members/bulk", {
@@ -219,8 +221,8 @@ export default function MembersClient({ initialRows, orgId }) {
           marginBottom: space[3],
         }}>
           <span style={{ fontWeight: font.weight.bold, color: cssVar.text }}>{selected.size} seleccionado(s)</span>
-          <Button variant="danger" size="sm" onClick={() => bulkAction("remove")}>Eliminar</Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} style={{ marginInlineStart: "auto" }}>Deseleccionar</Button>
+          <Button variant="danger" size="sm" onClick={() => bulkAction("remove")} loading={busy} loadingLabel="Eliminando…">Eliminar</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={busy} style={{ marginInlineStart: "auto" }}>Deseleccionar</Button>
         </div>
       )}
 
@@ -234,13 +236,13 @@ export default function MembersClient({ initialRows, orgId }) {
 
       {pageCount > 1 && (
         <nav aria-label="Paginación" style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginTop: space[4] }}>
-          <Button size="sm" variant="ghost" onClick={() => setPage(0)}                                         disabled={page === 0}>«</Button>
-          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.max(0, p - 1))}                 disabled={page === 0}>‹</Button>
-          <span style={{ color: cssVar.textDim, fontSize: font.size.sm, padding: `0 ${space[2]}px`, fontFamily: cssVar.fontMono }}>
+          <Button size="sm" variant="ghost" onClick={() => setPage(0)}                                         disabled={page === 0}                 aria-label="Primera página">«</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.max(0, p - 1))}                 disabled={page === 0}                 aria-label="Página anterior">‹</Button>
+          <span aria-live="polite" aria-atomic="true" style={{ color: cssVar.textDim, fontSize: font.size.sm, padding: `0 ${space[2]}px`, fontFamily: cssVar.fontMono }}>
             {page + 1} / {pageCount}
           </span>
-          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}     disabled={page >= pageCount - 1}>›</Button>
-          <Button size="sm" variant="ghost" onClick={() => setPage(pageCount - 1)}                              disabled={page >= pageCount - 1}>»</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}     disabled={page >= pageCount - 1} aria-label="Página siguiente">›</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage(pageCount - 1)}                              disabled={page >= pageCount - 1} aria-label="Última página">»</Button>
         </nav>
       )}
     </>

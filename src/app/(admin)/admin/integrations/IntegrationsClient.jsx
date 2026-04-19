@@ -105,9 +105,11 @@ export default function IntegrationsClient({ orgId, catalog, installed }) {
                   variant="ghost"
                   size="sm"
                   onClick={() => test(p.id)}
-                  disabled={testing === p.id}
+                  loading={testing === p.id}
+                  loadingLabel="Probando…"
+                  disabled={testing !== null && testing !== p.id}
                 >
-                  {testing === p.id ? "Probando…" : "Probar"}
+                  Probar
                 </Button>
               )}
             </div>
