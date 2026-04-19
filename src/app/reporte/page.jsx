@@ -84,7 +84,7 @@ export default function ReportePage() {
             .skel { background: linear-gradient(90deg, #1E293B, #334155 50%, #1E293B); }
           }
         `}</style>
-        <span className="sr-only">Generando informe trimestral…</span>
+        <span className="bi-sr-only">Generando informe trimestral…</span>
         <div className="skel" style={{ height: 32, width: "45%", marginBlockEnd: 12 }} />
         <div className="skel" style={{ height: 14, width: "70%", marginBlockEnd: 28 }} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBlockEnd: 28 }}>

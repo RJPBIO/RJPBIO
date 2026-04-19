@@ -133,7 +133,7 @@ export default function EvidenciaPage() {
             <p className="limitation">{e.limitation}</p>
 
             <p className="block-label">Estudios ({e.studies.length})</p>
-            <ol style={{ paddingInlineStart: 0, listStyle: "none", margin: 0 }}>
+            <ol role="list" style={{ paddingInlineStart: 0, listStyle: "none", margin: 0 }}>
               {e.studies.map((s, i) => (
                 <li key={i} className="study">
                   <div className="authors">{s.authors} ({s.year})</div>

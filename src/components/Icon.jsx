@@ -12,7 +12,7 @@ import {
   TrendingDown, Sparkles, Target, Shield, Waves, Sun, Moon,
   Volume2, VolumeX, Vibrate, Palette, FileText, RotateCw,
   Play, Pause, Square, ChevronRight, Info, X, Cpu, Gauge,
-  Compass, Lightbulb, Fingerprint, CircleDot, Loader2,
+  Compass, Lightbulb, Fingerprint, CircleDot, Loader2, Leaf,
 } from "lucide-react";
 import { BIO_ICONS } from "./BioIcons";
 
@@ -26,6 +26,7 @@ const ICON_MAP = {
 
   // Neural domains
   calm: Waves,
+  leaf: Leaf,
   focus: Crosshair,
   energy: Zap,
   reset: RotateCcw,
@@ -72,6 +73,7 @@ const ICON_MAP = {
   "chevron-down": ChevronDown,
   info: Info,
   close: X,
+  x: X,
   shuffle: Shuffle,
 
   // Neural-specific

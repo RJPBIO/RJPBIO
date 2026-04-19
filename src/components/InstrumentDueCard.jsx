@@ -50,13 +50,13 @@ const CONFIG = {
 };
 
 export default function InstrumentDueCard({ isDark, ac, defaultForce = null }) {
-  const instruments = useStore((s) => s.instruments || []);
+  const instruments = useStore((s) => s.instruments);
   const logInstrument = useStore((s) => s.logInstrument);
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState(null);
 
   const due = useMemo(
-    () => defaultForce || nextInstrumentDue(instruments),
+    () => defaultForce || nextInstrumentDue(instruments || []),
     [instruments, defaultForce]
   );
 
