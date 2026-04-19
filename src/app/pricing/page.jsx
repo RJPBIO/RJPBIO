@@ -23,6 +23,7 @@ const COPY = {
     sub: "Pagas por usuario activo. 20 % de descuento en facturación anual. Sin setup fees, sin mínimos.",
     unit: "por usuario / mes",
     unitYear: "facturación anual",
+    annualHint: (m, a) => `o ${a} / mes con facturación anual · ahorra 20 %`,
     featured: "Más elegido",
     faqTitle: "Preguntas frecuentes",
     plans: {
@@ -78,6 +79,7 @@ const COPY = {
     sub: "You pay per active user. 20% off on annual billing. No setup fees, no minimums.",
     unit: "per user / month",
     unitYear: "annual billing",
+    annualHint: (m, a) => `or ${a} / mo billed annually · save 20%`,
     featured: "Most chosen",
     faqTitle: "Frequently asked questions",
     plans: {
@@ -133,10 +135,12 @@ export default async function PricingPage() {
   const locale = await getServerLocale();
   const L = locale === "en" ? "en" : "es";
   const c = COPY[L];
+  const fmt = (n) => `$ ${Number.isInteger(n) ? n : n.toFixed(2).replace(/\.00$/, "")}`;
+  const annualOf = (monthly) => fmt(monthly * 0.8);
   const plans = [
-    { id: "starter", name: "Starter", price: "$ 9", unit: c.unit, tagline: c.plans.starter.tagline, features: c.plans.starter.features, cta: { href: "/signup", label: c.plans.starter.cta }, featured: false },
-    { id: "growth", name: "Growth", price: "$ 19", unit: c.unit, tagline: c.plans.growth.tagline, features: c.plans.growth.features, cta: { href: "/demo", label: c.plans.growth.cta }, featured: true },
-    { id: "enterprise", name: "Enterprise", price: L === "en" ? "Custom" : "Custom", unit: c.unitYear, tagline: c.plans.enterprise.tagline, features: c.plans.enterprise.features, cta: { href: "mailto:enterprise@bio-ignicion.app", label: c.plans.enterprise.cta }, featured: false },
+    { id: "starter", name: "Starter", priceMonthly: 9, price: "$ 9", unit: c.unit, tagline: c.plans.starter.tagline, features: c.plans.starter.features, cta: { href: "/signup", label: c.plans.starter.cta }, featured: false },
+    { id: "growth", name: "Growth", priceMonthly: 19, price: "$ 19", unit: c.unit, tagline: c.plans.growth.tagline, features: c.plans.growth.features, cta: { href: "/demo", label: c.plans.growth.cta }, featured: true },
+    { id: "enterprise", name: "Enterprise", priceMonthly: null, price: "Custom", unit: c.unitYear, tagline: c.plans.enterprise.tagline, features: c.plans.enterprise.features, cta: { href: "mailto:enterprise@bio-ignicion.app", label: c.plans.enterprise.cta }, featured: false },
   ];
   return (
     <PublicShell activePath="/pricing">
@@ -175,13 +179,24 @@ export default async function PricingPage() {
                 </div>
               )}
               <h2 id={`plan-${p.id}`} style={{ margin: 0, fontSize: 22 }}>{p.name}</h2>
-              <p style={{ minHeight: 36, color: cssVar.textDim, fontSize: 13 }}>{p.tagline}</p>
-              <div style={{ margin: `${space[3]}px 0`, display: "flex", alignItems: "baseline", gap: space[2] }}>
+              <p style={{ minHeight: 52, color: cssVar.textDim, fontSize: 13, lineHeight: 1.5 }}>{p.tagline}</p>
+              <div style={{ marginBlockStart: space[3], display: "flex", alignItems: "baseline", gap: space[2] }}>
                 <span style={{ fontSize: 42, fontWeight: font.weight.black, fontFamily: cssVar.fontMono, letterSpacing: "-1px" }}>
                   {p.price}
                 </span>
                 <span style={{ fontSize: 13, color: cssVar.textDim }}>{p.unit}</span>
               </div>
+              <p
+                aria-live="polite"
+                style={{
+                  minHeight: 18,
+                  margin: `${space[1]}px 0 ${space[3]}px`,
+                  fontSize: 12,
+                  color: cssVar.textMuted,
+                }}
+              >
+                {p.priceMonthly ? c.annualHint(fmt(p.priceMonthly), annualOf(p.priceMonthly)) : "\u00A0"}
+              </p>
               <ul style={{ listStyle: "none", padding: 0, margin: `0 0 ${space[5]}px`, fontSize: 14, lineHeight: 1.8 }}>
                 {p.features.map((f, i) => (
                   <li key={i} style={{ display: "flex", gap: space[2] }}>

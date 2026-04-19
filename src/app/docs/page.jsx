@@ -50,12 +50,12 @@ function sectionsFor(locale) {
           <p>
             {en ? <>
               We implement the{" "}
-              <a href="https://standardwebhooks.com" rel="noopener noreferrer">Standard Webhooks</a> spec.
+              <a href="https://standardwebhooks.com" target="_blank" rel="noopener noreferrer">Standard Webhooks</a> spec.
               Every delivery includes <code>webhook-id</code>, <code>webhook-timestamp</code> and{" "}
               <code>webhook-signature</code> (HMAC-SHA256 in base64, prefix <code>v1,</code>).
             </> : <>
               Implementamos el estándar{" "}
-              <a href="https://standardwebhooks.com" rel="noopener noreferrer">Standard Webhooks</a>.
+              <a href="https://standardwebhooks.com" target="_blank" rel="noopener noreferrer">Standard Webhooks</a>.
               Cada entrega incluye <code>webhook-id</code>, <code>webhook-timestamp</code> y{" "}
               <code>webhook-signature</code> (HMAC-SHA256 en base64, prefijo <code>v1,</code>).
             </>}
@@ -108,12 +108,12 @@ signature = "v1," + base64(hmac_sha256(secret, signed))`}</pre>
           {en ? <>
             Endpoints marked for retirement return <code>Deprecation: &lt;date&gt;</code>,{" "}
             <code>Sunset: &lt;date&gt;</code> and <code>Link: &lt;replacement&gt;; rel="successor-version"</code>{" "}
-            (<a href="https://datatracker.ietf.org/doc/html/rfc8594" rel="noopener noreferrer">RFC 8594</a>).
+            (<a href="https://datatracker.ietf.org/doc/html/rfc8594" target="_blank" rel="noopener noreferrer">RFC 8594</a>).
             Minimum 6 months between the first <i>Deprecation</i> and the <i>Sunset</i>.
           </> : <>
             Los endpoints marcados para retiro devuelven <code>Deprecation: &lt;date&gt;</code>,{" "}
             <code>Sunset: &lt;date&gt;</code> y <code>Link: &lt;replacement&gt;; rel="successor-version"</code>{" "}
-            (<a href="https://datatracker.ietf.org/doc/html/rfc8594" rel="noopener noreferrer">RFC 8594</a>).
+            (<a href="https://datatracker.ietf.org/doc/html/rfc8594" target="_blank" rel="noopener noreferrer">RFC 8594</a>).
             Mínimo 6 meses entre el primer <i>Deprecation</i> y el <i>Sunset</i>.
           </>}
         </p>
@@ -178,17 +178,32 @@ export default async function DocsPage() {
           <p style={{ maxWidth: 680 }}>
             {en ? <>
               Integrate BIO-IGNITION with your stack — Standard Webhooks, OpenAPI 3.1, rate-limits{" "}
-              <a href="https://datatracker.ietf.org/doc/html/rfc9331" rel="noopener noreferrer">RFC 9331</a>,
+              <a href="https://datatracker.ietf.org/doc/html/rfc9331" target="_blank" rel="noopener noreferrer">RFC 9331</a>,
               idempotency and transparent deprecation.
             </> : <>
               Integra BIO-IGNICIÓN con tu stack — webhooks Standard Webhooks, OpenAPI 3.1, rate-limits{" "}
-              <a href="https://datatracker.ietf.org/doc/html/rfc9331" rel="noopener noreferrer">RFC 9331</a>,
+              <a href="https://datatracker.ietf.org/doc/html/rfc9331" target="_blank" rel="noopener noreferrer">RFC 9331</a>,
               idempotencia y deprecación transparente.
             </>}
           </p>
         </header>
 
-        <nav aria-label={en ? "Index" : "Índice"} style={{ display: "flex", flexWrap: "wrap", gap: space[2], marginBottom: space[6] }}>
+        <nav
+          aria-label={en ? "Index" : "Índice"}
+          style={{
+            position: "sticky",
+            top: 60,
+            zIndex: 5,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: space[2],
+            marginBottom: space[6],
+            paddingBlock: space[3],
+            background: `color-mix(in srgb, var(--bi-bg) 88%, transparent)`,
+            backdropFilter: "saturate(160%) blur(8px)",
+            borderBottom: `1px solid ${cssVar.border}`,
+          }}
+        >
           {sections.map((s) => (
             <a
               key={s.id}
@@ -210,7 +225,7 @@ export default async function DocsPage() {
 
         <div style={{ display: "grid", gap: space[3] }}>
           {sections.map((s) => (
-            <Card as="section" key={s.id} id={s.id} style={{ scrollMarginTop: space[6] }}>
+            <Card as="section" key={s.id} id={s.id} style={{ scrollMarginTop: 140 }}>
               <h2 style={{ marginTop: 0 }}>{s.title}</h2>
               <div>{s.body}</div>
             </Card>

@@ -161,11 +161,21 @@ hourlyLoadedCost  — default USD 60 (knowledge worker global 2026)`}
       <section>
         <h2 style={h2Style}>Documentación</h2>
         <ul style={ulStyle}>
-          {LINKS.map((l) => (
-            <li key={l.href}>
-              <a href={l.href} style={linkStyle}>{l.label}</a>
-            </li>
-          ))}
+          {LINKS.map((l) => {
+            const external = /^https?:\/\//.test(l.href);
+            return (
+              <li key={l.href}>
+                <a
+                  href={l.href}
+                  style={linkStyle}
+                  {...(external ? { target: "_blank", rel: "noopener noreferrer" } : null)}
+                >
+                  {l.label}
+                  {external && <span aria-hidden="true"> ↗</span>}
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </section>
     </article>
