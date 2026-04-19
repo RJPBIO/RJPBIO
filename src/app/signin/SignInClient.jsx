@@ -22,6 +22,7 @@ export default function SignInClient() {
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(null); // "okta" | "azure-ad" | "google" | "sso" | null
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -90,7 +91,7 @@ export default function SignInClient() {
   }
 
   async function usePasskey() {
-    setSubmitting(true); setErr(""); setOk("");
+    setPasskeyBusy(true); setErr(""); setOk("");
     try {
       if (!email) throw new Error("Ingresa tu correo primero");
       const optsR = await fetch("/api/webauthn/auth", {
@@ -114,7 +115,7 @@ export default function SignInClient() {
     } catch (e) {
       const msg = e?.name === "NotAllowedError" ? "Cancelaste el passkey o no está disponible." : (e.message || "Error con passkey");
       setErr(msg);
-    } finally { setSubmitting(false); }
+    } finally { setPasskeyBusy(false); }
   }
 
   function startIdp(provider, url) {
@@ -127,7 +128,8 @@ export default function SignInClient() {
   const emailError = emailTouched && email && !EMAIL_RE.test(email)
     ? "Ingresa un correo con formato válido."
     : null;
-  const canSubmit = !submitting && !!email && !emailError && cooldownLeft === 0;
+  const anyBusy = submitting || passkeyBusy || ssoLoading !== null;
+  const canSubmit = !anyBusy && !!email && !emailError && cooldownLeft === 0;
 
   return (
     <AuthShell
@@ -164,10 +166,12 @@ export default function SignInClient() {
             type="button"
             variant="primary" block
             onClick={() => startIdp("sso", `/api/auth/signin/${sso.provider}?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`)}
-            disabled={ssoLoading !== null}
+            loading={ssoLoading === "sso"}
+            loadingLabel="Abriendo SSO…"
+            disabled={anyBusy && ssoLoading !== "sso"}
             style={{ marginTop: space[2] }}
           >
-            {ssoLoading === "sso" ? "Abriendo SSO…" : `Continuar con SSO (${sso.provider.toUpperCase()})`}
+            Continuar con SSO ({sso.provider.toUpperCase()})
           </Button>
         )}
 
@@ -187,7 +191,9 @@ export default function SignInClient() {
         <Button
           type="button" variant="secondary" block
           onClick={usePasskey}
-          disabled={submitting || !email}
+          loading={passkeyBusy}
+          loadingLabel="Verificando passkey…"
+          disabled={(anyBusy && !passkeyBusy) || !email}
           style={{ marginTop: space[2] }}
         >
           <span aria-hidden>🔑</span> Usar passkey

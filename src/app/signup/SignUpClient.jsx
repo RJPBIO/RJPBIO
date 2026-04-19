@@ -103,7 +103,7 @@ export default function SignUpClient() {
           </span>
         </label>
 
-        {err && <div style={{ marginTop: space[4] }}><Alert kind="danger">{err}</Alert></div>}
+        {err && <div style={{ marginTop: space[4] }} role="alert"><Alert kind="danger">{err}</Alert></div>}
 
         <Button
           type="submit" variant="primary" block
