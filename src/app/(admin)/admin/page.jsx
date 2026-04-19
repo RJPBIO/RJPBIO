@@ -75,6 +75,7 @@ export default async function AdminHome({ searchParams }) {
               <a
                 key={k}
                 href={`/admin?period=${k}`}
+                aria-current={active ? "page" : undefined}
                 style={{
                   padding: `${space[1.5]}px ${space[3]}px`,
                   borderRadius: radius.full,

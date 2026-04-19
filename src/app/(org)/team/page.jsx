@@ -51,18 +51,22 @@ export default async function TeamPage({ searchParams }) {
       </header>
 
       {teams.length > 0 && (
-        <div style={{
-          display: "flex",
-          gap: space[2],
-          margin: `${space[3]}px 0 ${space[4]}px`,
-          flexWrap: "wrap",
-        }}>
+        <nav
+          aria-label="Filtrar por equipo"
+          style={{
+            display: "flex",
+            gap: space[2],
+            margin: `${space[3]}px 0 ${space[4]}px`,
+            flexWrap: "wrap",
+          }}
+        >
           {teams.map((t) => {
             const active = t.id === teamId;
             return (
               <a
                 key={t.id}
                 href={`/team?team=${t.id}`}
+                aria-current={active ? "page" : undefined}
                 style={{
                   padding: `${space[2]}px ${space[4]}px`,
                   borderRadius: radius.full,
@@ -79,7 +83,7 @@ export default async function TeamPage({ searchParams }) {
               </a>
             );
           })}
-        </div>
+        </nav>
       )}
 
       <section style={{

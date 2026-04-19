@@ -103,6 +103,7 @@ export default async function Onboarding() {
               }}>
                 {s.done ? "✓" : ""}
               </span>
+              <span className="bi-sr-only">{s.done ? "Completado:" : "Pendiente:"}</span>
               {s.label}
             </span>
             <a
