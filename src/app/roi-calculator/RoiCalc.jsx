@@ -24,9 +24,13 @@ function fmtMoney(n, curr, locale) {
   return new Intl.NumberFormat(locale, { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n);
 }
 
+const INITIAL = { employees: 120, hourlyCost: 60, plan: "growth", currency: "USD" };
+const CLAMP = { employees: { min: 1, max: 100000 }, hourlyCost: { min: 5, max: 500 } };
+
 export default function RoiCalc() {
   const { t, locale } = useT();
-  const [inputs, setInputs] = useState({ employees: 120, hourlyCost: 60, plan: "growth", currency: "USD" });
+  const [inputs, setInputs] = useState(INITIAL);
+  const [drafts, setDrafts] = useState({ employees: "", hourlyCost: "" });
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -59,7 +63,21 @@ export default function RoiCalc() {
     return { recoveredHoursPerEmp, totalRecoveredHours, grossValue, annualLicenseCost, netValue, roiMultiple };
   }, [employees, hourlyCost, plan]);
 
-  const reset = () => setInputs({ employees: 120, hourlyCost: 60, plan: "growth", currency: "USD" });
+  const reset = () => {
+    setInputs(INITIAL);
+    setDrafts({ employees: "", hourlyCost: "" });
+  };
+
+  const onNumDraft = (key) => (e) => setDrafts((d) => ({ ...d, [key]: e.target.value }));
+  const onNumCommit = (key) => () => {
+    const raw = drafts[key];
+    if (raw === "") { setDrafts((d) => ({ ...d, [key]: "" })); return; }
+    const { min, max } = CLAMP[key];
+    const parsed = Number(raw);
+    const safe = Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : inputs[key];
+    setInputs((s) => ({ ...s, [key]: safe }));
+    setDrafts((d) => ({ ...d, [key]: "" }));
+  };
 
   return (
     <div className="bi-split-5-7">
@@ -76,10 +94,11 @@ export default function RoiCalc() {
               {...p}
               type="number"
               inputMode="numeric"
-              min={1}
-              max={100000}
-              value={employees}
-              onChange={(e) => setInputs({ ...inputs, employees: Math.max(1, +e.target.value || 0) })}
+              min={CLAMP.employees.min}
+              max={CLAMP.employees.max}
+              value={drafts.employees !== "" ? drafts.employees : employees}
+              onChange={onNumDraft("employees")}
+              onBlur={onNumCommit("employees")}
               style={inputStyle}
             />
           )}
@@ -91,16 +110,17 @@ export default function RoiCalc() {
               {...p}
               type="number"
               inputMode="decimal"
-              min={5}
-              max={500}
-              value={hourlyCost}
-              onChange={(e) => setInputs({ ...inputs, hourlyCost: Math.max(5, +e.target.value || 0) })}
+              min={CLAMP.hourlyCost.min}
+              max={CLAMP.hourlyCost.max}
+              value={drafts.hourlyCost !== "" ? drafts.hourlyCost : hourlyCost}
+              onChange={onNumDraft("hourlyCost")}
+              onBlur={onNumCommit("hourlyCost")}
               style={inputStyle}
             />
           )}
         </Field>
 
-        <Field label={t("roi.plan")} hint={locale === "en" ? "Price per user / month." : "Precio por usuario / mes."}>
+        <Field label={t("roi.plan")} hint={locale === "en" ? "Per user / month. Enterprise shown as a working estimate — real pricing is custom." : "Por usuario / mes. Enterprise se muestra como estimación — el precio real es a medida."}>
           {(p) => (
             <select {...p} value={plan} onChange={(e) => setInputs({ ...inputs, plan: e.target.value })} style={inputStyle}>
               <option value="starter">Starter · $9 / {locale === "en" ? "mo" : "mes"}</option>

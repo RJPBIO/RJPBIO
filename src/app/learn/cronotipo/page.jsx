@@ -24,6 +24,9 @@ export default function CronotipoPage() {
             Aprende · 5 min
           </div>
           <h1 style={{ margin: `${space[2]}px 0` }}>Cronotipo — tu reloj interno en la práctica</h1>
+          <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm }}>
+            Actualizado <time dateTime="2026-04-01">abril 2026</time> · revisado contra literatura vigente
+          </p>
           <p style={{ color: cssVar.textDim, maxWidth: 640 }}>
             Tu cronotipo es la preferencia innata de tu sistema circadiano para estar alerta
             temprano, tarde, o en medio. No es una etiqueta de personalidad: es un parámetro

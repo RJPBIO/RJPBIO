@@ -24,6 +24,9 @@ export default function HrvBasicsPage() {
             Aprende · 6 min
           </div>
           <h1 style={{ margin: `${space[2]}px 0` }}>HRV 101 — qué es y por qué importa</h1>
+          <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm }}>
+            Actualizado <time dateTime="2026-04-01">abril 2026</time> · revisado contra literatura vigente
+          </p>
           <p style={{ color: cssVar.textDim, maxWidth: 640 }}>
             La variabilidad de la frecuencia cardíaca (HRV) mide la diferencia, milisegundo a
             milisegundo, entre latidos consecutivos. Un corazón sano <em>nunca</em> late en

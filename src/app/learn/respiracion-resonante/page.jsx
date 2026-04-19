@@ -24,6 +24,9 @@ export default function ResonantePage() {
             Aprende · 7 min
           </div>
           <h1 style={{ margin: `${space[2]}px 0` }}>Respiración resonante — por qué ~0.1 Hz</h1>
+          <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm }}>
+            Actualizado <time dateTime="2026-04-01">abril 2026</time> · revisado contra literatura vigente
+          </p>
           <p style={{ color: cssVar.textDim, maxWidth: 640 }}>
             Cuando respiras a alrededor de 5.5–6.5 ciclos por minuto (≈0.1 Hz), tu frecuencia
             cardíaca, tu presión arterial y tu baroreflejo entran en fase constructiva. La
