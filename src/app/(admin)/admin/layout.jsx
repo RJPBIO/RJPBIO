@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import NotificationsBell from "@/components/ui/NotificationsBell";
+import AdminNavLink from "@/components/ui/AdminNavLink";
 
 export const metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
@@ -48,9 +48,9 @@ export default async function AdminLayout({ children }) {
             <div key={g.label} style={{ marginBottom: 16 }}>
               <div style={groupLabel}>{g.label}</div>
               {g.items.map((n) => (
-                <Link key={n.href} href={n.href} style={navStyle} prefetch>
+                <AdminNavLink key={n.href} href={n.href} style={navStyle} activeStyle={navActiveStyle}>
                   {n.label}
-                </Link>
+                </AdminNavLink>
               ))}
             </div>
           ))}
@@ -72,6 +72,9 @@ export default async function AdminLayout({ children }) {
 const navStyle = {
   display: "block", padding: "8px 12px", margin: "2px 0",
   color: "#A7F3D0", textDecoration: "none", borderRadius: 10, fontSize: 14,
+};
+const navActiveStyle = {
+  background: "#064E3B", color: "#ECFDF5", fontWeight: 700,
 };
 const groupLabel = {
   fontSize: 10, textTransform: "uppercase", letterSpacing: 2, fontWeight: 700,

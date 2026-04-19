@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/components/ui/Toast";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export default function Coach() {
@@ -23,6 +24,7 @@ export default function Coach() {
     setMsgs((m) => [...m, user, { role: "assistant", content: "" }]);
     setInput(""); setStreaming(true);
     ctrl.current = new AbortController();
+    let acc = "";
     try {
       const r = await fetch("/api/coach", {
         method: "POST",
@@ -30,9 +32,9 @@ export default function Coach() {
         body: JSON.stringify({ messages: [...msgs, user] }),
         signal: ctrl.current.signal,
       });
+      if (!r.ok || !r.body) throw new Error(`HTTP ${r.status}`);
       const reader = r.body.getReader();
       const decoder = new TextDecoder();
-      let acc = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -46,8 +48,19 @@ export default function Coach() {
           }
         }
       }
+    } catch (e) {
+      if (e?.name !== "AbortError") toast.error(e?.message || "No se pudo contactar al coach");
+      setMsgs((m) => {
+        const last = m[m.length - 1];
+        if (last?.role !== "assistant") return m;
+        if (acc) return m;
+        const c = m.slice(0, -1);
+        c.push({ role: "assistant", content: e?.name === "AbortError" ? "— detenido —" : "— sin respuesta —" });
+        return c;
+      });
     } finally {
       setStreaming(false);
+      ctrl.current = null;
       inputRef.current?.focus();
     }
   }
