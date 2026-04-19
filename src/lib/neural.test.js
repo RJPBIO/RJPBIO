@@ -10,7 +10,7 @@ import {
   predictSessionImpact,
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, calcCognitiveEntropy, estimateCoherence,
-  calcRecoveryIndex, genIns, smartSuggest, getRecords,
+  calcRecoveryIndex, genIns, getRecords,
   getDailyIgn, getCircadian, calcNeuralVariability,
   calcProtocolCorrelations, calcNeuralMomentum, estimateCognitiveLoad,
   analyzeNeuralRhythm, generateCoachingInsights, calcProtocolDiversity,
@@ -504,37 +504,6 @@ describe("genIns", () => {
   });
 });
 
-describe("smartSuggest", () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
-  it("retorna un protocolo", () => {
-    const r = smartSuggest({ moodLog: [], history: [] });
-    expect(r).toBeDefined();
-    expect(r.n).toBeDefined();
-    expect(r.int).toBeDefined();
-  });
-  it("mañana con mood bajo → reset", () => {
-    vi.setSystemTime(new Date("2026-04-16T07:00:00"));
-    const r = smartSuggest({ moodLog: [{ mood: 1 }], history: [] });
-    expect(r.int).toBe("reset");
-  });
-  it("mañana con mood normal → energia", () => {
-    vi.setSystemTime(new Date("2026-04-16T07:00:00"));
-    const r = smartSuggest({ moodLog: [{ mood: 4 }], history: [] });
-    expect(r.int).toBe("energia");
-  });
-  it("medio día → enfoque", () => {
-    vi.setSystemTime(new Date("2026-04-16T11:00:00"));
-    const r = smartSuggest({ moodLog: [], history: [] });
-    expect(r.int).toBe("enfoque");
-  });
-  it("noche → calma", () => {
-    vi.setSystemTime(new Date("2026-04-16T22:00:00"));
-    const r = smartSuggest({ moodLog: [], history: [] });
-    expect(r.int).toBe("calma");
-  });
-});
-
 describe("getRecords", () => {
   it("sin historial devuelve defaults", () => {
     const r = getRecords({ history: [], streak: 0, coherencia: 50 });
@@ -743,7 +712,7 @@ describe("generateCoachingInsights", () => {
     vi.setSystemTime(new Date("2026-04-16T10:00:00"));
     const r = generateCoachingInsights({ streak: 30, history: [], moodLog: [], weeklyData: [] });
     const streakIns = r.find((x) => x.type === "streak");
-    expect(streakIns.message).toMatch(/ganglios basales/);
+    expect(streakIns.message).toMatch(/Un mes/);
   });
   it("burnout crítico genera insight burnout", () => {
     vi.setSystemTime(new Date("2026-04-16T10:00:00"));

@@ -16,11 +16,16 @@ import AnimatedNumber from "./AnimatedNumber";
 import ReadinessRing from "./ReadinessRing";
 import BioSparkline from "./BioSparkline";
 import IllustratedEmpty from "./IllustratedEmpty";
+import CalibrationPlan from "./CalibrationPlan";
+import StreakCalendar from "./StreakCalendar";
+import InstrumentDueCard from "./InstrumentDueCard";
 import { MOODS, AM } from "../lib/constants";
+import { P } from "../lib/protocols";
 import {
   calcBioSignal, calcBurnoutIndex, calcProtoSensitivity,
   calcNeuralVariability,
 } from "../lib/neural";
+import { topArms } from "../lib/neural/bandit";
 import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
@@ -53,6 +58,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
   const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
   const bioSignal = useMemo(() => calcBioSignal(st), [st.coherencia, st.resiliencia, st.capacidad, st.moodLog, st.weeklyData, st.history]);
   const burnout = useMemo(() => calcBurnoutIndex(st.moodLog, st.history), [st.moodLog, st.history]);
+  const learnedArms = useMemo(() => topArms(st.banditArms || {}, 3), [st.banditArms]);
   const protoSens = useMemo(() => calcProtoSensitivity(st.moodLog), [st.moodLog]);
   const neuralVar = useMemo(() => calcNeuralVariability(st.history), [st.history]);
   const moodTrend = useMemo(() => (st.moodLog || []).slice(-14).map(m => m.mood), [st.moodLog]);
@@ -75,12 +81,31 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
     return h.map((s) => Math.round(((s.c ?? 50) + (s.r ?? 50)) / 2));
   }, [st.history]);
   const noData = st.totalSessions === 0;
+  const calibrating = st.totalSessions < 3;
   const bioColor = colorForScore(bioSignal.score, 70, 45);
   const burnoutColor = burnout.risk === "bajo" ? semantic.success : burnout.risk === "moderado" ? semantic.warning : semantic.danger;
 
+  if (calibrating) {
+    return (
+      <CalibrationPlan
+        totalSessions={st.totalSessions || 0}
+        isDark={isDark}
+        ac={ac}
+        onStart={(intent) => {
+          switchTab("ignicion");
+          if (typeof sp === "function") {
+            const proto = (P || []).find((p) => p.int === intent);
+            if (proto) sp(proto);
+          }
+        }}
+      />
+    );
+  }
+
+  // Reservado por si en el futuro queremos un empty state distinto al plan.
   if (noData) {
     return (
-      <section role="region" aria-label="Dashboard vacío" style={{ paddingBlock: `${space[3.5] || 14}px`, paddingInline: space[5], paddingBlockEnd: 180 }}>
+      <section role="region" aria-label="Dashboard vacío" style={{ paddingBlock: 14, paddingInline: space[5], paddingBlockEnd: 180 }}>
         <IllustratedEmpty
           illustration="baseline"
           kicker="Señal en reposo"
@@ -102,6 +127,8 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
       aria-label="Dashboard neural"
       style={{ paddingBlock: 14, paddingInline: space[5], paddingBlockEnd: 180 }}
     >
+      <InstrumentDueCard isDark={isDark} ac={ac} />
+
       <motion.div
         initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -321,6 +348,67 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         </article>
       </div>
 
+      {burnout.components && (burnout.components.exhaustion?.value > 0 || burnout.components.disengage?.value > 0) && (
+        <article
+          aria-label="Desglose Maslach del burnout"
+          style={{ background: cd, borderRadius: radius.lg, padding: space[3], marginBlockEnd: 14, border: `1px solid ${bd}` }}
+        >
+          <div style={{ ...ty.label(t3), marginBlockEnd: space[2] }}>Desglose Maslach</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2] }}>
+            {[
+              { k: "exhaustion", label: "Agotamiento", v: burnout.components.exhaustion?.value ?? 0 },
+              { k: "disengage", label: "Despersonalización", v: burnout.components.disengage?.value ?? 0 },
+              { k: "efficacy", label: "Baja eficacia", v: burnout.components.efficacy?.value ?? 0 },
+            ].map((row) => {
+              const v = Math.max(0, Math.min(100, Math.round(row.v)));
+              const color = v >= 60 ? semantic.danger : v >= 35 ? semantic.warning : semantic.success;
+              return (
+                <div key={row.k} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <div style={{ ...ty.caption(t3), fontSize: 10 }}>{row.label}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ ...ty.title(color), fontWeight: font.weight.bold, fontSize: 18 }}>{v}</span>
+                    <span style={{ ...ty.caption(t3), fontSize: 9 }}>/100</span>
+                  </div>
+                  <div style={{ height: 3, borderRadius: 2, background: withAlpha(color, 15), position: "relative" }}>
+                    <div style={{ position: "absolute", inset: 0, width: `${v}%`, background: color, borderRadius: 2 }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </article>
+      )}
+
+      {learnedArms.length >= 2 && (
+        <article
+          aria-label="Aprendizaje del motor neural"
+          style={{ background: cd, borderRadius: radius.lg, padding: space[3], marginBlockEnd: 14, border: `1px solid ${bd}` }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
+            <Icon name="predict" size={12} color={ac} aria-hidden="true" />
+            <span style={ty.label(t3)}>Aprendizaje del motor</span>
+          </div>
+          <div style={{ ...ty.caption(t3), marginBlockEnd: space[2], fontSize: 10 }}>
+            Brazos con mejor Δmood observado (intervalo 90% y muestras).
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: space[1.5] }}>
+            {learnedArms.map((arm) => {
+              const pos = arm.mean > 0;
+              const color = pos ? semantic.success : arm.mean < -0.2 ? semantic.danger : t2;
+              return (
+                <div key={arm.id} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: space[2], alignItems: "center" }}>
+                  <div>
+                    <div style={{ ...ty.body(t1), fontSize: 12, fontWeight: font.weight.semibold }}>{arm.id}</div>
+                    <div style={{ ...ty.caption(t3), fontSize: 9 }}>{arm.n} obs · rango {arm.lower > 0 ? "+" : ""}{arm.lower} a {arm.upper > 0 ? "+" : ""}{arm.upper}</div>
+                  </div>
+                  <div style={{ ...ty.title(color), fontSize: 16, fontWeight: font.weight.bold }}>{pos ? "+" : ""}{arm.mean}</div>
+                </div>
+              );
+            })}
+          </div>
+        </article>
+      )}
+
       {moodTrend.length >= 2 && (
         <article
           aria-label={`Tendencia emocional. Promedio ${avgMood} de 5`}
@@ -396,6 +484,10 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         <div style={{ ...ty.label(t3), marginBlockEnd: space[2] }}>Esta Semana</div>
         <TemporalCharts type="weekly" weeklyData={st.weeklyData} isDark={isDark} ac={ac} />
       </article>
+
+      <div style={{ marginBlockEnd: 14 }}>
+        <StreakCalendar history={st.history} isDark={isDark} accent={ac} weeks={12} />
+      </div>
 
       <div
         role="group"

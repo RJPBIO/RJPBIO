@@ -7,6 +7,7 @@ import "server-only";
 import { createHmac, randomBytes, timingSafeEqual as _timingSafeEqual } from "node:crypto";
 import { db } from "./db";
 import { logger } from "@/lib/logger";
+import { notifyOrgAdmins } from "./notifications";
 
 function sign(secret, body, timestamp, id) {
   const h = createHmac("sha256", Buffer.from(secret, "base64"));
@@ -55,6 +56,8 @@ async function sendWithRetry({ id, url, body, ts, sig, deliveryId, attempt = 0 }
     if (!r.ok && attempt < max - 1) {
       const delay = Math.min(60_000, 1000 * 2 ** attempt) + Math.random() * 300;
       setTimeout(() => sendWithRetry({ id, url, body, ts, sig, deliveryId, attempt: attempt + 1 }), delay);
+    } else if (!r.ok) {
+      await notifyFinalFailure(deliveryId, `HTTP ${r.status}`);
     }
   } catch (e) {
     await orm.webhookDelivery.update({
@@ -64,8 +67,40 @@ async function sendWithRetry({ id, url, body, ts, sig, deliveryId, attempt = 0 }
     if (attempt < max - 1) {
       const delay = Math.min(60_000, 1000 * 2 ** attempt) + Math.random() * 300;
       setTimeout(() => sendWithRetry({ id, url, body, ts, sig, deliveryId, attempt: attempt + 1 }), delay);
+    } else {
+      await notifyFinalFailure(deliveryId, String(e).slice(0, 120));
     }
   }
+}
+
+async function notifyFinalFailure(deliveryId, reason) {
+  try {
+    const orm = await db();
+    const d = await orm.webhookDelivery.findUnique({
+      where: { id: deliveryId }, include: { webhook: true },
+    });
+    if (!d?.webhook) return;
+    await notifyOrgAdmins(d.webhook.orgId, {
+      title: `Webhook falló tras ${d.attempts} intentos`,
+      body: `${d.event} → ${d.webhook.url} · ${reason}`,
+      level: "error",
+      href: "/admin/webhooks",
+      kind: "webhook.failed",
+    });
+  } catch { /* no-op */ }
+}
+
+export async function retryDelivery(deliveryId) {
+  const orm = await db();
+  const d = await orm.webhookDelivery.findUnique({ where: { id: deliveryId }, include: { webhook: true } });
+  if (!d || !d.webhook) return false;
+  const id = `msg_${randomBytes(12).toString("base64url")}`;
+  const body = JSON.stringify({ id, type: d.event, timestamp: new Date().toISOString(), data: d.payload, retry: true });
+  const ts = Math.floor(Date.now() / 1000);
+  const sig = sign(d.webhook.secret, body, ts, id);
+  await orm.webhookDelivery.update({ where: { id: d.id }, data: { nextRetry: new Date(), error: null } });
+  sendWithRetry({ id, url: d.webhook.url, body, ts, sig, deliveryId: d.id }).catch(() => {});
+  return true;
 }
 
 export function verifyIncomingSignature({ secret, body, timestamp, id, signatureHeader }) {

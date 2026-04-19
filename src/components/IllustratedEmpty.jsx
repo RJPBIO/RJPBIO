@@ -226,6 +226,7 @@ export default function IllustratedEmpty({
       {action && actionLabel && (
         <motion.button
           type="button"
+          className="bi-btn"
           whileTap={reduced ? {} : { scale: 0.97 }}
           onClick={action}
           style={{
@@ -236,12 +237,14 @@ export default function IllustratedEmpty({
             border: "none",
             background: `linear-gradient(135deg, ${accent}, ${bioSignal.neuralViolet})`,
             color: "#050810",
-            fontSize: font.size.sm,
+            fontSize: font.size.md,
             fontWeight: font.weight.black,
             letterSpacing: 1.5,
             textTransform: "uppercase",
             cursor: "pointer",
             boxShadow: `0 6px 24px -8px ${accent}`,
+            fontFamily: "inherit",
+            minBlockSize: 44,
           }}
         >
           {actionLabel}

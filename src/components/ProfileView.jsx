@@ -5,6 +5,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
 import { BioGlyph } from "./BioIgnicionMark";
@@ -17,6 +18,8 @@ import {
 import { resolveTheme, withAlpha, ty, font, space, radius, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
+import RemindersCard from "./RemindersCard";
+import InstrumentDueCard from "./InstrumentDueCard";
 
 const ACHIEVEMENT_IDS = Object.keys(AM);
 
@@ -501,6 +504,88 @@ export default function ProfileView({
           </div>
           <span style={ty.caption(t2)}>Historial</span>
         </motion.button>
+      </div>
+      <div style={{ marginBlockEnd: 10 }}>
+        <InstrumentDueCard isDark={isDark} ac={ac} />
+      </div>
+
+      <article
+        aria-label="Ciencia y resultados"
+        style={{
+          background: cd,
+          borderRadius: 16,
+          padding: 14,
+          marginBlockEnd: 10,
+          border: `1px solid ${bd}`,
+        }}
+      >
+        <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
+          <Icon name="shield" size={12} color={t3} aria-hidden="true" />
+          <h3 style={ty.label(t3)}>Ciencia & Resultados</h3>
+        </header>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <Link
+            href="/reporte"
+            aria-label="Ver informe trimestral"
+            className="bi-row-link"
+            style={{
+              display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+              paddingBlock: 10, paddingInline: 12,
+              background: isDark ? "#1A1E28" : "#F8FAFC",
+              border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
+              textAlign: "start", textDecoration: "none",
+            }}
+          >
+            <Icon name="trophy" size={14} color={ac} aria-hidden="true" />
+            <div style={{ flex: 1 }}>
+              <div style={{ ...ty.title(t1) }}>Informe trimestral</div>
+              <div style={ty.caption(t3)}>Sesiones, HRV, ánimo y escalas validadas · 90 días</div>
+            </div>
+            <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
+          </Link>
+          <Link
+            href="/evidencia"
+            aria-label="Biblioteca de evidencia científica"
+            className="bi-row-link"
+            style={{
+              display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+              paddingBlock: 10, paddingInline: 12,
+              background: isDark ? "#1A1E28" : "#F8FAFC",
+              border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
+              textAlign: "start", textDecoration: "none",
+            }}
+          >
+            <Icon name="fingerprint" size={14} color="#8B5CF6" aria-hidden="true" />
+            <div style={{ flex: 1 }}>
+              <div style={{ ...ty.title(t1) }}>Biblioteca de evidencia</div>
+              <div style={ty.caption(t3)}>Estudios y mecanismos detrás de cada protocolo</div>
+            </div>
+            <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
+          </Link>
+          <Link
+            href="/learn"
+            aria-label="Artículos de fundamentos"
+            className="bi-row-link"
+            style={{
+              display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+              paddingBlock: 10, paddingInline: 12,
+              background: isDark ? "#1A1E28" : "#F8FAFC",
+              border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
+              textAlign: "start", textDecoration: "none",
+            }}
+          >
+            <Icon name="lightbulb" size={14} color="#F59E0B" aria-hidden="true" />
+            <div style={{ flex: 1 }}>
+              <div style={{ ...ty.title(t1) }}>Aprende</div>
+              <div style={ty.caption(t3)}>HRV, cronotipo, respiración resonante · con citas</div>
+            </div>
+            <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
+          </Link>
+        </div>
+      </article>
+
+      <div style={{ marginBlockEnd: 10 }}>
+        <RemindersCard />
       </div>
       {(onShowChronotype || onShowResonance || onShowNOM035) && (
         <article

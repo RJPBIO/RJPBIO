@@ -16,7 +16,7 @@ import { useEffect, useMemo, useRef, useState, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { bioSignal, font, space, radius, z } from "../lib/theme";
-import { useReducedMotion } from "../lib/a11y";
+import { useReducedMotion, KEY } from "../lib/a11y";
 
 function score(label, query) {
   if (!query) return 0;
@@ -33,6 +33,8 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
   const [selected, setSelected] = useState(0);
   const inputRef = useRef(null);
   const listRef = useRef(null);
+  const panelRef = useRef(null);
+  const lastFocusedRef = useRef(null);
   const inputId = useId();
 
   const filtered = useMemo(() => {
@@ -54,11 +56,18 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
   }, [filtered]);
 
   useEffect(() => {
-    if (open) {
-      setQuery("");
-      setSelected(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!open || typeof document === "undefined") return;
+    setQuery("");
+    setSelected(0);
+    lastFocusedRef.current = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => {
+      clearTimeout(focusTimer);
+      document.body.style.overflow = prevOverflow;
+      try { lastFocusedRef.current?.focus?.({ preventScroll: true }); } catch {}
+    };
   }, [open]);
 
   useEffect(() => {
@@ -85,6 +94,15 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
           cmd.action?.();
           onClose?.();
         }
+      } else if (e.key === KEY.TAB && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusables.length) { e.preventDefault(); return; }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     }
     window.addEventListener("keydown", onKey);
@@ -126,6 +144,7 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
         aria-label="Paleta de comandos"
       >
         <motion.div
+          ref={panelRef}
           initial={reduced ? { opacity: 0 } : { opacity: 0, y: -12, scale: 0.97 }}
           animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}

@@ -14,23 +14,29 @@ import dynamic from "next/dynamic";
 import { P, SCIENCE_DEEP } from "../lib/protocols";
 import {
   MOODS, INTENTS,
-  MID_MSGS, POST_MSGS, PROG_7, DS,
+  POST_MSGS, PROG_7, DS,
 } from "../lib/constants";
 import {
   gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
   calcProtoSensitivity, predictSessionImpact,
-  adaptiveProtocolEngine, estimateCognitiveLoad,
+  estimateCognitiveLoad,
   calcSessionCompletion,
 } from "../lib/neural";
+import { useReadiness, computeReadiness } from "../hooks/useReadiness";
+import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "../hooks/useAdaptiveRecommendation";
+import { useCommandKey } from "../hooks/useCommandKey";
+import { useAutoSave } from "../hooks/useAutoSave";
+import { useSessionAudio } from "../hooks/useSessionAudio";
+import { useMidSessionMessages } from "../hooks/useMidSessionMessages";
 import {
   hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition,
-  startAmbient, stopAmbient,
-  startSoundscape, stopSoundscape, startBinaural, stopBinaural,
+  startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
   wireAudioUnlock,
 } from "../lib/audio";
-import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal, brand } from "../lib/theme";
+import { dark as darkPalette } from "../lib/tokens";
 import BioIgnicionMark, { BioGlyph } from "../components/BioIgnicionMark";
 import IgnitionBurst from "../components/IgnitionBurst";
 import { useStore } from "../store/useStore";
@@ -38,12 +44,15 @@ import Icon from "../components/Icon";
 import { useSync } from "../hooks/useSync";
 import { useDeepLink } from "../hooks/useDeepLink";
 import { useBreakpoint } from "../hooks/useBreakpoint";
+import { useThemeDark } from "../hooks/useThemeDark";
+import { useTapEntry } from "../hooks/useTapEntry";
 import { uiSound } from "../lib/uiSound";
-import { parseDeepLink } from "../lib/deeplink";
 import { buildCommands } from "../lib/commandPalette";
 import { computePhaseIndex, timeToNextPhase } from "../lib/phaseEngine";
 import { computeSessionMetrics, sessionQualityMessage, shouldPlayIgnitionSignature } from "../lib/sessionClose";
+import { buildCheckinEntry } from "../lib/sessionCheckin";
 import { computeBreathFrame } from "../lib/breathCycle";
+import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "../lib/nom35/recommend";
 import { useReducedMotion, useFocusTrap, KEY, announce } from "../lib/a11y";
 import { semantic } from "../lib/tokens";
 
@@ -103,6 +112,8 @@ export default function BioIgnicion(){
   const[showChronoTest,setShowChronoTest]=useState(false);
   const[showResonanceCal,setShowResonanceCal]=useState(false);
   const[showNOM035,setShowNOM035]=useState(false);
+  const[nom35Hint,setNom35Hint]=useState(null);
+  const[nom35Dominios,setNom35Dominios]=useState(null);
   const[showCmd,setShowCmd]=useState(false);
   const reducedMotion=useReducedMotion();
   const bp=useBreakpoint();
@@ -115,44 +126,14 @@ export default function BioIgnicion(){
   // SW se registra desde layout.js (con nonce)
   useSync();
 
-  // NFC/QR deep link validado (ver lib/deeplink.js)
-  useEffect(()=>{if(typeof window==="undefined")return;try{const params=new URLSearchParams(window.location.search);const link=parseDeepLink(params);if(link&&(link.company||link.type)){setNfcCtx({company:link.company,type:link.type,employee:link.employee});setEntryDone(true);
-    const isExit=link.type==="salida"||link.type==="exit";const h=new Date().getHours();
-    let pool=isExit?P.filter(p=>p.int==="calma"||p.int==="reset"):h<12?P.filter(p=>p.int==="energia"||p.int==="enfoque"):P.filter(p=>p.int==="enfoque"||p.int==="reset");
-    const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];setPr(pick);setSec(Math.round(pick.d*durMult));
-  }}catch(e){};},[]);
-
-  // Tap-to-Ignite: /q verificó la firma y nos redirigió con slot resuelto.
-  // Selecciona un protocolo apropiado al slot y marca el contexto de estación.
-  // No auto-arranca: iOS requiere gesto para audio; el usuario tapea el timer.
-  useEffect(()=>{if(typeof window==="undefined")return;try{
-    const params=new URLSearchParams(window.location.search);
-    if(params.get("source")!=="tap") return;
-    const stationId=params.get("station")||"";
-    const slot=params.get("slot")||"ADHOC";
-    setNfcCtx({company:null,type:slot==="MORNING"?"entrada":slot==="EVENING"?"salida":"tap",employee:null,station:stationId});
-    setEntryDone(true);
-    const isExit=slot==="EVENING";
-    let pool=isExit?P.filter(p=>p.int==="calma"||p.int==="reset")
-      :slot==="MORNING"?P.filter(p=>p.int==="energia"||p.int==="enfoque")
-      :P.filter(p=>p.int==="enfoque"||p.int==="reset");
-    const pick=pool[Math.floor(Math.random()*pool.length)]||P[0];
-    setPr(pick);setSec(Math.round(pick.d*durMult));
-  }catch(e){}},[]);
-
-  // Tap con error (firma inválida, slot no permitido, replay): notifica.
-  useEffect(()=>{if(typeof window==="undefined")return;try{
-    const params=new URLSearchParams(window.location.search);
-    if(params.get("tap")!=="error") return;
-    const reason=params.get("reason")||"unknown";
-    const msg=reason==="slot_not_allowed"?"Fuera de ventana permitida para esta estación."
-      :reason==="cooldown"?"Ya registraste un tap reciente."
-      :reason==="replay"?"Este enlace ya fue usado."
-      :reason==="expired"?"El enlace firmado expiró."
-      :reason==="not_found"?"Estación desconocida o inactiva."
-      :"No se pudo validar el tap.";
-    announce(msg,"assertive");
-  }catch(e){}},[]);
+  // Tap / NFC / deep-link: parse URL al montar. Lógica + mapa de errores
+  // viven en lib/tapEntry.js (testeable sin render). Aquí solo aplicamos
+  // el resultado al estado local.
+  const tap=useTapEntry({protocols:P,durationMultiplier:durMult});
+  useEffect(()=>{if(!tap||tap.kind===null||tap.kind==="error")return;
+    setNfcCtx(tap.context);setEntryDone(true);
+    setPr(tap.protocol);setSec(tap.seconds);
+  },[tap]);
 
   // ═══ VOICE + AUDIO UNLOCK ═══
   // iOS Safari / Android Chrome: el AudioContext queda suspended hasta que
@@ -189,7 +170,28 @@ export default function BioIgnicion(){
     setMt(true);
     if(l.totalSessions===0){setOnboard(true);}
     else if(!l.onboardingTourComplete){setShowTour(true);}
-    try{const rec=adaptiveProtocolEngine(l);if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}}catch(e){}
+    // Cargamos dominios NOM-035 antes del motor para que el sesgo psicosocial
+    // participe en la primera recomendación.
+    let domLocal=null;
+    try{
+      const raw=typeof window!=="undefined"?window.localStorage.getItem("bio-nom35-dominios"):null;
+      if(raw){domLocal=JSON.parse(raw);setNom35Dominios(domLocal);}
+    }catch{}
+    const rec=computeAdaptiveRecommendation(l,{nom35Dominios:domLocal,readiness:computeReadiness(l)});
+    if(rec&&rec.primary){setPr(rec.primary.protocol);setSec(Math.round(rec.primary.protocol.d*durMult));}
+    // NOM-035: si la última evaluación reporta riesgo medio/alto, sugerimos protocolo acorde.
+    try{
+      const nivel=readStoredNom35Level();
+      const banner=bannerForNivel(nivel);
+      if(banner){
+        const dismissed=(()=>{try{return window.localStorage.getItem("bio-nom35-hint-dismissed")===nivel;}catch{return false;}})();
+        if(!dismissed){
+          const recP=recommendProtocolForNivel(nivel,P);
+          if(recP){setPr(recP);setSec(Math.round(recP.d*durMult));}
+          setNom35Hint({...banner,protocol:recP||null});
+        }
+      }
+    }catch(e){}
   })();return()=>{cancelled=true;if(fallbackTO)clearTimeout(fallbackTO);};},[]);
 
   // ═══ SESSION RE-CHECK EN VISIBILITY ═══
@@ -198,36 +200,40 @@ export default function BioIgnicion(){
   // el store para no mezclar datos de dos cuentas en la misma pestaña.
   useEffect(()=>{if(typeof document==="undefined")return;let busy=false;async function recheck(){if(busy)return;if(document.visibilityState!=="visible")return;busy=true;try{const r=await Promise.race([fetch("/api/auth/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),1200))]);const nextId=r?.user?.id??null;const curId=useStore.getState()._userId??null;if(nextId!==curId){await store.init({userId:nextId});setSt_(useStore.getState());}}catch{}finally{busy=false;}}document.addEventListener("visibilitychange",recheck);return()=>document.removeEventListener("visibilitychange",recheck);},[]);
 
-  useEffect(()=>{if(typeof window==="undefined")return;function onCmdKey(e){if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();setShowCmd(v=>{const nv=!v;uiSound[nv?"open":"close"](st.soundOn);return nv;});}}window.addEventListener("keydown",onCmdKey);return()=>window.removeEventListener("keydown",onCmdKey);},[st.soundOn]);
+  useCommandKey(setShowCmd, st.soundOn);
 
   // NOTA: cmdCommands se define MÁS ABAJO, después de las function declarations
   // que referencia (switchTab, go, pa, sp). Evita TDZ bajo React Compiler, que
   // reemite esas function decls como const y pierde el hoisting estándar de JS.
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
-  useEffect(()=>{if(!mt||typeof window==="undefined")return;const save=()=>store.update(st);const iv=setInterval(save,30000);const onHide=()=>{if(document.visibilityState==="hidden")store.update(st);};window.addEventListener("beforeunload",save);window.addEventListener("pagehide",save);document.addEventListener("visibilitychange",onHide);return()=>{clearInterval(iv);window.removeEventListener("beforeunload",save);window.removeEventListener("pagehide",save);document.removeEventListener("visibilitychange",onHide);};},[mt,st]);
-  const[isDark,setIsDark]=useState(false);
-  useEffect(()=>{if(!mt)return;function ck(){const h=new Date().getHours();const m=st.themeMode||"auto";if(m==="dark")setIsDark(true);else if(m==="light")setIsDark(false);else setIsDark(h>=20||h<6);}ck();const iv=setInterval(ck,60000);return()=>clearInterval(iv);},[mt,st.themeMode]);
+  const stRef=useRef(st);useEffect(()=>{stRef.current=st;},[st]);
+  useAutoSave(mt, useCallback(()=>store.update(stRef.current),[]));
+  const isDark=useThemeDark({ready:mt,mode:st.themeMode||"auto"});
   const H=useCallback(t=>hap(t,st.soundOn,st.hapticOn),[st.soundOn,st.hapticOn]);
+  const hapRef=useRef(H);useEffect(()=>{hapRef.current=H;},[H]);
 
   const motionRef=useRef(null);const circadian=useMemo(()=>getCircadian(),[]);
-  useEffect(()=>{if(ts==="running"&&st.soundOn!==false){const ss=st.soundscape||"off";if(ss!=="off")startSoundscape(ss);else startAmbient();startBinaural(pr.int);}else{stopAmbient();stopSoundscape();stopBinaural();}return()=>{stopAmbient();stopSoundscape();stopBinaural();};},[ts]);
+  useSessionAudio({timerStatus:ts,soundOn:st.soundOn,soundscape:st.soundscape,intent:pr.int});
   useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection(({samples,stability})=>{setSessionData(d=>({...d,motionSamples:samples,stability:stability}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
 
-  useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");H("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>H("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
+  useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");hapRef.current("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>hapRef.current("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
   const totalDur=Math.round(pr.d*durMult);
   useEffect(()=>{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
-    if(idx!==pi){setPi(idx);if(st.hapticOn!==false)hapticPhase(pr.ph[idx].ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+pr.ph[idx].k,circadian,voiceOn);setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[idx].i,circadian,voiceOn);}catch(e){}},2500);}
+    let speakTO=null;
+    if(idx!==pi){setPi(idx);if(st.hapticOn!==false)hapticPhase(pr.ph[idx].ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+pr.ph[idx].k,circadian,voiceOn);speakTO=setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[idx].i,circadian,voiceOn);}catch(e){}},2500);}
     const ttN=timeToNextPhase(elapsedSec,pr.ph,durMult,pi);
     if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
+    return()=>{if(speakTO)clearTimeout(speakTO);};
   },[sec,pr,durMult]);
-  useEffect(()=>{if(ts==="running"&&sec===60){setMidMsg(MID_MSGS[Math.floor(Math.random()*MID_MSGS.length)]);setShowMid(true);setTimeout(()=>setShowMid(false),3500);}if(ts==="running"&&sec===30){setMidMsg("Últimos 30. Cierra con todo.");setShowMid(true);setTimeout(()=>setShowMid(false),3000);}},[sec,ts]);
+  useMidSessionMessages({timerStatus:ts,secondsRemaining:sec,setMidMsg,setShowMid});
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);if(st.hapticOn!==false)hapticCountdown(3);speakNow("Tres",circadian,voiceOn);cdR.current=setInterval(()=>{setCountdown(p=>{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow(pr.ph[0].k||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);if(st.hapticOn!==false)hapticCountdown(p-1);return p-1;});},1000);}
   function go(){unlockVoice();requestWakeLock();try{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();}catch(e){}setPostStep("none");setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
   const pauseTRef=useRef(null);
+  useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);},[]);
   function pa(){if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
   function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
@@ -266,7 +272,19 @@ export default function BioIgnicion(){
     setSt({...st,...result.newState});
   }
   function submitCheckin(){
-    if(checkMood>0){const ml=[...(st.moodLog||[]),{ts:Date.now(),mood:checkMood,energy:checkEnergy||2,tag:checkTag,proto:pr.n,pre:preMood||0}].slice(-100);const ach=[...st.achievements];if(checkMood===5&&!ach.includes("mood5"))ach.push("mood5");setSt({...st,moodLog:ml,achievements:ach});}
+    const built=buildCheckinEntry({
+      checkMood,checkEnergy,checkTag,preMood,
+      protocol:pr,
+      existingMoodLog:st.moodLog||[],
+      existingAchievements:st.achievements||[],
+      predictedDelta:typeof prediction?.predictedDelta==="number"?prediction.predictedDelta:null,
+    });
+    if(!built.skipped){
+      setSt({...st,moodLog:built.moodLog,achievements:built.achievements});
+      if(built.outcome){
+        try{store.recordSessionOutcome(built.outcome);setSt_(useStore.getState());}catch{}
+      }
+    }
     setPostStep("summary");
   }
 
@@ -284,7 +302,8 @@ export default function BioIgnicion(){
   const favs=st.favs||[];
   const toggleFav=useCallback((name)=>{setSt(s=>{const nf=(s.favs||[]).includes(name)?(s.favs||[]).filter(f=>f!==name):[...(s.favs||[]),name];return{...s,favs:nf};});},[setSt]);
   // Adaptive AI recommendation (replaces old smartPick)
-  const aiRec=useMemo(()=>{try{return adaptiveProtocolEngine(st);}catch(e){return null;}},[st.moodLog,st.history,st.weeklyData]);
+  const readiness=useReadiness(st);
+  const aiRec=useAdaptiveRecommendation(st,{nom35Dominios,readiness});
   const smartPick=aiRec?.primary?.protocol||null;
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
@@ -295,9 +314,10 @@ export default function BioIgnicion(){
   const ac=pr.cl;
 
   // ─── Loading screen — identidad BIO-IGNICIÓN ─────────────
+  // Siempre en paleta oscura (deepField), sin importar el modo del sistema.
   if(!mt)return(<div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:bioSignal.deepField,gap:space[5],paddingInline:space[5]}}>
-    <BioIgnicionMark layout="stack" glyphSize={76} textColor="#E8ECF4" signalColor={bioSignal.phosphorCyan} animated letterSpacing={6}/>
-    <div style={{fontSize:font.size.sm,color:"#4B5568",letterSpacing:2,textTransform:"uppercase",fontWeight:font.weight.semibold}}>Neural Performance System</div>
+    <BioIgnicionMark layout="stack" glyphSize={76} textColor={darkPalette.text.primary} signalColor={bioSignal.phosphorCyan} animated letterSpacing={6}/>
+    <div style={{fontSize:font.size.sm,color:darkPalette.text.muted,letterSpacing:2,textTransform:"uppercase",fontWeight:font.weight.semibold}}>Neural Performance System</div>
   </div>);
 
   return(
@@ -406,11 +426,12 @@ export default function BioIgnicion(){
   {/* ═══ TAB: IGNICIÓN ═══ */}
   {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
     {/* NFC Context */}
-    {nfcCtx&&ts==="idle"&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcCtx.type==="salida"?"#6366F108":ac+"08",borderRadius:14,border:`1.5px solid ${nfcCtx.type==="salida"?"#6366F120":ac+"20"}`,animation:"fi .4s"}}>
-      <div style={{width:28,height:28,borderRadius:8,background:nfcCtx.type==="salida"?"#6366F115":ac+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={nfcCtx.type==="salida"?"calm":"energy"} size={14} color={nfcCtx.type==="salida"?"#6366F1":ac}/></div>
-      <div><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:nfcCtx.type==="salida"?"#6366F1":ac,textTransform:"uppercase"}}>{nfcCtx.type==="salida"?"SESIÓN DE SALIDA":"SESIÓN DE ENTRADA"}</div>
+    {nfcCtx&&ts==="idle"&&(()=>{const nfcAc=nfcCtx.type==="salida"?brand.secondary:ac;return(
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcAc+"08",borderRadius:14,border:`1.5px solid ${nfcAc+"20"}`,animation:"fi .4s"}}>
+      <div style={{width:28,height:28,borderRadius:8,background:nfcAc+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={nfcCtx.type==="salida"?"calm":"energy"} size={14} color={nfcAc}/></div>
+      <div><div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:nfcAc,textTransform:"uppercase"}}>{nfcCtx.type==="salida"?"SESIÓN DE SALIDA":"SESIÓN DE ENTRADA"}</div>
       <div style={{fontSize:10,fontWeight:600,color:t1}}>{nfcCtx.type==="salida"?"Descomprime tu día.":"Activa tu enfoque."}</div></div>
-    </div>}
+    </div>);})()}
 
     {/* Immersive entry */}
     {!entryDone&&ts==="idle"&&st.totalSessions>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1}} style={{textAlign:"center",padding:"30px 0 20px"}} onClick={()=>setEntryDone(true)}>
@@ -424,6 +445,22 @@ export default function BioIgnicion(){
     {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
     {/* Streak Shield (replaces simple streak warning) */}
     {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}} onFreezeStreak={()=>{const r=store.freezeStreak();if(r.ok){setSt_(useStore.getState());announce(`Racha congelada honestamente. Te quedan ${r.remaining} pausas este mes.`,"polite");}else{announce(r.reason==="already_today"?"Ya usaste tu pausa hoy.":"Agotaste tus pausas del mes.","polite");}}}/>}
+
+    {/* NOM-035 hint — solo si hay un nivel medio/alto guardado y no fue descartado */}
+    {ts==="idle"&&nom35Hint&&(
+      <div role="status" aria-live="polite" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:space[3],padding:`${space[3]}px ${space[4]}px`,marginBottom:space[3],background:withAlpha(nom35Hint.intent==="calma"?"#DC2626":"#F59E0B",12),border:`1px solid ${withAlpha(nom35Hint.intent==="calma"?"#DC2626":"#F59E0B",30)}`,borderRadius:radius.md}}>
+        <div style={{display:"flex",alignItems:"center",gap:space[2],minWidth:0}}>
+          <Icon name="shield" size={14} color={nom35Hint.intent==="calma"?"#DC2626":"#F59E0B"}/>
+          <div style={{minWidth:0}}>
+            <div style={{...ty.body(t1),fontWeight:font.weight.semibold}}>{nom35Hint.text}</div>
+            {nom35Hint.protocol&&<div style={{...ty.caption(t3),marginTop:2}}>Sugerido: {nom35Hint.protocol.n} · {Math.round((nom35Hint.protocol.d||0)/60)} min</div>}
+          </div>
+        </div>
+        <button type="button" aria-label="Descartar sugerencia" onClick={()=>{try{window.localStorage.setItem("bio-nom35-hint-dismissed",nom35Hint.nivel);}catch{}setNom35Hint(null);}} style={{background:"transparent",border:"none",color:t2,cursor:"pointer",padding:space[1],borderRadius:radius.sm}}>
+          <Icon name="close" size={14} color={t2}/>
+        </button>
+      </div>
+    )}
 
     {/* Cognitive Load indicator (NEW) */}
     {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[2.5]}px ${space[4]}px`,marginBottom:space[3],background:surface,borderRadius:radius.md}}>
@@ -445,17 +482,17 @@ export default function BioIgnicion(){
     {/* Bioneural quick actions — evidence-based rescue protocols */}
     {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="calm" size={14} color="#059669"/>
+        <Icon name="calm" size={14} color={brand.primary}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
         <span style={{fontSize:8,color:t3}}>60s · calma</span>
       </motion.button>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRV(true);H("tap");}} aria-label="Medir HRV con sensor Bluetooth" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="predict" size={14} color="#6366F1"/>
+        <Icon name="predict" size={14} color={brand.secondary}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
         <span style={{fontSize:8,color:t3}}>5 min · BLE</span>
       </motion.button>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="mind" size={14} color="#0D9488"/>
+        <Icon name="mind" size={14} color={brand.accent}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>
         <span style={{fontSize:8,color:t3}}>10 min · reset</span>
       </motion.button>
@@ -474,7 +511,7 @@ export default function BioIgnicion(){
     </motion.button>}
 
     {/* AI Recommendation — inline compact */}
-    {ts==="idle"&&aiRec&&aiRec.primary&&aiRec.primary.protocol.id!==daily.proto.id&&<motion.button initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} whileTap={{scale:.97}} onClick={()=>sp(aiRec.primary.protocol)} style={{width:"100%",padding:"10px 14px",marginBottom:10,borderRadius:14,border:`1.5px solid ${ac}15`,background:isDark?"#0A1A0A":"#F0FDF4",cursor:"pointer",textAlign:"left",display:"flex",gap:10,alignItems:"center"}}>
+    {ts==="idle"&&aiRec&&aiRec.primary&&aiRec.primary.protocol.id!==daily.proto.id&&<motion.button initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} whileTap={{scale:.97}} onClick={()=>sp(aiRec.primary.protocol)} style={{width:"100%",padding:"10px 14px",marginBottom:10,borderRadius:14,border:`1.5px solid ${ac}15`,background:withAlpha(brand.primary,isDark?8:4),cursor:"pointer",textAlign:"left",display:"flex",gap:10,alignItems:"center"}}>
       <div style={{width:28,height:28,borderRadius:8,background:ac+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="cpu" size={13} color={ac}/></div>
       <div style={{flex:1}}><div style={{...ty.caption(ac),fontWeight:font.weight.bold}}>IA: {aiRec.primary.protocol.n}</div><div style={ty.caption(t3)}>{aiRec.primary.reason}</div></div>
       <Icon name="chevron" size={12} color={ac}/>
@@ -490,10 +527,15 @@ export default function BioIgnicion(){
     <AnimatePresence>
     {showMore&&<motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
       {/* Prediction */}
-      {prediction&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:10,background:prediction.predictedDelta>0?(isDark?"#0A1A0A":"#F0FDF4"):(isDark?"#1A1E28":"#F8FAFC"),borderRadius:14,border:`1px solid ${prediction.predictedDelta>0?"#05966920":bd}`}}>
-        <Icon name="predict" size={14} color={prediction.predictedDelta>0?"#059669":"#6366F1"}/>
-        <div style={{flex:1}}><div style={{fontSize:10,fontWeight:700,color:prediction.predictedDelta>0?"#059669":"#6366F1"}}>{prediction.message}</div><div style={{fontSize:10,color:t3,marginTop:1}}>Confianza: {prediction.confidence}%</div></div>
-      </div>}
+      {prediction&&(()=>{const pos=prediction.predictedDelta>0;const tone=pos?brand.primary:brand.secondary;const hasCI=typeof prediction.lower==="number"&&typeof prediction.upper==="number";const fmt=(v)=>(v>=0?"+":"")+v.toFixed(1);const drift=!!prediction.drift;return(
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:10,background:pos?withAlpha(brand.primary,isDark?8:4):surface,borderRadius:14,border:`1px solid ${drift?withAlpha(brand.secondary,30):pos?withAlpha(brand.primary,20):bd}`}}>
+          <Icon name="predict" size={14} color={tone}/>
+          <div style={{flex:1}}>
+            <div style={{fontSize:10,fontWeight:700,color:tone}}>{prediction.message}</div>
+            <div style={{fontSize:10,color:t3,marginTop:1}}>Confianza: {prediction.confidence}%{hasCI?` · rango ${fmt(prediction.lower)} a ${fmt(prediction.upper)}`:""}</div>
+            {drift&&<div style={{fontSize:9,color:brand.secondary,marginTop:2,fontWeight:600}}>Tu respuesta está cambiando — estamos recalibrando.</div>}
+          </div>
+        </div>);})()}
       {/* 7-Day Program */}
       {(st.progDay||0)<7&&<div style={{marginBottom:10,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -502,7 +544,7 @@ export default function BioIgnicion(){
         </div>
         <div style={{display:"flex",gap:3,marginBottom:10}}>
           {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
-        <motion.button whileTap={{scale:.97}} onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:isDark?"#1A1E28":"#F8FAFC",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+        <motion.button whileTap={{scale:.97}} onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:surface,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div>
           <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
           <Icon name="chevron" size={12} color={ac}/>
@@ -581,7 +623,7 @@ export default function BioIgnicion(){
         {ts==="idle"&&<>
           <div style={{...ty.label(t3),fontWeight:font.weight.semibold,marginTop:space[1.5]}}>segundos</div>
           <motion.div animate={{opacity:[.5,1,.5],y:[0,-2,0]}} transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:12,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-            <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},#0D9488)`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
+            <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},${brand.accent})`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
             <span style={ty.label(ac)}>INICIAR</span>
           </motion.div>
         </>}
@@ -648,12 +690,12 @@ export default function BioIgnicion(){
       </AnimatePresence>
     </motion.div>
 
-    {isActive&&nextPh&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",marginBottom:10,borderRadius:10,background:isDark?"#1A1E28":"#F8FAFC"}}>
+    {isActive&&nextPh&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",marginBottom:10,borderRadius:10,background:surface}}>
       <Icon name="chevron" size={10} color={t3}/><span style={{fontSize:10,color:t3,fontWeight:600}}>Siguiente: {nextPh.l}</span>
     </div>}
     <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;const isCurr=pi===i;const isDone=i<pi;return<motion.div key={i} animate={isCurr?{scale:[1,1.03,1]}:{}} transition={isCurr?{duration:2,repeat:Infinity}:{}} style={{padding:"4px 10px",borderRadius:16,border:isCurr?`2px solid ${ac}`:isDone?`1.5px solid ${ac}30`:`1px solid ${bd}`,background:isCurr?ac+"10":isDone?ac+"06":cd,color:isCurr?ac:isDone?ac:t3,fontSize:10,fontWeight:isCurr?800:600,display:"flex",alignItems:"center",gap:4,opacity:i<=pi?1:.4,boxShadow:isCurr?`0 2px 8px ${ac}15`:"none",transition:"all .3s"}}><span style={{width:isCurr?7:5,height:isCurr?7:5,borderRadius:"50%",background:isDone?ac:isCurr?ac:bd,transition:"all .3s",boxShadow:isCurr?`0 0 6px ${ac}40`:"none"}}/>{isCurr&&<Icon name={p.ic} size={10} color={ac}/>}{sR}</motion.div>;})}</div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
-      {ts==="idle"&&<motion.button whileTap={{scale:.95}} onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},#0D9488)`,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",boxShadow:`0 4px 18px ${ac}28`}}><Icon name="bolt" size={13} color="#fff"/>INICIAR</motion.button>}
+      {ts==="idle"&&<motion.button whileTap={{scale:.95}} onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},${brand.accent})`,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",boxShadow:`0 4px 18px ${ac}28`}}><Icon name="bolt" size={13} color="#fff"/>INICIAR</motion.button>}
       {ts==="running"&&<><motion.button whileTap={{scale:.95}} onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
       {ts==="paused"&&<><motion.button whileTap={{scale:.95}} onClick={()=>{if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
     </div>
@@ -678,7 +720,7 @@ export default function BioIgnicion(){
     const tintOpacity=neural>=70?(isDark?0.07:0.05):neural>=50?(isDark?0.05:0.035):0;
     const barAlpha=Math.round(tintOpacity*255).toString(16).padStart(2,"0");
     return <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:`linear-gradient(180deg, ${vitalTint}${barAlpha}, ${vitalTint}00), ${resolveTheme(isDark).glass}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${neural>=70?bioSignal.phosphorCyan+"22":bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}${neural>=70?`, 0 0 28px ${bioSignal.phosphorCyan}14`:""}`,transition:"background .8s ease, border-color .8s ease, box-shadow .8s ease"}}>
-      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:"#8B5CF6",ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:"#6366F1",ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
+      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:bioSignal.neuralViolet,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:brand.secondary,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
         <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
         <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
       </div>)}
@@ -687,7 +729,7 @@ export default function BioIgnicion(){
 
   {/* ═══ BOTTOM NAV ═══ */}
   <nav role="tablist" aria-label="Navegación principal" aria-hidden={ts==="running"?"true":undefined} style={{position:"fixed",bottom:0,left:"50%",transform:`translateX(-50%) translateY(${ts==="running"?"72px":"0"})`,width:"100%",maxWidth:rootMaxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:`6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav,opacity:ts==="running"?0:1,pointerEvents:ts==="running"?"none":"auto",transition:reducedMotion?"none":"transform .45s cubic-bezier(.16,1,.3,1), opacity .35s ease"}}>
-    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:"#6366F1"},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map((t,order)=>{const a=tab===t.id;return(<motion.button key={t.id} role="tab" aria-selected={a} aria-controls={`tab-${t.id}-panel`} id={`tab-${t.id}`} tabIndex={ts==="running"?-1:(a?0:-1)} onKeyDown={e=>onTabKey(e,t.id,order)} whileTap={reducedMotion?{}:{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
+    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:brand.secondary},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map((t,order)=>{const a=tab===t.id;return(<motion.button key={t.id} role="tab" aria-selected={a} aria-controls={`tab-${t.id}-panel`} id={`tab-${t.id}`} tabIndex={ts==="running"?-1:(a?0:-1)} onKeyDown={e=>onTabKey(e,t.id,order)} whileTap={reducedMotion?{}:{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
       {a&&<motion.div layoutId="navIndicator" aria-hidden="true" style={{position:"absolute",top:0,left:"20%",right:"20%",height:3,borderRadius:"0 0 3px 3px",background:t.ac}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:400,damping:30}}/>}
       <motion.div aria-hidden="true" animate={reducedMotion?{}:{scale:a?1:0.9,y:a?-1:0}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
         <Icon name={t.ic} size={a?19:17} color={a?t.ac:t3}/>

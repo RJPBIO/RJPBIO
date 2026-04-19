@@ -1,3 +1,7 @@
+import { PublicShell } from "@/components/ui/PublicShell";
+import { Container } from "@/components/ui/Container";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
 export const metadata = { title: "Subprocesadores" };
 
 const SUBS = [
@@ -13,21 +17,81 @@ const SUBS = [
 
 export default function Subprocessors() {
   return (
-    <article style={{ maxWidth: 860, margin: "0 auto", padding: "36px 24px", color: "#E2E8F0", fontFamily: "system-ui" }}>
-      <h1>Subprocesadores</h1>
-      <p style={{ color: "#94A3B8" }}>Actualizada: 2026-04-16. Notificamos cambios con 30 días de antelación via email y en esta página.</p>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-        <thead><tr><th>Proveedor</th><th>Propósito</th><th>Región</th><th>DPA</th></tr></thead>
-        <tbody>
-          {SUBS.map((s) => (
-            <tr key={s.name}>
-              <td>{s.name}</td><td>{s.purpose}</td><td>{s.region}</td>
-              <td><a href={s.dpa} style={{ color: "#10B981" }}>Link</a></td>
+    <PublicShell activePath="/trust/subprocessors">
+      <Container size="lg" className="bi-prose">
+        <article>
+      <h1 style={{
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        letterSpacing: font.tracking.tight,
+        margin: 0,
+      }}>
+        Subprocesadores
+      </h1>
+      <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[2] }}>
+        Actualizada <time dateTime="2026-04-16">16 abril 2026</time> · notificamos cambios con 30 días de antelación vía email y en esta página.
+      </p>
+
+      <div style={{
+        marginTop: space[4],
+        background: cssVar.surface,
+        border: `1px solid ${cssVar.border}`,
+        borderRadius: radius.md,
+        overflow: "hidden",
+      }}>
+        <table style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: font.size.sm,
+        }}>
+          <thead>
+            <tr style={{ background: cssVar.surface2 }}>
+              <th style={thStyle}>Proveedor</th>
+              <th style={thStyle}>Propósito</th>
+              <th style={thStyle}>Región</th>
+              <th style={thStyle}>DPA</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <p style={{ marginTop: 24, color: "#94A3B8" }}>Subscríbete a cambios: trust-announce@bio-ignicion.app</p>
-    </article>
+          </thead>
+          <tbody>
+            {SUBS.map((s) => (
+              <tr key={s.name} style={{ borderBlockStart: `1px solid ${cssVar.border}` }}>
+                <td style={{ ...tdStyle, fontWeight: font.weight.semibold }}>{s.name}</td>
+                <td style={tdStyle}>{s.purpose}</td>
+                <td style={tdStyle}>{s.region}</td>
+                <td style={tdStyle}>
+                  <a href={s.dpa} target="_blank" rel="noopener noreferrer" style={{
+                    color: cssVar.accent,
+                    fontWeight: font.weight.semibold,
+                  }}>
+                    Link ↗
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p style={{ marginTop: space[5], color: cssVar.textMuted, fontSize: font.size.sm }}>
+        Subscríbete a cambios: <a href="mailto:trust-announce@bio-ignicion.app" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>trust-announce@bio-ignicion.app</a>
+      </p>
+        </article>
+      </Container>
+    </PublicShell>
   );
 }
+
+const thStyle = {
+  textAlign: "left",
+  padding: `${space[2]}px ${space[3]}px`,
+  fontSize: font.size.xs,
+  color: cssVar.textDim,
+  fontWeight: font.weight.semibold,
+  textTransform: "uppercase",
+  letterSpacing: font.tracking.wide,
+};
+
+const tdStyle = {
+  padding: `${space[2]}px ${space[3]}px`,
+  color: cssVar.text,
+};

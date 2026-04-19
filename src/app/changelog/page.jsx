@@ -14,7 +14,7 @@ export const metadata = {
     description: "Qué hay de nuevo.",
     images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
-  alternates: { types: { "application/rss+xml": "/changelog.xml" } },
+  alternates: { canonical: "/changelog", types: { "application/rss+xml": "/changelog.xml" } },
 };
 
 const TAG_KEYS = {
@@ -40,9 +40,17 @@ export default async function ChangelogPage() {
           </div>
           <h1 style={{ margin: `${space[2]}px 0` }}>{T("changelog.heading", "Qué hay de nuevo")}</h1>
           <p>
-            {T("changelog.description", "Historial público de cambios. RSS disponible.")} ·{" "}
-            <a href="https://semver.org" rel="noopener noreferrer">SemVer</a> · RSS:{" "}
-            <a href="/changelog.xml">/changelog.xml</a> · <a href="/docs">/docs</a>
+            {T(
+              "changelog.description",
+              "Cada release usa SemVer. Los breaking changes se anuncian con al menos 6 meses de aviso en headers Deprecation/Sunset (RFC 8594) antes de retirarse.",
+            )}
+          </p>
+          <p style={{ fontSize: font.size.sm, color: cssVar.textMuted, marginBlockStart: space[1] }}>
+            <a href="https://semver.org" target="_blank" rel="noopener noreferrer">SemVer</a>
+            {" · "}
+            <a href="/changelog.xml">RSS</a>
+            {" · "}
+            <a href="/docs">API docs</a>
           </p>
         </header>
 

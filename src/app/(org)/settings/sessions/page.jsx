@@ -1,41 +1,178 @@
 import { auth } from "../../../../server/auth";
 import { db } from "../../../../server/db";
+import { auditLog } from "../../../../server/audit";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { ConfirmForm } from "@/components/ui/ConfirmForm";
+import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const dynamic = "force-dynamic";
 
 async function revoke(formData) {
   "use server";
   const id = formData.get("id");
-  await db().session.delete({ where: { id } }).catch(() => {});
+  const orm = await db();
+  await orm.session.delete({ where: { id } }).catch(() => {});
+}
+
+async function deleteAccount() {
+  "use server";
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  const userId = session.user.id;
+  const orm = await db();
+  await orm.user.update({
+    where: { id: userId },
+    data: {
+      deletedAt: new Date(),
+      email: `deleted-${userId}@bio-ignicion.local`,
+      name: null,
+      image: null,
+    },
+  });
+  const memberships = await orm.membership.findMany({ where: { userId } });
+  for (const m of memberships) {
+    await auditLog({
+      orgId: m.orgId, actorId: userId,
+      action: "user.deletion.requested", target: userId, payload: { graceDays: 30 },
+    }).catch(() => {});
+  }
+  await orm.session.deleteMany({ where: { userId } }).catch(() => {});
+  redirect("/signin?deleted=1");
 }
 
 export default async function Sessions() {
   const session = await auth();
-  if (!session?.user) return null;
-  const items = await db().session.findMany({ where: { userId: session.user.id }, orderBy: { expires: "desc" } });
+  if (!session?.user) redirect("/signin?next=/settings/sessions");
+  const orm = await db();
+  const items = await orm.session.findMany({
+    where: { userId: session.user.id }, orderBy: { expires: "desc" },
+  });
+
   return (
-    <article style={{ maxWidth: 760, margin: "0 auto", padding: "36px 24px", color: "#E2E8F0", fontFamily: "system-ui" }}>
-      <h1>Sesiones activas</h1>
-      <p style={{ color: "#94A3B8" }}>Revoca cualquier sesión que no reconozcas.</p>
-      <table style={{ width: "100%", marginTop: 16, borderCollapse: "collapse", fontSize: 14 }}>
-        <thead><tr style={{ textAlign: "left", color: "#64748B" }}><th>ID</th><th>Expira</th><th></th></tr></thead>
-        <tbody>
-          {items.map((s) => (
-            <tr key={s.id} style={{ borderTop: "1px solid #1E293B" }}>
-              <td style={{ padding: "8px 0", fontFamily: "ui-monospace" }}>{s.id.slice(0, 12)}…</td>
-              <td>{new Date(s.expires).toLocaleString()}</td>
-              <td><form action={revoke}><input type="hidden" name="id" value={s.id} /><button style={{ background: "transparent", color: "#F87171", border: "none", cursor: "pointer" }}>Revocar</button></form></td>
+    <article style={{
+      maxWidth: 760,
+      margin: "0 auto",
+      padding: `${space[6]}px ${space[4]}px`,
+      color: cssVar.text,
+      fontFamily: cssVar.fontSans,
+    }}>
+      <h1 style={{
+        margin: 0,
+        fontSize: font.size["2xl"],
+        fontWeight: font.weight.black,
+        letterSpacing: font.tracking.tight,
+      }}>
+        Sesiones activas
+      </h1>
+      <p style={{
+        color: cssVar.textMuted,
+        fontSize: font.size.sm,
+        marginTop: space[2],
+      }}>
+        Revoca cualquier sesión que no reconozcas.
+      </p>
+
+      <div style={{
+        marginTop: space[4],
+        background: cssVar.surface,
+        border: `1px solid ${cssVar.border}`,
+        borderRadius: radius.md,
+        overflow: "hidden",
+      }}>
+        <table style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: font.size.sm,
+        }}>
+          <thead>
+            <tr style={{ background: cssVar.surface2 }}>
+              <th style={thStyle}>ID</th>
+              <th style={thStyle}>Expira</th>
+              <th style={thStyle} />
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <hr style={{ margin: "32px 0", border: "none", borderTop: "1px solid #1E293B" }} />
-      <h2 style={{ fontSize: 18 }}>Mis datos</h2>
-      <p style={{ color: "#94A3B8" }}>Descarga todo tu historial (GDPR Art. 15 / LFPDPPP Art. 22).</p>
-      <a href="/api/v1/users/me/export" style={{ display: "inline-block", marginRight: 12, padding: "8px 14px", background: "#10B981", color: "#fff", borderRadius: 8, textDecoration: "none" }}>Descargar mis datos</a>
-      <form action="/api/v1/users/me" method="DELETE" style={{ display: "inline" }}>
-        <button type="submit" style={{ padding: "8px 14px", background: "transparent", color: "#F87171", border: "1px solid #7F1D1D", borderRadius: 8, cursor: "pointer" }}>Borrar mi cuenta</button>
-      </form>
+          </thead>
+          <tbody>
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={3} style={{
+                  padding: space[6],
+                  textAlign: "center",
+                  color: cssVar.textMuted,
+                }}>
+                  Sin sesiones activas.
+                </td>
+              </tr>
+            )}
+            {items.map((s) => (
+              <tr key={s.id} style={{ borderBlockStart: `1px solid ${cssVar.border}` }}>
+                <td style={{
+                  ...tdStyle,
+                  fontFamily: cssVar.fontMono,
+                  color: cssVar.textDim,
+                }}>
+                  {s.id.slice(0, 12)}…
+                </td>
+                <td style={tdStyle}>{new Date(s.expires).toLocaleString()}</td>
+                <td style={{ ...tdStyle, textAlign: "right" }}>
+                  <form action={revoke} style={{ display: "inline" }}>
+                    <input type="hidden" name="id" value={s.id} />
+                    <Button type="submit" variant="danger" size="sm">Revocar</Button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <hr style={{
+        margin: `${space[8]}px 0`,
+        border: "none",
+        borderTop: `1px solid ${cssVar.border}`,
+      }} />
+
+      <h2 style={{
+        fontSize: font.size.lg,
+        fontWeight: font.weight.bold,
+        margin: 0,
+      }}>
+        Mis datos
+      </h2>
+      <p style={{
+        color: cssVar.textMuted,
+        fontSize: font.size.sm,
+        marginTop: space[2],
+      }}>
+        Descarga todo tu historial (GDPR Art. 15 / LFPDPPP Art. 22).
+      </p>
+      <div style={{ display: "flex", gap: space[2], marginTop: space[3], flexWrap: "wrap" }}>
+        <Button href="/api/v1/users/me/export" variant="primary">
+          Descargar mis datos
+        </Button>
+        <ConfirmForm
+          action={deleteAccount}
+          message="¿Borrar tu cuenta definitivamente? Iniciaremos eliminación con 30 días de gracia y cerraremos tus sesiones ahora."
+          style={{ display: "inline" }}
+        >
+          <Button type="submit" variant="danger">Borrar mi cuenta</Button>
+        </ConfirmForm>
+      </div>
     </article>
   );
 }
+
+const thStyle = {
+  textAlign: "left",
+  padding: `${space[3]}px ${space[4]}px`,
+  fontSize: font.size.xs,
+  color: cssVar.textDim,
+  fontWeight: font.weight.semibold,
+  textTransform: "uppercase",
+  letterSpacing: font.tracking.wide,
+};
+
+const tdStyle = {
+  padding: `${space[3]}px ${space[4]}px`,
+  color: cssVar.text,
+};

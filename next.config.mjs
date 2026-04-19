@@ -18,7 +18,7 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
-  reactCompiler: true,
+  reactCompiler: false,
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
   },

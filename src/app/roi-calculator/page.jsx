@@ -6,6 +6,7 @@ import { cssVar, space, font } from "@/components/ui/tokens";
 export const metadata = {
   title: "Calculadora ROI",
   description: "Estima horas recuperadas y valor anual con supuestos conservadores. Sin email wall.",
+  alternates: { canonical: "/roi-calculator" },
   openGraph: {
     title: "BIO-IGNICIÓN · Calculadora ROI",
     description: "Corre el cálculo en tu navegador. No guardamos tus inputs.",

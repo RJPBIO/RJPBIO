@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")  // pooled (PgBouncer) — Vercel runtime
+  directUrl = env("DIRECT_URL")    // direct connection — migrations only
 }
 
 // ─── Tenancy ────────────────────────────────────────────
@@ -27,6 +28,9 @@ model Org {
   seats          Int           @default(5)
   seatsUsed      Int           @default(0)
   dpaAccepted    DateTime?
+  dunningState   String?       // null | "past_due" | "canceled" | "failed"
+  graceUntil     DateTime?     // after sub cancel/payment_failed, keep data until
+  trialEndsAt    DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   memberships    Membership[]
@@ -35,7 +39,12 @@ model Org {
   webhooks       Webhook[]
   apiKeys        ApiKey[]
   integrations   Integration[]
+  supportTickets SupportTicket[]
+  impersonations Impersonation[]
+  wearableEvents WearableEvent[]
+  nom35Responses Nom35Response[]
   @@index([region])
+  @@index([dunningState])
 }
 
 model User {
@@ -48,12 +57,18 @@ model User {
   timezone     String        @default("America/Mexico_City")
   mfaEnabled   Boolean       @default(false)
   mfaSecret    String?
+  passkeyCredentials Json?   // [{ id, publicKey, counter, transports }]
   lastLoginAt  DateTime?
+  deletedAt    DateTime?     // GDPR Art. 17 soft-delete
   createdAt    DateTime      @default(now())
   memberships  Membership[]
   sessions     Session[]
   accounts     Account[]
   neuralState  Json?         // cifrado server-side si decide sync
+  supportTickets SupportTicket[]
+  impersonatedBy Impersonation[] @relation("ImpersonationTarget")
+  impersonationsAsActor Impersonation[] @relation("ImpersonationActor")
+  nom35Responses Nom35Response[]
 }
 
 enum Role {
@@ -287,4 +302,92 @@ model Integration {
   createdAt DateTime @default(now())
   org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   @@unique([orgId, provider])
+}
+
+// ─── Support tickets (in-app → notify admins) ───────────
+enum TicketStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model SupportTicket {
+  id        String         @id @default(cuid())
+  orgId     String?
+  userId    String?
+  email     String         // fallback when unauthenticated
+  subject   String
+  body      String         @db.Text
+  status    TicketStatus   @default(OPEN)
+  priority  TicketPriority @default(NORMAL)
+  tags      String[]
+  ua        String?
+  ip        String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  org       Org?           @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([orgId, status, createdAt])
+  @@index([status, priority, createdAt])
+}
+
+// ─── Admin impersonation audit (who acted as whom) ──────
+model Impersonation {
+  id         String   @id @default(cuid())
+  orgId      String
+  actorId    String   // the platform admin
+  targetId   String   // the user being impersonated
+  reason     String
+  startedAt  DateTime @default(now())
+  endedAt    DateTime?
+  expiresAt  DateTime // hard cap, enforced server-side
+  ip         String?
+  ua         String?
+  org        Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  actor      User     @relation("ImpersonationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  target     User     @relation("ImpersonationTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  @@index([orgId, startedAt])
+  @@index([actorId, startedAt])
+  @@index([targetId, startedAt])
+}
+
+// ─── NOM-035 — Factores de riesgo psicosocial (MX) ──────
+model Nom35Response {
+  id           String   @id @default(cuid())
+  orgId        String
+  userId       String
+  guia         String   @default("III")  // "I" | "II" | "III"
+  answers      Json                        // { "1": 0..4, ... }
+  total        Int
+  nivel        String                      // nulo|bajo|medio|alto|muy_alto
+  porDominio   Json
+  porCategoria Json
+  completedAt  DateTime @default(now())
+  org          Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([orgId, completedAt])
+  @@index([orgId, nivel, completedAt])
+  @@index([userId, completedAt])
+}
+
+// ─── Wearable ingress (Whoop, Oura, Garmin, Apple Health) ──
+model WearableEvent {
+  id         String   @id @default(cuid())
+  orgId      String?
+  userId     String?
+  provider   String   // "whoop" | "oura" | "garmin" | "apple" | "fitbit"
+  kind       String   // "hrv" | "sleep" | "recovery" | "activity" | "webhook"
+  payload    Json
+  receivedAt DateTime @default(now())
+  org        Org?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  @@index([provider, receivedAt])
+  @@index([userId, provider, receivedAt])
 }

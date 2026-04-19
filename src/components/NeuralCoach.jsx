@@ -19,6 +19,8 @@ import {
   calcProtocolDiversity,
   calcSessionQualityTrend,
 } from "../lib/neural";
+import { buildCoachContext, summarizeContext } from "../lib/coachMemory";
+import { evaluateSafetySignals } from "../lib/coachSafety";
 import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
 import { useReducedMotion } from "../lib/a11y";
 import { semantic } from "../lib/tokens";
@@ -35,6 +37,9 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
   const rhythm = analyzeNeuralRhythm(st);
   const diversity = calcProtocolDiversity(st.history);
   const qualityTrend = calcSessionQualityTrend(st.history);
+  const memoryCtx = buildCoachContext(st);
+  const memorySummary = summarizeContext(memoryCtx);
+  const safety = evaluateSafetySignals(st, { locale: typeof navigator !== "undefined" ? navigator.language : "es" });
 
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
@@ -55,7 +60,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
     <section
       role="region"
       aria-label="Coach Neural con IA"
-      style={{ marginBlockEnd: space[3.5] || 14 }}
+      style={{ marginBlockEnd: space[4] }}
     >
       <header
         style={{
@@ -87,6 +92,59 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
           {showDetail ? "Menos" : "Detalle"}
         </button>
       </header>
+
+      {safety.level !== "none" && (
+        <aside
+          role={safety.level === "crisis" ? "alert" : "status"}
+          aria-label={safety.level === "crisis" ? "Alerta de seguridad" : "Señal de cuidado"}
+          style={{
+            background: safety.level === "crisis" ? withAlpha(semantic.danger, 10) : withAlpha(semantic.warning, 8),
+            border: `1.5px solid ${safety.level === "crisis" ? withAlpha(semantic.danger, 30) : withAlpha(semantic.warning, 25)}`,
+            borderRadius: radius.md,
+            padding: space[2.5],
+            marginBlockEnd: space[2.5],
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: space[1.5], marginBlockEnd: space[1] }}>
+            <Icon name={safety.level === "crisis" ? "alert-triangle" : "shield"} size={14} color={safety.level === "crisis" ? semantic.danger : semantic.warning} aria-hidden="true" />
+            <span style={{ ...ty.label(safety.level === "crisis" ? semantic.danger : semantic.warning), fontSize: font.size.sm }}>
+              {safety.level === "crisis" ? "Apoyo humano ahora" : "Carga alta detectada"}
+            </span>
+          </div>
+          <p style={{ fontSize: font.size.sm, color: t2, margin: 0, lineHeight: font.leading.normal }}>
+            {safety.message}
+          </p>
+          {safety.resources.length > 0 && (
+            <ul role="list" style={{ listStyle: "none", padding: 0, margin: `${space[2]}px 0 0`, display: "flex", flexDirection: "column", gap: space[1] }}>
+              {safety.resources.map((r, i) => (
+                <li key={i} style={{ fontSize: font.size.sm, color: t1, lineHeight: font.leading.normal }}>
+                  <strong>{r.label}:</strong> {r.contact}
+                </li>
+              ))}
+            </ul>
+          )}
+        </aside>
+      )}
+
+      {memorySummary && (
+        <div
+          aria-label="Resumen de memoria del coach"
+          style={{
+            background: withAlpha(brand.primary, 5),
+            border: `1px solid ${withAlpha(brand.primary, 12)}`,
+            borderRadius: radius.sm,
+            paddingBlock: space[1.5],
+            paddingInline: space[2.5],
+            marginBlockEnd: space[2.5],
+            fontSize: font.size.xs,
+            color: t2,
+            lineHeight: font.leading.normal,
+          }}
+        >
+          <span style={{ ...ty.label(brand.primary), fontSize: 10, marginInlineEnd: space[1] }}>Memoria</span>
+          {memorySummary}
+        </div>
+      )}
 
       <div
         role="group"

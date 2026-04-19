@@ -2,13 +2,16 @@ import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
 import CommandPaletteTrigger from "./CommandPaletteTrigger";
+import ShellMobileNav from "./ShellMobileNav";
 import { Container } from "./Container";
 import { cssVar, radius, space, font } from "./tokens";
 import { tLocale } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 
 const NAV_ITEMS = [
   { href: "/pricing",   key: "nav.pricing" },
+  { href: "/learn",     key: "nav.learn",     fallback: "Aprende" },
   { href: "/docs",      key: "nav.docs" },
   { href: "/changelog", key: "nav.changelog" },
   { href: "/trust",     key: "nav.trust" },
@@ -19,6 +22,8 @@ const FOOTER_LINKS = {
   product: [
     { href: "/pricing",        labelKey: "nav.pricing",    fallback: "Precios" },
     { href: "/demo",           labelKey: "nav.demo",       fallback: "Demo" },
+    { href: "/learn",          labelKey: "nav.learn",      fallback: "Aprende" },
+    { href: "/evidencia",      labelKey: null,             fallback: "Evidencia" },
     { href: "/roi-calculator", labelKey: "nav.roi",        fallback: "ROI" },
     { href: "/changelog",      labelKey: "nav.changelog",  fallback: "Changelog" },
   ],
@@ -48,6 +53,7 @@ const FOOTER_LINKS = {
 export async function PublicShell({ children, activePath }) {
   const locale = await getServerLocale();
   const T = (k, fb) => tLocale(locale, k) !== k ? tLocale(locale, k) : (fb ?? k);
+  const resolvedNav = NAV_ITEMS.map((n) => ({ href: n.href, label: T(n.key, n.fallback) }));
 
   return (
     <>
@@ -64,14 +70,10 @@ export async function PublicShell({ children, activePath }) {
       >
         <Container size="xl" style={{ paddingBlock: space[3], display: "flex", alignItems: "center", gap: space[4], flexWrap: "wrap" }}>
           <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: space[2], textDecoration: "none", color: cssVar.text }} aria-label={T("shell.brandHome", "BIO-IGNICIÓN")}>
-            <span aria-hidden style={{
-              width: 22, height: 22, borderRadius: radius.sm,
-              background: `conic-gradient(from 180deg, var(--bi-accent), #22D3EE, #FDE68A, var(--bi-accent))`,
-              boxShadow: `0 0 18px var(--bi-accent)`,
-            }} />
-            <span style={{ fontWeight: font.weight.black, letterSpacing: "1px", fontSize: font.size.lg }}>BIO-IGN</span>
+            <BioGlyph size={24} />
+            <span className="bi-shell-wordmark" style={{ fontWeight: font.weight.black, letterSpacing: "1px", fontSize: font.size.lg }}>BIO-IGNICIÓN</span>
           </Link>
-          <nav aria-label={T("shell.nav", "Principal")} style={{ display: "flex", gap: space[4], marginInlineStart: "auto", flexWrap: "wrap" }}>
+          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav bi-shell-nav-desktop" style={{ display: "flex", gap: space[4], marginInlineStart: "auto", flexWrap: "wrap", rowGap: space[2] }}>
             {NAV_ITEMS.map((n) => {
               const active = activePath === n.href;
               return (
@@ -79,6 +81,8 @@ export async function PublicShell({ children, activePath }) {
                   key={n.href}
                   href={n.href}
                   aria-current={active ? "page" : undefined}
+                  className="bi-shell-navlink"
+                  data-active={active ? "true" : undefined}
                   style={{
                     color: active ? cssVar.text : cssVar.textDim,
                     textDecoration: "none",
@@ -86,26 +90,38 @@ export async function PublicShell({ children, activePath }) {
                     fontWeight: font.weight.semibold,
                     borderBottom: active ? `2px solid ${cssVar.accent}` : "2px solid transparent",
                     paddingBlock: 2,
+                    transition: "color 0.15s ease, border-color 0.15s ease",
                   }}
                 >
-                  {T(n.key)}
+                  {T(n.key, n.fallback)}
                 </Link>
               );
             })}
           </nav>
+          <ShellMobileNav
+            items={resolvedNav}
+            activePath={activePath}
+            triggerLabel={T("shell.menu", "Menú")}
+            closeLabel={T("shell.close", "Cerrar")}
+          />
           <CommandPaletteTrigger />
           <LocaleSelect variant="compact" />
           <ThemeToggle />
           <Link
             href="/signin"
+            className="bi-btn bi-btn-primary"
             style={{
-              padding: `${space[1.5]}px ${space[3]}px`,
+              padding: `${space[2]}px ${space[4]}px`,
               borderRadius: radius.full,
               background: cssVar.accent,
               color: cssVar.accentInk,
               textDecoration: "none",
               fontWeight: font.weight.bold,
               fontSize: font.size.md,
+              minBlockSize: 40,
+              display: "inline-flex",
+              alignItems: "center",
+              transition: "box-shadow 0.15s ease, filter 0.15s ease",
             }}
           >
             {T("shell.signin", "Entrar")}
@@ -142,19 +158,19 @@ export async function PublicShell({ children, activePath }) {
 
 function FooterCol({ title, links, T }) {
   return (
-    <div>
-      <div style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", marginBottom: space[3] }}>
+    <nav aria-label={title}>
+      <h2 style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", marginBlock: 0, marginBlockEnd: space[3] }}>
         {title}
-      </div>
+      </h2>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href} style={{ color: cssVar.textDim, textDecoration: "none", fontSize: font.size.lg }}>
+            <Link href={l.href} className="bi-shell-footer-link" style={{ color: cssVar.textDim, textDecoration: "none", fontSize: font.size.lg }}>
               {l.labelKey ? T(l.labelKey, l.fallback) : l.fallback}
             </Link>
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   );
 }

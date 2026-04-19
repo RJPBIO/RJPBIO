@@ -9,8 +9,10 @@ import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
 import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
 import { logger } from "../lib/logger";
+import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
+import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 8;
+const STORE_VERSION = 11;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
@@ -26,6 +28,17 @@ function migrate(data) {
     if (typeof merged.sleepTargetHours !== "number") merged.sleepTargetHours = 7.5;
     // v8: anclar estado al userId autenticado (anti cross-user leak en mismo browser)
     if (typeof merged._userId === "undefined") merged._userId = null;
+    // v9: aprendizaje del motor neural — bandit UCB y residuales de predicción
+    if (!merged.banditArms || typeof merged.banditArms !== "object") merged.banditArms = {};
+    if (!merged.predictionResiduals || !Array.isArray(merged.predictionResiduals.history)) {
+      merged.predictionResiduals = { history: [] };
+    }
+    // v10: recordatorios diarios (push/local). Default apagado — opt-in explícito.
+    if (typeof merged.remindersEnabled !== "boolean") merged.remindersEnabled = false;
+    if (typeof merged.reminderHour !== "number") merged.reminderHour = 9;
+    if (typeof merged.reminderMinute !== "number") merged.reminderMinute = 0;
+    // v11: historial de instrumentos psicométricos (PSS-4, SWEMWBS-7, PHQ-2).
+    if (!Array.isArray(merged.instruments)) merged.instruments = [];
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -226,6 +239,18 @@ export const useStore = create((set, get) => ({
     outboxAdd({ kind: "nom035", payload: result, userId: st._userId ?? null }).catch(() => {});
   },
 
+  // Registra un resultado de instrumento psicométrico (PSS-4, SWEMWBS-7, PHQ-2).
+  // El `entry` debe incluir `instrumentId`, `score`, `level`, `ts`.
+  logInstrument: (entry) => {
+    const st = get();
+    if (!entry || !entry.instrumentId || typeof entry.score !== "number") return;
+    const withTs = { ...entry, ts: typeof entry.ts === "number" ? entry.ts : Date.now() };
+    const instruments = [...(st.instruments || []), withTs].slice(-200);
+    set({ instruments });
+    scheduleSave({ ...st, instruments });
+    outboxAdd({ kind: "instrument", payload: withTs, userId: st._userId ?? null }).catch(() => {});
+  },
+
   logBreathTechnique: (entry) => {
     const st = get();
     const breathTechniqueLog = [...(st.breathTechniqueLog || []), entry].slice(-500);
@@ -243,6 +268,58 @@ export const useStore = create((set, get) => ({
   setOrgMode: (enabled) => {
     set({ orgMode: !!enabled });
     scheduleSave({ ...get() });
+  },
+
+  // ─── Neural learning (v9) ──────────────────────────────
+  // Cada sesión con mood pre/post alimenta el bandit contextual
+  // (intent × bucket temporal) y el log de residuales para calibrar
+  // predicciones. El decay del bandit hace que observaciones nuevas
+  // pesen más que las viejas (~33 obs de vida media).
+  recordSessionOutcome: ({
+    intent,
+    protocol,
+    deltaMood,
+    predictedDelta = null,
+    at = null,
+    energyDelta = null,
+    hrvDelta = null,
+    completionRatio = 1,
+  }) => {
+    const st = get();
+    const delta = Number(deltaMood);
+    if (!Number.isFinite(delta) || !intent) return;
+    // El bandit aprende del reward compuesto (mood + energía + HRV +
+    // completitud). Los residuales siguen calibrando contra mood puro —
+    // que es lo que predecimos en la UI.
+    const reward = compositeReward({
+      moodDelta: delta,
+      energyDelta,
+      hrvDeltaLnRmssd: hrvDelta,
+      completionRatio,
+    });
+    if (reward === null) return;
+    const bucket = timeBucket(at || new Date());
+    const arms = st.banditArms || {};
+    // Actualizamos DOS brazos: contextual (intent:bucket) y global (intent).
+    // El global da fallback cuando el bucket actual no tiene datos.
+    const keyCtx = armKey(intent, bucket);
+    const keyGlb = armKey(intent);
+    const nextArms = {
+      ...arms,
+      [keyCtx]: updateArm(arms[keyCtx], reward),
+      [keyGlb]: updateArm(arms[keyGlb], reward),
+    };
+    const nextResiduals =
+      typeof predictedDelta === "number"
+        ? logResidualEntry(st.predictionResiduals || { history: [] }, {
+            predicted: predictedDelta,
+            actual: delta,
+            armId: intent,
+          })
+        : (st.predictionResiduals || { history: [] });
+    const update = { banditArms: nextArms, predictionResiduals: nextResiduals };
+    set(update);
+    scheduleSave({ ...st, ...update });
   },
 
   resetAll: async () => {

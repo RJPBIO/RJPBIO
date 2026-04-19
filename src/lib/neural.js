@@ -5,6 +5,10 @@
 
 import { P } from "./protocols";
 import { LVL, STATUS_MSGS, DAILY_PHRASES } from "./constants";
+import { scoreArm, armKey, timeBucket } from "./neural/bandit";
+import { getCircadianPersonalized } from "./neural/chronoCircadian";
+import { calibratePrediction } from "./neural/residuals";
+import { protocolBiasFromDomain, applyBiasToScore } from "./nom35/protocolBias";
 
 // ─── Level System ─────────────────────────────────────────
 export function gL(s) {
@@ -83,28 +87,116 @@ export function calcBioQuality(sd) {
   return { score, quality, iScore: Math.round(iScore * 100), mScore: Math.round(mScore * 100), tScore: Math.round(tScore * 100) };
 }
 
-// ─── Burnout Prediction Index ─────────────────────────────
-export function calcBurnoutIndex(ml, hist) {
-  ml = ml || []; hist = hist || [];
-  if (ml.length < 5) return { index: 0, risk: "sin datos", trend: "neutral", prediction: "", avgMood: 3 };
+// ─── Burnout Index ─────────────────────────────────────────
+// Inspirado en los 3 componentes del Maslach Burnout Inventory
+// (MBI-GS, Schaufeli 2002), adaptado a lo que podemos observar sin
+// cuestionario:
+//   1. Agotamiento emocional → tendencia negativa del mood reciente.
+//   2. Distanciamiento / cinismo → varianza de mood comprimida
+//      (respuestas "uniformes" = posible desengagement).
+//   3. Realización reducida → caída en calidad de sesión (bioQ).
+//
+// Cada subíndice es 0..100. El índice agregado los combina con pesos
+// iguales (MBI también los trata separadamente). No es diagnóstico:
+// es un indicador interno que el motor usa para sesgar protocolos.
+function _burnoutExhaustion(ml) {
+  if (ml.length < 5) return { value: 0, reason: "datos insuficientes" };
   const last7 = ml.slice(-7);
   const prev7 = ml.slice(-14, -7);
   const avgR = last7.reduce((a, m) => a + m.mood, 0) / last7.length;
   const avgP = prev7.length >= 3 ? prev7.reduce((a, m) => a + m.mood, 0) / prev7.length : avgR;
-  const trend = avgR - avgP;
-  const lowC = last7.filter((m) => m.mood <= 2).length;
-  const sessW = hist.filter((s) => Date.now() - s.ts < 7 * 86400000).length;
-  const raw = Math.max(0, Math.min(100, 50 - trend * 15 + lowC * 10 - sessW * 2 + (avgR < 2.5 ? 20 : 0)));
-  const idx = Math.round(raw);
-  const flatAffect = ml.length >= 7 && ml.slice(-7).every((m) => m.mood === 3);
-  const risk = flatAffect ? "moderado" : idx >= 70 ? "crítico" : idx >= 50 ? "alto" : idx >= 30 ? "moderado" : "bajo";
-  const pred = flatAffect
-    ? "Patrón de respuesta uniforme detectado. Posible desengagement. Variar protocolos recomendado."
-    : idx >= 70 ? "Riesgo de agotamiento en 48h. Protocolo OMEGA recomendado."
-    : idx >= 50 ? "Tendencia descendente detectada. Aumentar frecuencia de sesiones."
+  const trend = avgR - avgP; // + = mejorando, − = empeorando
+  // Escalón por nivel absoluto: mood sostenido muy bajo es la señal
+  // más fuerte de exhaustion (independiente del trend).
+  const baseLow =
+    avgR < 1.5 ? 80 :
+    avgR < 2.0 ? 55 :
+    avgR < 2.5 ? 35 :
+    avgR < 3.0 ? 15 : 0;
+  // −1.0 de trend → +20 al índice; +1.0 → −20.
+  const trendPenalty = Math.max(-20, Math.min(30, -trend * 25));
+  return {
+    value: Math.max(0, Math.min(100, Math.round(baseLow + trendPenalty + 10))),
+    trend: +trend.toFixed(2),
+    avgR: +avgR.toFixed(2),
+  };
+}
+
+function _burnoutDisengagement(ml) {
+  if (ml.length < 7) return { value: 0, reason: "datos insuficientes" };
+  const last7 = ml.slice(-7).map((m) => m.mood);
+  const avg = last7.reduce((a, b) => a + b, 0) / last7.length;
+  const variance = last7.reduce((a, m) => a + (m - avg) * (m - avg), 0) / last7.length;
+  // Solo contamos como "flat" (desengagement) si la varianza es 0 Y la
+  // media está en la zona neutra (~3). Varianza 0 con mood muy bajo no
+  // es disengagement — es exhaustion sostenida, y la capturamos ahí.
+  const neutral = avg >= 2.5 && avg <= 3.5;
+  const flat = variance < 0.1 && neutral;
+  if (variance < 0.1) {
+    // Uniforme en mood no-neutro: se considera señal del componente
+    // de exhaustion, no de disengagement.
+    return { value: neutral ? 80 : 15, variance: +variance.toFixed(2), flat };
+  }
+  if (variance < 0.4) return { value: 50, variance: +variance.toFixed(2), flat: false };
+  if (variance < 0.8) return { value: 25, variance: +variance.toFixed(2), flat: false };
+  return { value: 10, variance: +variance.toFixed(2), flat: false };
+}
+
+function _burnoutReducedEfficacy(hist) {
+  if (hist.length < 6) return { value: 0, reason: "datos insuficientes" };
+  const last5 = hist.slice(-5).filter((h) => typeof h.bioQ === "number");
+  const prev5 = hist.slice(-10, -5).filter((h) => typeof h.bioQ === "number");
+  if (last5.length < 3 || prev5.length < 3) return { value: 0, reason: "datos insuficientes" };
+  const qR = last5.reduce((a, h) => a + h.bioQ, 0) / last5.length;
+  const qP = prev5.reduce((a, h) => a + h.bioQ, 0) / prev5.length;
+  const drop = qP - qR; // positivo = cayendo la calidad
+  const baseFromLow = qR < 40 ? 30 : qR < 55 ? 15 : 0;
+  const dropPenalty = Math.max(0, Math.min(40, drop));
+  return {
+    value: Math.max(0, Math.min(100, Math.round(baseFromLow + dropPenalty))),
+    qualityRecent: Math.round(qR),
+    qualityDrop: Math.round(drop),
+  };
+}
+
+export function calcBurnoutIndex(ml, hist) {
+  ml = ml || []; hist = hist || [];
+  if (ml.length < 5) return { index: 0, risk: "sin datos", trend: "neutral", prediction: "", avgMood: 3, components: null };
+  const exhaustion = _burnoutExhaustion(ml);
+  const disengage = _burnoutDisengagement(ml);
+  const efficacy = _burnoutReducedEfficacy(hist);
+  // Pesos iguales salvo que la señal de eficacia sea insuficiente:
+  // entonces redistribuimos su peso a las otras dos.
+  // Pesos: exhaustion domina porque es la señal más interpretable y
+  // es la que dispara la intervención más clara (bajar carga). Si no
+  // tenemos datos de eficacia, su peso se reparte hacia exhaustion.
+  const hasEfficacy = efficacy.value > 0 || efficacy.qualityRecent != null;
+  const idx = Math.round(
+    hasEfficacy
+      ? exhaustion.value * 0.5 + disengage.value * 0.2 + efficacy.value * 0.3
+      : exhaustion.value * 0.75 + disengage.value * 0.25
+  );
+  const risk = disengage.flat ? "moderado"
+    : idx >= 70 ? "crítico"
+    : idx >= 50 ? "alto"
+    : idx >= 30 ? "moderado"
+    : "bajo";
+  const pred = disengage.flat
+    ? "Respuestas uniformes detectadas. Posible desengagement. Variar protocolos ayuda a reactivar."
+    : idx >= 70 ? "Carga sostenida alta. Prioriza protocolos de calma y reduce exigencia esta semana."
+    : idx >= 50 ? "Tendencia de fatiga detectada. Aumentar frecuencia de sesiones cortas."
     : idx >= 30 ? "Estado estable con margen de mejora."
-    : "Sistema en buen estado. Mantener ritmo.";
-  return { index: idx, risk, trend: trend > 0.3 ? "mejorando" : trend < -0.3 ? "deteriorando" : "estable", prediction: pred, avgMood: +avgR.toFixed(1) };
+    : "Estado dentro de rango saludable. Mantener ritmo.";
+  const trendWord =
+    exhaustion.trend > 0.3 ? "mejorando" : exhaustion.trend < -0.3 ? "deteriorando" : "estable";
+  return {
+    index: idx,
+    risk,
+    trend: trendWord,
+    prediction: pred,
+    avgMood: exhaustion.avgR ?? 3,
+    components: { exhaustion, disengage, efficacy },
+  };
 }
 
 // ─── BioSignal Score ──────────────────────────────────────
@@ -252,20 +344,6 @@ export function genIns(st) {
   return r;
 }
 
-// ─── Smart Suggest ────────────────────────────────────────
-export function smartSuggest(st) {
-  const h = new Date().getHours();
-  const lastMood = (st.moodLog || []).slice(-1)[0]?.mood || 3;
-  const lastP = (st.history || []).slice(-1)[0]?.p || "";
-  let intent = "calma";
-  if (h >= 6 && h < 10) intent = lastMood <= 2 ? "reset" : "energia";
-  else if (h >= 10 && h < 14) intent = "enfoque";
-  else if (h >= 14 && h < 18) intent = lastMood <= 2 ? "calma" : "enfoque";
-  else intent = "calma";
-  const opts = P.filter((p) => p.int === intent && p.n !== lastP);
-  return opts.length ? opts[Math.floor(Math.random() * opts.length)] : P[0];
-}
-
 // ─── Records ──────────────────────────────────────────────
 export function getRecords(st) {
   const h = st.history || [];
@@ -297,37 +375,96 @@ export function calcNeuralVariability(history) {
 }
 
 // ─── Prediction Engine (NEW) ─────────────────────────────
+// Returns predictedDelta + 80 % CI (lower/upper). CI is derived from
+// the standard error of the sample mean (σ / √n), so más sesiones ⇒
+// banda más estrecha. Si la muestra < 2, devolvemos banda amplia.
+function _ciBand(deltas) {
+  const n = deltas.length;
+  const mean = deltas.reduce((a, b) => a + b, 0) / n;
+  if (n < 2) return { mean, lower: mean - 1.5, upper: mean + 1.5, se: null };
+  const variance = deltas.reduce((a, d) => a + (d - mean) * (d - mean), 0) / (n - 1);
+  const se = Math.sqrt(variance / n);
+  // z=1.28 ≈ 80 % gaussian band (suficiente para UX, no clínico)
+  const margin = 1.28 * se;
+  return { mean, lower: mean - margin, upper: mean + margin, se };
+}
+
+// Aplica calibración por residuales al final de cualquier predicción.
+// Además ensancha el CI si detecta drift (últimas 5 entradas vs las 5
+// previas cambian el signo del bias) — señal de no-estacionariedad.
+function _applyResidualCalibration(raw, st, protocol) {
+  const residuals = st?.predictionResiduals;
+  if (!residuals || !Array.isArray(residuals.history) || residuals.history.length < 5) {
+    return raw;
+  }
+  const calibrated = calibratePrediction(residuals, raw, { armId: protocol.int });
+  if (!calibrated || !calibrated.calibrated) return raw;
+  // Detectar drift: bias reciente vs bias antiguo.
+  const hist = residuals.history;
+  if (hist.length >= 10) {
+    const recent = hist.slice(-5).map(h => h.residual);
+    const prev = hist.slice(-10, -5).map(h => h.residual);
+    const mR = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const mP = prev.reduce((a, b) => a + b, 0) / prev.length;
+    if (Math.sign(mR) !== Math.sign(mP) && Math.abs(mR - mP) > 0.8) {
+      // Drift: ensanchamos banda y bajamos confianza.
+      const widen = Math.abs(mR - mP) * 0.5;
+      calibrated.lower = +(calibrated.lower - widen).toFixed(2);
+      calibrated.upper = +(calibrated.upper + widen).toFixed(2);
+      calibrated.confidence = Math.max(10, (calibrated.confidence || 0) - 15);
+      calibrated.drift = true;
+    }
+  }
+  calibrated.predictedDelta = +Number(calibrated.predictedDelta).toFixed(1);
+  return calibrated;
+}
+
 export function predictSessionImpact(st, protocol) {
   const ml = st.moodLog || [];
   const withProto = ml.filter(m => m.proto === protocol.n && m.pre > 0);
+  let raw;
   if (withProto.length >= 2) {
-    const avgDelta = withProto.reduce((a, m) => a + (m.mood - m.pre), 0) / withProto.length;
-    return {
-      predictedDelta: +avgDelta.toFixed(1),
+    const deltas = withProto.map(m => m.mood - m.pre);
+    const { mean, lower, upper } = _ciBand(deltas);
+    raw = {
+      predictedDelta: +mean.toFixed(1),
+      lower: +lower.toFixed(2),
+      upper: +upper.toFixed(2),
       confidence: Math.min(95, 50 + withProto.length * 5),
+      sampleSize: withProto.length,
       basis: "historial personal",
-      message: avgDelta > 0 ? `+${avgDelta.toFixed(1)} puntos estimados basado en ${withProto.length} sesiones anteriores` : "Protocolo sin mejora demostrada. Considera cambiar."
+      message: mean > 0 ? `+${mean.toFixed(1)} puntos estimados basado en ${withProto.length} sesiones anteriores` : "Protocolo sin mejora demostrada. Considera cambiar."
     };
+  } else {
+    const intentSessions = ml.filter(m => {
+      const p = P.find(pp => pp.n === m.proto);
+      return p && p.int === protocol.int && m.pre > 0;
+    });
+    if (intentSessions.length >= 2) {
+      const deltas = intentSessions.map(m => m.mood - m.pre);
+      const { mean, lower, upper } = _ciBand(deltas);
+      raw = {
+        predictedDelta: +mean.toFixed(1),
+        lower: +lower.toFixed(2),
+        upper: +upper.toFixed(2),
+        confidence: Math.min(70, 30 + intentSessions.length * 4),
+        sampleSize: intentSessions.length,
+        basis: "protocolos similares",
+        message: `+${mean.toFixed(1)} estimado basado en protocolos de ${protocol.int}`
+      };
+    } else {
+      raw = {
+        predictedDelta: 0.8,
+        lower: -0.7,
+        upper: 2.3,
+        confidence: 20,
+        sampleSize: 0,
+        basis: "promedio global",
+        message: "Primera sesión con este protocolo. Impacto promedio: +0.8"
+      };
+    }
   }
-  const intentSessions = ml.filter(m => {
-    const p = P.find(pp => pp.n === m.proto);
-    return p && p.int === protocol.int && m.pre > 0;
-  });
-  if (intentSessions.length >= 2) {
-    const avgDelta = intentSessions.reduce((a, m) => a + (m.mood - m.pre), 0) / intentSessions.length;
-    return {
-      predictedDelta: +avgDelta.toFixed(1),
-      confidence: Math.min(70, 30 + intentSessions.length * 4),
-      basis: "protocolos similares",
-      message: `+${avgDelta.toFixed(1)} estimado basado en protocolos de ${protocol.int}`
-    };
-  }
-  return {
-    predictedDelta: 0.8,
-    confidence: 20,
-    basis: "promedio global",
-    message: "Primera sesión con este protocolo. Impacto promedio: +0.8"
-  };
+  return _applyResidualCalibration(raw, st, protocol);
 }
 
 // ─── Correlation Engine (NEW) ────────────────────────────
@@ -371,16 +508,30 @@ export function calcProtocolCorrelations(st) {
 
 // ─── Adaptive Protocol Engine ────────────────────────────
 // Motor inteligente que considera: hora, mood, historial, burnout,
-// ritmo circadiano, efectividad personal, diversidad y carga cognitiva
-export function adaptiveProtocolEngine(st) {
-  const h = new Date().getHours();
-  const circadian = getCircadian();
+// ritmo circadiano, efectividad personal, diversidad, carga cognitiva,
+// chronotype (hora subjetiva), bandit (exploración UCB) y bias
+// NOM-035 (dominio de mayor riesgo psicosocial).
+//
+// Options (todas opcionales, sin romper compatibilidad):
+//   - chronotype: resultado de MEQ-SA → desplaza el reloj circadiano
+//   - banditArms: estado UCB1 por intent ({ calma, reset, energia, enfoque })
+//   - porDominio: sumatorios crudos NOM-035 por dominio → aplica sesgo
+//   - readiness: output de calcReadiness(...) — z-scores de HRV/RHR/sueño
+export function adaptiveProtocolEngine(st, options = {}) {
+  const { chronotype = null, banditArms = null, porDominio = null, readiness = null } = options;
+  const now = new Date();
+  const h = now.getHours();
+  // Reloj circadiano personalizado por chronotype (fallback al real).
+  const circadian = chronotype
+    ? getCircadianPersonalized(chronotype, now)
+    : getCircadian();
   const ml = st.moodLog || [];
   const hist = st.history || [];
   const burnout = calcBurnoutIndex(ml, hist);
   const lastMood = ml.slice(-1)[0]?.mood || 3;
   const sensitivity = calcProtoSensitivity(ml);
   const momentum = calcNeuralMomentum(st);
+  const nom35Bias = porDominio ? protocolBiasFromDomain(porDominio) : null;
 
   // Determinar necesidad primaria por contexto
   let primaryNeed = circadian.intent;
@@ -388,6 +539,16 @@ export function adaptiveProtocolEngine(st) {
   // Override por burnout
   if (burnout.risk === "crítico" || burnout.risk === "alto") {
     primaryNeed = "calma";
+  }
+  // Override por readiness crítico: HRV/RHR/sueño fisiológicos mandan sobre
+  // preferencias. "recover" → calma forzada; "primed" → permite activación.
+  else if (readiness && readiness.score !== null && readiness.interpretation === "recover") {
+    primaryNeed = "calma";
+  }
+  // Override por NOM-35 urgente (violencia) — tiene prioridad por sobre
+  // tendencias recientes y momentum, pero cede ante burnout crítico.
+  else if (nom35Bias && nom35Bias.urgent) {
+    primaryNeed = nom35Bias.intent;
   }
   // Override por tendencia emocional reciente
   else if (ml.length >= 3) {
@@ -403,6 +564,12 @@ export function adaptiveProtocolEngine(st) {
   // Obtener candidatos
   let candidates = P.filter((p) => p.int === primaryNeed);
   if (!candidates.length) candidates = [...P];
+
+  // Bucket temporal actual (contexto del bandit) y total de pulls.
+  const bucket = timeBucket(now);
+  const armsTotal = banditArms
+    ? Object.values(banditArms).reduce((a, arm) => a + (arm?.n || 0), 0)
+    : 0;
 
   // Puntuar cada candidato multidimensionalmente
   const scored = candidates.map((p) => {
@@ -433,10 +600,36 @@ export function adaptiveProtocolEngine(st) {
     // Bonus favoritos (+8)
     if ((st.favs || []).includes(p.n)) score += 8;
 
-    // Generar razón contextual
-    const reason = _generateReason(p, primaryNeed, sens, burnout, momentum);
+    // Bandit UCB1 contextual: mira primero el brazo (intent:bucket);
+    // si está vacío, cae al brazo global (intent). El prior poblacional
+    // hace que siempre devuelva un score finito, sin empates triviales.
+    if (banditArms) {
+      const ctxArm = banditArms[armKey(p.int, bucket)] || banditArms[p.int] || null;
+      const ucb = scoreArm(ctxArm, armsTotal, 0.6);
+      if (Number.isFinite(ucb)) score += ucb * 4;
+    }
 
-    return { protocol: p, score, reason };
+    // Readiness (HRV+RHR+sueño) alinea la activación fisiológica esperada:
+    // - primed/ready: bonus a activación; calma pierde relevancia
+    // - recover: bonus a calma; energía/enfoque penalizan
+    // Solo se aplica cuando hay score real (insufficient data → skip).
+    if (readiness && typeof readiness.score === "number") {
+      if (readiness.interpretation === "recover") {
+        if (p.int === "calma") score += 10;
+        else if (p.int === "energia" || p.int === "enfoque") score -= 8;
+      } else if (readiness.interpretation === "primed") {
+        if (p.int === "energia" || p.int === "enfoque") score += 8;
+        else if (p.int === "calma") score -= 4;
+      }
+    }
+
+    // Sesgo NOM-035 (dominio psicosocial dominante → intent preferido)
+    if (nom35Bias) score = applyBiasToScore(score, p, nom35Bias);
+
+    // Generar razón contextual (prioriza NOM-35 si aplica)
+    const reason = _generateReason(p, primaryNeed, sens, burnout, momentum, nom35Bias, readiness);
+
+    return { protocol: p, score: +score.toFixed(2), reason };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -451,25 +644,46 @@ export function adaptiveProtocolEngine(st) {
       lastMood,
       momentum: momentum.score,
       momentumDir: momentum.direction,
+      chronotype: chronotype?.type || null,
+      subjectiveHour: circadian.subjectiveHour ?? null,
+      timeBucket: bucket,
+      nom35Bias: nom35Bias
+        ? { dominio: nom35Bias.dominio, intent: nom35Bias.intent, urgent: !!nom35Bias.urgent }
+        : null,
+      readiness: readiness && typeof readiness.score === "number"
+        ? { score: readiness.score, interpretation: readiness.interpretation }
+        : null,
     },
   };
 }
 
-function _generateReason(protocol, need, sensitivity, burnout, momentum) {
+function _generateReason(protocol, need, sensitivity, burnout, momentum, nom35Bias, readiness) {
   if (burnout.risk === "crítico" || burnout.risk === "alto") {
-    return "Prioridad: reducir riesgo de agotamiento neural";
+    return "Prioridad: reducir riesgo de agotamiento sostenido";
+  }
+  if (readiness && readiness.interpretation === "recover") {
+    return "Readiness bajo (HRV/sueño): prioriza recuperación parasimpática";
+  }
+  if (readiness && readiness.interpretation === "primed" && (protocol.int === "energia" || protocol.int === "enfoque")) {
+    return `Readiness elevado (${readiness.score}): ventana para trabajo cognitivo exigente`;
+  }
+  if (nom35Bias && nom35Bias.urgent) {
+    return "Prioridad: indicadores NOM-035 de violencia laboral requieren intervención formal";
+  }
+  if (nom35Bias && protocol.int === nom35Bias.intent) {
+    return `Tu perfil NOM-035 (${nom35Bias.dominioLabel || nom35Bias.dominio}) indica ${nom35Bias.intent} como prioridad`;
   }
   if (sensitivity && sensitivity.avgDelta > 0.5) {
     return `Tu historial muestra +${sensitivity.avgDelta} puntos con este protocolo`;
   }
   if (momentum.direction === "descendente") {
-    return "Recuperación de momentum neural recomendada";
+    return "Recuperación de momentum recomendada";
   }
   const reasons = {
     calma: "Tu sistema necesita regulación parasimpática",
     enfoque: "Ventana óptima para activación prefrontal",
-    energia: "Ciclo circadiano favorable para activación simpática",
-    reset: "Descarga neural recomendada según tu estado",
+    energia: "Ciclo circadiano favorable para activación",
+    reset: "Descarga cognitiva recomendada según tu estado",
   };
   return reasons[need] || "Protocolo adaptado a tu contexto actual";
 }
@@ -499,11 +713,11 @@ export function calcNeuralMomentum(st) {
     score,
     direction: score > 10 ? "ascendente" : score < -10 ? "descendente" : "estable",
     description:
-      score > 30 ? "Momentum fuerte. Tu cerebro está en fase de crecimiento neural." :
-      score > 10 ? "Tendencia positiva. Cada sesión consolida nuevas vías." :
-      score > -10 ? "Estado estable. Mantén la frecuencia para no perder ganancia." :
+      score > 30 ? "Momentum fuerte. Tu coherencia sube y la racha sostiene el ritmo." :
+      score > 10 ? "Tendencia positiva. Cada sesión suma al promedio sin caer bajo la línea base." :
+      score > -10 ? "Estado estable. Mantén la frecuencia para no perder el efecto acumulado." :
       score > -30 ? "Momentum descendente. Aumenta frecuencia de sesiones." :
-      "Pérdida de momentum. Sesión de reset urgente recomendada.",
+      "Pérdida de momentum. Considera una sesión corta de reset hoy.",
     delta: Math.round(delta),
     recentAvg: Math.round(recentAvg),
     prevAvg: Math.round(prevAvg),
@@ -511,28 +725,77 @@ export function calcNeuralMomentum(st) {
 }
 
 // ─── Cognitive Load Estimator ────────────────────────────
-// Estima la carga cognitiva actual del usuario basándose en
-// hora del día, sesiones realizadas, mood y patrones temporales
+// Estima la carga cognitiva actual combinando señales genéricas
+// (hora, día, mood) con datos del propio usuario (sus horas pico
+// históricas y su patrón por día de la semana). Si existe suficiente
+// historial, este componente personal pesa más que las heurísticas.
 export function estimateCognitiveLoad(st) {
-  const h = new Date().getHours();
+  const now = new Date();
+  const h = now.getHours();
+  const dow = now.getDay();
   const todaySessions = st.todaySessions || 0;
   const ml = st.moodLog || [];
+  const hist = st.history || [];
   const lastMood = ml.slice(-1)[0]?.mood || 3;
 
-  // Carga base por hora (recursos cognitivos se depletan durante el día)
+  // Curva base por hora: recursos cognitivos se depletan durante el día.
   let base = h < 8 ? 15 : h < 10 ? 25 : h < 13 ? 40 : h < 15 ? 55 : h < 18 ? 60 : h < 21 ? 70 : 80;
 
-  // Cada sesión reduce carga temporalmente (efecto de claridad post-sesión)
+  // Señal personal 1: estamos dentro de la ventana pico histórica del
+  // usuario (donde ha entrenado con mejor coherencia). En esa ventana
+  // el rendimiento es demostrablemente mejor, así que bajamos carga.
+  const rhythm = hist.length >= 8 ? analyzeNeuralRhythm(st) : null;
+  if (rhythm?.isInPeakNow) base -= 12;
+  else if (rhythm?.peakWindow) {
+    const dist = Math.min(
+      Math.abs(h - rhythm.peakWindow.start),
+      Math.abs(h - (rhythm.peakWindow.end || rhythm.peakWindow.start + 2))
+    );
+    if (dist <= 1) base -= 6; // borde de la ventana
+  }
+
+  // Señal personal 2: densidad histórica por día de la semana. Si un
+  // día tiene muchas sesiones es porque ahí el usuario ha tenido capacidad
+  // (observado) → menor carga esperada. Si casi nunca entrena ese día,
+  // probablemente está más cargado.
+  if (hist.length >= 14) {
+    const dayCounts = Array(7).fill(0);
+    for (const x of hist) {
+      const d = new Date(x.ts).getDay();
+      dayCounts[d === 0 ? 6 : d - 1]++;
+    }
+    const todayIdx = dow === 0 ? 6 : dow - 1;
+    const avgPerDay = dayCounts.reduce((a, b) => a + b, 0) / 7;
+    const diff = dayCounts[todayIdx] - avgPerDay;
+    // +1 sesión vs promedio → −4 de carga; −1 → +4 (acotado a ±12).
+    base -= Math.max(-12, Math.min(12, diff * 4));
+  } else {
+    // Fallback heurístico cuando no tenemos historial suficiente.
+    if (dow === 1) base += 8; // Lunes
+    if (dow === 5) base += 5; // Viernes
+  }
+
+  // Cada sesión hoy reduce carga (claridad post-sesión).
   base -= todaySessions * 10;
 
-  // Ajuste por mood reciente
+  // Ajuste por mood reciente (observable).
   if (lastMood <= 2) base += 15;
   else if (lastMood >= 4) base -= 10;
 
-  // Ajuste por día de semana (lunes y viernes mayor carga)
-  const dow = new Date().getDay();
-  if (dow === 1) base += 8;
-  if (dow === 5) base += 5;
+  // Deuda de sueño: horas de la última noche contra target personal.
+  // +6 de carga por cada hora faltante (capado a +20). Evidencia: deprivación
+  // parcial de sueño reduce memoria de trabajo y control inhibitorio
+  // (Lim & Dinges 2010, Psychol Bull 136:375).
+  const sleepHours = typeof st.lastSleepHours === "number" ? st.lastSleepHours : null;
+  const sleepTarget = typeof st.sleepTargetHours === "number" ? st.sleepTargetHours : 7.5;
+  let sleepDebtUsed = false;
+  if (sleepHours !== null && sleepHours > 0) {
+    const deficit = Math.max(0, sleepTarget - sleepHours);
+    if (deficit > 0) {
+      base += Math.min(20, deficit * 6);
+      sleepDebtUsed = true;
+    }
+  }
 
   const load = Math.max(0, Math.min(100, Math.round(base)));
 
@@ -543,9 +806,11 @@ export function estimateCognitiveLoad(st) {
       load < 25 ? "Capacidad disponible — ideal para protocolos de enfoque o avanzados" :
       load < 45 ? "Carga moderada — protocolos de activación funcionarán bien" :
       load < 65 ? "Carga alta — prioriza reset o calma para desbloquear rendimiento" :
-      "Carga máxima — sesión de descarga parasimpática necesaria",
+      "Carga máxima — sesión corta de reset antes de seguir",
     optimalDuration: load < 45 ? 1.5 : load < 65 ? 1 : 0.5,
     color: load < 25 ? "#059669" : load < 45 ? "#6366F1" : load < 65 ? "#D97706" : "#DC2626",
+    personalized: rhythm != null || hist.length >= 14 || sleepDebtUsed,
+    sleepDebt: sleepDebtUsed ? +Math.max(0, sleepTarget - sleepHours).toFixed(1) : 0,
   };
 }
 
@@ -664,10 +929,10 @@ export function generateCoachingInsights(st) {
       type: "streak", priority: 2, icon: "fire", color: "#D97706",
       title: `${st.streak} días de racha`,
       message: st.streak >= 30
-        ? "Neuroplasticidad consolidada. El hábito está cableado en tus ganglios basales."
+        ? "Un mes consecutivo. La consistencia en protocolos de autorregulación muestra efecto acumulado."
         : st.streak >= 14
-        ? "Dos semanas. Tu cerebro ya anticipa la sesión — dopamina preparatoria activa."
-        : "Una semana. La mielina de tus nuevas vías se está fortaleciendo.",
+        ? "Dos semanas. A esta altura la sesión ya compite por sí sola contra la fricción del día."
+        : "Una semana. La práctica diaria empieza a sostenerse sin fuerza de voluntad.",
     });
   }
 
@@ -678,7 +943,7 @@ export function generateCoachingInsights(st) {
       insights.push({
         type: "diversity", priority: 1, icon: "shuffle", color: "#8B5CF6",
         title: "Diversifica estímulos",
-        message: `Solo ${last10Protos.size} protocolos en tus últimas 10 sesiones. Tu cerebro necesita variedad para evitar habituación.`,
+        message: `Solo ${last10Protos.size} protocolos en tus últimas 10 sesiones. La variedad reduce habituación y mantiene el efecto.`,
         action: "Prueba un protocolo nuevo hoy",
       });
     }
@@ -721,12 +986,12 @@ export function generateCoachingInsights(st) {
     const h = new Date().getHours();
     insights.push({
       type: "motivational", priority: 3, icon: "lightbulb", color: "#059669",
-      title: h < 12 ? "Tu cerebro te espera" : h < 18 ? "Pausa estratégica" : "Cierra el día con claridad",
+      title: h < 12 ? "Abre el día con un ancla" : h < 18 ? "Pausa estratégica" : "Cierra el día con claridad",
       message: h < 12
-        ? "Una sesión matutina activa la corteza prefrontal para las próximas 4 horas."
+        ? "Una sesión matutina prepara el tono cognitivo antes de la primera demanda fuerte del día."
         : h < 18
-        ? "2 minutos de regulación neural = 90 minutos de rendimiento sostenido."
-        : "Resetea tu sistema antes de dormir. Tu cerebro consolida durante el sueño.",
+        ? "Dos minutos de regulación respiratoria bajan activación y extienden el foco."
+        : "Un reset antes de dormir separa trabajo y descanso — la calidad del sueño lo agradece.",
     });
   }
 

@@ -8,6 +8,7 @@ import { getServerLocale } from "@/lib/locale-server";
 export const metadata = {
   title: "Demo",
   description: "30 minutos con un especialista. Protocolo en vivo + dashboard de equipo con datos simulados.",
+  alternates: { canonical: "/demo" },
   openGraph: {
     title: "BIO-IGNICIÓN · Demo 1:1",
     description: "Ve un protocolo neural en vivo. Sin slides.",
@@ -25,6 +26,13 @@ const COPY = {
       "Panel de equipo con k-anonymity ≥5.",
       <>Q&amp;A de SSO, SCIM, DPA, residencia de datos.</>,
       "ROI estimado según tu tamaño de equipo.",
+    ],
+    stepsTitle: "Qué sigue",
+    steps: [
+      { t: "Hoy", d: "Envías el formulario." },
+      { t: "< 24 h hábiles", d: "Te escribe un humano (no un bot) con 2–3 horarios propuestos." },
+      { t: "Día de la demo", d: "30 min por video. Sin slides — sesión en vivo + panel + Q&A." },
+      { t: "Después", d: "Sin spam. Si sigue haciendo sentido, te mandamos pilot agreement. Si no, te avisamos por qué." },
     ],
     refs: "Referencias",
     refsBody: (
@@ -44,6 +52,13 @@ const COPY = {
       "Team panel with k-anonymity ≥5.",
       <>Q&amp;A on SSO, SCIM, DPA, data residency.</>,
       "Estimated ROI based on your team size.",
+    ],
+    stepsTitle: "What happens next",
+    steps: [
+      { t: "Today", d: "You send the form." },
+      { t: "< 24 business hours", d: "A human (not a bot) replies with 2–3 proposed time slots." },
+      { t: "Demo day", d: "30 min over video. No slides — live session + panel + Q&A." },
+      { t: "After", d: "No spam. If it still makes sense, we send the pilot agreement. If not, we tell you why." },
     ],
     refs: "References",
     refsBody: (
@@ -72,6 +87,33 @@ export default async function DemoPage() {
             <ul style={{ paddingInlineStart: 20, lineHeight: 1.8, fontSize: 14 }}>
               {c.bullets.map((b, i) => <li key={i}>{b}</li>)}
             </ul>
+
+            <div style={{ marginTop: space[6] }}>
+              <h2 style={{ fontSize: font.size.md, fontWeight: font.weight.bold, letterSpacing: font.tracking.tight, marginBlock: 0, marginBlockEnd: space[3] }}>
+                {c.stepsTitle}
+              </h2>
+              <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: space[2] }}>
+                {c.steps.map((s, i) => (
+                  <li key={i} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: space[3], alignItems: "baseline" }}>
+                    <span
+                      style={{
+                        fontSize: font.size.xs,
+                        fontFamily: cssVar.fontMono,
+                        color: cssVar.accent,
+                        fontWeight: font.weight.bold,
+                        textTransform: "uppercase",
+                        letterSpacing: font.tracking.wide,
+                        minWidth: 120,
+                      }}
+                    >
+                      {s.t}
+                    </span>
+                    <span style={{ color: cssVar.text, fontSize: font.size.sm, lineHeight: 1.5 }}>{s.d}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
             <Card as="aside" style={{ marginTop: space[5] }}>
               <div style={{ fontSize: font.size.sm, color: cssVar.accent, fontWeight: font.weight.bold, textTransform: "uppercase", letterSpacing: "1px" }}>
                 {c.refs}
@@ -82,7 +124,7 @@ export default async function DemoPage() {
 
           <Card as="section" padding={7} aria-labelledby="demo-form-title">
             <h2 id="demo-form-title" style={{ margin: `0 0 ${space[4]}px` }}>{c.formTitle}</h2>
-            <DemoForm source="demo" />
+            <DemoForm source="demo" locale={locale} />
           </Card>
         </div>
       </Container>

@@ -10,7 +10,42 @@ function csrfHeaders() {
   return m ? { "x-csrf-token": decodeURIComponent(m[1]) } : {};
 }
 
-export default function DemoForm({ source = "demo" }) {
+const NOTE_MAX = 1200;
+
+const I18N = {
+  es: {
+    name: "Nombre", email: "Email corporativo", company: "Empresa",
+    size: "Tamaño del equipo", note: "¿Qué quieres lograr?",
+    noteHint: "Opcional. Ayuda a preparar la sesión.",
+    noteCount: (n) => `${n} / ${NOTE_MAX}`,
+    submit: "Agenda demo", submitting: "Enviando…",
+    errSummary: "No pudimos enviar el formulario.",
+    errFields: "Revisa los campos marcados.",
+    errName: "Mínimo 2 caracteres.", errEmail: "Email inválido.",
+    errNetwork: "Error de red",
+    sentTitle: (n) => (n ? `Gracias, ${n}` : "Recibido"),
+    sentBody: (<>Un humano te responde en &lt; 24 h hábiles para confirmar horario. Si es urgente, escribe a{" "}<a href="mailto:sales@bio-ignicion.app">sales@bio-ignicion.app</a>.</>),
+    consent: (<>Al enviar aceptas nuestra <a href="/privacy">política de privacidad</a>. No compartimos tu información con terceros.</>),
+  },
+  en: {
+    name: "Name", email: "Work email", company: "Company",
+    size: "Team size", note: "What are you trying to achieve?",
+    noteHint: "Optional. Helps us prep the session.",
+    noteCount: (n) => `${n} / ${NOTE_MAX}`,
+    submit: "Book a demo", submitting: "Sending…",
+    errSummary: "We couldn't submit the form.",
+    errFields: "Please review the highlighted fields.",
+    errName: "At least 2 characters.", errEmail: "Invalid email.",
+    errNetwork: "Network error",
+    sentTitle: (n) => (n ? `Thanks, ${n}` : "Received"),
+    sentBody: (<>A human replies within 24 business hours to confirm a slot. If it's urgent, write to{" "}<a href="mailto:sales@bio-ignicion.app">sales@bio-ignicion.app</a>.</>),
+    consent: (<>By submitting you accept our <a href="/privacy">privacy policy</a>. We don't share your information with third parties.</>),
+  },
+};
+
+export default function DemoForm({ source = "demo", locale = "es" }) {
+  const L = locale === "en" ? "en" : "es";
+  const T = I18N[L];
   const [form, setForm] = useState({ name: "", email: "", company: "", size: "26-100", note: "", website: "" });
   const [status, setStatus] = useState("idle");
   const [errMsg, setErrMsg] = useState("");
@@ -28,14 +63,13 @@ export default function DemoForm({ source = "demo" }) {
     setErrMsg("");
     setFieldErrors({});
 
-    // Validación cliente liviana antes del POST para dar feedback inmediato
     const errs = {};
-    if (form.name.trim().length < 2) errs.name = "Mínimo 2 caracteres.";
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) errs.email = "Email inválido.";
+    if (form.name.trim().length < 2) errs.name = T.errName;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) errs.email = T.errEmail;
     if (Object.keys(errs).length) {
       setFieldErrors(errs);
       setStatus("error");
-      setErrMsg("Revisa los campos marcados.");
+      setErrMsg(T.errFields);
       return;
     }
 
@@ -52,11 +86,12 @@ export default function DemoForm({ source = "demo" }) {
       setStatus("sent");
     } catch (err) {
       setStatus("error");
-      setErrMsg(err.message || "Error de red");
+      setErrMsg(err.message || T.errNetwork);
     }
   }
 
   if (status === "sent") {
+    const firstName = form.name.trim().split(/\s+/)[0] || "";
     return (
       <div
         role="status"
@@ -69,11 +104,8 @@ export default function DemoForm({ source = "demo" }) {
           color: cssVar.text,
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 22 }}>Recibido</h2>
-        <p style={{ marginTop: space[2] }}>
-          Un humano te responde en &lt; 24 h hábiles para confirmar horario. Si es urgente, escribe a{" "}
-          <a href="mailto:sales@bio-ignicion.app">sales@bio-ignicion.app</a>.
-        </p>
+        <h2 style={{ margin: 0, fontSize: 22 }}>{T.sentTitle(firstName)}</h2>
+        <p style={{ marginTop: space[2] }}>{T.sentBody}</p>
       </div>
     );
   }
@@ -97,12 +129,12 @@ export default function DemoForm({ source = "demo" }) {
             color: cssVar.text,
           }}
         >
-          <strong style={{ color: cssVar.danger }}>No pudimos enviar el formulario.</strong>
+          <strong style={{ color: cssVar.danger }}>{T.errSummary}</strong>
           <div style={{ fontSize: 13, marginTop: 4 }}>{errMsg}</div>
         </div>
       )}
 
-      <Field label="Nombre" required error={fieldErrors.name}>
+      <Field label={T.name} required error={fieldErrors.name}>
         {(p) => (
           <input
             {...p}
@@ -116,7 +148,7 @@ export default function DemoForm({ source = "demo" }) {
         )}
       </Field>
 
-      <Field label="Email corporativo" required error={fieldErrors.email}>
+      <Field label={T.email} required error={fieldErrors.email}>
         {(p) => (
           <input
             {...p}
@@ -130,7 +162,7 @@ export default function DemoForm({ source = "demo" }) {
         )}
       </Field>
 
-      <Field label="Empresa">
+      <Field label={T.company}>
         {(p) => (
           <input
             {...p}
@@ -143,7 +175,7 @@ export default function DemoForm({ source = "demo" }) {
         )}
       </Field>
 
-      <Field label="Tamaño del equipo">
+      <Field label={T.size}>
         {(p) => (
           <select {...p} value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} style={inputStyle}>
             <option value="1-25">1 – 25</option>
@@ -155,18 +187,31 @@ export default function DemoForm({ source = "demo" }) {
         )}
       </Field>
 
-      <Field label="¿Qué quieres lograr?">
+      <Field label={T.note} hint={T.noteHint}>
         {(p) => (
           <textarea
             {...p}
             rows={3}
-            maxLength={1200}
+            maxLength={NOTE_MAX}
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
             style={{ ...inputStyle, resize: "vertical" }}
           />
         )}
       </Field>
+      <div
+        aria-live="polite"
+        style={{
+          textAlign: "end",
+          fontSize: 11,
+          color: form.note.length >= NOTE_MAX ? cssVar.danger : cssVar.textMuted,
+          fontFamily: cssVar.fontMono,
+          marginBlockStart: `calc(${space[2]}px * -1)`,
+          marginBlockEnd: space[3],
+        }}
+      >
+        {T.noteCount(form.note.length)}
+      </div>
 
       {/* Honeypot: label + input sacados del accessibility tree */}
       <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}>
@@ -181,12 +226,11 @@ export default function DemoForm({ source = "demo" }) {
         </label>
       </div>
 
-      <Button type="submit" disabled={status === "sending"}>
-        {status === "sending" ? "Enviando…" : "Agenda demo"}
+      <Button type="submit" loading={status === "sending"} loadingLabel={T.submitting}>
+        {T.submit}
       </Button>
       <p style={{ fontSize: 11, color: cssVar.textMuted, marginTop: space[3] }}>
-        Al enviar aceptas nuestra <a href="/privacy">política de privacidad</a>.
-        No compartimos tu información con terceros.
+        {T.consent}
       </p>
     </form>
   );

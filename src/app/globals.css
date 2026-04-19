@@ -10,8 +10,9 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 0 0 5px rgba(5, 150, 105, 0.15);
-  --focus-ring-inverse: 0 0 0 3px rgba(16, 185, 129, 0.5);
+  /* Focus ring — capa interna accent + halo bioSignal cyan para profundidad */
+  --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 0 0 5px rgba(34, 211, 238, 0.2), 0 0 18px rgba(34, 211, 238, 0.15);
+  --focus-ring-inverse: 0 0 0 3px rgba(16, 185, 129, 0.5), 0 0 0 5px rgba(34, 211, 238, 0.22), 0 0 20px rgba(34, 211, 238, 0.18);
 
   /* ═══ Theme tokens — light defaults; dark overrides below ═══ */
   --bi-bg: #F1F4F9;
@@ -27,6 +28,7 @@
   --bi-accent-ink: #FFFFFF;
   --bi-danger: #DC2626;
   --bi-warn: #D97706;
+  --bi-success: #10B981;
   --bi-focus-ring: var(--focus-ring);
 }
 
@@ -183,6 +185,35 @@ input, textarea, select {
 }
 
 /* ═══ CORE KEYFRAMES ═══ */
+@keyframes bi-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes bi-toast-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes bi-toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.bi-toast-action:focus-visible, .bi-toast-close:focus-visible {
+  outline: none;
+  box-shadow: var(--bi-focus-ring);
+}
+.bi-toast-close:hover { color: var(--bi-text) !important; background: var(--bi-surface2); }
+
+.bi-table-row-clickable:hover { background: color-mix(in srgb, var(--bi-accent) 8%, transparent) !important; }
+.bi-table-row-clickable:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--bi-accent);
+  background: color-mix(in srgb, var(--bi-accent) 10%, transparent) !important;
+}
+.bi-table-wrap {
+  background:
+    linear-gradient(to right, var(--bi-surface) 30%, transparent),
+    linear-gradient(to right, transparent, var(--bi-surface) 70%) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,0.12), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.12), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 32px 100%, 32px 100%, 12px 100%, 12px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-skeleton { animation: none !important; }
+  [role="status"][aria-live], [role="alert"][aria-live] { animation: none !important; }
+}
 @keyframes fi { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes po { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 @keyframes su { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -234,6 +265,8 @@ input, textarea, select {
 @keyframes vcoreEarn { 0% { opacity: 0; transform: translateY(10px) scale(0.5); } 50% { opacity: 1; transform: translateY(-5px) scale(1.2); } 100% { opacity: 0; transform: translateY(-20px) scale(0.8); } }
 @keyframes achievementUnlock { 0% { opacity: 0; transform: scale(0.3) rotate(-10deg); } 60% { transform: scale(1.1) rotate(2deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
 @keyframes levelUp { 0% { opacity: 0; transform: scale(0.5); filter: brightness(2); } 50% { transform: scale(1.15); filter: brightness(1.5); } 100% { opacity: 1; transform: scale(1); filter: brightness(1); } }
+@keyframes bi-indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+@keyframes bi-ionize { 0% { box-shadow: 0 0 0 0 currentColor, 0 0 0 0 currentColor; opacity: 1; } 100% { box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 20%, transparent), 0 0 0 16px color-mix(in srgb, currentColor 0%, transparent); opacity: 0.6; } }
 
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { inline-size: 3px; block-size: 3px; }
@@ -256,6 +289,11 @@ input, textarea, select {
 .bi-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: scale(0.98); }
 .bi-btn:focus-visible { box-shadow: var(--bi-focus-ring); outline: none; }
 .bi-btn-primary:hover:not(:disabled) { box-shadow: 0 8px 24px -12px var(--bi-accent); }
+@keyframes bi-btn-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .bi-btn { transition: none !important; }
+  .bi-btn:active:not(:disabled) { transform: none !important; }
+}
 
 a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
   outline: none;
@@ -288,6 +326,48 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visibl
 .bi-prose code { background: color-mix(in srgb, var(--bi-surface) 60%, transparent); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--bi-border); font-size: 0.9em; }
 .bi-prose pre { background: var(--bi-surface); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--bi-border); font-size: 12.5px; overflow: auto; line-height: 1.6; }
 .bi-prose a { color: var(--bi-accent); text-decoration: underline; text-underline-offset: 2px; }
+.bi-prose ul, .bi-prose ol { padding-inline-start: 22px; margin-block: 8px 12px; }
+.bi-prose li { margin-block-end: 6px; line-height: 1.6; color: var(--bi-text-dim); }
+.bi-prose li::marker { color: var(--bi-accent); }
+
+/* Interactive card wrapper — used on hub/listing pages */
+.bi-card-link { display: block; color: inherit; text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.bi-card-link:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -20px var(--bi-accent); border-color: var(--bi-accent) !important; }
+.bi-card-link:focus-visible { outline: none; box-shadow: var(--bi-focus-ring); transform: translateY(-1px); }
+@media (prefers-reduced-motion: reduce) {
+  .bi-card-link:hover, .bi-card-link:focus-visible { transform: none; }
+}
+
+/* PublicShell nav — hover feedback for inactive links */
+.bi-shell-navlink:hover:not([data-active="true"]) { color: var(--bi-text); border-color: var(--bi-border-strong) !important; }
+.bi-shell-navlink:focus-visible { border-radius: 6px; }
+
+/* PublicShell responsive nav — desktop links vs mobile hamburger */
+.bi-shell-nav-trigger { display: none; }
+@media (max-width: 768px) {
+  .bi-shell-nav-desktop { display: none !important; }
+  .bi-shell-nav-trigger { display: inline-flex !important; }
+}
+@media (max-width: 380px) {
+  .bi-shell-wordmark { display: none; }
+}
+
+/* Footer / generic subtle link hover inside marketing shell */
+.bi-shell-footer-link { transition: color 0.15s ease; }
+.bi-shell-footer-link:hover { color: var(--bi-text); text-decoration: underline; text-underline-offset: 2px; }
+
+/* Profile row-style links (Ciencia & Resultados) */
+.bi-row-link { transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease; }
+.bi-row-link:hover { border-color: var(--bi-accent) !important; transform: translateX(2px); }
+.bi-row-link:focus-visible { outline: none; box-shadow: var(--bi-focus-ring); }
+@media (prefers-reduced-motion: reduce) {
+  .bi-row-link:hover { transform: none; }
+}
+
+/* Auth form links — subtle underline on hover, accent-tinted */
+.bi-auth-link { transition: color 0.15s ease, text-decoration-color 0.15s ease; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; text-decoration-thickness: 1px; }
+.bi-auth-link:hover { text-decoration-color: currentColor; color: var(--bi-accent); }
+.bi-auth-link:focus-visible { outline: none; box-shadow: var(--bi-focus-ring); border-radius: 4px; }
 
 /* ═══ REDUCED MOTION — honored everywhere ═══ */
 @media (prefers-reduced-motion: reduce) {
