@@ -37,7 +37,14 @@ export default async function Share({ searchParams }) {
         {url && (
           <p style={{ margin: 0 }}>
             <b>URL:</b>{" "}
-            <a href={url} style={{ color: cssVar.accent, wordBreak: "break-all" }}>{url}</a>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: cssVar.accent, wordBreak: "break-all" }}
+            >
+              {url}
+            </a>
           </p>
         )}
         <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, margin: 0 }}>

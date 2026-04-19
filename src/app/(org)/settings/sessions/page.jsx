@@ -3,6 +3,7 @@ import { db } from "../../../../server/db";
 import { auditLog } from "../../../../server/audit";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { ConfirmForm } from "@/components/ui/ConfirmForm";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const dynamic = "force-dynamic";
@@ -149,9 +150,13 @@ export default async function Sessions() {
         <Button href="/api/v1/users/me/export" variant="primary">
           Descargar mis datos
         </Button>
-        <form action={deleteAccount} style={{ display: "inline" }}>
+        <ConfirmForm
+          action={deleteAccount}
+          message="¿Borrar tu cuenta definitivamente? Iniciaremos eliminación con 30 días de gracia y cerraremos tus sesiones ahora."
+          style={{ display: "inline" }}
+        >
           <Button type="submit" variant="danger">Borrar mi cuenta</Button>
-        </form>
+        </ConfirmForm>
       </div>
     </article>
   );
