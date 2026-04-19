@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BIO-IGNICIÓN — M4 Synapse Bolt">
+  <rect width="512" height="512" rx="112" fill="#0B1320"/>
+  <!-- Filled circle (neural node) with a lightning bolt punched out.
+       Negative-space bolt = ignición carved from the synapse. -->
+  <path fill="#E8ECF4" fill-rule="evenodd"
+        d="M 256 96
+           a 160 160 0 1 1 0 320
+           a 160 160 0 1 1 0 -320 Z
+           M 288 140
+           L 192 268
+           L 246 268
+           L 224 372
+           L 320 244
+           L 266 244
+           L 288 140 Z"/>
+</svg>

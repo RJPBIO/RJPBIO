@@ -36,12 +36,13 @@ export default function TrustCenter() {
         Trust Center
       </h1>
       <p style={{ color: cssVar.textDim, fontSize: font.size.md, marginTop: space[2] }}>
-        Seguridad, privacidad y resiliencia operativa. Todo a la vista.
+        Seguridad, privacidad y resiliencia operativa — documentadas, no declamadas.
       </p>
       <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: 0 }}>
-        Transparencia: ninguna certificación se declara hasta contar con reporte auditado disponible. Las
-        fechas listadas son objetivos públicos, no estado vigente. Última revisión:{" "}
-        <time dateTime="2026-04-01">abril 2026</time>.
+        Ninguna certificación se declara hasta que el reporte auditado esté disponible: las fechas abajo son
+        objetivos públicos, no estado vigente. Si tu equipo de seguridad necesita algo que no vemos listado,
+        escríbenos a <a href="mailto:trust@bio-ignicion.app" style={{ color: cssVar.accent }}>trust@bio-ignicion.app</a>.
+        Última revisión: <time dateTime="2026-04-01">abril 2026</time>.
       </p>
 
       <section>

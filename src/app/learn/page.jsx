@@ -58,12 +58,12 @@ export default async function LearnHubPage() {
             {en ? "Learn" : "Aprende"}
           </div>
           <h1 style={{ margin: `${space[2]}px 0` }}>
-            {en ? "Fundamentals with evidence" : "Fundamentos con evidencia"}
+            {en ? "Fundamentals, not folk wisdom" : "Fundamentos, no folklore"}
           </h1>
           <p style={{ maxWidth: 680 }}>
             {en
-              ? "Short, dense articles on the science behind the protocols. Every claim is cited. We update when the literature moves."
-              : "Artículos cortos y densos sobre la ciencia detrás de los protocolos. Cada afirmación está citada. Actualizamos cuando la literatura cambia."}
+              ? "Short, dense explainers for the science behind each protocol. Every claim cites its source. When the literature moves, we update the article — not just the date."
+              : "Explicadores cortos y densos sobre la ciencia detrás de cada protocolo. Cada afirmación cita su fuente. Cuando la literatura cambia, actualizamos el artículo — no sólo la fecha."}
           </p>
         </header>
 

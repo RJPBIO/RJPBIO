@@ -68,6 +68,13 @@ export default async function StatusPage() {
           </p>
         </header>
 
+        <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginBlockEnd: space[4], textAlign: "center" }}>
+          {T(
+            "status.legend",
+            "Operativo: probe responde en <2.5 s. Degradado: timeout, 5xx o health-check fallido. Este panel se prueba desde un probe público; incidencias mayores se publican en el RSS y el webhook status.incident.",
+          )}
+        </p>
+
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {components.map((c) => (
             <li

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BIO-IGNICIÓN — M2 Cortex Bolt">
+  <rect width="512" height="512" rx="112" fill="#0B1320"/>
+  <!-- Head silhouette facing right, with a bolt carved out of the cortex.
+       One continuous path + inner bolt hole via fill-rule:evenodd. -->
+  <path fill="#E8ECF4" fill-rule="evenodd"
+        d="M 168 132
+           C 216 96, 296 88, 348 128
+           C 396 164, 408 228, 384 288
+           C 372 316, 360 336, 356 356
+           L 356 404
+           Q 356 424, 336 424
+           L 216 424
+           Q 196 424, 196 404
+           L 196 384
+           Q 196 372, 186 366
+           L 160 348
+           Q 140 332, 144 308
+           L 152 272
+           Q 156 256, 148 240
+           L 132 208
+           Q 124 188, 136 170
+           Z
+           M 284 148
+           L 212 264
+           L 254 264
+           L 232 348
+           L 308 228
+           L 266 228
+           L 288 148
+           Z"/>
+</svg>

@@ -188,6 +188,31 @@ export default async function DocsPage() {
           </p>
         </header>
 
+        <Card as="section" aria-labelledby="quickstart" style={{ marginBlockEnd: space[5], borderColor: cssVar.accent, background: cssVar.accentSoft }}>
+          <h2 id="quickstart" style={{ marginTop: 0, fontSize: 18 }}>
+            {en ? "Quickstart (60 s)" : "Quickstart (60 s)"}
+          </h2>
+          <p style={{ marginBlockStart: 0 }}>
+            {en ? <>Base URL: <code>https://bio-ignicion.app/api/v1</code> · mint a key in <a href="/admin/api-keys">Admin · API Keys</a>.</>
+               : <>Base URL: <code>https://bio-ignicion.app/api/v1</code> · genera una key en <a href="/admin/api-keys">Admin · API Keys</a>.</>}
+          </p>
+          <pre>{`# ${en ? "Whoami — verifies the key is live" : "Whoami — verifica que la key esté viva"}
+curl https://bio-ignicion.app/api/v1/users/me \\
+     -H "Authorization: Bearer bi_xxx"
+
+# ${en ? "Create an idempotent session" : "Crea una sesión idempotente"}
+curl -X POST https://bio-ignicion.app/api/v1/sessions \\
+     -H "Authorization: Bearer bi_xxx" \\
+     -H "Idempotency-Key: $(uuidgen)" \\
+     -H "Content-Type: application/json" \\
+     -d '{"protocol":"resonant-breath-5m"}'`}</pre>
+          <p style={{ marginBlockEnd: 0, fontSize: font.size.sm, color: cssVar.textDim }}>
+            {en
+              ? "Full reference below — auth, webhooks, rate-limits, idempotency, deprecation, OpenAPI and ROI model."
+              : "Referencia completa abajo — auth, webhooks, rate-limits, idempotencia, deprecación, OpenAPI y modelo ROI."}
+          </p>
+        </Card>
+
         <nav
           aria-label={en ? "Index" : "Índice"}
           style={{

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BIO-IGNICIÓN — M3 Brain Bolt">
+  <rect width="512" height="512" rx="112" fill="#0B1320"/>
+  <!-- Half-brain silhouette (left hemisphere D-shape) with a bolt zigzag
+       forming the inside edge. One single filled shape, dual-reads as
+       cerebrum + ignition fissure. -->
+  <path fill="#E8ECF4"
+        d="M 256 80
+           C 172 80, 96 156, 96 256
+           C 96 356, 172 432, 256 432
+           L 236 376
+           L 284 336
+           L 228 288
+           L 284 240
+           L 224 192
+           L 284 144
+           Z"/>
+</svg>
