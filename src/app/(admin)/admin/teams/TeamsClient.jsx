@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "@/components/ui/Toast";
-import { DataTable } from "@/components/ui/Table";
+import { DataTable, TableToolbar } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -18,6 +18,16 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
   const [name, setName] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
   const [creating, setCreating] = useState(false);
+  const [q, setQ] = useState("");
+
+  const filteredTeams = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return teams;
+    return teams.filter((t) => {
+      const managerEmail = managersById[t.managerId] || "";
+      return (t.name || "").toLowerCase().includes(needle) || managerEmail.toLowerCase().includes(needle);
+    });
+  }, [teams, q, managersById]);
 
   async function createTeam(e) {
     e.preventDefault();
@@ -137,12 +147,31 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
         </Button>
       </form>
 
+      {teams.length > 0 && (
+        <TableToolbar>
+          <div style={{ flex: "1 1 240px", minWidth: 200 }}>
+            <Input
+              type="search"
+              value={q}
+              placeholder="Buscar por nombre o manager…"
+              onChange={(e) => setQ(e.target.value)}
+              aria-label="Buscar equipos"
+            />
+          </div>
+          {q && (
+            <span style={{ color: cssVar.textDim, fontSize: font.size.sm }}>
+              {filteredTeams.length} de {teams.length}
+            </span>
+          )}
+        </TableToolbar>
+      )}
+
       <DataTable
         columns={columns}
-        rows={teams}
+        rows={filteredTeams}
         getKey={(t) => t.id}
-        emptyTitle="Sin equipos todavía"
-        emptyDescription="Crea el primer equipo usando el formulario de arriba."
+        emptyTitle={q ? "Sin coincidencias" : "Sin equipos todavía"}
+        emptyDescription={q ? "Ningún equipo coincide con la búsqueda actual." : "Crea el primer equipo usando el formulario de arriba."}
       />
 
       {unassigned > 0 && (

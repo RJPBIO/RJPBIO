@@ -1,8 +1,8 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { fmtDate } from "@/lib/i18n";
 import { toast } from "@/components/ui/Toast";
-import { DataTable } from "@/components/ui/Table";
+import { DataTable, TableToolbar } from "@/components/ui/Table";
 import { Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -29,6 +29,20 @@ export default function StationsClient({ orgId, origin, initial }) {
   const [busy, setBusy] = useState(false);
   const [reveal, setReveal] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [q, setQ] = useState("");
+  const [statusF, setStatusF] = useState("ALL");
+  const [policyF, setPolicyF] = useState("ALL");
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return rows.filter((s) => {
+      if (statusF === "ACTIVE" && !s.active) return false;
+      if (statusF === "INACTIVE" && s.active) return false;
+      if (policyF !== "ALL" && s.policy !== policyF) return false;
+      if (!needle) return true;
+      return (s.label || "").toLowerCase().includes(needle) || (s.location || "").toLowerCase().includes(needle);
+    });
+  }, [rows, q, statusF, policyF]);
 
   const create = useCallback(async (e) => {
     e.preventDefault();
@@ -195,12 +209,44 @@ export default function StationsClient({ orgId, origin, initial }) {
         </Button>
       </form>
 
+      {rows.length > 0 && (
+        <TableToolbar>
+          <div style={{ flex: "1 1 240px", minWidth: 200 }}>
+            <Input
+              type="search"
+              value={q}
+              placeholder="Buscar etiqueta o ubicación…"
+              onChange={(e) => setQ(e.target.value)}
+              aria-label="Buscar estaciones"
+            />
+          </div>
+          <div style={{ minWidth: 140 }}>
+            <Select value={statusF} onChange={(e) => setStatusF(e.target.value)} aria-label="Filtrar por estado">
+              <option value="ALL">Todas</option>
+              <option value="ACTIVE">Activas</option>
+              <option value="INACTIVE">Inactivas</option>
+            </Select>
+          </div>
+          <div style={{ minWidth: 180 }}>
+            <Select value={policyF} onChange={(e) => setPolicyF(e.target.value)} aria-label="Filtrar por política">
+              <option value="ALL">Cualquier política</option>
+              {POLICIES.map((p) => <option key={p.v} value={p.v}>{p.l}</option>)}
+            </Select>
+          </div>
+          {(q || statusF !== "ALL" || policyF !== "ALL") && (
+            <span style={{ color: cssVar.textDim, fontSize: font.size.sm }}>
+              {filtered.length} de {rows.length}
+            </span>
+          )}
+        </TableToolbar>
+      )}
+
       <DataTable
         columns={columns}
-        rows={rows}
+        rows={filtered}
         getKey={(s) => s.id}
-        emptyTitle="Sin estaciones todavía"
-        emptyDescription="Crea la primera con el formulario de arriba."
+        emptyTitle={(q || statusF !== "ALL" || policyF !== "ALL") ? "Sin coincidencias" : "Sin estaciones todavía"}
+        emptyDescription={(q || statusF !== "ALL" || policyF !== "ALL") ? "Ajusta los filtros para ver resultados." : "Crea la primera con el formulario de arriba."}
       />
 
       <details style={{

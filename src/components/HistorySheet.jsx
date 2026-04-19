@@ -3,7 +3,7 @@
    HISTORY SHEET — dialog with grouped session log
    ═══════════════════════════════════════════════════════════════ */
 
-import { useId } from "react";
+import { useId, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import BioSparkline from "./BioSparkline";
@@ -45,6 +45,8 @@ function qualityBadge(quality) {
   }
 }
 
+const OLDER_PAGE = 30;
+
 export default function HistorySheet({ show, onClose, st, isDark, ac }) {
   const reduced = useReducedMotion();
   const dialogRef = useFocusTrap(show, onClose);
@@ -53,6 +55,8 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
   const items = [...(st.history || [])].reverse();
   const grouped = groupHist(items);
   const total = items.length;
+  const [olderShown, setOlderShown] = useState(OLDER_PAGE);
+  useEffect(() => { if (show) setOlderShown(OLDER_PAGE); }, [show]);
   const trendData = (st.history || [])
     .slice(-14)
     .map((h) => h.bioQ || h.c || 50)
@@ -169,6 +173,9 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
             {Object.entries(grouped).map(([k, gi]) => {
               if (!gi.length) return null;
               const groupLabel = k === "hoy" ? "Hoy" : k === "ayer" ? "Ayer" : "Anteriores";
+              const isOlder = k === "antes";
+              const visible = isOlder ? gi.slice(0, olderShown) : gi;
+              const hiddenCount = isOlder ? Math.max(0, gi.length - visible.length) : 0;
               return (
                 <section key={k} aria-label={`${groupLabel}: ${gi.length} sesiones`}>
                   <h4
@@ -179,9 +186,14 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                     }}
                   >
                     {groupLabel}
+                    {isOlder && gi.length > OLDER_PAGE && (
+                      <span style={{ marginInlineStart: 6, color: t3, fontWeight: font.weight.medium, letterSpacing: 0 }}>
+                        · {visible.length}/{gi.length}
+                      </span>
+                    )}
                   </h4>
                   <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                    {gi.map((h, i) => {
+                    {visible.map((h, i) => {
                       const tm = new Date(h.ts).toLocaleTimeString("es", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -274,6 +286,32 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                       );
                     })}
                   </ul>
+                  {isOlder && hiddenCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setOlderShown((n) => n + OLDER_PAGE)}
+                      style={{
+                        display: "block",
+                        inlineSize: "100%",
+                        marginBlockStart: space[2],
+                        marginBlockEnd: space[3],
+                        paddingBlock: space[2],
+                        paddingInline: space[3],
+                        background: withAlpha(ac, 6),
+                        border: `1px solid ${withAlpha(ac, 14)}`,
+                        borderRadius: radius.sm,
+                        color: ac,
+                        fontSize: font.size.sm,
+                        fontWeight: font.weight.semibold,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        minBlockSize: 36,
+                      }}
+                      aria-label={`Cargar ${Math.min(OLDER_PAGE, hiddenCount)} sesiones más`}
+                    >
+                      Ver {Math.min(OLDER_PAGE, hiddenCount)} más · {hiddenCount} restantes
+                    </button>
+                  )}
                 </section>
               );
             })}
