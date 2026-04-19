@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import SubmitButton from "@/components/ui/SubmitButton";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
@@ -91,14 +92,19 @@ export default function IntegrationsClient({ orgId, catalog, installed }) {
                 <input type="hidden" name="orgId" value={orgId} />
                 <input type="hidden" name="provider" value={p.id} />
                 {inst && <input type="hidden" name="_method" value={enabled ? "PAUSE" : "RESUME"} />}
-                <Button
-                  type="submit"
+                <SubmitButton
                   variant={inst ? (enabled ? "secondary" : "primary") : "primary"}
                   size="sm"
                   style={{ width: "100%" }}
+                  loadingLabel={inst ? (enabled ? "Pausando…" : "Reactivando…") : "Conectando…"}
+                  onClick={(e) => {
+                    if (enabled && !confirm(`Pausar ${p.name}? Los syncs se detendrán hasta reactivar.`)) {
+                      e.preventDefault();
+                    }
+                  }}
                 >
                   {inst ? (enabled ? "Pausar" : "Reactivar") : "Conectar"}
-                </Button>
+                </SubmitButton>
               </form>
               {inst && (
                 <Button
