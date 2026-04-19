@@ -60,7 +60,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
     <section
       role="region"
       aria-label="Coach Neural con IA"
-      style={{ marginBlockEnd: space[3.5] || 14 }}
+      style={{ marginBlockEnd: space[4] }}
     >
       <header
         style={{
@@ -115,9 +115,9 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
             {safety.message}
           </p>
           {safety.resources.length > 0 && (
-            <ul style={{ listStyle: "none", padding: 0, margin: `${space[1.5]}px 0 0`, display: "flex", flexDirection: "column", gap: space[0.5] }}>
+            <ul role="list" style={{ listStyle: "none", padding: 0, margin: `${space[2]}px 0 0`, display: "flex", flexDirection: "column", gap: space[1] }}>
               {safety.resources.map((r, i) => (
-                <li key={i} style={{ fontSize: font.size.xs, color: t1 }}>
+                <li key={i} style={{ fontSize: font.size.sm, color: t1, lineHeight: font.leading.normal }}>
                   <strong>{r.label}:</strong> {r.contact}
                 </li>
               ))}

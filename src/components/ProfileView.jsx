@@ -527,6 +527,7 @@ export default function ProfileView({
           <Link
             href="/reporte"
             aria-label="Ver informe trimestral"
+            className="bi-row-link"
             style={{
               display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
@@ -545,6 +546,7 @@ export default function ProfileView({
           <Link
             href="/evidencia"
             aria-label="Biblioteca de evidencia científica"
+            className="bi-row-link"
             style={{
               display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
@@ -563,6 +565,7 @@ export default function ProfileView({
           <Link
             href="/learn"
             aria-label="Artículos de fundamentos"
+            className="bi-row-link"
             style={{
               display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,

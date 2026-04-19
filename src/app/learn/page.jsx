@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
-import { cssVar, space, font, radius } from "@/components/ui/tokens";
+import { cssVar, space, font } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 
 export const metadata = {
@@ -67,36 +67,37 @@ export default async function LearnHubPage() {
           </p>
         </header>
 
-        <div style={{ display: "grid", gap: space[3], gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <div style={{ display: "grid", gap: space[4], gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           {ARTICLES.map((a) => (
-            <Card as="article" key={a.slug}>
-              <div style={{ fontSize: font.size.sm, color: cssVar.textMuted, marginBottom: space[1] }}>
-                {a.minutes} min {en ? "read" : "lectura"}
-              </div>
-              <h2 style={{ margin: `0 0 ${space[2]}px`, fontSize: font.size.xl }}>
-                <Link href={`/learn/${a.slug}`} style={{ color: cssVar.text, textDecoration: "none" }}>
+            <Link
+              key={a.slug}
+              href={`/learn/${a.slug}`}
+              className="bi-card-link"
+              aria-label={`${en ? a.title.en : a.title.es} — ${a.minutes} min`}
+            >
+              <Card as="article" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                <div style={{ fontSize: font.size.sm, color: cssVar.textMuted, marginBottom: space[1], textTransform: "uppercase", letterSpacing: 1.5, fontWeight: font.weight.semibold }}>
+                  {a.minutes} min · {en ? "read" : "lectura"}
+                </div>
+                <h2 style={{ margin: `0 0 ${space[2]}px`, fontSize: font.size.xl, color: cssVar.text, lineHeight: 1.25 }}>
                   {en ? a.title.en : a.title.es}
-                </Link>
-              </h2>
-              <p style={{ color: cssVar.textDim, margin: `0 0 ${space[3]}px` }}>
-                {en ? a.blurb.en : a.blurb.es}
-              </p>
-              <Link
-                href={`/learn/${a.slug}`}
-                style={{
-                  display: "inline-block",
-                  padding: `${space[1]}px ${space[3]}px`,
-                  borderRadius: radius.full,
-                  border: `1px solid ${cssVar.border}`,
-                  color: cssVar.accent,
-                  textDecoration: "none",
-                  fontSize: font.size.md,
-                  fontWeight: font.weight.semibold,
-                }}
-              >
-                {en ? "Read →" : "Leer →"}
-              </Link>
-            </Card>
+                </h2>
+                <p style={{ color: cssVar.textDim, margin: `0 0 ${space[3]}px`, flex: 1 }}>
+                  {en ? a.blurb.en : a.blurb.es}
+                </p>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    color: cssVar.accent,
+                    fontSize: font.size.md,
+                    fontWeight: font.weight.bold,
+                    marginTop: "auto",
+                  }}
+                >
+                  {en ? "Read →" : "Leer →"}
+                </span>
+              </Card>
+            </Link>
           ))}
         </div>
 

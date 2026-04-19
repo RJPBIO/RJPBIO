@@ -134,17 +134,20 @@ export default function InstrumentDueCard({ isDark, ac, defaultForce = null }) {
         <button
           onClick={handleOpen}
           aria-label={`Empezar ${cfg.instrument.name}`}
+          className="bi-btn bi-btn-primary"
           style={{
             background: tint,
             color: "#fff",
             border: "none",
             borderRadius: radius.md,
-            padding: `${space[2]}px ${space[3]}px`,
-            fontSize: font.size.sm,
+            padding: `${space[2.5]}px ${space[4]}px`,
+            fontSize: font.size.md,
             fontWeight: font.weight.bold,
             cursor: "pointer",
             whiteSpace: "nowrap",
             fontFamily: "inherit",
+            minBlockSize: 40,
+            transition: "filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
           }}
         >
           Empezar

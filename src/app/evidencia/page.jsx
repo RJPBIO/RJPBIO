@@ -89,7 +89,8 @@ export default function EvidenciaPage() {
         .study .effect { margin-block-start: 6px; background: #F1F5F9; padding: 6px 10px; border-radius: 6px; font-size: 12px; }
         .study .doi { color: #64748B; font-size: 10px; font-family: "JetBrains Mono", monospace; margin-block-start: 4px; }
         .nav { margin-block-end: 24px; font-size: 13px; }
-        .nav a { color: #475569; text-decoration: none; }
+        .nav a { color: #475569; text-decoration: none; transition: color 0.15s ease; }
+        .nav a:hover { color: #059669; text-decoration: underline; text-underline-offset: 2px; }
       `}</style>
 
       <nav className="nav"><Link href="/">← BIO-IGNICIÓN</Link></nav>

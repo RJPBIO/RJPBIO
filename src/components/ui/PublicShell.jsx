@@ -74,7 +74,7 @@ export async function PublicShell({ children, activePath }) {
             }} />
             <span style={{ fontWeight: font.weight.black, letterSpacing: "1px", fontSize: font.size.lg }}>BIO-IGN</span>
           </Link>
-          <nav aria-label={T("shell.nav", "Principal")} style={{ display: "flex", gap: space[4], marginInlineStart: "auto", flexWrap: "wrap" }}>
+          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav" style={{ display: "flex", gap: space[4], marginInlineStart: "auto", flexWrap: "wrap", rowGap: space[2] }}>
             {NAV_ITEMS.map((n) => {
               const active = activePath === n.href;
               return (
@@ -82,6 +82,8 @@ export async function PublicShell({ children, activePath }) {
                   key={n.href}
                   href={n.href}
                   aria-current={active ? "page" : undefined}
+                  className="bi-shell-navlink"
+                  data-active={active ? "true" : undefined}
                   style={{
                     color: active ? cssVar.text : cssVar.textDim,
                     textDecoration: "none",
@@ -89,6 +91,7 @@ export async function PublicShell({ children, activePath }) {
                     fontWeight: font.weight.semibold,
                     borderBottom: active ? `2px solid ${cssVar.accent}` : "2px solid transparent",
                     paddingBlock: 2,
+                    transition: "color 0.15s ease, border-color 0.15s ease",
                   }}
                 >
                   {T(n.key, n.fallback)}
@@ -101,14 +104,19 @@ export async function PublicShell({ children, activePath }) {
           <ThemeToggle />
           <Link
             href="/signin"
+            className="bi-btn bi-btn-primary"
             style={{
-              padding: `${space[1.5]}px ${space[3]}px`,
+              padding: `${space[2]}px ${space[4]}px`,
               borderRadius: radius.full,
               background: cssVar.accent,
               color: cssVar.accentInk,
               textDecoration: "none",
               fontWeight: font.weight.bold,
               fontSize: font.size.md,
+              minBlockSize: 40,
+              display: "inline-flex",
+              alignItems: "center",
+              transition: "box-shadow 0.15s ease, filter 0.15s ease",
             }}
           >
             {T("shell.signin", "Entrar")}
@@ -152,7 +160,7 @@ function FooterCol({ title, links, T }) {
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href} style={{ color: cssVar.textDim, textDecoration: "none", fontSize: font.size.lg }}>
+            <Link href={l.href} className="bi-shell-footer-link" style={{ color: cssVar.textDim, textDecoration: "none", fontSize: font.size.lg }}>
               {l.labelKey ? T(l.labelKey, l.fallback) : l.fallback}
             </Link>
           </li>

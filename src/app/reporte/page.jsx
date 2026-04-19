@@ -138,7 +138,7 @@ export default function ReportePage() {
           font-size: 13px;
         }
         .warn.high { border-inline-start-color: #DC2626; background: #FEF2F2; }
-        .actions { display: flex; gap: 10px; justify-content: flex-end; margin-block-end: 20px; }
+        .actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-block-end: 20px; }
         .actions a, .actions button {
           font: inherit;
           font-size: 13px; font-weight: 700;
@@ -146,8 +146,13 @@ export default function ReportePage() {
           border: 1px solid #CBD5E1;
           background: #FFFFFF; color: #0F172A;
           cursor: pointer; text-decoration: none;
+          transition: box-shadow 0.15s ease, transform 0.15s ease, background 0.15s ease;
         }
+        .actions a:hover, .actions button:hover { box-shadow: 0 4px 14px -6px rgba(15,23,42,0.18); transform: translateY(-1px); }
+        .actions a:focus-visible, .actions button:focus-visible { outline: 2px solid #0F172A; outline-offset: 2px; }
         .actions .primary { background: #0F172A; color: #FFFFFF; border-color: #0F172A; }
+        .actions .primary:hover { background: #1E293B; }
+        .num { text-align: end; font-variant-numeric: tabular-nums; }
         .muted { color: #64748B; }
         .footnote { font-size: 11px; color: #64748B; margin-block-start: 24px; }
 
@@ -161,7 +166,7 @@ export default function ReportePage() {
       `}</style>
 
       <div className="actions">
-        <Link href="/" className="">← Volver</Link>
+        <Link href="/">← Volver</Link>
         <button className="primary" type="button" onClick={() => window.print()}>
           Descargar PDF
         </button>
@@ -218,36 +223,36 @@ export default function ReportePage() {
         <thead>
           <tr>
             <th>Instrumento</th>
-            <th>N</th>
-            <th>Inicial</th>
-            <th>Último</th>
-            <th>Δ</th>
+            <th className="num">N</th>
+            <th className="num">Inicial</th>
+            <th className="num">Último</th>
+            <th className="num">Δ</th>
             <th>Nivel actual</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>PSS-4 (estrés)</td>
-            <td>{report.instruments.pss4.n}</td>
-            <td>{fmtScore(report.instruments.pss4.first?.score)}</td>
-            <td>{fmtScore(report.instruments.pss4.latest?.score)}</td>
-            <td><DeltaBadge delta={report.instruments.pss4.delta} positiveIsBetter={false} /></td>
+            <td className="num">{report.instruments.pss4.n}</td>
+            <td className="num">{fmtScore(report.instruments.pss4.first?.score)}</td>
+            <td className="num">{fmtScore(report.instruments.pss4.latest?.score)}</td>
+            <td className="num"><DeltaBadge delta={report.instruments.pss4.delta} positiveIsBetter={false} /></td>
             <td className="muted">{report.instruments.pss4.latest?.level || "—"}</td>
           </tr>
           <tr>
             <td>SWEMWBS-7 (bienestar)</td>
-            <td>{report.instruments.wemwbs7.n}</td>
-            <td>{fmtScore(report.instruments.wemwbs7.first?.score)}</td>
-            <td>{fmtScore(report.instruments.wemwbs7.latest?.score)}</td>
-            <td><DeltaBadge delta={report.instruments.wemwbs7.delta} positiveIsBetter={true} /></td>
+            <td className="num">{report.instruments.wemwbs7.n}</td>
+            <td className="num">{fmtScore(report.instruments.wemwbs7.first?.score)}</td>
+            <td className="num">{fmtScore(report.instruments.wemwbs7.latest?.score)}</td>
+            <td className="num"><DeltaBadge delta={report.instruments.wemwbs7.delta} positiveIsBetter={true} /></td>
             <td className="muted">{report.instruments.wemwbs7.latest?.level || "—"}</td>
           </tr>
           <tr>
             <td>PHQ-2 (screening)</td>
-            <td>{report.instruments.phq2.n}</td>
-            <td>{fmtScore(report.instruments.phq2.first?.score)}</td>
-            <td>{fmtScore(report.instruments.phq2.latest?.score)}</td>
-            <td><DeltaBadge delta={report.instruments.phq2.delta} positiveIsBetter={false} /></td>
+            <td className="num">{report.instruments.phq2.n}</td>
+            <td className="num">{fmtScore(report.instruments.phq2.first?.score)}</td>
+            <td className="num">{fmtScore(report.instruments.phq2.latest?.score)}</td>
+            <td className="num"><DeltaBadge delta={report.instruments.phq2.delta} positiveIsBetter={false} /></td>
             <td className="muted">{report.instruments.phq2.latest?.level || "—"}</td>
           </tr>
         </tbody>
@@ -270,16 +275,16 @@ export default function ReportePage() {
             <thead>
               <tr>
                 <th>Protocolo</th>
-                <th>Sesiones</th>
-                <th>Δ ánimo promedio</th>
+                <th className="num">Sesiones</th>
+                <th className="num">Δ ánimo promedio</th>
               </tr>
             </thead>
             <tbody>
               {report.sessions.topProtocols.map((p) => (
                 <tr key={p.name}>
                   <td>{p.name}</td>
-                  <td>{p.count}</td>
-                  <td>
+                  <td className="num">{p.count}</td>
+                  <td className="num">
                     {p.avgDelta === null
                       ? <span className="muted">—</span>
                       : <DeltaBadge delta={p.avgDelta} positiveIsBetter={true} />}
