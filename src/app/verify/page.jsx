@@ -35,6 +35,7 @@ export default async function VerifyPage({ searchParams }) {
 
   return (
     <AuthShell
+      locale={locale}
       size="md"
       footer={
         <span>

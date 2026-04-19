@@ -14,7 +14,72 @@ import { describeAuthError } from "@/lib/authErrors";
 const RESEND_COOLDOWN_MS = 30_000;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function SignInClient() {
+const I18N = {
+  es: {
+    title: "Entrar a BIO-IGNICIÓN",
+    subtitle: "Te enviaremos un enlace mágico, usa tu passkey o SSO corporativo.",
+    footerFirst: "¿Primera vez?",
+    footerCreate: "Crea tu organización",
+    emailLabel: "Correo de trabajo",
+    emailPlaceholder: "tú@empresa.com",
+    emailInvalid: "Ingresa un correo con formato válido.",
+    ssoBtn: (provider) => `Continuar con SSO (${provider})`,
+    ssoLoading: "Abriendo SSO…",
+    magicBtn: "Enviar enlace mágico",
+    magicResendIn: (s) => `Reenviar en ${s}s`,
+    magicSending: "Enviando…",
+    passkeyBtn: "Usar passkey",
+    passkeyVerifying: "Verificando passkey…",
+    lastBadge: "Último",
+    idpDivider: "O CON TU IDP",
+    idpLoading: "…",
+    recoverLink: "¿Problemas para entrar?",
+    errTooMany: (s) => `Demasiados intentos. Intenta en ${s}s.`,
+    errSend: "Error al enviar",
+    errGeneric: "Error",
+    errNoEmail: "Ingresa tu correo primero",
+    errPasskeyNotFound: "No hay passkey registrado para este correo. Usa el enlace mágico.",
+    errPasskeyStart: "No pudimos iniciar el passkey. Intenta de nuevo.",
+    errPasskeyVerify: "Falló la verificación",
+    errPasskeyCancel: "Cancelaste el passkey o no está disponible.",
+    errPasskeyGeneric: "Error con passkey",
+    okMagicSent: "Enlace enviado. Revisa tu correo.",
+  },
+  en: {
+    title: "Sign in to BIO-IGNITION",
+    subtitle: "We'll send a magic link, use your passkey, or corporate SSO.",
+    footerFirst: "First time?",
+    footerCreate: "Create your organization",
+    emailLabel: "Work email",
+    emailPlaceholder: "you@company.com",
+    emailInvalid: "Enter a valid email address.",
+    ssoBtn: (provider) => `Continue with SSO (${provider})`,
+    ssoLoading: "Opening SSO…",
+    magicBtn: "Send magic link",
+    magicResendIn: (s) => `Resend in ${s}s`,
+    magicSending: "Sending…",
+    passkeyBtn: "Use passkey",
+    passkeyVerifying: "Verifying passkey…",
+    lastBadge: "Last used",
+    idpDivider: "OR WITH YOUR IDP",
+    idpLoading: "…",
+    recoverLink: "Having trouble signing in?",
+    errTooMany: (s) => `Too many attempts. Try again in ${s}s.`,
+    errSend: "Failed to send",
+    errGeneric: "Error",
+    errNoEmail: "Enter your email first",
+    errPasskeyNotFound: "No passkey registered for this email. Use the magic link.",
+    errPasskeyStart: "We couldn't start the passkey. Try again.",
+    errPasskeyVerify: "Verification failed",
+    errPasskeyCancel: "You cancelled the passkey or it isn't available.",
+    errPasskeyGeneric: "Passkey error",
+    okMagicSent: "Link sent. Check your inbox.",
+  },
+};
+
+export default function SignInClient({ locale = "es" }) {
+  const L = locale === "en" ? "en" : "es";
+  const T = I18N[L];
   const searchParams = useSearchParams();
   const callbackError = describeAuthError(searchParams?.get("error"));
   const callbackUrl = searchParams?.get("callbackUrl") || "/";
@@ -23,7 +88,7 @@ export default function SignInClient() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [passkeyBusy, setPasskeyBusy] = useState(false);
-  const [ssoLoading, setSsoLoading] = useState(null); // "okta" | "azure-ad" | "google" | "sso" | null
+  const [ssoLoading, setSsoLoading] = useState(null);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
   const [sso, setSso] = useState(null);
@@ -77,30 +142,30 @@ export default function SignInClient() {
       const r = await fetch("/api/auth/signin/email", { method: "POST", body: new URLSearchParams({ email, callbackUrl }) });
       if (r.status === 429) {
         const retry = Number(r.headers.get("Retry-After") || 60);
-        throw new Error(`Demasiados intentos. Intenta en ${retry}s.`);
+        throw new Error(T.errTooMany(retry));
       }
-      if (!r.ok) throw new Error((await r.text()) || "Error al enviar");
+      if (!r.ok) throw new Error((await r.text()) || T.errSend);
       try {
         localStorage.setItem("bio-last-signin", "magic-link");
         localStorage.setItem("bio-magic-cooldown", String(Date.now() + RESEND_COOLDOWN_MS));
       } catch {}
       setCooldownLeft(Math.ceil(RESEND_COOLDOWN_MS / 1000));
-      setOk("Enlace enviado. Revisa tu correo.");
+      setOk(T.okMagicSent);
       setTimeout(() => { location.href = "/verify?email=" + encodeURIComponent(email); }, 500);
-    } catch (e) { setErr(e.message || "Error"); } finally { setSubmitting(false); }
+    } catch (e) { setErr(e.message || T.errGeneric); } finally { setSubmitting(false); }
   }
 
   async function usePasskey() {
     setPasskeyBusy(true); setErr(""); setOk("");
     try {
-      if (!email) throw new Error("Ingresa tu correo primero");
+      if (!email) throw new Error(T.errNoEmail);
       const optsR = await fetch("/api/webauthn/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (optsR.status === 404) throw new Error("No hay passkey registrado para este correo. Usa el enlace mágico.");
-      if (!optsR.ok) throw new Error("No pudimos iniciar el passkey. Intenta de nuevo.");
+      if (optsR.status === 404) throw new Error(T.errPasskeyNotFound);
+      if (!optsR.ok) throw new Error(T.errPasskeyStart);
       const opts = await optsR.json();
       const { startAuthentication } = await import("@simplewebauthn/browser");
       const assertion = await startAuthentication({ optionsJSON: opts });
@@ -109,11 +174,11 @@ export default function SignInClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(assertion),
       });
-      if (!verifyR.ok) throw new Error((await verifyR.text()) || "Falló la verificación");
+      if (!verifyR.ok) throw new Error((await verifyR.text()) || T.errPasskeyVerify);
       try { localStorage.setItem("bio-last-signin", "passkey"); } catch {}
       location.href = callbackUrl;
     } catch (e) {
-      const msg = e?.name === "NotAllowedError" ? "Cancelaste el passkey o no está disponible." : (e.message || "Error con passkey");
+      const msg = e?.name === "NotAllowedError" ? T.errPasskeyCancel : (e.message || T.errPasskeyGeneric);
       setErr(msg);
     } finally { setPasskeyBusy(false); }
   }
@@ -125,19 +190,18 @@ export default function SignInClient() {
     location.href = url;
   }
 
-  const emailError = emailTouched && email && !EMAIL_RE.test(email)
-    ? "Ingresa un correo con formato válido."
-    : null;
+  const emailError = emailTouched && email && !EMAIL_RE.test(email) ? T.emailInvalid : null;
   const anyBusy = submitting || passkeyBusy || ssoLoading !== null;
   const canSubmit = !anyBusy && !!email && !emailError && cooldownLeft === 0;
 
   return (
     <AuthShell
-      title="Entrar a BIO-IGNICIÓN"
-      subtitle="Te enviaremos un enlace mágico, usa tu passkey o SSO corporativo."
+      locale={L}
+      title={T.title}
+      subtitle={T.subtitle}
       footer={
         <span>
-          ¿Primera vez? <Link href="/signup" className="bi-auth-link" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>Crea tu organización</Link>
+          {T.footerFirst} <Link href="/signup" className="bi-auth-link" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>{T.footerCreate}</Link>
         </span>
       }
     >
@@ -148,14 +212,14 @@ export default function SignInClient() {
       )}
 
       <form onSubmit={onSubmit} noValidate>
-        <Field label="Correo de trabajo" required error={emailError}>
+        <Field label={T.emailLabel} required error={emailError}>
           {(a) => (
             <Input
               {...a}
               type="email" value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => setEmailTouched(true)}
-              placeholder="tú@empresa.com"
+              placeholder={T.emailPlaceholder}
               autoComplete="email" autoFocus
             />
           )}
@@ -167,24 +231,24 @@ export default function SignInClient() {
             variant="primary" block
             onClick={() => startIdp("sso", `/api/auth/signin/${sso.provider}?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`)}
             loading={ssoLoading === "sso"}
-            loadingLabel="Abriendo SSO…"
+            loadingLabel={T.ssoLoading}
             disabled={anyBusy && ssoLoading !== "sso"}
             style={{ marginTop: space[2] }}
           >
-            Continuar con SSO ({sso.provider.toUpperCase()})
+            {T.ssoBtn(sso.provider.toUpperCase())}
           </Button>
         )}
 
         <Button
           type="submit" variant="primary" block
           loading={submitting}
-          loadingLabel="Enviando…"
+          loadingLabel={T.magicSending}
           disabled={!canSubmit}
           style={{ marginTop: space[3] }}
         >
-          {cooldownLeft > 0 ? `Reenviar en ${cooldownLeft}s` : "Enviar enlace mágico"}
+          {cooldownLeft > 0 ? T.magicResendIn(cooldownLeft) : T.magicBtn}
           {lastMethod === "magic-link" && cooldownLeft === 0 && !submitting && (
-            <Badge variant="soft" size="sm" style={{ marginInlineStart: space[2] }}>Último</Badge>
+            <Badge variant="soft" size="sm" style={{ marginInlineStart: space[2] }}>{T.lastBadge}</Badge>
           )}
         </Button>
 
@@ -192,12 +256,12 @@ export default function SignInClient() {
           type="button" variant="secondary" block
           onClick={usePasskey}
           loading={passkeyBusy}
-          loadingLabel="Verificando passkey…"
+          loadingLabel={T.passkeyVerifying}
           disabled={(anyBusy && !passkeyBusy) || !email}
           style={{ marginTop: space[2] }}
         >
-          <span aria-hidden>🔑</span> Usar passkey
-          {lastMethod === "passkey" && <Badge variant="soft" size="sm" style={{ marginInlineStart: space[2] }}>Último</Badge>}
+          <span aria-hidden>🔑</span> {T.passkeyBtn}
+          {lastMethod === "passkey" && <Badge variant="soft" size="sm" style={{ marginInlineStart: space[2] }}>{T.lastBadge}</Badge>}
         </Button>
 
         {err && <div style={{ marginTop: space[4] }} role="alert"><Alert kind="danger">{err}</Alert></div>}
@@ -209,7 +273,7 @@ export default function SignInClient() {
           color: cssVar.textMuted, fontSize: font.size.xs, letterSpacing: font.tracking.widest,
         }}>
           <hr style={{ flex: 1, border: 0, borderTop: `1px solid ${cssVar.border}` }} />
-          <span>O CON TU IDP</span>
+          <span>{T.idpDivider}</span>
           <hr style={{ flex: 1, border: 0, borderTop: `1px solid ${cssVar.border}` }} />
         </div>
 
@@ -219,26 +283,26 @@ export default function SignInClient() {
             onClick={() => startIdp("okta", `/api/auth/signin/okta?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
             disabled={ssoLoading !== null}
           >
-            {ssoLoading === "okta" ? "…" : "Okta"}
+            {ssoLoading === "okta" ? T.idpLoading : "Okta"}
           </Button>
           <Button
             type="button" variant="secondary" size="sm"
             onClick={() => startIdp("azure-ad", `/api/auth/signin/azure-ad?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
             disabled={ssoLoading !== null}
           >
-            {ssoLoading === "azure-ad" ? "…" : "Azure AD"}
+            {ssoLoading === "azure-ad" ? T.idpLoading : "Azure AD"}
           </Button>
           <Button
             type="button" variant="secondary" size="sm"
             onClick={() => startIdp("google", `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
             disabled={ssoLoading !== null}
           >
-            {ssoLoading === "google" ? "…" : "Google"}
+            {ssoLoading === "google" ? T.idpLoading : "Google"}
           </Button>
         </div>
 
         <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[5], textAlign: "center" }}>
-          <Link href="/recover" className="bi-auth-link" style={{ color: cssVar.textDim }}>¿Problemas para entrar?</Link>
+          <Link href="/recover" className="bi-auth-link" style={{ color: cssVar.textDim }}>{T.recoverLink}</Link>
         </p>
       </form>
     </AuthShell>

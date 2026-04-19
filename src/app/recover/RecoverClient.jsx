@@ -10,16 +10,59 @@ import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function RecoverClient() {
+const I18N = {
+  es: {
+    title: "Recuperar acceso",
+    subtitle: "Elige la opción que mejor describa tu situación.",
+    footerBack: "Volver a entrar",
+    stepForgot: "No recuerdo mi método",
+    stepForgotHint: "Enviaremos un enlace mágico a tu correo. No necesitas contraseña.",
+    emailLabel: "Correo",
+    emailPlaceholder: "tú@empresa.com",
+    emailInvalid: "Ingresa un correo con formato válido.",
+    sendBtn: "Enviarme un enlace",
+    sending: "Enviando…",
+    stepLost: "Perdí mi dispositivo con TOTP / passkey",
+    stepLostHint: "Tu administrador puede reiniciar el segundo factor desde el panel de miembros, o contacta a soporte con tu correo corporativo.",
+    lostBtn: "Pedir reset de MFA",
+    stepBlocked: "Bloqueado por un admin",
+    stepBlockedHint: "Tu administrador puede reactivar tu cuenta desde el panel de miembros.",
+    blockedBtn: "Contactar soporte",
+    okSent: "Enlace enviado. Revisa tu correo.",
+    errGeneric: "Error",
+  },
+  en: {
+    title: "Recover access",
+    subtitle: "Pick the option that best describes your situation.",
+    footerBack: "Back to sign in",
+    stepForgot: "I don't remember my method",
+    stepForgotHint: "We'll send a magic link to your email. No password needed.",
+    emailLabel: "Email",
+    emailPlaceholder: "you@company.com",
+    emailInvalid: "Enter a valid email address.",
+    sendBtn: "Send me a link",
+    sending: "Sending…",
+    stepLost: "I lost my TOTP / passkey device",
+    stepLostHint: "Your admin can reset the second factor from the members panel, or contact support with your corporate email.",
+    lostBtn: "Request MFA reset",
+    stepBlocked: "Blocked by an admin",
+    stepBlockedHint: "Your admin can reactivate your account from the members panel.",
+    blockedBtn: "Contact support",
+    okSent: "Link sent. Check your inbox.",
+    errGeneric: "Error",
+  },
+};
+
+export default function RecoverClient({ locale = "es" }) {
+  const L = locale === "en" ? "en" : "es";
+  const T = I18N[L];
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
-  const emailError = emailTouched && email && !EMAIL_RE.test(email)
-    ? "Ingresa un correo con formato válido."
-    : null;
+  const emailError = emailTouched && email && !EMAIL_RE.test(email) ? T.emailInvalid : null;
 
   async function sendLink(e) {
     e.preventDefault();
@@ -28,41 +71,42 @@ export default function RecoverClient() {
     try {
       const r = await fetch("/api/auth/signin/email", { method: "POST", body: new URLSearchParams({ email }) });
       if (!r.ok) throw new Error(await r.text());
-      setMsg("Enlace enviado. Revisa tu correo.");
-    } catch (e) { setErr(e.message || "Error"); } finally { setBusy(false); }
+      setMsg(T.okSent);
+    } catch (e) { setErr(e.message || T.errGeneric); } finally { setBusy(false); }
   }
 
   return (
     <AuthShell
-      title="Recuperar acceso"
-      subtitle="Elige la opción que mejor describa tu situación."
+      locale={L}
+      title={T.title}
+      subtitle={T.subtitle}
       footer={
         <span>
-          <Link href="/signin" className="bi-auth-link" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>Volver a entrar</Link>
+          <Link href="/signin" className="bi-auth-link" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>{T.footerBack}</Link>
         </span>
       }
     >
       <form onSubmit={sendLink} noValidate>
-        <Step label="No recuerdo mi método" hint="Enviaremos un enlace mágico a tu correo. No necesitas contraseña.">
-          <Field label="Correo" required error={emailError}>
-            {(a) => <Input {...a} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder="tú@empresa.com" />}
+        <Step label={T.stepForgot} hint={T.stepForgotHint}>
+          <Field label={T.emailLabel} required error={emailError}>
+            {(a) => <Input {...a} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder={T.emailPlaceholder} />}
           </Field>
-          <Button type="submit" variant="primary" block loading={busy} loadingLabel="Enviando…" disabled={!email || !!emailError}>
-            Enviarme un enlace
+          <Button type="submit" variant="primary" block loading={busy} loadingLabel={T.sending} disabled={!email || !!emailError}>
+            {T.sendBtn}
           </Button>
         </Step>
       </form>
 
       <hr style={divider} />
 
-      <Step label="Perdí mi dispositivo con TOTP / passkey" hint="Tu administrador puede reiniciar el segundo factor desde el panel de miembros, o contacta a soporte con tu correo corporativo.">
-        <Button href="mailto:soporte@bio-ignicion.app?subject=Reset%20MFA" variant="secondary" size="sm">Pedir reset de MFA</Button>
+      <Step label={T.stepLost} hint={T.stepLostHint}>
+        <Button href="mailto:soporte@bio-ignicion.app?subject=Reset%20MFA" variant="secondary" size="sm">{T.lostBtn}</Button>
       </Step>
 
       <hr style={divider} />
 
-      <Step label="Bloqueado por un admin" hint="Tu administrador puede reactivar tu cuenta desde el panel de miembros.">
-        <Button href="mailto:soporte@bio-ignicion.app" variant="secondary" size="sm">Contactar soporte</Button>
+      <Step label={T.stepBlocked} hint={T.stepBlockedHint}>
+        <Button href="mailto:soporte@bio-ignicion.app" variant="secondary" size="sm">{T.blockedBtn}</Button>
       </Step>
 
       {msg && <div style={{ marginTop: space[4] }} role="status"><Alert kind="success">{msg}</Alert></div>}

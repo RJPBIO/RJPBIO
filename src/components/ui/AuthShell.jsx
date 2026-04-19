@@ -2,17 +2,18 @@ import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
 import { cssVar, radius, space, font, bioSignal } from "./tokens";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 
-/**
- * AuthShell — shell compartido para todas las rutas de auth (signin, signup,
- * recover, mfa, verify, account). Centra un panel glass, añade ambient
- * bio-signal radial glow y cabecera mínima con brand + controles de idioma/tema.
- *
- * Server-component. El contenido puede ser client o server.
- */
-export function AuthShell({ children, title, subtitle, footer, size = "md", side }) {
+const DEFAULT_FOOTER_I18N = {
+  es: { privacy: "Privacidad", terms: "Términos", trust: "Confianza" },
+  en: { privacy: "Privacy", terms: "Terms", trust: "Trust" },
+};
+
+export function AuthShell({ children, title, subtitle, footer, size = "md", side, locale = "es" }) {
   const widths = { sm: 360, md: 420, lg: 520 };
   const panelWidth = widths[size] || widths.md;
+  const L = locale === "en" ? "en" : "es";
+  const FT = DEFAULT_FOOTER_I18N[L];
 
   return (
     <main
@@ -50,13 +51,8 @@ export function AuthShell({ children, title, subtitle, footer, size = "md", side
         }}
       >
         <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: space[2], textDecoration: "none", color: cssVar.text }}>
-          <span aria-hidden style={{
-            width: 24, height: 24, borderRadius: radius.sm,
-            background: `conic-gradient(from 180deg, var(--bi-accent), ${bioSignal.phosphorCyan}, ${bioSignal.ignition}, var(--bi-accent))`,
-            boxShadow: `0 0 22px var(--bi-accent)`,
-            animation: "orbFloat 6s ease-in-out infinite",
-          }} />
-          <span style={{ fontWeight: font.weight.black, letterSpacing: font.tracking.wider, fontSize: font.size.lg }}>BIO-IGN</span>
+          <BioGlyph size={24} />
+          <span className="bi-shell-wordmark" style={{ fontWeight: font.weight.black, letterSpacing: "1px", fontSize: font.size.lg }}>BIO-IGNICIÓN</span>
         </Link>
         <div style={{ display: "inline-flex", gap: space[2], alignItems: "center" }}>
           <LocaleSelect variant="compact" />
@@ -121,9 +117,9 @@ export function AuthShell({ children, title, subtitle, footer, size = "md", side
       >
         {footer || (
           <span>
-            <Link href="/privacy" className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>Privacidad</Link>·
-            <Link href="/terms"   className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>Términos</Link>·
-            <Link href="/trust"   className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>Confianza</Link>
+            <Link href="/privacy" className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>{FT.privacy}</Link>·
+            <Link href="/terms"   className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>{FT.terms}</Link>·
+            <Link href="/trust"   className="bi-auth-link" style={{ color: cssVar.textMuted, marginInline: space[2] }}>{FT.trust}</Link>
           </span>
         )}
       </footer>
