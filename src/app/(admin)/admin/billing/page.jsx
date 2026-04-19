@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { listInvoices } from "@/server/billing";
-import { Button } from "@/components/ui/Button";
+import SubmitButton from "@/components/ui/SubmitButton";
 import { Badge } from "@/components/ui/Badge";
 import { Progress } from "@/components/ui/Progress";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
@@ -73,7 +73,7 @@ export default async function BillingPage() {
         </div>
         <form action="/api/billing/portal" method="post">
           <input type="hidden" name="orgId" value={orgId} />
-          <Button type="submit" variant="primary">Abrir portal de facturación</Button>
+          <SubmitButton variant="primary" loadingLabel="Abriendo portal…">Abrir portal de facturación</SubmitButton>
         </form>
       </header>
 
@@ -299,7 +299,7 @@ function Tier({ name, price, features, current, plan, orgId }) {
         <form action="/api/billing/checkout" method="post" style={{ marginTop: space[3] }}>
           <input type="hidden" name="orgId" value={orgId} />
           <input type="hidden" name="plan" value={plan} />
-          <Button type="submit" variant="primary" block>Elegir {name}</Button>
+          <SubmitButton variant="primary" block loadingLabel="Redirigiendo a Stripe…">Elegir {name}</SubmitButton>
         </form>
       )}
     </div>
