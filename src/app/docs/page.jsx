@@ -2,8 +2,126 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import CodeTabs from "@/components/ui/CodeTabs";
 import { cssVar, space, font } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
+
+const QUICKSTART_SNIPPETS = {
+  es: [
+    {
+      id: "curl",
+      label: "curl",
+      code: `# Whoami — verifica que la key esté viva
+curl https://bio-ignicion.app/api/v1/users/me \\
+     -H "Authorization: Bearer bi_xxx"
+
+# Crea una sesión idempotente
+curl -X POST https://bio-ignicion.app/api/v1/sessions \\
+     -H "Authorization: Bearer bi_xxx" \\
+     -H "Idempotency-Key: $(uuidgen)" \\
+     -H "Content-Type: application/json" \\
+     -d '{"protocol":"resonant-breath-5m"}'`,
+    },
+    {
+      id: "ts",
+      label: "TypeScript",
+      code: `const BASE = "https://bio-ignicion.app/api/v1";
+const KEY  = process.env.BI_API_KEY!;          // bi_xxx
+
+// Whoami — verifica que la key esté viva
+const me = await fetch(\`\${BASE}/users/me\`, {
+  headers: { Authorization: \`Bearer \${KEY}\` },
+}).then((r) => r.json());
+
+// Crea una sesión idempotente
+const session = await fetch(\`\${BASE}/sessions\`, {
+  method: "POST",
+  headers: {
+    Authorization: \`Bearer \${KEY}\`,
+    "Idempotency-Key": crypto.randomUUID(),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ protocol: "resonant-breath-5m" }),
+}).then((r) => r.json());`,
+    },
+    {
+      id: "py",
+      label: "Python",
+      code: `import os, uuid, requests
+
+BASE = "https://bio-ignicion.app/api/v1"
+KEY  = os.environ["BI_API_KEY"]               # bi_xxx
+headers = {"Authorization": f"Bearer {KEY}"}
+
+# Whoami — verifica que la key esté viva
+me = requests.get(f"{BASE}/users/me", headers=headers).json()
+
+# Crea una sesión idempotente
+session = requests.post(
+    f"{BASE}/sessions",
+    headers={**headers, "Idempotency-Key": str(uuid.uuid4())},
+    json={"protocol": "resonant-breath-5m"},
+).json()`,
+    },
+  ],
+  en: [
+    {
+      id: "curl",
+      label: "curl",
+      code: `# Whoami — verifies the key is live
+curl https://bio-ignicion.app/api/v1/users/me \\
+     -H "Authorization: Bearer bi_xxx"
+
+# Create an idempotent session
+curl -X POST https://bio-ignicion.app/api/v1/sessions \\
+     -H "Authorization: Bearer bi_xxx" \\
+     -H "Idempotency-Key: $(uuidgen)" \\
+     -H "Content-Type: application/json" \\
+     -d '{"protocol":"resonant-breath-5m"}'`,
+    },
+    {
+      id: "ts",
+      label: "TypeScript",
+      code: `const BASE = "https://bio-ignicion.app/api/v1";
+const KEY  = process.env.BI_API_KEY!;          // bi_xxx
+
+// Whoami — verifies the key is live
+const me = await fetch(\`\${BASE}/users/me\`, {
+  headers: { Authorization: \`Bearer \${KEY}\` },
+}).then((r) => r.json());
+
+// Create an idempotent session
+const session = await fetch(\`\${BASE}/sessions\`, {
+  method: "POST",
+  headers: {
+    Authorization: \`Bearer \${KEY}\`,
+    "Idempotency-Key": crypto.randomUUID(),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ protocol: "resonant-breath-5m" }),
+}).then((r) => r.json());`,
+    },
+    {
+      id: "py",
+      label: "Python",
+      code: `import os, uuid, requests
+
+BASE = "https://bio-ignicion.app/api/v1"
+KEY  = os.environ["BI_API_KEY"]               # bi_xxx
+headers = {"Authorization": f"Bearer {KEY}"}
+
+# Whoami — verifies the key is live
+me = requests.get(f"{BASE}/users/me", headers=headers).json()
+
+# Create an idempotent session
+session = requests.post(
+    f"{BASE}/sessions",
+    headers={**headers, "Idempotency-Key": str(uuid.uuid4())},
+    json={"protocol": "resonant-breath-5m"},
+).json()`,
+    },
+  ],
+};
 
 export const metadata = {
   title: "API Docs",
@@ -196,16 +314,13 @@ export default async function DocsPage() {
             {en ? <>Base URL: <code>https://bio-ignicion.app/api/v1</code> · mint a key in <a href="/admin/api-keys">Admin · API Keys</a>.</>
                : <>Base URL: <code>https://bio-ignicion.app/api/v1</code> · genera una key en <a href="/admin/api-keys">Admin · API Keys</a>.</>}
           </p>
-          <pre>{`# ${en ? "Whoami — verifies the key is live" : "Whoami — verifica que la key esté viva"}
-curl https://bio-ignicion.app/api/v1/users/me \\
-     -H "Authorization: Bearer bi_xxx"
-
-# ${en ? "Create an idempotent session" : "Crea una sesión idempotente"}
-curl -X POST https://bio-ignicion.app/api/v1/sessions \\
-     -H "Authorization: Bearer bi_xxx" \\
-     -H "Idempotency-Key: $(uuidgen)" \\
-     -H "Content-Type: application/json" \\
-     -d '{"protocol":"resonant-breath-5m"}'`}</pre>
+          <CodeTabs
+            tabs={QUICKSTART_SNIPPETS[en ? "en" : "es"]}
+            ariaLabel={en ? "SDK quickstart samples" : "Ejemplos de quickstart"}
+            copyLabel={en ? "Copy" : "Copiar"}
+            copiedLabel={en ? "Copied to clipboard" : "Copiado al portapapeles"}
+            copyErrorLabel={en ? "Could not copy" : "No se pudo copiar"}
+          />
           <p style={{ marginBlockEnd: 0, fontSize: font.size.sm, color: cssVar.textDim }}>
             {en
               ? "Full reference below — auth, webhooks, rate-limits, idempotency, deprecation, OpenAPI and ROI model."
