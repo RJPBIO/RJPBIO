@@ -9,6 +9,7 @@ import { cssVar, radius, space, font } from "./tokens";
  */
 const KEY = "bio-theme";
 const ORDER = ["system", "light", "dark"];
+const LABELS = { system: "Auto", light: "Claro", dark: "Oscuro" };
 
 function apply(mode) {
   if (typeof document === "undefined") return;
@@ -21,6 +22,8 @@ function apply(mode) {
 
 export default function ThemeToggle() {
   const [mode, setMode] = useState("system");
+  const [announcement, setAnnouncement] = useState("");
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(KEY);
@@ -32,33 +35,43 @@ export default function ThemeToggle() {
     const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
     setMode(next);
     apply(next);
+    setAnnouncement(`Tema cambiado a ${LABELS[next]}`);
     try { localStorage.setItem(KEY, next); } catch {}
   };
 
-  const labels = { system: "Auto", light: "Claro", dark: "Oscuro" };
+  const nextMode = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
+
   return (
-    <button
-      type="button"
-      onClick={cycle}
-      aria-label={`Tema actual: ${labels[mode]}. Cambiar`}
-      className="bi-theme-toggle"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: space[2],
-        padding: `${space[1.5]}px ${space[3]}px`,
-        borderRadius: radius.full,
-        background: "transparent",
-        color: cssVar.textDim,
-        border: `1px solid ${cssVar.border}`,
-        fontSize: font.size.sm,
-        fontWeight: font.weight.semibold,
-        cursor: "pointer",
-        fontFamily: "inherit",
-      }}
-    >
-      <span aria-hidden>{mode === "light" ? "☀" : mode === "dark" ? "☾" : "◐"}</span>
-      <span>{labels[mode]}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={cycle}
+        aria-label={`Tema: ${LABELS[mode]}. Click para cambiar a ${LABELS[nextMode]}`}
+        title={`Cambiar a ${LABELS[nextMode]}`}
+        className="bi-theme-toggle"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: space[2],
+          padding: `${space[2]}px ${space[3]}px`,
+          minBlockSize: 36,
+          borderRadius: radius.full,
+          background: "transparent",
+          color: cssVar.textDim,
+          border: `1px solid ${cssVar.border}`,
+          fontSize: font.size.sm,
+          fontWeight: font.weight.semibold,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          transition: "border-color .15s ease, color .15s ease, background .15s ease",
+        }}
+      >
+        <span aria-hidden style={{ fontSize: font.size.md, lineHeight: 1 }}>
+          {mode === "light" ? "☀" : mode === "dark" ? "☾" : "◐"}
+        </span>
+        <span>{LABELS[mode]}</span>
+      </button>
+      <span role="status" aria-live="polite" className="bi-sr-only">{announcement}</span>
+    </>
   );
 }
