@@ -289,6 +289,11 @@ input, textarea, select {
 .bi-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: scale(0.98); }
 .bi-btn:focus-visible { box-shadow: var(--bi-focus-ring); outline: none; }
 .bi-btn-primary:hover:not(:disabled) { box-shadow: 0 8px 24px -12px var(--bi-accent); }
+@keyframes bi-btn-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .bi-btn { transition: none !important; }
+  .bi-btn:active:not(:disabled) { transform: none !important; }
+}
 
 a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
   outline: none;

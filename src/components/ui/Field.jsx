@@ -22,14 +22,34 @@ export function Field({ label, hint, error, required, children, id, className = 
     <div className={`bi-field ${className}`} style={{ display: "block", marginBottom: space[4], ...style }}>
       <label htmlFor={fieldId} style={{ display: "block", fontSize: font.size.md, color: cssVar.textDim, marginBottom: space[1], fontWeight: font.weight.semibold }}>
         {label}
-        {required && <span aria-hidden style={{ color: cssVar.danger, marginInlineStart: 4 }}>*</span>}
+        {required && (
+          <>
+            <span aria-hidden style={{ color: cssVar.danger, marginInlineStart: 4 }}>*</span>
+            <span className="bi-sr-only"> (requerido)</span>
+          </>
+        )}
       </label>
       {child}
       {hint && !error && (
         <p id={hintId} style={{ margin: `${space[1]}px 0 0`, fontSize: font.size.sm, color: cssVar.textMuted }}>{hint}</p>
       )}
       {error && (
-        <p id={errorId} role="alert" style={{ margin: `${space[1]}px 0 0`, fontSize: font.size.sm, color: cssVar.danger }}>{error}</p>
+        <p
+          id={errorId}
+          role="alert"
+          style={{
+            margin: `${space[1]}px 0 0`,
+            fontSize: font.size.sm,
+            color: cssVar.danger,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: space[1],
+            lineHeight: 1.4,
+          }}
+        >
+          <span aria-hidden style={{ flexShrink: 0, marginBlockStart: 1 }}>⚠</span>
+          <span>{error}</span>
+        </p>
       )}
     </div>
   );

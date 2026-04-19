@@ -73,8 +73,8 @@ export default function ToastHost() {
       aria-label="Notificaciones"
       style={{
         position: "fixed",
-        insetBlockEnd: space[6],
-        insetInlineEnd: space[6],
+        insetBlockEnd: `calc(${space[6]}px + env(safe-area-inset-bottom, 0px))`,
+        insetInlineEnd: `calc(${space[6]}px + env(safe-area-inset-right, 0px))`,
         zIndex: 320,
         display: "flex",
         flexDirection: "column",

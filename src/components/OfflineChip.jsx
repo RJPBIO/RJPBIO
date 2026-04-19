@@ -41,8 +41,8 @@ export default function OfflineChip() {
       aria-live="polite"
       style={{
         position: "fixed",
-        insetBlockEnd: space[4],
-        insetInlineStart: space[4],
+        insetBlockEnd: `calc(${space[4]}px + env(safe-area-inset-bottom, 0px))`,
+        insetInlineStart: `calc(${space[4]}px + env(safe-area-inset-left, 0px))`,
         zIndex: 300,
         display: "inline-flex",
         alignItems: "center",

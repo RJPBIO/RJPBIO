@@ -12,6 +12,10 @@ export const Input = forwardRef(function Input(
   ref
 ) {
   const hasAdornment = leading || trailing;
+  const isAuthField = rest.type === "email" || rest.type === "password";
+  const authDefaults = isAuthField
+    ? { autoCapitalize: rest.autoCapitalize ?? "off", spellCheck: rest.spellCheck ?? false, autoCorrect: rest.autoCorrect ?? "off" }
+    : null;
   const commonInput = {
     flex: 1,
     minWidth: 0,
@@ -35,6 +39,7 @@ export const Input = forwardRef(function Input(
         ref={ref}
         aria-invalid={invalid || undefined}
         className={`bi-input ${className}`}
+        {...(authDefaults || {})}
         style={{
           display: "block",
           width: "100%",
@@ -46,7 +51,7 @@ export const Input = forwardRef(function Input(
           fontSize: font.size.lg,
           fontFamily: "inherit",
           lineHeight: 1.4,
-          minHeight: 40,
+          minHeight: 44,
           transition: "border-color .15s ease, box-shadow .15s ease",
           ...style,
         }}
@@ -67,13 +72,13 @@ export const Input = forwardRef(function Input(
         color: cssVar.text,
         border: `1px solid ${invalid ? cssVar.danger : cssVar.border}`,
         borderRadius: radius.sm,
-        minHeight: 40,
+        minHeight: 44,
         transition: "border-color .15s ease, box-shadow .15s ease",
         ...style,
       }}
     >
       {leading && <span style={{ color: cssVar.textMuted, display: "inline-flex" }}>{leading}</span>}
-      <input ref={ref} aria-invalid={invalid || undefined} style={commonInput} {...rest} />
+      <input ref={ref} aria-invalid={invalid || undefined} {...(authDefaults || {})} style={commonInput} {...rest} />
       {trailing && <span style={{ color: cssVar.textMuted, display: "inline-flex" }}>{trailing}</span>}
     </div>
   );
@@ -95,7 +100,7 @@ export const Select = forwardRef(function Select({ invalid, style, className = "
         padding: `${space[2.5]}px ${space[3]}px`,
         fontSize: font.size.lg,
         fontFamily: "inherit",
-        minHeight: 40,
+        minHeight: 44,
         appearance: "auto",
         ...style,
       }}

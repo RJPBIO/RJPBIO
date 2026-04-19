@@ -19,14 +19,16 @@ export function Button({
   href,
   block = false,
   disabled = false,
+  loading = false,
+  loadingLabel,
   type,
   className = "",
   children,
   ...rest
 }) {
   const sizes = {
-    sm: { padding: `${space[1.5]}px ${space[3]}px`, fontSize: font.size.base, minHeight: 32 },
-    md: { padding: `${space[2.5]}px ${space[4]}px`, fontSize: font.size.md,   minHeight: 40 },
+    sm: { padding: `${space[1.5]}px ${space[3]}px`, fontSize: font.size.base, minHeight: 36 },
+    md: { padding: `${space[2.5]}px ${space[4]}px`, fontSize: font.size.md,   minHeight: 44 },
     lg: { padding: `${space[3]}px ${space[6]}px`,  fontSize: font.size.lg,   minHeight: 48 },
   };
   const variants = {
@@ -35,6 +37,7 @@ export function Button({
     ghost:     { background: "transparent",     color: cssVar.textDim,   border: "1px solid transparent" },
     danger:    { background: cssVar.danger,     color: "#FFF",           border: `1px solid ${cssVar.danger}` },
   };
+  const isDisabled = disabled || loading;
   const style = {
     display: block ? "flex" : "inline-flex",
     alignItems: "center",
@@ -45,33 +48,59 @@ export function Button({
     fontWeight: font.weight.bold,
     fontFamily: cssVar.fontSans,
     textDecoration: "none",
-    cursor: disabled ? "not-allowed" : "pointer",
-    opacity: disabled ? 0.5 : 1,
+    cursor: isDisabled ? "not-allowed" : "pointer",
+    opacity: isDisabled ? 0.65 : 1,
+    position: "relative",
     transition: "background .15s ease, transform .1s ease, box-shadow .15s ease",
     ...sizes[size],
     ...variants[variant],
   };
 
   const cls = `bi-btn bi-btn-${variant} ${className}`;
+  const spinnerColor = variant === "primary" ? cssVar.accentInk : variant === "danger" ? "#FFF" : cssVar.text;
+
+  const content = loading ? (
+    <>
+      <span
+        aria-hidden="true"
+        style={{
+          inlineSize: 14, blockSize: 14, borderRadius: "50%",
+          border: `2px solid color-mix(in srgb, ${spinnerColor} 30%, transparent)`,
+          borderTopColor: spinnerColor,
+          animation: "bi-btn-spin 0.7s linear infinite",
+          flexShrink: 0,
+        }}
+      />
+      <span>{loadingLabel || children}</span>
+    </>
+  ) : children;
 
   if (href) {
     const external = /^https?:\/\//.test(href) || href.startsWith("mailto:") || href.startsWith("tel:");
     if (external) {
+      const externalRel = /^https?:\/\//.test(href) ? (rest.rel ?? "noopener noreferrer") : rest.rel;
       return (
-        <a href={href} className={cls} style={style} {...rest}>
-          {children}
+        <a href={href} className={cls} style={style} {...rest} rel={externalRel}>
+          {content}
         </a>
       );
     }
     return (
       <Link href={href} className={cls} style={style} {...rest}>
-        {children}
+        {content}
       </Link>
     );
   }
   return (
-    <button type={type || "button"} className={cls} style={style} disabled={disabled} {...rest}>
-      {children}
+    <button
+      type={type || "button"}
+      className={cls}
+      style={style}
+      disabled={isDisabled}
+      aria-busy={loading || undefined}
+      {...rest}
+    >
+      {content}
     </button>
   );
 }
