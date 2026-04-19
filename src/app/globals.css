@@ -342,6 +342,16 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visibl
 .bi-shell-navlink:hover:not([data-active="true"]) { color: var(--bi-text); border-color: var(--bi-border-strong) !important; }
 .bi-shell-navlink:focus-visible { border-radius: 6px; }
 
+/* PublicShell responsive nav — desktop links vs mobile hamburger */
+.bi-shell-nav-trigger { display: none; }
+@media (max-width: 768px) {
+  .bi-shell-nav-desktop { display: none !important; }
+  .bi-shell-nav-trigger { display: inline-flex !important; }
+}
+@media (max-width: 380px) {
+  .bi-shell-wordmark { display: none; }
+}
+
 /* Footer / generic subtle link hover inside marketing shell */
 .bi-shell-footer-link { transition: color 0.15s ease; }
 .bi-shell-footer-link:hover { color: var(--bi-text); text-decoration: underline; text-underline-offset: 2px; }

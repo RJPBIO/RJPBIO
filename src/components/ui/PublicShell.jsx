@@ -2,10 +2,12 @@ import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
 import CommandPaletteTrigger from "./CommandPaletteTrigger";
+import ShellMobileNav from "./ShellMobileNav";
 import { Container } from "./Container";
 import { cssVar, radius, space, font } from "./tokens";
 import { tLocale } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 
 const NAV_ITEMS = [
   { href: "/pricing",   key: "nav.pricing" },
@@ -51,6 +53,7 @@ const FOOTER_LINKS = {
 export async function PublicShell({ children, activePath }) {
   const locale = await getServerLocale();
   const T = (k, fb) => tLocale(locale, k) !== k ? tLocale(locale, k) : (fb ?? k);
+  const resolvedNav = NAV_ITEMS.map((n) => ({ href: n.href, label: T(n.key, n.fallback) }));
 
   return (
     <>
@@ -67,14 +70,10 @@ export async function PublicShell({ children, activePath }) {
       >
         <Container size="xl" style={{ paddingBlock: space[3], display: "flex", alignItems: "center", gap: space[4], flexWrap: "wrap" }}>
           <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: space[2], textDecoration: "none", color: cssVar.text }} aria-label={T("shell.brandHome", "BIO-IGNICIÓN")}>
-            <span aria-hidden style={{
-              width: 22, height: 22, borderRadius: radius.sm,
-              background: `conic-gradient(from 180deg, var(--bi-accent), #22D3EE, #FDE68A, var(--bi-accent))`,
-              boxShadow: `0 0 18px var(--bi-accent)`,
-            }} />
-            <span style={{ fontWeight: font.weight.black, letterSpacing: "1px", fontSize: font.size.lg }}>BIO-IGN</span>
+            <BioGlyph size={24} />
+            <span className="bi-shell-wordmark" style={{ fontWeight: font.weight.black, letterSpacing: "1px", fontSize: font.size.lg }}>BIO-IGNICIÓN</span>
           </Link>
-          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav" style={{ display: "flex", gap: space[4], marginInlineStart: "auto", flexWrap: "wrap", rowGap: space[2] }}>
+          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav bi-shell-nav-desktop" style={{ display: "flex", gap: space[4], marginInlineStart: "auto", flexWrap: "wrap", rowGap: space[2] }}>
             {NAV_ITEMS.map((n) => {
               const active = activePath === n.href;
               return (
@@ -99,6 +98,12 @@ export async function PublicShell({ children, activePath }) {
               );
             })}
           </nav>
+          <ShellMobileNav
+            items={resolvedNav}
+            activePath={activePath}
+            triggerLabel={T("shell.menu", "Menú")}
+            closeLabel={T("shell.close", "Cerrar")}
+          />
           <CommandPaletteTrigger />
           <LocaleSelect variant="compact" />
           <ThemeToggle />
