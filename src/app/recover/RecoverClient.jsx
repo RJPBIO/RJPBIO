@@ -8,14 +8,22 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function RecoverClient() {
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
+  const emailError = emailTouched && email && !EMAIL_RE.test(email)
+    ? "Ingresa un correo con formato válido."
+    : null;
+
   async function sendLink(e) {
     e.preventDefault();
+    if (!EMAIL_RE.test(email)) { setEmailTouched(true); return; }
     setBusy(true); setMsg(""); setErr("");
     try {
       const r = await fetch("/api/auth/signin/email", { method: "POST", body: new URLSearchParams({ email }) });
@@ -36,11 +44,11 @@ export default function RecoverClient() {
     >
       <form onSubmit={sendLink} noValidate>
         <Step label="No recuerdo mi método" hint="Enviaremos un enlace mágico a tu correo. No necesitas contraseña.">
-          <Field label="Correo" required>
-            {(a) => <Input {...a} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tú@empresa.com" />}
+          <Field label="Correo" required error={emailError}>
+            {(a) => <Input {...a} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder="tú@empresa.com" />}
           </Field>
-          <Button type="submit" variant="primary" block disabled={busy || !email}>
-            {busy ? "Enviando…" : "Enviarme un enlace"}
+          <Button type="submit" variant="primary" block loading={busy} loadingLabel="Enviando…" disabled={!email || !!emailError}>
+            Enviarme un enlace
           </Button>
         </Step>
       </form>

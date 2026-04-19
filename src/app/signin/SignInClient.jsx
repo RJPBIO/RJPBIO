@@ -12,6 +12,7 @@ import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import { describeAuthError } from "@/lib/authErrors";
 
 const RESEND_COOLDOWN_MS = 30_000;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignInClient() {
   const searchParams = useSearchParams();
@@ -19,6 +20,7 @@ export default function SignInClient() {
   const callbackUrl = searchParams?.get("callbackUrl") || "/";
 
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(null); // "okta" | "azure-ad" | "google" | "sso" | null
   const [err, setErr] = useState("");
@@ -68,6 +70,7 @@ export default function SignInClient() {
   async function onSubmit(e) {
     e.preventDefault();
     if (cooldownLeft > 0) return;
+    if (!EMAIL_RE.test(email)) { setEmailTouched(true); return; }
     setSubmitting(true); setErr(""); setOk("");
     try {
       const r = await fetch("/api/auth/signin/email", { method: "POST", body: new URLSearchParams({ email, callbackUrl }) });
@@ -121,7 +124,10 @@ export default function SignInClient() {
     location.href = url;
   }
 
-  const canSubmit = !submitting && !!email && cooldownLeft === 0;
+  const emailError = emailTouched && email && !EMAIL_RE.test(email)
+    ? "Ingresa un correo con formato válido."
+    : null;
+  const canSubmit = !submitting && !!email && !emailError && cooldownLeft === 0;
 
   return (
     <AuthShell
@@ -140,12 +146,13 @@ export default function SignInClient() {
       )}
 
       <form onSubmit={onSubmit} noValidate>
-        <Field label="Correo de trabajo" required>
+        <Field label="Correo de trabajo" required error={emailError}>
           {(a) => (
             <Input
               {...a}
               type="email" value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setEmailTouched(true)}
               placeholder="tú@empresa.com"
               autoComplete="email" autoFocus
             />
@@ -166,14 +173,12 @@ export default function SignInClient() {
 
         <Button
           type="submit" variant="primary" block
+          loading={submitting}
+          loadingLabel="Enviando…"
           disabled={!canSubmit}
           style={{ marginTop: space[3] }}
         >
-          {submitting
-            ? "Enviando…"
-            : cooldownLeft > 0
-              ? `Reenviar en ${cooldownLeft}s`
-              : "Enviar enlace mágico"}
+          {cooldownLeft > 0 ? `Reenviar en ${cooldownLeft}s` : "Enviar enlace mágico"}
           {lastMethod === "magic-link" && cooldownLeft === 0 && !submitting && (
             <Badge variant="soft" size="sm" style={{ marginInlineStart: space[2] }}>Último</Badge>
           )}
