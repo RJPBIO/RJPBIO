@@ -122,13 +122,13 @@ export default function AuditClient({ rows, chain }) {
 
       {pageCount > 1 && (
         <nav aria-label="Paginación" style={{ display: "flex", gap: space[2], justifyContent: "center", alignItems: "center", marginTop: space[4] }}>
-          <Button size="sm" variant="ghost" onClick={() => setPage(0)}                             disabled={page === 0}>«</Button>
-          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.max(0, p - 1))}     disabled={page === 0}>‹</Button>
-          <span style={{ color: cssVar.textDim, fontSize: font.size.sm, padding: `0 ${space[2]}px`, fontFamily: cssVar.fontMono }}>
+          <Button size="sm" variant="ghost" onClick={() => setPage(0)}                             disabled={page === 0}                 aria-label="Primera página">«</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.max(0, p - 1))}     disabled={page === 0}                 aria-label="Página anterior">‹</Button>
+          <span aria-live="polite" aria-atomic="true" style={{ color: cssVar.textDim, fontSize: font.size.sm, padding: `0 ${space[2]}px`, fontFamily: cssVar.fontMono }}>
             {page + 1} / {pageCount}
           </span>
-          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1}>›</Button>
-          <Button size="sm" variant="ghost" onClick={() => setPage(pageCount - 1)}                          disabled={page >= pageCount - 1}>»</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1} aria-label="Página siguiente">›</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPage(pageCount - 1)}                          disabled={page >= pageCount - 1} aria-label="Última página">»</Button>
         </nav>
       )}
 

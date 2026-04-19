@@ -21,6 +21,16 @@ function csrfHeader() {
 }
 
 function RevealSecret({ secret, onClose }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  }
   return (
     <Dialog
       open={!!secret}
@@ -31,7 +41,7 @@ function RevealSecret({ secret, onClose }) {
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Ya lo guardé</Button>
-          <Button variant="primary" onClick={() => navigator.clipboard?.writeText(secret).then(() => toast.success("Copiado")).catch(() => {})}>Copiar</Button>
+          <Button variant="primary" onClick={copy}>{copied ? "¡Copiado!" : "Copiar"}</Button>
         </>
       }
     >
@@ -94,8 +104,14 @@ function DeliveriesDialog({ hookId, onClose }) {
     {
       key: "__actions", label: "", align: "right", width: 120,
       render: (d) => !d.deliveredAt && (
-        <Button size="sm" variant="ghost" onClick={() => retry(d.id)} disabled={retrying === d.id}>
-          {retrying === d.id ? "…" : "Reintentar"}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => retry(d.id)}
+          loading={retrying === d.id}
+          loadingLabel="Reintentando…"
+        >
+          Reintentar
         </Button>
       ),
     },
