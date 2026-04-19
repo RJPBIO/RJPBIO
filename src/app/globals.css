@@ -28,6 +28,7 @@
   --bi-accent-ink: #FFFFFF;
   --bi-danger: #DC2626;
   --bi-warn: #D97706;
+  --bi-success: #10B981;
   --bi-focus-ring: var(--focus-ring);
 }
 
@@ -186,8 +187,32 @@ input, textarea, select {
 /* ═══ CORE KEYFRAMES ═══ */
 @keyframes bi-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes bi-toast-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes bi-toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.bi-toast-action:focus-visible, .bi-toast-close:focus-visible {
+  outline: none;
+  box-shadow: var(--bi-focus-ring);
+}
+.bi-toast-close:hover { color: var(--bi-text) !important; background: var(--bi-surface2); }
+
+.bi-table-row-clickable:hover { background: color-mix(in srgb, var(--bi-accent) 8%, transparent) !important; }
+.bi-table-row-clickable:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--bi-accent);
+  background: color-mix(in srgb, var(--bi-accent) 10%, transparent) !important;
+}
+.bi-table-wrap {
+  background:
+    linear-gradient(to right, var(--bi-surface) 30%, transparent),
+    linear-gradient(to right, transparent, var(--bi-surface) 70%) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,0.12), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.12), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 32px 100%, 32px 100%, 12px 100%, 12px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 @media (prefers-reduced-motion: reduce) {
   .bi-skeleton { animation: none !important; }
+  [role="status"][aria-live], [role="alert"][aria-live] { animation: none !important; }
 }
 @keyframes fi { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes po { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }

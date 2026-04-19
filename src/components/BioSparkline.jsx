@@ -109,8 +109,25 @@ export default function BioSparkline({
     return diff > 0 ? "ascendente" : "descendente";
   }, [data]);
 
+  const summary = useMemo(() => {
+    if (!ariaLabel || !data.length) return undefined;
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const avg = data.reduce((a, v) => a + v, 0) / data.length;
+    const round = (n) => (Math.abs(n) >= 10 ? Math.round(n) : +n.toFixed(1));
+    const parts = [
+      `${ariaLabel}`,
+      `${data.length} puntos`,
+      trend ? `tendencia ${trend}` : null,
+      `mín ${round(min)}`,
+      `máx ${round(max)}`,
+      `promedio ${round(avg)}`,
+    ].filter(Boolean);
+    return parts.join(". ") + ".";
+  }, [ariaLabel, data, trend]);
+
   return (
-    <figure role={ariaLabel ? "figure" : "presentation"} aria-label={ariaLabel ? `${ariaLabel}. Tendencia ${trend || "única"}.` : undefined} style={{ position: "relative", display: "inline-block", lineHeight: 0, margin: 0 }}>
+    <figure role={ariaLabel ? "figure" : "presentation"} aria-label={summary} style={{ position: "relative", display: "inline-block", lineHeight: 0, margin: 0 }}>
       <svg
         ref={svgRef}
         width={width}

@@ -26,6 +26,7 @@ export const cssVar = {
   accentInk: "var(--bi-accent-ink)",
   danger:    "var(--bi-danger)",
   warn:      "var(--bi-warn)",
+  success:   "var(--bi-success)",
   focusRing: "var(--bi-focus-ring)",
   fontSans:  "var(--font-sans)",
   fontMono:  "var(--font-mono)",

@@ -1,16 +1,39 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
    OfflineChip — pill discreta esquina inferior-izquierda que sólo
-   aparece cuando el navegador reporta offline. Silencioso online:
-   cero ruido visual cuando todo funciona.
+   aparece cuando el navegador reporta offline, con un breve pulso
+   de "Conexión restaurada" al reconectar.
    ═══════════════════════════════════════════════════════════════ */
 
+import { useEffect, useRef, useState } from "react";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
-import { cssVar, radius, space, font } from "./ui/tokens";
+import { cssVar, space, font } from "./ui/tokens";
 
 export default function OfflineChip() {
   const online = useOnlineStatus();
-  if (online) return null;
+  const [showRestored, setShowRestored] = useState(false);
+  const wasOfflineRef = useRef(false);
+
+  useEffect(() => {
+    if (!online) {
+      wasOfflineRef.current = true;
+      setShowRestored(false);
+      return;
+    }
+    if (!wasOfflineRef.current) return;
+    wasOfflineRef.current = false;
+    setShowRestored(true);
+    const t = setTimeout(() => setShowRestored(false), 2800);
+    return () => clearTimeout(t);
+  }, [online]);
+
+  if (online && !showRestored) return null;
+
+  const restored = online && showRestored;
+  const dotColor = restored ? cssVar.success : cssVar.warn;
+  const label = restored
+    ? "Conexión restaurada — sincronizando"
+    : "Sin conexión — cambios locales se sincronizarán al volver";
 
   return (
     <div
@@ -32,6 +55,7 @@ export default function OfflineChip() {
         fontSize: font.size.sm,
         fontWeight: font.weight.semibold,
         color: cssVar.textDim,
+        transition: "opacity 0.25s ease",
       }}
     >
       <span
@@ -40,12 +64,12 @@ export default function OfflineChip() {
           inlineSize: 8,
           blockSize: 8,
           borderRadius: 999,
-          background: cssVar.warn,
+          background: dotColor,
           display: "inline-block",
-          boxShadow: `0 0 0 3px color-mix(in srgb, ${cssVar.warn} 18%, transparent)`,
+          boxShadow: `0 0 0 3px color-mix(in srgb, ${dotColor} 18%, transparent)`,
         }}
       />
-      Sin conexión — cambios locales se sincronizarán al volver
+      {label}
     </div>
   );
 }

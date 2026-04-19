@@ -79,6 +79,9 @@ export function DataTable({
               key={getKey(r, i)}
               onClick={onRowClick ? () => onRowClick(r, i) : undefined}
               tabIndex={onRowClick ? 0 : undefined}
+              role={onRowClick ? "button" : undefined}
+              aria-label={onRowClick && r?.ariaLabel ? r.ariaLabel : undefined}
+              className={onRowClick ? "bi-table-row-clickable" : undefined}
               onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(r, i); } } : undefined}
               style={{
                 background: zebra && i % 2 === 1 ? cssVar.surface2 : "transparent",

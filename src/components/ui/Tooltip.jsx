@@ -1,16 +1,33 @@
 "use client";
-import { useId, useState } from "react";
+import { useId, useEffect, useRef, useState } from "react";
 import { cssVar, radius, space, font } from "./tokens";
 
 /**
- * Tooltip CSS-only (hover + focus). No se apoya en JS para mostrarse;
- * respeta prefers-reduced-motion y se oculta en touch.
+ * Tooltip con hover + focus, delay corto, cierre por Escape y wrap
+ * en contenido largo. Se oculta en touch para evitar el sticky-hover.
  */
-export function Tooltip({ content, side = "top", children }) {
+export function Tooltip({ content, side = "top", delay = 250, children }) {
   const id = useId();
   const [open, setOpen] = useState(false);
-  const show = () => setOpen(true);
-  const hide = () => setOpen(false);
+  const timerRef = useRef(null);
+
+  const show = () => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setOpen(true), delay);
+  };
+  const hide = () => {
+    clearTimeout(timerRef.current);
+    setOpen(false);
+  };
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); hide(); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const pos = {
     top:    { bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)" },
@@ -22,7 +39,10 @@ export function Tooltip({ content, side = "top", children }) {
   return (
     <span
       style={{ position: "relative", display: "inline-flex" }}
-      onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}
+      onPointerEnter={(e) => { if (e.pointerType !== "touch") show(); }}
+      onPointerLeave={hide}
+      onFocus={show}
+      onBlur={hide}
       aria-describedby={open ? id : undefined}
     >
       {children}
@@ -33,7 +53,10 @@ export function Tooltip({ content, side = "top", children }) {
           style={{
             position: "absolute", zIndex: 220,
             ...pos,
-            whiteSpace: "nowrap",
+            maxInlineSize: 260,
+            inlineSize: "max-content",
+            whiteSpace: "normal",
+            lineHeight: 1.4,
             padding: `${space[1]}px ${space[2]}px`,
             background: cssVar.text,
             color: cssVar.bg,

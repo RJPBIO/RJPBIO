@@ -8,10 +8,11 @@
      toast.error("No se pudo conectar", { action: { label: "Reintentar", onClick: ... } });
    Montaje único desde GlobalChrome. Emite eventos con window.dispatchEvent.
    ═══════════════════════════════════════════════════════════════ */
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { cssVar, radius, space, font } from "./tokens";
 
 const EVENT = "bio-toast:push";
+const MAX_STACK = 5;
 
 function push(variant, message, opts = {}) {
   if (typeof window === "undefined") return;
@@ -43,12 +44,26 @@ export default function ToastHost() {
   useEffect(() => {
     const onPush = (e) => {
       const t = e.detail;
-      setItems((xs) => [...xs, t]);
-      if (t.duration > 0) setTimeout(() => remove(t.id), t.duration);
+      setItems((xs) => {
+        const next = [...xs, t];
+        return next.length > MAX_STACK ? next.slice(next.length - MAX_STACK) : next;
+      });
     };
     window.addEventListener(EVENT, onPush);
     return () => window.removeEventListener(EVENT, onPush);
-  }, [remove]);
+  }, []);
+
+  useEffect(() => {
+    if (!items.length) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setItems((xs) => xs.slice(0, -1));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [items.length]);
 
   if (!items.length) return null;
 
@@ -77,12 +92,55 @@ export default function ToastHost() {
 
 function ToastItem({ toast: t, onClose }) {
   const color = VARIANT[t.variant] || VARIANT.info;
+  const rootRef = useRef(null);
+  const timerRef = useRef(null);
+  const deadlineRef = useRef(0);
+  const remainingRef = useRef(t.duration);
+  const [paused, setPaused] = useState(false);
+
+  const startTimer = useCallback((ms) => {
+    if (!ms || ms <= 0) return;
+    clearTimeout(timerRef.current);
+    deadlineRef.current = Date.now() + ms;
+    timerRef.current = setTimeout(onClose, ms);
+  }, [onClose]);
+
+  const pause = useCallback(() => {
+    if (!t.duration || t.duration <= 0) return;
+    if (!timerRef.current) return;
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+    const left = deadlineRef.current - Date.now();
+    remainingRef.current = Math.max(0, left);
+    setPaused(true);
+  }, [t.duration]);
+
+  const resume = useCallback(() => {
+    if (!t.duration || t.duration <= 0) return;
+    if (timerRef.current) return;
+    setPaused(false);
+    startTimer(remainingRef.current || t.duration);
+  }, [t.duration, startTimer]);
+
+  useEffect(() => {
+    remainingRef.current = t.duration;
+    startTimer(t.duration);
+    return () => clearTimeout(timerRef.current);
+  }, [t.duration, startTimer]);
+
   return (
     <div
+      ref={rootRef}
       role={t.variant === "error" ? "alert" : "status"}
       aria-live={t.variant === "error" ? "assertive" : "polite"}
+      aria-atomic="true"
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onFocus={pause}
+      onBlur={(e) => { if (!rootRef.current?.contains(e.relatedTarget)) resume(); }}
       style={{
         pointerEvents: "auto",
+        position: "relative",
         display: "flex",
         alignItems: "flex-start",
         gap: space[3],
@@ -94,6 +152,7 @@ function ToastItem({ toast: t, onClose }) {
         borderRadius: radius.md,
         boxShadow: "0 12px 32px -12px rgba(0,0,0,0.4)",
         animation: "bi-toast-in 0.18s cubic-bezier(0.16,1,0.3,1)",
+        overflow: "hidden",
       }}
     >
       <span
@@ -118,6 +177,7 @@ function ToastItem({ toast: t, onClose }) {
         {t.action && (
           <button
             type="button"
+            className="bi-toast-action"
             onClick={() => { t.action.onClick?.(); onClose(); }}
             style={{
               marginBlockStart: space[2],
@@ -127,9 +187,12 @@ function ToastItem({ toast: t, onClose }) {
               fontSize: font.size.sm,
               fontWeight: font.weight.semibold,
               cursor: "pointer",
-              padding: 0,
+              padding: `${space[1]}px ${space[2]}px`,
+              marginInlineStart: `-${space[2]}px`,
               fontFamily: "inherit",
               textDecoration: "underline",
+              textUnderlineOffset: 3,
+              borderRadius: radius.sm,
             }}
           >
             {t.action.label}
@@ -138,21 +201,44 @@ function ToastItem({ toast: t, onClose }) {
       </div>
       <button
         type="button"
+        className="bi-toast-close"
         onClick={onClose}
-        aria-label="Cerrar"
+        aria-label="Cerrar notificación"
         style={{
           background: "transparent",
           border: "none",
           color: cssVar.textMuted,
           cursor: "pointer",
-          fontSize: 16,
+          fontSize: 18,
           lineHeight: 1,
-          padding: 2,
+          inlineSize: 28,
+          blockSize: 28,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: radius.sm,
+          flexShrink: 0,
           fontFamily: "inherit",
         }}
       >
         ×
       </button>
+      {t.duration > 0 && (
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            insetInlineStart: 0,
+            insetBlockEnd: 0,
+            blockSize: 2,
+            inlineSize: "100%",
+            background: `color-mix(in srgb, ${color} 60%, transparent)`,
+            transformOrigin: "left",
+            animation: `bi-toast-progress ${t.duration}ms linear forwards`,
+            animationPlayState: paused ? "paused" : "running",
+          }}
+        />
+      )}
     </div>
   );
 }
