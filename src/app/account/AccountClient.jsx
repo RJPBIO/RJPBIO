@@ -103,8 +103,14 @@ export default function AccountClient({ user, memberships }) {
         </p>
         <div style={{ display: "flex", gap: space[2], flexWrap: "wrap", marginTop: space[3] }}>
           <Button href="/api/v1/users/me/export" variant="secondary" size="sm">Exportar mis datos</Button>
-          <Button onClick={requestDeletion} variant="danger" size="sm" disabled={deleting}>
-            {deleting ? "Procesando…" : "Eliminar mi cuenta"}
+          <Button
+            onClick={requestDeletion}
+            variant="danger"
+            size="sm"
+            loading={deleting}
+            loadingLabel="Procesando…"
+          >
+            Eliminar mi cuenta
           </Button>
         </div>
       </Section>

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
@@ -9,6 +9,13 @@ export default function Coach() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const ctrl = useRef(null);
+  const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [msgs]);
 
   async function send() {
     if (!input.trim()) return;
@@ -39,7 +46,10 @@ export default function Coach() {
           }
         }
       }
-    } finally { setStreaming(false); }
+    } finally {
+      setStreaming(false);
+      inputRef.current?.focus();
+    }
   }
 
   return (
@@ -67,7 +77,33 @@ export default function Coach() {
         </h1>
       </header>
 
-      <div style={{ flex: 1, overflow: "auto", padding: space[4] }}>
+      <div
+        ref={scrollRef}
+        role="log"
+        aria-live="polite"
+        aria-label="Conversación con el coach"
+        style={{ flex: 1, overflow: "auto", padding: space[4] }}
+      >
+        {msgs.length === 0 && (
+          <div style={{
+            display: "grid",
+            placeItems: "center",
+            minHeight: "100%",
+            color: cssVar.textMuted,
+            fontSize: font.size.sm,
+            textAlign: "center",
+            padding: space[6],
+          }}>
+            <div>
+              <p style={{ margin: 0, fontSize: font.size.md, color: cssVar.textDim }}>
+                Conversa con tu coach neural.
+              </p>
+              <p style={{ margin: `${space[2]}px 0 0`, fontSize: font.size.sm, color: cssVar.textMuted }}>
+                Respuestas basadas en tu sesión y literatura publicada. No sustituye atención clínica.
+              </p>
+            </div>
+          </div>
+        )}
         {msgs.map((m, i) => (
           <div
             key={i}
@@ -103,10 +139,12 @@ export default function Coach() {
         gap: space[2],
       }}>
         <Input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder="¿Cómo te sientes hoy?"
+          aria-label="Mensaje para el coach"
           disabled={streaming}
           style={{ flex: 1 }}
         />
