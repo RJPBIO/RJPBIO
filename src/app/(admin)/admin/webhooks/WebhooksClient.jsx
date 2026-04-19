@@ -191,6 +191,7 @@ export default function WebhooksClient({ initial }) {
   }
 
   async function toggle(h) {
+    if (h.active && !confirm(`Pausar ${h.url}? Los eventos dejarán de entregarse hasta reactivarlo.`)) return;
     setRowBusy(`${h.id}:toggle`);
     try {
       const r = await fetch(`/api/v1/webhooks/${h.id}`, {

@@ -172,7 +172,7 @@ export default async function BillingPage() {
                   </td>
                   <td style={tdStyle}>
                     {inv.pdf
-                      ? <a href={inv.pdf} style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>PDF ↗</a>
+                      ? <a href={inv.pdf} target="_blank" rel="noopener noreferrer" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>PDF ↗</a>
                       : <span style={{ color: cssVar.textMuted }}>—</span>}
                   </td>
                 </tr>
