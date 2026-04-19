@@ -10,11 +10,13 @@ const AuthBadge = dynamic(() => import("./AuthBadge"), { ssr: false });
 const InstallBanner = dynamic(() => import("./InstallBanner"), { ssr: false });
 const OfflineChip = dynamic(() => import("./OfflineChip"), { ssr: false });
 const SWUpdateNotifier = dynamic(() => import("./SWUpdateNotifier"), { ssr: false });
+const ShortcutsHelp = dynamic(() => import("./ShortcutsHelp"), { ssr: false });
 
 export default function GlobalChrome() {
   return (
     <>
       <CommandPalette />
+      <ShortcutsHelp />
       <ToastHost />
       <AuthBadge />
       <InstallBanner />

@@ -281,6 +281,7 @@ function buildItems({ t, router, setLocale, close }) {
 
     { id: "act-quick",     group: act, icon: "⚡", label: t("cmd.quickSession"), href: "/ignicion/quick", keywords: "rapida sesion 60s" },
     { id: "act-export",    group: act, icon: "↓", label: t("cmd.exportJson"),    action: exportJson,       keywords: "download backup" },
+    { id: "act-shortcuts", group: act, icon: "?", label: "Atajos de teclado",    action: () => { try { window.dispatchEvent(new Event("bio-help:open")); } catch {} }, keywords: "keyboard shortcuts ayuda help hotkeys" },
 
     { id: "pref-theme-light", group: pref, icon: "☀", label: t("cmd.themeLight"), action: () => applyTheme("light"), keywords: "light claro" },
     { id: "pref-theme-dark",  group: pref, icon: "☾", label: t("cmd.themeDark"),  action: () => applyTheme("dark"),  keywords: "dark oscuro" },
