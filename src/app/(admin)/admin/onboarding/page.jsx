@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { resolveOrg } from "../../../../server/tenancy";
 import { db } from "../../../../server/db";
 import { Progress } from "@/components/ui/Progress";
@@ -59,6 +60,22 @@ export default async function Onboarding() {
         <Progress value={done} max={steps.length} tone="accent" size="md" />
       </div>
 
+      {done === steps.length && (
+        <div role="status" style={{
+          marginTop: space[4],
+          padding: space[4],
+          background: cssVar.accentSoft,
+          border: `1px solid ${cssVar.accent}`,
+          borderRadius: radius.md,
+          color: cssVar.text,
+        }}>
+          <strong style={{ color: cssVar.accent }}>Listo ✓</strong>
+          <span style={{ marginInlineStart: space[2], color: cssVar.textMuted, fontSize: font.size.sm }}>
+            Tu organización está configurada. Puedes seguir afinando cualquier paso desde su sección.
+          </span>
+        </div>
+      )}
+
       <ol style={{
         listStyle: "none",
         padding: 0,
@@ -106,8 +123,9 @@ export default async function Onboarding() {
               <span className="bi-sr-only">{s.done ? "Completado:" : "Pendiente:"}</span>
               {s.label}
             </span>
-            <a
+            <Link
               href={s.href}
+              prefetch
               style={{
                 color: cssVar.accent,
                 fontWeight: font.weight.semibold,
@@ -117,7 +135,7 @@ export default async function Onboarding() {
               }}
             >
               {s.done ? "Revisar →" : "Ir →"}
-            </a>
+            </Link>
           </li>
         ))}
       </ol>
