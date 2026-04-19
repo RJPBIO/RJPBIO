@@ -83,7 +83,7 @@ export default function Nom35DocumentClient({
 
         {alertas.length > 0 && (
           <div style={{ marginBottom: space[4] }}>
-            <Alert kind="warning">
+            <Alert kind="warn">
               <ul style={{ margin: 0, paddingLeft: space[4] }}>
                 {alertas.map((a, i) => <li key={i}>{a}</li>)}
               </ul>

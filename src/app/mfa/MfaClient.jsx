@@ -10,9 +10,11 @@ import { cssVar, space, font } from "@/components/ui/tokens";
 export default function MfaClient() {
   const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busyTotp, setBusyTotp] = useState(false);
+  const [busyPasskey, setBusyPasskey] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
+  const busy = busyTotp || busyPasskey;
 
   useEffect(() => {
     try {
@@ -24,7 +26,7 @@ export default function MfaClient() {
 
   async function onSubmit(e) {
     e.preventDefault();
-    setBusy(true); setErr(""); setOk("");
+    setBusyTotp(true); setErr(""); setOk("");
     try {
       const r = await fetch("/api/auth/mfa/verify", {
         method: "POST",
@@ -36,11 +38,11 @@ export default function MfaClient() {
       setTimeout(() => { location.href = "/"; }, 400);
     } catch (e) {
       setErr(e.message);
-    } finally { setBusy(false); }
+    } finally { setBusyTotp(false); }
   }
 
   async function usePasskey() {
-    setBusy(true); setErr(""); setOk("");
+    setBusyPasskey(true); setErr(""); setOk("");
     try {
       if (!email) throw new Error("Falta tu correo para ubicar la passkey.");
       const optsR = await fetch("/api/webauthn/auth", {
@@ -62,7 +64,7 @@ export default function MfaClient() {
       setTimeout(() => { location.href = "/"; }, 400);
     } catch (e) {
       setErr(e.message || "Error con passkey");
-    } finally { setBusy(false); }
+    } finally { setBusyPasskey(false); }
   }
 
   return (
@@ -91,8 +93,15 @@ export default function MfaClient() {
           )}
         </Field>
 
-        <Button type="submit" variant="primary" block disabled={busy || code.length !== 6}>
-          {busy ? "Verificando…" : "Verificar"}
+        <Button
+          type="submit"
+          variant="primary"
+          block
+          loading={busyTotp}
+          loadingLabel="Verificando…"
+          disabled={busy || code.length !== 6}
+        >
+          Verificar
         </Button>
 
         {err && <div style={{ marginTop: space[4] }}><Alert kind="danger">{err}</Alert></div>}
@@ -112,7 +121,15 @@ export default function MfaClient() {
           {(a) => <Input {...a} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tú@empresa.com" />}
         </Field>
 
-        <Button type="button" variant="secondary" block onClick={usePasskey} disabled={busy || !email}>
+        <Button
+          type="button"
+          variant="secondary"
+          block
+          onClick={usePasskey}
+          loading={busyPasskey}
+          loadingLabel="Verificando passkey…"
+          disabled={busy || !email}
+        >
           <span aria-hidden>🔑</span> Usar passkey
         </Button>
       </form>

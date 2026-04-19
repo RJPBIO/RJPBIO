@@ -334,7 +334,7 @@ function ResultPane({ result, onSubmit, submitting, submittedAt, error, complete
               />
             </div>
 
-            <Alert kind={result.nivel === "alto" || result.nivel === "muy_alto" ? "warning" : "info"}>
+            <Alert kind={result.nivel === "alto" || result.nivel === "muy_alto" ? "warn" : "info"}>
               <strong>Recomendación.</strong> {result.recomendacion}
             </Alert>
 
@@ -354,8 +354,14 @@ function ResultPane({ result, onSubmit, submitting, submittedAt, error, complete
             </ul>
 
             <div style={{ display: "flex", gap: space[3], marginTop: space[5], flexWrap: "wrap" }}>
-              <Button variant="primary" onClick={onSubmit} disabled={submitting || !!submittedAt}>
-                {submittedAt ? "Enviado ✓" : submitting ? "Enviando…" : "Enviar reporte a mi empresa"}
+              <Button
+                variant="primary"
+                onClick={onSubmit}
+                loading={submitting}
+                loadingLabel="Enviando…"
+                disabled={!!submittedAt}
+              >
+                {submittedAt ? "Enviado ✓" : "Enviar reporte a mi empresa"}
               </Button>
               <Button variant="secondary" href="/">
                 Ir a BIO-IGNICIÓN →
