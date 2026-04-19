@@ -15,6 +15,7 @@ export const es = {
     trust: "Seguridad",
     status: "Estado",
     demo: "Demo",
+    learn: "Aprende",
     roi: "ROI",
     signin: "Entrar",
   },

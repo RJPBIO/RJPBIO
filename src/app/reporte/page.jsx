@@ -38,7 +38,15 @@ function DeltaBadge({ delta, positiveIsBetter = true }) {
 export default function ReportePage() {
   const init = useStore((s) => s.init);
   const loaded = useStore((s) => s._loaded);
-  const st = useStore((s) => s);
+  const history = useStore((s) => s.history);
+  const moodLog = useStore((s) => s.moodLog);
+  const hrvLog = useStore((s) => s.hrvLog);
+  const instruments = useStore((s) => s.instruments);
+  const coherencia = useStore((s) => s.coherencia);
+  const resiliencia = useStore((s) => s.resiliencia);
+  const capacidad = useStore((s) => s.capacidad);
+  const streak = useStore((s) => s.streak);
+  const bestStreak = useStore((s) => s.bestStreak);
 
   useEffect(() => {
     if (!loaded) init?.();
@@ -49,13 +57,43 @@ export default function ReportePage() {
 
   const report = useMemo(() => {
     if (!loaded || now === null) return null;
-    return buildQuarterlyReport(st, { now, days: 90 });
-  }, [st, loaded, now]);
+    return buildQuarterlyReport(
+      { history, moodLog, hrvLog, instruments, coherencia, resiliencia, capacidad, streak, bestStreak },
+      { now, days: 90 }
+    );
+  }, [loaded, now, history, moodLog, hrvLog, instruments, coherencia, resiliencia, capacidad, streak, bestStreak]);
 
   if (!loaded || !report) {
     return (
-      <main className="page">
-        <p>Cargando informe…</p>
+      <main
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        style={{
+          maxWidth: 820,
+          margin: "0 auto",
+          padding: "32px 24px 64px",
+          fontFamily: "Inter, system-ui, sans-serif",
+        }}
+      >
+        <style>{`
+          @keyframes bi-skel { 0% { opacity: .55 } 50% { opacity: 1 } 100% { opacity: .55 } }
+          .skel { background: linear-gradient(90deg, #E2E8F0, #F1F5F9 50%, #E2E8F0); border-radius: 8px; animation: bi-skel 1.4s ease-in-out infinite; }
+          @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+          @media (prefers-color-scheme: dark) {
+            .skel { background: linear-gradient(90deg, #1E293B, #334155 50%, #1E293B); }
+          }
+        `}</style>
+        <span className="sr-only">Generando informe trimestral…</span>
+        <div className="skel" style={{ height: 32, width: "45%", marginBlockEnd: 12 }} />
+        <div className="skel" style={{ height: 14, width: "70%", marginBlockEnd: 28 }} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBlockEnd: 28 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="skel" style={{ height: 86 }} />
+          ))}
+        </div>
+        <div className="skel" style={{ height: 200, marginBlockEnd: 14 }} />
+        <div className="skel" style={{ height: 200 }} />
       </main>
     );
   }

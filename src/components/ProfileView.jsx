@@ -560,6 +560,24 @@ export default function ProfileView({
             </div>
             <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
           </Link>
+          <Link
+            href="/learn"
+            aria-label="Artículos de fundamentos"
+            style={{
+              display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+              paddingBlock: 10, paddingInline: 12,
+              background: isDark ? "#1A1E28" : "#F8FAFC",
+              border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
+              textAlign: "start", textDecoration: "none",
+            }}
+          >
+            <Icon name="lightbulb" size={14} color="#F59E0B" aria-hidden="true" />
+            <div style={{ flex: 1 }}>
+              <div style={{ ...ty.title(t1) }}>Aprende</div>
+              <div style={ty.caption(t3)}>HRV, cronotipo, respiración resonante · con citas</div>
+            </div>
+            <Icon name="chevron" size={12} color={t3} aria-hidden="true" />
+          </Link>
         </div>
       </article>
 

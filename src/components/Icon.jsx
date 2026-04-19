@@ -32,6 +32,7 @@ const ICON_MAP = {
   breath: Wind,
   mind: Brain,
   body: Heart,
+  heart: Heart,
 
   // Actions & indicators
   up: TrendingUp,

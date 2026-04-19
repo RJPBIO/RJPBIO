@@ -106,7 +106,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: space[1.5], marginBlockEnd: space[1] }}>
-            <Icon name="life-buoy" size={14} color={safety.level === "crisis" ? semantic.danger : semantic.warning} aria-hidden="true" />
+            <Icon name={safety.level === "crisis" ? "alert-triangle" : "shield"} size={14} color={safety.level === "crisis" ? semantic.danger : semantic.warning} aria-hidden="true" />
             <span style={{ ...ty.label(safety.level === "crisis" ? semantic.danger : semantic.warning), fontSize: font.size.sm }}>
               {safety.level === "crisis" ? "Apoyo humano ahora" : "Carga alta detectada"}
             </span>
