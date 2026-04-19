@@ -128,13 +128,26 @@ function DeliveriesDialog({ hookId, onClose }) {
   );
 }
 
+function isValidHttpsUrl(u) {
+  try {
+    const p = new URL(u);
+    return p.protocol === "https:" || p.protocol === "http:";
+  } catch { return false; }
+}
+
 export default function WebhooksClient({ initial }) {
   const [hooks, setHooks] = useState(initial);
   const [url, setUrl] = useState("");
+  const [urlTouched, setUrlTouched] = useState(false);
   const [events, setEvents] = useState(new Set(["session.completed"]));
   const [busy, setBusy] = useState(false);
+  const [rowBusy, setRowBusy] = useState(null); // "${id}:${action}"
   const [revealed, setRevealed] = useState(null);
   const [deliveriesFor, setDeliveriesFor] = useState(null);
+
+  const urlError = urlTouched && url && !isValidHttpsUrl(url)
+    ? "Debe ser una URL completa (https://…)"
+    : null;
 
   function toggleEvent(e) {
     setEvents((c) => { const n = new Set(c); n.has(e) ? n.delete(e) : n.add(e); return n; });
@@ -142,6 +155,7 @@ export default function WebhooksClient({ initial }) {
 
   async function create(e) {
     e.preventDefault();
+    if (!isValidHttpsUrl(url)) { setUrlTouched(true); return; }
     setBusy(true);
     try {
       const r = await fetch("/api/v1/webhooks", {
@@ -154,12 +168,14 @@ export default function WebhooksClient({ initial }) {
       setHooks((s) => [{ id: j.id, url: j.url, events: j.events, active: j.active, secretTail: j.secret.slice(-4), createdAt: new Date().toISOString() }, ...s]);
       setRevealed(j.secret);
       setUrl("");
+      setUrlTouched(false);
       toast.success("Webhook creado");
     } catch (err) { toast.error(err.message); }
     finally { setBusy(false); }
   }
 
   async function toggle(h) {
+    setRowBusy(`${h.id}:toggle`);
     try {
       const r = await fetch(`/api/v1/webhooks/${h.id}`, {
         method: "PATCH",
@@ -170,10 +186,12 @@ export default function WebhooksClient({ initial }) {
       if (!r.ok) throw new Error(j.error || "Error");
       setHooks((s) => s.map((x) => x.id === h.id ? { ...x, active: j.active } : x));
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   async function rotate(h) {
     if (!confirm(`Rotar secret de ${h.url}? La firma vieja deja de validar.`)) return;
+    setRowBusy(`${h.id}:rotate`);
     try {
       const r = await fetch(`/api/v1/webhooks/${h.id}?action=rotate`, {
         method: "POST",
@@ -184,9 +202,11 @@ export default function WebhooksClient({ initial }) {
       setRevealed(j.secret);
       setHooks((s) => s.map((x) => x.id === h.id ? { ...x, secretTail: j.secret.slice(-4) } : x));
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   async function testPing(h) {
+    setRowBusy(`${h.id}:test`);
     try {
       const r = await fetch(`/api/v1/webhooks/${h.id}?action=test`, {
         method: "POST",
@@ -195,10 +215,12 @@ export default function WebhooksClient({ initial }) {
       if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || "Error"); }
       toast.success("Ping enviado — revisa entregas");
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   async function remove(h) {
     if (!confirm(`Eliminar webhook ${h.url}?`)) return;
+    setRowBusy(`${h.id}:delete`);
     try {
       const r = await fetch(`/api/v1/webhooks/${h.id}`, {
         method: "DELETE",
@@ -208,6 +230,7 @@ export default function WebhooksClient({ initial }) {
       setHooks((s) => s.filter((x) => x.id !== h.id));
       toast.success("Webhook eliminado");
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   return (
@@ -222,7 +245,25 @@ export default function WebhooksClient({ initial }) {
       >
         <label>
           <span style={labelStyle}>URL del endpoint</span>
-          <Input value={url} onChange={(e) => setUrl(e.target.value)} type="url" placeholder="https://tu-endpoint.com/hook" required />
+          <Input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onBlur={() => setUrlTouched(true)}
+            type="url"
+            placeholder="https://tu-endpoint.com/hook"
+            required
+            aria-invalid={urlError ? true : undefined}
+            aria-describedby={urlError ? "webhook-url-error" : undefined}
+          />
+          {urlError && (
+            <span
+              id="webhook-url-error"
+              role="alert"
+              style={{ display: "block", marginTop: space[1], fontSize: font.size.sm, color: cssVar.danger }}
+            >
+              {urlError}
+            </span>
+          )}
         </label>
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
           <legend style={{ ...labelStyle, padding: 0, marginBottom: space[2] }}>Eventos</legend>
@@ -242,8 +283,15 @@ export default function WebhooksClient({ initial }) {
             ))}
           </div>
         </fieldset>
-        <Button type="submit" variant="primary" disabled={busy || !url || events.size === 0} style={{ justifySelf: "start" }}>
-          {busy ? "Creando…" : "Crear webhook"}
+        <Button
+          type="submit"
+          variant="primary"
+          loading={busy}
+          loadingLabel="Creando…"
+          disabled={!url || events.size === 0 || !!urlError}
+          style={{ justifySelf: "start" }}
+        >
+          Crear webhook
         </Button>
       </form>
 
@@ -254,28 +302,33 @@ export default function WebhooksClient({ initial }) {
         </div>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
-          {hooks.map((h) => (
-            <li key={h.id} style={{
-              padding: space[4],
-              background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: space[2], alignItems: "center" }}>
-                <span style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, wordBreak: "break-all", color: cssVar.text }}>{h.url}</span>
-                <Badge variant={h.active ? "success" : "warn"} size="sm">{h.active ? "Activo" : "Pausado"}</Badge>
-              </div>
-              <div style={{ marginTop: space[2], display: "flex", flexWrap: "wrap", gap: space[1] }}>
-                {(h.events || []).map((e) => <Badge key={e} variant="soft" size="sm">{e}</Badge>)}
-                <Badge variant="neutral" size="sm">secret …{h.secretTail}</Badge>
-              </div>
-              <div style={{ marginTop: space[3], display: "flex", gap: space[1], flexWrap: "wrap" }}>
-                <Button size="sm" variant="ghost" onClick={() => toggle(h)}>{h.active ? "Pausar" : "Reactivar"}</Button>
-                <Button size="sm" variant="ghost" onClick={() => testPing(h)}>Test ping</Button>
-                <Button size="sm" variant="ghost" onClick={() => setDeliveriesFor(h.id)}>Ver entregas</Button>
-                <Button size="sm" variant="ghost" onClick={() => rotate(h)}>Rotar secret</Button>
-                <Button size="sm" variant="danger" onClick={() => remove(h)}>Eliminar</Button>
-              </div>
-            </li>
-          ))}
+          {hooks.map((h) => {
+            const anyBusy = rowBusy?.startsWith(`${h.id}:`);
+            const busyKey = anyBusy ? rowBusy.split(":")[1] : null;
+            const otherBusy = (k) => anyBusy && busyKey !== k;
+            return (
+              <li key={h.id} style={{
+                padding: space[4],
+                background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: space[2], alignItems: "center" }}>
+                  <span style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, wordBreak: "break-all", color: cssVar.text }}>{h.url}</span>
+                  <Badge variant={h.active ? "success" : "warn"} size="sm">{h.active ? "Activo" : "Pausado"}</Badge>
+                </div>
+                <div style={{ marginTop: space[2], display: "flex", flexWrap: "wrap", gap: space[1] }}>
+                  {(h.events || []).map((e) => <Badge key={e} variant="soft" size="sm">{e}</Badge>)}
+                  <Badge variant="neutral" size="sm">secret …{h.secretTail}</Badge>
+                </div>
+                <div style={{ marginTop: space[3], display: "flex", gap: space[1], flexWrap: "wrap" }}>
+                  <Button size="sm" variant="ghost" onClick={() => toggle(h)}   loading={busyKey === "toggle"} disabled={otherBusy("toggle")}>{h.active ? "Pausar" : "Reactivar"}</Button>
+                  <Button size="sm" variant="ghost" onClick={() => testPing(h)} loading={busyKey === "test"}   disabled={otherBusy("test")}>Test ping</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setDeliveriesFor(h.id)} disabled={anyBusy}>Ver entregas</Button>
+                  <Button size="sm" variant="ghost" onClick={() => rotate(h)}   loading={busyKey === "rotate"} disabled={otherBusy("rotate")}>Rotar secret</Button>
+                  <Button size="sm" variant="danger" onClick={() => remove(h)}  loading={busyKey === "delete"} disabled={otherBusy("delete")}>Eliminar</Button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 

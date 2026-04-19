@@ -27,6 +27,7 @@ export default function StationsClient({ orgId, origin, initial }) {
   const [rows, setRows] = useState(initial || []);
   const [draft, setDraft] = useState({ label: "", location: "", policy: "ENTRY_EXIT" });
   const [busy, setBusy] = useState(false);
+  const [rowBusy, setRowBusy] = useState(null); // "${id}:${action}"
   const [reveal, setReveal] = useState(null);
   const [copied, setCopied] = useState(false);
   const [q, setQ] = useState("");
@@ -68,29 +69,35 @@ export default function StationsClient({ orgId, origin, initial }) {
   }, [draft, orgId]);
 
   const toggleActive = useCallback(async (id, active) => {
-    const r = await fetch(`/api/v1/stations/${id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json", ...csrfHeaders() },
-      body: JSON.stringify({ active: !active }),
-    });
-    if (r.ok) {
-      setRows((x) => x.map((s) => s.id === id ? { ...s, active: !active } : s));
-      toast.success(active ? "Estación desactivada" : "Estación activada");
-    } else {
-      toast.error("No se pudo actualizar");
-    }
+    setRowBusy(`${id}:toggle`);
+    try {
+      const r = await fetch(`/api/v1/stations/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json", ...csrfHeaders() },
+        body: JSON.stringify({ active: !active }),
+      });
+      if (r.ok) {
+        setRows((x) => x.map((s) => s.id === id ? { ...s, active: !active } : s));
+        toast.success(active ? "Estación desactivada" : "Estación activada");
+      } else {
+        toast.error("No se pudo actualizar");
+      }
+    } finally { setRowBusy(null); }
   }, []);
 
   const rotate = useCallback(async (id) => {
     if (!confirm("Rotar clave invalidará los tags impresos. ¿Continuar?")) return;
-    const r = await fetch(`/api/v1/stations/${id}?action=rotate`, { method: "POST", headers: csrfHeaders() });
-    const j = await r.json();
-    if (r.ok) {
-      setReveal({ id, label: rows.find((s) => s.id === id)?.label || "", tapUrl: j.tapUrl, rotated: true });
-      toast.success("Clave rotada");
-    } else {
-      toast.error("Falló: " + j.error);
-    }
+    setRowBusy(`${id}:rotate`);
+    try {
+      const r = await fetch(`/api/v1/stations/${id}?action=rotate`, { method: "POST", headers: csrfHeaders() });
+      const j = await r.json();
+      if (r.ok) {
+        setReveal({ id, label: rows.find((s) => s.id === id)?.label || "", tapUrl: j.tapUrl, rotated: true });
+        toast.success("Clave rotada");
+      } else {
+        toast.error("Falló: " + j.error);
+      }
+    } finally { setRowBusy(null); }
   }, [rows]);
 
   async function copyUrl() {
@@ -128,14 +135,29 @@ export default function StationsClient({ orgId, origin, initial }) {
     },
     {
       key: "__actions", label: "", align: "right", width: 200,
-      render: (s) => (
-        <span style={{ display: "inline-flex", gap: space[1] }}>
-          <Button size="sm" variant="ghost" onClick={() => toggleActive(s.id, s.active)}>
-            {s.active ? "Desactivar" : "Activar"}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => rotate(s.id)}>Rotar</Button>
-        </span>
-      ),
+      render: (s) => {
+        const anyBusy = rowBusy?.startsWith(`${s.id}:`);
+        return (
+          <span style={{ display: "inline-flex", gap: space[1] }}>
+            <Button
+              size="sm" variant="ghost"
+              onClick={() => toggleActive(s.id, s.active)}
+              loading={rowBusy === `${s.id}:toggle`}
+              disabled={anyBusy && rowBusy !== `${s.id}:toggle`}
+            >
+              {s.active ? "Desactivar" : "Activar"}
+            </Button>
+            <Button
+              size="sm" variant="ghost"
+              onClick={() => rotate(s.id)}
+              loading={rowBusy === `${s.id}:rotate`}
+              disabled={anyBusy && rowBusy !== `${s.id}:rotate`}
+            >
+              Rotar
+            </Button>
+          </span>
+        );
+      },
     },
   ];
 
@@ -204,8 +226,8 @@ export default function StationsClient({ orgId, origin, initial }) {
             {POLICIES.map((p) => <option key={p.v} value={p.v}>{p.l}</option>)}
           </Select>
         </label>
-        <Button type="submit" variant="primary" disabled={busy}>
-          {busy ? "Creando…" : "Crear estación"}
+        <Button type="submit" variant="primary" loading={busy} loadingLabel="Creando…">
+          Crear estación
         </Button>
       </form>
 

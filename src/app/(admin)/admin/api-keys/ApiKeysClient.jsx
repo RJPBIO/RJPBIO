@@ -67,6 +67,7 @@ export default function ApiKeysClient({ initial }) {
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState(new Set(["read:sessions"]));
   const [busy, setBusy] = useState(false);
+  const [rowBusy, setRowBusy] = useState(null); // "${id}:${action}"
   const [revealed, setRevealed] = useState(null);
 
   function toggleScope(s) {
@@ -99,6 +100,7 @@ export default function ApiKeysClient({ initial }) {
 
   async function rotate(k) {
     if (!confirm(`Rotar "${k.name}"? La clave actual quedará revocada inmediatamente.`)) return;
+    setRowBusy(`${k.id}:rotate`);
     try {
       const r = await fetch(`/api/v1/api-keys/${k.id}?action=rotate`, {
         method: "POST",
@@ -113,10 +115,12 @@ export default function ApiKeysClient({ initial }) {
       setRevealed(j.token);
       toast.success("Clave rotada");
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   async function revoke(k) {
     if (!confirm(`Revocar "${k.name}"? Cualquier integración que la use dejará de funcionar.`)) return;
+    setRowBusy(`${k.id}:revoke`);
     try {
       const r = await fetch(`/api/v1/api-keys/${k.id}`, {
         method: "DELETE",
@@ -126,6 +130,7 @@ export default function ApiKeysClient({ initial }) {
       setKeys((s) => s.map((x) => x.id === k.id ? { ...x, revokedAt: new Date().toISOString() } : x));
       toast.success("Clave revocada");
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   const columns = [
@@ -144,12 +149,18 @@ export default function ApiKeysClient({ initial }) {
     { key: "state", label: "Estado", width: 110, render: (k) => k.revokedAt ? <Badge variant="danger" size="sm">Revocada</Badge> : <Badge variant="success" size="sm">Activa</Badge> },
     {
       key: "__actions", label: "", align: "right", width: 170,
-      render: (k) => !k.revokedAt && (
-        <span style={{ display: "inline-flex", gap: space[1] }}>
-          <Button size="sm" variant="ghost"  onClick={() => rotate(k)}>Rotar</Button>
-          <Button size="sm" variant="danger" onClick={() => revoke(k)}>Revocar</Button>
-        </span>
-      ),
+      render: (k) => {
+        if (k.revokedAt) return null;
+        const rotating = rowBusy === `${k.id}:rotate`;
+        const revoking = rowBusy === `${k.id}:revoke`;
+        const otherBusy = rowBusy && !rowBusy.startsWith(`${k.id}:`);
+        return (
+          <span style={{ display: "inline-flex", gap: space[1] }}>
+            <Button size="sm" variant="ghost"  onClick={() => rotate(k)} loading={rotating} disabled={otherBusy || revoking}>Rotar</Button>
+            <Button size="sm" variant="danger" onClick={() => revoke(k)} loading={revoking} disabled={otherBusy || rotating}>Revocar</Button>
+          </span>
+        );
+      },
     },
   ];
 
@@ -186,8 +197,15 @@ export default function ApiKeysClient({ initial }) {
             ))}
           </div>
         </fieldset>
-        <Button type="submit" variant="primary" disabled={busy || !name.trim() || scopes.size === 0} style={{ justifySelf: "start" }}>
-          {busy ? "Creando…" : "Crear clave"}
+        <Button
+          type="submit"
+          variant="primary"
+          loading={busy}
+          loadingLabel="Creando…"
+          disabled={!name.trim() || scopes.size === 0}
+          style={{ justifySelf: "start" }}
+        >
+          Crear clave
         </Button>
       </form>
 

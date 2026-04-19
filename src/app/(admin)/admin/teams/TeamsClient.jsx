@@ -18,6 +18,7 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
   const [name, setName] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
   const [creating, setCreating] = useState(false);
+  const [rowBusy, setRowBusy] = useState(null); // "${id}:${action}"
   const [q, setQ] = useState("");
 
   const filteredTeams = useMemo(() => {
@@ -55,6 +56,7 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
   }
 
   async function saveEdit(id) {
+    setRowBusy(`${id}:save`);
     try {
       const r = await fetch(`/api/v1/teams/${id}`, {
         method: "PATCH",
@@ -67,10 +69,12 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
       setEditing(null);
       toast.success("Equipo actualizado");
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   async function removeTeam(t) {
     if (!confirm(`¿Eliminar equipo "${t.name}"? Sus ${t._members} miembros quedarán sin equipo.`)) return;
+    setRowBusy(`${t.id}:delete`);
     try {
       const r = await fetch(`/api/v1/teams/${t.id}`, {
         method: "DELETE",
@@ -80,6 +84,7 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
       setTeams((s) => s.filter((x) => x.id !== t.id));
       toast.success("Equipo eliminado");
     } catch (err) { toast.error(err.message); }
+    finally { setRowBusy(null); }
   }
 
   const columns = [
@@ -107,17 +112,22 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
     },
     {
       key: "__actions", label: "", align: "right", width: 200,
-      render: (t) => editing === t.id ? (
-        <span style={{ display: "inline-flex", gap: space[1] }}>
-          <Button size="sm" variant="primary" onClick={() => saveEdit(t.id)}>Guardar</Button>
-          <Button size="sm" variant="ghost"   onClick={() => setEditing(null)}>Cancelar</Button>
-        </span>
-      ) : (
-        <span style={{ display: "inline-flex", gap: space[1] }}>
-          <Button size="sm" variant="ghost"  onClick={() => startEdit(t)}>Editar</Button>
-          <Button size="sm" variant="danger" onClick={() => removeTeam(t)}>Eliminar</Button>
-        </span>
-      ),
+      render: (t) => {
+        const savingThis = rowBusy === `${t.id}:save`;
+        const deletingThis = rowBusy === `${t.id}:delete`;
+        const otherBusy = rowBusy && !rowBusy.startsWith(`${t.id}:`);
+        return editing === t.id ? (
+          <span style={{ display: "inline-flex", gap: space[1] }}>
+            <Button size="sm" variant="primary" onClick={() => saveEdit(t.id)} loading={savingThis} disabled={otherBusy}>Guardar</Button>
+            <Button size="sm" variant="ghost"   onClick={() => setEditing(null)} disabled={savingThis}>Cancelar</Button>
+          </span>
+        ) : (
+          <span style={{ display: "inline-flex", gap: space[1] }}>
+            <Button size="sm" variant="ghost"  onClick={() => startEdit(t)} disabled={!!rowBusy}>Editar</Button>
+            <Button size="sm" variant="danger" onClick={() => removeTeam(t)} loading={deletingThis} disabled={otherBusy}>Eliminar</Button>
+          </span>
+        );
+      },
     },
   ];
 
@@ -142,8 +152,8 @@ export default function TeamsClient({ initial, managersById, unassigned }) {
           <span style={labelStyle}>Manager (opcional)</span>
           <Input name="managerEmail" placeholder="email@empresa.com" type="email" />
         </label>
-        <Button type="submit" variant="primary" disabled={creating}>
-          {creating ? "Creando…" : "Crear equipo"}
+        <Button type="submit" variant="primary" loading={creating} loadingLabel="Creando…">
+          Crear equipo
         </Button>
       </form>
 

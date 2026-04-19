@@ -180,8 +180,8 @@ export default function MembersClient({ initialRows, orgId }) {
                 <option value="VIEWER">Viewer</option>
               </Select>
             </div>
-            <Button type="submit" variant="primary" disabled={busy}>
-              {busy ? "Enviando…" : "Enviar invitaciones"}
+            <Button type="submit" variant="primary" loading={busy} loadingLabel="Enviando…">
+              Enviar invitaciones
             </Button>
           </div>
         </form>
