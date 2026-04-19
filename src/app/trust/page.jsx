@@ -17,7 +17,7 @@ const LINKS = [
   { label: "Reporte de pentest (NDA)", href: "mailto:trust@bio-ignicion.app" },
   { label: "Security questionnaire (CAIQ/SIG, NDA)", href: "mailto:trust@bio-ignicion.app" },
   { label: "Status page", href: "https://status.bio-ignicion.app" },
-  { label: "Responsible disclosure", href: "/trust/security" },
+  { label: "Responsible disclosure (security.txt)", href: "/.well-known/security.txt" },
 ];
 
 export default function TrustCenter() {

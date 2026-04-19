@@ -21,7 +21,8 @@ export default function DPA() {
         DPA — Data Processing Addendum
       </h1>
       <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[2] }}>
-        Anexo al contrato de servicios. Aplica GDPR, LFPDPPP, LGPD, CCPA.
+        Versión 1.2 · vigente desde <time dateTime="2026-04-01">1 abril 2026</time> ·
+        anexo al contrato de servicios. Aplica GDPR, LFPDPPP, LGPD, CCPA.
       </p>
 
       <h2 style={h2Style}>1. Roles</h2>
@@ -34,7 +35,7 @@ export default function DPA() {
       <p>Todo el personal con acceso a datos firma acuerdos de confidencialidad perpetuos.</p>
 
       <h2 style={h2Style}>4. Seguridad</h2>
-      <p>TLS 1.3, AES-256-GCM en reposo, SSO, MFA, auditoría append-only con cadena SHA-256, RLS en Postgres, BYOK opcional. Ver <a href="/SECURITY.md" style={linkStyle}>SECURITY.md</a>.</p>
+      <p>TLS 1.3, AES-256-GCM en reposo, SSO, MFA, auditoría append-only con cadena SHA-256, RLS en Postgres, BYOK opcional. Ver <a href="/trust" style={linkStyle}>Trust Center</a> y <a href="/.well-known/security.txt" style={linkStyle}>security.txt</a>.</p>
 
       <h2 style={h2Style}>5. Subencargados</h2>
       <p>Notificamos nuevos subencargados con <b>30 días</b> de antelación en /trust/subprocessors; el cliente puede objetar.</p>
@@ -43,7 +44,7 @@ export default function DPA() {
       <p>SCCs UE 2021/914 + evaluación TIA cuando aplique; datos residen en la región elegida (US/EU/APAC/LATAM).</p>
 
       <h2 style={h2Style}>7. Derechos del titular</h2>
-      <p>Acceso, rectificación, supresión, portabilidad vía API: ver <a href="/API.md" style={linkStyle}>API.md</a>.</p>
+      <p>Acceso, rectificación, supresión, portabilidad vía API: ver <a href="/docs" style={linkStyle}>documentación pública</a>.</p>
 
       <h2 style={h2Style}>8. Brechas</h2>
       <p>Notificación dentro de <b>72 horas</b> al contacto designado por el cliente.</p>

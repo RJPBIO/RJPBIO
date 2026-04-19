@@ -82,7 +82,7 @@ export default async function DemoPage() {
 
           <Card as="section" padding={7} aria-labelledby="demo-form-title">
             <h2 id="demo-form-title" style={{ margin: `0 0 ${space[4]}px` }}>{c.formTitle}</h2>
-            <DemoForm source="demo" />
+            <DemoForm source="demo" locale={locale} />
           </Card>
         </div>
       </Container>
