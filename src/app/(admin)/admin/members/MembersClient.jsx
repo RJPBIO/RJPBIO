@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/Toast";
 import { DataTable, TableToolbar } from "@/components/ui/Table";
 import { Input, Select, Textarea } from "@/components/ui/Input";
@@ -8,6 +8,24 @@ import { Badge } from "@/components/ui/Badge";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const PAGE = 25;
+
+function HeaderCheckbox({ checked, indeterminate, onChange }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = !!indeterminate;
+  }, [indeterminate]);
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      aria-label="Seleccionar todos en esta página"
+      aria-checked={indeterminate ? "mixed" : checked}
+      style={{ accentColor: "var(--bi-accent)" }}
+    />
+  );
+}
 
 function toCSV(rows) {
   const header = ["email", "name", "role", "since", "scim"];
@@ -53,7 +71,9 @@ export default function MembersClient({ initialRows, orgId }) {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const slice = filtered.slice(page * PAGE, page * PAGE + PAGE);
 
-  const allChecked = slice.length > 0 && slice.every((r) => selected.has(r.id));
+  const selectedInSlice = slice.reduce((acc, r) => acc + (selected.has(r.id) ? 1 : 0), 0);
+  const allChecked = slice.length > 0 && selectedInSlice === slice.length;
+  const someChecked = selectedInSlice > 0 && selectedInSlice < slice.length;
   const toggleAll = () => {
     const next = new Set(selected);
     if (allChecked) slice.forEach((r) => next.delete(r.id));
@@ -90,11 +110,13 @@ export default function MembersClient({ initialRows, orgId }) {
     } finally { setBusy(false); }
   }
 
-  const ACTION_LABEL = { remove: "Eliminar" };
+  const ACTION_CONFIRM = {
+    remove: (n) => `¿Eliminar ${n} miembro(s)? Perderán acceso inmediatamente. Los datos de sesión se conservan según tu política de retención.`,
+  };
   async function bulkAction(action) {
     if (!selected.size) return;
-    const label = ACTION_LABEL[action] || action;
-    if (!confirm(`¿${label} a ${selected.size} miembro(s)?`)) return;
+    const msg = ACTION_CONFIRM[action]?.(selected.size) || `¿${action} a ${selected.size} miembro(s)?`;
+    if (!confirm(msg)) return;
     setBusy(true);
     try {
       const res = await fetch("/api/members/bulk", {
@@ -114,7 +136,7 @@ export default function MembersClient({ initialRows, orgId }) {
   const columns = [
     {
       key: "__check", label: (
-        <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="Seleccionar todos" style={{ accentColor: "var(--bi-accent)" }} />
+        <HeaderCheckbox checked={allChecked} indeterminate={someChecked} onChange={toggleAll} />
       ), width: 40,
       render: (r) => (
         <input
