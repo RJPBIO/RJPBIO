@@ -3,6 +3,7 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font, radius } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
+import { EVIDENCE } from "@/lib/evidence";
 import PricingCards from "./PricingCards";
 
 export const metadata = {
@@ -136,6 +137,25 @@ const COPY = {
       { label: "CFDI 4.0", hint: "Facturación MX" },
       { label: "Audit log", hint: "Hash chain verificable" },
     ],
+    proofTitle: "Por qué puedes creer esto sin un muro de logos",
+    proofSub: "Estamos en pre-lanzamiento — no vamos a inventar testimonios. Las señales que importan aquí son auditables, no decorativas.",
+    proofStat1Label: "protocolos con mecanismo documentado",
+    proofStat2Label: "estudios citados con DOI verificable",
+    proofStat3Value: "0",
+    proofStat3Label: "puntajes propietarios sin referencia pública",
+    proofStat1Sub: (n) => `Ver los ${n} en /evidencia`,
+    proofStat2Sub: "Cohen 1988 · Task Force 1996 · Shaffer 2017…",
+    proofStat3Sub: "Si aparece en el reporte, su fuente es pública",
+    partnerTitle: "Programa de Design Partners",
+    partnerBody: "Buscamos 10 organizaciones (20–500 personas) para implementar BIO-IGNICIÓN antes del lanzamiento público. A cambio: tarifa fundacional de por vida, roadmap compartido y acceso directo al equipo que escribió este código.",
+    partnerCta: "Aplica como Design Partner",
+    founderTitle: "Los fundadores responden directo",
+    founderBody: (
+      <>
+        Si algo no cuadra — técnico, comercial o de privacidad — escribe a{" "}
+        <a href="mailto:hello@bio-ignicion.app">hello@bio-ignicion.app</a>. Responde el equipo que construyó esto, no una bandeja compartida.
+      </>
+    ),
     faqs: [
       { q: "¿Puedo cambiar de plan sin costo?", a: "Sí. Los upgrades aplican de inmediato con prorrateo automático; los downgrades toman efecto al próximo ciclo, sin penalizaciones." },
       { q: "¿Qué pasa con mis datos si cancelo?", a: "Exportas en JSON + CSV desde el panel antes de terminar el ciclo. Eliminamos los datos a los 30 días — o al momento si tu DPA lo especifica." },
@@ -267,6 +287,25 @@ const COPY = {
       { label: "CFDI 4.0", hint: "MX invoicing" },
       { label: "Audit log", hint: "Verifiable hash chain" },
     ],
+    proofTitle: "Why you can trust this without a wall of logos",
+    proofSub: "We're pre-launch — we won't fake testimonials. The signals that matter here are auditable, not decorative.",
+    proofStat1Label: "protocols with documented mechanism",
+    proofStat2Label: "studies cited with verifiable DOIs",
+    proofStat3Value: "0",
+    proofStat3Label: "proprietary scores without public reference",
+    proofStat1Sub: (n) => `See all ${n} at /evidencia`,
+    proofStat2Sub: "Cohen 1988 · Task Force 1996 · Shaffer 2017…",
+    proofStat3Sub: "If it shows up in the report, its source is public",
+    partnerTitle: "Design Partner Program",
+    partnerBody: "We're taking 10 organizations (20–500 people) live with BIO-IGNITION before public launch. In return: founder-tier pricing for life, shared roadmap, and direct access to the team that wrote this code.",
+    partnerCta: "Apply as a Design Partner",
+    founderTitle: "The founders answer directly",
+    founderBody: (
+      <>
+        If something doesn't add up — technical, commercial or privacy — write to{" "}
+        <a href="mailto:hello@bio-ignicion.app">hello@bio-ignicion.app</a>. The people who built this answer, not a shared inbox.
+      </>
+    ),
     faqs: [
       { q: "Can I change plans at no cost?", a: "Yes. Upgrades apply immediately with automatic proration; downgrades take effect next cycle — no penalties." },
       { q: "What happens to my data if I cancel?", a: "You export JSON + CSV from the panel before your cycle ends. We delete data within 30 days — or immediately if your DPA specifies so." },
@@ -284,6 +323,10 @@ export default async function PricingPage() {
   const locale = await getServerLocale();
   const L = locale === "en" ? "en" : "es";
   const c = COPY[L];
+
+  const evidenceEntries = Object.values(EVIDENCE);
+  const protocolCount = evidenceEntries.length;
+  const studyCount = evidenceEntries.reduce((n, e) => n + (e.studies?.length || 0), 0);
 
   const plans = [
     {
@@ -399,6 +442,86 @@ export default async function PricingPage() {
           </ul>
         </section>
 
+        <section aria-labelledby="proof" style={{ marginTop: space[12], maxWidth: 960, marginInline: "auto" }}>
+          <header style={{ textAlign: "center", marginBottom: space[6] }}>
+            <h2 id="proof" style={{ marginBottom: space[2] }}>{c.proofTitle}</h2>
+            <p style={{ color: cssVar.textDim, maxWidth: 640, marginInline: "auto" }}>{c.proofSub}</p>
+          </header>
+
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: space[3],
+              marginBlockEnd: space[6],
+            }}
+          >
+            <ProofStat value={String(protocolCount)} label={c.proofStat1Label} sub={c.proofStat1Sub(protocolCount)} />
+            <ProofStat value={String(studyCount)}    label={c.proofStat2Label} sub={c.proofStat2Sub} />
+            <ProofStat value={c.proofStat3Value}     label={c.proofStat3Label} sub={c.proofStat3Sub} />
+          </ul>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: space[4],
+            }}
+          >
+            <article
+              style={{
+                padding: space[6],
+                borderRadius: radius.lg,
+                border: `2px solid ${cssVar.accent}`,
+                background: cssVar.accentSoft,
+                display: "flex",
+                flexDirection: "column",
+                gap: space[3],
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: font.size.xl, color: cssVar.text }}>{c.partnerTitle}</h3>
+              <p style={{ margin: 0, color: cssVar.textDim, lineHeight: 1.6 }}>{c.partnerBody}</p>
+              <div style={{ marginTop: "auto" }}>
+                <a
+                  href="mailto:partners@bio-ignicion.app?subject=Design%20Partner"
+                  className="bi-btn bi-btn-primary"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: `${space[2]}px ${space[4]}px`,
+                    borderRadius: radius.full,
+                    background: cssVar.accent,
+                    color: cssVar.accentInk,
+                    textDecoration: "none",
+                    fontWeight: font.weight.bold,
+                    fontSize: font.size.md,
+                  }}
+                >
+                  {c.partnerCta}
+                </a>
+              </div>
+            </article>
+
+            <article
+              style={{
+                padding: space[6],
+                borderRadius: radius.lg,
+                border: `1px solid ${cssVar.border}`,
+                background: cssVar.surface,
+                display: "flex",
+                flexDirection: "column",
+                gap: space[3],
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: font.size.xl, color: cssVar.text }}>{c.founderTitle}</h3>
+              <p style={{ margin: 0, color: cssVar.textDim, lineHeight: 1.6 }}>{c.founderBody}</p>
+            </article>
+          </div>
+        </section>
+
         <section aria-labelledby="faq" style={{ marginTop: space[12], maxWidth: 720, marginInline: "auto" }}>
           <h2 id="faq" style={{ marginBottom: space[4] }}>{c.faqTitle}</h2>
           {c.faqs.map((f, i) => (
@@ -477,6 +600,39 @@ function CompareTable({ groups, cols }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+function ProofStat({ value, label, sub }) {
+  return (
+    <li
+      style={{
+        padding: space[5],
+        borderRadius: radius.lg,
+        border: `1px solid ${cssVar.border}`,
+        background: cssVar.surface,
+        display: "flex",
+        flexDirection: "column",
+        gap: space[1],
+      }}
+    >
+      <span style={{
+        fontSize: 44,
+        fontWeight: font.weight.black,
+        fontFamily: cssVar.fontMono,
+        color: cssVar.accent,
+        letterSpacing: "-1px",
+        lineHeight: 1,
+      }}>
+        {value}
+      </span>
+      <span style={{ fontSize: font.size.md, color: cssVar.text, fontWeight: font.weight.semibold, lineHeight: 1.3 }}>
+        {label}
+      </span>
+      <span style={{ fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: 1.5 }}>
+        {sub}
+      </span>
+    </li>
   );
 }
 
