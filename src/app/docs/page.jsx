@@ -126,6 +126,7 @@ session = requests.post(
 export const metadata = {
   title: "API Docs",
   description: "Documentación pública de la API v1 — autenticación Bearer, webhooks firmados, rate-limits.",
+  alternates: { canonical: "/docs" },
   openGraph: {
     title: "BIO-IGNICIÓN · API Docs",
     description: "API v1 · OpenAPI 3.1 · Standard Webhooks · RFC 9331 rate-limits",

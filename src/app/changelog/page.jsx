@@ -14,7 +14,7 @@ export const metadata = {
     description: "Qué hay de nuevo.",
     images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
-  alternates: { types: { "application/rss+xml": "/changelog.xml" } },
+  alternates: { canonical: "/changelog", types: { "application/rss+xml": "/changelog.xml" } },
 };
 
 const TAG_KEYS = {

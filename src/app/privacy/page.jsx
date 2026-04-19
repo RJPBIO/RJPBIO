@@ -5,6 +5,7 @@ import { cssVar, space, font } from "@/components/ui/tokens";
 export const metadata = {
   title: "Privacidad",
   description: "Política de privacidad de BIO-IGNICIÓN",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {

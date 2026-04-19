@@ -8,6 +8,7 @@ import { getServerLocale } from "@/lib/locale-server";
 export const metadata = {
   title: "Demo",
   description: "30 minutos con un especialista. Protocolo en vivo + dashboard de equipo con datos simulados.",
+  alternates: { canonical: "/demo" },
   openGraph: {
     title: "BIO-IGNICIÓN · Demo 1:1",
     description: "Ve un protocolo neural en vivo. Sin slides.",

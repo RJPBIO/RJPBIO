@@ -28,7 +28,7 @@ const RTL_LOCALES = new Set(["ar", "he", "fa", "ur"]);
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://bio-ignicion.app"),
   title: { default: "BIO-IGNICIÓN", template: "%s · BIO-IGNICIÓN" },
   description: "Plataforma de Optimización Humana — Neural Performance System",
   manifest: "/manifest.webmanifest",
@@ -42,7 +42,12 @@ export const metadata = {
     description: "Plataforma de Optimización Humana",
     images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
-  twitter: { card: "summary_large_image", title: "BIO-IGNICIÓN" },
+  twitter: {
+    card: "summary_large_image",
+    title: "BIO-IGNICIÓN",
+    description: "Plataforma de Optimización Humana — entrena el sistema nervioso con evidencia.",
+    images: ["/screenshots/ignicion-wide.svg"],
+  },
   robots: { index: true, follow: true },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
@@ -65,6 +70,35 @@ export const viewport = {
   colorScheme: "light dark",
 };
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://bio-ignicion.app";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "BIO-IGNICIÓN",
+    url: BASE_URL,
+    logo: `${BASE_URL}/icon.svg`,
+    sameAs: [],
+    contactPoint: [
+      { "@type": "ContactPoint", email: "hello@bio-ignicion.app", contactType: "sales", availableLanguage: ["es", "en"] },
+      { "@type": "ContactPoint", email: "trust@bio-ignicion.app", contactType: "customer support", availableLanguage: ["es", "en"] },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "BIO-IGNICIÓN",
+    url: BASE_URL,
+    inLanguage: ["es-MX", "en-US"],
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${BASE_URL}/learn?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  },
+];
+
 export default async function RootLayout({ children }) {
   const h = await headers();
   const nonce = h.get("x-nonce") || undefined;
@@ -82,6 +116,14 @@ export default async function RootLayout({ children }) {
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="color-scheme" content="light dark" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {JSON_LD.map((ld, i) => (
+          <script
+            key={i}
+            type="application/ld+json"
+            nonce={nonce}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+          />
+        ))}
         {/* Theme + locale init antes de paint. Nonce requerido por CSP. */}
         <script
           nonce={nonce}

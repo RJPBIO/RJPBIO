@@ -14,7 +14,7 @@ export const metadata = {
     description: "Transparencia operativa en vivo.",
     images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
-  alternates: { types: { "application/rss+xml": "/status/feed.xml" } },
+  alternates: { canonical: "/status", types: { "application/rss+xml": "/status/feed.xml" } },
 };
 
 export const revalidate = 30;

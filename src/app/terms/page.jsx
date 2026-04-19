@@ -2,7 +2,7 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font } from "@/components/ui/tokens";
 
-export const metadata = { title: "Términos de Servicio" };
+export const metadata = { title: "Términos de Servicio", alternates: { canonical: "/terms" } };
 
 export default function Terms() {
   return (

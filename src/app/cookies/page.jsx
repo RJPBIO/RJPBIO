@@ -2,7 +2,7 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
-export const metadata = { title: "Política de Cookies" };
+export const metadata = { title: "Política de Cookies", alternates: { canonical: "/cookies" } };
 
 export default function Cookies() {
   return (

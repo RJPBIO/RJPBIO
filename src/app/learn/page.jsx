@@ -9,6 +9,7 @@ export const metadata = {
   title: "Aprende · Fundamentos neurales",
   description:
     "Artículos evergreen sobre HRV, cronotipo y respiración resonante. Basados en literatura revisada por pares — sin hype, con citas.",
+  alternates: { canonical: "/learn" },
   openGraph: {
     title: "BIO-IGNICIÓN · Aprende",
     description: "HRV, cronotipo, respiración resonante — fundamentos con evidencia.",

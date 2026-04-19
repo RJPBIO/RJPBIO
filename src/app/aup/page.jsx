@@ -2,7 +2,7 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font } from "@/components/ui/tokens";
 
-export const metadata = { title: "Política de Uso Aceptable" };
+export const metadata = { title: "Política de Uso Aceptable", alternates: { canonical: "/aup" } };
 
 export default function AUP() {
   return (

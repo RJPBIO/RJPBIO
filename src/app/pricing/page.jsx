@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { headers } from "next/headers";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font, radius } from "@/components/ui/tokens";
@@ -9,6 +10,7 @@ import PricingCards from "./PricingCards";
 export const metadata = {
   title: "Precios",
   description: "Planes B2B para equipos que entrenan el sistema nervioso. Seats anuales con descuento por volumen.",
+  alternates: { canonical: "/pricing" },
   openGraph: {
     title: "BIO-IGNICIÓN · Precios",
     description: "Starter, Growth, Enterprise. Menos fricción, más entrenamiento.",
@@ -323,6 +325,7 @@ export default async function PricingPage() {
   const locale = await getServerLocale();
   const L = locale === "en" ? "en" : "es";
   const c = COPY[L];
+  const nonce = (await headers()).get("x-nonce") || undefined;
 
   const evidenceEntries = Object.values(EVIDENCE);
   const protocolCount = evidenceEntries.length;
@@ -531,6 +534,22 @@ export default async function PricingPage() {
             </details>
           ))}
         </section>
+
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: c.faqs.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            }),
+          }}
+        />
       </Container>
     </PublicShell>
   );

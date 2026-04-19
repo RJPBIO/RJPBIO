@@ -19,6 +19,12 @@ export const metadata = {
   title: "Evidencia científica · BIO-IGNICIÓN",
   description:
     "Estudios revisados por pares detrás de cada protocolo. Efectos reportados, tamaños de muestra y DOIs — sin claims sin cita.",
+  alternates: { canonical: "/evidencia" },
+  openGraph: {
+    title: "BIO-IGNICIÓN · Evidencia",
+    description: "Estudios revisados por pares detrás de cada protocolo.",
+    images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
+  },
 };
 
 const LEVEL_LABEL = {

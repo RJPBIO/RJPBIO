@@ -2,7 +2,16 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
-export const metadata = { title: "Trust Center" };
+export const metadata = {
+  title: "Trust Center",
+  description: "Seguridad, privacidad y resiliencia operativa — documentadas, no declamadas.",
+  alternates: { canonical: "/trust" },
+  openGraph: {
+    title: "BIO-IGNICIÓN · Trust Center",
+    description: "Seguridad, privacidad y resiliencia — documentadas, no declamadas.",
+    images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
+  },
+};
 
 const CERTS = [
   { name: "SOC 2 Type II", status: "In audit", target: "2026-Q3" },
