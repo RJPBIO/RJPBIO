@@ -69,6 +69,7 @@ export default function StationsClient({ orgId, origin, initial }) {
   }, [draft, orgId]);
 
   const toggleActive = useCallback(async (id, active) => {
+    if (active && !confirm("Desactivar la estación impedirá nuevos taps hasta reactivarla. ¿Continuar?")) return;
     setRowBusy(`${id}:toggle`);
     try {
       const r = await fetch(`/api/v1/stations/${id}`, {
@@ -307,13 +308,13 @@ export default function StationsClient({ orgId, origin, initial }) {
 
       <Dialog
         open={!!reveal}
-        onClose={() => setReveal(null)}
+        onClose={() => { setReveal(null); setCopied(false); }}
         size="lg"
         title={reveal?.rotated ? "Clave rotada" : "Estación creada"}
         description={reveal ? `${reveal.label} — imprime o graba esta URL` : ""}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setReveal(null)}>Cerrar</Button>
+            <Button variant="secondary" onClick={() => { setReveal(null); setCopied(false); }}>Cerrar</Button>
             {reveal && (
               <a
                 href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(reveal.tapUrl)}`}
