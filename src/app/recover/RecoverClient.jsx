@@ -65,8 +65,8 @@ export default function RecoverClient() {
         <Button href="mailto:soporte@bio-ignicion.app" variant="secondary" size="sm">Contactar soporte</Button>
       </Step>
 
-      {msg && <div style={{ marginTop: space[4] }}><Alert kind="success">{msg}</Alert></div>}
-      {err && <div style={{ marginTop: space[4] }}><Alert kind="danger">{err}</Alert></div>}
+      {msg && <div style={{ marginTop: space[4] }} role="status"><Alert kind="success">{msg}</Alert></div>}
+      {err && <div style={{ marginTop: space[4] }} role="alert"><Alert kind="danger">{err}</Alert></div>}
     </AuthShell>
   );
 }

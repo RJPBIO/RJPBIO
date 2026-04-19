@@ -9,6 +9,7 @@ import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export default function AccountClient({ user, memberships }) {
   const [deleting, setDeleting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [msg, setMsg] = useState(null);
 
   async function requestDeletion() {
@@ -31,6 +32,7 @@ export default function AccountClient({ user, memberships }) {
 
   async function signOutAll() {
     if (!confirm("¿Cerrar sesión en todos los dispositivos?")) return;
+    setSigningOut(true); setMsg(null);
     try {
       const tokenR = await fetch("/api/auth/csrf");
       const { csrfToken } = await tokenR.json();
@@ -42,6 +44,7 @@ export default function AccountClient({ user, memberships }) {
       location.href = "/signin";
     } catch (e) {
       setMsg({ kind: "danger", text: e?.message || "Error" });
+      setSigningOut(false);
     }
   }
 
@@ -88,7 +91,16 @@ export default function AccountClient({ user, memberships }) {
       </Section>
 
       <Section title="Seguridad">
-        <Button onClick={signOutAll} variant="secondary" size="sm">Cerrar sesión en todos los dispositivos</Button>
+        <Button
+          onClick={signOutAll}
+          variant="secondary"
+          size="sm"
+          loading={signingOut}
+          loadingLabel="Cerrando sesiones…"
+          disabled={deleting}
+        >
+          Cerrar sesión en todos los dispositivos
+        </Button>
         <div style={{ marginTop: space[3] }}>
           <Link href="/settings/sessions" style={{ color: cssVar.accent, fontSize: font.size.sm, fontWeight: font.weight.semibold, textDecoration: "none" }}>
             Ver sesiones activas →
@@ -109,13 +121,18 @@ export default function AccountClient({ user, memberships }) {
             size="sm"
             loading={deleting}
             loadingLabel="Procesando…"
+            disabled={signingOut}
           >
             Eliminar mi cuenta
           </Button>
         </div>
       </Section>
 
-      {msg && <div style={{ marginTop: space[5] }}><Alert kind={msg.kind}>{msg.text}</Alert></div>}
+      {msg && (
+        <div style={{ marginTop: space[5] }} role={msg.kind === "danger" ? "alert" : "status"}>
+          <Alert kind={msg.kind}>{msg.text}</Alert>
+        </div>
+      )}
     </AuthShell>
   );
 }
