@@ -45,8 +45,8 @@ export default function AuditClient({ rows, chain }) {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const fromTs = fromDate ? new Date(fromDate).getTime() : null;
-    const toTs = toDate ? new Date(toDate).getTime() + 86400000 : null;
+    const fromTs = fromDate ? new Date(fromDate + "T00:00:00").getTime() : null;
+    const toTs   = toDate   ? new Date(toDate   + "T23:59:59.999").getTime() : null;
     return rows.filter((r) => {
       if (action && r.action !== action) return false;
       const ts = new Date(r.ts).getTime();
@@ -57,6 +57,9 @@ export default function AuditClient({ rows, chain }) {
       return hay.includes(needle);
     });
   }, [rows, q, action, fromDate, toDate]);
+
+  const hasFilters = Boolean(q || action || fromDate || toDate);
+  const clearFilters = () => { setQ(""); setAction(""); setFromDate(""); setToDate(""); setPage(0); };
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const slice = filtered.slice(page * PAGE, page * PAGE + PAGE);
@@ -85,8 +88,8 @@ export default function AuditClient({ rows, chain }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: space[2] }}>
-          <Button onClick={() => download(`audit-${fmtDate(new Date())}.csv`, toCSV(filtered))} variant="secondary" size="sm">Exportar CSV</Button>
-          <Button onClick={() => download(`audit-${fmtDate(new Date())}.json`, JSON.stringify(filtered, null, 2), "application/json")} variant="secondary" size="sm">Exportar JSON</Button>
+          <Button onClick={() => download(`audit-${fmtDate(new Date())}.csv`, toCSV(filtered))} variant="secondary" size="sm" disabled={filtered.length === 0}>Exportar CSV</Button>
+          <Button onClick={() => download(`audit-${fmtDate(new Date())}.json`, JSON.stringify(filtered, null, 2), "application/json")} variant="secondary" size="sm" disabled={filtered.length === 0}>Exportar JSON</Button>
         </div>
       </header>
 
@@ -105,6 +108,11 @@ export default function AuditClient({ rows, chain }) {
         </div>
         <Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(0); }} aria-label="Desde" style={{ maxWidth: 160 }} />
         <Input type="date" value={toDate}   onChange={(e) => { setToDate(e.target.value); setPage(0); }}   aria-label="Hasta" style={{ maxWidth: 160 }} />
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} aria-label="Limpiar filtros">
+            Limpiar filtros
+          </Button>
+        )}
       </TableToolbar>
 
       <p style={{ fontSize: font.size.sm, color: cssVar.textMuted, margin: `0 0 ${space[3]}px` }}>
