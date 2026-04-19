@@ -14,6 +14,7 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font, radius } from "@/components/ui/tokens";
 import { EVIDENCE } from "../../lib/evidence";
+import { getServerLocale } from "@/lib/locale-server";
 
 export const metadata = {
   title: "Evidencia científica · BIO-IGNICIÓN",
@@ -27,10 +28,65 @@ export const metadata = {
   },
 };
 
-const LEVEL_LABEL = {
-  high: "Evidencia alta",
-  moderate: "Evidencia moderada",
-  limited: "Evidencia limitada",
+const COPY = {
+  es: {
+    eyebrow: "Biblioteca",
+    title: "Evidencia científica",
+    intro:
+      "Cada protocolo se apoya en literatura publicada y revisada por pares. Esta biblioteca lista mecanismos, estudios, tamaños de muestra y efectos reportados. Los niveles están auto-clasificados de forma conservadora — revisamos y degradamos cuando la evidencia no justifica lo que una app suele prometer.",
+    protocolsN: (n) => `${n} protocolos`,
+    studiesN: (n) => `${n} estudios`,
+    highN: (n) => `${n} · evidencia alta`,
+    moderateN: (n) => `${n} · moderada`,
+    limitedN: (n) => `${n} · limitada`,
+    toc: "Protocolos",
+    levelHigh: "Evidencia alta",
+    levelModerate: "Evidencia moderada",
+    levelLimited: "Evidencia limitada",
+    mechanism: "Mecanismo",
+    expect: "Qué esperar",
+    limitation: "Limitación",
+    studies: (n) => `Estudios (${n})`,
+    anchor: "Copiar enlace directo",
+    openDoi: "Abrir DOI",
+    updateNote: (
+      <>
+        ¿Falta un estudio o ves un claim mal calibrado? Abre un issue en el
+        repositorio público. Esta página se genera desde el mismo archivo
+        (<code>src/lib/evidence.js</code>) que consume el producto — corregir
+        aquí corrige la app.
+      </>
+    ),
+  },
+  en: {
+    eyebrow: "Library",
+    title: "Scientific evidence",
+    intro:
+      "Every protocol rests on published, peer-reviewed literature. This library lists mechanisms, studies, sample sizes and reported effects. Levels are auto-classified conservatively — we downgrade whenever the evidence doesn't warrant what apps usually promise.",
+    protocolsN: (n) => `${n} protocols`,
+    studiesN: (n) => `${n} studies`,
+    highN: (n) => `${n} · high evidence`,
+    moderateN: (n) => `${n} · moderate`,
+    limitedN: (n) => `${n} · limited`,
+    toc: "Protocols",
+    levelHigh: "High evidence",
+    levelModerate: "Moderate evidence",
+    levelLimited: "Limited evidence",
+    mechanism: "Mechanism",
+    expect: "What to expect",
+    limitation: "Limitation",
+    studies: (n) => `Studies (${n})`,
+    anchor: "Copy direct link",
+    openDoi: "Open DOI",
+    updateNote: (
+      <>
+        Missing a study or see a miscalibrated claim? Open an issue in the
+        public repo. This page is generated from the same file
+        (<code>src/lib/evidence.js</code>) the product reads — fixing it here
+        fixes the app.
+      </>
+    ),
+  },
 };
 
 const LEVEL_COLOR = {
@@ -45,7 +101,11 @@ const PILL_VARIANT = {
   limited: { bg: "#FEF3C7", fg: "#854D0E" },
 };
 
-export default function EvidenciaPage() {
+const LEVEL_ORDER = ["high", "moderate", "limited"];
+
+export default async function EvidenciaPage() {
+  const locale = await getServerLocale();
+  const c = COPY[locale === "en" ? "en" : "es"];
   const entries = Object.values(EVIDENCE);
   const counts = entries.reduce(
     (acc, e) => {
@@ -55,65 +115,150 @@ export default function EvidenciaPage() {
     { high: 0, moderate: 0, limited: 0 }
   );
   const totalStudies = entries.reduce((n, e) => n + (e.studies?.length || 0), 0);
+  const grouped = LEVEL_ORDER.map((level) => ({
+    level,
+    label: level === "high" ? c.levelHigh : level === "moderate" ? c.levelModerate : c.levelLimited,
+    items: entries.filter((e) => e.evidenceLevel === level),
+  })).filter((g) => g.items.length > 0);
 
   return (
     <PublicShell activePath="/evidencia">
       <Container size="md" className="bi-prose">
         <header style={{ marginBlockEnd: space[6] }}>
           <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
-            Biblioteca
+            {c.eyebrow}
           </div>
-          <h1 style={{ margin: `${space[2]}px 0` }}>Evidencia científica</h1>
-          <p style={{ color: cssVar.textDim, maxWidth: "60ch" }}>
-            Cada protocolo se apoya en literatura publicada y revisada por pares.
-            Esta biblioteca lista mecanismos, estudios, tamaños de muestra y
-            efectos reportados. Los niveles están auto-clasificados de forma
-            conservadora — revisamos y degradamos cuando la evidencia no
-            justifica lo que una app suele prometer.
-          </p>
+          <h1 style={{ margin: `${space[2]}px 0` }}>{c.title}</h1>
+          <p style={{ color: cssVar.textDim, maxWidth: "60ch" }}>{c.intro}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: space[2], marginBlockStart: space[4] }}>
-            <Pill>{entries.length} protocolos</Pill>
-            <Pill>{totalStudies} estudios</Pill>
-            <Pill variant={PILL_VARIANT.high}>{counts.high} · evidencia alta</Pill>
-            <Pill variant={PILL_VARIANT.moderate}>{counts.moderate} · moderada</Pill>
-            <Pill variant={PILL_VARIANT.limited}>{counts.limited} · limitada</Pill>
+            <Pill>{c.protocolsN(entries.length)}</Pill>
+            <Pill>{c.studiesN(totalStudies)}</Pill>
+            <Pill variant={PILL_VARIANT.high}>{c.highN(counts.high)}</Pill>
+            <Pill variant={PILL_VARIANT.moderate}>{c.moderateN(counts.moderate)}</Pill>
+            <Pill variant={PILL_VARIANT.limited}>{c.limitedN(counts.limited)}</Pill>
           </div>
         </header>
+
+        <nav
+          aria-labelledby="toc-heading"
+          style={{
+            border: `1px solid ${cssVar.border}`,
+            borderRadius: radius.md,
+            padding: space[4],
+            background: cssVar.surface,
+            marginBlockEnd: space[6],
+          }}
+        >
+          <h2
+            id="toc-heading"
+            style={{
+              fontSize: font.size.xs,
+              color: cssVar.textDim,
+              textTransform: "uppercase",
+              letterSpacing: font.tracking.wide,
+              fontWeight: font.weight.semibold,
+              margin: 0,
+              marginBlockEnd: space[3],
+            }}
+          >
+            {c.toc}
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
+            {grouped.map((g) => (
+              <li key={g.level} style={{ display: "flex", gap: space[2], alignItems: "baseline", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    color: LEVEL_COLOR[g.level],
+                    fontWeight: font.weight.black,
+                    minWidth: 110,
+                  }}
+                >
+                  {g.label}
+                </span>
+                <span style={{ display: "inline-flex", flexWrap: "wrap", gap: space[2] }}>
+                  {g.items.map((e, i) => (
+                    <a
+                      key={e.id}
+                      href={`#${e.id}`}
+                      style={{
+                        color: cssVar.text,
+                        fontSize: font.size.sm,
+                        fontWeight: font.weight.semibold,
+                        textDecoration: "none",
+                      }}
+                    >
+                      {e.title}
+                      {i < g.items.length - 1 && <span aria-hidden="true" style={{ color: cssVar.textMuted }}>  ·</span>}
+                    </a>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         <div style={{ display: "grid", gap: space[3] }}>
           {entries.map((e) => {
             const color = LEVEL_COLOR[e.evidenceLevel] || cssVar.textDim;
+            const levelLabel = e.evidenceLevel === "high" ? c.levelHigh : e.evidenceLevel === "moderate" ? c.levelModerate : c.levelLimited;
             return (
               <article
                 key={e.id}
-                aria-label={e.title}
+                id={e.id}
+                aria-labelledby={`${e.id}-title`}
                 style={{
                   background: cssVar.surface,
                   border: `1px solid ${cssVar.border}`,
+                  borderInlineStart: `3px solid ${color}`,
                   borderRadius: radius.md,
                   padding: space[4],
+                  scrollMarginBlockStart: space[6],
                 }}
               >
-                <p style={{
-                  margin: 0,
-                  fontSize: 10,
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                  fontWeight: font.weight.black,
-                  color,
-                }}>
-                  {LEVEL_LABEL[e.evidenceLevel] || "—"}
-                </p>
-                <h2 style={{ fontSize: 18, fontWeight: font.weight.black, margin: `2px 0 0`, color: cssVar.text }}>{e.title}</h2>
-                <p style={{ fontSize: 13, color: cssVar.textDim, margin: `${space[2]}px 0 ${space[3]}px` }}>{e.mechanism}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: space[2], flexWrap: "wrap" }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 10,
+                      letterSpacing: 2,
+                      textTransform: "uppercase",
+                      fontWeight: font.weight.black,
+                      color,
+                    }}
+                  >
+                    {levelLabel}
+                  </p>
+                  <a
+                    href={`#${e.id}`}
+                    aria-label={c.anchor}
+                    title={c.anchor}
+                    style={{
+                      color: cssVar.textMuted,
+                      fontSize: 11,
+                      fontFamily: cssVar.fontMono,
+                      textDecoration: "none",
+                    }}
+                  >
+                    #{e.id}
+                  </a>
+                </div>
+                <h2 id={`${e.id}-title`} style={{ fontSize: 18, fontWeight: font.weight.black, margin: `2px 0 0`, color: cssVar.text }}>
+                  {e.title}
+                </h2>
 
-                <BlockLabel>Qué esperar</BlockLabel>
+                <BlockLabel>{c.mechanism}</BlockLabel>
+                <p style={{ fontSize: 13, color: cssVar.textDim, margin: 0 }}>{e.mechanism}</p>
+
+                <BlockLabel>{c.expect}</BlockLabel>
                 <p style={{ fontSize: 12, margin: 0, color: cssVar.text }}>{e.expect}</p>
 
-                <BlockLabel>Limitación</BlockLabel>
+                <BlockLabel>{c.limitation}</BlockLabel>
                 <p style={{ fontSize: 12, margin: 0, color: cssVar.textDim, fontStyle: "italic" }}>{e.limitation}</p>
 
-                <BlockLabel>Estudios ({e.studies.length})</BlockLabel>
+                <BlockLabel>{c.studies(e.studies.length)}</BlockLabel>
                 <ol role="list" style={{ paddingInlineStart: 0, listStyle: "none", margin: 0 }}>
                   {e.studies.map((s, i) => (
                     <li
@@ -125,10 +270,13 @@ export default function EvidenciaPage() {
                         fontSize: 12,
                       }}
                     >
-                      <div style={{ fontWeight: font.weight.bold, color: cssVar.text }}>{s.authors} ({s.year})</div>
+                      <div style={{ fontWeight: font.weight.bold, color: cssVar.text }}>
+                        {s.authors} ({s.year})
+                      </div>
                       <div style={{ color: cssVar.text }}>{s.title}</div>
                       <div style={{ color: cssVar.textMuted, fontStyle: "italic", fontSize: 11 }}>
-                        {s.journal}{s.n ? ` · N=${s.n}` : ""}
+                        {s.journal}
+                        {s.n ? ` · N=${s.n}` : ""}
                       </div>
                       {s.effect && (
                         <div style={{
@@ -142,13 +290,21 @@ export default function EvidenciaPage() {
                         </div>
                       )}
                       {s.doi && (
-                        <div style={{
-                          color: cssVar.textMuted,
-                          fontSize: 10,
-                          fontFamily: cssVar.fontMono,
-                          marginBlockStart: 4,
-                        }}>
-                          DOI: {s.doi}
+                        <div style={{ marginBlockStart: 4 }}>
+                          <a
+                            href={`https://doi.org/${s.doi}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: cssVar.accent,
+                              fontSize: 10,
+                              fontFamily: cssVar.fontMono,
+                              textDecoration: "none",
+                              fontWeight: font.weight.semibold,
+                            }}
+                          >
+                            DOI: {s.doi} <span aria-hidden="true">↗</span>
+                          </a>
                         </div>
                       )}
                     </li>
@@ -160,10 +316,7 @@ export default function EvidenciaPage() {
         </div>
 
         <p style={{ marginBlockStart: space[6], color: cssVar.textMuted, fontSize: font.size.sm, maxWidth: "60ch" }}>
-          ¿Falta un estudio o ves un claim mal calibrado? Abre un issue en el
-          repositorio público. Esta página se genera desde el mismo archivo
-          (<code>src/lib/evidence.js</code>) que consume el producto — corregir
-          aquí corrige la app.
+          {c.updateNote}
         </p>
       </Container>
     </PublicShell>
