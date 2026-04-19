@@ -315,21 +315,13 @@ export default function StationsClient({ orgId, origin, initial }) {
         footer={
           <>
             <Button variant="secondary" onClick={() => { setReveal(null); setCopied(false); }}>Cerrar</Button>
-            {reveal && (
-              <a
-                href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(reveal.tapUrl)}`}
-                target="_blank" rel="noopener noreferrer"
-                style={{ textDecoration: "none" }}
-              >
-                <Button variant="secondary">Ver QR</Button>
-              </a>
-            )}
             <Button variant="primary" onClick={copyUrl}>{copied ? "¡Copiado!" : "Copiar URL"}</Button>
           </>
         }
       >
         <Alert kind="warn" title="URL única">
           Esta URL no se vuelve a mostrar. Si la pierdes, rota la clave y re-imprime los tags.
+          Para el QR, genera el código con una herramienta offline (evita servicios web: la URL es una credencial firmada).
         </Alert>
         {reveal && (
           <pre style={{
