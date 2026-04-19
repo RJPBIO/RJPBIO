@@ -1,3 +1,5 @@
+import { PublicShell } from "@/components/ui/PublicShell";
+import { Container } from "@/components/ui/Container";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Subprocesadores" };
@@ -15,13 +17,9 @@ const SUBS = [
 
 export default function Subprocessors() {
   return (
-    <article style={{
-      maxWidth: 860,
-      margin: "0 auto",
-      padding: `${space[6]}px ${space[4]}px`,
-      color: cssVar.text,
-      fontFamily: cssVar.fontSans,
-    }}>
+    <PublicShell activePath="/trust/subprocessors">
+      <Container size="lg" className="bi-prose">
+        <article>
       <h1 style={{
         fontSize: font.size["2xl"],
         fontWeight: font.weight.black,
@@ -31,7 +29,7 @@ export default function Subprocessors() {
         Subprocesadores
       </h1>
       <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[2] }}>
-        Actualizada: 2026-04-16. Notificamos cambios con 30 días de antelación via email y en esta página.
+        Actualizada <time dateTime="2026-04-16">16 abril 2026</time> · notificamos cambios con 30 días de antelación vía email y en esta página.
       </p>
 
       <div style={{
@@ -77,7 +75,9 @@ export default function Subprocessors() {
       <p style={{ marginTop: space[5], color: cssVar.textMuted, fontSize: font.size.sm }}>
         Subscríbete a cambios: <a href="mailto:trust-announce@bio-ignicion.app" style={{ color: cssVar.accent, fontWeight: font.weight.semibold }}>trust-announce@bio-ignicion.app</a>
       </p>
-    </article>
+        </article>
+      </Container>
+    </PublicShell>
   );
 }
 

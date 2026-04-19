@@ -1,3 +1,5 @@
+import { PublicShell } from "@/components/ui/PublicShell";
+import { Container } from "@/components/ui/Container";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Trust Center" };
@@ -22,7 +24,9 @@ const LINKS = [
 
 export default function TrustCenter() {
   return (
-    <article style={wrap}>
+    <PublicShell activePath="/trust">
+      <Container size="lg" className="bi-prose">
+        <article style={{ lineHeight: 1.6 }}>
       <h1 style={{
         fontSize: font.size["3xl"],
         fontWeight: font.weight.black,
@@ -36,7 +40,8 @@ export default function TrustCenter() {
       </p>
       <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: 0 }}>
         Transparencia: ninguna certificación se declara hasta contar con reporte auditado disponible. Las
-        fechas listadas son objetivos públicos, no estado vigente. Última revisión: 2026-04.
+        fechas listadas son objetivos públicos, no estado vigente. Última revisión:{" "}
+        <time dateTime="2026-04-01">abril 2026</time>.
       </p>
 
       <section>
@@ -178,18 +183,11 @@ hourlyLoadedCost  — default USD 60 (knowledge worker global 2026)`}
           })}
         </ul>
       </section>
-    </article>
+        </article>
+      </Container>
+    </PublicShell>
   );
 }
-
-const wrap = {
-  maxWidth: 860,
-  margin: "0 auto",
-  padding: `${space[6]}px ${space[4]}px`,
-  color: cssVar.text,
-  fontFamily: cssVar.fontSans,
-  lineHeight: 1.6,
-};
 
 const h2Style = {
   fontSize: font.size.xl,

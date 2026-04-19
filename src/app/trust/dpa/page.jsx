@@ -1,17 +1,14 @@
+import { PublicShell } from "@/components/ui/PublicShell";
+import { Container } from "@/components/ui/Container";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Acuerdo de Procesamiento de Datos (DPA)" };
 
 export default function DPA() {
   return (
-    <article style={{
-      maxWidth: 760,
-      margin: "0 auto",
-      padding: `${space[6]}px ${space[4]}px`,
-      color: cssVar.text,
-      fontFamily: cssVar.fontSans,
-      lineHeight: 1.6,
-    }}>
+    <PublicShell activePath="/trust/dpa">
+      <Container size="md" className="bi-prose">
+        <article style={{ lineHeight: 1.6 }}>
       <h1 style={{
         fontSize: font.size["2xl"],
         fontWeight: font.weight.black,
@@ -58,7 +55,9 @@ export default function DPA() {
       <p style={{ marginTop: space[6], color: cssVar.textMuted, fontSize: font.size.sm }}>
         Para firmar el DPA contacta <a href="mailto:legal@bio-ignicion.app" style={linkStyle}>legal@bio-ignicion.app</a>.
       </p>
-    </article>
+        </article>
+      </Container>
+    </PublicShell>
   );
 }
 
