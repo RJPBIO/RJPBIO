@@ -158,10 +158,10 @@ export async function PublicShell({ children, activePath }) {
 
 function FooterCol({ title, links, T }) {
   return (
-    <div>
-      <div style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", marginBottom: space[3] }}>
+    <nav aria-label={title}>
+      <h2 style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", marginBlock: 0, marginBlockEnd: space[3] }}>
         {title}
-      </div>
+      </h2>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
         {links.map((l) => (
           <li key={l.href}>
@@ -171,6 +171,6 @@ function FooterCol({ title, links, T }) {
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   );
 }

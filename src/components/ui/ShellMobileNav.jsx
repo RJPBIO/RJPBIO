@@ -2,20 +2,19 @@
 import { useState, useEffect, useId } from "react";
 import Link from "next/link";
 import { cssVar, space, font, radius } from "./tokens";
+import { useFocusTrap } from "@/lib/a11y";
 
 export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃº", closeLabel = "Cerrar" }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const dialogRef = useFocusTrap(open, () => setOpen(false));
 
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
-    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
@@ -57,6 +56,7 @@ export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃ
             }}
           />
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label={triggerLabel}
