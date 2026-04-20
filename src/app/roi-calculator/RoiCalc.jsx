@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Field, inputStyle } from "@/components/ui/Field";
-import { Kpi } from "@/components/ui/Kpi";
-import { Button } from "@/components/ui/Button";
 import { cssVar, space, font } from "@/components/ui/tokens";
 import { useT } from "@/hooks/useT";
 import { fmtNumber } from "@/lib/i18n";
@@ -10,25 +9,32 @@ import { fmtNumber } from "@/lib/i18n";
 const DEFAULTS = {
   effectSizeCap: 0.35,
   residualFactor: 2.0,
-  observedLift: 0.22,
   sessionsPerDay: 2,
   sessionMinutes: 3,
   workDays: 220,
   complianceRate: 0.6,
 };
 
+const SCENARIOS = {
+  conservador: { lift: 0.15, labelEs: "Conservador", labelEn: "Conservative", hintEs: "15% lift", hintEn: "15% lift" },
+  baseline: { lift: 0.22, labelEs: "Baseline", labelEn: "Baseline", hintEs: "22% lift · observado", hintEn: "22% lift · observed" },
+  agresivo: { lift: 0.30, labelEs: "Agresivo", labelEn: "Aggressive", hintEs: "30% lift · < cap", hintEn: "30% lift · < cap" },
+};
+
 const PLAN_PRICE = { starter: 9, growth: 19, enterprise: 29 };
-const STORAGE_KEY = "bio-roi-inputs";
+const STORAGE_KEY = "bio-roi-inputs-v2";
+const MERCER_MEDIAN_USD = 900;
 
 function fmtMoney(n, curr, locale) {
   return new Intl.NumberFormat(locale, { style: "currency", currency: curr, maximumFractionDigits: 0 }).format(n);
 }
 
-const INITIAL = { employees: 120, hourlyCost: 60, plan: "growth", currency: "USD" };
+const INITIAL = { employees: 120, hourlyCost: 60, plan: "growth", currency: "USD", scenario: "baseline" };
 const CLAMP = { employees: { min: 1, max: 100000 }, hourlyCost: { min: 5, max: 500 } };
 
 export default function RoiCalc() {
   const { t, locale } = useT();
+  const en = locale === "en";
   const [inputs, setInputs] = useState(INITIAL);
   const [drafts, setDrafts] = useState({ employees: "", hourlyCost: "" });
   const [hydrated, setHydrated] = useState(false);
@@ -49,19 +55,26 @@ export default function RoiCalc() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs)); } catch {}
   }, [inputs, hydrated]);
 
-  const { employees, hourlyCost, plan, currency } = inputs;
+  const { employees, hourlyCost, plan, currency, scenario } = inputs;
 
   const result = useMemo(() => {
-    const lift = Math.min(DEFAULTS.observedLift, DEFAULTS.effectSizeCap);
+    const observedLift = SCENARIOS[scenario]?.lift ?? SCENARIOS.baseline.lift;
+    const lift = Math.min(observedLift, DEFAULTS.effectSizeCap);
     const minutesPerEmployee = DEFAULTS.sessionsPerDay * DEFAULTS.sessionMinutes * DEFAULTS.workDays * DEFAULTS.complianceRate;
     const recoveredHoursPerEmp = (minutesPerEmployee * lift * DEFAULTS.residualFactor) / 60;
     const totalRecoveredHours = recoveredHoursPerEmp * employees;
     const grossValue = totalRecoveredHours * hourlyCost;
+    const pricePerEmpYearUSD = PLAN_PRICE[plan] * 12;
     const annualLicenseCost = employees * PLAN_PRICE[plan] * 12;
     const netValue = grossValue - annualLicenseCost;
+    const threeYearNet = netValue * 3;
     const roiMultiple = annualLicenseCost > 0 ? grossValue / annualLicenseCost : null;
-    return { recoveredHoursPerEmp, totalRecoveredHours, grossValue, annualLicenseCost, netValue, roiMultiple };
-  }, [employees, hourlyCost, plan]);
+    const paybackMonths = grossValue > 0 ? (annualLicenseCost / grossValue) * 12 : null;
+    const wellnessDeltaPct = pricePerEmpYearUSD > 0 && pricePerEmpYearUSD < MERCER_MEDIAN_USD
+      ? Math.round((1 - pricePerEmpYearUSD / MERCER_MEDIAN_USD) * 100)
+      : null;
+    return { recoveredHoursPerEmp, totalRecoveredHours, grossValue, annualLicenseCost, netValue, threeYearNet, roiMultiple, paybackMonths, wellnessDeltaPct, liftApplied: lift };
+  }, [employees, hourlyCost, plan, scenario]);
 
   const reset = () => {
     setInputs(INITIAL);
@@ -79,16 +92,20 @@ export default function RoiCalc() {
     setDrafts((d) => ({ ...d, [key]: "" }));
   };
 
+  const netPositive = result.netValue > 0;
+
   return (
-    <div className="bi-split-5-7">
-      <aside
-        aria-labelledby="roi-inputs-heading"
-        style={{ padding: space[5], background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: 14 }}
-      >
-        <h2 id="roi-inputs-heading" style={{ margin: 0, fontSize: 18, fontWeight: font.weight.bold }}>{t("roi.yourData") !== "roi.yourData" ? t("roi.yourData") : (locale === "en" ? "Your data" : "Tus datos")}</h2>
+    <div className="bi-roicc">
+      {/* ─── Inputs panel ─── */}
+      <aside aria-labelledby="roi-inputs-heading" className="bi-roi-panel">
+        <div className="bi-roi-panel-head">
+          <span className="bi-roi-panel-kicker">INPUTS · TU ORGANIZACIÓN</span>
+          <h3 id="roi-inputs-heading" className="bi-roi-panel-title">
+            {en ? "Your data" : "Tus datos"}
+          </h3>
+        </div>
 
-        <Field label={t("roi.employees")} hint={locale === "en" ? "Staff covered by the license." : "Personal cubierto por la licencia."}>
-
+        <Field label={t("roi.employees")} hint={en ? "Staff covered by the license." : "Personal cubierto por la licencia."}>
           {(p) => (
             <input
               {...p}
@@ -104,7 +121,7 @@ export default function RoiCalc() {
           )}
         </Field>
 
-        <Field label={`${t("roi.hourlyCost")} (${currency})`} hint={locale === "en" ? "Salary + benefits + overhead per hour." : "Salario + beneficios + overhead por hora."}>
+        <Field label={`${t("roi.hourlyCost")} (${currency})`} hint={en ? "Salary + benefits + overhead per hour." : "Salario + beneficios + overhead por hora."}>
           {(p) => (
             <input
               {...p}
@@ -120,12 +137,12 @@ export default function RoiCalc() {
           )}
         </Field>
 
-        <Field label={t("roi.plan")} hint={locale === "en" ? "Per user / month. Enterprise shown as a working estimate — real pricing is custom." : "Por usuario / mes. Enterprise se muestra como estimación — el precio real es a medida."}>
+        <Field label={t("roi.plan")} hint={en ? "Per user / month. Enterprise shown as a working estimate — real pricing is custom." : "Por usuario / mes. Enterprise se muestra como estimación — el precio real es a medida."}>
           {(p) => (
             <select {...p} value={plan} onChange={(e) => setInputs({ ...inputs, plan: e.target.value })} style={inputStyle}>
-              <option value="starter">Starter · $9 / {locale === "en" ? "mo" : "mes"}</option>
-              <option value="growth">Growth · $19 / {locale === "en" ? "mo" : "mes"}</option>
-              <option value="enterprise">Enterprise · $29 / {locale === "en" ? "mo (approx.)" : "mes (aprox.)"}</option>
+              <option value="starter">Starter · $9 / {en ? "mo" : "mes"}</option>
+              <option value="growth">Growth · $19 / {en ? "mo" : "mes"}</option>
+              <option value="enterprise">Enterprise · $29 / {en ? "mo (approx.)" : "mes (aprox.)"}</option>
             </select>
           )}
         </Field>
@@ -140,33 +157,128 @@ export default function RoiCalc() {
           )}
         </Field>
 
-        <Button variant="ghost" size="sm" onClick={reset} type="button">{t("roi.reset")}</Button>
+        <div className="bi-roi-scenario" role="radiogroup" aria-label={en ? "Sensitivity scenario" : "Escenario de sensibilidad"}>
+          <span className="bi-roi-scenario-label">
+            {en ? "Sensitivity · lift assumption" : "Sensibilidad · supuesto de lift"}
+          </span>
+          <div className="bi-roi-scenario-group">
+            {Object.keys(SCENARIOS).map((key) => {
+              const s = SCENARIOS[key];
+              const active = scenario === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  className={`bi-roi-scenario-btn${active ? " is-active" : ""}`}
+                  onClick={() => setInputs((prev) => ({ ...prev, scenario: key }))}
+                >
+                  <span className="bi-roi-scenario-name">{en ? s.labelEn : s.labelEs}</span>
+                  <span className="bi-roi-scenario-hint">{en ? s.hintEn : s.hintEs}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-        <p style={{ marginTop: space[4], padding: space[2.5], background: cssVar.bg, border: `1px dashed ${cssVar.border}`, borderRadius: 8, fontSize: 11, color: cssVar.textMuted, lineHeight: 1.6 }}>
-          {locale === "en"
-            ? "Assumptions: 2 sessions × 3 min, 60% compliance, effect-size capped at 0.35, 2× persistence. Everything is computed in your browser; we don't store inputs server-side. "
-            : "Supuestos: 2 sesiones × 3 min, 60 % cumplimiento, effect-size capado en 0.35, persistencia 2×. Todo se calcula en tu navegador; no guardamos los inputs en servidor. "}
-          <a href="/docs#roi-model">{locale === "en" ? "See model." : "Ver modelo."}</a>
+        <button type="button" onClick={reset} className="bi-roi-reset">
+          {t("roi.reset")}
+        </button>
+
+        <p className="bi-roi-panel-note">
+          {en
+            ? "Everything computes in your browser — no server storage. "
+            : "Todo corre en tu navegador — sin almacenamiento en servidor. "}
+          <Link href="/docs#roi-model" className="bi-roi-link">
+            {en ? "See the model." : "Ver el modelo."}
+          </Link>
         </p>
       </aside>
 
-      <section aria-labelledby="roi-out-heading" style={{ padding: space[1] }}>
-        <h2 id="roi-out-heading" className="bi-sr-only">{locale === "en" ? "Results" : "Resultados"}</h2>
-        <Kpi live label={locale === "en" ? "Recovered hours / employee / year" : "Horas recuperadas / empleado / año"} value={result.recoveredHoursPerEmp.toFixed(1)} />
-        <Kpi live label={locale === "en" ? "Recovered hours (annual total)" : "Horas recuperadas (total anual)"} value={fmtNumber(Math.round(result.totalRecoveredHours))} />
-        <Kpi live label={locale === "en" ? "Annual gross value" : "Valor bruto anual"} value={fmtMoney(result.grossValue, currency, locale)} accent />
-        <Kpi
-          live
-          label={locale === "en" ? "Annual license cost" : "Costo de licencia anual"}
-          value={fmtMoney(result.annualLicenseCost, currency, locale)}
-          sub={`${employees} × $${PLAN_PRICE[plan]} × 12`}
-        />
-        <Kpi live label={locale === "en" ? "Annual net value" : "Valor neto anual"} value={fmtMoney(result.netValue, currency, locale)} accent={result.netValue > 0} />
-        <Kpi live label={locale === "en" ? "ROI multiple" : "Múltiplo de ROI"} value={result.roiMultiple ? `${result.roiMultiple.toFixed(1)}×` : "—"} />
+      {/* ─── Result panel ─── */}
+      <section aria-labelledby="roi-result-heading" className="bi-roi-result">
+        <h3 id="roi-result-heading" className="bi-sr-only">{en ? "Results" : "Resultados"}</h3>
 
-        <div style={{ marginTop: space[3] }}>
-          <Button href="/demo">{locale === "en" ? "Book a demo with these numbers" : "Agenda demo con estos números"}</Button>
+        <div className={`bi-roi-hero-card${netPositive ? " is-positive" : " is-negative"}`}>
+          <div className="bi-roi-hero-kicker">
+            {en ? "ANNUAL NET VALUE" : "VALOR NETO ANUAL"}
+            <span className="bi-roi-hero-scenario">
+              · {en ? SCENARIOS[scenario].labelEn : SCENARIOS[scenario].labelEs}
+            </span>
+          </div>
+          <div className="bi-roi-hero-figure" aria-live="polite">
+            {fmtMoney(result.netValue, currency, locale)}
+          </div>
+          <div className="bi-roi-hero-row">
+            {result.roiMultiple ? (
+              <span className="bi-roi-hero-badge">
+                <span className="v">{result.roiMultiple.toFixed(1)}×</span>
+                <span className="l">{en ? "ROI multiple" : "Múltiplo ROI"}</span>
+              </span>
+            ) : null}
+            {result.paybackMonths && result.paybackMonths > 0 && result.paybackMonths <= 60 ? (
+              <span className="bi-roi-hero-badge bi-roi-hero-badge--alt">
+                <span className="v">{result.paybackMonths.toFixed(1)}</span>
+                <span className="l">{en ? "months payback" : "meses payback"}</span>
+              </span>
+            ) : null}
+            <span className="bi-roi-hero-badge bi-roi-hero-badge--ghost">
+              <span className="v">{(result.liftApplied * 100).toFixed(0)}%</span>
+              <span className="l">{en ? "lift applied" : "lift aplicado"}</span>
+            </span>
+          </div>
         </div>
+
+        <div className="bi-roi-3yr" aria-label={en ? "3-year view" : "Vista a 3 años"}>
+          <div className="bi-roi-3yr-cell">
+            <span className="y">{en ? "Year 1 net" : "Neto Año 1"}</span>
+            <span className="v" aria-live="polite">{fmtMoney(result.netValue, currency, locale)}</span>
+          </div>
+          <div className="bi-roi-3yr-cell">
+            <span className="y">{en ? "Year 2 net" : "Neto Año 2"}</span>
+            <span className="v" aria-live="polite">{fmtMoney(result.netValue * 2, currency, locale)}</span>
+          </div>
+          <div className="bi-roi-3yr-cell cum">
+            <span className="y">{en ? "Cumulative Y3" : "Acumulado A3"}</span>
+            <span className="v" aria-live="polite">{fmtMoney(result.threeYearNet, currency, locale)}</span>
+          </div>
+        </div>
+
+        <ul className="bi-roi-insight-row" aria-label={en ? "Context insights" : "Insights de contexto"}>
+          <li className="bi-roi-insight-chip loss">
+            {en ? "Hours currently leaking: " : "Horas fugando hoy: "}
+            <strong>{fmtNumber(Math.round(result.totalRecoveredHours))}</strong>
+            {en ? " / yr" : " / año"}
+          </li>
+          {result.wellnessDeltaPct ? (
+            <li className="bi-roi-insight-chip peer">
+              {en ? "vs. Mercer wellness median · " : "vs. mediana Mercer wellness · "}
+              <strong>{result.wellnessDeltaPct}%</strong>
+              {en ? " less per employee" : " menos por empleado"}
+            </li>
+          ) : null}
+        </ul>
+
+        <ul className="bi-roi-metric-grid" aria-label={en ? "Supporting metrics" : "Métricas de soporte"}>
+          <li>
+            <span className="k">{en ? "Hours / employee / yr" : "Horas / empleado / año"}</span>
+            <span className="v" aria-live="polite">{result.recoveredHoursPerEmp.toFixed(1)}</span>
+          </li>
+          <li>
+            <span className="k">{en ? "Total recovered hours" : "Horas recuperadas totales"}</span>
+            <span className="v" aria-live="polite">{fmtNumber(Math.round(result.totalRecoveredHours))}</span>
+          </li>
+          <li>
+            <span className="k">{en ? "Annual gross value" : "Valor bruto anual"}</span>
+            <span className="v" aria-live="polite">{fmtMoney(result.grossValue, currency, locale)}</span>
+          </li>
+          <li>
+            <span className="k">{en ? "Annual license cost" : "Costo licencia anual"}</span>
+            <span className="v" aria-live="polite">{fmtMoney(result.annualLicenseCost, currency, locale)}</span>
+            <span className="s">{employees} × ${PLAN_PRICE[plan]} × 12</span>
+          </li>
+        </ul>
       </section>
     </div>
   );
