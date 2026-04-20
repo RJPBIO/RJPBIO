@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
 import CommandPaletteTrigger from "./CommandPaletteTrigger";
@@ -8,6 +9,12 @@ import { cssVar, radius, space, font } from "./tokens";
 import { tLocale } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
 import { BioGlyph } from "@/components/BioIgnicionMark";
+import AmbientBackdrop from "@/components/brand/AmbientBackdrop";
+
+async function hasSessionCookie() {
+  const jar = await cookies();
+  return Boolean(jar.get("authjs.session-token") || jar.get("__Secure-authjs.session-token"));
+}
 
 const NAV_ITEMS = [
   { href: "/pricing",   key: "nav.pricing" },
@@ -54,9 +61,15 @@ export async function PublicShell({ children, activePath }) {
   const locale = await getServerLocale();
   const T = (k, fb) => tLocale(locale, k) !== k ? tLocale(locale, k) : (fb ?? k);
   const resolvedNav = NAV_ITEMS.map((n) => ({ href: n.href, label: T(n.key, n.fallback) }));
+  const authed = await hasSessionCookie();
+  const ctaHref = authed ? "/app" : "/signin";
+  const ctaLabel = authed
+    ? T("shell.openApp", locale === "en" ? "Open app" : "Abrir app")
+    : T("shell.signin", "Entrar");
 
   return (
     <>
+      <AmbientBackdrop />
       <header
         role="banner"
         style={{
@@ -69,11 +82,11 @@ export async function PublicShell({ children, activePath }) {
         }}
       >
         <Container size="xl" style={{ paddingBlock: space[3], display: "flex", alignItems: "center", gap: space[4], flexWrap: "wrap" }}>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: space[2], textDecoration: "none", color: cssVar.text }} aria-label={T("shell.brandHome", "BIO-IGNICIÓN")}>
+          <Link href="/" className="bi-shell-brand" style={{ display: "inline-flex", alignItems: "center", gap: space[2], textDecoration: "none", color: cssVar.text }} aria-label={T("shell.brandHome", "BIO-IGNICIÓN")}>
             <BioGlyph size={24} />
-            <span className="bi-shell-wordmark" style={{ fontWeight: font.weight.black, letterSpacing: "1px", fontSize: font.size.lg }}>BIO-IGNICIÓN</span>
+            <span className="bi-shell-wordmark" style={{ fontWeight: font.weight.black, letterSpacing: "0.18em", fontSize: font.size.md }}>BIO-IGNICIÓN</span>
           </Link>
-          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav bi-shell-nav-desktop" style={{ display: "flex", gap: space[4], marginInlineStart: "auto", flexWrap: "wrap", rowGap: space[2] }}>
+          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav bi-shell-nav-desktop" style={{ display: "flex", gap: space[5], marginInlineStart: "auto", flexWrap: "wrap", rowGap: space[2] }}>
             {NAV_ITEMS.map((n) => {
               const active = activePath === n.href;
               return (
@@ -83,15 +96,6 @@ export async function PublicShell({ children, activePath }) {
                   aria-current={active ? "page" : undefined}
                   className="bi-shell-navlink"
                   data-active={active ? "true" : undefined}
-                  style={{
-                    color: active ? cssVar.text : cssVar.textDim,
-                    textDecoration: "none",
-                    fontSize: font.size.lg,
-                    fontWeight: font.weight.semibold,
-                    borderBottom: active ? `2px solid ${cssVar.accent}` : "2px solid transparent",
-                    paddingBlock: 2,
-                    transition: "color 0.15s ease, border-color 0.15s ease",
-                  }}
                 >
                   {T(n.key, n.fallback)}
                 </Link>
@@ -108,23 +112,21 @@ export async function PublicShell({ children, activePath }) {
           <LocaleSelect variant="compact" />
           <ThemeToggle />
           <Link
-            href="/signin"
-            className="bi-btn bi-btn-primary"
+            href={ctaHref}
+            className="bi-nav-cta"
             style={{
-              padding: `${space[2]}px ${space[4]}px`,
+              padding: `${space[2]}px ${space[5]}px`,
               borderRadius: radius.full,
-              background: cssVar.accent,
-              color: cssVar.accentInk,
               textDecoration: "none",
               fontWeight: font.weight.bold,
               fontSize: font.size.md,
               minBlockSize: 40,
               display: "inline-flex",
               alignItems: "center",
-              transition: "box-shadow 0.15s ease, filter 0.15s ease",
+              gap: space[2],
             }}
           >
-            {T("shell.signin", "Entrar")}
+            {ctaLabel}
           </Link>
         </Container>
       </header>
@@ -133,7 +135,7 @@ export async function PublicShell({ children, activePath }) {
         {children}
       </div>
 
-      <footer role="contentinfo" style={{ borderTop: `1px solid ${cssVar.border}`, marginTop: space[12], background: cssVar.surface }}>
+      <footer role="contentinfo" className="bi-footer-root" style={{ marginTop: space[12] }}>
         <Container size="xl" style={{ paddingBlock: space[10] }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: space[8] }}>
             <FooterCol T={T} title={T("footer.product", "Producto")}      links={FOOTER_LINKS.product} />
@@ -143,10 +145,12 @@ export async function PublicShell({ children, activePath }) {
           </div>
           <hr style={{ border: 0, borderTop: `1px solid ${cssVar.border}`, margin: `${space[8]}px 0 ${space[4]}px` }} />
           <div style={{ display: "flex", flexWrap: "wrap", gap: space[3], alignItems: "center", justifyContent: "space-between", color: cssVar.textMuted, fontSize: font.size.sm }}>
-            <span>© {new Date().getFullYear()} BIO-IGNICIÓN · {T("footer.handcrafted", "Hecho con rigor en Chihuahua, MX")}</span>
+            <span style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
+              © {new Date().getFullYear()} BIO-IGNICIÓN · {T("footer.rights", "Todos los derechos reservados")}
+            </span>
             <span>
               <address style={{ display: "inline", fontStyle: "normal" }}>
-                <a href="mailto:hello@bio-ignicion.app" style={{ color: cssVar.textDim }}>hello@bio-ignicion.app</a>
+                <a href="mailto:hello@bio-ignicion.app" className="bi-footer-link">hello@bio-ignicion.app</a>
               </address>
             </span>
           </div>
@@ -159,13 +163,11 @@ export async function PublicShell({ children, activePath }) {
 function FooterCol({ title, links, T }) {
   return (
     <nav aria-label={title}>
-      <h2 style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", marginBlock: 0, marginBlockEnd: space[3] }}>
-        {title}
-      </h2>
+      <h2 className="bi-footer-heading">{title}</h2>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href} className="bi-shell-footer-link" style={{ color: cssVar.textDim, textDecoration: "none", fontSize: font.size.lg }}>
+            <Link href={l.href} className="bi-footer-link">
               {l.labelKey ? T(l.labelKey, l.fallback) : l.fallback}
             </Link>
           </li>

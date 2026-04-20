@@ -1,7 +1,9 @@
 "use client";
+import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { bioSignal, cssVar, font, space } from "@/components/ui/tokens";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
 
 export default function SensoryHero({ T }) {
   const [state, setState] = useState("idle");
@@ -64,13 +66,56 @@ export default function SensoryHero({ T }) {
       paddingInline: space[4],
       textAlign: "center",
       overflow: "hidden",
+      background: `
+        radial-gradient(ellipse 80% 60% at 50% 120%, color-mix(in srgb, ${bioSignal.phosphorCyan} 22%, transparent), transparent 60%),
+        radial-gradient(ellipse 70% 50% at 12% -10%, color-mix(in srgb, ${bioSignal.neuralViolet} 18%, transparent), transparent 65%),
+        linear-gradient(160deg, color-mix(in srgb, var(--bi-surface) 92%, #000) 0%, color-mix(in srgb, var(--bi-bg) 98%, #000) 100%)
+      `,
+      color: cssVar.text,
     }}>
+      {/* Layer 1 — drifting neural lattice. Same asset as AuthHero. */}
+      <div
+        aria-hidden
+        className="bi-hero-lattice"
+        style={{
+          position: "absolute",
+          inset: "-8%",
+          zIndex: 0,
+          opacity: 0.55,
+          pointerEvents: "none",
+          filter: "saturate(115%) blur(0.2px)",
+        }}
+      >
+        <BioglyphLattice variant="neural" animated height="100%" />
+      </div>
+
+      {/* Layer 2 — vignette that darkens edges, lifts the center. */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+          background: `radial-gradient(ellipse 70% 80% at 50% 50%, transparent 0%, transparent 35%, color-mix(in srgb, #000 50%, transparent) 100%)`,
+        }}
+      />
+
+      {/* Layer 3 — scanline tint for subtle depth (one line-pair per 3px). */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+          backgroundImage: `repeating-linear-gradient(0deg, transparent 0, transparent 2px, color-mix(in srgb, #000 8%, transparent) 2px, color-mix(in srgb, #000 8%, transparent) 3px)`,
+          mixBlendMode: "overlay",
+          opacity: 0.5,
+        }}
+      />
+
+      {/* Layer 4 — phosphor glow centered on the pulse button. */}
       <div aria-hidden style={{
-        position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
-        backgroundImage: `radial-gradient(45% 55% at 50% 40%, ${bioSignal.phosphorCyan}18, transparent 70%)`,
+        position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+        backgroundImage: `radial-gradient(45% 55% at 50% 58%, ${bioSignal.phosphorCyan}22, transparent 70%)`,
       }} />
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 860, marginInline: "auto" }}>
+      <div style={{ position: "relative", zIndex: 2, maxWidth: 860, marginInline: "auto" }}>
         <div style={{
           fontFamily: cssVar.fontMono, fontSize: font.size.xs,
           color: cssVar.textMuted,
@@ -184,6 +229,32 @@ export default function SensoryHero({ T }) {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {T.secondaryCta && T.secondaryHref && (
+            <Link
+              href={T.secondaryHref}
+              style={{
+                marginBlockStart: space[1],
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: `10px 18px`,
+                borderRadius: 999,
+                border: `1px solid color-mix(in srgb, ${bioSignal.phosphorCyan} 28%, transparent)`,
+                background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 6%, transparent)`,
+                color: cssVar.text,
+                textDecoration: "none",
+                fontFamily: cssVar.fontMono,
+                fontSize: 12,
+                fontWeight: font.weight.bold,
+                textTransform: "uppercase",
+                letterSpacing: font.tracking.caps,
+              }}
+            >
+              {T.secondaryCta}
+              <span aria-hidden style={{ color: bioSignal.phosphorCyan }}>→</span>
+            </Link>
+          )}
         </div>
 
         <svg viewBox="0 0 900 60" preserveAspectRatio="none"
@@ -220,6 +291,25 @@ export default function SensoryHero({ T }) {
             transition={{ duration: pulsing ? 2.2 : 6, repeat: Infinity, ease: "easeInOut" }}
           />
         </svg>
+
+        {T.chips && T.chips.length > 0 && (
+          <motion.ul
+            className="bi-authhero-chips"
+            role="list"
+            aria-label={T.chipsLabel || "Compliance"}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            style={{ justifyContent: "center", marginBlockStart: space[5] }}
+          >
+            {T.chips.map((c) => (
+              <li key={c}>
+                <span className="dot" aria-hidden />
+                {c}
+              </li>
+            ))}
+          </motion.ul>
+        )}
       </div>
     </section>
   );

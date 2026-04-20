@@ -61,6 +61,7 @@ export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃ
             aria-modal="true"
             aria-label={triggerLabel}
             id={panelId}
+            className="bi-mobile-drawer"
             style={{
               position: "fixed",
               insetBlock: 0,
@@ -80,13 +81,14 @@ export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃ
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBlockEnd: space[2],
+              marginBlockEnd: space[3],
             }}>
               <span style={{
-                color: cssVar.textMuted,
-                fontSize: font.size.sm,
+                color: "#22D3EE",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
                 textTransform: "uppercase",
-                letterSpacing: "2px",
+                letterSpacing: "0.22em",
                 fontWeight: font.weight.bold,
               }}>
                 {triggerLabel}
@@ -116,11 +118,12 @@ export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃ
                     href={it.href}
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
+                    className="bi-mobile-navlink"
+                    data-active={active ? "true" : undefined}
                     style={{
-                      padding: `${space[3]}px ${space[3]}px`,
+                      padding: `${space[3]}px ${space[4]}px`,
                       borderRadius: radius.sm,
-                      color: active ? cssVar.accent : cssVar.text,
-                      background: active ? cssVar.accentSoft : "transparent",
+                      color: cssVar.text,
                       fontWeight: font.weight.semibold,
                       fontSize: font.size.lg,
                       textDecoration: "none",
