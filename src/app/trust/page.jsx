@@ -1,6 +1,9 @@
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
-import { cssVar, radius, space, font } from "@/components/ui/tokens";
+import { cssVar, radius, space, font, bioSignal } from "@/components/ui/tokens";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
   title: "Trust Center",
@@ -36,23 +39,57 @@ export default function TrustCenter() {
     <PublicShell activePath="/trust">
       <Container size="lg" className="bi-prose">
         <article style={{ lineHeight: 1.6 }}>
-      <h1 style={{
-        fontSize: font.size["3xl"],
-        fontWeight: font.weight.black,
-        letterSpacing: font.tracking.tight,
-        margin: 0,
-      }}>
-        Trust Center
-      </h1>
-      <p style={{ color: cssVar.textDim, fontSize: font.size.md, marginTop: space[2] }}>
-        Seguridad, privacidad y resiliencia operativa — documentadas, no declamadas.
-      </p>
-      <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: 0 }}>
-        Ninguna certificación se declara hasta que el reporte auditado esté disponible: las fechas abajo son
-        objetivos públicos, no estado vigente. Si tu equipo de seguridad necesita algo que no vemos listado,
-        escríbenos a <a href="mailto:trust@bio-ignicion.app" style={{ color: cssVar.accent }}>trust@bio-ignicion.app</a>.
-        Última revisión: <time dateTime="2026-04-01">abril 2026</time>.
-      </p>
+      <div style={{ position: "relative", paddingBlock: space[8] }}>
+        <div aria-hidden style={{
+          position: "absolute", inset: 0, opacity: 0.28, pointerEvents: "none", zIndex: 0,
+        }}>
+          <BioglyphLattice variant="ambient" />
+        </div>
+        <IgnitionReveal sparkOrigin="30% 40%">
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{
+              fontFamily: cssVar.fontMono,
+              fontSize: font.size.xs,
+              color: bioSignal.phosphorCyan,
+              textTransform: "uppercase",
+              letterSpacing: font.tracking.caps,
+              fontWeight: font.weight.black,
+              marginBlockEnd: space[3],
+            }}>
+              TRUST CENTER
+            </div>
+            <h1 style={{
+              fontSize: "clamp(40px, 6vw, 72px)",
+              fontWeight: font.weight.black,
+              letterSpacing: "-0.035em",
+              margin: 0,
+              lineHeight: 1.05,
+            }}>
+              Documentadas, no declamadas.
+            </h1>
+            <p style={{
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              color: cssVar.textDim,
+              fontSize: "clamp(18px, 2.2vw, 24px)",
+              lineHeight: 1.4,
+              marginBlockStart: space[4],
+              maxInlineSize: 640,
+              letterSpacing: "-0.01em",
+            }}>
+              Seguridad, privacidad y resiliencia operativa — con fechas, con métodos, con fuentes.
+            </p>
+            <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[4], maxInlineSize: 680 }}>
+              Ninguna certificación se declara hasta que el reporte auditado esté disponible: las fechas abajo son
+              objetivos públicos, no estado vigente. Si tu equipo de seguridad necesita algo que no vemos listado,
+              escríbenos a <a href="mailto:trust@bio-ignicion.app" style={{ color: bioSignal.phosphorCyan }}>trust@bio-ignicion.app</a>.
+              Última revisión: <time dateTime="2026-04-01">abril 2026</time>.
+            </p>
+          </div>
+        </IgnitionReveal>
+      </div>
+
+      <PulseDivider intensity="dim" />
 
       <section>
         <h2 style={h2Style}>Certificaciones y marcos</h2>
@@ -76,6 +113,8 @@ export default function TrustCenter() {
         </table>
       </section>
 
+      <PulseDivider intensity="dim" />
+
       <section>
         <h2 style={h2Style}>Controles clave</h2>
         <ul style={ulStyle}>
@@ -89,6 +128,8 @@ export default function TrustCenter() {
           <li><strong>Continuidad:</strong> BCP/DRP documentados · ejercicios trimestrales.</li>
         </ul>
       </section>
+
+      <PulseDivider intensity="dim" />
 
       <section id="methodology">
         <h2 style={h2Style}>Metodología e instrumentos</h2>
@@ -172,6 +213,8 @@ hourlyLoadedCost  — default USD 60 (knowledge worker global 2026)`}
           <li>No convertimos ΔHRV debajo del MDC95 en "lift vagal" para quedar bien.</li>
         </ul>
       </section>
+
+      <PulseDivider intensity="dim" />
 
       <section>
         <h2 style={h2Style}>Documentación</h2>

@@ -2,10 +2,13 @@ import { Fragment } from "react";
 import { headers } from "next/headers";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
-import { cssVar, space, font, radius } from "@/components/ui/tokens";
+import { cssVar, space, font, radius, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import { EVIDENCE } from "@/lib/evidence";
 import PricingCards from "./PricingCards";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
   title: "Precios",
@@ -20,9 +23,9 @@ export const metadata = {
 
 const COPY = {
   es: {
-    eyebrow: "Precios",
-    title: "Menos fricción, más entrenamiento",
-    sub: "Pagas por usuario activo. 20 % de descuento en facturación anual. Sin setup fees, sin mínimos.",
+    eyebrow: "PRECIOS",
+    title: "Enciende al equipo. Paga solo por quien entra.",
+    sub: "Por usuario activo. 20 % de descuento anual. Sin setup, sin mínimos — nada de la fricción que sale de serie en SaaS.",
     cadenceLabel: "Facturación",
     cadenceMonthly: "Mensual",
     cadenceAnnual: "Anual · −20 %",
@@ -170,9 +173,9 @@ const COPY = {
     ],
   },
   en: {
-    eyebrow: "Pricing",
-    title: "Less friction, more training",
-    sub: "You pay per active user. 20% off on annual billing. No setup fees, no minimums.",
+    eyebrow: "PRICING",
+    title: "Ignite the team. Pay only for who shows up.",
+    sub: "Per active user. 20% off on annual billing. No setup, no minimums — none of the usual SaaS friction.",
     cadenceLabel: "Billing",
     cadenceMonthly: "Monthly",
     cadenceAnnual: "Annual · −20%",
@@ -378,33 +381,70 @@ export default async function PricingPage() {
   return (
     <PublicShell activePath="/pricing">
       <Container size="xl" className="bi-prose">
-        <header style={{ textAlign: "center", marginBottom: space[8] }}>
-          <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
-            {c.eyebrow}
+        <div style={{ position: "relative", paddingBlockStart: space[8], paddingBlockEnd: space[6] }}>
+          <div aria-hidden style={{
+            position: "absolute", inset: 0, opacity: 0.3, pointerEvents: "none", zIndex: 0,
+          }}>
+            <BioglyphLattice variant="ambient" />
           </div>
-          <h1 style={{ margin: `${space[2]}px 0` }}>{c.title}</h1>
-          <p style={{ maxWidth: 640, marginInline: "auto" }}>{c.sub}</p>
-        </header>
+          <IgnitionReveal sparkOrigin="50% 45%">
+            <header style={{ textAlign: "center", marginBottom: space[8], position: "relative", zIndex: 1 }}>
+              <div style={{
+                fontFamily: cssVar.fontMono,
+                fontSize: font.size.xs,
+                color: bioSignal.phosphorCyan,
+                textTransform: "uppercase",
+                letterSpacing: font.tracking.caps,
+                fontWeight: font.weight.black,
+                marginBlockEnd: space[4],
+              }}>
+                {c.eyebrow}
+              </div>
+              <h1 style={{
+                margin: `${space[2]}px 0`,
+                fontSize: "clamp(36px, 5.5vw, 64px)",
+                lineHeight: 1.05,
+                letterSpacing: "-0.035em",
+                fontWeight: font.weight.black,
+              }}>{c.title}</h1>
+              <p style={{ maxWidth: 640, marginInline: "auto", fontSize: font.size.lg, color: cssVar.textDim }}>{c.sub}</p>
+            </header>
+          </IgnitionReveal>
+        </div>
 
         <div style={{ display: "flex", justifyContent: "center" }}>
           <PricingCards plans={plans} copy={cardsCopy} />
         </div>
 
-        <section
-          aria-labelledby="compare"
-          style={{ marginTop: space[12] }}
-        >
-          <h2 id="compare" style={{ marginBottom: space[4], textAlign: "center" }}>
-            {c.compareTitle}
-          </h2>
-          <CompareTable groups={c.compareGroups} cols={c.compareCols} />
+        <PulseDivider />
+
+        <section aria-labelledby="compare" style={{ marginTop: space[8] }}>
+          <IgnitionReveal sparkOrigin="50% 50%">
+            <h2 id="compare" style={{
+              marginBottom: space[6], textAlign: "center",
+              fontSize: "clamp(28px, 4vw, 44px)",
+              letterSpacing: "-0.025em",
+              fontWeight: font.weight.black,
+            }}>
+              {c.compareTitle}
+            </h2>
+            <CompareTable groups={c.compareGroups} cols={c.compareCols} />
+          </IgnitionReveal>
         </section>
+
+        <PulseDivider intensity="dim" />
 
         <section
           aria-labelledby="trust"
-          style={{ marginTop: space[12], textAlign: "center" }}
+          style={{ marginTop: space[8], textAlign: "center" }}
         >
-          <h2 id="trust" style={{ marginBottom: space[2] }}>{c.trustTitle}</h2>
+         <IgnitionReveal sparkOrigin="50% 40%">
+          <h2 id="trust" style={{
+            marginBottom: space[2],
+            fontSize: "clamp(28px, 4vw, 44px)",
+            letterSpacing: "-0.025em",
+            fontWeight: font.weight.black,
+          }}>{c.trustTitle}</h2>
           <p style={{ color: cssVar.textDim, maxWidth: 640, marginInline: "auto", marginBlockEnd: space[5] }}>
             {c.trustSub}
           </p>
@@ -443,12 +483,30 @@ export default async function PricingPage() {
               </li>
             ))}
           </ul>
+         </IgnitionReveal>
         </section>
 
-        <section aria-labelledby="proof" style={{ marginTop: space[12], maxWidth: 960, marginInline: "auto" }}>
+        <PulseDivider />
+
+        <section aria-labelledby="proof" style={{ marginTop: space[8], maxWidth: 960, marginInline: "auto" }}>
+         <IgnitionReveal sparkOrigin="50% 40%">
           <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <h2 id="proof" style={{ marginBottom: space[2] }}>{c.proofTitle}</h2>
-            <p style={{ color: cssVar.textDim, maxWidth: 640, marginInline: "auto" }}>{c.proofSub}</p>
+            <h2 id="proof" style={{
+              marginBottom: space[2],
+              fontSize: "clamp(28px, 4vw, 44px)",
+              letterSpacing: "-0.025em",
+              fontWeight: font.weight.black,
+            }}>{c.proofTitle}</h2>
+            <p style={{
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontSize: "clamp(18px, 2vw, 22px)",
+              color: cssVar.textDim,
+              maxWidth: 640,
+              marginInline: "auto",
+              lineHeight: 1.4,
+              letterSpacing: "-0.01em",
+            }}>{c.proofSub}</p>
           </header>
 
           <ul
@@ -523,16 +581,26 @@ export default async function PricingPage() {
               <p style={{ margin: 0, color: cssVar.textDim, lineHeight: 1.6 }}>{c.founderBody}</p>
             </article>
           </div>
+         </IgnitionReveal>
         </section>
 
-        <section aria-labelledby="faq" style={{ marginTop: space[12], maxWidth: 720, marginInline: "auto" }}>
-          <h2 id="faq" style={{ marginBottom: space[4] }}>{c.faqTitle}</h2>
+        <PulseDivider intensity="dim" />
+
+        <section aria-labelledby="faq" style={{ marginTop: space[8], maxWidth: 720, marginInline: "auto" }}>
+         <IgnitionReveal sparkOrigin="50% 30%">
+          <h2 id="faq" style={{
+            marginBottom: space[5],
+            fontSize: "clamp(28px, 4vw, 44px)",
+            letterSpacing: "-0.025em",
+            fontWeight: font.weight.black,
+          }}>{c.faqTitle}</h2>
           {c.faqs.map((f, i) => (
             <details key={i} style={{ borderTop: `1px solid ${cssVar.border}`, padding: "4px 0" }}>
               <summary style={{ cursor: "pointer", fontWeight: font.weight.semibold, padding: "10px 0" }}>{f.q}</summary>
               <p style={{ margin: `${space[1]}px 0 ${space[2]}px` }}>{f.a}</p>
             </details>
           ))}
+         </IgnitionReveal>
         </section>
 
         <script

@@ -4,9 +4,9 @@ import { Container } from "@/components/ui/Container";
 import { cssVar, space, font, bioSignal, radius } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import SensoryHero from "./SensoryHero";
-import IgnitionReveal from "./IgnitionReveal";
-import BioglyphLattice from "./BioglyphLattice";
-import PulseDivider from "./PulseDivider";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
   title: "BIO-IGNICIÓN",
