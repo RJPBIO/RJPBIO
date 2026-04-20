@@ -1,98 +1,74 @@
-import { db } from "@/server/db";
-import { auth } from "@/server/auth";
-import { anonymize } from "@/server/analytics";
-import { redirect } from "next/navigation";
+/* Preview route — renders /team visually with mock data for review.
+   Public, unauthenticated. DELETE WHEN /team polish is signed off. */
 import { cssVar, radius, space, font, bioSignal } from "@/components/ui/tokens";
 
-export const metadata = { title: "Equipo" };
-export const dynamic = "force-dynamic";
+export const metadata = { title: "Equipo · preview", robots: { index: false, follow: false } };
+
+const MOCK_TEAMS = [
+  { id: "eng", name: "Ingeniería", members: 34 },
+  { id: "ops", name: "Operaciones", members: 18 },
+  { id: "sales", name: "Ventas", members: 22 },
+  { id: "success", name: "Customer Success", members: 14 },
+];
 
 const WEEKDAYS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+
+/* Mock 30d of buckets; suppress a few to exercise the counter. */
+const MOCK_30D = Array.from({ length: 30 }, (_, i) => {
+  const d = new Date(Date.UTC(2026, 3, 20 - i));
+  const day = d.toISOString().slice(0, 10);
+  const wd = WEEKDAYS[d.getUTCDay()];
+  const base = 18 + Math.sin(i / 3) * 4 + (i % 7 === 0 ? -6 : 0);
+  const users = Math.max(0, Math.round(base));
+  if (users < 5) return null;
+  const sessions = Math.round(users * (2 + Math.sin(i / 4)));
+  return {
+    day, wd,
+    uniqueUsers: users,
+    sessions,
+    avgCoherenciaDelta: +(3.6 + Math.sin(i / 2) * 1.8 - (i % 5 === 0 ? 0.6 : 0)).toFixed(1),
+    avgMoodDelta: +(0.32 + Math.cos(i / 3) * 0.18 - (i % 6 === 0 ? 0.1 : 0)).toFixed(2),
+  };
+}).filter(Boolean);
 
 const RANGES = [
   { id: "7d",  label: "7 d",  days: 7  },
   { id: "30d", label: "30 d", days: 30 },
   { id: "90d", label: "90 d", days: 90 },
 ];
+
 function pickRange(id) { return RANGES.find((r) => r.id === id) || RANGES[1]; }
 
-function weekdayFromISO(iso) {
-  const d = new Date(`${iso}T00:00:00Z`);
-  return WEEKDAYS[d.getUTCDay()];
-}
-
-function relativeAgo(date) {
-  if (!date) return null;
-  const diff = Date.now() - new Date(date).getTime();
-  const min = Math.round(diff / 60000);
-  if (min < 1) return "hace segundos";
-  if (min < 60) return `hace ${min} min`;
-  const hr = Math.round(min / 60);
-  if (hr < 24) return `hace ${hr} h`;
-  const day = Math.round(hr / 24);
-  return `hace ${day} d`;
-}
-
-export default async function TeamPage({ searchParams }) {
-  const session = await auth();
-  if (!session?.user) redirect("/signin?next=/team");
-  const mgr = session.memberships.find((m) => ["OWNER","ADMIN","MANAGER"].includes(m.role));
-  if (!mgr) redirect("/app");
+export default async function TeamPreviewPage({ searchParams }) {
   const sp = await searchParams;
-  const orm = await db();
-
-  const [org, teams] = await Promise.all([
-    orm.org.findUnique({ where: { id: mgr.orgId }, select: { name: true } }),
-    orm.team.findMany({ where: { orgId: mgr.orgId } }),
-  ]);
-
-  const teamId = sp?.team || teams[0]?.id;
+  const teamId = sp?.team || MOCK_TEAMS[0].id;
   const rangeId = sp?.range || "30d";
   const range = pickRange(rangeId);
+  const empty = sp?.empty === "1";
 
-  const [memberCount, sessions] = await Promise.all([
-    teamId
-      ? orm.membership.count({ where: { orgId: mgr.orgId, teamId } })
-      : orm.membership.count({ where: { orgId: mgr.orgId } }),
-    orm.neuralSession.findMany({
-      where: {
-        orgId: mgr.orgId,
-        ...(teamId ? { teamId } : {}),
-        completedAt: { gte: new Date(Date.now() - range.days * 86400_000) },
-      },
-      orderBy: { completedAt: "desc" },
-    }),
-  ]);
+  const fullBuckets = empty ? [] : MOCK_30D.slice(0, range.days).reverse();
+  const suppressed = empty ? 4 : (range.days === 7 ? 1 : range.days === 90 ? 8 : 2);
+  const totalSessions = fullBuckets.reduce((n, b) => n + b.sessions, 0);
+  const avgCoh = fullBuckets.length ? +(fullBuckets.reduce((n, b) => n + b.avgCoherenciaDelta, 0) / fullBuckets.length).toFixed(1) : null;
+  const avgMood = fullBuckets.length ? +(fullBuckets.reduce((n, b) => n + b.avgMoodDelta, 0) / fullBuckets.length).toFixed(2) : null;
+  const selectedTeam = MOCK_TEAMS.find((t) => t.id === teamId) || MOCK_TEAMS[0];
 
-  const agg = anonymize(sessions, { k: 5, epsilon: 1.0 });
-  const selectedTeam = teams.find((t) => t.id === teamId);
-  const lastSync = sessions[0]?.completedAt ?? null;
-  const lastSyncLabel = relativeAgo(lastSync);
-
-  const totalSessions = agg.buckets.reduce((n, b) => n + b.sessions, 0);
-  const avgCoh = agg.buckets.length
-    ? +(agg.buckets.reduce((n, b) => n + (b.avgCoherenciaDelta ?? 0), 0) / agg.buckets.length).toFixed(1)
-    : null;
-  const avgMood = agg.buckets.length
-    ? +(agg.buckets.reduce((n, b) => n + (b.avgMoodDelta ?? 0), 0) / agg.buckets.length).toFixed(2)
-    : null;
-  const sparkSeries = agg.buckets.map((b) => b.sessions);
-  const highActivityPct = agg.buckets.length
-    ? Math.round((agg.buckets.filter((b) => b.uniqueUsers >= 20).length / agg.buckets.length) * 100)
-    : 0;
+  const sparkSeries = fullBuckets.map((b) => b.sessions);
 
   const rangeHref = (id) => {
     const params = new URLSearchParams();
     if (teamId) params.set("team", teamId);
     if (id !== "30d") params.set("range", id);
+    if (empty) params.set("empty", "1");
     const qs = params.toString();
-    return `/team${qs ? `?${qs}` : ""}`;
+    return `/team-preview${qs ? `?${qs}` : ""}`;
   };
   const teamHref = (id) => {
     const params = new URLSearchParams();
     params.set("team", id);
     if (rangeId !== "30d") params.set("range", rangeId);
-    return `/team?${params.toString()}`;
+    if (empty) params.set("empty", "1");
+    return `/team-preview?${params.toString()}`;
   };
 
   return (
@@ -105,20 +81,30 @@ export default async function TeamPage({ searchParams }) {
       minHeight: "100dvh",
       fontFamily: cssVar.fontSans,
     }}>
+      <div role="note" style={{
+        marginBlockEnd: space[4],
+        padding: `${space[2]}px ${space[3]}px`,
+        border: `1px dashed ${cssVar.border}`,
+        borderRadius: radius.sm,
+        fontFamily: cssVar.fontMono,
+        fontSize: font.size.xs,
+        color: cssVar.textMuted,
+        letterSpacing: "0.08em",
+      }}>
+        PREVIEW · DATOS MOCK ·{" "}
+        <a href={empty ? rangeHref(rangeId).replace("?empty=1", "").replace("&empty=1", "") : `${rangeHref(rangeId)}${rangeHref(rangeId).includes("?") ? "&" : "?"}empty=1`} style={{ color: bioSignal.phosphorCyan }}>
+          {empty ? "ver con datos" : "ver vacío"}
+        </a>
+      </div>
+
       <div className="bi-team-context" role="group" aria-label="Contexto">
         <div className="bi-team-context-left">
-          <span className="bi-team-org">
-            {org?.name || "Organización"} · {memberCount} {memberCount === 1 ? "miembro" : "miembros"}
+          <span className="bi-team-org">DEMO ORG · {selectedTeam.members} miembros</span>
+          <span className="bi-team-context-sep" aria-hidden>·</span>
+          <span className="bi-team-fresh" data-state="fresh">
+            <span className="dot" aria-hidden />
+            Sincronizado hace 4 min
           </span>
-          {lastSyncLabel && (
-            <>
-              <span className="bi-team-context-sep" aria-hidden>·</span>
-              <span className="bi-team-fresh" data-state="fresh">
-                <span className="dot" aria-hidden />
-                Sincronizado {lastSyncLabel}
-              </span>
-            </>
-          )}
         </div>
         <div className="bi-team-context-right">
           <a href="/trust#trust-principles" className="bi-team-context-link">
@@ -146,7 +132,7 @@ export default async function TeamPage({ searchParams }) {
           letterSpacing: "-0.025em",
           lineHeight: 1.08,
         }}>
-          {selectedTeam ? selectedTeam.name : "Panel de equipo"}
+          {selectedTeam.name}
         </h1>
         <p style={{
           color: cssVar.textDim,
@@ -161,42 +147,40 @@ export default async function TeamPage({ searchParams }) {
         </p>
       </header>
 
-      {teams.length > 0 && (
-        <div className="bi-team-toolbar">
-          <nav aria-label="Filtrar por equipo" className="bi-team-tabs">
-            {teams.map((t) => {
-              const active = t.id === teamId;
-              return (
-                <a
-                  key={t.id}
-                  href={teamHref(t.id)}
-                  aria-current={active ? "page" : undefined}
-                  className="bi-team-tab"
-                  data-active={active ? "true" : undefined}
-                >
-                  {t.name}
-                </a>
-              );
-            })}
-          </nav>
-          <div className="bi-team-range" role="group" aria-label="Rango de tiempo">
-            {RANGES.map((r) => {
-              const active = r.id === rangeId;
-              return (
-                <a
-                  key={r.id}
-                  href={rangeHref(r.id)}
-                  aria-current={active ? "page" : undefined}
-                  className="bi-team-range-btn"
-                  data-active={active ? "true" : undefined}
-                >
-                  {r.label}
-                </a>
-              );
-            })}
-          </div>
+      <div className="bi-team-toolbar">
+        <nav aria-label="Filtrar por equipo" className="bi-team-tabs">
+          {MOCK_TEAMS.map((t) => {
+            const active = t.id === teamId;
+            return (
+              <a
+                key={t.id}
+                href={teamHref(t.id)}
+                aria-current={active ? "page" : undefined}
+                className="bi-team-tab"
+                data-active={active ? "true" : undefined}
+              >
+                {t.name}
+              </a>
+            );
+          })}
+        </nav>
+        <div className="bi-team-range" role="group" aria-label="Rango de tiempo">
+          {RANGES.map((r) => {
+            const active = r.id === rangeId;
+            return (
+              <a
+                key={r.id}
+                href={rangeHref(r.id)}
+                aria-current={active ? "page" : undefined}
+                className="bi-team-range-btn"
+                data-active={active ? "true" : undefined}
+              >
+                {r.label}
+              </a>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       <section
         aria-label="Resumen"
@@ -214,34 +198,12 @@ export default async function TeamPage({ searchParams }) {
           sub="total observado"
           spark={sparkSeries}
         />
-        <Stat
-          label="Cohortes visibles"
-          v={agg.buckets.length}
-          sub={`de ${agg.buckets.length + agg.suppressed} posibles`}
-        />
-        <Stat
-          label="Δ coherencia · media"
-          v={avgCoh ?? "—"}
-          sub="puntos · vs. baseline"
-          delta={avgCoh}
-        />
-        <Stat
-          label="Δ mood · media"
-          v={avgMood ?? "—"}
-          sub="0..1 · vs. baseline"
-          delta={avgMood}
-        />
+        <Stat label="Cohortes visibles" v={fullBuckets.length} sub={`de ${fullBuckets.length + suppressed} posibles`} />
+        <Stat label="Δ coherencia · media" v={avgCoh ?? "—"} sub="puntos · vs. baseline" delta={avgCoh} />
+        <Stat label="Δ mood · media" v={avgMood ?? "—"} sub="0..1 · vs. baseline" delta={avgMood} />
       </section>
 
-      <header style={{
-        marginTop: space[6],
-        marginBottom: space[3],
-        display: "flex",
-        alignItems: "baseline",
-        justifyContent: "space-between",
-        gap: space[3],
-        flexWrap: "wrap",
-      }}>
+      <header style={{ marginTop: space[6], marginBottom: space[3], display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: space[3], flexWrap: "wrap" }}>
         <div>
           <h2 style={{
             margin: 0,
@@ -258,19 +220,15 @@ export default async function TeamPage({ searchParams }) {
             letterSpacing: "0.08em",
             marginInlineStart: 4,
           }}>
-            {agg.buckets.length} {agg.buckets.length === 1 ? "día visible" : "días visibles"}
-            {agg.suppressed > 0 ? ` · ${agg.suppressed} suprimido${agg.suppressed === 1 ? "" : "s"}` : ""}
+            {fullBuckets.length} {fullBuckets.length === 1 ? "día visible" : "días visibles"}
+            {suppressed > 0 ? ` · ${suppressed} suprimido${suppressed === 1 ? "" : "s"}` : ""}
           </span>
         </div>
         <div className="bi-team-actions" role="group" aria-label="Acciones">
-          <a
-            href={`/api/team/export?team=${teamId ?? ""}&range=${rangeId}`}
-            className="bi-team-action"
-            data-kind="ghost"
-          >
+          <a href="#" className="bi-team-action" data-kind="ghost">
             <IconDownload /> Exportar CSV
           </a>
-          <a href="#" className="bi-team-action" data-kind="ghost" aria-disabled="true" title="Próximamente">
+          <a href="#" className="bi-team-action" data-kind="ghost">
             <IconLink /> Compartir
           </a>
         </div>
@@ -297,7 +255,7 @@ export default async function TeamPage({ searchParams }) {
             </tr>
           </thead>
           <tbody>
-            {agg.buckets.length === 0 && (
+            {fullBuckets.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ padding: `${space[7]}px ${space[4]}px`, textAlign: "center" }}>
                   <div style={{
@@ -321,11 +279,11 @@ export default async function TeamPage({ searchParams }) {
                 </td>
               </tr>
             )}
-            {agg.buckets.map((b, i) => (
+            {fullBuckets.map((b, i) => (
               <tr key={i} className="bi-team-row">
                 <td style={tdStyle}>
                   <span>{b.day}</span>
-                  <span className="bi-team-weekday" aria-hidden> · {weekdayFromISO(b.day)}</span>
+                  <span className="bi-team-weekday" aria-hidden> · {b.wd}</span>
                 </td>
                 <td style={{ ...tdStyle, fontFamily: cssVar.fontMono, textAlign: "end", fontVariantNumeric: "tabular-nums" }}>{b.uniqueUsers}</td>
                 <td style={{ ...tdStyle, fontFamily: cssVar.fontMono, textAlign: "end", fontVariantNumeric: "tabular-nums" }}>{b.sessions}</td>
@@ -341,21 +299,13 @@ export default async function TeamPage({ searchParams }) {
         </table>
       </div>
 
-      {agg.buckets.length > 0 && (
+      {fullBuckets.length > 0 && (
         <aside className="bi-team-insight" aria-label="Insight">
           <div className="bi-team-insight-kicker">INSIGHT · {range.label}</div>
           <p className="bi-team-insight-body">
-            <strong>{selectedTeam?.name || "Equipo"}</strong> registró{" "}
-            <strong style={{ fontFamily: cssVar.fontMono }}>{totalSessions}</strong> sesiones en {range.label}
-            {avgCoh != null && (
-              <>, con Δ coherencia media de{" "}
-                <strong style={{ fontFamily: cssVar.fontMono, color: avgCoh >= 0 ? bioSignal.phosphorCyan : cssVar.textDim }}>
-                  {avgCoh >= 0 ? "+" : ""}{avgCoh}
-                </strong>{" "}pts
-              </>
-            )}
-            . Los días con ≥ 20 usuarios activos concentran el{" "}
-            <strong>{highActivityPct}%</strong> de la actividad —
+            <strong>{selectedTeam.name}</strong> registró <strong style={{ fontFamily: cssVar.fontMono }}>{totalSessions}</strong> sesiones en {range.label},
+            con Δ coherencia media de <strong style={{ fontFamily: cssVar.fontMono, color: bioSignal.phosphorCyan }}>+{avgCoh}</strong> pts.
+            Los días con ≥ 20 usuarios activos concentran el <strong>{Math.round((fullBuckets.filter(b => b.uniqueUsers >= 20).length / fullBuckets.length) * 100)}%</strong> de la actividad —
             cadencia sugerida: sesión grupal semanal en el pico.
           </p>
         </aside>
@@ -426,7 +376,7 @@ function Stat({ label, v, sub, tone = "default", mono = false, spark, delta }) {
         </span>
         {spark && spark.length > 1 && <Sparkline series={spark} />}
         {hasDelta && (
-          <span className="bi-team-stat-delta" data-sign={deltaPositive ? "pos" : "neg"}>
+          <span className={`bi-team-stat-delta`} data-sign={deltaPositive ? "pos" : "neg"}>
             {deltaPositive ? "▲" : "▼"}
           </span>
         )}
