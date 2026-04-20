@@ -3759,6 +3759,46 @@ a.bi-data-card:hover {
   z-index: 0;
 }
 
+/* Hero FX — vignette + scanline + phosphor glow (brand DNA parity) */
+.bi-demo-hero-fx {
+  position: absolute;
+  inset-block-start: -60px;
+  inset-inline: -40px;
+  block-size: 560px;
+  pointer-events: none;
+  overflow: clip;
+  z-index: 0;
+}
+.bi-demo-hero-fx::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 30% 10%, color-mix(in srgb, #22D3EE 14%, transparent) 0%, transparent 55%),
+    radial-gradient(ellipse 120% 80% at 50% 0%, transparent 30%, color-mix(in srgb, var(--bi-bg) 55%, transparent) 80%, var(--bi-bg) 100%);
+  opacity: 0.9;
+}
+.bi-demo-hero-fx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    color-mix(in srgb, #22D3EE 9%, transparent) 2px,
+    color-mix(in srgb, #22D3EE 9%, transparent) 3px
+  );
+  opacity: 0.55;
+  mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 95%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 95%);
+}
+.theme-light .bi-demo-hero-fx::after { opacity: 0.28; }
+.theme-light .bi-demo-hero-fx::before { opacity: 0.7; }
+@media (prefers-reduced-motion: reduce) {
+  .bi-demo-hero-fx::after { opacity: 0.3; }
+}
+
 /* ═══ DEMO · alt paths (async / self-serve) below the form ═══ */
 .bi-demo-alt-paths {
   margin-block-start: 18px;
