@@ -2,8 +2,11 @@ import DemoForm from "./DemoForm";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
-import { cssVar, space, font } from "@/components/ui/tokens";
+import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
   title: "Demo",
@@ -18,9 +21,10 @@ export const metadata = {
 
 const COPY = {
   es: {
-    eyebrow: "Demo 1:1",
-    h1: "30 minutos para ver si BIO-IGNICIÓN le sirve a tu equipo",
-    p: "No es una presentación de slides. Corremos un protocolo neural en vivo contigo, te mostramos el panel de equipo con datos simulados y respondemos preguntas de seguridad y compliance.",
+    eyebrow: "DEMO 1:1",
+    h1: "Sentilo primero. Deciden después.",
+    editorial: "30 minutos, en vivo, sin slides — respiras, escuchas, ves el panel.",
+    p: "Corremos un protocolo neural contigo — respiración coherente + audio binaural + medición HRV. Te mostramos el panel de equipo con datos simulados reales y respondemos preguntas de seguridad y compliance sobre la mesa.",
     bullets: [
       "Sesión neural en vivo (breath + audio + binaural).",
       "Panel de equipo con k-anonymity ≥5.",
@@ -44,9 +48,10 @@ const COPY = {
     formTitle: "Reserva un horario",
   },
   en: {
-    eyebrow: "1:1 demo",
-    h1: "30 minutes to see if BIO-IGNITION fits your team",
-    p: "It's not a slide deck. We run a live neural protocol with you, show the team panel with simulated data, and answer security & compliance questions.",
+    eyebrow: "1:1 DEMO",
+    h1: "Feel it first. Decide after.",
+    editorial: "30 minutes, live, no slides — you breathe, you listen, you see the panel.",
+    p: "We run a live neural protocol with you — coherent breathing + binaural audio + HRV measurement. We show you the team panel with real simulated data and answer security & compliance questions on the table.",
     bullets: [
       "Live neural session (breath + audio + binaural).",
       "Team panel with k-anonymity ≥5.",
@@ -77,18 +82,72 @@ export default async function DemoPage() {
   return (
     <PublicShell activePath="/demo">
       <Container size="lg" className="bi-prose">
-        <div className="bi-split">
-          <section>
-            <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
-              {c.eyebrow}
-            </div>
-            <h1 style={{ margin: `${space[2]}px 0 ${space[3]}px` }}>{c.h1}</h1>
-            <p>{c.p}</p>
-            <ul style={{ paddingInlineStart: 20, lineHeight: 1.8, fontSize: 14 }}>
+        <div className="bi-split" style={{ position: "relative" }}>
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: `-${space[4]}px -${space[6]}px auto -${space[6]}px`,
+              height: 420,
+              opacity: 0.22,
+              pointerEvents: "none",
+              maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+              zIndex: 0,
+            }}
+          >
+            <BioglyphLattice variant="ambient" />
+          </div>
+
+          <section style={{ position: "relative", zIndex: 1 }}>
+            <IgnitionReveal sparkOrigin="20% 25%">
+              <div
+                style={{
+                  fontSize: font.size.xs,
+                  fontFamily: cssVar.fontMono,
+                  color: bioSignal.phosphorCyan,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.28em",
+                  fontWeight: font.weight.bold,
+                }}
+              >
+                {c.eyebrow}
+              </div>
+              <h1
+                style={{
+                  margin: `${space[3]}px 0 ${space[4]}px`,
+                  fontSize: "clamp(36px, 5.2vw, 64px)",
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1.02,
+                }}
+              >
+                {c.h1}
+              </h1>
+              <p
+                style={{
+                  fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                  fontStyle: "italic",
+                  fontSize: "clamp(18px, 2vw, 24px)",
+                  lineHeight: 1.35,
+                  color: cssVar.textMuted,
+                  margin: `0 0 ${space[4]}px`,
+                  maxWidth: "40ch",
+                }}
+              >
+                {c.editorial}
+              </p>
+              <p style={{ marginBlockStart: 0 }}>{c.p}</p>
+            </IgnitionReveal>
+
+            <ul style={{ paddingInlineStart: 20, lineHeight: 1.8, fontSize: 14, marginTop: space[4] }}>
               {c.bullets.map((b, i) => <li key={i}>{b}</li>)}
             </ul>
 
-            <div style={{ marginTop: space[6] }}>
+            <div style={{ marginTop: space[5] }}>
+              <PulseDivider intensity="dim" />
+            </div>
+
+            <div style={{ marginTop: space[5] }}>
               <h2 style={{ fontSize: font.size.md, fontWeight: font.weight.bold, letterSpacing: font.tracking.tight, marginBlock: 0, marginBlockEnd: space[3] }}>
                 {c.stepsTitle}
               </h2>
@@ -122,8 +181,20 @@ export default async function DemoPage() {
             </Card>
           </section>
 
-          <Card as="section" padding={7} aria-labelledby="demo-form-title">
-            <h2 id="demo-form-title" style={{ margin: `0 0 ${space[4]}px` }}>{c.formTitle}</h2>
+          <Card as="section" padding={7} aria-labelledby="demo-form-title" style={{ position: "relative", zIndex: 1 }}>
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                insetInlineStart: 0,
+                insetBlockStart: 0,
+                height: 2,
+                width: "38%",
+                background: `linear-gradient(90deg, ${bioSignal.phosphorCyan} 0%, ${bioSignal.neuralViolet} 100%)`,
+                borderStartStartRadius: "inherit",
+              }}
+            />
+            <h2 id="demo-form-title" style={{ margin: `0 0 ${space[4]}px`, letterSpacing: "-0.02em" }}>{c.formTitle}</h2>
             <DemoForm source="demo" locale={locale} />
           </Card>
         </div>

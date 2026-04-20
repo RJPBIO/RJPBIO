@@ -12,9 +12,12 @@
 
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
-import { cssVar, space, font, radius } from "@/components/ui/tokens";
+import { cssVar, space, font, radius, bioSignal } from "@/components/ui/tokens";
 import { EVIDENCE } from "../../lib/evidence";
 import { getServerLocale } from "@/lib/locale-server";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
   title: "Evidencia científica · BIO-IGNICIÓN",
@@ -30,8 +33,9 @@ export const metadata = {
 
 const COPY = {
   es: {
-    eyebrow: "Biblioteca",
-    title: "Evidencia científica",
+    eyebrow: "BIBLIOTECA",
+    title: "Citadas, no declamadas.",
+    editorial: "Cada claim con autor, año, revista, N y efecto reportado.",
     intro:
       "Cada protocolo se apoya en literatura publicada y revisada por pares. Esta biblioteca lista mecanismos, estudios, tamaños de muestra y efectos reportados. Los niveles están auto-clasificados de forma conservadora — revisamos y degradamos cuando la evidencia no justifica lo que una app suele prometer.",
     protocolsN: (n) => `${n} protocolos`,
@@ -59,8 +63,9 @@ const COPY = {
     ),
   },
   en: {
-    eyebrow: "Library",
-    title: "Scientific evidence",
+    eyebrow: "LIBRARY",
+    title: "Cited, not claimed.",
+    editorial: "Every claim with author, year, journal, N and reported effect.",
     intro:
       "Every protocol rests on published, peer-reviewed literature. This library lists mechanisms, studies, sample sizes and reported effects. Levels are auto-classified conservatively — we downgrade whenever the evidence doesn't warrant what apps usually promise.",
     protocolsN: (n) => `${n} protocols`,
@@ -124,13 +129,63 @@ export default async function EvidenciaPage() {
   return (
     <PublicShell activePath="/evidencia">
       <Container size="md" className="bi-prose">
-        <header style={{ marginBlockEnd: space[6] }}>
-          <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
-            {c.eyebrow}
+        <header style={{ marginBlockEnd: space[6], position: "relative" }}>
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: `-${space[4]}px -${space[6]}px auto -${space[6]}px`,
+              height: 380,
+              opacity: 0.2,
+              pointerEvents: "none",
+              maskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)",
+              zIndex: 0,
+            }}
+          >
+            <BioglyphLattice variant="ambient" />
           </div>
-          <h1 style={{ margin: `${space[2]}px 0` }}>{c.title}</h1>
-          <p style={{ color: cssVar.textDim, maxWidth: "60ch" }}>{c.intro}</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: space[2], marginBlockStart: space[4] }}>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <IgnitionReveal sparkOrigin="12% 30%">
+              <div
+                style={{
+                  fontSize: font.size.xs,
+                  fontFamily: cssVar.fontMono,
+                  color: bioSignal.phosphorCyan,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.28em",
+                  fontWeight: font.weight.bold,
+                }}
+              >
+                {c.eyebrow}
+              </div>
+              <h1
+                style={{
+                  margin: `${space[3]}px 0 ${space[4]}px`,
+                  fontSize: "clamp(36px, 5.2vw, 64px)",
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1.02,
+                }}
+              >
+                {c.title}
+              </h1>
+              <p
+                style={{
+                  fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                  fontStyle: "italic",
+                  fontSize: "clamp(18px, 2vw, 24px)",
+                  lineHeight: 1.35,
+                  color: cssVar.textMuted,
+                  maxWidth: "44ch",
+                  margin: `0 0 ${space[4]}px`,
+                }}
+              >
+                {c.editorial}
+              </p>
+              <p style={{ color: cssVar.textDim, maxWidth: "60ch", marginBlockStart: 0 }}>{c.intro}</p>
+            </IgnitionReveal>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: space[2], marginBlockStart: space[4], position: "relative", zIndex: 1 }}>
             <Pill>{c.protocolsN(entries.length)}</Pill>
             <Pill>{c.studiesN(totalStudies)}</Pill>
             <Pill variant={PILL_VARIANT.high}>{c.highN(counts.high)}</Pill>
@@ -138,6 +193,10 @@ export default async function EvidenciaPage() {
             <Pill variant={PILL_VARIANT.limited}>{c.limitedN(counts.limited)}</Pill>
           </div>
         </header>
+
+        <div style={{ marginBlock: space[5] }}>
+          <PulseDivider intensity="dim" />
+        </div>
 
         <nav
           aria-labelledby="toc-heading"

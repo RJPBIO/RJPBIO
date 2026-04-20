@@ -2,8 +2,11 @@ import Link from "next/link";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
-import { cssVar, space, font } from "@/components/ui/tokens";
+import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
   title: "Aprende · Fundamentos neurales",
@@ -54,19 +57,73 @@ export default async function LearnHubPage() {
   return (
     <PublicShell activePath="/learn">
       <Container size="lg" className="bi-prose">
-        <header style={{ marginBottom: space[6] }}>
-          <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
-            {en ? "Learn" : "Aprende"}
+        <header style={{ marginBottom: space[6], position: "relative" }}>
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: `-${space[4]}px -${space[6]}px auto -${space[6]}px`,
+              height: 360,
+              opacity: 0.2,
+              pointerEvents: "none",
+              maskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)",
+              zIndex: 0,
+            }}
+          >
+            <BioglyphLattice variant="ambient" />
           </div>
-          <h1 style={{ margin: `${space[2]}px 0` }}>
-            {en ? "Fundamentals, not folk wisdom" : "Fundamentos, no folklore"}
-          </h1>
-          <p style={{ maxWidth: 680 }}>
-            {en
-              ? "Short, dense explainers for the science behind each protocol. Every claim cites its source. When the literature moves, we update the article — not just the date."
-              : "Explicadores cortos y densos sobre la ciencia detrás de cada protocolo. Cada afirmación cita su fuente. Cuando la literatura cambia, actualizamos el artículo — no sólo la fecha."}
-          </p>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <IgnitionReveal sparkOrigin="15% 30%">
+              <div
+                style={{
+                  fontSize: font.size.xs,
+                  fontFamily: cssVar.fontMono,
+                  color: bioSignal.phosphorCyan,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.28em",
+                  fontWeight: font.weight.bold,
+                }}
+              >
+                {en ? "LEARN" : "APRENDE"}
+              </div>
+              <h1
+                style={{
+                  margin: `${space[3]}px 0 ${space[4]}px`,
+                  fontSize: "clamp(36px, 5.2vw, 64px)",
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1.02,
+                }}
+              >
+                {en ? "Fundamentals, not folk wisdom" : "Fundamentos, no folklore"}
+              </h1>
+              <p
+                style={{
+                  fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                  fontStyle: "italic",
+                  fontSize: "clamp(18px, 2vw, 24px)",
+                  lineHeight: 1.35,
+                  color: cssVar.textMuted,
+                  maxWidth: "44ch",
+                  margin: `0 0 ${space[4]}px`,
+                }}
+              >
+                {en
+                  ? "Every claim cites its source. When the literature moves, the article moves."
+                  : "Cada afirmación cita su fuente. Cuando se mueve la literatura, se mueve el artículo."}
+              </p>
+              <p style={{ maxWidth: 680, marginBlockStart: 0 }}>
+                {en
+                  ? "Short, dense explainers for the science behind each protocol — not the date on the footer."
+                  : "Explicadores cortos y densos sobre la ciencia detrás de cada protocolo — no la fecha del pie."}
+              </p>
+            </IgnitionReveal>
+          </div>
         </header>
+
+        <div style={{ marginBlock: space[5] }}>
+          <PulseDivider intensity="dim" />
+        </div>
 
         <div style={{ display: "grid", gap: space[4], gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           {ARTICLES.map((a) => (

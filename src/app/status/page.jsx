@@ -2,9 +2,12 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { cssVar, radius, space, font } from "@/components/ui/tokens";
+import { cssVar, radius, space, font, bioSignal } from "@/components/ui/tokens";
 import { tLocale, fmtDateL } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
   title: "Status",
@@ -78,19 +81,70 @@ export default async function StatusPage() {
   return (
     <PublicShell activePath="/status">
       <Container size="md" className="bi-prose">
-        <header style={{ textAlign: "center", marginBottom: space[8] }}>
-          <div style={{ fontSize: font.size.sm, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "2px", fontWeight: font.weight.bold }}>
-            {T("status.title", "Status")}
+        <header style={{ textAlign: "center", marginBottom: space[8], position: "relative" }}>
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: `-${space[4]}px -${space[6]}px auto -${space[6]}px`,
+              height: 340,
+              opacity: 0.22,
+              pointerEvents: "none",
+              maskImage: "radial-gradient(ellipse at 50% 35%, black 0%, black 50%, transparent 85%)",
+              WebkitMaskImage: "radial-gradient(ellipse at 50% 35%, black 0%, black 50%, transparent 85%)",
+              zIndex: 0,
+            }}
+          >
+            <BioglyphLattice variant="ambient" />
           </div>
-          <h1 style={{ margin: `${space[2]}px 0`, color: allOk ? cssVar.text : cssVar.warn }}>
-            {allOk ? T("status.allOk", "Todos los sistemas operativos") : T("status.problem", "Estamos viendo un problema")}
-          </h1>
-          <p style={{ color: cssVar.textDim }}>
-            <time dateTime={now.toISOString()}>
-              {T("status.lastCheck", "Última verificación")}: {fmtDateL(locale, now, { dateStyle: "medium", timeStyle: "short" })}
-            </time>
-            {" · "}{T("status.refreshEvery", "actualiza cada 30 s")}
-          </p>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <IgnitionReveal sparkOrigin="50% 30%">
+              <div
+                style={{
+                  fontSize: font.size.xs,
+                  fontFamily: cssVar.fontMono,
+                  color: bioSignal.phosphorCyan,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.28em",
+                  fontWeight: font.weight.bold,
+                }}
+              >
+                {T("status.title", "STATUS")}
+              </div>
+              <h1
+                style={{
+                  margin: `${space[3]}px 0 ${space[4]}px`,
+                  fontSize: "clamp(36px, 5.2vw, 64px)",
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1.02,
+                  color: allOk ? cssVar.text : cssVar.warn,
+                }}
+              >
+                {allOk ? T("status.allOk", "Todos los sistemas operativos") : T("status.problem", "Estamos viendo un problema")}
+              </h1>
+              <p
+                style={{
+                  fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                  fontStyle: "italic",
+                  fontSize: "clamp(16px, 1.8vw, 22px)",
+                  lineHeight: 1.35,
+                  color: cssVar.textMuted,
+                  margin: `0 auto`,
+                  maxWidth: "48ch",
+                }}
+              >
+                {en
+                  ? "Probes from this edge request. No placeholder numbers."
+                  : "Probes desde este edge. Sin números de mentira."}
+              </p>
+              <p style={{ color: cssVar.textDim, marginBlockStart: space[3] }}>
+                <time dateTime={now.toISOString()}>
+                  {T("status.lastCheck", "Última verificación")}: {fmtDateL(locale, now, { dateStyle: "medium", timeStyle: "short" })}
+                </time>
+                {" · "}{T("status.refreshEvery", "actualiza cada 30 s")}
+              </p>
+            </IgnitionReveal>
+          </div>
         </header>
 
         <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginBlockEnd: space[4], textAlign: "center" }}>
@@ -133,7 +187,11 @@ export default async function StatusPage() {
           ))}
         </ul>
 
-        <section aria-labelledby="status-sla" style={{ marginTop: space[8] }}>
+        <div style={{ marginBlock: space[6] }}>
+          <PulseDivider intensity="dim" />
+        </div>
+
+        <section aria-labelledby="status-sla">
           <h2 id="status-sla" style={{ fontSize: font.size.xl, fontWeight: font.weight.bold, letterSpacing: font.tracking.tight, marginBlockEnd: space[2] }}>
             {en ? "SLA targets" : "Objetivos de SLA"}
           </h2>
@@ -191,7 +249,11 @@ export default async function StatusPage() {
           </Card>
         </section>
 
-        <section aria-labelledby="status-incidents" style={{ marginTop: space[8] }}>
+        <div style={{ marginBlock: space[6] }}>
+          <PulseDivider intensity="dim" />
+        </div>
+
+        <section aria-labelledby="status-incidents">
           <h2 id="status-incidents" style={{ fontSize: font.size.xl, fontWeight: font.weight.bold, letterSpacing: font.tracking.tight, marginBlockEnd: space[2] }}>
             {en ? "Incident timeline" : "Línea de incidentes"}
           </h2>
