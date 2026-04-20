@@ -5,4 +5,8 @@ Disallow: /api/
 Disallow: /org/
 Disallow: /settings/
 Disallow: /coach
+Disallow: /home-v2
+Disallow: /home-v3
+Disallow: /home-v4
+Disallow: /home-v5
 Sitemap: https://bio-ignicion.app/sitemap.xml
