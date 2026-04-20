@@ -149,7 +149,7 @@ export default function Nom35Client() {
   return (
     <main style={shellStyle}>
       <header style={headerStyle}>
-        <Link href="/" style={{ color: cssVar.text, textDecoration: "none", fontWeight: font.weight.bold, letterSpacing: font.tracking.wider }}>
+        <Link href="/app" style={{ color: cssVar.text, textDecoration: "none", fontWeight: font.weight.bold, letterSpacing: font.tracking.wider }}>
           BIO-IGN · NOM-035
         </Link>
         <nav style={{ display: "flex", gap: space[2], alignItems: "center" }}>
@@ -363,7 +363,7 @@ function ResultPane({ result, onSubmit, submitting, submittedAt, error, complete
               >
                 {submittedAt ? "Enviado ✓" : "Enviar reporte a mi empresa"}
               </Button>
-              <Button variant="secondary" href="/">
+              <Button variant="secondary" href="/app">
                 Ir a BIO-IGNICIÓN →
               </Button>
               <Button variant="ghost" onClick={() => typeof window !== "undefined" && window.print()}>
