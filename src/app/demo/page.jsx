@@ -54,11 +54,24 @@ const COPY = {
       <>ROI estimado según tu tamaño de equipo — <Link href="/roi-calculator">ver calculadora</Link>.</>,
     ],
     formTitle: "Reserva un horario",
+    formSubtitle: "Contesta un humano · < 24 h hábiles · Sin bots, sin auto-responders.",
+
+    closingKicker: "LISTO CUANDO TÚ LO ESTÉS",
+    closingHLead: "Treinta minutos.",
+    closingHBody: "Sin slides. Un humano al otro lado.",
+    closingBody: "Sin tarjeta. Sin compromisos. Sin scripts de venta. Si al minuto 15 decides que no aplica, lo cerramos con un resumen útil y seguimos como amigos.",
+    closingAvail: "Ventanas abiertas esta semana",
+    closingAvailMeta: "LATAM · US Central · EMEA bajo agenda",
+    closingSigName: "Equipo de Partnerships",
+    closingSigMeta: "Contesta en < 24 h hábiles · Nunca un bot",
+    closingPrimary: "Agenda demo",
+    closingSecondary: "Prefiero async — escribir a sales",
+    closingTertiary: "Mejor pruebo self-serve",
 
     proofKicker: "LO QUE ESPERAS",
     proofStats: [
       { v: "30", l: "min en vivo", s: "sin slides, sin deck" },
-      { v: "0", l: "tarjeta requerida", s: "sólo un email corporativo" },
+      { v: "—", l: "tarjeta requerida", s: "sólo un email corporativo" },
       { v: "< 24h", l: "respuesta humana", s: "hábiles · no bot" },
       { v: "k ≥ 5", l: "anonimato del panel", s: "agregados, sin nombres" },
     ],
@@ -147,11 +160,24 @@ const COPY = {
       <>Estimated ROI based on your team size — <Link href="/roi-calculator">see calculator</Link>.</>,
     ],
     formTitle: "Book a slot",
+    formSubtitle: "A human replies · within 24 business hours · No bots, no auto-responders.",
+
+    closingKicker: "READY WHEN YOU ARE",
+    closingHLead: "Thirty minutes.",
+    closingHBody: "No slides. A human on the other side.",
+    closingBody: "No card. No commitment. No sales script. If at minute 15 you decide it doesn't fit, we close with a useful recap and part ways as friends.",
+    closingAvail: "Windows open this week",
+    closingAvailMeta: "LATAM · US Central · EMEA on request",
+    closingSigName: "Partnerships team",
+    closingSigMeta: "Replies within 24 business hours · Never a bot",
+    closingPrimary: "Book a demo",
+    closingSecondary: "I prefer async — email sales",
+    closingTertiary: "I'll try self-serve first",
 
     proofKicker: "WHAT TO EXPECT",
     proofStats: [
       { v: "30", l: "min live", s: "no slides, no deck" },
-      { v: "0", l: "card required", s: "just a work email" },
+      { v: "—", l: "card required", s: "just a work email" },
       { v: "< 24h", l: "human reply", s: "business hours · no bot" },
       { v: "k ≥ 5", l: "panel anonymity", s: "aggregates, no names" },
     ],
@@ -304,7 +330,8 @@ export default async function DemoPage() {
                 borderStartStartRadius: "inherit",
               }}
             />
-            <h2 id="demo-form-title" style={{ margin: `0 0 ${space[4]}px`, letterSpacing: "-0.02em" }}>{c.formTitle}</h2>
+            <h2 id="demo-form-title" style={{ margin: 0, letterSpacing: "-0.02em" }}>{c.formTitle}</h2>
+            <p className="bi-demo-form-subtitle">{c.formSubtitle}</p>
             <DemoForm source="demo" locale={locale} />
           </Card>
         </div>
@@ -452,6 +479,77 @@ export default async function DemoPage() {
                   <div className="bi-faq-a">{item.a}</div>
                 </details>
               ))}
+            </div>
+          </IgnitionReveal>
+        </Container>
+      </section>
+
+      <PulseDivider intensity="dim" />
+
+      {/* ═══ Closing CTA — reactivation + human signature for bottom readers ═══ */}
+      <section aria-labelledby="demo-closing" className="bi-demo-closing-section">
+        <Container size="lg" style={{ paddingBlock: `clamp(48px, 7vw, 96px)` }}>
+          <IgnitionReveal sparkOrigin="50% 20%">
+            <div className="bi-demo-closing">
+              <div aria-hidden className="bi-demo-closing-lattice">
+                <BioglyphLattice variant="ambient" />
+              </div>
+              <span aria-hidden className="bi-demo-closing-aura" />
+              <span aria-hidden className="bi-demo-closing-aura bi-demo-closing-aura--spark" />
+
+              <div className="bi-demo-closing-mark" aria-hidden>
+                <span className="bi-demo-closing-mark-core" />
+                <span className="bi-demo-closing-mark-ring" />
+              </div>
+
+              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+
+              <h2 id="demo-closing" className="bi-demo-closing-h">
+                <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}
+                <span className="bi-demo-closing-h-body">{c.closingHBody}</span>
+              </h2>
+
+              <p className="bi-demo-closing-body">{c.closingBody}</p>
+
+              <div className="bi-demo-closing-actions">
+                <a href="#demo-form-title" className="bi-demo-closing-primary">
+                  <span className="bi-demo-closing-primary-label">{c.closingPrimary}</span>
+                  <span aria-hidden className="bi-demo-closing-primary-sep" />
+                  <svg aria-hidden width="15" height="15" viewBox="0 0 15 15" className="bi-demo-closing-primary-arrow">
+                    <path d="M7.5 11.5V3M4 6.5L7.5 3l3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  </svg>
+                </a>
+                <a
+                  href="mailto:sales@bio-ignicion.app?subject=Async%20demo%20%E2%80%94%20BIO-IGNICI%C3%93N"
+                  className="bi-demo-closing-ghost"
+                >
+                  <svg aria-hidden width="13" height="13" viewBox="0 0 13 13">
+                    <path d="M1.5 3.5h10v6a1 1 0 01-1 1h-8a1 1 0 01-1-1v-6z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+                    <path d="M1.9 3.8l4.6 3.6L11.1 3.8" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>{c.closingSecondary}</span>
+                </a>
+                <Link href="/signup?plan=starter" className="bi-demo-closing-ghost">
+                  <svg aria-hidden width="13" height="13" viewBox="0 0 13 13">
+                    <path d="M6.5 1.5v4M6.5 7.5v4M1.5 6.5h4M7.5 6.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+                  </svg>
+                  <span>{c.closingTertiary}</span>
+                </Link>
+              </div>
+
+              <div className="bi-demo-closing-meta">
+                <div className="bi-demo-closing-avail">
+                  <span aria-hidden className="bi-demo-closing-avail-pulse">
+                    <span className="bi-demo-closing-avail-dot" />
+                  </span>
+                  <span className="bi-demo-closing-avail-label">{c.closingAvail}</span>
+                  <span className="bi-demo-closing-avail-meta">{c.closingAvailMeta}</span>
+                </div>
+                <div className="bi-demo-closing-sig">
+                  <span className="bi-demo-closing-sig-name">— {c.closingSigName}</span>
+                  <span className="bi-demo-closing-sig-meta">{c.closingSigMeta}</span>
+                </div>
+              </div>
             </div>
           </IgnitionReveal>
         </Container>

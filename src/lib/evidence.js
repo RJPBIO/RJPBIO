@@ -17,6 +17,10 @@
  * @property {"high"|"moderate"|"limited"} evidenceLevel
  */
 
+// ISO date de la última curaduría del registro. Actualizar al tocar
+// cualquier entrada: lo consume /evidencia para marcar "última revisión".
+export const EVIDENCE_LAST_REVIEWED = "2026-04-16";
+
 export const EVIDENCE = {
   physiological_sigh: {
     id: "physiological_sigh",
