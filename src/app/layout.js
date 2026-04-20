@@ -1,4 +1,4 @@
-import { Manrope, JetBrains_Mono } from "next/font/google";
+import { Manrope, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
@@ -21,6 +21,15 @@ const jetbrains = JetBrains_Mono({
   weight: ["400", "500", "700", "800"],
   display: "swap",
   variable: "--font-mono",
+});
+
+// Editorial serif — pull-quotes and editorial moments. Italic is the signature.
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-editorial",
 });
 
 const RTL_LOCALES = new Set(["ar", "he", "fa", "ur"]);
@@ -133,7 +142,7 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body
-        className={`${manrope.variable} ${jetbrains.variable} ${manrope.className}`}
+        className={`${manrope.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${manrope.className}`}
         style={{ margin: 0, overscrollBehavior: "none" }}
       >
         <a
