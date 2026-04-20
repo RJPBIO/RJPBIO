@@ -9621,4 +9621,351 @@ a.bi-learn-trail-link,
 .theme-light .bi-docs-errors dt[data-sev="server"] { background: color-mix(in srgb, #FBBF24 12%, var(--bi-surface)); }
 .theme-light .bi-docs-timeline { background: color-mix(in srgb, var(--bi-surface) 85%, transparent); }
 
+/* ═══ /status — live operational transparency. Same cinematic DNA
+      as /docs, /evidencia, /learn. Primitives: hero (centered),
+      component rows with live pulse + severity stripe, sla grid,
+      empty incident card. Reuses bi-proof-stats--label + closing. */
+
+.bi-status-hero {
+  position: relative;
+  padding-block: clamp(48px, 7vw, 96px) clamp(24px, 4vw, 48px);
+  isolation: isolate;
+  overflow: hidden;
+}
+.bi-status-hero-lattice {
+  position: absolute;
+  inset: -40px -40px auto -40px;
+  height: 440px;
+  opacity: 0.22;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at 50% 30%, black 0%, black 55%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 0%, black 55%, transparent 90%);
+  z-index: 0;
+}
+.bi-status-hero-aura {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 50% 40% at 50% 30%,
+    color-mix(in srgb, #10B981 16%, transparent) 0%,
+    transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(28px);
+}
+.bi-status-hero--problem .bi-status-hero-aura {
+  background: radial-gradient(ellipse 50% 40% at 50% 30%,
+    color-mix(in srgb, var(--bi-warn) 22%, transparent) 0%,
+    transparent 70%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bi-status-hero-aura { animation: bi-status-aura-pulse 6s ease-in-out infinite; }
+}
+@keyframes bi-status-aura-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.05); }
+}
+
+/* Live eyebrow pulse — signals "this page is live" */
+.bi-status-live-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.bi-status-live-dot {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 0 color-mix(in srgb, #10B981 55%, transparent);
+}
+.bi-status-hero--problem .bi-status-live-dot { background: var(--bi-warn); }
+@media (prefers-reduced-motion: no-preference) {
+  .bi-status-live-dot { animation: bi-status-live-dot-pulse 2s ease-out infinite; }
+}
+@keyframes bi-status-live-dot-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, #10B981 55%, transparent); }
+  70%  { box-shadow: 0 0 0 8px color-mix(in srgb, #10B981 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, #10B981 0%, transparent); }
+}
+
+/* Components list — premium row with stripe + pulse */
+.bi-status-components {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+  border: 1px solid var(--bi-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
+}
+.bi-status-component {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 20px 16px 28px;
+  border-block-end: 1px solid var(--bi-border);
+  background: var(--bi-bg);
+  transition: background .18s ease;
+}
+.bi-status-component:last-child { border-block-end: none; }
+.bi-status-component:hover { background: color-mix(in srgb, var(--bi-surface) 70%, transparent); }
+
+.bi-status-component-stripe {
+  position: absolute;
+  inset: 0 auto 0 0;
+  inline-size: 3px;
+  background: #10B981;
+}
+.bi-status-component--degraded .bi-status-component-stripe { background: var(--bi-danger); }
+
+.bi-status-component-left { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bi-status-component-name { font-weight: 700; color: var(--bi-text); font-size: 15px; letter-spacing: -0.01em; }
+.bi-status-component-detail {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--bi-text-muted);
+  text-transform: uppercase;
+}
+
+.bi-status-component-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.bi-status-component-latency {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bi-text-muted);
+  letter-spacing: 0.04em;
+}
+.bi-status-component-latency[data-band="fast"] { color: #22D3EE; }
+.bi-status-component-latency[data-band="ok"]   { color: var(--bi-text); }
+.bi-status-component-latency[data-band="slow"] { color: #FBBF24; }
+
+.bi-status-component-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #10B981;
+}
+.bi-status-component--degraded .bi-status-component-state { color: var(--bi-danger); }
+
+.bi-status-component-pulse {
+  position: relative;
+  inline-size: 9px;
+  block-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bi-status-component-dot {
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 50%;
+  background: currentColor;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bi-status-component--ok .bi-status-component-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.4;
+    animation: bi-status-component-ripple 1.8s ease-out infinite;
+  }
+}
+@keyframes bi-status-component-ripple {
+  0%   { transform: scale(1);   opacity: 0.45; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@media (max-width: 600px) {
+  .bi-status-component { padding: 14px 16px 14px 24px; gap: 10px; }
+  .bi-status-component-right { gap: 10px; }
+}
+
+/* SLA grid */
+.bi-status-sla-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-block-start: 20px;
+}
+.bi-status-sla-card {
+  border: 1px solid var(--bi-border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
+  position: relative;
+  overflow: hidden;
+  transition: border-color .22s ease;
+}
+.bi-status-sla-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  block-size: 2px;
+  background: linear-gradient(to right, #22D3EE, transparent 70%);
+  opacity: 0.7;
+}
+.bi-status-sla-card:hover {
+  border-color: color-mix(in srgb, #22D3EE 40%, var(--bi-border));
+}
+.bi-status-sla-surface {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bi-text-muted);
+  font-weight: 700;
+}
+.bi-status-sla-target {
+  font-family: var(--font-mono);
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 900;
+  color: #22D3EE;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-block: 8px 6px;
+}
+.bi-status-sla-window {
+  font-size: 12px;
+  color: var(--bi-text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* Historical uptime — editorial note card */
+.bi-status-history-note {
+  margin-block-start: 20px;
+  padding: 22px 24px;
+  border: 1px solid var(--bi-border);
+  border-inline-start: 3px solid color-mix(in srgb, #22D3EE 70%, var(--bi-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
+  color: var(--bi-text-muted);
+  line-height: 1.65;
+  font-size: 15px;
+}
+.bi-status-inline-link,
+.bi-prose a.bi-status-inline-link {
+  color: var(--bi-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, #22D3EE 60%, transparent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+.bi-status-inline-link:hover,
+.bi-status-inline-link:focus-visible {
+  text-decoration-color: #22D3EE;
+}
+
+/* Incident empty state */
+.bi-status-incident-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-block-start: 20px;
+  padding: 22px 24px;
+  border: 1px solid var(--bi-border);
+  border-inline-start: 3px solid #10B981;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
+}
+.bi-status-incident-empty-pulse {
+  position: relative;
+  inline-size: 12px;
+  block-size: 12px;
+  margin-block-start: 6px;
+  flex-shrink: 0;
+}
+.bi-status-incident-empty-dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #10B981;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bi-status-incident-empty-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #10B981;
+    opacity: 0.4;
+    animation: bi-status-component-ripple 2.4s ease-out infinite;
+  }
+}
+.bi-status-incident-empty-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #10B981;
+  margin-block-end: 6px;
+}
+.bi-status-incident-empty-body {
+  margin: 0;
+  color: var(--bi-text-muted);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* Incident list (populated) */
+.bi-status-incident-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bi-status-incident {
+  border: 1px solid var(--bi-border);
+  border-inline-start: 3px solid var(--bi-warn);
+  border-radius: 12px;
+  padding: 18px 22px;
+  background: var(--bi-bg);
+}
+.bi-status-incident[data-severity="major"] { border-inline-start-color: var(--bi-danger); }
+.bi-status-incident-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.bi-status-incident-head strong { font-size: 16px; color: var(--bi-text); }
+.bi-status-incident-head time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bi-text-muted);
+  letter-spacing: 0.04em;
+}
+.bi-status-incident-body {
+  margin: 8px 0 0;
+  color: var(--bi-text-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* Light-mode tweaks for /status */
+.theme-light .bi-status-components { background: color-mix(in srgb, var(--bi-surface) 85%, transparent); }
+.theme-light .bi-status-sla-card   { background: color-mix(in srgb, var(--bi-surface) 90%, transparent); }
+.theme-light .bi-status-history-note,
+.theme-light .bi-status-incident-empty { background: color-mix(in srgb, var(--bi-surface) 90%, transparent); }
+
 
