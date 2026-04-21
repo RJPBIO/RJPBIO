@@ -50,6 +50,17 @@ function colorForScore(score, goodThreshold = 70, mediumThreshold = 45) {
   return semantic.danger;
 }
 
+// Neural-dna section kicker — sentence case, no letter-spacing, no uppercase.
+// Replaces ty.label(...) for read-text headings in data panels.
+function sectionLabel(color) {
+  return {
+    fontSize: font.size.sm,
+    fontWeight: font.weight.semibold,
+    color,
+    letterSpacing: -0.05,
+  };
+}
+
 const CALIBRATION_THRESHOLD = 3;
 
 export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHist, bp = "mobile" }) {
@@ -156,7 +167,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: space[3.5] || 14, position: "relative" }}>
           <div>
-            <div style={{ ...ty.label(t3), marginBlockEnd: space[1] }}>Rendimiento Neural</div>
+            <div style={{ ...sectionLabel(t3), marginBlockEnd: space[1] }}>Rendimiento Neural</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: space[1] }}>
               <span style={ty.metric(t1, font.size["4xl"])}>{perf}</span>
               <span style={ty.caption(t3)}>%</span>
@@ -197,7 +208,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
               }}
             >
               <div style={ty.metric(m.c, font.size.xl)}>{m.v}</div>
-              <div style={{ ...ty.label(t3), fontSize: font.size.xs, letterSpacing: font.tracking.wider, marginBlockStart: 2 }}>{m.l}</div>
+              <div style={{ ...sectionLabel(t3), fontSize: font.size.xs, marginBlockStart: 2 }}>{m.l}</div>
             </div>
           ))}
         </div>
@@ -211,7 +222,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
               paddingInline: space[1],
             }}
           >
-            <span style={{ ...ty.label(t3), fontSize: font.size.xs, flexShrink: 0 }}>
+            <span style={{ ...sectionLabel(t3), fontSize: font.size.xs, flexShrink: 0 }}>
               Trayectoria
             </span>
             <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
@@ -264,7 +275,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBlockEnd: space[1.5] }}>
             <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
               <Icon name="predict" size={12} color={t3} aria-hidden="true" />
-              <span style={ty.label(t3)}>Variabilidad Neural</span>
+              <span style={sectionLabel(t3)}>Variabilidad Neural</span>
             </div>
             <span style={ty.metric(colorForScore(100 - neuralVar.index, 90, 80), font.size.xl)}>{neuralVar.index}</span>
           </div>
@@ -300,7 +311,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           <div aria-hidden="true" style={{ position: "absolute", insetBlockStart: -10, insetInlineEnd: -10, inlineSize: 40, blockSize: 40, borderRadius: "50%", background: withAlpha(bioColor, 6) }} />
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[1.5] }}>
             <Icon name="shield" size={12} color={bioColor} aria-hidden="true" />
-            <span style={ty.label(t3)}>BioSignal</span>
+            <span style={sectionLabel(t3)}>BioSignal</span>
           </div>
           <AnimatedNumber value={bioSignal.score} color={bioColor} size={28} />
           <div style={{ ...ty.caption(t2), marginBlockStart: space[1.5] }}>
@@ -321,7 +332,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           <div aria-hidden="true" style={{ position: "absolute", insetBlockStart: -10, insetInlineEnd: -10, inlineSize: 40, blockSize: 40, borderRadius: "50%", background: withAlpha(burnoutColor, 6) }} />
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[1.5] }}>
             <Icon name="alert-triangle" size={12} color={burnoutColor} aria-hidden="true" />
-            <span style={ty.label(t3)}>Burnout</span>
+            <span style={sectionLabel(t3)}>Burnout</span>
           </div>
           <AnimatedNumber value={burnout.index} color={burnoutColor} size={28} />
           <div style={{ ...ty.caption(burnoutColor), fontWeight: font.weight.bold, marginBlockStart: space[1.5] }}>
@@ -335,7 +346,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           aria-label="Desglose Maslach del burnout"
           style={{ background: cd, borderRadius: radius.lg, padding: space[3], marginBlockEnd: 14, border: `1px solid ${bd}` }}
         >
-          <div style={{ ...ty.label(t3), marginBlockEnd: space[2] }}>Desglose Maslach</div>
+          <div style={{ ...sectionLabel(t3), marginBlockEnd: space[2] }}>Desglose Maslach</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2] }}>
             {[
               { k: "exhaustion", label: "Agotamiento", v: burnout.components.exhaustion?.value ?? 0 },
@@ -368,7 +379,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         >
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
             <Icon name="predict" size={12} color={ac} aria-hidden="true" />
-            <span style={ty.label(t3)}>Aprendizaje del motor</span>
+            <span style={sectionLabel(t3)}>Aprendizaje del motor</span>
           </div>
           <div style={{ ...ty.caption(t3), marginBlockEnd: space[2], fontSize: 10 }}>
             Brazos con mejor Δmood observado (intervalo 90% y muestras).
@@ -397,7 +408,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           style={{ background: cd, borderRadius: radius.lg, padding: space[3], marginBlockEnd: 14, border: `1px solid ${bd}` }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBlockEnd: space[1.5] }}>
-            <span style={ty.label(t3)}>Tendencia Emocional</span>
+            <span style={sectionLabel(t3)}>Tendencia Emocional</span>
             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Icon name={MOODS[Math.round(avgMood) - 1]?.icon || "neutral"} size={12} color={MOODS[Math.round(avgMood) - 1]?.color || t3} aria-hidden="true" />
               <span style={ty.title(MOODS[Math.round(avgMood) - 1]?.color || t3)}>{avgMood}/5</span>
@@ -411,7 +422,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         aria-label="Mapa de actividad últimos 28 días"
         style={{ background: cd, borderRadius: radius.lg, padding: `${space[3.5] || 14}px ${space[3]}px`, marginBlockEnd: 14, border: `1px solid ${bd}` }}
       >
-        <div style={{ ...ty.label(t3), marginBlockEnd: space[2.5] }}>Actividad · 28 días</div>
+        <div style={{ ...sectionLabel(t3), marginBlockEnd: space[2.5] }}>Actividad · 28 días</div>
         <TemporalCharts type="heatmap" history={st.history} isDark={isDark} ac={ac} />
       </article>
 
@@ -420,7 +431,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           aria-label="Flujo de energía histórico"
           style={{ background: cd, borderRadius: radius.lg, padding: `${space[3.5] || 14}px ${space[3]}px`, marginBlockEnd: 14, border: `1px solid ${bd}` }}
         >
-          <div style={{ ...ty.label(t3), marginBlockEnd: space[2.5] }}>Flujo de Energía</div>
+          <div style={{ ...sectionLabel(t3), marginBlockEnd: space[2.5] }}>Flujo de Energía</div>
           <TemporalCharts type="energy" history={st.history} isDark={isDark} ac={ac} />
         </article>
       )}
@@ -432,7 +443,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         >
           <div style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
             <Icon name="fingerprint" size={11} color={t3} aria-hidden="true" />
-            <span style={ty.label(t3)}>Sensibilidad por Protocolo</span>
+            <span style={sectionLabel(t3)}>Sensibilidad por Protocolo</span>
           </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {Object.entries(protoSens).sort((a, b) => b[1].avgDelta - a[1].avgDelta).slice(0, 5).map(([name, data], i, arr) => (
@@ -463,7 +474,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         aria-label="Resumen semanal en gráfico"
         style={{ background: cd, borderRadius: radius.lg, padding: `${space[3]}px ${space[2.5]}px`, marginBlockEnd: 14, border: `1px solid ${bd}` }}
       >
-        <div style={{ ...ty.label(t3), marginBlockEnd: space[2] }}>Esta Semana</div>
+        <div style={{ ...sectionLabel(t3), marginBlockEnd: space[2] }}>Esta Semana</div>
         <TemporalCharts type="weekly" weeklyData={st.weeklyData} isDark={isDark} ac={ac} />
       </article>
 
