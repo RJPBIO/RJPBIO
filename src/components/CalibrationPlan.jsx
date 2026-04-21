@@ -3,29 +3,52 @@
    CalibrationPlan — onboarding de datos para usuarios nuevos.
 
    Tres sesiones variando intent (calma/enfoque/energía) antes de
-   mostrar el dashboard "real". Abre la pestaña Ignición y, si se
-   pasa un `onSelectIntent`, hace focus en el intent del paso.
-
-   Se muestra mientras `totalSessions < 3`. Completado, el Dashboard
-   toma el relevo normalmente.
+   mostrar el dashboard "real". Layout tipo procedimiento
+   instrumentado: mono kickers, corner brackets por paso, progreso
+   con ticks de etapa y CTA de 44-min con letra mono.
    ═══════════════════════════════════════════════════════════════ */
 
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { calibrationState } from "../lib/calibrationPlan";
-import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import {
+  resolveTheme,
+  withAlpha,
+  ty,
+  font,
+  space,
+  radius,
+  bioSignal,
+} from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
+
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
+function CornerBrackets({ color, size = 8 }) {
+  const L = size;
+  const common = { position: "absolute", inlineSize: L, blockSize: L, pointerEvents: "none" };
+  return (
+    <>
+      <span aria-hidden="true" style={{ ...common, insetInlineStart: 4, insetBlockStart: 4, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
+      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 4, insetBlockStart: 4, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
+      <span aria-hidden="true" style={{ ...common, insetInlineStart: 4, insetBlockEnd: 4, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
+      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 4, insetBlockEnd: 4, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
+    </>
+  );
+}
 
 export default function CalibrationPlan({
   totalSessions,
   isDark,
   ac,
-  onStart,           // (intent) => void : abre ignición con el intent del paso
+  onStart,
 }) {
   const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const plan = calibrationState(totalSessions);
+
+  const rule = withAlpha(ac, isDark ? 22 : 16);
 
   return (
     <section
@@ -33,9 +56,20 @@ export default function CalibrationPlan({
       aria-label="Plan de calibración inicial"
       style={{ paddingBlock: 14, paddingInline: space[5], paddingBlockEnd: 180 }}
     >
-      <header style={{ marginBlockEnd: space[4] }}>
-        <p style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: ac, fontWeight: font.weight.bold, margin: 0 }}>
-          Paso {plan.currentStep} de 3
+      <header style={{ marginBlockEnd: space[4], paddingBlockEnd: space[3], borderBlockEnd: `1px dashed ${rule}` }}>
+        <p
+          style={{
+            fontFamily: MONO,
+            fontSize: 10,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            color: ac,
+            fontWeight: 800,
+            margin: 0,
+            opacity: 0.9,
+          }}
+        >
+          ▸ Calibración · Paso {plan.currentStep}/3
         </p>
         <h2 style={{ ...ty.heading(t1), margin: 0, marginBlockStart: 4 }}>
           Calibra tu motor neural
@@ -53,6 +87,7 @@ export default function CalibrationPlan({
         aria-valuemax={100}
         aria-label="Progreso de calibración"
         style={{
+          position: "relative",
           inlineSize: "100%",
           blockSize: 6,
           background: withAlpha(ac, 10),
@@ -65,8 +100,27 @@ export default function CalibrationPlan({
           initial={{ inlineSize: 0 }}
           animate={{ inlineSize: `${plan.percent}%` }}
           transition={{ duration: reduced ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-          style={{ blockSize: "100%", background: ac, borderRadius: 999 }}
+          style={{
+            blockSize: "100%",
+            background: `linear-gradient(90deg, ${ac}, ${bioSignal.phosphorCyan})`,
+            borderRadius: 999,
+            boxShadow: `0 0 10px ${withAlpha(ac, 50)}`,
+          }}
         />
+        {[33.33, 66.66].map((pct) => (
+          <span
+            key={pct}
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              insetInlineStart: `${pct}%`,
+              insetBlockStart: 0,
+              inlineSize: 1,
+              blockSize: "100%",
+              background: withAlpha(isDark ? "#FFFFFF" : "#000000", 20),
+            }}
+          />
+        ))}
       </div>
 
       <ol
@@ -77,6 +131,8 @@ export default function CalibrationPlan({
           const isDone = step.state === "done";
           const isCurrent = step.state === "current";
           const accent = isDone ? semantic.success : isCurrent ? ac : t3;
+          const statusLabel = isDone ? "Completado" : isCurrent ? "Actual" : "Pendiente";
+          const stepNum = String(i + 1).padStart(2, "0");
           return (
             <motion.li
               key={step.id}
@@ -84,40 +140,94 @@ export default function CalibrationPlan({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: reduced ? 0 : i * 0.08, duration: reduced ? 0 : 0.3 }}
               style={{
+                position: "relative",
                 background: cd,
-                border: `1px solid ${isCurrent ? withAlpha(ac, 35) : bd}`,
+                border: `1px solid ${isCurrent ? withAlpha(ac, 40) : bd}`,
                 borderRadius: radius.lg,
                 padding: space[4],
                 display: "flex",
                 alignItems: "flex-start",
                 gap: space[3],
-                opacity: isDone ? 0.6 : 1,
-                position: "relative",
+                opacity: isDone ? 0.72 : 1,
+                boxShadow: isCurrent
+                  ? `0 0 0 1px ${withAlpha(ac, 22)}, 0 10px 30px -20px ${withAlpha(ac, 80)}`
+                  : "none",
+                overflow: "hidden",
               }}
             >
+              <CornerBrackets color={withAlpha(accent, isCurrent ? 55 : 28)} />
+
               <div
                 aria-hidden
                 style={{
-                  inlineSize: 36,
-                  blockSize: 36,
+                  position: "relative",
+                  inlineSize: 44,
+                  blockSize: 44,
                   borderRadius: radius.md,
                   background: withAlpha(accent, isCurrent ? 18 : 10),
+                  border: `1px solid ${withAlpha(accent, isCurrent ? 40 : 24)}`,
                   color: accent,
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
-                  fontWeight: font.weight.bold,
+                  gap: 1,
                 }}
               >
-                {isDone ? "✓" : <Icon name={step.icon} size={16} color={accent} />}
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 8,
+                    letterSpacing: 1.3,
+                    color: accent,
+                    opacity: 0.7,
+                    lineHeight: 1,
+                  }}
+                >
+                  {stepNum}
+                </span>
+                {isDone ? (
+                  <Icon name="check" size={16} color={accent} />
+                ) : (
+                  <Icon name={step.icon} size={16} color={accent} />
+                )}
               </div>
+
               <div style={{ flex: 1, minInlineSize: 0 }}>
-                <p style={{ fontSize: font.size.md, fontWeight: font.weight.bold, color: isDone ? t3 : t1, margin: 0 }}>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 2,
+                    color: accent,
+                    textTransform: "uppercase",
+                    opacity: 0.85,
+                    marginBlockEnd: 3,
+                  }}
+                >
+                  ▸ {statusLabel}
+                </div>
+                <p
+                  style={{
+                    fontSize: font.size.md,
+                    fontWeight: font.weight.bold,
+                    color: isDone ? t3 : t1,
+                    margin: 0,
+                    letterSpacing: -0.2,
+                  }}
+                >
                   {step.title}
-                  {isDone && <span style={{ fontSize: font.size.sm, color: semantic.success, marginInlineStart: 8, fontWeight: font.weight.semibold }}>hecho</span>}
                 </p>
-                <p style={{ fontSize: font.size.sm, color: isDone ? t3 : t2, margin: 0, marginBlockStart: 2, lineHeight: 1.4 }}>
+                <p
+                  style={{
+                    fontSize: font.size.sm,
+                    color: isDone ? t3 : t2,
+                    margin: 0,
+                    marginBlockStart: 4,
+                    lineHeight: 1.45,
+                  }}
+                >
                   {step.subtitle}
                 </p>
                 {isCurrent && (
@@ -127,18 +237,23 @@ export default function CalibrationPlan({
                     aria-label={`Iniciar ${step.title}`}
                     style={{
                       marginBlockStart: space[3],
-                      background: ac,
+                      background: `linear-gradient(135deg, ${ac}, ${bioSignal.phosphorCyan})`,
                       color: "#fff",
                       border: "none",
                       borderRadius: radius.md,
-                      padding: `${space[2]}px ${space[4]}px`,
-                      fontSize: font.size.sm,
-                      fontWeight: font.weight.bold,
+                      paddingBlock: 12,
+                      paddingInline: 18,
+                      fontFamily: MONO,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
                       cursor: "pointer",
-                      fontFamily: "inherit",
+                      minBlockSize: 44,
+                      boxShadow: `0 8px 24px -10px ${withAlpha(ac, 90)}`,
                     }}
                   >
-                    Empezar ahora
+                    ▸ Empezar ahora
                   </motion.button>
                 )}
               </div>
@@ -147,8 +262,18 @@ export default function CalibrationPlan({
         })}
       </ol>
 
-      <p style={{ fontSize: font.size.sm, color: t3, marginBlockStart: space[4], textAlign: "center" }}>
-        Tip: hazlas en días distintos para que el motor aprenda tu ritmo circadiano.
+      <p
+        style={{
+          fontFamily: MONO,
+          fontSize: 9,
+          letterSpacing: 1.5,
+          color: t3,
+          marginBlockStart: space[4],
+          textAlign: "center",
+          textTransform: "uppercase",
+        }}
+      >
+        ▸ Tip · Hazlas en días distintos para que aprenda tu ritmo circadiano
       </p>
     </section>
   );
