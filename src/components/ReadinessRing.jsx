@@ -12,17 +12,19 @@
      engrosa con endpoint marker cinemático y glow filter.
    - Reduced-motion: sin spring, sin pulso del aura.
 
-   Paleta: mapping a bio-signal tokens para identidad coherente.
-     Enfoque  → neuralViolet  (cognición)
-     Calma    → brand.primary (emerald, equilibrio parasimpático)
-     Energía  → plasmaPink    (pico de ignición)
+   Paleta intent-anchored — alineada al resto del app
+   (protocolos, intents, quick actions, bottom metrics bar):
+     Enfoque  → protoColor.enfoque (phosphorCyan, claridad prefrontal)
+     Calma    → protoColor.calma   (emerald, equilibrio parasimpático)
+     Energía  → protoColor.energia (amber, activación térmica)
    ═══════════════════════════════════════════════════════════════ */
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveTheme, withAlpha, ty, font, space, radius, brand, bioSignal } from "../lib/theme";
-import { semantic } from "../lib/tokens";
+import { semantic, protoColor } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
+import Icon from "./Icon";
 
 function interpret(score) {
   if (score >= 85) return { label: "Óptimo", color: semantic.success, tone: "Hoy puedes exigir más." };
@@ -41,14 +43,15 @@ export default function ReadinessRing({
   const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const [activeRing, setActiveRing] = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   const overall = Math.round((focusScore + calmScore + energyScore) / 3);
   const meta = interpret(overall);
 
   const rings = useMemo(() => [
-    { score: focusScore,  color: bioSignal.neuralViolet, label: "Enfoque", r: size * 0.44 },
-    { score: calmScore,   color: brand.primary,          label: "Calma",   r: size * 0.35 },
-    { score: energyScore, color: bioSignal.plasmaPink,   label: "Energía", r: size * 0.26 },
+    { score: focusScore,  color: protoColor.enfoque, label: "Enfoque", r: size * 0.44 },
+    { score: calmScore,   color: protoColor.calma,   label: "Calma",   r: size * 0.35 },
+    { score: energyScore, color: protoColor.energia, label: "Energía", r: size * 0.26 },
   ], [focusScore, calmScore, energyScore, size]);
 
   const active = activeRing != null ? rings[activeRing] : null;
@@ -304,14 +307,17 @@ export default function ReadinessRing({
             alignItems: "center",
             justifyContent: "center",
             pointerEvents: "none",
+            gap: 3,
           }}
         >
           <div
             style={{
-              fontSize: 12,
-              fontWeight: 600,
-              letterSpacing: -0.05,
-              color: t3,
+              fontFamily: font.mono,
+              fontSize: 9,
+              fontWeight: font.weight.bold,
+              letterSpacing: font.tracking.caps,
+              color: withAlpha(centerColor, 70),
+              textTransform: "uppercase",
             }}
           >
             {centerKicker}
@@ -324,7 +330,7 @@ export default function ReadinessRing({
               exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
               transition={{ duration: reduced ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
               style={{
-                ...ty.metric(centerColor, font.size["4xl"]),
+                ...ty.biometric(centerColor, font.size["3xl"]),
                 lineHeight: 1,
                 textShadow: `0 0 20px ${withAlpha(centerColor, 30)}`,
               }}
@@ -332,7 +338,14 @@ export default function ReadinessRing({
               {centerScore}
             </motion.div>
           </AnimatePresence>
-          <div style={{ ...ty.caption(centerColor), fontWeight: font.weight.bold, marginBlockStart: 2 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: font.weight.bold,
+              letterSpacing: -0.05,
+              color: centerColor,
+            }}
+          >
             {centerSub}
           </div>
         </div>
@@ -357,7 +370,81 @@ export default function ReadinessRing({
       </div>
 
       <div style={{ flex: 1, minInlineSize: 0 }}>
-        <div style={{ ...ty.body(t2), marginBlockEnd: space[3] }}>{active ? `Canal ${active.label.toLowerCase()}.` : meta.tone}</div>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: space[2], marginBlockEnd: space[2] }}>
+          <div style={{ ...ty.body(t2), flex: 1, minInlineSize: 0 }}>
+            {active ? `Canal ${active.label.toLowerCase()}.` : meta.tone}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowInfo((v) => !v)}
+            aria-expanded={showInfo}
+            aria-label={showInfo ? "Ocultar información de readiness" : "Cómo se mide la readiness"}
+            style={{
+              flexShrink: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              paddingBlock: 3,
+              paddingInline: 7,
+              borderRadius: radius.full,
+              background: showInfo ? withAlpha(emerald, 14) : withAlpha(emerald, 8),
+              border: `1px solid ${withAlpha(emerald, showInfo ? 40 : 22)}`,
+              color: emerald,
+              fontFamily: font.mono,
+              fontSize: 10,
+              fontWeight: font.weight.bold,
+              letterSpacing: font.tracking.caps,
+              textTransform: "uppercase",
+              cursor: "pointer",
+              outline: "none",
+              transition: "background 0.18s ease, border-color 0.18s ease",
+              minBlockSize: 22,
+            }}
+          >
+            <Icon name="info" size={10} color={emerald} aria-hidden="true" />
+            <span>Info</span>
+          </button>
+        </div>
+
+        <AnimatePresence initial={false}>
+          {showInfo && (
+            <motion.div
+              key="info-popover"
+              initial={reduced ? { opacity: 0 } : { opacity: 0, height: 0 }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+              exit={reduced ? { opacity: 0 } : { opacity: 0, height: 0 }}
+              transition={{ duration: reduced ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
+              style={{ overflow: "hidden", marginBlockEnd: space[2] }}
+            >
+              <div
+                role="note"
+                style={{
+                  padding: space[2.5],
+                  borderRadius: radius.md,
+                  background: withAlpha(emerald, isDark ? 8 : 6),
+                  border: `1px solid ${withAlpha(emerald, 20)}`,
+                  fontSize: 11,
+                  lineHeight: 1.55,
+                  color: t2,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <div>
+                  Composite de <strong style={{ color: t1, fontWeight: font.weight.bold }}>HRV, sueño, RHR, ánimo</strong> y carga cognitiva acumulada. Baseline: tus últimos 7 días.
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3, fontFamily: font.mono, fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
+                  <span style={{ color: semantic.success, fontWeight: font.weight.bold }}>≥85 · Óptimo — exige más</span>
+                  <span style={{ color: brand.primary, fontWeight: font.weight.bold }}>70-84 · Buen ritmo — balanceado</span>
+                  <span style={{ color: semantic.warning, fontWeight: font.weight.bold }}>50-69 · Moderado — dosifica</span>
+                  <span style={{ color: semantic.danger, fontWeight: font.weight.bold }}>&lt;50 · Recuperación — descansa</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: space[1.5] }}>
           {rings.map((r, i) => {
             const isActive = activeRing === i;
@@ -408,7 +495,7 @@ export default function ReadinessRing({
                 <dt style={{ ...ty.caption(isActive ? r.color : t3), fontWeight: font.weight.bold, inlineSize: 64, transition: "color 0.18s ease" }}>
                   {r.label}
                 </dt>
-                <dd style={{ ...ty.metric(t1, font.size.md), margin: 0 }}>{r.score}%</dd>
+                <dd style={{ ...ty.biometric(isActive ? r.color : t1, font.size.md), margin: 0, transition: "color 0.18s ease" }}>{r.score}%</dd>
               </div>
             );
           })}
