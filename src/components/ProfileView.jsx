@@ -357,7 +357,7 @@ export default function ProfileView({
         >
           <div style={{ display: "flex", alignItems: "center", gap: 3, marginBlockEnd: 2 }}>
             <Icon name="sparkle" size={10} color={ac} aria-hidden="true" />
-            <span style={ty.label(ac)}>V-Cores</span>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: -0.05, color: ac }}>V-Cores</span>
           </div>
           <AnimatedNumber value={st.vCores || 0} color={ac} size={24} />
         </article>

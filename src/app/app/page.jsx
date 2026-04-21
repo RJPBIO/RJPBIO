@@ -504,7 +504,7 @@ export default function BioIgnicion(){
       <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
       <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
       <div style={{flex:1,position:"relative",zIndex:1}}>
-        <div style={{...ty.label(daily.proto.cl),marginBottom:2}}>IGNICIÓN DEL DÍA</div>
+        <div style={{fontSize:12,fontWeight:600,letterSpacing:-0.05,color:daily.proto.cl,marginBottom:2}}>Ignición del día</div>
         <div style={{...ty.title(t1),fontWeight:font.weight.black}}>{daily.proto.n}</div>
         <div style={{...ty.caption(t3),marginTop:2,fontStyle:"italic",lineHeight:font.leading.snug}}>{daily.phrase}</div>
       </div>
@@ -622,7 +622,7 @@ export default function BioIgnicion(){
           </motion.div>}
         </AnimatePresence>
         {ts==="idle"&&<>
-          <div style={{...ty.label(t3),fontWeight:font.weight.semibold,marginTop:space[1.5]}}>segundos</div>
+          <div style={{fontSize:12,fontWeight:600,letterSpacing:-0.05,color:t3,marginTop:space[1.5]}}>segundos</div>
           <motion.div animate={{opacity:[.5,1,.5],y:[0,-2,0]}} transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:12,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
             <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},${brand.accent})`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
             <span style={{fontSize:12,fontWeight:600,color:ac,letterSpacing:-0.05}}>Iniciar</span>

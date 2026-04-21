@@ -73,16 +73,15 @@ export function cardGradient(base, accent, isDark) {
 
 export const ty = {
   /**
-   * UPPERCASE LABEL — section headers, badge text, category names.
-   * The most overused pattern in the app. Now consistent everywhere.
-   * Before: fontSize:10, fontWeight:800, letterSpacing:2-3, textTransform:"uppercase"
+   * KICKER LABEL — section headers, badge text, category names.
+   * Neural-DNA: sentence case, tight letter-spacing, semibold.
+   * Was uppercase+wide-LSp; flipped 2026-04-21.
    */
   label: (color) => ({
     fontSize: font.size.sm,
-    fontWeight: font.weight.bold,
-    letterSpacing: font.tracking.caps,
+    fontWeight: font.weight.semibold,
+    letterSpacing: -0.05,
     color,
-    textTransform: "uppercase",
   }),
 
   /**
@@ -181,12 +180,11 @@ export const ty = {
 
   /**
    * BUTTON — CTA labels, action text.
-   * Before: fontSize:10-11, fontWeight:800, letterSpacing:2, textTransform:"uppercase"
+   * Neural-DNA: 15/700 tight, sentence. Pair with minBlockSize:48.
    */
   button: {
-    fontSize: font.size.base,
-    fontWeight: font.weight.black,
-    letterSpacing: font.tracking.widest,
-    textTransform: "uppercase",
+    fontSize: font.size.md,
+    fontWeight: font.weight.bold,
+    letterSpacing: -0.1,
   },
 };

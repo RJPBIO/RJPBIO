@@ -107,7 +107,7 @@ export default function PostSessionFlow({
               </div>
 
               <fieldset style={{ border: "none", padding: 0, margin: 0, marginBlockEnd: space[4] }}>
-                <legend style={{ ...ty.label(t3), marginBlockEnd: space[2], padding: 0 }}>
+                <legend style={{ fontSize: 13, fontWeight: 600, letterSpacing: -0.05, color: t3, marginBlockEnd: space[2], padding: 0 }}>
                   ¿Cómo te sientes ahora?
                 </legend>
                 <div role="radiogroup" aria-label="Estado emocional post-sesión" style={{ display: "flex", justifyContent: "center", gap: space[1] }}>
@@ -425,7 +425,7 @@ export default function PostSessionFlow({
                     }}
                   >
                     <div style={ty.metric(m.c, font.size.lg)}>{m.v}</div>
-                    <div style={{ ...ty.label(t3), fontSize: font.size.sm, marginBlockStart: 1 }}>{m.l}</div>
+                    <div style={{ fontSize: font.size.sm, fontWeight: 600, letterSpacing: -0.05, color: t3, marginBlockStart: 1 }}>{m.l}</div>
                   </motion.div>
                 ))}
               </div>
