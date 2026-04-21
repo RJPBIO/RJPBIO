@@ -17,6 +17,15 @@ import { predictSessionImpact } from "../lib/neural";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
 
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+const numStyle = (color, weight = 700) => ({
+  fontFamily: MONO,
+  fontWeight: weight,
+  color,
+  letterSpacing: -0.1,
+  fontVariantNumeric: "tabular-nums",
+});
+
 export default function ProtocolSelector({
   show, onClose, st, isDark, ac, pr, sc, setSc, fl, favs, toggleFav,
   lastProto, smartPick, protoSens, sp, H,
@@ -278,14 +287,17 @@ export default function ProtocolSelector({
                         </div>
                         <div style={{ ...ty.caption(t2), marginBlockEnd: 2 }}>{p.sb}</div>
                         <div style={{ ...ty.caption(t3), display: "flex", alignItems: "center", gap: 6 }}>
-                          {p.ph.length} fases · {p.d}s ·{" "}
+                          <span style={numStyle(t3, 600)}>{p.ph.length}</span> fases ·{" "}
+                          <span style={numStyle(t3, 600)}>{p.d}s</span> ·{" "}
                           <span style={{ color: p.dif === 1 ? "#059669" : p.dif === 2 ? "#D97706" : "#DC2626" }}>
                             {diffLabel}
                           </span>
                           {pred.predictedDelta > 0 && (
-                            <span style={{ color: "#059669", fontWeight: font.weight.bold }}>
-                              {" "}· +{pred.predictedDelta} est.
-                            </span>
+                            <>
+                              {" "}·{" "}
+                              <span style={numStyle("#059669")}>+{pred.predictedDelta}</span>
+                              <span style={{ color: "#059669", fontWeight: font.weight.bold }}> est.</span>
+                            </>
                           )}
                         </div>
                       </div>
@@ -293,8 +305,8 @@ export default function ProtocolSelector({
                         <span
                           aria-hidden="true"
                           style={{
-                            ...ty.caption(sens.avgDelta > 0 ? "#059669" : "#DC2626"),
-                            fontWeight: font.weight.black,
+                            ...numStyle(sens.avgDelta > 0 ? "#059669" : "#DC2626", 800),
+                            fontSize: font.size.sm,
                             marginInlineEnd: space[1],
                           }}
                         >
