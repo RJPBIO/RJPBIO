@@ -251,16 +251,17 @@ export default function BioIgnicion(){
   // Phase flash: pulso sutil cuando cambia de fase durante running (choreography entre fases).
   useEffect(()=>{if(pi>0&&ts==="running"){setPhaseFlash(true);const t=setTimeout(()=>setPhaseFlash(false),700);return()=>clearTimeout(t);}},[pi,ts]);
   const totalDur=Math.round(pr.d*durMult);
-  useEffect(()=>{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
+  useEffect(()=>{try{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
     let speakTO=null;
-    if(idx!==pi){setPi(idx);if(st.hapticOn!==false)hapticPhase(pr.ph[idx].ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+pr.ph[idx].k,circadian,voiceOn);speakTO=setTimeout(()=>{try{if(document.visibilityState==="visible")speak(pr.ph[idx].i,circadian,voiceOn);}catch(e){}},2500);}
+    const phAtIdx=pr?.ph?.[idx];
+    if(idx!==pi&&phAtIdx){setPi(idx);if(st.hapticOn!==false)hapticPhase(phAtIdx.ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+phAtIdx.k,circadian,voiceOn);speakTO=setTimeout(()=>{try{if(document.visibilityState==="visible")speak(phAtIdx.i,circadian,voiceOn);}catch(e){}},2500);}
     const ttN=timeToNextPhase(elapsedSec,pr.ph,durMult,pi);
     if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
-    return()=>{if(speakTO)clearTimeout(speakTO);};
+    return()=>{if(speakTO)clearTimeout(speakTO);};}catch(e){}
   },[sec,pr,durMult]);
   useMidSessionMessages({timerStatus:ts,secondsRemaining:sec,setMidMsg,setShowMid});
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
-  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr.ph[pi];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
+  useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr?.ph?.[pi]||pr?.ph?.[0];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph||!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);if(st.hapticOn!==false)hapticCountdown(3);try{speakNow("Tres",circadian,voiceOn);}catch(e){}cdR.current=setInterval(()=>{setCountdown(p=>{try{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow((pr?.ph?.[0]?.k)||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);if(st.hapticOn!==false)hapticCountdown(p-1);return p-1;}catch(e){clearInterval(cdR.current);setTs("running");return 0;}});},1000);}
   function go(){if(actLockRef.current||ts!=="idle"||countdown>0)return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);unlockVoice();requestWakeLock();try{const fs=document.documentElement.requestFullscreen?.();if(fs&&typeof fs.catch==="function")fs.catch(()=>{});}catch(e){}setPostStep("none");setPi(0);setSec(Math.round(pr.d*durMult));setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
@@ -328,7 +329,7 @@ export default function BioIgnicion(){
     setPostStep("summary");
   }
 
-  const lv=gL(st.totalSessions),ph=pr.ph[pi]||pr.ph[0],fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc);
+  const lv=gL(st.totalSessions),ph=pr?.ph?.[pi]||pr?.ph?.[0]||{k:"",i:"",l:"",r:"",ic:"focus",sc:"",s:0,e:0,br:null},fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc);
   const pct=(totalDur-sec)/totalDur,isBr=ts==="running"&&!!ph?.br;
   const perf=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
   const protoSens=useMemo(()=>calcProtoSensitivity(st.moodLog),[st.moodLog]);
