@@ -228,7 +228,7 @@ export const z = {
   modal: 210,
   postSession: 220,
   flash: 230,
-  countdown: 240,
+  countdown: 10000,
 };
 
 // ─── Layout Constants ────────────────────────────────────
