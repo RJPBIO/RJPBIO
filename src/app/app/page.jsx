@@ -710,12 +710,6 @@ export default function BioIgnicion(){
       <Icon name="bolt" size={16} color={daily.proto.cl}/>
     </motion.button>}
 
-    {/* AI Recommendation — inline compact */}
-    {ts==="idle"&&aiRec&&aiRec.primary&&aiRec.primary.protocol.id!==daily.proto.id&&<motion.button initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} whileTap={{scale:.97}} onClick={()=>sp(aiRec.primary.protocol)} style={{width:"100%",padding:"10px 14px",marginBottom:10,borderRadius:14,border:`1.5px solid ${ac}15`,background:withAlpha(brand.primary,isDark?8:4),cursor:"pointer",textAlign:"left",display:"flex",gap:10,alignItems:"center"}}>
-      <div style={{width:28,height:28,borderRadius:8,background:ac+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="cpu" size={13} color={ac}/></div>
-      <div style={{flex:1}}><div style={{...ty.caption(ac),fontWeight:font.weight.bold}}>IA: {aiRec.primary.protocol.n}</div><div style={ty.caption(t3)}>{aiRec.primary.reason}</div></div>
-      <Icon name="chevron" size={12} color={ac}/>
-    </motion.button>}
 
     {/* Expandable secondary section */}
     {ts==="idle"&&(prediction||(st.progDay||0)<7)&&<>
@@ -802,11 +796,56 @@ export default function BioIgnicion(){
         </div>
       );
     })()}
-    {ts==="idle"&&aiRec?.primary?.reason&&(
-      <div style={{fontSize:11,fontWeight:500,color:t3,lineHeight:1.5,marginBottom:14,fontStyle:"italic",paddingInline:4,letterSpacing:-0.02}}>
-        {aiRec.primary.reason}
-      </div>
-    )}
+    {/* Engine pick: affirm when selected matches, offer swap when diverges */}
+    {ts==="idle"&&aiRec?.primary?.protocol&&(()=>{
+      const enginePick=aiRec.primary.protocol;
+      const reason=aiRec.primary.reason;
+      const matches=enginePick.id===pr.id;
+      if(matches){
+        return reason?(
+          <div style={{fontSize:11,fontWeight:500,color:t3,lineHeight:1.5,marginBottom:14,fontStyle:"italic",paddingInline:4,letterSpacing:-0.02}}>
+            {reason}
+          </div>
+        ):null;
+      }
+      return(
+        <motion.button
+          initial={{opacity:0,y:4}}
+          animate={{opacity:1,y:0}}
+          whileTap={{scale:.98}}
+          onClick={()=>sp(enginePick)}
+          aria-label={`El motor sugiere ${enginePick.n}: ${reason||"tap para cambiar"}`}
+          style={{
+            inlineSize:"100%",
+            padding:"10px 12px",
+            marginBlockEnd:14,
+            borderRadius:12,
+            border:`1px solid ${withAlpha(ac,22)}`,
+            background:withAlpha(ac,isDark?10:5),
+            cursor:"pointer",
+            textAlign:"left",
+            display:"flex",
+            alignItems:"center",
+            gap:10,
+          }}
+        >
+          <div style={{inlineSize:26,blockSize:26,borderRadius:8,background:withAlpha(ac,14),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Icon name="cpu" size={12} color={ac} aria-hidden="true"/>
+          </div>
+          <div style={{flex:1,minInlineSize:0}}>
+            <div style={{fontSize:11,fontWeight:700,color:ac,letterSpacing:-0.05,lineHeight:1.3}}>
+              Motor sugiere <span style={{fontWeight:800}}>{enginePick.n}</span>
+            </div>
+            {reason&&(
+              <div style={{fontSize:10,fontWeight:500,color:t3,lineHeight:1.4,marginBlockStart:2,fontStyle:"italic",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                {reason}
+              </div>
+            )}
+          </div>
+          <span style={{fontSize:10,fontWeight:700,color:ac,letterSpacing:0.3,textTransform:"uppercase",flexShrink:0}}>Cambiar</span>
+        </motion.button>
+      );
+    })()}
 
     {/* Duration selector */}
     {ts==="idle"&&(()=>{
