@@ -67,21 +67,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/signin", error: "/signin" },
   trustHost: process.env.AUTH_TRUST_HOST === "1" || process.env.NODE_ENV !== "production",
   providers: [
-    Okta({
+    ...(process.env.OKTA_CLIENT_ID && process.env.OKTA_CLIENT_SECRET && process.env.OKTA_ISSUER ? [Okta({
       clientId: process.env.OKTA_CLIENT_ID,
       clientSecret: process.env.OKTA_CLIENT_SECRET,
       issuer: process.env.OKTA_ISSUER,
-    }),
-    AzureAD({
+    })] : []),
+    ...(process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET && process.env.AZURE_AD_TENANT_ID ? [AzureAD({
       clientId: process.env.AZURE_AD_CLIENT_ID,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
       tenantId: process.env.AZURE_AD_TENANT_ID,
-    }),
-    Google({
+    })] : []),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       authorization: { params: { hd: "*" } },
-    }),
+    })] : []),
     ...(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET ? [Apple({
       clientId: process.env.APPLE_CLIENT_ID,
       clientSecret: process.env.APPLE_CLIENT_SECRET,

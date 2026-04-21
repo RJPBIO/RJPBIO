@@ -130,12 +130,14 @@ export default async function RootLayout({ children }) {
             key={i}
             type="application/ld+json"
             nonce={nonce}
+            suppressHydrationWarning
             dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
           />
         ))}
         {/* Theme + locale init antes de paint. Nonce requerido por CSP. */}
         <script
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `try{var d=document.documentElement;var p=location.pathname||'/';var isApp=p==='/app'||p.indexOf('/app/')===0||p==='/account'||p.indexOf('/account/')===0;if(isApp){var m=localStorage.getItem('bio-theme');if(m==='dim'||m==='dark')d.classList.add('theme-dim');else if(m==='light')d.classList.add('theme-light');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)d.classList.add('theme-dim');}else{d.classList.add('theme-light');}var l=localStorage.getItem('bio-locale');if(l){d.lang=l;d.dir=['ar','he','fa','ur'].indexOf(l)>-1?'rtl':'ltr';if(!document.cookie.match(/(?:^|; )bio-locale=/))document.cookie='bio-locale='+l+'; Path=/; Max-Age=31536000; SameSite=Lax';}}catch(e){}`,
           }}
@@ -175,6 +177,7 @@ export default async function RootLayout({ children }) {
         </LocaleProvider>
         <script
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}`,
           }}

@@ -285,7 +285,7 @@ export default function ProtocolSelector({
                     <motion.button
                       data-proto-item
                       whileTap={reduced ? {} : { scale: 0.98 }}
-                      onClick={() => sp(p)}
+                      onClick={() => sp(p, true)}
                       aria-label={`${p.n}. ${ariaDescription}`}
                       aria-current={isCurrent ? "true" : undefined}
                       style={{
