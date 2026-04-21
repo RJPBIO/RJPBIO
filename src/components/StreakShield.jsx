@@ -18,7 +18,7 @@
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
-import { resolveTheme, withAlpha, font, space, radius, brand, bioSignal } from "../lib/theme";
+import { resolveTheme, withAlpha, space, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
@@ -93,14 +93,8 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
           overflow: "hidden",
           border: `1.5px solid ${withAlpha(shield.color, 28)}`,
           background: `linear-gradient(135deg, ${withAlpha(shield.color, 10)}, ${withAlpha(shield.color, 3)})`,
-          boxShadow: isCritical
-            ? `0 0 0 1px ${withAlpha(shield.color, 18)}, 0 12px 40px -12px ${withAlpha(shield.color, 40)}`
-            : "none",
         }}
       >
-        {/* Corner brackets — brand DNA */}
-        <CornerBrackets color={withAlpha(shield.color, 55)} />
-
         <div style={{ display: "flex", alignItems: "stretch", gap: 0 }}>
           {/* Hero column: monumental streak digit */}
           <div
@@ -120,43 +114,36 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
             <span
               style={{
                 fontFamily: MONO,
-                fontSize: 9,
-                fontWeight: 800,
-                letterSpacing: 3,
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: -0.05,
                 color: withAlpha(shield.color, 80),
-                textTransform: "uppercase",
               }}
             >
-              ▸ RACHA
+              Racha
             </span>
-            <motion.span
-              animate={
-                isCritical && !reduced
-                  ? { textShadow: [`0 0 8px ${shield.color}55`, `0 0 20px ${shield.color}88`, `0 0 8px ${shield.color}55`] }
-                  : {}
-              }
-              transition={isCritical && !reduced ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : {}}
-              style={{
-                fontFamily: MONO,
-                fontSize: 36,
-                fontWeight: 800,
-                letterSpacing: -2,
-                color: shield.color,
-                lineHeight: 1,
-                marginBlockStart: 2,
-              }}
-            >
-              {st.streak}
-            </motion.span>
             <span
               style={{
                 fontFamily: MONO,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: 2,
+                fontSize: 40,
+                fontWeight: 800,
+                letterSpacing: -1.6,
+                color: shield.color,
+                lineHeight: 1,
+                marginBlockStart: 2,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {st.streak}
+            </span>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: -0.05,
                 color: t3,
                 marginBlockStart: 2,
-                textTransform: "uppercase",
               }}
             >
               {st.streak === 1 ? "día" : "días"}
@@ -166,18 +153,8 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
           {/* Message + countdown column */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingBlock: space[3], paddingInline: space[4], gap: 6, minInlineSize: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-              <motion.div
+              <div
                 aria-hidden="true"
-                animate={
-                  isCritical && !reduced
-                    ? { scale: [1, 1.12, 1], opacity: [0.75, 1, 0.75] }
-                    : {}
-                }
-                transition={
-                  isCritical && !reduced
-                    ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
-                    : {}
-                }
                 style={{
                   inlineSize: 28,
                   blockSize: 28,
@@ -188,12 +165,11 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
-                  filter: isCritical ? `drop-shadow(0 0 8px ${withAlpha(shield.color, 50)})` : "none",
                 }}
               >
                 <Icon name={shield.icon} size={14} color={shield.color} />
-              </motion.div>
-              <p style={{ fontSize: 11, fontWeight: 700, color: shield.color, lineHeight: 1.35, margin: 0, flex: 1 }}>
+              </div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: shield.color, lineHeight: 1.4, margin: 0, flex: 1, letterSpacing: -0.05 }}>
                 {shield.message}
               </p>
             </div>
@@ -203,20 +179,20 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
               aria-hidden="true"
               style={{
                 fontFamily: MONO,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: 2,
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: -0.05,
                 color: t3,
-                textTransform: "uppercase",
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
                 flexWrap: "wrap",
+                fontVariantNumeric: "tabular-nums",
               }}
             >
-              <span>▸ V-CORES · ~{shield.streakValue}</span>
+              <span>V-Cores · ~{shield.streakValue}</span>
               <span style={{ opacity: 0.5 }}>·</span>
-              <span style={{ color: shield.color }}>T-{shield.hoursLeft}H</span>
+              <span style={{ color: shield.color, fontWeight: 700 }}>T-{shield.hoursLeft}h</span>
             </div>
 
             {/* Countdown progress bar — day elapsed */}
@@ -245,7 +221,6 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
                   insetInlineStart: 0,
                   blockSize: "100%",
                   background: `linear-gradient(90deg, ${withAlpha(shield.color, 60)}, ${shield.color})`,
-                  boxShadow: `0 0 8px ${withAlpha(shield.color, 50)}`,
                 }}
               />
               {/* Tick marks at 6h intervals */}
@@ -291,9 +266,9 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
               transition: "background 0.18s ease",
             }}
           >
-            <Icon name="bolt" size={13} color={shield.color} aria-hidden="true" />
-            <span style={{ fontSize: 11, fontWeight: font.weight.black, color: shield.color, letterSpacing: 1.3, textTransform: "uppercase", fontFamily: MONO }}>
-              Sesión 60s
+            <Icon name="bolt" size={14} color={shield.color} aria-hidden="true" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: shield.color, letterSpacing: -0.05 }}>
+              Sesión <span style={{ fontFamily: MONO, fontWeight: 700, letterSpacing: -0.1, fontVariantNumeric: "tabular-nums" }}>60s</span>
             </span>
           </motion.button>
           {onFreezeStreak && freezesLeft > 0 && (
@@ -321,34 +296,14 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
                 color: t1,
               }}
             >
-              <Icon name="shield" size={13} color={t3} aria-hidden="true" />
-              <span style={{ fontSize: 11, fontWeight: font.weight.bold, color: t3, letterSpacing: 1.3, textTransform: "uppercase", fontFamily: MONO }}>
-                Pausa · {freezesLeft}
+              <Icon name="shield" size={14} color={t3} aria-hidden="true" />
+              <span style={{ fontSize: 14, fontWeight: 600, color: t3, letterSpacing: -0.05 }}>
+                Pausa · <span style={{ fontFamily: MONO, fontWeight: 700, letterSpacing: -0.1, fontVariantNumeric: "tabular-nums" }}>{freezesLeft}</span>
               </span>
             </motion.button>
           )}
         </div>
       </motion.aside>
     </AnimatePresence>
-  );
-}
-
-function CornerBrackets({ color }) {
-  const style = { position: "absolute", inlineSize: 10, blockSize: 10, pointerEvents: "none" };
-  return (
-    <>
-      <svg aria-hidden="true" style={{ ...style, insetBlockStart: 6, insetInlineStart: 6 }} viewBox="0 0 10 10">
-        <path d="M0 10 L0 0 L10 0" stroke={color} strokeWidth="1.25" fill="none" />
-      </svg>
-      <svg aria-hidden="true" style={{ ...style, insetBlockStart: 6, insetInlineEnd: 6 }} viewBox="0 0 10 10">
-        <path d="M0 0 L10 0 L10 10" stroke={color} strokeWidth="1.25" fill="none" />
-      </svg>
-      <svg aria-hidden="true" style={{ ...style, insetBlockEnd: 6, insetInlineStart: 6 }} viewBox="0 0 10 10">
-        <path d="M10 10 L0 10 L0 0" stroke={color} strokeWidth="1.25" fill="none" />
-      </svg>
-      <svg aria-hidden="true" style={{ ...style, insetBlockEnd: 6, insetInlineEnd: 6 }} viewBox="0 0 10 10">
-        <path d="M0 10 L10 10 L10 0" stroke={color} strokeWidth="1.25" fill="none" />
-      </svg>
-    </>
   );
 }
