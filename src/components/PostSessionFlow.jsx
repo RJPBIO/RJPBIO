@@ -4,14 +4,25 @@
    Full a11y: role=dialog + focus trap, radiogroups, reduced-motion.
    ═══════════════════════════════════════════════════════════════ */
 
-import { useId, useState } from "react";
+import { useId, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import SessionShareCard from "./SessionShareCard";
+import BioIgnicionMark from "./BioIgnicionMark";
 import { MOODS, ENERGY_LEVELS, WORK_TAGS } from "../lib/constants";
-import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
-import { semantic } from "../lib/tokens";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, bioSignal } from "../lib/theme";
+import { semantic, protoColor } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
+import { useAdaptiveRecommendation } from "../hooks/useAdaptiveRecommendation";
+import { playChord, hapticSignature } from "../lib/audio";
+
+function bioQTone(score) {
+  if (score == null) return { label: null, color: bioSignal.phosphorCyan };
+  if (score >= 80) return { label: "Alta", color: bioSignal.phosphorCyan };
+  if (score >= 60) return { label: "Media", color: bioSignal.phosphorCyan };
+  if (score >= 40) return { label: "Baja", color: bioSignal.signalAmber };
+  return { label: "Ligera", color: bioSignal.plasmaRed };
+}
 
 export default function PostSessionFlow({
   postStep, ts, ac, isDark,
@@ -37,6 +48,17 @@ export default function PostSessionFlow({
   const breatheTitleId = useId();
   const summaryTitleId = useId();
 
+  // Firma al abrir summary: chord de premio + haptic "award". Separado del
+  // playIgnition() que suena al cerrar el orb — este es el momento "medalla".
+  useEffect(() => {
+    if (!showSummary) return;
+    if (st.soundOn !== false) { try { playChord([660, 990, 1320], 0.32, 0.035); } catch {} }
+    if (st.hapticOn !== false) { try { hapticSignature("award"); } catch {} }
+  }, [showSummary, st.soundOn, st.hapticOn]);
+
+  const nextRec = useAdaptiveRecommendation(showSummary ? st : null);
+  const nextProto = nextRec?.primary?.protocol && nextRec.primary.protocol.n !== pr.n ? nextRec.primary.protocol : null;
+
   return (
     <>
       <AnimatePresence>
@@ -50,7 +72,7 @@ export default function PostSessionFlow({
               position: "fixed",
               inset: 0,
               zIndex: z.postSession,
-              background: `${bg}F5`,
+              background: `radial-gradient(120% 80% at 50% 0%, ${withAlpha(ac, 10)}, ${bg}F5 60%)`,
               backdropFilter: "blur(30px)",
               display: "flex",
               alignItems: "center",
@@ -58,7 +80,7 @@ export default function PostSessionFlow({
               padding: space[5],
               overflowY: "auto",
             }}
-            aria-hidden="true"
+            role="presentation"
           >
             <motion.div
               ref={breatheDialogRef}
@@ -74,35 +96,53 @@ export default function PostSessionFlow({
                 padding: `${space[6]}px ${space[5]}px`,
                 maxInlineSize: 400,
                 inlineSize: "100%",
+                border: `1px solid ${withAlpha(ac, 8)}`,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: space[4], marginBlockEnd: space[4] }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBlockEnd: space[3] }}>
+                <BioIgnicionMark glyphSize={22} textColor={t1} signalColor={ac} letterSpacing={3} animated={false} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: space[2], marginBlockEnd: space[4] }}>
                 <motion.div
                   aria-hidden="true"
-                  animate={reduced ? {} : { scale: [1, 1.1, 1], opacity: [0.4, 0.7, 0.4] }}
-                  transition={reduced ? { duration: 0 } : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  animate={reduced ? {} : { scale: [1, 1.06, 1] }}
+                  transition={reduced ? { duration: 0 } : { duration: 4, repeat: Infinity, ease: "easeInOut" }}
                   style={{
-                    inlineSize: 56,
-                    blockSize: 56,
+                    inlineSize: 120,
+                    blockSize: 120,
                     borderRadius: radius.full,
-                    background: `radial-gradient(circle,${withAlpha(ac, 8)},${withAlpha(ac, 4)},transparent)`,
+                    background: `radial-gradient(circle at 50% 38%, ${withAlpha(ac, 25)}, #0a0d14 72%)`,
+                    boxShadow: `0 18px 48px -16px ${withAlpha(ac, 50)}, inset 0 1px 0 ${withAlpha("#ffffff", 8)}`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    flexShrink: 0,
+                    position: "relative",
                   }}
                 >
                   <motion.div
-                    animate={reduced ? {} : { opacity: [0.3, 0.8, 0.3] }}
-                    transition={reduced ? {} : { duration: 2.5, repeat: Infinity }}
-                    style={{ inlineSize: 12, blockSize: 12, borderRadius: radius.full, background: ac }}
+                    aria-hidden="true"
+                    animate={reduced ? {} : { opacity: [0.6, 1, 0.6], scale: [0.9, 1.05, 0.9] }}
+                    transition={reduced ? {} : { duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    style={{
+                      inlineSize: 28,
+                      blockSize: 28,
+                      borderRadius: radius.full,
+                      background: `radial-gradient(circle, ${bioSignal.ignition}, ${ac})`,
+                      filter: `drop-shadow(0 0 10px ${withAlpha(ac, 70)})`,
+                    }}
                   />
+                  <svg width="120" height="120" viewBox="0 0 120 120" style={{ position: "absolute", inset: 0 }} aria-hidden="true">
+                    <path d="M30 36 L60 30 L90 36" stroke={withAlpha(ac, 25)} strokeWidth="1" fill="none" />
+                    <path d="M30 84 L60 90 L90 84" stroke={withAlpha(ac, 15)} strokeWidth="1" fill="none" />
+                  </svg>
                 </motion.div>
-                <div>
-                  <h2 id={breatheTitleId} style={{ ...ty.heading(t1), fontSize: font.size.lg, lineHeight: font.leading.normal, margin: 0 }}>
-                    Sesión completada
+                <div style={{ textAlign: "center" }}>
+                  <h2 id={breatheTitleId} style={{ ...ty.heading(t1), fontSize: font.size["2xl"], lineHeight: font.leading.tight, margin: 0 }}>
+                    Ignición completa
                   </h2>
-                  <div style={ty.body(t3)}>Tu sistema nervioso cambió en {Math.round(pr.d * durMult)}s</div>
+                  <div style={{ ...ty.body(t3), marginBlockStart: 2 }}>
+                    Tu sistema nervioso cambió en {Math.round(pr.d * durMult)}s
+                  </div>
                 </div>
               </div>
 
@@ -146,7 +186,11 @@ export default function PostSessionFlow({
                 </div>
               </fieldset>
 
-              <div role="radiogroup" aria-label="Nivel de energía" style={{ display: "flex", gap: space[1.5] || 6, marginBlockEnd: space[4] }}>
+              <fieldset style={{ border: "none", padding: 0, margin: 0, marginBlockEnd: space[4] }}>
+                <legend style={{ fontSize: 13, fontWeight: 600, letterSpacing: -0.05, color: t3, marginBlockEnd: space[2], padding: 0 }}>
+                  ¿Cómo está tu energía?
+                </legend>
+                <div role="radiogroup" aria-label="Nivel de energía" style={{ display: "flex", gap: space[1.5] || 6 }}>
                 {ENERGY_LEVELS.map((e) => {
                   const active = checkEnergy === e.v;
                   return (
@@ -172,9 +216,14 @@ export default function PostSessionFlow({
                     </motion.button>
                   );
                 })}
-              </div>
+                </div>
+              </fieldset>
 
-              <div role="radiogroup" aria-label="Contexto de la sesión" style={{ display: "flex", flexWrap: "wrap", gap: space[1], marginBlockEnd: space[4] }}>
+              <fieldset style={{ border: "none", padding: 0, margin: 0, marginBlockEnd: space[4] }}>
+                <legend style={{ fontSize: 13, fontWeight: 600, letterSpacing: -0.05, color: t3, marginBlockEnd: space[2], padding: 0 }}>
+                  ¿En qué contexto?
+                </legend>
+                <div role="radiogroup" aria-label="Contexto de la sesión" style={{ display: "flex", flexWrap: "wrap", gap: space[1] }}>
                 {WORK_TAGS.map((tg) => {
                   const active = checkTag === tg;
                   return (
@@ -199,14 +248,15 @@ export default function PostSessionFlow({
                     </button>
                   );
                 })}
-              </div>
+                </div>
+              </fieldset>
 
               <motion.button
                 type="button"
                 whileTap={reduced || checkMood <= 0 ? {} : { scale: 0.96 }}
                 onClick={checkMood > 0 ? submitCheckin : undefined}
                 aria-disabled={checkMood <= 0}
-                aria-label={checkMood <= 0 ? "Selecciona tu estado antes de continuar" : "Continuar al resumen"}
+                aria-label={checkMood <= 0 ? "Continuar — selecciona tu estado primero" : "Continuar al resumen"}
                 style={{
                   inlineSize: "100%",
                   minBlockSize: 48,
@@ -222,23 +272,29 @@ export default function PostSessionFlow({
                   opacity: checkMood > 0 ? 1 : 0.55,
                 }}
               >
-                {checkMood > 0 ? "Continuar" : "Selecciona tu estado"}
+                Continuar
               </motion.button>
               <button
                 onClick={() => onSetPostStep("summary")}
-                aria-label="Omitir check-in"
+                aria-label="Omitir check-in e ir al resumen"
                 style={{
                   inlineSize: "100%",
-                  padding: space[2],
+                  minBlockSize: 40,
+                  paddingBlock: space[2],
                   marginBlockStart: space[1],
                   background: "transparent",
                   border: "none",
-                  color: t3,
-                  ...ty.caption(t3),
+                  color: t2,
+                  fontSize: font.size.sm,
+                  fontWeight: font.weight.semibold,
+                  letterSpacing: -0.05,
                   cursor: "pointer",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                  textDecorationColor: withAlpha(t2, 30),
                 }}
               >
-                Omitir
+                Omitir check-in
               </button>
             </motion.div>
           </motion.div>
@@ -256,7 +312,7 @@ export default function PostSessionFlow({
               position: "fixed",
               inset: 0,
               zIndex: z.postSession,
-              background: `${bg}F2`,
+              background: `radial-gradient(120% 80% at 50% 0%, ${withAlpha(ac, 10)}, ${bg}F2 60%)`,
               backdropFilter: "blur(20px)",
               display: "flex",
               alignItems: "center",
@@ -264,7 +320,7 @@ export default function PostSessionFlow({
               padding: space[5],
               overflowY: "auto",
             }}
-            aria-hidden="true"
+            role="presentation"
           >
             <motion.div
               ref={summaryDialogRef}
@@ -282,11 +338,13 @@ export default function PostSessionFlow({
                 inlineSize: "100%",
                 position: "relative",
                 overflow: "hidden",
+                border: `1px solid ${withAlpha(ac, 8)}`,
               }}
             >
               {!reduced && Array.from({ length: 24 }).map((_, i) => {
                 const angle = (i / 24) * Math.PI * 2;
                 const dist = 60 + Math.random() * 80;
+                const palette = [ac, bioSignal.phosphorCyan, bioSignal.ignition, bioSignal.plasmaPink];
                 return (
                   <motion.div
                     key={i}
@@ -301,37 +359,98 @@ export default function PostSessionFlow({
                     transition={{ duration: 1.8, delay: i * 0.04, ease: "easeOut" }}
                     style={{
                       position: "absolute",
-                      insetBlockStart: "18%",
+                      insetBlockStart: "22%",
                       insetInlineStart: "50%",
                       inlineSize: i % 3 === 0 ? 5 : 3,
                       blockSize: i % 3 === 0 ? 5 : 3,
                       borderRadius: i % 4 === 0 ? "1px" : radius.full,
-                      background: i % 3 === 0 ? ac : i % 3 === 1 ? "#6366F1" : semantic.warning,
+                      background: palette[i % 4],
+                      boxShadow: i % 3 === 0 ? `0 0 6px ${palette[i % 4]}` : "none",
                     }}
                   />
                 );
               })}
 
+              <div style={{ display: "flex", justifyContent: "center", marginBlockEnd: space[2] }}>
+                <BioIgnicionMark glyphSize={22} textColor={t1} signalColor={ac} letterSpacing={3} animated={false} />
+              </div>
               <div style={{ textAlign: "center", marginBlockEnd: space[4] }}>
                 <motion.div
                   aria-hidden="true"
-                  initial={reduced ? { scale: 1 } : { scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 200, delay: 0.2 }}
+                  initial={reduced ? { scale: 1, opacity: 1 } : { scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 16, delay: 0.2 }}
+                  style={{ position: "relative", inlineSize: 72, blockSize: 72, margin: `0 auto ${space[2]}px` }}
                 >
-                  <svg width="48" height="48" viewBox="0 0 48 48" style={{ margin: `0 auto ${space[2.5] || 10}px`, display: "block" }}>
-                    <circle cx="24" cy="24" r="22" fill={ac} opacity=".08" />
-                    <circle cx="24" cy="24" r="16" fill={ac} opacity=".12" />
-                    <path d="M15 24l6 6 12-12" stroke={ac} strokeWidth="3" strokeLinecap="round" fill="none" />
+                  <motion.div
+                    aria-hidden="true"
+                    initial={{ scale: 0.3, opacity: 0.8 }}
+                    animate={reduced ? {} : { scale: [0.3, 2, 2.4], opacity: [0.6, 0.15, 0] }}
+                    transition={reduced ? {} : { duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                    style={{ position: "absolute", inset: 0, borderRadius: radius.full, border: `2px solid ${ac}` }}
+                  />
+                  <svg width="72" height="72" viewBox="0 0 72 72" style={{ position: "relative" }}>
+                    <circle cx="36" cy="36" r="34" fill={withAlpha(ac, 8)} />
+                    <circle cx="36" cy="36" r="26" fill={withAlpha(ac, 12)} />
+                    <motion.path
+                      d="M22 36l10 10 18-18"
+                      stroke={ac}
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                      initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={reduced ? { duration: 0 } : { duration: 0.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    />
                   </svg>
                 </motion.div>
                 <h2 id={summaryTitleId} style={{ ...ty.heroHeading(t1), margin: 0 }}>
-                  {st.totalSessions <= 1 ? "Tu primera ignición" : "Sesión completada"}
+                  {st.totalSessions <= 1 ? "Tu primera ignición" : `Ignición #${st.totalSessions}`}
                 </h2>
                 <div style={{ ...ty.title(ac), marginBlockStart: space[1] }}>
                   {pr.n} · {Math.round(pr.d * durMult)}s
                 </div>
               </div>
+
+              {typeof lastBioQ === "number" && lastBioQ > 0 && (() => {
+                const tone = bioQTone(lastBioQ);
+                return (
+                  <motion.div
+                    role="group"
+                    aria-label={`BioQ Score ${lastBioQ} por ciento — calidad ${tone.label}`}
+                    initial={reduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={reduced ? { duration: 0 } : { delay: 0.55, duration: 0.4 }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: space[3],
+                      padding: `${space[3]}px ${space[4]}px`,
+                      marginBlockEnd: space[3],
+                      background: `linear-gradient(135deg, ${withAlpha(tone.color, 8)}, ${withAlpha(tone.color, 4)})`,
+                      borderRadius: radius.lg,
+                      border: `1px solid ${withAlpha(tone.color, 15)}`,
+                    }}
+                  >
+                    <div>
+                      <div style={{ ...ty.caption(t3), letterSpacing: 1.5, textTransform: "uppercase", fontSize: font.size.xs }}>
+                        BioQ Score
+                      </div>
+                      <div style={{ ...ty.caption(t2), fontSize: font.size.sm, marginBlockStart: 2 }}>
+                        Calidad de sesión · {tone.label}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+                      <div style={{ ...ty.metric(tone.color, font.size["3xl"]), fontVariantNumeric: "tabular-nums" }}>
+                        {lastBioQ}
+                      </div>
+                      <div style={{ ...ty.caption(t3), fontSize: font.size.sm }}>%</div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
 
               {st.streak >= 3 && (
                 <div
@@ -397,7 +516,7 @@ export default function PostSessionFlow({
 
               <div
                 role="group"
-                aria-label="Recompensa"
+                aria-label="Contribución de esta sesión"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "1fr 1fr 1fr",
@@ -406,9 +525,9 @@ export default function PostSessionFlow({
                 }}
               >
                 {[
-                  { l: "V-Cores", v: "+" + postVC, c: ac },
-                  { l: "Enfoque", v: st.coherencia + "%", c: "#3B82F6" },
-                  { l: "Calma", v: st.resiliencia + "%", c: "#8B5CF6" },
+                  { l: "V-Cores", v: "+" + postVC, c: bioSignal.ignition },
+                  { l: "Racha", v: (st.streak || 0) + "d", c: bioSignal.signalAmber },
+                  { l: "Hoy", v: (st.todaySessions || 1) + "/" + (st.sessionGoal || 2), c: ac },
                 ].map((m, i) => (
                   <motion.div
                     key={i}
@@ -441,6 +560,47 @@ export default function PostSessionFlow({
               >
                 <p style={{ ...ty.body(t2), fontStyle: "italic", margin: 0 }}>{postMsg}</p>
               </div>
+
+              {nextProto && (() => {
+                const nxCl = protoColor[nextProto.int] || ac;
+                return (
+                  <motion.div
+                    role="group"
+                    aria-label={`Ignición siguiente sugerida: ${nextProto.n}`}
+                    initial={reduced ? { opacity: 1 } : { opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={reduced ? { duration: 0 } : { delay: 0.7 }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: space[3],
+                      padding: `${space[2.5] || 10}px ${space[3]}px`,
+                      marginBlockEnd: space[3],
+                      background: `linear-gradient(135deg, ${withAlpha(nxCl, 6)}, ${withAlpha(nxCl, 2)})`,
+                      borderRadius: radius.md,
+                      border: `1px solid ${withAlpha(nxCl, 12)}`,
+                    }}
+                  >
+                    <div style={{
+                      inlineSize: 36, blockSize: 36, borderRadius: radius.full,
+                      background: `radial-gradient(circle at 50% 40%, ${withAlpha(nxCl, 25)}, #0a0d14 75%)`,
+                      boxShadow: `inset 0 1px 0 ${withAlpha("#ffffff", 6)}, 0 0 12px ${withAlpha(nxCl, 25)}`,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      <div style={{ inlineSize: 8, blockSize: 8, borderRadius: radius.full, background: bioSignal.ignition, boxShadow: `0 0 6px ${nxCl}` }} />
+                    </div>
+                    <div style={{ minInlineSize: 0, flex: 1 }}>
+                      <div style={{ fontSize: font.size.xs, letterSpacing: 1.5, textTransform: "uppercase", fontWeight: font.weight.bold, color: nxCl, marginBlockEnd: 2 }}>
+                        Ignición siguiente
+                      </div>
+                      <div style={{ ...ty.body(t1), fontWeight: font.weight.semibold, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {nextProto.n} · {Math.round(nextProto.d / 60)} min
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+
               <AnimatePresence initial={false}>
                 {showShare && (
                   <motion.div
