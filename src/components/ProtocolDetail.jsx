@@ -17,6 +17,22 @@ import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 import { evidenceForProtocol } from "../lib/evidence";
 import EvidenceCard from "./EvidenceCard";
 
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+const numStyle = (color, weight = 700) => ({
+  fontFamily: MONO,
+  fontWeight: weight,
+  color,
+  letterSpacing: -0.1,
+  fontVariantNumeric: "tabular-nums",
+});
+const kickerStyle = (color) => ({
+  fontSize: 12,
+  fontWeight: 600,
+  color,
+  letterSpacing: -0.05,
+  margin: 0,
+});
+
 const PHASE_ICONS = {
   breath: { icon: "breath", label: "Respiración", color: brand.primary },
   body: { icon: "heart", label: "Corporal", color: semantic.danger },
@@ -148,11 +164,15 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
               >
                 {DIF_LABELS[(protocol.dif || 1) - 1]}
               </span>
-              <span style={{ fontSize: 10, color: t3 }}>{totalDur}s</span>
-              <span style={{ fontSize: 10, color: t3 }}>{protocol.ph.length} fases</span>
+              <span style={{ fontSize: 11, color: t3, letterSpacing: -0.05 }}>
+                <span style={numStyle(t3, 600)}>{totalDur}s</span>
+              </span>
+              <span style={{ fontSize: 11, color: t3, letterSpacing: -0.05 }}>
+                <span style={numStyle(t3, 600)}>{protocol.ph.length}</span> fases
+              </span>
               {histCount > 0 && (
-                <span style={{ fontSize: 10, color: protocol.cl, fontWeight: 700 }}>
-                  {histCount}x completado
+                <span style={{ fontSize: 11, color: protocol.cl, fontWeight: 600, letterSpacing: -0.05 }}>
+                  <span style={numStyle(protocol.cl)}>{histCount}×</span> completado
                 </span>
               )}
             </div>
@@ -179,18 +199,16 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
           >
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Icon name="predict" size={13} color={predictionColor} aria-hidden="true" />
-              <span style={{ fontSize: 10, fontWeight: font.weight.black, letterSpacing: 2, color: t3, textTransform: "uppercase" }}>
-                Predicción IA
-              </span>
+              <span style={kickerStyle(predictionColor)}>Predicción IA</span>
             </div>
-            <span style={{ fontSize: 18, fontWeight: font.weight.black, color: predictionColor }}>
+            <span style={{ ...numStyle(predictionColor, 800), fontSize: 20, letterSpacing: -0.4 }}>
               {predictionPositive ? "+" : ""}
               {prediction.predictedDelta}
             </span>
           </div>
-          <p style={{ fontSize: 10, color: t2, lineHeight: 1.5, margin: 0 }}>{prediction.message}</p>
-          <p style={{ fontSize: 10, color: t3, marginBlockStart: 4, margin: 0 }}>
-            Confianza: {prediction.confidence}% · {prediction.basis}
+          <p style={{ fontSize: 12, color: t2, lineHeight: 1.5, margin: 0, letterSpacing: -0.05 }}>{prediction.message}</p>
+          <p style={{ fontSize: 11, color: t3, marginBlockStart: 4, margin: 0, letterSpacing: -0.05 }}>
+            Confianza: <span style={numStyle(t3, 600)}>{prediction.confidence}%</span> · {prediction.basis}
           </p>
         </article>
 
@@ -217,15 +235,19 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
             <div style={{ flex: 1 }}>
               <div
                 style={{
-                  fontSize: 10,
-                  fontWeight: 700,
+                  fontSize: 12,
+                  fontWeight: 600,
                   color: sensitivity.avgDelta > 0 ? semantic.success : semantic.danger,
+                  letterSpacing: -0.05,
                 }}
               >
-                Tu historial: {sensitivity.avgDelta > 0 ? "+" : ""}
-                {sensitivity.avgDelta} puntos promedio en {sensitivity.sessions} sesiones
+                Tu historial:{" "}
+                <span style={numStyle(sensitivity.avgDelta > 0 ? semantic.success : semantic.danger, 700)}>
+                  {sensitivity.avgDelta > 0 ? "+" : ""}{sensitivity.avgDelta}
+                </span>{" "}
+                puntos promedio en <span style={numStyle(sensitivity.avgDelta > 0 ? semantic.success : semantic.danger, 700)}>{sensitivity.sessions}</span> sesiones
               </div>
-              <div style={{ fontSize: 10, color: t3, marginBlockStart: 1 }}>
+              <div style={{ fontSize: 11, color: t3, marginBlockStart: 2, letterSpacing: -0.05 }}>
                 Efectividad personal: {sensitivity.eff}
               </div>
             </div>
@@ -255,28 +277,20 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
                 }}
               >
                 <Icon name={cfg.icon} size={14} color={cfg.color} aria-hidden="true" />
-                <div style={{ fontSize: 10, fontWeight: 700, color: cfg.color, marginBlockStart: 3 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: cfg.color, marginBlockStart: 3, letterSpacing: -0.05 }}>
                   {cfg.label}
                 </div>
-                <div style={{ fontSize: 10, color: t3 }}>{count} fase{count > 1 ? "s" : ""}</div>
+                <div style={{ fontSize: 11, color: t3, letterSpacing: -0.05 }}>
+                  <span style={numStyle(t3, 600)}>{count}</span> fase{count > 1 ? "s" : ""}
+                </div>
               </div>
             );
           })}
         </div>
 
         <section aria-label="Timeline de fases" style={{ marginBlockEnd: 16 }}>
-          <h4
-            style={{
-              fontSize: 10,
-              fontWeight: font.weight.black,
-              letterSpacing: 3,
-              color: t3,
-              textTransform: "uppercase",
-              marginBlockEnd: 10,
-              marginBlockStart: 0,
-            }}
-          >
-            Fases del Protocolo
+          <h4 style={{ ...kickerStyle(t3), marginBlockEnd: 10, marginBlockStart: 0 }}>
+            Fases del protocolo
           </h4>
           <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {protocol.ph.map((phase, i) => {
@@ -332,8 +346,8 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
                         justifyContent: "space-between",
                       }}
                     >
-                      <span style={{ fontSize: 12, fontWeight: 700, color: t1 }}>{phase.l}</span>
-                      <span style={{ fontSize: 10, color: t3 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: t1, letterSpacing: -0.1 }}>{phase.l}</span>
+                      <span style={numStyle(t3, 600)}>
                         {startS}–{endS}s
                       </span>
                     </div>
@@ -365,7 +379,9 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
                         }}
                       >
                         <Icon name="breath" size={10} color={semantic.success} aria-hidden="true" />
-                        {phase.br.in}-{phase.br.h1 || 0}-{phase.br.ex}-{phase.br.h2 || 0}
+                        <span style={numStyle(semantic.success, 700)}>
+                          {phase.br.in}-{phase.br.h1 || 0}-{phase.br.ex}-{phase.br.h2 || 0}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -388,20 +404,9 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
           >
             <header style={{ display: "flex", alignItems: "center", gap: 6, marginBlockEnd: 8 }}>
               <Icon name="mind" size={12} color={protocol.cl} aria-hidden="true" />
-              <h4
-                style={{
-                  fontSize: 10,
-                  fontWeight: font.weight.black,
-                  letterSpacing: 2,
-                  color: protocol.cl,
-                  textTransform: "uppercase",
-                  margin: 0,
-                }}
-              >
-                Base Neurocientífica
-              </h4>
+              <h4 style={kickerStyle(protocol.cl)}>Base neurocientífica</h4>
             </header>
-            <p style={{ fontSize: 11, color: t2, lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontSize: 13, color: t2, lineHeight: 1.6, margin: 0, letterSpacing: -0.05 }}>
               {SCIENCE_DEEP[protocol.id]}
             </p>
           </section>
@@ -415,25 +420,27 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
           aria-label={`Iniciar ${protocol.n}, ${totalDur} segundos`}
           style={{
             inlineSize: "100%",
-            padding: 16,
-            borderRadius: 50,
+            minBlockSize: 48,
+            paddingBlock: 14,
+            paddingInline: 22,
+            borderRadius: radius.md,
             background: `linear-gradient(135deg, ${protocol.cl}, ${brand.secondary})`,
             border: "none",
             color: "#fff",
-            fontSize: 12,
-            fontWeight: font.weight.black,
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: -0.1,
             cursor: "pointer",
-            letterSpacing: 2,
-            textTransform: "uppercase",
-            boxShadow: `0 4px 18px ${withAlpha(protocol.cl, 28)}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 8,
+            gap: 10,
           }}
         >
-          <Icon name="bolt" size={14} color="#fff" aria-hidden="true" />
-          INICIAR {protocol.n.toUpperCase()} · {totalDur}s
+          <Icon name="bolt" size={16} color="#fff" aria-hidden="true" />
+          Iniciar {protocol.n}
+          <span style={{ opacity: 0.75 }}>·</span>
+          <span style={numStyle("#fff", 700)}>{totalDur}s</span>
         </motion.button>
       </motion.div>
     </motion.div>
