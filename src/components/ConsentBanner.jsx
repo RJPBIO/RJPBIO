@@ -48,12 +48,12 @@ export default function ConsentBanner() {
         marginInline: "auto",
       }}
     >
-      <h2 id="consent-title" style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700 }}>
+      <h2 id="consent-title" style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, letterSpacing: -0.2 }}>
         {t("consent.title")}
       </h2>
       <p
         id="consent-body"
-        style={{ margin: "0 0 12px", fontSize: 13, color: "#A7F3D0", lineHeight: 1.5 }}
+        style={{ margin: "0 0 12px", fontSize: 13, color: "#A7F3D0", lineHeight: 1.5, letterSpacing: -0.05 }}
       >
         {t("consent.body")}
       </p>
@@ -61,14 +61,18 @@ export default function ConsentBanner() {
         <a
           href="/privacy"
           style={{
-            paddingBlock: 8,
-            paddingInline: 14,
+            minBlockSize: 44,
+            paddingBlock: 10,
+            paddingInline: 16,
             borderRadius: 999,
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 600,
+            letterSpacing: -0.05,
             color: "#A7F3D0",
             textDecoration: "none",
             border: "1px solid #064E3B",
+            display: "inline-flex",
+            alignItems: "center",
           }}
         >
           {t("consent.learnMore")}
@@ -79,11 +83,13 @@ export default function ConsentBanner() {
           aria-label={t("consent.accept")}
           style={{
             border: 0,
-            paddingBlock: 8,
-            paddingInline: 16,
+            minBlockSize: 44,
+            paddingBlock: 10,
+            paddingInline: 18,
             borderRadius: 999,
             fontWeight: 700,
-            fontSize: 13,
+            fontSize: 14,
+            letterSpacing: -0.1,
             background: `linear-gradient(135deg,${brand.primary},#10B981)`,
             color: "#fff",
             cursor: "pointer",
