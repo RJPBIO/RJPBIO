@@ -209,17 +209,20 @@ export default function PostSessionFlow({
                 aria-label={checkMood <= 0 ? "Selecciona tu estado antes de continuar" : "Continuar al resumen"}
                 style={{
                   inlineSize: "100%",
-                  padding: space[3],
+                  minBlockSize: 48,
+                  paddingBlock: 14,
                   borderRadius: radius.full,
                   background: checkMood > 0 ? ac : bd,
                   border: "none",
                   color: checkMood > 0 ? "#fff" : t3,
-                  ...ty.button,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  letterSpacing: -0.1,
                   cursor: checkMood > 0 ? "pointer" : "not-allowed",
                   opacity: checkMood > 0 ? 1 : 0.55,
                 }}
               >
-                {checkMood > 0 ? "CONTINUAR" : "SELECCIONA ESTADO"}
+                {checkMood > 0 ? "Continuar" : "Selecciona tu estado"}
               </motion.button>
               <button
                 onClick={() => onSetPostStep("summary")}
@@ -344,8 +347,8 @@ export default function PostSessionFlow({
                 >
                   <div style={ty.title(semantic.warning)}>
                     <Icon name="fire" size={14} color={semantic.warning} aria-hidden="true" />{" "}
-                    {st.streak} días —{" "}
-                    {st.streak >= 30 ? "IMPARABLE" : st.streak >= 14 ? "DISCIPLINADO" : st.streak >= 7 ? "CONSTANTE" : "EN CONSTRUCCIÓN"}
+                    {st.streak} días ·{" "}
+                    {st.streak >= 30 ? "Imparable" : st.streak >= 14 ? "Disciplinado" : st.streak >= 7 ? "Constante" : "En construcción"}
                   </div>
                 </div>
               )}
@@ -471,17 +474,17 @@ export default function PostSessionFlow({
                   aria-label="Ver tarjeta compartible de la sesión"
                   style={{
                     inlineSize: "100%",
-                    paddingBlock: space[2.5] || 10,
+                    minBlockSize: 44,
+                    paddingBlock: 12,
                     paddingInline: space[3],
                     marginBlockEnd: space[2],
                     borderRadius: radius.full,
                     background: "transparent",
                     border: `1px solid ${withAlpha(ac, 10)}`,
                     color: ac,
-                    ...ty.caption(ac),
-                    fontWeight: font.weight.black,
-                    letterSpacing: 1.5,
-                    textTransform: "uppercase",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    letterSpacing: -0.05,
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
@@ -489,7 +492,7 @@ export default function PostSessionFlow({
                     gap: space[1],
                   }}
                 >
-                  <Icon name="export" size={12} color={ac} />
+                  <Icon name="export" size={14} color={ac} />
                   Generar tarjeta
                 </motion.button>
               )}
@@ -500,16 +503,19 @@ export default function PostSessionFlow({
                 aria-label="Continuar"
                 style={{
                   inlineSize: "100%",
-                  padding: space[3],
+                  minBlockSize: 48,
+                  paddingBlock: 14,
                   borderRadius: radius.full,
                   background: ac,
                   border: "none",
                   color: "#fff",
-                  ...ty.button,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  letterSpacing: -0.1,
                   cursor: "pointer",
                 }}
               >
-                CONTINUAR
+                Continuar
               </motion.button>
             </motion.div>
           </motion.div>
