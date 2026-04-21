@@ -370,6 +370,163 @@ export default function BioIgnicion(){
   {/* ═══ ONBOARDING TOUR — 3-step guided intro ═══ */}
   <OnboardingTour show={showTour&&!onboard&&!showCalibration} isDark={isDark} onClose={completeTour}/>
 
+  {/* ═══ RETURN CARD — frosted welcome-back overlay (Ignición tab, idle, hasSessions) ═══ */}
+  <AnimatePresence>
+  {tab==="ignicion"&&!entryDone&&ts==="idle"&&st.totalSessions>0&&!onboard&&!showCalibration&&!showTour&&(()=>{
+    const now=new Date();
+    const today=now.toISOString().slice(0,10);
+    const y=new Date(now);y.setDate(y.getDate()-1);
+    const yest=y.toISOString().slice(0,10);
+    const hoursLeft=Math.max(1,24-now.getHours());
+    let fomo;
+    if(st.streak>=2&&st.lastDate===yest){
+      fomo={text:`Día ${st.streak} · se enfría en ${hoursLeft}h`,color:semantic.warning,icon:"fire",urgent:true};
+    }else if(st.lastDate===today&&st.streak>=1){
+      fomo={text:`Día ${st.streak} · racha activa`,color:semantic.success,icon:"fire"};
+    }else if(st.streak>=1){
+      fomo={text:`Racha de ${st.streak} días`,color:ac,icon:"fire"};
+    }else{
+      fomo={text:`${st.totalSessions} sesiones · empieza racha nueva`,color:t2,icon:"bolt"};
+    }
+    const startQuick=()=>{
+      setEntryDone(true);
+      setDurMult(0.5);
+      const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];
+      setPr(calmP);
+      setSec(Math.round(calmP.d*0.5));
+      go();
+    };
+    const cardBg=isDark?"rgba(20, 24, 32, 0.72)":"rgba(255, 255, 255, 0.82)";
+    const cardBorder=isDark?"rgba(255,255,255,0.08)":"rgba(15,23,42,0.06)";
+    const innerBevel=isDark?"0 0 0 1px rgba(255,255,255,0.04) inset":"0 0 0 1px rgba(255,255,255,0.6) inset";
+    const cardShadow=isDark?`0 24px 70px rgba(0,0,0,0.45), ${innerBevel}`:`0 24px 70px rgba(15,23,42,0.18), ${innerBevel}`;
+    return(
+      <motion.div
+        key="return-card-overlay"
+        role="dialog"
+        aria-modal="false"
+        aria-label="Bienvenida de vuelta"
+        initial={reducedMotion?{opacity:1}:{opacity:0}}
+        animate={{opacity:1}}
+        exit={{opacity:0}}
+        transition={{duration:reducedMotion?0:.28,ease:[.16,1,.3,1]}}
+        onClick={(e)=>{if(e.target.closest("[data-return-card-body]"))return;setEntryDone(true);}}
+        style={{
+          position:"fixed",
+          insetBlockStart:0,
+          insetInlineStart:0,
+          inlineSize:"100%",
+          blockSize:"100%",
+          zIndex:80,
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"center",
+          paddingBlock:"20px 96px",
+          paddingInline:20,
+          background:isDark?"rgba(8, 12, 20, 0.32)":"rgba(15, 23, 42, 0.22)",
+          backdropFilter:"blur(4px) saturate(1.05)",
+          WebkitBackdropFilter:"blur(4px) saturate(1.05)",
+          cursor:"pointer",
+        }}
+      >
+        <motion.article
+          data-return-card-body=""
+          initial={reducedMotion?{opacity:1,scale:1,y:0}:{opacity:0,scale:.96,y:12}}
+          animate={{opacity:1,scale:1,y:0}}
+          exit={reducedMotion?{opacity:0}:{opacity:0,scale:.97,y:6}}
+          transition={{duration:reducedMotion?0:.34,ease:[.16,1,.3,1]}}
+          style={{
+            inlineSize:"100%",
+            maxInlineSize:380,
+            padding:22,
+            borderRadius:22,
+            background:cardBg,
+            backdropFilter:"blur(22px) saturate(1.1)",
+            WebkitBackdropFilter:"blur(22px) saturate(1.1)",
+            border:`1px solid ${fomo.urgent?withAlpha(semantic.warning,30):cardBorder}`,
+            boxShadow:cardShadow,
+            cursor:"default",
+            position:"relative",
+            overflow:"hidden",
+          }}
+        >
+          <div aria-hidden="true" style={{position:"absolute",insetBlockStart:-40,insetInlineEnd:-40,inlineSize:140,blockSize:140,borderRadius:"50%",background:withAlpha(ac,8),pointerEvents:"none",filter:"blur(20px)"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBlockEnd:14,position:"relative"}}>
+            <div
+              aria-hidden="true"
+              style={{
+                inlineSize:48,blockSize:48,borderRadius:"50%",
+                background:`linear-gradient(135deg, ${lv.c}, ${lv.c}CC)`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:22,fontWeight:900,color:"#fff",lineHeight:1,
+                boxShadow:`0 6px 18px ${withAlpha(lv.c,35)}`,flexShrink:0,
+              }}
+            >
+              {lv.g}
+            </div>
+            <div style={{flex:1,minInlineSize:0}}>
+              <div style={{fontSize:12,fontWeight:600,color:t3,letterSpacing:-0.05}}>Bienvenido de vuelta</div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBlockStart:3}}>
+                <Icon name={fomo.icon} size={13} color={fomo.color} aria-hidden="true"/>
+                <span style={{fontSize:14,fontWeight:700,color:fomo.color,letterSpacing:-0.05}}>{fomo.text}</span>
+              </div>
+            </div>
+          </div>
+          <p style={{fontSize:13,fontWeight:400,color:t2,lineHeight:1.55,margin:"0 0 18px",fontStyle:"italic",position:"relative"}}>
+            {daily.phrase}
+          </p>
+          <button
+            onClick={startQuick}
+            aria-label="Empezar sesión rápida de 60 segundos"
+            style={{
+              inlineSize:"100%",
+              minBlockSize:48,
+              paddingBlock:14,
+              paddingInline:22,
+              borderRadius:radius.full,
+              border:"none",
+              background:`linear-gradient(135deg, ${ac}, ${ac}DD)`,
+              color:"#fff",
+              fontSize:15,
+              fontWeight:700,
+              letterSpacing:-0.1,
+              cursor:"pointer",
+              display:"flex",
+              alignItems:"center",
+              justifyContent:"center",
+              gap:8,
+              boxShadow:`0 6px 18px ${withAlpha(ac,30)}`,
+              position:"relative",
+            }}
+          >
+            <Icon name="bolt" size={14} color="#fff" aria-hidden="true"/>
+            <span>Sesión <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontWeight:700,fontVariantNumeric:"tabular-nums",letterSpacing:-0.1}}>60s</span> · empezar ahora</span>
+          </button>
+          <button
+            onClick={()=>setEntryDone(true)}
+            aria-label="Continuar sin iniciar sesión"
+            style={{
+              inlineSize:"100%",
+              marginBlockStart:6,
+              paddingBlock:10,
+              background:"transparent",
+              border:"none",
+              color:t3,
+              fontSize:13,
+              fontWeight:600,
+              letterSpacing:-0.05,
+              cursor:"pointer",
+              position:"relative",
+            }}
+          >
+            Seguir más tarde
+          </button>
+        </motion.article>
+      </motion.div>
+    );
+  })()}
+  </AnimatePresence>
+
   {/* ═══ COMMAND PALETTE — ⌘K/Ctrl+K ═══ */}
   <CommandPalette open={showCmd} onClose={()=>{uiSound.close(st.soundOn);setShowCmd(false);}} commands={cmdCommands} onSelect={()=>uiSound.select(st.soundOn)}/>
 
@@ -434,16 +591,7 @@ export default function BioIgnicion(){
       <div style={{fontSize:10,fontWeight:600,color:t1}}>{nfcCtx.type==="salida"?"Descomprime tu día.":"Activa tu enfoque."}</div></div>
     </div>);})()}
 
-    {/* Immersive entry */}
-    {!entryDone&&ts==="idle"&&st.totalSessions>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1}} style={{textAlign:"center",padding:"30px 0 20px"}} onClick={()=>setEntryDone(true)}>
-      <motion.div animate={{scale:[1,1.06,1],opacity:[.7,1,.7]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>
-        <svg width="48" height="48" viewBox="0 0 52 52" style={{margin:"0 auto 16px",display:"block"}}><circle cx="26" cy="26" r="22" fill="none" stroke={ac} strokeWidth="1.5" opacity=".3"/><circle cx="26" cy="26" r="15" fill="none" stroke={ac} strokeWidth="1" strokeDasharray="4 4" style={{animation:"innerRing 6s linear infinite"}}/><circle cx="26" cy="26" r="4" fill={ac} opacity=".3"/></svg>
-      </motion.div>
-      <div style={{fontSize:14,fontWeight:300,color:t2,lineHeight:1.7,maxWidth:300,margin:"0 auto"}}>{daily.phrase}</div>
-      <div style={{fontSize:10,color:t3,marginTop:16,fontWeight:600,letterSpacing:2,textTransform:"uppercase"}}>TOCA PARA CONTINUAR</div>
-    </motion.div>}
-
-    {(entryDone||st.totalSessions===0||ts!=="idle")&&<>
+    {/* Ignición content — always renders (Return Card floats over it) */}
     {/* Streak Shield (replaces simple streak warning) */}
     {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}} onFreezeStreak={()=>{const r=store.freezeStreak();if(r.ok){setSt_(useStore.getState());announce(`Racha congelada honestamente. Te quedan ${r.remaining} pausas este mes.`,"polite");}else{announce(r.reason==="already_today"?"Ya usaste tu pausa hoy.":"Agotaste tus pausas del mes.","polite");}}}/>}
 
@@ -553,7 +701,6 @@ export default function BioIgnicion(){
       </div>}
     </motion.div>}
     </AnimatePresence>
-    </>}
 
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
