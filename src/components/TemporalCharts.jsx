@@ -13,6 +13,8 @@ import { resolveTheme, withAlpha, brand, font } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
 export function MoodTrendChart({ moodLog, isDark }) {
   const reduced = useReducedMotion();
   const { border: bd, t3 } = resolveTheme(isDark);
@@ -142,8 +144,12 @@ export function EnergyFlowChart({ history, isDark, ac = brand.primary }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <figcaption style={{ fontSize: 10, color: t2, marginBlockStart: 6, fontStyle: "italic" }}>
-        Tu hora pico: <span style={{ fontWeight: font.weight.black, color: ac }}>{peakHour.h}:00</span>. Tu sistema rinde mejor aquí.
+      <figcaption style={{ fontSize: 11, fontWeight: 500, color: t2, marginBlockStart: 6, letterSpacing: -0.05 }}>
+        Tu hora pico:{" "}
+        <span style={{ fontFamily: MONO, fontWeight: 700, color: ac, fontVariantNumeric: "tabular-nums" }}>
+          {peakHour.h}:00
+        </span>
+        . Tu sistema rinde mejor aquí.
       </figcaption>
     </figure>
   );
@@ -212,9 +218,12 @@ export function ActivityHeatmap({ history, isDark, ac = brand.primary }) {
             {cell.count > 0 && (
               <span
                 style={{
+                  fontFamily: MONO,
                   fontSize: 10,
-                  fontWeight: font.weight.black,
+                  fontWeight: 700,
                   color: cell.count >= 3 ? "#fff" : ac,
+                  letterSpacing: -0.1,
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
                 {cell.count}
@@ -224,9 +233,9 @@ export function ActivityHeatmap({ history, isDark, ac = brand.primary }) {
         ))}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBlockStart: 6 }}>
-        <span style={{ fontSize: 10, color: t3 }}>4 semanas atrás</span>
+        <span style={{ fontSize: 10, fontWeight: 500, color: t3, letterSpacing: -0.05 }}>4 semanas atrás</span>
         <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <span style={{ fontSize: 10, color: t3 }}>Menos</span>
+          <span style={{ fontSize: 10, fontWeight: 500, color: t3, letterSpacing: -0.05 }}>Menos</span>
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
@@ -247,7 +256,7 @@ export function ActivityHeatmap({ history, isDark, ac = brand.primary }) {
               }}
             />
           ))}
-          <span style={{ fontSize: 10, color: t3 }}>Más</span>
+          <span style={{ fontSize: 10, fontWeight: 500, color: t3, letterSpacing: -0.05 }}>Más</span>
         </div>
       </div>
     </figure>
@@ -302,7 +311,8 @@ export function WeeklyChart({ weeklyData, isDark, ac = brand.primary }) {
               style={{
                 fontSize: 10,
                 color: d.isToday ? ac : t3,
-                fontWeight: d.isToday ? font.weight.black : 600,
+                fontWeight: d.isToday ? 700 : 600,
+                letterSpacing: -0.05,
               }}
             >
               {d.day}
