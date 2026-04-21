@@ -116,11 +116,10 @@ export default function InstrumentDueCard({ isDark, ac, defaultForce = null }) {
         <div style={{ flex: 1, minInlineSize: 0 }}>
           <p
             style={{
-              fontSize: 10,
-              letterSpacing: 2,
-              textTransform: "uppercase",
+              fontSize: 12,
+              letterSpacing: -0.05,
               color: tint,
-              fontWeight: font.weight.bold,
+              fontWeight: 600,
               margin: 0,
             }}
           >
@@ -140,13 +139,15 @@ export default function InstrumentDueCard({ isDark, ac, defaultForce = null }) {
             color: "#fff",
             border: "none",
             borderRadius: radius.md,
-            padding: `${space[2.5]}px ${space[4]}px`,
-            fontSize: font.size.md,
-            fontWeight: font.weight.bold,
+            paddingBlock: 14,
+            paddingInline: 22,
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: -0.1,
             cursor: "pointer",
             whiteSpace: "nowrap",
             fontFamily: "inherit",
-            minBlockSize: 40,
+            minBlockSize: 48,
             transition: "filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
           }}
         >
