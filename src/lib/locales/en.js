@@ -62,7 +62,7 @@ export const en = {
     languageLabel: "Interface language",
     soundscape: "Soundscape",
     soundscapeDesc: "Unlock with V-Cores",
-    active: "ACTIVE",
+    active: "Active",
     unlocked: "unlocked",
     on: "on",
     off: "off",

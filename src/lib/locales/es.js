@@ -62,7 +62,7 @@ export const es = {
     languageLabel: "Idioma de la interfaz",
     soundscape: "Paisaje sonoro",
     soundscapeDesc: "Desbloquea con V-Cores",
-    active: "ACTIVO",
+    active: "Activo",
     unlocked: "desbloqueado",
     on: "activado",
     off: "desactivado",
