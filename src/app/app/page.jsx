@@ -92,7 +92,7 @@ export default function BioIgnicion(){
   const[postStep,setPostStep]=useState("none");
   const[postVC,setPostVC]=useState(0);const[postMsg,setPostMsg]=useState("");
   const[checkMood,setCheckMood]=useState(0);const[checkEnergy,setCheckEnergy]=useState(0);const[checkTag,setCheckTag]=useState("");
-  const[preMood,setPreMood]=useState(0);
+  const[preMood,setPreMood]=useState(0);const[preMoodFromPrefill,setPreMoodFromPrefill]=useState(false);
   const[countdown,setCountdown]=useState(0);
   const[compFlash,setCompFlash]=useState(false);
   const[showHist,setShowHist]=useState(false);const[showSettings,setShowSettings]=useState(false);
@@ -149,6 +149,7 @@ export default function BioIgnicion(){
     const last=ml[ml.length-1];const ageMs=Date.now()-(last.ts||0);
     if(ageMs<=4*60*60*1000&&typeof last.mood==="number"&&last.mood>0&&last.mood<=5){
       setPreMood(last.mood);
+      setPreMoodFromPrefill(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[st.moodLog]);
@@ -847,6 +848,60 @@ export default function BioIgnicion(){
       );
     })()}
 
+    {/* Pre-session mood — color spectrum, pre-fill transparency, affirmative heading */}
+    {ts==="idle"&&(
+      <div style={{marginBlockEnd:14}}>
+        <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:8,marginBlockEnd:8,paddingInline:2}}>
+          <span style={{fontSize:11,fontWeight:700,color:t2,letterSpacing:0.3,textTransform:"uppercase"}}>Tu estado ahora</span>
+          {preMood>0&&preMoodFromPrefill&&(
+            <span style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:10,fontWeight:500,color:t3,letterSpacing:-0.02,fontStyle:"italic"}}>
+              <span aria-hidden="true" style={{inlineSize:4,blockSize:4,borderRadius:"50%",background:withAlpha(ac,60),flexShrink:0}}/>
+              desde tu última sesión
+            </span>
+          )}
+        </div>
+        <div role="radiogroup" aria-label="Tu estado ahora" style={{display:"flex",gap:4}}>
+          {MOODS.map(m=>{
+            const selected=preMood===m.value;
+            return(
+              <motion.button
+                key={m.id}
+                role="radio"
+                aria-checked={selected}
+                whileTap={{scale:.92}}
+                onClick={()=>{setPreMood(m.value);setPreMoodFromPrefill(false);H("tap");}}
+                style={{
+                  flex:1,
+                  display:"flex",
+                  flexDirection:"column",
+                  alignItems:"center",
+                  gap:4,
+                  paddingBlock:9,
+                  paddingInline:2,
+                  borderRadius:12,
+                  border:selected?`2px solid ${m.color}`:`1.5px solid ${bd}`,
+                  background:selected?withAlpha(m.color,10):cd,
+                  cursor:"pointer",
+                  transition:"all .2s",
+                  position:"relative",
+                }}
+              >
+                <Icon name={m.icon} size={16} color={selected?m.color:withAlpha(m.color,55)}/>
+                <span style={{
+                  fontSize:10,
+                  fontWeight:selected?800:600,
+                  color:selected?m.color:t3,
+                  lineHeight:1.1,
+                  textAlign:"center",
+                  letterSpacing:-0.02,
+                }}>{m.label}</span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
     {/* Duration selector */}
     {ts==="idle"&&(()=>{
       const need=aiRec?.need;
@@ -871,15 +926,6 @@ export default function BioIgnicion(){
       );
     })()}
 
-    {/* Pre-session mood */}
-    {ts==="idle"&&<div style={{marginBottom:16}}>
-      <div style={{fontSize:12,fontWeight:600,color:t3,marginBottom:8,letterSpacing:-0.05}}>¿Cómo llegas a esta sesión?</div>
-      <div style={{display:"flex",gap:4}}>{MOODS.map(m=>(
-        <motion.button key={m.id} whileTap={{scale:.9}} onClick={()=>{setPreMood(m.value);H("tap");}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"7px 2px",borderRadius:11,border:preMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:preMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s"}}>
-          <Icon name={m.icon} size={16} color={preMood===m.value?m.color:t3}/>
-          <span style={{fontSize:10,fontWeight:700,color:preMood===m.value?m.color:t3,lineHeight:1.1,textAlign:"center"}}>{m.label}</span>
-        </motion.button>))}</div>
-    </div>}
 
     {/* ═══ CORE DE IGNICIÓN — unificado: timer + respiración + fase en un solo foco ═══ */}
     <div onClick={timerTap} role="button" tabIndex={0} aria-label={ts==="idle"?`Iniciar sesión de ${pr.n}, duración ${sec} segundos`:ts==="running"?`Pausar sesión. Fase ${ph.l}, ${sec} segundos restantes`:`Reanudar sesión. ${sec} segundos restantes`} aria-pressed={ts==="running"} onKeyDown={onTimerKey} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?240:250,height:isActive?240:250,margin:"4px auto 18px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:reducedMotion?"none":"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
