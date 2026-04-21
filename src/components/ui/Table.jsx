@@ -27,10 +27,9 @@ export function DataTable({
     padding: `${space[2]}px ${space[3]}px`,
     textAlign: "left",
     color: cssVar.textMuted,
-    fontSize: font.size.xs,
-    fontWeight: font.weight.bold,
-    textTransform: "uppercase",
-    letterSpacing: font.tracking.caps,
+    fontSize: font.size.sm,
+    fontWeight: 600,
+    letterSpacing: -0.05,
     whiteSpace: "nowrap",
   };
   const cellPad = dense ? `${space[2]}px ${space[3]}px` : `${space[3]}px ${space[3]}px`;

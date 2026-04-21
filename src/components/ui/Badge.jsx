@@ -28,8 +28,7 @@ export function Badge({ children, variant = "neutral", size = "md", style, class
         color: p.color,
         borderRadius: radius.full,
         fontWeight: font.weight.semibold,
-        letterSpacing: font.tracking.wide,
-        textTransform: "uppercase",
+        letterSpacing: -0.05,
         ...sizes[size],
         ...style,
       }}

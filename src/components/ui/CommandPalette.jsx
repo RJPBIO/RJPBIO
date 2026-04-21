@@ -222,7 +222,7 @@ export default function CommandPalette() {
                   fontFamily: cssVar.fontMono,
                 }}>{it.icon}</span>
                 <span style={{ fontSize: font.size.lg, fontWeight: font.weight.medium }}>{it.label}</span>
-                <span style={{ marginInlineStart: "auto", fontSize: font.size.sm, color: cssVar.textMuted, textTransform: "uppercase", letterSpacing: "1px" }}>
+                <span style={{ marginInlineStart: "auto", fontSize: font.size.sm, color: cssVar.textMuted, letterSpacing: -0.05 }}>
                   {it.group}
                 </span>
               </li>

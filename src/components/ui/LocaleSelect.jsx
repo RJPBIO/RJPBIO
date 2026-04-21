@@ -67,8 +67,7 @@ export default function LocaleSelect({ variant = "compact", locales = QUICK }) {
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: "pointer",
-                textTransform: "uppercase",
-                letterSpacing: 1,
+                letterSpacing: -0.05,
                 fontFamily: "inherit",
               }}
             >

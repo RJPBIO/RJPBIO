@@ -85,11 +85,9 @@ export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃ
             }}>
               <span style={{
                 color: "#22D3EE",
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                textTransform: "uppercase",
-                letterSpacing: "0.22em",
-                fontWeight: font.weight.bold,
+                fontSize: 13,
+                letterSpacing: -0.1,
+                fontWeight: 700,
               }}>
                 {triggerLabel}
               </span>

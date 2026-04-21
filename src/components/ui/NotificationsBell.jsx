@@ -133,7 +133,7 @@ export default function NotificationsBell() {
       {open && (
         <div role="menu" style={panel}>
           <div style={{ padding: "10px 12px", borderBottom: "1px solid #1E293B", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#6EE7B7" }}>Notificaciones</span>
+            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1, color: "#6EE7B7" }}>Notificaciones</span>
             {items.length > 0 && (
               <button type="button" onClick={() => { setItems([]); save([]); }} style={clearBtn}>Limpiar</button>
             )}

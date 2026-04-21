@@ -84,12 +84,11 @@ export default function CodeTabs({ tabs, ariaLabel = "Code samples", copyLabel =
             background: "transparent",
             color: "#A7F3D0",
             border: "1px solid #1E2330",
-            fontSize: font.size.xs,
+            fontSize: font.size.sm,
             fontWeight: font.weight.semibold,
             cursor: "pointer",
             fontFamily: cssVar.fontMono,
-            textTransform: "uppercase",
-            letterSpacing: "1px",
+            letterSpacing: -0.05,
           }}
         >
           {copyLabel}

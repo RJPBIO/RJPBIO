@@ -16,7 +16,7 @@ export function Kpi({ label, value, sub, accent = false, live = false, size = "m
         marginBottom: space[2.5],
       }}
     >
-      <div style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.accent, textTransform: "uppercase", letterSpacing: "1.5px" }}>
+      <div style={{ fontSize: font.size.sm, fontWeight: 600, color: cssVar.accent, letterSpacing: "-0.05px" }}>
         {label}
       </div>
       <div
