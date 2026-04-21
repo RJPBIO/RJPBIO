@@ -14,7 +14,8 @@ import { useRef, useEffect } from "react";
 import Icon from "./Icon";
 import { CATS, INTENTS, DIF_LABELS } from "../lib/constants";
 import { predictSessionImpact } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, brand } from "../lib/theme";
+import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
@@ -105,22 +106,68 @@ export default function ProtocolSelector({
             onClick={(e) => e.stopPropagation()}
           >
             <div aria-hidden="true" style={{ inlineSize: 36, blockSize: 4, background: bd, borderRadius: 2, marginInline: "auto", marginBlockEnd: space[4] }} />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: space[3] }}>
-              <h3 id="proto-sheet-title" style={{ ...ty.heroHeading(t1), fontSize: font.size.xl, margin: 0 }}>
-                Protocolos
-              </h3>
-              <button
-                onClick={onClose}
-                aria-label="Cerrar selector de protocolos"
+            <div style={{ marginBlockEnd: space[3] }}>
+              <div
+                aria-hidden="true"
                 style={{
-                  inlineSize: 40, blockSize: 40, borderRadius: radius.full,
-                  border: `1px solid ${bd}`, background: cd,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBlockEnd: 6,
+                  fontFamily: MONO,
+                  fontSize: 9,
+                  fontWeight: font.weight.bold,
+                  letterSpacing: font.tracking.caps,
+                  textTransform: "uppercase",
+                  color: withAlpha(brand.primary, 70),
                 }}
               >
-                <Icon name="x" size={16} color={t2} />
-              </button>
+                <span
+                  style={{
+                    inlineSize: 4,
+                    blockSize: 4,
+                    borderRadius: "50%",
+                    background: brand.primary,
+                    boxShadow: `0 0 6px ${withAlpha(brand.primary, 80)}`,
+                  }}
+                />
+                <span>Instrumentos neurales</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: space[2] }}>
+                <div style={{ flex: 1, minInlineSize: 0 }}>
+                  <h3 id="proto-sheet-title" style={{ ...ty.heroHeading(t1), fontSize: font.size.xl, margin: 0 }}>
+                    Protocolos
+                  </h3>
+                  <div
+                    style={{
+                      marginBlockStart: 2,
+                      fontSize: 11,
+                      color: t3,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span style={{ ...numStyle(t2, 700), fontSize: 12 }}>{fl.length}</span>
+                    <span>protocolos</span>
+                    <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>
+                    <span>filtra por intención</span>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  aria-label="Cerrar selector de protocolos"
+                  style={{
+                    inlineSize: 40, blockSize: 40, borderRadius: radius.full,
+                    border: `1px solid ${bd}`, background: cd,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon name="x" size={16} color={t2} />
+                </button>
+              </div>
             </div>
 
             <div
@@ -139,17 +186,31 @@ export default function ProtocolSelector({
                     whileTap={reduced ? {} : { scale: 0.93 }}
                     onClick={() => setSc(isActive ? "Protocolo" : i.id)}
                     style={{
-                      display: "flex", alignItems: "center", gap: 5,
+                      display: "flex", alignItems: "center", gap: 6,
                       paddingInline: space[4], paddingBlock: space[2],
                       borderRadius: radius.xl,
-                      border: isActive ? `2px solid ${i.color}` : `1.5px solid ${bd}`,
-                      background: isActive ? withAlpha(i.color, 4) : cd,
+                      border: isActive
+                        ? `1.5px solid ${withAlpha(i.color, 55)}`
+                        : `1px solid ${bd}`,
+                      background: isActive ? withAlpha(i.color, 10) : cd,
                       flexShrink: 0,
                       transition: "all .2s",
+                      boxShadow: isActive ? `0 0 0 3px ${withAlpha(i.color, 8)}` : "none",
                     }}
                   >
-                    <Icon name={i.icon} size={14} color={isActive ? i.color : t3} />
-                    <span style={ty.caption(isActive ? i.color : t3)}>{i.label}</span>
+                    <Icon
+                      name={i.icon}
+                      size={14}
+                      color={isActive ? i.color : withAlpha(i.color, 55)}
+                    />
+                    <span
+                      style={{
+                        ...ty.caption(isActive ? i.color : t2),
+                        fontWeight: isActive ? font.weight.bold : font.weight.semibold,
+                      }}
+                    >
+                      {i.label}
+                    </span>
                   </motion.button>
                 );
               })}
@@ -208,7 +269,7 @@ export default function ProtocolSelector({
                   `${p.sb}`,
                   `${p.ph.length} fases, ${p.d} segundos`,
                   `Dificultad: ${diffLabel}`,
-                  isSmart ? "Recomendado por IA" : null,
+                  isSmart ? "Motor sugiere este protocolo" : null,
                   isLast ? "Última sesión" : null,
                   isCurrent ? "Seleccionado actualmente" : null,
                   pred.predictedDelta > 0 ? `Impacto estimado +${pred.predictedDelta}` : null,
@@ -279,24 +340,86 @@ export default function ProtocolSelector({
                       >
                         {p.tg}
                       </motion.div>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minInlineSize: 0 }}>
                         <div style={{ ...ty.title(t1), display: "flex", alignItems: "center", gap: space[1], flexWrap: "wrap" }}>
                           {p.n}
                           {isLast && <span style={ty.badge(t3, isDark ? "#1A1E28" : "#F1F5F9")}>último</span>}
-                          {isSmart && <span style={ty.badge(ac, withAlpha(ac, 6))}>IA recomienda</span>}
+                          {isSmart && (
+                            <span
+                              aria-label="Recomendado por el motor neural"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                fontFamily: MONO,
+                                fontSize: 9,
+                                fontWeight: font.weight.black,
+                                letterSpacing: font.tracking.caps,
+                                textTransform: "uppercase",
+                                color: ac,
+                                paddingInline: 7,
+                                paddingBlock: 3,
+                                borderRadius: radius.full,
+                                background: withAlpha(ac, 10),
+                                border: `1px solid ${withAlpha(ac, 28)}`,
+                              }}
+                            >
+                              <span
+                                aria-hidden="true"
+                                style={{
+                                  inlineSize: 4,
+                                  blockSize: 4,
+                                  borderRadius: "50%",
+                                  background: ac,
+                                  boxShadow: `0 0 6px ${withAlpha(ac, 90)}`,
+                                }}
+                              />
+                              Motor sugiere
+                            </span>
+                          )}
                         </div>
                         <div style={{ ...ty.caption(t2), marginBlockEnd: 2 }}>{p.sb}</div>
-                        <div style={{ ...ty.caption(t3), display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={numStyle(t3, 600)}>{p.ph.length}</span> fases ·{" "}
-                          <span style={numStyle(t3, 600)}>{p.d}s</span> ·{" "}
-                          <span style={{ color: p.dif === 1 ? "#059669" : p.dif === 2 ? "#D97706" : "#DC2626" }}>
-                            {diffLabel}
+                        <div style={{ ...ty.caption(t3), display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span><span style={numStyle(t2, 700)}>{p.ph.length}</span> fases</span>
+                          <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>
+                          <span style={numStyle(t2, 700)}>{p.d}s</span>
+                          <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                inlineSize: 5,
+                                blockSize: 5,
+                                borderRadius: "50%",
+                                background: p.dif === 1 ? brand.primary : p.dif === 2 ? semantic.warning : semantic.danger,
+                              }}
+                            />
+                            <span style={{ color: t3 }}>{diffLabel}</span>
                           </span>
                           {pred.predictedDelta > 0 && (
                             <>
-                              {" "}·{" "}
-                              <span style={numStyle("#059669")}>+{pred.predictedDelta}</span>
-                              <span style={{ color: "#059669", fontWeight: font.weight.bold }}> est.</span>
+                              <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>
+                              <span
+                                aria-label={`Mejora estimada de readiness: más ${pred.predictedDelta}`}
+                                title="Δ readiness estimado"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 2,
+                                  fontFamily: MONO,
+                                  fontWeight: font.weight.black,
+                                  color: brand.primary,
+                                  fontVariantNumeric: "tabular-nums",
+                                  letterSpacing: -0.1,
+                                  paddingInline: 5,
+                                  paddingBlock: 1,
+                                  borderRadius: radius.sm,
+                                  background: withAlpha(brand.primary, 8),
+                                  border: `1px solid ${withAlpha(brand.primary, 22)}`,
+                                }}
+                              >
+                                Δ +{pred.predictedDelta}
+                              </span>
                             </>
                           )}
                         </div>
@@ -305,7 +428,7 @@ export default function ProtocolSelector({
                         <span
                           aria-hidden="true"
                           style={{
-                            ...numStyle(sens.avgDelta > 0 ? "#059669" : "#DC2626", 800),
+                            ...numStyle(sens.avgDelta > 0 ? brand.primary : semantic.danger, 800),
                             fontSize: font.size.sm,
                             marginInlineEnd: space[1],
                           }}
