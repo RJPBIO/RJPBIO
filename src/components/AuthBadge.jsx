@@ -11,7 +11,7 @@ const HIDE_PREFIXES = [
   "/signin", "/signup", "/recover", "/mfa", "/verify", "/accept-invite",
   "/pricing", "/demo", "/docs", "/status", "/changelog", "/roi-calculator",
   "/admin", "/settings", "/team", "/error",
-  "/for-healthcare", "/for-manufacturing", "/for-finance", "/for-logistics",
+  "/for", "/for-healthcare", "/for-manufacturing", "/for-finance", "/for-logistics",
   "/for-tech", "/for-aviation", "/for-energy", "/for-public-sector",
 ];
 
