@@ -11,6 +11,22 @@ import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 import { MEQ_SA_QUESTIONS, classifyChronotype } from "../lib/chronotype";
 
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+const numStyle = (color, weight = 700) => ({
+  fontFamily: MONO,
+  fontWeight: weight,
+  color,
+  letterSpacing: -0.1,
+  fontVariantNumeric: "tabular-nums",
+});
+const kickerStyle = (color) => ({
+  fontSize: 12,
+  fontWeight: 600,
+  color,
+  letterSpacing: -0.05,
+  margin: 0,
+});
+
 export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
   const reduced = useReducedMotion();
   const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
@@ -74,10 +90,10 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
             <div style={{ blockSize: "100%", inlineSize: `${(idx / total) * 100}%`, background: brand.primary, transition: "inline-size .3s" }} />
           </div>
 
-          <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 8 }}>
-            Pregunta {idx + 1} de {total}
+          <p style={{ ...kickerStyle(t3), marginBlockEnd: 8 }}>
+            Pregunta <span style={numStyle(t3, 600)}>{idx + 1}</span> de <span style={numStyle(t3, 600)}>{total}</span>
           </p>
-          <h3 style={{ color: t1, fontSize: 18, fontWeight: font.weight.bold, lineHeight: 1.4, marginBlockEnd: 24 }}>
+          <h3 style={{ color: t1, fontSize: 20, fontWeight: 700, lineHeight: 1.35, letterSpacing: -0.2, marginBlockEnd: 24 }}>
             {question.q}
           </h3>
 
@@ -90,14 +106,16 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
                 onClick={() => pick(opt.score)}
                 style={{
                   inlineSize: "100%",
+                  minBlockSize: 48,
                   paddingBlock: 14,
                   paddingInline: 16,
                   background: cd,
                   color: t1,
                   border: `1px solid ${bd}`,
                   borderRadius: 12,
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: 600,
+                  letterSpacing: -0.05,
                   textAlign: "start",
                   cursor: "pointer",
                 }}
@@ -112,13 +130,15 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
       {result && (
         <section aria-label="Resultado de cronotipo" style={{ maxInlineSize: 500, marginInline: "auto" }}>
           <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 16, padding: 20, marginBlockEnd: 16 }}>
-            <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 8 }}>
+            <p style={{ ...kickerStyle(t3), marginBlockEnd: 8 }}>
               Tu cronotipo
             </p>
-            <h3 style={{ color: brand.primary, fontSize: 24, fontWeight: font.weight.black, marginBlockEnd: 4 }}>
+            <h3 style={{ color: brand.primary, fontSize: 26, fontWeight: 800, letterSpacing: -0.6, marginBlockEnd: 6 }}>
               {result.label}
             </h3>
-            <p style={{ color: t2, fontSize: 11 }}>Puntaje MEQ-SA: {result.score}/25</p>
+            <p style={{ color: t2, fontSize: 12, letterSpacing: -0.05 }}>
+              Puntaje MEQ-SA: <span style={numStyle(t2, 700)}>{result.score}/25</span>
+            </p>
 
             <div style={{ marginBlockStart: 20, display: "flex", flexDirection: "column", gap: 12 }}>
               <Row label="Ventana de sueño" value={result.sleepWindow} t1={t1} t3={t3} />
@@ -129,7 +149,7 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
             </div>
           </div>
 
-          <p style={{ color: t3, fontSize: 10, lineHeight: 1.6, marginBlockEnd: 16 }}>
+          <p style={{ color: t3, fontSize: 11, lineHeight: 1.6, marginBlockEnd: 16, letterSpacing: -0.05 }}>
             Basado en Adan &amp; Almirall 1991. Cronotipos son disposiciones, no destinos — luz matutina fuerte puede adelantar el ritmo circadiano incluso en vespertinos.
           </p>
 
@@ -139,13 +159,15 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
               aria-label="Repetir test"
               style={{
                 flex: 1,
+                minBlockSize: 48,
                 paddingBlock: 14,
                 background: "transparent",
                 color: t1,
                 border: `1px solid ${bd}`,
                 borderRadius: 14,
-                fontSize: 12,
-                fontWeight: 700,
+                fontSize: 14,
+                fontWeight: 600,
+                letterSpacing: -0.05,
                 cursor: "pointer",
               }}
             >
@@ -156,15 +178,15 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
               aria-label="Guardar cronotipo"
               style={{
                 flex: 2,
+                minBlockSize: 48,
                 paddingBlock: 14,
                 background: brand.primary,
                 color: "#fff",
                 border: "none",
                 borderRadius: 14,
-                fontSize: 13,
-                fontWeight: font.weight.black,
-                letterSpacing: 1,
-                textTransform: "uppercase",
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: -0.1,
                 cursor: "pointer",
               }}
             >
@@ -180,8 +202,8 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
 function Row({ label, value, t1, t3 }) {
   return (
     <div>
-      <div style={{ color: t3, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", marginBlockEnd: 3 }}>{label}</div>
-      <div style={{ color: t1, fontSize: 13, fontWeight: 700 }}>{value}</div>
+      <div style={{ color: t3, fontSize: 11, fontWeight: 600, letterSpacing: -0.05, marginBlockEnd: 3 }}>{label}</div>
+      <div style={{ color: t1, fontSize: 14, fontWeight: 700, letterSpacing: -0.1 }}>{value}</div>
     </div>
   );
 }
