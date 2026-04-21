@@ -25,14 +25,14 @@ const NAMES = {
 
 const SHORTCUTS = {
   es: [
-    { name: "Sesión rápida", short: "Rápida", desc: "Inicia una sesión de 60 segundos", url: "/?t=entrada&source=shortcut" },
-    { name: "Dashboard neural", short: "Dashboard", desc: "Ver métricas y tendencias", url: "/?tab=dashboard&source=shortcut" },
-    { name: "Reset 90s", short: "Reset", desc: "Protocolo de reset rápido", url: "/?t=salida&source=shortcut" },
+    { name: "Sesión rápida", short: "Rápida", desc: "Inicia una sesión de 60 segundos", url: "/app?t=entrada&source=shortcut" },
+    { name: "Dashboard neural", short: "Dashboard", desc: "Ver métricas y tendencias", url: "/app?tab=dashboard&source=shortcut" },
+    { name: "Reset 90s", short: "Reset", desc: "Protocolo de reset rápido", url: "/app?t=salida&source=shortcut" },
   ],
   en: [
-    { name: "Quick session", short: "Quick", desc: "Start a 60-second session", url: "/?t=entrada&source=shortcut" },
-    { name: "Neural dashboard", short: "Dashboard", desc: "View metrics and trends", url: "/?tab=dashboard&source=shortcut" },
-    { name: "Reset 90s", short: "Reset", desc: "Quick reset protocol", url: "/?t=salida&source=shortcut" },
+    { name: "Quick session", short: "Quick", desc: "Start a 60-second session", url: "/app?t=entrada&source=shortcut" },
+    { name: "Neural dashboard", short: "Dashboard", desc: "View metrics and trends", url: "/app?tab=dashboard&source=shortcut" },
+    { name: "Reset 90s", short: "Reset", desc: "Quick reset protocol", url: "/app?t=salida&source=shortcut" },
   ],
 };
 
@@ -57,7 +57,7 @@ export async function GET() {
     name: copy.name,
     short_name: copy.short,
     description: copy.desc,
-    start_url: "/?source=pwa",
+    start_url: "/app?source=pwa",
     display: "standalone",
     display_override: ["window-controls-overlay", "standalone", "minimal-ui"],
     orientation: "portrait",

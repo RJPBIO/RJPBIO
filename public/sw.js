@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 12;
+const CACHE_VERSION = 13;
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -11,6 +11,7 @@ const MAX_DYNAMIC = 100;
 
 const PRECACHE = [
   "/",
+  "/app",
   "/offline.html",
   "/icon.svg",
   "/icon-maskable.svg",
