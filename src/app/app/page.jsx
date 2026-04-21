@@ -215,6 +215,13 @@ export default function BioIgnicion(){
 
   const motionRef=useRef(null);const circadian=useMemo(()=>getCircadian(),[]);
   useSessionAudio({timerStatus:ts,soundOn:st.soundOn,soundscape:st.soundscape,intent:pr.int});
+
+  // Signal session state to ambient CSS (AppAmbientBackdrop + AppBrandMark
+  // step back during running sessions so the breath timer owns attention).
+  useEffect(()=>{if(typeof document==="undefined")return;const d=document.documentElement;
+    if(ts==="running")d.setAttribute("data-session","running");else d.removeAttribute("data-session");
+    return()=>{d.removeAttribute("data-session");};
+  },[ts]);
   useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection(({samples,stability})=>{setSessionData(d=>({...d,motionSamples:samples,stability:stability}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");hapRef.current("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>hapRef.current("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
@@ -321,10 +328,11 @@ export default function BioIgnicion(){
   </div>);
 
   return(
-  <div data-bp={bp} style={{maxWidth:rootMaxWidth,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflowX:"hidden",fontFamily:font.family,transition:"background .8s, max-width .25s",paddingBlockEnd:"env(safe-area-inset-bottom)",paddingInline:rootPadInline}}>
-
-  {/* Background aura — dims during running session (cinematic focus) */}
-  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s ease"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
+  <div data-bp={bp} style={{maxWidth:rootMaxWidth,margin:"0 auto",minHeight:"100dvh",background:"transparent",position:"relative",overflowX:"hidden",fontFamily:font.family,transition:"max-width .25s",paddingBlockEnd:"env(safe-area-inset-bottom)",paddingInline:rootPadInline}}>
+  {/* Ambient stage (lattice + vignette + halo) is provided by
+      src/app/app/layout.jsx → AppAmbientBackdrop. Kept transparent
+      here so that backdrop shows through on the lateral rails and
+      behind the session chrome. */}
 
   {/* Mid-session message */}
   <AnimatePresence>
