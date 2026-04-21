@@ -18,19 +18,6 @@ import { useReducedMotion, onActivate } from "../lib/a11y";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
-function CornerBrackets({ color }) {
-  const L = 10;
-  const common = { position: "absolute", inlineSize: L, blockSize: L, pointerEvents: "none" };
-  return (
-    <>
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockStart: 6, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockStart: 6, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockEnd: 6, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockEnd: 6, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-    </>
-  );
-}
-
 export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
   const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t3 } = resolveTheme(isDark);
@@ -42,24 +29,19 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
   const sorted = Object.entries(correlations).sort((a, b) => b[1].avgDelta - a[1].avgDelta);
   const maxDelta = Math.max(...sorted.map(([, d]) => Math.abs(d.avgDelta)), 0.1);
 
-  const frameStroke = withAlpha(brand.primary, isDark ? 32 : 24);
   const rule = withAlpha(brand.primary, isDark ? 20 : 14);
 
   return (
     <section
       aria-label="Efectividad personal por protocolo"
       style={{
-        position: "relative",
         background: cd,
         borderRadius: 18,
         padding: "16px 14px",
         border: `1px solid ${bd}`,
         marginBlockEnd: 14,
-        overflow: "hidden",
       }}
     >
-      <CornerBrackets color={frameStroke} />
-
       <header
         style={{
           display: "flex",
@@ -70,33 +52,31 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
           borderBlockEnd: `1px dashed ${rule}`,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="radar" size={12} color={brand.primary} aria-hidden="true" />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="radar" size={14} color={brand.primary} aria-hidden="true" />
           <h3
             style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: 3,
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: -0.05,
               color: brand.primary,
-              textTransform: "uppercase",
               margin: 0,
-              opacity: 0.9,
             }}
           >
-            ▸ Efectividad Personal
+            Efectividad personal
           </h3>
         </div>
         <span
           style={{
             fontFamily: MONO,
-            fontSize: 10,
-            letterSpacing: 1.5,
+            fontSize: 11,
+            fontWeight: 600,
             color: t3,
-            textTransform: "uppercase",
+            fontVariantNumeric: "tabular-nums",
+            letterSpacing: -0.05,
           }}
         >
-          N · {sorted.length} protocolos
+          n · {sorted.length} protocolos
         </span>
       </header>
 
@@ -170,10 +150,8 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: 0.5,
+                  fontSize: 11,
+                  fontWeight: 700,
                   color: protoColor,
                   flexShrink: 0,
                 }}
@@ -208,12 +186,12 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                     <span
                       style={{
                         fontFamily: MONO,
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: 700,
                         color: deltaColor,
                         lineHeight: 1,
                         letterSpacing: -0.3,
-                        textShadow: `0 0 8px ${withAlpha(deltaColor, 25)}`,
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
                       {isPositive ? "+" : ""}
@@ -222,10 +200,10 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                     <span
                       style={{
                         fontFamily: MONO,
-                        fontSize: 9,
+                        fontSize: 11,
+                        fontWeight: 600,
                         color: t3,
-                        letterSpacing: 1,
-                        textTransform: "uppercase",
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
                       · {data.sessions}×
@@ -255,25 +233,25 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                         ? `linear-gradient(90deg, ${brand.primary}, ${bioSignal.phosphorCyan})`
                         : `linear-gradient(90deg, ${bioSignal.plasmaPink}, ${bioSignal.ignition})`,
                       borderRadius: 2,
-                      boxShadow: `0 0 8px ${withAlpha(deltaColor, 45)}`,
                     }}
                   />
                 </div>
 
                 <div
                   style={{
-                    fontFamily: MONO,
-                    fontSize: 9,
+                    fontSize: 11,
+                    fontWeight: 500,
                     color: t3,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
+                    letterSpacing: -0.05,
                     marginBlockStart: 4,
                   }}
                 >
-                  ▸ Mejor · {data.bestTimeOfDay} ·{" "}
-                  {data.bestTimeOfDay === "mañana"
-                    ? `+${data.morningDelta}`
-                    : `+${data.afternoonDelta}`}{" "}
+                  Mejor · {data.bestTimeOfDay} ·{" "}
+                  <span style={{ fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
+                    {data.bestTimeOfDay === "mañana"
+                      ? `+${data.morningDelta}`
+                      : `+${data.afternoonDelta}`}
+                  </span>{" "}
                   pts
                 </div>
               </div>
