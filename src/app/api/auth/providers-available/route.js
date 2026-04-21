@@ -22,7 +22,9 @@ export async function GET() {
     microsoft: isDev || has("AZURE_AD_CLIENT_ID", "AZURE_AD_CLIENT_SECRET"),
     apple:     isDev || has("APPLE_CLIENT_ID", "APPLE_CLIENT_SECRET"),
     okta:      isDev || has("OKTA_CLIENT_ID", "OKTA_CLIENT_SECRET", "OKTA_ISSUER"),
-    email:     isDev || has("EMAIL_SERVER"),
+    // Email magic link is always available: src/server/auth.js prints the
+    // link to the server log when EMAIL_SERVER is unset (pilot fallback).
+    email:     true,
     phone:     smsEnabled(),
   }, {
     headers: { "cache-control": "no-store" },

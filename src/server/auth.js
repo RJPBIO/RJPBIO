@@ -14,8 +14,42 @@ import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import Email from "next-auth/providers/email";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import nodemailer from "nodemailer";
 import { db } from "./db";
 import { auditLog } from "./audit";
+
+/* Magic-link delivery. When EMAIL_SERVER is configured we send via
+   nodemailer; otherwise we fall back to a console log so the instance
+   is functional from day 0 without Postmark/SES. The console path is
+   acceptable for internal pilots — for real users, set EMAIL_SERVER. */
+async function sendMagicLink({ identifier, url, provider }) {
+  if (provider.server) {
+    const t = nodemailer.createTransport(provider.server);
+    const result = await t.sendMail({
+      to: identifier,
+      from: provider.from,
+      subject: "Sign in to BIO-IGNICIÓN",
+      text: `Sign in to BIO-IGNICIÓN\n\n${url}\n\nLink expires in 24 hours.\n`,
+      html: `<p>Sign in to <strong>BIO-IGNICIÓN</strong></p>
+             <p><a href="${url}" style="color:#059669;font-weight:600">${url}</a></p>
+             <p style="color:#888;font-size:12px">Link expires in 24 hours.</p>`,
+    });
+    const failed = [...(result.rejected || []), ...(result.pending || [])].filter(Boolean);
+    if (failed.length) throw new Error(`Email delivery failed: ${failed.join(", ")}`);
+    return;
+  }
+  console.log(
+    [
+      "",
+      "┌─ BIO-IGNICIÓN · MAGIC LINK (console fallback) ──────────────────",
+      `│ to:     ${identifier}`,
+      `│ link:   ${url}`,
+      "│ expires in 24h · configure EMAIL_SERVER to silence this log",
+      "└─────────────────────────────────────────────────────────────────",
+      "",
+    ].join("\n")
+  );
+}
 
 async function adapter() {
   if (!process.env.DATABASE_URL) return undefined;
@@ -48,10 +82,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.APPLE_CLIENT_ID,
       clientSecret: process.env.APPLE_CLIENT_SECRET,
     })] : []),
-    ...(process.env.EMAIL_SERVER ? [Email({
-      server: process.env.EMAIL_SERVER,
+    Email({
+      server: process.env.EMAIL_SERVER || undefined,
       from: process.env.EMAIL_FROM || "no-reply@bio-ignicion.app",
-    })] : []),
+      sendVerificationRequest: sendMagicLink,
+    }),
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
