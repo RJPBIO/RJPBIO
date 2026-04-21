@@ -20,7 +20,8 @@ import {
   requestPushPermission, subscribePush, unsubscribePush, scheduleLocalReminder,
 } from "../lib/push";
 import { toast } from "./ui/Toast";
-import { cssVar, radius, space, font } from "./ui/tokens";
+import { resolveTheme, withAlpha, font, space, radius } from "../lib/theme";
+import { semantic } from "../lib/tokens";
 
 function formatHM(h, m) {
   const hh = String(h).padStart(2, "0");
@@ -41,7 +42,8 @@ function readPermission() {
   return Notification.permission;
 }
 
-export default function RemindersCard() {
+export default function RemindersCard({ isDark = true, ac = "#10B981" }) {
+  const { surface: sf, border: bd, t1, t3 } = resolveTheme(isDark);
   const enabled = useStore((s) => !!s.remindersEnabled);
   const hour = useStore((s) => s.reminderHour ?? 9);
   const minute = useStore((s) => s.reminderMinute ?? 0);
@@ -52,7 +54,6 @@ export default function RemindersCard() {
 
   useEffect(() => { setPermission(readPermission()); }, []);
 
-  // Re-scheduling local reminder cuando cambian hora/minuto o al activar.
   useEffect(() => {
     if (!enabled) return;
     if (readPermission() !== "granted") return;
@@ -72,7 +73,6 @@ export default function RemindersCard() {
         });
         return;
       }
-      // Best-effort: suscribirse a Web Push si hay VAPID. No fatal si falla.
       try { await subscribePush(); } catch { /* noop */ }
       update({ remindersEnabled: true });
       scheduleLocalReminder({ hour, minute });
@@ -105,25 +105,26 @@ export default function RemindersCard() {
 
   const unsupported = permission === "unsupported";
   const denied = permission === "denied";
+  const switchLabel = `${enabled ? "Desactivar" : "Activar"} recordatorio diario a las ${formatHM(hour, minute)}`;
 
   return (
     <section
       aria-label="Recordatorios diarios"
       style={{
         padding: space[4],
-        background: cssVar.surface,
-        border: `1px solid ${cssVar.border}`,
+        background: sf,
+        border: `1px solid ${bd}`,
         borderRadius: radius.lg,
         display: "grid",
         gap: space[3],
       }}
     >
-      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: space[3] }}>
-        <div style={{ minInlineSize: 0 }}>
-          <h3 style={{ fontSize: font.size.md, fontWeight: font.weight.bold, color: cssVar.text, margin: 0 }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: space[3] }}>
+        <div style={{ minInlineSize: 0, flex: 1 }}>
+          <h3 style={{ fontSize: font.size.md, fontWeight: font.weight.bold, color: t1, margin: 0 }}>
             Recordatorio diario
           </h3>
-          <p style={{ fontSize: font.size.sm, color: cssVar.textDim, margin: 0, marginBlockStart: 2 }}>
+          <p style={{ fontSize: font.size.sm, color: t3, margin: 0, marginBlockStart: 2 }}>
             Un empujón suave a la misma hora para no romper la racha.
           </p>
         </div>
@@ -132,41 +133,48 @@ export default function RemindersCard() {
             position: "relative",
             display: "inline-flex",
             alignItems: "center",
+            justifyContent: "center",
             cursor: busy || unsupported ? "not-allowed" : "pointer",
             opacity: unsupported ? 0.5 : 1,
             flexShrink: 0,
+            minInlineSize: 44,
+            minBlockSize: 44,
+            padding: 4,
           }}
         >
           <input
             type="checkbox"
             role="switch"
             aria-checked={enabled}
+            aria-label={switchLabel}
             checked={enabled}
             disabled={busy || unsupported}
             onChange={onToggle}
-            style={{ position: "absolute", opacity: 0, inlineSize: 0, blockSize: 0 }}
+            style={{ position: "absolute", opacity: 0, inlineSize: "100%", blockSize: "100%", margin: 0, cursor: "inherit" }}
           />
           <span
             aria-hidden
             style={{
               inlineSize: 40,
               blockSize: 22,
-              background: enabled ? cssVar.accent : cssVar.border,
+              background: enabled ? ac : bd,
               borderRadius: 999,
               position: "relative",
               transition: "background 0.2s ease",
+              boxShadow: enabled ? `0 0 0 3px ${withAlpha(ac, 15)}` : "none",
             }}
           >
             <span
               style={{
                 position: "absolute",
                 insetBlockStart: 3,
-                insetInlineStart: enabled ? 21 : 3,
+                insetInlineStart: 3,
                 inlineSize: 16,
                 blockSize: 16,
                 background: "#fff",
                 borderRadius: 999,
-                transition: "inset-inline-start 0.2s ease",
+                transform: enabled ? "translateX(18px)" : "translateX(0)",
+                transition: "transform 0.2s ease",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
               }}
             />
@@ -175,20 +183,22 @@ export default function RemindersCard() {
       </header>
 
       {enabled && (
-        <label style={{ display: "flex", alignItems: "center", gap: space[2], fontSize: font.size.sm, color: cssVar.textDim }}>
+        <label style={{ display: "flex", alignItems: "center", gap: space[2], fontSize: font.size.sm, color: t3 }}>
           A las
           <input
             type="time"
             value={formatHM(hour, minute)}
             onChange={onTimeChange}
             style={{
-              background: cssVar.surface2,
-              border: `1px solid ${cssVar.border}`,
-              color: cssVar.text,
+              background: isDark ? "rgba(255,255,255,.04)" : "#F1F4F9",
+              border: `1px solid ${bd}`,
+              color: t1,
               borderRadius: radius.md,
               padding: `${space[2]}px ${space[3]}px`,
               fontSize: font.size.md,
               fontFamily: "inherit",
+              colorScheme: isDark ? "dark" : "light",
+              minBlockSize: 44,
             }}
           />
         </label>
@@ -199,9 +209,10 @@ export default function RemindersCard() {
           role="alert"
           style={{
             fontSize: font.size.sm,
-            color: cssVar.warn,
-            background: `color-mix(in srgb, ${cssVar.warn} 10%, transparent)`,
-            padding: space[2],
+            color: semantic.warning,
+            background: withAlpha(semantic.warning, isDark ? 10 : 8),
+            border: `1px solid ${withAlpha(semantic.warning, 20)}`,
+            padding: space[3],
             borderRadius: radius.md,
             margin: 0,
           }}
@@ -211,7 +222,7 @@ export default function RemindersCard() {
       )}
 
       {unsupported && (
-        <p style={{ fontSize: font.size.sm, color: cssVar.textMuted, margin: 0 }}>
+        <p style={{ fontSize: font.size.sm, color: t3, margin: 0 }}>
           Tu navegador no soporta notificaciones — los recordatorios quedarán activos si
           instalas la app como PWA.
         </p>

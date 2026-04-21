@@ -587,7 +587,7 @@ export default function ProfileView({
       </article>
 
       <div style={{ marginBlockEnd: 10 }}>
-        <RemindersCard />
+        <RemindersCard isDark={isDark} ac={ac} />
       </div>
       {(onShowChronotype || onShowResonance || onShowNOM035) && (
         <article
