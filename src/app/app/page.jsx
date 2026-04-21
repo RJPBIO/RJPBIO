@@ -391,20 +391,26 @@ export default function BioIgnicion(){
     const adaptiveProto=aiRec?.primary?.protocol||null;
     const adaptiveIntent=aiRec?.need||"calma";
     const adaptiveReason=aiRec?.primary?.reason||null;
+    const circadianPeriod=aiRec?.context?.circadian||null;
     const intentMeta=({
       calma:{label:"Calma",icon:"calm"},
       enfoque:{label:"Enfoque",icon:"focus"},
       energia:{label:"Energía",icon:"energy"},
       reset:{label:"Reset",icon:"reset"},
     }[adaptiveIntent])||{label:"Sesión",icon:"bolt"};
+    const cardProto=adaptiveProto||P.find(p=>p.int===adaptiveIntent&&p.dif===1)||P.find(p=>p.int==="calma"&&p.dif===1)||P[0];
+    const cardPred=(()=>{try{return predictSessionImpact(st,cardProto);}catch(e){return null;}})();
+    const showDelta=cardPred&&cardPred.confidence>=50&&cardPred.predictedDelta>0;
     const startQuick=()=>{
       setEntryDone(true);
       setDurMult(0.5);
-      const chosen=adaptiveProto||P.find(p=>p.int===adaptiveIntent&&p.dif===1)||P.find(p=>p.int==="calma"&&p.dif===1)||P[0];
-      setPr(chosen);
-      setSec(Math.round(chosen.d*0.5));
+      setPr(cardProto);
+      setSec(Math.round(cardProto.d*0.5));
       go();
     };
+    const isUrgent=!!fomo.urgent;
+    const secondaryLabel=isUrgent?`Pierdes la racha en ${hoursLeft}h`:"Abrir la app";
+    const secondaryColor=isUrgent?semantic.warning:t3;
     const cardBg=isDark?"rgba(20, 24, 32, 0.72)":"rgba(255, 255, 255, 0.82)";
     const cardBorder=isDark?"rgba(255,255,255,0.08)":"rgba(15,23,42,0.06)";
     const innerBevel=isDark?"0 0 0 1px rgba(255,255,255,0.04) inset":"0 0 0 1px rgba(255,255,255,0.6) inset";
@@ -481,6 +487,14 @@ export default function BioIgnicion(){
               </div>
             </div>
           </div>
+          {circadianPeriod&&(
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBlockEnd:12,position:"relative"}}>
+              <span aria-hidden="true" style={{inlineSize:6,blockSize:6,borderRadius:"50%",background:ac,boxShadow:`0 0 8px ${withAlpha(ac,60)}`,flexShrink:0}}/>
+              <span style={{fontSize:11,fontWeight:600,color:t3,letterSpacing:0.3,textTransform:"uppercase"}}>
+                Ventana de {circadianPeriod}
+              </span>
+            </div>
+          )}
           <p style={{fontSize:13,fontWeight:400,color:t2,lineHeight:1.55,margin:"0 0 18px",fontStyle:"italic",position:"relative"}}>
             {daily.phrase}
           </p>
@@ -516,24 +530,34 @@ export default function BioIgnicion(){
               {adaptiveReason}
             </div>
           )}
+          {showDelta&&(
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBlockStart:8}}>
+              <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontSize:11,fontWeight:700,color:semantic.success,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>
+                +{cardPred.predictedDelta.toFixed(1)}
+              </span>
+              <span style={{fontSize:10,fontWeight:500,color:t3,letterSpacing:0.2}}>
+                mood esperado · confianza {cardPred.confidence}%
+              </span>
+            </div>
+          )}
           <button
             onClick={()=>setEntryDone(true)}
-            aria-label="Continuar sin iniciar sesión"
+            aria-label={isUrgent?`Abrir la app sin iniciar sesión — ${secondaryLabel}`:"Abrir la app sin iniciar sesión"}
             style={{
               inlineSize:"100%",
               marginBlockStart:6,
               paddingBlock:10,
               background:"transparent",
               border:"none",
-              color:t3,
+              color:secondaryColor,
               fontSize:13,
-              fontWeight:600,
+              fontWeight:isUrgent?700:600,
               letterSpacing:-0.05,
               cursor:"pointer",
               position:"relative",
             }}
           >
-            Seguir más tarde
+            {secondaryLabel}
           </button>
         </motion.article>
       </motion.div>
