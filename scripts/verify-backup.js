@@ -16,7 +16,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createHash } from "node:crypto";
+import { recomputeRow } from "../src/lib/audit-chain.js";
 
 const BACKUP_URL = process.env.BACKUP_URL;
 const RESTORE_DB_URL = process.env.RESTORE_DB_URL;
@@ -90,18 +90,16 @@ try {
       `SELECT json_agg(row_to_json(x) ORDER BY ts) FROM "AuditLog" x WHERE "orgId" = '${orgId.replace(/'/g, "''")}';`,
     ]).trim() || "[]");
 
+    const hmacKey = process.env.AUDIT_HMAC_KEY || null;
     let prev = null, broken = 0;
     for (const r of rows) {
-      const { prevHash, hash, id, ts, ...rest } = r;
-      const payload = Object.keys(rest).sort().reduce((a, k) => { a[k] = rest[k]; return a; }, {});
-      const expected = createHash("sha256")
-        .update(`${prev || ""}|${JSON.stringify(payload)}`)
-        .digest("hex");
-      if (expected !== hash) broken++;
-      prev = hash;
+      const { expectedHash, expectedSeal, storedSeal } = recomputeRow(r, prev, hmacKey);
+      if (expectedHash !== r.hash) broken++;
+      else if (expectedSeal && storedSeal !== expectedSeal) broken++;
+      prev = r.hash;
     }
     if (broken > 0) throw new Error(`hash-chain broken at ${broken} of ${rows.length} rows`);
-    console.log(`  chain OK: ${rows.length} rows verified for org ${orgId}`);
+    console.log(`  chain OK: ${rows.length} rows verified for org ${orgId}${hmacKey ? " (seal enforced)" : ""}`);
   }
 
   console.log("\n✅ Backup verified. Restore tested, counts OK, audit chain intact.");
