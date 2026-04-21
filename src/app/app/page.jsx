@@ -388,12 +388,21 @@ export default function BioIgnicion(){
     }else{
       fomo={text:`${st.totalSessions} sesiones · empieza racha nueva`,color:t2,icon:"bolt"};
     }
+    const adaptiveProto=aiRec?.primary?.protocol||null;
+    const adaptiveIntent=aiRec?.need||"calma";
+    const adaptiveReason=aiRec?.primary?.reason||null;
+    const intentMeta=({
+      calma:{label:"Calma",icon:"calm"},
+      enfoque:{label:"Enfoque",icon:"focus"},
+      energia:{label:"Energía",icon:"energy"},
+      reset:{label:"Reset",icon:"reset"},
+    }[adaptiveIntent])||{label:"Sesión",icon:"bolt"};
     const startQuick=()=>{
       setEntryDone(true);
       setDurMult(0.5);
-      const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];
-      setPr(calmP);
-      setSec(Math.round(calmP.d*0.5));
+      const chosen=adaptiveProto||P.find(p=>p.int===adaptiveIntent&&p.dif===1)||P.find(p=>p.int==="calma"&&p.dif===1)||P[0];
+      setPr(chosen);
+      setSec(Math.round(chosen.d*0.5));
       go();
     };
     const cardBg=isDark?"rgba(20, 24, 32, 0.72)":"rgba(255, 255, 255, 0.82)";
@@ -477,7 +486,7 @@ export default function BioIgnicion(){
           </p>
           <button
             onClick={startQuick}
-            aria-label="Empezar sesión rápida de 60 segundos"
+            aria-label={`Empezar sesión de ${intentMeta.label.toLowerCase()} de 60 segundos`}
             style={{
               inlineSize:"100%",
               minBlockSize:48,
@@ -499,9 +508,14 @@ export default function BioIgnicion(){
               position:"relative",
             }}
           >
-            <Icon name="bolt" size={14} color="#fff" aria-hidden="true"/>
-            <span>Sesión <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontWeight:700,fontVariantNumeric:"tabular-nums",letterSpacing:-0.1}}>60s</span> · empezar ahora</span>
+            <Icon name={intentMeta.icon} size={14} color="#fff" aria-hidden="true"/>
+            <span>{intentMeta.label} <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontWeight:700,fontVariantNumeric:"tabular-nums",letterSpacing:-0.1}}>60s</span> · empezar ahora</span>
           </button>
+          {adaptiveReason&&(
+            <div style={{fontSize:11,fontWeight:500,color:t3,lineHeight:1.45,marginBlockStart:10,textAlign:"center",fontStyle:"italic",letterSpacing:-0.02,paddingInline:4}}>
+              {adaptiveReason}
+            </div>
+          )}
           <button
             onClick={()=>setEntryDone(true)}
             aria-label="Continuar sin iniciar sesión"
