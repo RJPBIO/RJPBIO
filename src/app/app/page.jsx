@@ -55,7 +55,7 @@ import { buildCheckinEntry } from "@/lib/sessionCheckin";
 import { computeBreathFrame } from "@/lib/breathCycle";
 import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "@/lib/nom35/recommend";
 import { useReducedMotion, useFocusTrap, KEY, announce } from "@/lib/a11y";
-import { semantic } from "@/lib/tokens";
+import { semantic, protoColor } from "@/lib/tokens";
 
 // Dynamic imports (code-split)
 const NeuralCalibration = dynamic(() => import("@/components/NeuralCalibration"), { ssr: false });
@@ -661,6 +661,19 @@ export default function BioIgnicion(){
 
   {/* ═══ TAB: IGNICIÓN ═══ */}
   {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
+    {/* Brand kicker — wordmark micro-strip en momento-cero (solo idle) */}
+    {ts==="idle"&&(
+      <div aria-hidden="true" style={{display:"flex",justifyContent:"center",marginBlockEnd:space[3]}}>
+        <span style={{display:"inline-flex",alignItems:"center",gap:6,paddingBlock:4,paddingInline:10,borderRadius:999,background:withAlpha(ac,6),border:`1px solid ${withAlpha(ac,14)}`}}>
+          <span style={{inlineSize:4,blockSize:4,borderRadius:"50%",background:ac,boxShadow:`0 0 6px ${withAlpha(ac,70)}`}}/>
+          <span style={{display:"inline-flex",alignItems:"baseline",gap:3,fontFamily:font.family,fontSize:10,letterSpacing:3,textTransform:"uppercase",lineHeight:1}}>
+            <span style={{fontWeight:font.weight.normal,color:t3}}>BIO</span>
+            <span style={{color:ac,fontWeight:font.weight.bold,transform:"translateY(-0.08em)"}}>—</span>
+            <span style={{fontWeight:font.weight.black,color:t1}}>IGNICIÓN</span>
+          </span>
+        </span>
+      </div>
+    )}
     {/* NFC Context */}
     {nfcCtx&&ts==="idle"&&(()=>{const nfcAc=nfcCtx.type==="salida"?brand.secondary:ac;return(
       <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:12,background:nfcAc+"08",borderRadius:14,border:`1.5px solid ${nfcAc+"20"}`,animation:"fi .4s"}}>
@@ -674,10 +687,10 @@ export default function BioIgnicion(){
     {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}} onFreezeStreak={()=>{const r=store.freezeStreak();if(r.ok){setSt_(useStore.getState());announce(`Racha congelada honestamente. Te quedan ${r.remaining} pausas este mes.`,"polite");}else{announce(r.reason==="already_today"?"Ya usaste tu pausa hoy.":"Agotaste tus pausas del mes.","polite");}}}/>}
 
     {/* NOM-035 hint — solo si hay un nivel medio/alto guardado y no fue descartado */}
-    {ts==="idle"&&nom35Hint&&(
-      <div role="status" aria-live="polite" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:space[3],padding:`${space[3]}px ${space[4]}px`,marginBottom:space[3],background:withAlpha(nom35Hint.intent==="calma"?"#DC2626":"#F59E0B",12),border:`1px solid ${withAlpha(nom35Hint.intent==="calma"?"#DC2626":"#F59E0B",30)}`,borderRadius:radius.md}}>
+    {ts==="idle"&&nom35Hint&&(()=>{const nomTone=nom35Hint.intent==="calma"?semantic.danger:semantic.warning;return(
+      <div role="status" aria-live="polite" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:space[3],padding:`${space[3]}px ${space[4]}px`,marginBottom:space[3],background:withAlpha(nomTone,12),border:`1px solid ${withAlpha(nomTone,30)}`,borderRadius:radius.md}}>
         <div style={{display:"flex",alignItems:"center",gap:space[2],minWidth:0}}>
-          <Icon name="shield" size={14} color={nom35Hint.intent==="calma"?"#DC2626":"#F59E0B"}/>
+          <Icon name="shield" size={14} color={nomTone}/>
           <div style={{minWidth:0}}>
             <div style={{...ty.body(t1),fontWeight:font.weight.semibold}}>{nom35Hint.text}</div>
             {nom35Hint.protocol&&<div style={{...ty.caption(t3),marginTop:2}}>Sugerido: {nom35Hint.protocol.n} · {Math.round((nom35Hint.protocol.d||0)/60)} min</div>}
@@ -687,21 +700,38 @@ export default function BioIgnicion(){
           <Icon name="close" size={14} color={t2}/>
         </button>
       </div>
-    )}
+      );})()}
 
-    {/* Cognitive Load indicator (NEW) */}
-    {ts==="idle"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`${space[2.5]}px ${space[4]}px`,marginBottom:space[3],background:surface,borderRadius:radius.md}}>
-      <div style={{display:"flex",alignItems:"center",gap:space[1.5]}}>
-        <div style={{width:24,height:24,borderRadius:7,background:withAlpha(ac,6),display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="bolt" size={11} color={ac}/></div>
-        <span style={{...ty.body(t1),fontWeight:font.weight.semibold}}>{st.todaySessions||0} de {st.sessionGoal||2} sesiones hoy</span>
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:space[1.5]}}>
-        <div style={{display:"flex",alignItems:"center",gap:3}}><Icon name="gauge" size={10} color={cogLoad.color}/><span style={ty.caption(cogLoad.color)}>{cogLoad.level}</span></div>
-        <div style={{width:40,height:5,borderRadius:radius.sm/2,background:bd,overflow:"hidden"}}>
-          <div style={{width:Math.min(100,(st.todaySessions||0)/(st.sessionGoal||2)*100)+"%",height:"100%",background:ac,borderRadius:radius.sm/2,transition:"width .3s"}}/>
+    {/* Cognitive Load indicator — carga del día con label + MONO tabular */}
+    {ts==="idle"&&(()=>{
+      const done=st.todaySessions||0;
+      const goal=st.sessionGoal||2;
+      const pct=Math.min(100,(done/goal)*100);
+      return(
+        <div aria-label={`Carga hoy: ${done} de ${goal} sesiones. Nivel ${cogLoad.level}`} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:space[3],padding:`${space[3]}px ${space[4]}px`,marginBottom:space[3],background:surface,border:`1px solid ${bd}`,borderRadius:radius.md}}>
+          <div style={{display:"flex",alignItems:"center",gap:space[2],minInlineSize:0}}>
+            <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:withAlpha(ac,10),border:`1px solid ${withAlpha(ac,18)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <Icon name="cpu" size={13} color={ac}/>
+            </div>
+            <div style={{minInlineSize:0}}>
+              <div style={{fontSize:10,fontWeight:700,color:t3,letterSpacing:2,textTransform:"uppercase",lineHeight:1}}>Carga hoy</div>
+              <div style={{display:"inline-flex",alignItems:"baseline",gap:4,marginBlockStart:3,lineHeight:1}}>
+                <span style={{fontFamily:font.mono,fontSize:15,fontWeight:800,color:t1,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}>{done}</span>
+                <span style={{fontSize:11,fontWeight:500,color:t3}}>/</span>
+                <span style={{fontFamily:font.mono,fontSize:12,fontWeight:600,color:t3,fontVariantNumeric:"tabular-nums"}}>{goal}</span>
+                <span style={{fontSize:11,fontWeight:500,color:t3,marginInlineStart:2}}>sesiones</span>
+              </div>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:space[2],flexShrink:0}}>
+            <span style={{fontSize:10,fontWeight:700,color:cogLoad.color,letterSpacing:0.3,textTransform:"uppercase"}}>{cogLoad.level}</span>
+            <div aria-hidden="true" style={{inlineSize:44,blockSize:5,borderRadius:999,background:bd,overflow:"hidden"}}>
+              <div style={{inlineSize:pct+"%",blockSize:"100%",background:`linear-gradient(90deg, ${withAlpha(cogLoad.color,60)}, ${cogLoad.color})`,borderRadius:999,transition:"width .4s ease"}}/>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>}
+      );
+    })()}
 
     {/* Readiness Score — bioneural composite */}
     {ts==="idle"&&<ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRV(true)}/>}
@@ -709,17 +739,17 @@ export default function BioIgnicion(){
     {/* Bioneural quick actions — evidence-based rescue protocols */}
     {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="calm" size={14} color={brand.primary}/>
+        <Icon name="calm" size={14} color={protoColor.calma}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
         <span style={{fontSize:8,color:t3}}>60s · calma</span>
       </motion.button>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRV(true);H("tap");}} aria-label="Medir HRV con sensor Bluetooth" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="predict" size={14} color={brand.secondary}/>
+        <Icon name="predict" size={14} color={protoColor.enfoque}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
         <span style={{fontSize:8,color:t3}}>5 min · BLE</span>
       </motion.button>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="mind" size={14} color={brand.accent}/>
+        <Icon name="mind" size={14} color={protoColor.reset}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>
         <span style={{fontSize:8,color:t3}}>10 min · reset</span>
       </motion.button>
@@ -751,9 +781,19 @@ export default function BioIgnicion(){
       {prediction&&(()=>{const pos=prediction.predictedDelta>0;const tone=pos?brand.primary:brand.secondary;const hasCI=typeof prediction.lower==="number"&&typeof prediction.upper==="number";const fmt=(v)=>(v>=0?"+":"")+v.toFixed(1);const drift=!!prediction.drift;return(
         <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:10,background:pos?withAlpha(brand.primary,isDark?8:4):surface,borderRadius:14,border:`1px solid ${drift?withAlpha(brand.secondary,30):pos?withAlpha(brand.primary,20):bd}`}}>
           <Icon name="predict" size={14} color={tone}/>
-          <div style={{flex:1}}>
-            <div style={{fontSize:10,fontWeight:700,color:tone}}>{prediction.message}</div>
-            <div style={{fontSize:10,color:t3,marginTop:1}}>Confianza: {prediction.confidence}%{hasCI?` · rango ${fmt(prediction.lower)} a ${fmt(prediction.upper)}`:""}</div>
+          <div style={{flex:1,minInlineSize:0}}>
+            <div style={{fontSize:10,fontWeight:700,color:tone,lineHeight:1.3}}>{prediction.message}</div>
+            <div style={{fontSize:10,color:t3,marginTop:2,display:"inline-flex",alignItems:"baseline",gap:5,flexWrap:"wrap"}}>
+              <span>Confianza</span>
+              <span style={{fontFamily:font.mono,fontWeight:700,color:t2,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>{prediction.confidence}%</span>
+              {hasCI&&<>
+                <span aria-hidden="true" style={{opacity:0.55}}>·</span>
+                <span>rango</span>
+                <span style={{fontFamily:font.mono,fontWeight:600,color:t2,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>{fmt(prediction.lower)}</span>
+                <span aria-hidden="true" style={{opacity:0.55}}>a</span>
+                <span style={{fontFamily:font.mono,fontWeight:600,color:t2,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>{fmt(prediction.upper)}</span>
+              </>}
+            </div>
             {drift&&<div style={{fontSize:9,color:brand.secondary,marginTop:2,fontWeight:600}}>Tu respuesta está cambiando — estamos recalibrando.</div>}
           </div>
         </div>);})()}
@@ -761,12 +801,17 @@ export default function BioIgnicion(){
       {(st.progDay||0)<7&&<div style={{marginBottom:10,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
-          <span style={{fontSize:10,fontWeight:800,color:t1}}>Día {Math.min((st.progDay||0)+1,7)}/7</span>
+          <span style={{display:"inline-flex",alignItems:"baseline",gap:3,fontFamily:font.mono,fontSize:11,fontWeight:800,color:t1,fontVariantNumeric:"tabular-nums",letterSpacing:-0.1}}>
+            <span style={{fontSize:9,fontWeight:600,color:t3,letterSpacing:1,textTransform:"uppercase",marginInlineEnd:3}}>Día</span>
+            <span>{Math.min((st.progDay||0)+1,7)}</span>
+            <span style={{color:t3}}>/</span>
+            <span style={{color:t3}}>7</span>
+          </span>
         </div>
         <div style={{display:"flex",gap:3,marginBottom:10}}>
           {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
         <motion.button whileTap={{scale:.97}} onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:surface,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="bolt" size={12} color={ac}/></div>
+          <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="mind" size={12} color={ac}/></div>
           <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
           <Icon name="chevron" size={12} color={ac}/>
         </motion.button>
@@ -778,15 +823,31 @@ export default function BioIgnicion(){
       <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:5,height:5,borderRadius:"50%",background:nSt.color,animation:"shimDot 2s ease infinite"}}/><span style={{fontSize:10,fontWeight:700,color:nSt.color}}>{nSt.label}</span></div>
       <div style={{display:"flex",alignItems:"center",gap:3}}><span style={{fontSize:10,fontWeight:700,color:lv.c}}>{lv.n}</span><div style={{width:36,height:3,borderRadius:2,background:bd,overflow:"hidden"}}><div style={{width:lPct+"%",height:"100%",borderRadius:2,background:lv.c}}/></div></div>
     </div>
+    {(()=>{
+      const engineMatch=aiRec?.primary?.protocol?.id===pr.id;
+      const engineReason=engineMatch?aiRec?.primary?.reason:null;
+      return(
     <div style={{display:"flex",gap:7,marginBottom:16}}>
-      <motion.button whileTap={{scale:.96}} onClick={()=>setSl(true)} style={{flex:1,padding:"10px 12px",borderRadius:15,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",gap:9}}>
+      <motion.button whileTap={{scale:.96}} onClick={()=>setSl(true)} style={{flex:1,padding:"10px 12px",borderRadius:15,border:`1.5px solid ${engineReason?withAlpha(ac,22):bd}`,background:engineReason?withAlpha(ac,isDark?8:4):cd,cursor:"pointer",display:"flex",alignItems:"center",gap:9}}>
         <motion.div layoutId={sl||reducedMotion?undefined:`proto-glyph-${pr.id}`} transition={{type:"spring",stiffness:360,damping:32}} style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:ac}}>{pr.tg}</motion.div>
-        <div style={{flex:1,textAlign:"left"}}><div style={{fontWeight:700,fontSize:11,color:t1}}>{pr.n}</div><div style={{fontSize:10,color:t3}}>{pr.ph.length} fases</div></div>
+        <div style={{flex:1,textAlign:"left",minInlineSize:0}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:5}}>
+            <span style={{fontWeight:700,fontSize:11,color:t1,letterSpacing:-0.05}}>{pr.n}</span>
+            {engineReason&&<span aria-hidden="true" style={{fontSize:8,fontWeight:800,letterSpacing:1.2,color:ac,textTransform:"uppercase"}}>· pick</span>}
+          </div>
+          {engineReason?(
+            <div style={{fontSize:10,fontWeight:500,color:t3,marginBlockStart:2,fontStyle:"italic",letterSpacing:-0.02,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{engineReason}</div>
+          ):(
+            <div style={{fontSize:10,color:t3}}>{pr.ph.length} fases</div>
+          )}
+        </div>
         <Icon name="chevron-down" size={12} color={t3}/>
       </motion.button>
       <motion.button whileTap={{scale:.93}} onClick={()=>setShowProtoDetail(true)} aria-label="Ver detalle del protocolo" title="Ver detalle del protocolo" style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="info" size={16} color={t3} aria-hidden="true"/></motion.button>
       <motion.button whileTap={{scale:.93}} onClick={()=>setShowIntent(true)} aria-label="Definir intención" title="Definir intención" style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="target" size={18} color={t3} aria-hidden="true"/></motion.button>
     </div>
+      );
+    })()}
 
     {/* Adaptive context strip — circadian + readiness + optimal time + prediction */}
     {ts==="idle"&&aiRec&&(()=>{
@@ -823,18 +884,12 @@ export default function BioIgnicion(){
         </div>
       );
     })()}
-    {/* Engine pick: affirm when selected matches, offer swap when diverges */}
+    {/* Engine pick swap — only when engine diverges from current selection (match-reason lives in picker button) */}
     {ts==="idle"&&aiRec?.primary?.protocol&&(()=>{
       const enginePick=aiRec.primary.protocol;
       const reason=aiRec.primary.reason;
       const matches=enginePick.id===pr.id;
-      if(matches){
-        return reason?(
-          <div style={{fontSize:11,fontWeight:500,color:t3,lineHeight:1.5,marginBottom:14,fontStyle:"italic",paddingInline:4,letterSpacing:-0.02}}>
-            {reason}
-          </div>
-        ):null;
-      }
+      if(matches)return null;
       return(
         <motion.button
           initial={{opacity:0,y:4}}
