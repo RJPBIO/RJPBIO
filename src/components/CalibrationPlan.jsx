@@ -25,19 +25,6 @@ import { useReducedMotion } from "../lib/a11y";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
-function CornerBrackets({ color, size = 8 }) {
-  const L = size;
-  const common = { position: "absolute", inlineSize: L, blockSize: L, pointerEvents: "none" };
-  return (
-    <>
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 4, insetBlockStart: 4, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 4, insetBlockStart: 4, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 4, insetBlockEnd: 4, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 4, insetBlockEnd: 4, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-    </>
-  );
-}
-
 export default function CalibrationPlan({
   totalSessions,
   isDark,
@@ -59,17 +46,17 @@ export default function CalibrationPlan({
       <header style={{ marginBlockEnd: space[4], paddingBlockEnd: space[3], borderBlockEnd: `1px dashed ${rule}` }}>
         <p
           style={{
-            fontFamily: MONO,
-            fontSize: 10,
-            letterSpacing: 3,
-            textTransform: "uppercase",
+            fontSize: 12,
+            fontWeight: 600,
             color: ac,
-            fontWeight: 800,
+            letterSpacing: -0.05,
             margin: 0,
-            opacity: 0.9,
           }}
         >
-          ▸ Calibración · Paso {plan.currentStep}/3
+          Calibración · paso{" "}
+          <span style={{ fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>
+            {plan.currentStep}/3
+          </span>
         </p>
         <h2 style={{ ...ty.heading(t1), margin: 0, marginBlockStart: 4 }}>
           Calibra tu motor neural
@@ -104,7 +91,6 @@ export default function CalibrationPlan({
             blockSize: "100%",
             background: `linear-gradient(90deg, ${ac}, ${bioSignal.phosphorCyan})`,
             borderRadius: 999,
-            boxShadow: `0 0 10px ${withAlpha(ac, 50)}`,
           }}
         />
         {[33.33, 66.66].map((pct) => (
@@ -149,14 +135,10 @@ export default function CalibrationPlan({
                 alignItems: "flex-start",
                 gap: space[3],
                 opacity: isDone ? 0.72 : 1,
-                boxShadow: isCurrent
-                  ? `0 0 0 1px ${withAlpha(ac, 22)}, 0 10px 30px -20px ${withAlpha(ac, 80)}`
-                  : "none",
+                boxShadow: isCurrent ? `0 0 0 1px ${withAlpha(ac, 22)}` : "none",
                 overflow: "hidden",
               }}
             >
-              <CornerBrackets color={withAlpha(accent, isCurrent ? 55 : 28)} />
-
               <div
                 aria-hidden
                 style={{
@@ -178,11 +160,13 @@ export default function CalibrationPlan({
                 <span
                   style={{
                     fontFamily: MONO,
-                    fontSize: 8,
-                    letterSpacing: 1.3,
+                    fontSize: 9,
+                    fontWeight: 600,
                     color: accent,
-                    opacity: 0.7,
+                    opacity: 0.75,
                     lineHeight: 1,
+                    letterSpacing: -0.05,
+                    fontVariantNumeric: "tabular-nums",
                   }}
                 >
                   {stepNum}
@@ -197,16 +181,15 @@ export default function CalibrationPlan({
               <div style={{ flex: 1, minInlineSize: 0 }}>
                 <div
                   style={{
-                    fontFamily: MONO,
-                    fontSize: 9,
-                    letterSpacing: 2,
+                    fontSize: 11,
+                    fontWeight: 600,
                     color: accent,
-                    textTransform: "uppercase",
-                    opacity: 0.85,
+                    letterSpacing: -0.05,
+                    opacity: 0.9,
                     marginBlockEnd: 3,
                   }}
                 >
-                  ▸ {statusLabel}
+                  {statusLabel}
                 </div>
                 <p
                   style={{
@@ -241,19 +224,16 @@ export default function CalibrationPlan({
                       color: "#fff",
                       border: "none",
                       borderRadius: radius.md,
-                      paddingBlock: 12,
-                      paddingInline: 18,
-                      fontFamily: MONO,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      letterSpacing: 1.5,
-                      textTransform: "uppercase",
+                      paddingBlock: 14,
+                      paddingInline: 22,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      letterSpacing: -0.1,
                       cursor: "pointer",
-                      minBlockSize: 44,
-                      boxShadow: `0 8px 24px -10px ${withAlpha(ac, 90)}`,
+                      minBlockSize: 48,
                     }}
                   >
-                    ▸ Empezar ahora
+                    Empezar ahora
                   </motion.button>
                 )}
               </div>
@@ -264,16 +244,16 @@ export default function CalibrationPlan({
 
       <p
         style={{
-          fontFamily: MONO,
-          fontSize: 9,
-          letterSpacing: 1.5,
+          fontSize: 11,
+          fontWeight: 500,
           color: t3,
           marginBlockStart: space[4],
           textAlign: "center",
-          textTransform: "uppercase",
+          letterSpacing: -0.05,
+          lineHeight: 1.5,
         }}
       >
-        ▸ Tip · Hazlas en días distintos para que aprenda tu ritmo circadiano
+        Tip · Hazlas en días distintos para que aprenda tu ritmo circadiano
       </p>
     </section>
   );
