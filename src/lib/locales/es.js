@@ -18,6 +18,7 @@ export const es = {
     learn: "Aprende",
     roi: "ROI",
     signin: "Entrar",
+    for: "Por sector",
   },
   session: {
     start: "Iniciar",
@@ -82,7 +83,7 @@ export const es = {
     developers: "Desarrolladores",
     legal: "Legal",
     trust: "Confianza",
-    handcrafted: "Hecho con rigor en Chihuahua, MX",
+    rights: "Todos los derechos reservados",
   },
   docs: {
     title: "Documentación",
@@ -163,6 +164,20 @@ export const es = {
       body: "Cargamos <b>{amount}</b>.",
       viewInvoice: "Ver factura",
       text: "Recibo: {amount} — {url}",
+    },
+    mfaReset: {
+      approvedSubject: "MFA restablecido en tu cuenta",
+      approvedHeading: "Tu MFA fue restablecido",
+      approvedBody: "Tu administrador de <b>{org}</b> aprobó tu solicitud. Ya puedes iniciar sesión sin segundo factor y re-inscribir un dispositivo desde Ajustes → Seguridad → MFA.",
+      approvedCta: "Ir a iniciar sesión",
+      approvedFineprint: "Por seguridad revocamos todas las sesiones previas y dispositivos de confianza. Si no lo solicitaste, contacta a security@bio-ignicion.app.",
+      approvedText: "Tu administrador aprobó el reset de MFA. Revisa Ajustes → Seguridad para re-inscribir un dispositivo.",
+      rejectedSubject: "Solicitud de reset de MFA denegada",
+      rejectedHeading: "Tu solicitud fue denegada",
+      rejectedBody: "Tu administrador de <b>{org}</b> revisó tu solicitud y decidió no aprobarla. Si tienes contexto adicional, escríbele directamente.",
+      rejectedReasonLabel: "Motivo:",
+      rejectedFineprint: "Si crees que es un error, contacta a tu administrador o a security@bio-ignicion.app.",
+      rejectedText: "Tu solicitud de reset de MFA fue denegada por tu administrador.",
     },
   },
   common: {

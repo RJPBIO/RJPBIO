@@ -18,6 +18,7 @@ export const en = {
     learn: "Learn",
     roi: "ROI",
     signin: "Sign in",
+    for: "By sector",
   },
   session: {
     start: "Start",
@@ -82,7 +83,7 @@ export const en = {
     developers: "Developers",
     legal: "Legal",
     trust: "Trust",
-    handcrafted: "Built with rigor in Chihuahua, MX",
+    rights: "All rights reserved",
   },
   docs: {
     title: "Documentation",
@@ -163,6 +164,20 @@ export const en = {
       body: "We charged <b>{amount}</b>.",
       viewInvoice: "View invoice",
       text: "Receipt: {amount} — {url}",
+    },
+    mfaReset: {
+      approvedSubject: "MFA was reset on your account",
+      approvedHeading: "Your MFA was reset",
+      approvedBody: "Your <b>{org}</b> administrator approved your request. You can now sign in without a second factor and re-enroll a device from Settings → Security → MFA.",
+      approvedCta: "Go to sign in",
+      approvedFineprint: "For safety, we revoked all previous sessions and trusted devices. If you didn't request this, contact security@bio-ignicion.app.",
+      approvedText: "Your administrator approved the MFA reset. Head to Settings → Security to re-enroll a device.",
+      rejectedSubject: "MFA reset request denied",
+      rejectedHeading: "Your request was denied",
+      rejectedBody: "Your <b>{org}</b> administrator reviewed your request and chose not to approve it. If you have more context, reach out to them directly.",
+      rejectedReasonLabel: "Reason:",
+      rejectedFineprint: "If you think this is a mistake, contact your administrator or security@bio-ignicion.app.",
+      rejectedText: "Your MFA reset request was denied by your administrator.",
     },
   },
   common: {

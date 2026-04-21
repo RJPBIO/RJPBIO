@@ -4,8 +4,9 @@ import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
 import CommandPaletteTrigger from "./CommandPaletteTrigger";
 import ShellMobileNav from "./ShellMobileNav";
+import NavDropdown from "./NavDropdown";
 import { Container } from "./Container";
-import { cssVar, radius, space, font } from "./tokens";
+import { cssVar, space, font } from "./tokens";
 import { tLocale } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
 import { BioGlyph } from "@/components/BioIgnicionMark";
@@ -18,7 +19,28 @@ async function hasSessionCookie() {
 
 const NAV_ITEMS = [
   { href: "/pricing",   key: "nav.pricing" },
-  { href: "/learn",     key: "nav.learn",     fallback: "Aprende" },
+  {
+    href: "/for", key: "nav.for", fallback: "Por sector",
+    submenu: [
+      { href: "/for-healthcare",    title: "Salud",          titleEn: "Healthcare",     desc: "Patient safety y HIPAA",        descEn: "Patient safety & HIPAA",        icon: "✚" },
+      { href: "/for-manufacturing", title: "Manufactura",    titleEn: "Manufacturing",  desc: "Occupational safety y OSHA",     descEn: "Occupational safety & OSHA",    icon: "⬢" },
+      { href: "/for-finance",       title: "Finanzas",       titleEn: "Finance",        desc: "Trading risk y SOC 2",           descEn: "Trading risk & SOC 2",          icon: "◈" },
+      { href: "/for-logistics",     title: "Logística",      titleEn: "Logistics",      desc: "DOT y fleet safety",             descEn: "DOT & fleet safety",            icon: "▸" },
+      { href: "/for-tech",          title: "Tech · SRE",     titleEn: "Tech · SRE",     desc: "SRE incident risk",              descEn: "SRE incident risk",             icon: "◉" },
+      { href: "/for-aviation",      title: "Aviación",       titleEn: "Aviation",       desc: "Flight safety y FRMS",           descEn: "Flight safety & FRMS",          icon: "◬" },
+      { href: "/for-energy",        title: "Energía",        titleEn: "Energy",         desc: "Process safety y API 755",       descEn: "Process safety & API 755",      icon: "⌁" },
+      { href: "/for-public-sector", title: "Sector público", titleEn: "Public sector",  desc: "NIST y mission-critical",        descEn: "NIST & mission-critical",       icon: "★" },
+    ],
+  },
+  {
+    href: "/learn", key: "nav.learn", fallback: "Aprende",
+    submenu: [
+      { href: "/learn",                       title: "Hub",                  desc: "Panorama de aprendizaje",        descEn: "Learning overview",            icon: "✦" },
+      { href: "/learn/cronotipo",             title: "Cronotipo",            desc: "Descubre tu ventana ignición",    descEn: "Find your ignition window",    icon: "◐" },
+      { href: "/learn/hrv-basics",            title: "HRV básico",           desc: "Coherencia cardíaca en 3 min",    descEn: "Cardiac coherence in 3 min",   icon: "♡" },
+      { href: "/learn/respiracion-resonante", title: "Respiración resonante", desc: "6 rpm, el patrón madre",         descEn: "6 bpm, the master pattern",    icon: "∿" },
+    ],
+  },
   { href: "/docs",      key: "nav.docs" },
   { href: "/changelog", key: "nav.changelog" },
   { href: "/trust",     key: "nav.trust" },
@@ -28,6 +50,7 @@ const NAV_ITEMS = [
 const FOOTER_LINKS = {
   product: [
     { href: "/pricing",        labelKey: "nav.pricing",    fallback: "Precios" },
+    { href: "/for",            labelKey: "nav.for",        fallback: "Por sector" },
     { href: "/demo",           labelKey: "nav.demo",       fallback: "Demo" },
     { href: "/learn",          labelKey: "nav.learn",      fallback: "Aprende" },
     { href: "/evidencia",      labelKey: null,             fallback: "Evidencia" },
@@ -70,25 +93,32 @@ export async function PublicShell({ children, activePath }) {
   return (
     <>
       <AmbientBackdrop />
-      <header
-        role="banner"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 60,
-          backdropFilter: "saturate(180%) blur(12px)",
-          background: "color-mix(in srgb, var(--bi-bg) 82%, transparent)",
-          borderBottom: `1px solid ${cssVar.border}`,
-        }}
-      >
-        <Container size="xl" style={{ paddingBlock: space[3], display: "flex", alignItems: "center", gap: space[4], flexWrap: "wrap" }}>
-          <Link href="/" className="bi-shell-brand" style={{ display: "inline-flex", alignItems: "center", gap: space[2], textDecoration: "none", color: cssVar.text }} aria-label={T("shell.brandHome", "BIO-IGNICIÓN")}>
-            <BioGlyph size={24} />
-            <span className="bi-shell-wordmark" style={{ fontWeight: font.weight.black, letterSpacing: "0.18em", fontSize: font.size.md }}>BIO-IGNICIÓN</span>
+      <header role="banner" className="bi-shell-header">
+        <span aria-hidden className="bi-shell-header-aura" />
+        <span aria-hidden className="bi-shell-header-aura bi-shell-header-aura-end" />
+        <Container size="xl" className="bi-shell-header-row">
+          <Link href="/" className="bi-shell-brand" aria-label={T("shell.brandHome", "BIO-IGNICIÓN")}>
+            <span aria-hidden className="bi-shell-brand-glyph"><BioGlyph size={42} /></span>
+            <span aria-hidden className="bi-shell-wordmark">
+              <span className="bi-wm-bio">BIO</span>
+              <span className="bi-wm-dash">—</span>
+              <span className="bi-wm-main">IGNICIÓN</span>
+            </span>
           </Link>
-          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav bi-shell-nav-desktop" style={{ display: "flex", gap: space[5], marginInlineStart: "auto", flexWrap: "wrap", rowGap: space[2] }}>
+
+          <nav aria-label={T("shell.nav", "Principal")} className="bi-shell-nav bi-shell-nav-desktop">
             {NAV_ITEMS.map((n) => {
-              const active = activePath === n.href;
+              const active = activePath === n.href || (n.submenu && activePath?.startsWith(n.href + "/"));
+              const label = T(n.key, n.fallback);
+              if (n.submenu) {
+                const items = n.submenu.map((s) => ({
+                  href: s.href,
+                  title: locale === "en" ? (s.titleEn || s.title) : s.title,
+                  desc: locale === "en" ? (s.descEn || s.desc) : s.desc,
+                  icon: s.icon,
+                }));
+                return <NavDropdown key={n.href} label={label} href={n.href} active={active} items={items} />;
+              }
               return (
                 <Link
                   key={n.href}
@@ -97,37 +127,31 @@ export async function PublicShell({ children, activePath }) {
                   className="bi-shell-navlink"
                   data-active={active ? "true" : undefined}
                 >
-                  {T(n.key, n.fallback)}
+                  <span className="bi-shell-navlink-dot" aria-hidden />
+                  <span className="bi-shell-navlink-label">{label}</span>
                 </Link>
               );
             })}
           </nav>
-          <ShellMobileNav
-            items={resolvedNav}
-            activePath={activePath}
-            triggerLabel={T("shell.menu", "Menú")}
-            closeLabel={T("shell.close", "Cerrar")}
-          />
-          <CommandPaletteTrigger />
-          <LocaleSelect variant="compact" />
-          <ThemeToggle />
-          <Link
-            href={ctaHref}
-            className="bi-nav-cta"
-            style={{
-              padding: `${space[2]}px ${space[5]}px`,
-              borderRadius: radius.full,
-              textDecoration: "none",
-              fontWeight: font.weight.bold,
-              fontSize: font.size.md,
-              minBlockSize: 40,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: space[2],
-            }}
-          >
-            {ctaLabel}
-          </Link>
+
+          <div className="bi-shell-actions">
+            <ShellMobileNav
+              items={resolvedNav}
+              activePath={activePath}
+              triggerLabel={T("shell.menu", "Menú")}
+              closeLabel={T("shell.close", "Cerrar")}
+            />
+            <CommandPaletteTrigger searchLabel={T("shell.search", locale === "en" ? "Search" : "Buscar")} />
+            <span aria-hidden className="bi-shell-divider" />
+            <LocaleSelect variant="compact" />
+            <ThemeToggle />
+            <Link href={ctaHref} className="bi-nav-cta" aria-label={ctaLabel}>
+              <span className="bi-nav-cta-label">{ctaLabel}</span>
+              <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" className="bi-nav-cta-arrow">
+                <path d="M1.75 6h7.8M6.9 2.75L9.75 6 6.9 9.25" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
+            </Link>
+          </div>
         </Container>
       </header>
 
