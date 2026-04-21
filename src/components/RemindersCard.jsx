@@ -121,10 +121,10 @@ export default function RemindersCard({ isDark = true, ac = "#10B981" }) {
     >
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: space[3] }}>
         <div style={{ minInlineSize: 0, flex: 1 }}>
-          <h3 style={{ fontSize: font.size.md, fontWeight: font.weight.bold, color: t1, margin: 0 }}>
+          <h3 style={{ fontSize: font.size.md, fontWeight: 700, color: t1, margin: 0, letterSpacing: -0.1 }}>
             Recordatorio diario
           </h3>
-          <p style={{ fontSize: font.size.sm, color: t3, margin: 0, marginBlockStart: 2 }}>
+          <p style={{ fontSize: font.size.sm, color: t3, margin: 0, marginBlockStart: 2, letterSpacing: -0.05 }}>
             Un empujón suave a la misma hora para no romper la racha.
           </p>
         </div>
@@ -161,7 +161,6 @@ export default function RemindersCard({ isDark = true, ac = "#10B981" }) {
               borderRadius: 999,
               position: "relative",
               transition: "background 0.2s ease",
-              boxShadow: enabled ? `0 0 0 3px ${withAlpha(ac, 15)}` : "none",
             }}
           >
             <span
