@@ -1,5 +1,28 @@
 export const CHANGELOG_ENTRIES = [
   {
+    version: "1.4.0",
+    date: "2026-04-20",
+    tag: "security",
+    title: "MFA endurecido · phone OTP · trusted devices",
+    notes: [
+      "Sign-in por SMS (E.164, Twilio o consola dev) como identidad alterna al correo.",
+      "Trusted devices: cookie sha256-hasheada por navegador, salta MFA 30 días tras challenge exitoso.",
+      "Backup codes scrypt-hashed de un solo uso + lockout progresivo (mfaFailCount / mfaLockedUntil).",
+      "Self-serve MFA reset con resolver en /admin/security (aprobar/denegar con motivo).",
+    ],
+  },
+  {
+    version: "1.3.0",
+    date: "2026-04-19",
+    tag: "feature",
+    title: "Hub B2B · ocho sectores con lenguaje regulatorio propio",
+    notes: [
+      "/for como índice navegable con 8 verticales: Salud, Manufactura, Finanzas, Logística, Tech · SRE, Aviación, Energía, Sector público.",
+      "Cada página alinea el discurso a su régimen (HIPAA · OSHA · SOC 2 · DOT/FMCSA · FAA/FRMS · API 755/NFPA · NIST/FedRAMP-ready) sin inventar certificaciones.",
+      "Rail de compliance transversal (k-anonymity ≥5, SOC 2, DPA, residencia) y emails sectoriales (healthcare@, manufacturing@, ...).",
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-04-17",
     tag: "feature",
