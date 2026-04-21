@@ -167,7 +167,6 @@ export default function OnboardingTour({ show, isDark = false, onClose }) {
                     alignItems: "center",
                     justifyContent: "center",
                     marginBlockEnd: space[4],
-                    boxShadow: `0 6px 20px ${brand.primary}35`,
                   }}
                 >
                   <Icon name={current.icon} size={24} color="#fff" />
@@ -212,23 +211,25 @@ export default function OnboardingTour({ show, isDark = false, onClose }) {
                 style={{
                   flex: 1,
                   maxInlineSize: 220,
-                  paddingBlock: space[3],
-                  paddingInline: space[5],
+                  minBlockSize: 48,
+                  paddingBlock: 14,
+                  paddingInline: 22,
                   borderRadius: radius.full,
                   background: `linear-gradient(135deg, ${brand.primary}, #0D9488)`,
                   border: "none",
                   color: "#fff",
-                  ...ty.button,
-                  fontSize: font.size.base,
-                  boxShadow: `0 4px 18px ${brand.primary}40`,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  letterSpacing: -0.1,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: space[1.5],
+                  cursor: "pointer",
                 }}
               >
                 {current.action}
-                <Icon name="chevron" size={12} color="#fff" />
+                <Icon name="chevron" size={14} color="#fff" />
               </motion.button>
 
               <div style={{ inlineSize: 44, blockSize: 44, flexShrink: 0 }} aria-hidden="true" />
