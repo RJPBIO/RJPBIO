@@ -201,10 +201,10 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
             disabled={!bleAvailable}
             aria-label="Iniciar calibración de resonancia"
             style={{
-              inlineSize: "100%", paddingBlock: 14,
+              inlineSize: "100%", minBlockSize: 48, paddingBlock: 14,
               background: bleAvailable ? brand.primary : bd,
               color: "#fff", border: "none", borderRadius: 14,
-              fontSize: 13, fontWeight: font.weight.black, letterSpacing: 1, textTransform: "uppercase",
+              fontSize: 15, fontWeight: 700, letterSpacing: -0.1,
               cursor: bleAvailable ? "pointer" : "not-allowed",
               opacity: bleAvailable ? 1 : 0.55,
             }}
@@ -222,7 +222,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
 
       {phase === "running" && currentRate && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 24 }}>
-          <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase" }}>
+          <p style={{ color: t3, fontSize: 12, margin: 0 }}>
             Ensayo {currentIdx + 1} de {RESONANCE_RATES.length} · {currentRate.label}
           </p>
 
@@ -266,10 +266,20 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
       {phase === "done" && result && (
         <section aria-label="Resultado" style={{ maxInlineSize: 500, marginInline: "auto" }}>
           <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 20, marginBlockEnd: 16, textAlign: "center" }}>
-            <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 8 }}>
+            <p style={{ color: t3, fontSize: 12, marginBlockEnd: 8 }}>
               Tu frecuencia de resonancia
             </p>
-            <div style={{ color: brand.accent, fontSize: 56, fontWeight: font.weight.black, lineHeight: 1 }}>
+            <div
+              style={{
+                color: brand.accent,
+                fontSize: 56,
+                fontWeight: 600,
+                lineHeight: 1,
+                fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+                letterSpacing: -1.5,
+                textShadow: `0 0 24px ${withAlpha(brand.accent, 35)}`,
+              }}
+            >
               {result.pick ? result.pick.bpm : "—"}
             </div>
             <p style={{ color: t2, fontSize: 12, marginBlockStart: 6 }}>respiraciones por minuto</p>
@@ -281,7 +291,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
           </div>
 
           <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 16, marginBlockEnd: 16 }}>
-            <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 12 }}>
+            <p style={{ color: t3, fontSize: 12, fontWeight: 600, marginBlockEnd: 12 }}>
               Ranking por amplitud
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -302,10 +312,10 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
             disabled={!result.pick}
             aria-label="Guardar frecuencia de resonancia"
             style={{
-              inlineSize: "100%", paddingBlock: 14,
+              inlineSize: "100%", minBlockSize: 48, paddingBlock: 14,
               background: result.pick ? brand.primary : bd,
               color: "#fff", border: "none", borderRadius: 14,
-              fontSize: 13, fontWeight: font.weight.black, letterSpacing: 1, textTransform: "uppercase",
+              fontSize: 15, fontWeight: 700, letterSpacing: -0.1,
               cursor: result.pick ? "pointer" : "not-allowed",
               opacity: result.pick ? 1 : 0.55,
             }}

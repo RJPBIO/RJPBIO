@@ -339,11 +339,9 @@ export default function NeuralCalibration({ onComplete, isDark }) {
               </h2>
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   color: ac,
-                  fontWeight: 700,
-                  letterSpacing: 3,
-                  textTransform: "uppercase",
+                  fontWeight: 600,
                   marginBottom: 16,
                 }}
               >
@@ -405,20 +403,19 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                 }}
                 style={{
                   width: "100%",
+                  minHeight: 48,
                   padding: "16px",
                   borderRadius: 50,
-                  background: `linear-gradient(135deg, ${ac}, ${brand.secondary})`,
+                  background: ac,
                   border: "none",
                   color: "#fff",
-                  fontSize: 13,
-                  fontWeight: 800,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  letterSpacing: -0.1,
                   cursor: "pointer",
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                  boxShadow: `0 4px 20px ${ac}30`,
                 }}
               >
-                INICIAR CALIBRACIÓN
+                Iniciar calibración
               </motion.button>
             </>
           )}
@@ -460,17 +457,17 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   </span>
                 )}
                 {rtPhase === "ready" && (
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", opacity: 0.8 }}>
-                    NO TOQUES AÚN
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", opacity: 0.85 }}>
+                    No toques aún
                   </span>
                 )}
                 {rtPhase === "go" && (
                   <motion.span
                     initial={{ scale: 0.5 }}
                     animate={{ scale: 1 }}
-                    style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}
+                    style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}
                   >
-                    ¡TOCA!
+                    ¡Toca!
                   </motion.span>
                 )}
                 {rtPhase === "done" && (
@@ -550,8 +547,8 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   {bhTime}s
                 </div>
                 {bhPhase === "holding" && (
-                  <div style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, marginTop: 4 }}>
-                    SOSTENIENDO
+                  <div style={{ fontSize: 12, color: "#6366F1", fontWeight: 600, marginTop: 4 }}>
+                    Sosteniendo
                   </div>
                 )}
               </motion.div>
@@ -561,18 +558,18 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   whileTap={{ scale: 0.96 }}
                   onClick={startBreathHold}
                   style={{
+                    minHeight: 48,
                     padding: "14px 32px",
                     borderRadius: 50,
                     background: "#6366F1",
                     border: "none",
                     color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 800,
+                    fontSize: 15,
+                    fontWeight: 700,
                     cursor: "pointer",
-                    letterSpacing: 1,
                   }}
                 >
-                  INHALA Y TOCA PARA EMPEZAR
+                  Inhala y toca para empezar
                 </motion.button>
               )}
               {bhPhase === "holding" && (
@@ -580,18 +577,18 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   whileTap={{ scale: 0.96 }}
                   onClick={stopBreathHold}
                   style={{
+                    minHeight: 48,
                     padding: "14px 32px",
                     borderRadius: 50,
                     background: ac,
                     border: "none",
                     color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 800,
+                    fontSize: 15,
+                    fontWeight: 700,
                     cursor: "pointer",
-                    letterSpacing: 1,
                   }}
                 >
-                  EXHALA Y TOCA
+                  Exhala y toca
                 </motion.button>
               )}
               {bhPhase === "done" && (
@@ -625,19 +622,19 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   whileTap={{ scale: 0.96 }}
                   onClick={startFocusTest}
                   style={{
+                    minHeight: 48,
                     padding: "14px 32px",
                     borderRadius: 50,
                     background: "#D97706",
                     border: "none",
                     color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 800,
+                    fontSize: 15,
+                    fontWeight: 700,
                     cursor: "pointer",
-                    letterSpacing: 1,
                     marginBottom: 20,
                   }}
                 >
-                  INICIAR TEST DE FOCO
+                  Iniciar test de foco
                 </motion.button>
               )}
 
@@ -784,18 +781,19 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                 onClick={() => setStep(5)}
                 style={{
                   width: "100%",
+                  minHeight: 48,
                   padding: "14px",
                   borderRadius: 50,
                   background: ac,
                   border: "none",
                   color: "#fff",
-                  fontSize: 12,
-                  fontWeight: 800,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  letterSpacing: -0.1,
                   cursor: "pointer",
-                  letterSpacing: 1,
                 }}
               >
-                VER RESULTADOS
+                Ver resultados
               </motion.button>
             </>
           )}
@@ -834,14 +832,13 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   </h3>
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: 13,
                       color: ac,
-                      fontWeight: 700,
-                      letterSpacing: 2,
+                      fontWeight: 600,
                       marginBottom: 20,
                     }}
                   >
-                    PERFIL: {baseline.profileLabel.toUpperCase()}
+                    Perfil · {baseline.profileLabel}
                   </div>
 
                   {/* Score ring */}
@@ -891,11 +888,19 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                         justifyContent: "center",
                       }}
                     >
-                      <span style={{ fontSize: 28, fontWeight: 800, color: t1 }}>
+                      <span
+                        style={{
+                          fontSize: 30,
+                          fontWeight: 600,
+                          color: t1,
+                          fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+                          letterSpacing: -1,
+                        }}
+                      >
                         {baseline.composite}
                       </span>
-                      <span style={{ fontSize: 9, color: t3, fontWeight: 700 }}>
-                        BASELINE
+                      <span style={{ fontSize: 10, color: t3, marginTop: 2 }}>
+                        baseline
                       </span>
                     </div>
                   </div>
@@ -1015,20 +1020,19 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                     onClick={handleComplete}
                     style={{
                       width: "100%",
+                      minHeight: 48,
                       padding: "16px",
                       borderRadius: 50,
-                      background: `linear-gradient(135deg, ${ac}, ${brand.secondary})`,
+                      background: ac,
                       border: "none",
                       color: "#fff",
-                      fontSize: 13,
-                      fontWeight: 800,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      letterSpacing: -0.1,
                       cursor: "pointer",
-                      letterSpacing: 2,
-                      textTransform: "uppercase",
-                      boxShadow: `0 4px 20px ${ac}30`,
                     }}
                   >
-                    COMENZAR MI PRIMERA IGNICIÓN
+                    Comenzar mi primera ignición
                   </motion.button>
                 </>
               );
