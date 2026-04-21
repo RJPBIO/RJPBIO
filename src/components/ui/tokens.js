@@ -1,14 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════
    UI primitives · token adaptor
    ───────────────────────────────────────────────────────────────
-   Server components no pueden leer prefers-color-scheme en SSR.
-   Resolvemos colores vía variables CSS declaradas en globals.css
-   (bloque .bi-surface*). Esto permite un solo render que responde
-   a prefers-color-scheme y a la clase .theme-dark/.theme-light que
-   ponga el ThemeToggle.
+   Server components no pueden resolver el tema en SSR. Exponemos
+   variables CSS declaradas en globals.css; el layout aplica
+   theme-light a todo el marketing (identidad única, #059669) y
+   opcionalmente theme-dim dentro de /app. Un solo render que
+   responde vía custom properties.
 
-   Los hex que quedan aquí son solo brand + bio-signal — colores
-   "semánticos" que no cambian con el tema.
+   Los hex aquí son solo brand + bio-signal — colores "semánticos"
+   que no cambian con el tema.
    ═══════════════════════════════════════════════════════════════ */
 import { brand, bioSignal, radius, space, font, shadow } from "@/lib/tokens";
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
 import CommandPaletteTrigger from "./CommandPaletteTrigger";
 import ShellMobileNav from "./ShellMobileNav";
@@ -144,7 +143,6 @@ export async function PublicShell({ children, activePath }) {
             <CommandPaletteTrigger searchLabel={T("shell.search", locale === "en" ? "Search" : "Buscar")} />
             <span aria-hidden className="bi-shell-divider" />
             <LocaleSelect variant="compact" />
-            <ThemeToggle />
             <Link href={ctaHref} className="bi-nav-cta" aria-label={ctaLabel}>
               <span className="bi-nav-cta-label">{ctaLabel}</span>
               <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" className="bi-nav-cta-arrow">

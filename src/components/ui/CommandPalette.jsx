@@ -13,9 +13,9 @@ const THEME_KEY = "bio-theme";
 function applyTheme(mode) {
   if (typeof document === "undefined") return;
   const html = document.documentElement;
-  html.classList.remove("theme-light", "theme-dark");
+  html.classList.remove("theme-light", "theme-dark", "theme-dim");
   if (mode === "light") html.classList.add("theme-light");
-  else if (mode === "dark") html.classList.add("theme-dark");
+  else if (mode === "dim") html.classList.add("theme-dim");
   try { localStorage.setItem(THEME_KEY, mode); } catch {}
 }
 
@@ -290,7 +290,7 @@ function buildItems({ t, router, setLocale, close }) {
     { id: "act-shortcuts", group: act, icon: "?", label: "Atajos de teclado",    action: () => { try { window.dispatchEvent(new Event("bio-help:open")); } catch {} }, keywords: "keyboard shortcuts ayuda help hotkeys" },
 
     { id: "pref-theme-light", group: pref, icon: "☀", label: t("cmd.themeLight"), action: () => applyTheme("light"), keywords: "light claro" },
-    { id: "pref-theme-dark",  group: pref, icon: "☾", label: t("cmd.themeDark"),  action: () => applyTheme("dark"),  keywords: "dark oscuro" },
+    { id: "pref-theme-dim",   group: pref, icon: "☾", label: t("cmd.themeDim"),   action: () => applyTheme("dim"),   keywords: "dim oscuro dark" },
     { id: "pref-theme-auto",  group: pref, icon: "◐", label: t("cmd.themeAuto"),  action: () => applyTheme("system"), keywords: "auto system" },
     { id: "pref-lang-es",     group: pref, icon: "ES", label: t("cmd.langEs"), action: () => setLocale("es"), keywords: "espanol spanish" },
     { id: "pref-lang-en",     group: pref, icon: "EN", label: t("cmd.langEn"), action: () => setLocale("en"), keywords: "english ingles" },

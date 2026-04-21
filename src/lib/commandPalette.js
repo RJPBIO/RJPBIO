@@ -21,7 +21,7 @@ function protoIcon(intent) {
 }
 
 function themeLabel(mode) {
-  if (mode === "dark") return "oscuro";
+  if (mode === "dark") return "dim";
   if (mode === "light") return "claro";
   return "automático";
 }

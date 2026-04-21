@@ -158,19 +158,23 @@ export const alpha = {
   100: "FF",
 };
 
-// ─── Dark Theme ──────────────────────────────────────────
+// ─── Dim Theme (PWA only — emerald-undertone graphite) ────
+// Retains the legacy `dark` export name for back-compat with
+// /app/page.jsx call sites, but the palette is the "dim" family:
+// warm graphite with a trace of emerald so the brand color
+// (#059669) still reads as the star even in low-light mode.
 export const dark = {
-  bg:      "#0B0E14",
-  card:    "#141820",
-  surface: "#1A1E28",
-  border:  "#1E2330",
+  bg:      "#0A130E",
+  card:    "#0F1B14",
+  surface: "#13231B",
+  border:  "#1A2922",
   text: {
-    primary:   "#E8ECF4",
-    secondary: "#8B95A8",
-    muted:     "#4B5568",
+    primary:   "#E6F1EA",
+    secondary: "#A7F3D0",
+    muted:     "#8FA598",
   },
-  overlay: "rgba(11, 14, 20, 0.96)",
-  glass:   "rgba(20, 24, 32, 0.92)",
+  overlay: "rgba(10, 19, 14, 0.96)",
+  glass:   "rgba(15, 27, 20, 0.92)",
 };
 
 // ─── Light Theme ─────────────────────────────────────────

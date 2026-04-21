@@ -119,7 +119,7 @@ describe("buildCommands", () => {
     const dark = buildCommands(ctx({ state: { ...baseState, themeMode: "dark" } }));
     const light = buildCommands(ctx({ state: { ...baseState, themeMode: "light" } }));
     expect(auto.find((c) => c.id === "act-theme").label).toMatch(/autom/);
-    expect(dark.find((c) => c.id === "act-theme").label).toMatch(/oscuro/);
+    expect(dark.find((c) => c.id === "act-theme").label).toMatch(/dim/);
     expect(light.find((c) => c.id === "act-theme").label).toMatch(/claro/);
   });
 

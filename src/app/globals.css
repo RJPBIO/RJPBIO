@@ -32,25 +32,12 @@
   --bi-focus-ring: var(--focus-ring);
 }
 
-/* System dark */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bi-bg: #0B0E14;
-    --bi-surface: #141820;
-    --bi-surface-2: rgba(16, 185, 129, 0.08);
-    --bi-border: #1E2330;
-    --bi-border-strong: #2A3040;
-    --bi-text: #E8ECF4;
-    --bi-text-dim: #A7F3D0;
-    --bi-text-muted: #8B95A8;
-    --bi-accent: #10B981;
-    --bi-accent-soft: rgba(16, 185, 129, 0.12);
-    --bi-accent-ink: #052E16;
-    --bi-focus-ring: var(--focus-ring-inverse);
-  }
-}
+/* Public/marketing pages = light-only (single brand identity). No
+   @media (prefers-color-scheme: dark) here so OS preference never
+   forces dark on public pages. The authed PWA opts in via explicit
+   html.theme-dim class, applied by the init script below and by
+   AuthShell for /app routes only. */
 
-/* Explicit overrides from ThemeToggle */
 html.theme-light {
   --bi-bg: #F1F4F9;
   --bi-surface: #FFFFFF;
@@ -66,18 +53,22 @@ html.theme-light {
   --bi-focus-ring: var(--focus-ring);
 }
 
-html.theme-dark {
-  --bi-bg: #0B0E14;
-  --bi-surface: #141820;
-  --bi-surface-2: rgba(16, 185, 129, 0.08);
-  --bi-border: #1E2330;
-  --bi-border-strong: #2A3040;
-  --bi-text: #E8ECF4;
+/* "Dim" — brand night palette for the PWA. Same emerald accent family
+   as light, but background tuned with a subtle emerald undertone so the
+   night mode still feels BIO-IGNICIÓN, not generic dark. Accent lifted
+   to #10B981 for WCAG AA contrast on dim bg. */
+html.theme-dark, html.theme-dim {
+  --bi-bg: #0A130E;
+  --bi-surface: #0F1B14;
+  --bi-surface-2: rgba(5, 150, 105, 0.06);
+  --bi-border: #1A2922;
+  --bi-border-strong: #26382E;
+  --bi-text: #E6F1EA;
   --bi-text-dim: #A7F3D0;
-  --bi-text-muted: #8B95A8;
+  --bi-text-muted: #8FA598;
   --bi-accent: #10B981;
-  --bi-accent-soft: rgba(16, 185, 129, 0.12);
-  --bi-accent-ink: #052E16;
+  --bi-accent-soft: rgba(16, 185, 129, 0.10);
+  --bi-accent-ink: #041B11;
   --bi-focus-ring: var(--focus-ring-inverse);
 }
 
@@ -126,9 +117,7 @@ body {
   border-radius: 6px;
   transition: box-shadow 0.15s ease;
 }
-@media (prefers-color-scheme: dark) {
-  :focus-visible { box-shadow: var(--focus-ring-inverse); }
-}
+html.theme-dim :focus-visible { box-shadow: var(--focus-ring-inverse); }
 
 button, [role="button"], a[href], input, select, textarea, [tabindex]:not([tabindex="-1"]) {
   /* ensure interactive elements receive focus ring */
@@ -3736,11 +3725,9 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visibl
 .theme-light .bi-ambient-vignette { display: none; }
 .theme-light .bi-ambient-scanline { opacity: 0.5; }
 .theme-light .bi-ambient-lattice { opacity: 0.08; }
-@media (prefers-color-scheme: light) {
-  html:not(.theme-dark) .bi-ambient-vignette { display: none; }
-  html:not(.theme-dark) .bi-ambient-scanline { opacity: 0.5; }
-  html:not(.theme-dark) .bi-ambient-lattice { opacity: 0.08; }
-}
+html:not(.theme-dim) .bi-ambient-vignette { display: none; }
+html:not(.theme-dim) .bi-ambient-scanline { opacity: 0.5; }
+html:not(.theme-dim) .bi-ambient-lattice { opacity: 0.08; }
 @media (prefers-reduced-motion: reduce) {
   .bi-ambient-mesh,
   .bi-ambient-orb-a,
@@ -4191,10 +4178,8 @@ a.bi-data-card:hover {
   background: color-mix(in srgb, #22D3EE 8%, var(--bi-surface)) !important;
   box-shadow: 0 6px 18px -10px color-mix(in srgb, #22D3EE 55%, transparent) !important;
 }
-@media (prefers-color-scheme: dark) {
-  .bi-pricing-card .bi-refined {
-    border-color: color-mix(in srgb, #22D3EE 22%, var(--bi-border)) !important;
-  }
+html.theme-dim .bi-pricing-card .bi-refined {
+  border-color: color-mix(in srgb, #22D3EE 22%, var(--bi-border)) !important;
 }
 
 /* ═══ PRICING · legal disclaimer footer ═══

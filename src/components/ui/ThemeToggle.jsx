@@ -2,21 +2,22 @@
 import { useEffect, useState } from "react";
 
 /**
- * Ciclo: system → light → dark → system. Persiste en localStorage bajo
- * `bio-theme`. Aplica clase `theme-light` o `theme-dark` en <html>.
- * Sin FOUC: lee la preferencia en el componente script inline del layout.
+ * Ciclo (solo /app): system → light → dim → system. Persiste en localStorage
+ * bajo `bio-theme`. Aplica `theme-light` o `theme-dim` en <html>. Sin FOUC:
+ * el script inline del layout lo lee antes del primer paint. El marketing
+ * site no monta este componente (identidad única: luz + #059669).
  */
 const KEY = "bio-theme";
-const ORDER = ["system", "light", "dark"];
-const LABELS = { system: "Auto", light: "Claro", dark: "Oscuro" };
+const ORDER = ["system", "light", "dim"];
+const LABELS = { system: "Auto", light: "Claro", dim: "Dim" };
 
 function apply(mode) {
   if (typeof document === "undefined") return;
   const html = document.documentElement;
-  html.classList.remove("theme-light", "theme-dark");
+  html.classList.remove("theme-light", "theme-dark", "theme-dim");
   if (mode === "light") html.classList.add("theme-light");
-  else if (mode === "dark") html.classList.add("theme-dark");
-  // system: sin clase → CSS usa prefers-color-scheme.
+  else if (mode === "dim") html.classList.add("theme-dim");
+  // system: sin clase → script del layout aplica por prefers-color-scheme.
 }
 
 export default function ThemeToggle() {
@@ -51,7 +52,7 @@ export default function ThemeToggle() {
         data-mode={mode}
       >
         <span aria-hidden className="bi-shell-theme-icon">
-          {mode === "light" ? "☀" : mode === "dark" ? "☾" : "◐"}
+          {mode === "light" ? "☀" : mode === "dim" ? "☾" : "◐"}
         </span>
         <span className="bi-shell-theme-label">{LABELS[mode]}</span>
       </button>

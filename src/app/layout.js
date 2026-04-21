@@ -123,7 +123,7 @@ export default async function RootLayout({ children }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#059669" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
-        <meta name="color-scheme" content="light dark" />
+        <meta name="color-scheme" content="light" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {JSON_LD.map((ld, i) => (
           <script
@@ -137,7 +137,7 @@ export default async function RootLayout({ children }) {
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: `try{var d=document.documentElement;var m=localStorage.getItem('bio-theme');if(m==='light')d.classList.add('theme-light');else if(m==='dark')d.classList.add('theme-dark');var l=localStorage.getItem('bio-locale');if(l){d.lang=l;d.dir=['ar','he','fa','ur'].indexOf(l)>-1?'rtl':'ltr';if(!document.cookie.match(/(?:^|; )bio-locale=/))document.cookie='bio-locale='+l+'; Path=/; Max-Age=31536000; SameSite=Lax';}}catch(e){}`,
+            __html: `try{var d=document.documentElement;var p=location.pathname||'/';var isApp=p==='/app'||p.indexOf('/app/')===0||p==='/account'||p.indexOf('/account/')===0;if(isApp){var m=localStorage.getItem('bio-theme');if(m==='dim'||m==='dark')d.classList.add('theme-dim');else if(m==='light')d.classList.add('theme-light');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)d.classList.add('theme-dim');}else{d.classList.add('theme-light');}var l=localStorage.getItem('bio-locale');if(l){d.lang=l;d.dir=['ar','he','fa','ur'].indexOf(l)>-1?'rtl':'ltr';if(!document.cookie.match(/(?:^|; )bio-locale=/))document.cookie='bio-locale='+l+'; Path=/; Max-Age=31536000; SameSite=Lax';}}catch(e){}`,
           }}
         />
       </head>

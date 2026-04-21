@@ -1,5 +1,4 @@
 import Link from "next/link";
-import ThemeToggle from "./ThemeToggle";
 import LocaleSelect from "./LocaleSelect";
 import { cssVar, radius, space, font, bioSignal } from "./tokens";
 import { BioGlyph } from "@/components/BioIgnicionMark";
@@ -73,7 +72,6 @@ export function AuthShell({ children, title, subtitle, kicker, footer, size = "m
           </Link>
           <div style={{ display: "inline-flex", gap: space[2], alignItems: "center" }}>
             <LocaleSelect variant="compact" />
-            <ThemeToggle />
           </div>
         </header>
 
