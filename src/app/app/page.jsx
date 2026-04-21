@@ -184,7 +184,7 @@ export default function BioIgnicion(){
     if(!l._loaded){setMt(true);return;}
     setSt_(l);
     setMt(true);
-    if(l.totalSessions===0){setOnboard(true);}
+    if(!l.onboardingComplete){setOnboard(true);}
     else if(!l.onboardingTourComplete){setShowTour(true);}
     // Cargamos dominios NOM-035 antes del motor para que el sesgo psicosocial
     // participe en la primera recomendación.
@@ -661,7 +661,7 @@ export default function BioIgnicion(){
   >
 
   {/* ═══ TAB: IGNICIÓN ═══ */}
-  {tab==="ignicion"&&postStep==="none"&&countdown===0&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
+  {tab==="ignicion"&&postStep==="none"&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
     {/* Brand kicker — wordmark micro-strip en momento-cero (solo idle) */}
     {ts==="idle"&&(
       <div aria-hidden="true" style={{display:"flex",justifyContent:"center",marginBlockEnd:space[3]}}>
