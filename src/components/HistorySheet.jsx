@@ -3,13 +3,13 @@
    HISTORY SHEET — dialog with grouped session log
    ═══════════════════════════════════════════════════════════════ */
 
-import { useId, useState, useEffect } from "react";
+import { useId, useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import BioSparkline from "./BioSparkline";
 import IllustratedEmpty from "./IllustratedEmpty";
 import { MOODS } from "../lib/constants";
-import { resolveTheme, withAlpha, ty, font, space, radius, z, bioSignal } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 
@@ -33,14 +33,13 @@ function bioQColor(q) {
   return semantic.danger;
 }
 
-// Sello visible de la sesión — transparencia total sobre calidad
 function qualityBadge(quality) {
   switch (quality) {
-    case "alta":    return { label: "Plena",    icon: "check",  color: "#059669" };
+    case "alta":    return { label: "Plena",    icon: "check",  color: semantic.success };
     case "media":   return { label: "Sólida",   icon: "check",  color: "#0D9488" };
-    case "baja":    return { label: "Breve",    icon: "clock",  color: "#D97706" };
+    case "baja":    return { label: "Breve",    icon: "clock",  color: semantic.warning };
     case "ligera":  return { label: "Ligera",   icon: "clock",  color: "#94A3B8" };
-    case "inválida":return { label: "Revisar",  icon: "alert",  color: "#DC2626" };
+    case "inválida":return { label: "Revisar",  icon: "alert",  color: semantic.danger };
     default:        return { label: "Manual",   icon: "edit",   color: "#64748B" };
   }
 }
@@ -52,15 +51,18 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
   const dialogRef = useFocusTrap(show, onClose);
   const { card: cd, border: bd, t1, t3 } = resolveTheme(isDark);
   const titleId = useId();
-  const items = [...(st.history || [])].reverse();
-  const grouped = groupHist(items);
+  const items = useMemo(() => [...(st.history || [])].reverse(), [st.history]);
+  const grouped = useMemo(() => groupHist(items), [items]);
   const total = items.length;
   const [olderShown, setOlderShown] = useState(OLDER_PAGE);
   useEffect(() => { if (show) setOlderShown(OLDER_PAGE); }, [show]);
-  const trendData = (st.history || [])
-    .slice(-14)
-    .map((h) => h.bioQ || h.c || 50)
-    .filter((n) => typeof n === "number");
+  const trendData = useMemo(
+    () => (st.history || [])
+      .slice(-14)
+      .map((h) => h.bioQ || h.c || 50)
+      .filter((n) => typeof n === "number"),
+    [st.history],
+  );
 
   return (
     <AnimatePresence>
@@ -81,7 +83,6 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
             justifyContent: "center",
           }}
           onClick={onClose}
-          aria-hidden="true"
         >
           <motion.div
             ref={dialogRef}
@@ -102,6 +103,8 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
               paddingBlock: `${space[5]}px ${space[10]}px`,
               paddingInline: space[5],
               overflowY: "auto",
+              overscrollBehavior: "contain",
+              WebkitOverflowScrolling: "touch",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -115,9 +118,31 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                 margin: `0 auto ${space[5]}px`,
               }}
             />
-            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[3] }}>
-              Historial
-            </h3>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: space[3], marginBlockEnd: space[3] }}>
+              <h3 id={titleId} style={{ ...ty.heading(t1), margin: 0 }}>
+                Historial
+              </h3>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar historial"
+                style={{
+                  inlineSize: 44,
+                  blockSize: 44,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "transparent",
+                  border: `1px solid ${bd}`,
+                  borderRadius: radius.md,
+                  color: t3,
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon name="x" size={14} color={t3} aria-hidden="true" />
+              </button>
+            </div>
 
             {trendData.length >= 3 && (
               <div
@@ -150,7 +175,7 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                   data={trendData}
                   width={150}
                   height={32}
-                  color={bioSignal.phosphorCyan}
+                  color={ac}
                   ariaLabel={`Curva de calidad biométrica últimas ${trendData.length} sesiones`}
                 />
               </div>
@@ -182,7 +207,7 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                     style={{
                       ...ty.label(t3),
                       marginBlockEnd: space[2],
-                      marginBlockStart: space[2.5] || 10,
+                      marginBlockStart: space[3],
                     }}
                   >
                     {groupLabel}
@@ -305,7 +330,7 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                         fontWeight: font.weight.semibold,
                         cursor: "pointer",
                         fontFamily: "inherit",
-                        minBlockSize: 36,
+                        minBlockSize: 44,
                       }}
                       aria-label={`Cargar ${Math.min(OLDER_PAGE, hiddenCount)} sesiones más`}
                     >
