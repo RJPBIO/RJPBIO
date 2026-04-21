@@ -29,12 +29,14 @@ export default function ProfileView({
   onShowChronotype, onShowResonance, onShowNOM035,
 }) {
   const reduced = useReducedMotion();
-  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const { card: cd, surface: sf, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
   const lv = gL(st.totalSessions);
   const lPct = lvPct(st.totalSessions);
   const nLv = nxtLv(st.totalSessions);
-  const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
+  const perf = Math.round(((st.coherencia || 0) + (st.resiliencia || 0) + (st.capacidad || 0)) / 3);
+  const totalSessions = st.totalSessions || 0;
+  const streak = st.streak || 0;
   const nSt = getStatus(perf);
   const avgMood = useMemo(() => {
     const ml = st.moodLog || [];
@@ -138,7 +140,7 @@ export default function ProfileView({
         initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: reduced ? 0 : 0.08, duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
-        aria-label={`Estadísticas: ${st.totalSessions} sesiones, racha ${st.streak} días`}
+        aria-label={`Estadísticas: ${totalSessions} sesiones, racha ${streak} días`}
         style={{
           background: `linear-gradient(145deg,${cd},${withAlpha(ac, 5)})`,
           borderRadius: 20,
@@ -163,14 +165,14 @@ export default function ProfileView({
         />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBlockEnd: 14 }}>
           {[
-            { v: st.totalSessions, l: "Sesiones", c: ac, ic: "bolt" },
+            { v: totalSessions, l: "Sesiones", c: ac, ic: "bolt" },
             {
               v: `${Math.floor((st.totalTime || 0) / 3600)}h${Math.floor(((st.totalTime || 0) % 3600) / 60)}m`,
               l: "Tiempo",
               c: t1,
               ic: "clock",
             },
-            { v: st.streak, l: "Racha", c: semantic.warning, ic: "fire" },
+            { v: streak, l: "Racha", c: semantic.warning, ic: "fire" },
           ].map((m, i) => (
             <div
               key={i}
@@ -315,7 +317,7 @@ export default function ProfileView({
                   key={i}
                   role="group"
                   aria-label={`${d.l}: ${d.v}`}
-                  style={{ background: isDark ? "#1A1E28" : "#F8FAFC", borderRadius: 12, padding: 10 }}
+                  style={{ background: sf, borderRadius: 12, padding: 10 }}
                 >
                   <div style={ty.caption(t3)}>{d.l}</div>
                   <div style={ty.metric(d.c || t1, font.size.lg)}>{d.v}</div>
@@ -531,7 +533,7 @@ export default function ProfileView({
             style={{
               display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
-              background: isDark ? "#1A1E28" : "#F8FAFC",
+              background: sf,
               border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
               textAlign: "start", textDecoration: "none",
             }}
@@ -550,7 +552,7 @@ export default function ProfileView({
             style={{
               display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
-              background: isDark ? "#1A1E28" : "#F8FAFC",
+              background: sf,
               border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
               textAlign: "start", textDecoration: "none",
             }}
@@ -569,7 +571,7 @@ export default function ProfileView({
             style={{
               display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
-              background: isDark ? "#1A1E28" : "#F8FAFC",
+              background: sf,
               border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
               textAlign: "start", textDecoration: "none",
             }}
@@ -610,7 +612,7 @@ export default function ProfileView({
                 style={{
                   display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
                   paddingBlock: 10, paddingInline: 12,
-                  background: isDark ? "#1A1E28" : "#F8FAFC",
+                  background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
               >
@@ -631,7 +633,7 @@ export default function ProfileView({
                 style={{
                   display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
                   paddingBlock: 10, paddingInline: 12,
-                  background: isDark ? "#1A1E28" : "#F8FAFC",
+                  background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
               >
@@ -652,7 +654,7 @@ export default function ProfileView({
                 style={{
                   display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
                   paddingBlock: 10, paddingInline: 12,
-                  background: isDark ? "#1A1E28" : "#F8FAFC",
+                  background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
               >
@@ -708,7 +710,7 @@ export default function ProfileView({
           padding: space[3],
           borderRadius: radius.lg,
           border: `1px solid ${withAlpha(semantic.danger, 20)}`,
-          background: isDark ? "#1A0A0A" : withAlpha(semantic.danger, 4),
+          background: withAlpha(semantic.danger, isDark ? 8 : 4),
           color: semantic.danger,
           ...ty.caption(semantic.danger),
           cursor: "pointer",
