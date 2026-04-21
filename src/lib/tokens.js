@@ -126,12 +126,16 @@ export const semantic = {
 };
 
 // ─── Protocol Colors ─────────────────────────────────────
-// Only used within protocol-scoped UI (orb, phase card, protocol badge)
+// Intent-anchored palette — cada intent fisiológica tiene su hue distintivo.
+// `enfoque` usa phosphorCyan (ADN azul del marketing site) para presencia de marca.
+// `reset` usa neuralViolet (neural/brain integration). Emerald para calma parasimpática.
+// Amber para energia (activación térmica). Used within protocol-scoped UI
+// (orb, phase card, protocol badge) y vía `pr.cl` en cada protocolo.
 export const protoColor = {
-  calma: "#059669",
-  enfoque: "#6366F1",
-  energia: "#D97706",
-  reset: "#0D9488",
+  calma: "#059669",     // emerald — parasimpático, enfriamiento
+  enfoque: "#22D3EE",   // phosphorCyan — marca, claridad prefrontal
+  energia: "#F59E0B",   // amber — activación térmica
+  reset: "#8B5CF6",     // neuralViolet — reintegración cognitiva
 };
 
 // ─── Opacity Scale ───────────────────────────────────────

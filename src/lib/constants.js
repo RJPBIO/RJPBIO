@@ -39,9 +39,9 @@ export const WORK_TAGS = [
 
 export const INTENTS = [
   { id: "calma", label: "Calma", icon: "calm", desc: "Reducir tensión", color: "#059669" },
-  { id: "enfoque", label: "Enfoque", icon: "focus", desc: "Concentración", color: "#6366F1" },
-  { id: "energia", label: "Energía", icon: "energy", desc: "Activación", color: "#D97706" },
-  { id: "reset", label: "Reset", icon: "reset", desc: "Reinicio", color: "#0D9488" },
+  { id: "enfoque", label: "Enfoque", icon: "focus", desc: "Concentración", color: "#22D3EE" },
+  { id: "energia", label: "Energía", icon: "energy", desc: "Activación", color: "#F59E0B" },
+  { id: "reset", label: "Reset", icon: "reset", desc: "Reinicio", color: "#8B5CF6" },
 ];
 
 export const DIF_LABELS = ["Básico", "Intermedio", "Avanzado"];
@@ -197,10 +197,10 @@ export const DS = {
 // ─── Neural State Color Mapping ──────────────────────────
 // Colores adaptados al estado cognitivo actual
 export const NEURAL_COLORS = {
-  calma: { primary: "#059669", glow: "#05966920", gradient: "135deg, #059669, #0D9488" },
-  enfoque: { primary: "#6366F1", glow: "#6366F120", gradient: "135deg, #6366F1, #818CF8" },
-  energia: { primary: "#D97706", glow: "#D9770620", gradient: "135deg, #D97706, #F59E0B" },
-  reset: { primary: "#0D9488", glow: "#0D948820", gradient: "135deg, #0D9488, #14B8A6" },
-  stress: { primary: "#DC2626", glow: "#DC262620", gradient: "135deg, #DC2626, #EF4444" },
-  optimal: { primary: "#059669", glow: "#05966930", gradient: "135deg, #059669, #10B981" },
+  calma: { primary: "#059669", glow: "#05966920", gradient: "135deg, #059669, #10B981" },
+  enfoque: { primary: "#22D3EE", glow: "#22D3EE20", gradient: "135deg, #22D3EE, #6366F1" },
+  energia: { primary: "#F59E0B", glow: "#F59E0B20", gradient: "135deg, #F59E0B, #FBBF24" },
+  reset: { primary: "#8B5CF6", glow: "#8B5CF620", gradient: "135deg, #8B5CF6, #A78BFA" },
+  stress: { primary: "#DC2626", glow: "#DC262620", gradient: "135deg, #DC2626, #F43F5E" },
+  optimal: { primary: "#059669", glow: "#05966930", gradient: "135deg, #059669, #22D3EE" },
 };
