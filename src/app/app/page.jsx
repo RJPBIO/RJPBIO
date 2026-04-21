@@ -77,6 +77,7 @@ const ChronotypeTest = dynamic(() => import("@/components/ChronotypeTest"), { ss
 const ResonanceCalibration = dynamic(() => import("@/components/ResonanceCalibration"), { ssr: false });
 const NOM035Questionnaire = dynamic(() => import("@/components/NOM035Questionnaire"), { ssr: false });
 const ReadinessScore = dynamic(() => import("@/components/ReadinessScore"), { ssr: false });
+const SessionRunner = dynamic(() => import("@/components/SessionRunner"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -373,14 +374,27 @@ export default function BioIgnicion(){
   {showMid&&<motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",zIndex:180,pointerEvents:"none"}}><div style={{background:cd,borderRadius:16,padding:"14px 22px",boxShadow:"0 8px 30px rgba(0,0,0,.08)",border:`1px solid ${bd}`,maxWidth:320,textAlign:"center"}}><div style={{fontSize:13,fontWeight:600,color:t1,lineHeight:1.6,fontStyle:"italic"}}>{midMsg}</div></div></motion.div>}
   </AnimatePresence>
 
-  {/* Countdown */}
-  <AnimatePresence>
-  {countdown>0&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.countdown,background:`${bg}DD`,backdropFilter:"blur(30px)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-    <motion.div key={countdown} initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:1.5,opacity:0}} transition={{type:"spring",stiffness:200,damping:15}}>
-      <div style={{fontSize:96,fontWeight:font.weight.black,color:ac}}>{countdown}</div>
-    </motion.div>
-  </motion.div>}
-  </AnimatePresence>
+  {/* Session Runner — fullscreen cinematic overlay (countdown + running + paused) */}
+  <SessionRunner
+    show={countdown>0||ts==="running"||ts==="paused"}
+    countdown={countdown}
+    ts={ts}
+    sec={sec}
+    totalDur={totalDur}
+    pr={pr}
+    ph={ph}
+    pi={pi}
+    bL={bL}
+    bS={bS}
+    bCnt={bCnt}
+    isBr={isBr}
+    ac={ac}
+    onPause={pa}
+    onResume={resume}
+    onReset={rs}
+    reducedMotion={reducedMotion}
+  />
+
 
   <IgnitionBurst show={compFlash} accent={ac} onDone={()=>{}}/>
 
