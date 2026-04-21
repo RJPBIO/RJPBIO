@@ -26,8 +26,8 @@ import {
   calcNeuralVariability,
 } from "../lib/neural";
 import { topArms } from "../lib/neural/bandit";
-import { resolveTheme, withAlpha, ty, font, space, radius, bioSignal as brandSignal } from "../lib/theme";
-import { semantic, protoColor } from "../lib/tokens";
+import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
+import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
 const NeuralRadar = dynamic(() => import("./NeuralRadar"), { ssr: false });
@@ -173,7 +173,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: space[3.5] || 14, position: "relative" }}>
           <div>
-            <div style={{ ...ty.label(brandSignal.phosphorCyan), fontFamily: font.mono, letterSpacing: "0.26em", marginBlockEnd: space[1] }}>Rendimiento Neural</div>
+            <div style={{ ...ty.label(t3), marginBlockEnd: space[1] }}>Rendimiento Neural</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: space[1] }}>
               <span style={ty.metric(t1, font.size["4xl"])}>{perf}</span>
               <span style={ty.caption(t3)}>%</span>
@@ -495,8 +495,8 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: space[1.5], marginBlockEnd: 14 }}
       >
         {[
-          { l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? `+${rD.c}%` : "—", c: protoColor.enfoque, ic: "focus", suffix: "%" },
-          { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? `+${rD.r}%` : "—", c: protoColor.calma, ic: "calm", suffix: "%" },
+          { l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? `+${rD.c}%` : "—", c: "#3B82F6", ic: "focus", suffix: "%" },
+          { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? `+${rD.r}%` : "—", c: "#8B5CF6", ic: "calm", suffix: "%" },
           { l: "V-Cores", v: st.vCores || 0, d: `+${st.history?.slice(-1)[0]?.vc || 0}`, c: semantic.warning, ic: "sparkle", suffix: "" },
           { l: "Sesiones", v: st.totalSessions, d: `${st.streak}d racha`, c: semantic.success, ic: "bolt", suffix: "" },
         ].map((k, i) => (

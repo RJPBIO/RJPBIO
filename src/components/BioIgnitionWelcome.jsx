@@ -20,14 +20,13 @@ import { BioGlyph } from "./BioIgnicionMark";
 import IgnitionBurst from "./IgnitionBurst";
 import Icon from "./Icon";
 import { bioSignal, font, space, radius, ty } from "../lib/theme";
-import { protoColor } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 
 const INTENTS = [
-  { id: "enfoque",       label: "Enfoque",        desc: "Cortar ruido mental. Entrar en flow.",     icon: "focus",   color: protoColor.enfoque },
-  { id: "calma",         label: "Calma",          desc: "Bajar activación. Soltar tensión.",        icon: "calm",    color: protoColor.calma },
-  { id: "energia",       label: "Energía",        desc: "Encender el sistema. Activar el día.",     icon: "energy",  color: protoColor.energia },
-  { id: "recuperacion",  label: "Recuperación",   desc: "Descomprimir. Reparar carga acumulada.",   icon: "shield",  color: protoColor.reset },
+  { id: "enfoque",       label: "Enfoque",        desc: "Cortar ruido mental. Entrar en flow.",     icon: "focus",   color: "#3B82F6" },
+  { id: "calma",         label: "Calma",          desc: "Bajar activación. Soltar tensión.",        icon: "calm",    color: "#8B5CF6" },
+  { id: "energia",       label: "Energía",        desc: "Encender el sistema. Activar el día.",     icon: "energy",  color: "#D97706" },
+  { id: "recuperacion",  label: "Recuperación",   desc: "Descomprimir. Reparar carga acumulada.",   icon: "shield",  color: "#059669" },
 ];
 
 const SCREENS = [
@@ -253,30 +252,20 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
             {current.kicker}
           </div>
 
-          {/* Title — fluid clamp matches marketing H1 scale (brand DNA). */}
+          {/* Title */}
           <h1
             id={titleId}
             style={{
-              fontSize: "clamp(30px, 5vw, 48px)",
+              fontSize: font.size["3xl"] || 32,
               fontWeight: font.weight.black,
-              lineHeight: 1.04,
-              letterSpacing: "-0.035em",
+              lineHeight: 1.15,
+              letterSpacing: -0.5,
               margin: 0,
-              maxInlineSize: 420,
+              maxInlineSize: 360,
             }}
           >
             {current.title}
-            <span
-              style={{
-                display: "block",
-                color: bioSignal.phosphorCyan,
-                fontFamily: "var(--font-editorial)",
-                fontStyle: "italic",
-                fontWeight: 400,
-                letterSpacing: "-0.01em",
-                marginBlockStart: 6,
-              }}
-            >
+            <span style={{ display: "block", color: bioSignal.phosphorCyan, marginBlockStart: 4 }}>
               {current.titleAccent}
             </span>
           </h1>
