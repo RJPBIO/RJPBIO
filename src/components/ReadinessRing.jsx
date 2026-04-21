@@ -12,13 +12,15 @@
      engrosa con endpoint marker cinemático y glow filter.
    - Reduced-motion: sin spring, sin pulso del aura.
 
-   NOTA: colores de canal (#3B82F6/#8B5CF6/#6366F1) son decisión
-   ratificada por el usuario y NO deben cambiar aquí.
+   Paleta: mapping a bio-signal tokens para identidad coherente.
+     Enfoque  → neuralViolet  (cognición)
+     Calma    → brand.primary (emerald, equilibrio parasimpático)
+     Energía  → plasmaPink    (pico de ignición)
    ═══════════════════════════════════════════════════════════════ */
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { resolveTheme, withAlpha, ty, font, space, radius, brand } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, brand, bioSignal } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
@@ -44,9 +46,9 @@ export default function ReadinessRing({
   const meta = interpret(overall);
 
   const rings = useMemo(() => [
-    { score: focusScore, color: "#3B82F6", label: "Enfoque", r: size * 0.44 },
-    { score: calmScore,  color: "#8B5CF6", label: "Calma",   r: size * 0.35 },
-    { score: energyScore,color: "#6366F1", label: "Energía", r: size * 0.26 },
+    { score: focusScore,  color: bioSignal.neuralViolet, label: "Enfoque", r: size * 0.44 },
+    { score: calmScore,   color: brand.primary,          label: "Calma",   r: size * 0.35 },
+    { score: energyScore, color: bioSignal.plasmaPink,   label: "Energía", r: size * 0.26 },
   ], [focusScore, calmScore, energyScore, size]);
 
   const active = activeRing != null ? rings[activeRing] : null;
