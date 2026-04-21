@@ -15,6 +15,32 @@ import { computeRecoveredHours, computeRoiValue } from "../lib/roi";
 import { aggregateInstrument } from "../lib/instruments";
 
 const MIN_K = 5;
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
+const kickerStyle = (color) => ({
+  color,
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: -0.05,
+  margin: 0,
+});
+
+const metricValueStyle = (color) => ({
+  fontFamily: MONO,
+  fontSize: 32,
+  fontWeight: 800,
+  color,
+  letterSpacing: -0.8,
+  lineHeight: 1,
+  fontVariantNumeric: "tabular-nums",
+});
+
+const captionStyle = (color) => ({
+  fontSize: 11,
+  fontWeight: 500,
+  color,
+  letterSpacing: -0.05,
+});
 
 export default function OrgDashboard({
   teamResponses = [],
@@ -144,7 +170,7 @@ function NOMCard({ agg, isDark }) {
   if (agg.insufficient) {
     return (
       <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
-        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 10, margin: 0 }}>
+        <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 10 }}>
           Riesgo psicosocial (NOM-035)
         </h3>
         <p style={{ color: t2, fontSize: 12, lineHeight: 1.6, marginBlockStart: 10 }}>
@@ -159,15 +185,15 @@ function NOMCard({ agg, isDark }) {
       aria-label="Riesgo psicosocial del equipo"
       style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
     >
-      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
         Riesgo psicosocial (NOM-035)
       </h3>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBlockEnd: 10 }}>
         <div>
-          <div style={{ fontSize: 32, fontWeight: font.weight.black, color: t1 }}>
+          <div style={metricValueStyle(t1)}>
             {agg.mean}
           </div>
-          <div style={{ fontSize: 10, color: t3, letterSpacing: 1, textTransform: "uppercase" }}>
+          <div style={{ fontSize: 11, fontWeight: 500, color: t3, letterSpacing: -0.05 }}>
             puntaje promedio (σ={agg.sd})
           </div>
         </div>
@@ -200,7 +226,7 @@ function EngagementCard({ eng, isDark }) {
   if (eng.insufficient) {
     return (
       <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
-        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+        <h3 style={kickerStyle(t3)}>
           Adopción
         </h3>
         <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
@@ -215,7 +241,7 @@ function EngagementCard({ eng, isDark }) {
       aria-label="Adopción del equipo"
       style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
     >
-      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
         Adopción
       </h3>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -231,8 +257,20 @@ function EngagementCard({ eng, isDark }) {
 function Stat({ value, label, t1, t3 }) {
   return (
     <div role="group" aria-label={`${label}: ${value}`}>
-      <div style={{ color: t1, fontSize: 22, fontWeight: font.weight.black }}>{value}</div>
-      <div style={{ color: t3, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", marginBlockStart: 2 }}>
+      <div
+        style={{
+          fontFamily: MONO,
+          color: t1,
+          fontSize: 22,
+          fontWeight: 700,
+          letterSpacing: -0.5,
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ color: t3, fontSize: 11, fontWeight: 500, letterSpacing: -0.05, marginBlockStart: 4 }}>
         {label}
       </div>
     </div>
@@ -247,7 +285,7 @@ function ComplianceCard({ isDark }) {
       aria-label="Cumplimiento y privacidad"
       style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
     >
-      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
         Cumplimiento y privacidad
       </h3>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -278,7 +316,7 @@ function RoiCard({ roi, isDark }) {
   if (roi.insufficient) {
     return (
       <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
-        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+        <h3 style={kickerStyle(t3)}>
           ROI · Horas de foco
         </h3>
         <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
@@ -294,12 +332,12 @@ function RoiCard({ roi, isDark }) {
       aria-label="Retorno de inversión"
       style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
     >
-      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
         ROI · Horas de foco recuperadas
       </h3>
-      <div style={{ fontSize: 32, fontWeight: font.weight.black, color: t1 }}>
+      <div style={metricValueStyle(t1)}>
         {roi.recoveredHours}
-        <span style={{ fontSize: 14, color: t3, marginInlineStart: 6 }}>h</span>
+        <span style={{ fontSize: 14, color: t3, marginInlineStart: 6, fontFamily: "inherit" }}>h</span>
       </div>
       {hasValue && (
         <div style={{ fontSize: 14, fontWeight: 700, color: brand.primary, marginBlockStart: 4 }}>
@@ -324,7 +362,7 @@ function HrvDeltaCard({ agg, isDark }) {
   if (agg.insufficient) {
     return (
       <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
-        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+        <h3 style={kickerStyle(t3)}>
           HRV · Δ RMSSD pre/post
         </h3>
         <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
@@ -340,12 +378,12 @@ function HrvDeltaCard({ agg, isDark }) {
       aria-label="Variación de HRV pre y post sesión"
       style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
     >
-      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
         HRV · Δ RMSSD pre/post
       </h3>
-      <div style={{ fontSize: 32, fontWeight: font.weight.black, color: liftColor }}>
+      <div style={metricValueStyle(liftColor)}>
         {agg.meanDelta > 0 ? "+" : ""}{agg.meanDelta}
-        <span style={{ fontSize: 14, color: t3, marginInlineStart: 6 }}>ms</span>
+        <span style={{ fontSize: 14, color: t3, marginInlineStart: 6, fontFamily: "inherit" }}>ms</span>
       </div>
       <div style={{ fontSize: 11, color: t3, marginBlockStart: 4 }}>
         IC95% [{agg.ci95Lo}, {agg.ci95Hi}] · σ={agg.sd}
@@ -366,7 +404,7 @@ function EffectivenessCard({ eff, isDark }) {
   if (eff.insufficient) {
     return (
       <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
-        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+        <h3 style={kickerStyle(t3)}>
           Efectividad · lift pre/post
         </h3>
         <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
@@ -388,10 +426,10 @@ function EffectivenessCard({ eff, isDark }) {
       aria-label="Efectividad pre y post sesión"
       style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
     >
-      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
         Efectividad · lift de estado
       </h3>
-      <div style={{ fontSize: 32, fontWeight: font.weight.black, color: t1 }}>
+      <div style={metricValueStyle(t1)}>
         {eff.meanLift > 0 ? "+" : ""}{eff.meanLift}
       </div>
       <div style={{ fontSize: 11, color: t3, marginBlockStart: 4 }}>
@@ -416,7 +454,7 @@ function InstrumentCard({ agg, title, reference, scale, isDark }) {
   if (agg.insufficient) {
     return (
       <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
-        <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+        <h3 style={kickerStyle(t3)}>
           {title}
         </h3>
         <p style={{ color: t2, fontSize: 12, marginBlockStart: 10 }}>
@@ -431,13 +469,13 @@ function InstrumentCard({ agg, title, reference, scale, isDark }) {
       aria-label={title}
       style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
     >
-      <h3 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 14, margin: 0 }}>
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
         {title}
       </h3>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <div>
-          <div style={{ fontSize: 32, fontWeight: font.weight.black, color: t1 }}>{agg.mean}</div>
-          <div style={{ fontSize: 10, color: t3, letterSpacing: 1, textTransform: "uppercase" }}>
+          <div style={metricValueStyle(t1)}>{agg.mean}</div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: t3, letterSpacing: -0.05 }}>
             promedio (σ={agg.sd})
           </div>
         </div>
