@@ -78,6 +78,7 @@ const ResonanceCalibration = dynamic(() => import("@/components/ResonanceCalibra
 const NOM035Questionnaire = dynamic(() => import("@/components/NOM035Questionnaire"), { ssr: false });
 const ReadinessScore = dynamic(() => import("@/components/ReadinessScore"), { ssr: false });
 const SessionRunner = dynamic(() => import("@/components/SessionRunner"), { ssr: false });
+const AmbientLattice = dynamic(() => import("@/components/AmbientLattice"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -389,9 +390,38 @@ export default function BioIgnicion(){
     bCnt={bCnt}
     isBr={isBr}
     ac={ac}
+    scienceDeep={pr&&SCIENCE_DEEP?SCIENCE_DEEP[pr.id]||"":""}
     onPause={pa}
     onResume={resume}
     onReset={rs}
+    onCheckpointOpen={(idx)=>{
+      const cue=idx===0?"Mantén presionado":idx===1?"Toca al exhalar":"Confirma tu presencia";
+      speak(cue,circadian,voiceOn);
+    }}
+    onCheckpointResolve={(idx,payload)=>{
+      if(payload?.type==="hold"){
+        if(payload.success){
+          setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),payload.dur]}));
+          H("ok");speak("verificado",circadian,voiceOn);
+        } else {
+          setSessionData(d=>({...d,interactions:(d.interactions||0)+0.25}));H("tap");
+        }
+      } else if(payload?.type==="tapExhale"){
+        const weight=payload.success?1:0.25;
+        setSessionData(d=>({...d,interactions:(d.interactions||0)+weight,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));
+        H(payload.success?"ok":"tap");
+        if(payload.success)speak("sincronizado",circadian,voiceOn);
+      } else if(payload?.type==="presence"){
+        setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));
+        H("ok");speak("confirmado",circadian,voiceOn);
+      }
+    }}
+    onCheckpointTimeout={(idx)=>{
+      setSessionData(d=>({...d,missedCheckpoints:(d.missedCheckpoints||0)+1,interactions:Math.max(0,(d.interactions||0)-0.1)}));
+    }}
+    onVisibilityLoss={()=>{
+      setSessionData(d=>({...d,tabAways:(d.tabAways||0)+1,interactions:Math.max(0,(d.interactions||0)-0.5)}));
+    }}
     reducedMotion={reducedMotion}
   />
 
@@ -658,6 +688,13 @@ export default function BioIgnicion(){
   <ChronotypeTest show={showChronoTest} isDark={isDark} onClose={()=>setShowChronoTest(false)} onComplete={(ct)=>{store.setChronotype(ct);setSt_(useStore.getState());}}/>
   <ResonanceCalibration show={showResonanceCal} isDark={isDark} onClose={()=>setShowResonanceCal(false)} onComplete={(res)=>{store.setResonanceFreq(res.bpm);setSt_(useStore.getState());}}/>
   <NOM035Questionnaire show={showNOM035} isDark={isDark} onClose={()=>setShowNOM035(false)} onComplete={(r)=>{store.logNOM035(r);setSt_(useStore.getState());}}/>
+
+  {/* ═══ AMBIENT LATTICE — brand continuity whisper behind idle ═══ */}
+  {tab==="ignicion"&&ts==="idle"&&!compFlash&&(
+    <div aria-hidden="true" style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none"}}>
+      <AmbientLattice accent={ac} reducedMotion={reducedMotion} opacity={0.12} edgeOnly vignette={false}/>
+    </div>
+  )}
 
   {/* ═══ MAIN CONTENT ═══ */}
   <div style={{position:"relative",zIndex:1}}>
@@ -1116,41 +1153,7 @@ export default function BioIgnicion(){
       {ph.k&&<div style={{fontSize:15,fontWeight:800,color:t1,lineHeight:1.45,marginBottom:8,letterSpacing:"-0.2px"}}>{ph.k}</div>}
       <p style={{fontSize:12,lineHeight:1.7,color:t2,margin:0}}>{ph.i}</p>
 
-      {/* Anti-trampa checkpoints */}
-      {isActive&&(()=>{
-        const elapsed=totalDur-sec;
-        const cp1=Math.round(totalDur*0.25),cp2=Math.round(totalDur*0.50),cp3=Math.round(totalDur*0.78);
-        const isCP1=elapsed>=cp1&&elapsed<cp1+10;const isCP2=elapsed>=cp2&&elapsed<cp2+10;const isCP3=elapsed>=cp3&&elapsed<cp3+10;
-        if(!isCP1&&!isCP2&&!isCP3)return null;
-        if(elapsed===cp1)speak("Mantén presionado",circadian,voiceOn);
-        else if(elapsed===cp2)speak("Toca al exhalar",circadian,voiceOn);
-        else if(elapsed===cp3)speak("Confirma tu presencia",circadian,voiceOn);
-
-        if(isCP1)return(<motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{marginTop:12}}><button
-          onTouchStart={e=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.94)";hapticBreath("INHALA");const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="width 2.5s linear";bar.style.width="100%";}}}
-          onTouchEnd={e=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
-            if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");speak("verificado",circadian,voiceOn);}
-            else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3}));H("tap");}}}
-          onMouseDown={e=>{e.currentTarget.dataset.holdStart=Date.now();e.currentTarget.style.transform="scale(0.94)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="width 2.5s linear";bar.style.width="100%";}}}
-          onMouseUp={e=>{const dur=Date.now()-(+e.currentTarget.dataset.holdStart||Date.now());e.currentTarget.style.transform="scale(1)";const bar=e.currentTarget.querySelector("[data-hold-bar]");if(bar){bar.style.transition="none";bar.style.width="0%";}
-            if(dur>=2000){setSessionData(d=>({...d,touchHolds:(d.touchHolds||0)+1,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),dur]}));H("ok");}
-            else{setSessionData(d=>({...d,interactions:(d.interactions||0)+0.3}));H("tap");}}}
-          style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`2px solid ${ac}25`,background:ac+"06",cursor:"pointer",display:"flex",flexDirection:"column",gap:8,transition:"all .3s",position:"relative",overflow:"hidden"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><div style={{width:10,height:10,borderRadius:"50%",background:ac,opacity:.7,animation:"pu 1s ease infinite"}}/><span style={{fontSize:13,fontWeight:700,color:ac}}>Mantén presionado 2s</span></div>
-          <div style={{height:4,background:bd,borderRadius:4,overflow:"hidden",width:"100%"}}><div data-hold-bar="" style={{width:"0%",height:"100%",background:`linear-gradient(90deg,${ac}60,${ac})`,borderRadius:4}}/></div>
-        </button></motion.div>);
-        if(isCP2)return(<motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{marginTop:12}}><button
-          onClick={()=>{const isExhale=bL==="EXHALA"||bL==="SOSTÉN";setSessionData(d=>({...d,interactions:(d.interactions||0)+(isExhale?1:0.7),reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");if(isExhale)speak("sincronizado",circadian,voiceOn);}}
-          style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px dashed ${ac}35`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <div style={{width:9,height:9,borderRadius:"50%",background:bL==="EXHALA"?ac:"transparent",border:`2px solid ${ac}`,opacity:.6}}/><span style={{fontSize:13,fontWeight:700,color:ac}}>Toca al exhalar</span>
-          {bL==="EXHALA"&&<span style={{fontSize:13,fontWeight:700,color:ac,letterSpacing:-0.05}}>Ahora</span>}
-        </button></motion.div>);
-        return(<motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{marginTop:12}}><button
-          onClick={()=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");speak("confirmado",circadian,voiceOn);}}
-          style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px solid ${ac}20`,background:ac+"04",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <div style={{width:8,height:8,borderRadius:"50%",background:ac,opacity:.5}}/><span style={{fontSize:13,fontWeight:700,color:ac}}>Confirma tu presencia</span>
-        </button></motion.div>);
-      })()}
+      {/* Anti-trampa checkpoints — ahora viven dentro del SessionRunner (ver onCheckpoint* props). */}
 
       {/* Science */}
       <button onClick={()=>{setShowScience(!showScience);}} style={{display:"flex",alignItems:"center",gap:5,marginTop:12,padding:"6px 0",background:"none",border:"none",cursor:"pointer"}}>
