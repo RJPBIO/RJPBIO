@@ -2,23 +2,28 @@
 /* ═══════════════════════════════════════════════════════════════
    BIO-SPARKLINE — dataviz con lenguaje de osciloscopio
    ═══════════════════════════════════════════════════════════════
-   Sustituye sparklines genéricas por una lectura tipo instrumento
-   biométrico: línea con glow, puntos-señal en extremos/actuales,
-   línea base discreta. Identidad de firma visual para HRV, mood
-   log, weekly data, cualquier serie temporal pequeña.
+   Lectura tipo instrumento biométrico: línea con glow, gradiente
+   de área, pulso en el punto actual, grilla opcional, arrow de
+   tendencia y extremos min/max opcionales.
 
    Props:
    - data: number[]
    - width, height
    - color: trazo principal (default phosphor cyan)
-   - showLast: bool (punto brillante en el último valor)
+   - showLast: bool (punto brillante en el último valor, con pulso)
    - baseline: number|null (línea punteada horizontal; ej. media)
    - interactive: bool — hover/tap muestra tooltip con valor
    - formatValue: (v, i) => string — label custom en tooltip
+   - showGrid: bool — tres rules horizontales sutiles (default false)
+   - showExtremes: bool — dots en mín y máx (default false)
+   - showTrend: bool — pequeño arrow ascend/desc (default true)
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo, useId, useRef, useState, useCallback } from "react";
 import { bioSignal } from "../lib/theme";
+import { useReducedMotion } from "../lib/a11y";
+
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
 export default function BioSparkline({
   data = [],
@@ -32,14 +37,20 @@ export default function BioSparkline({
   ariaLabel,
   interactive = true,
   formatValue,
+  showGrid = false,
+  showExtremes = false,
+  showTrend = true,
 }) {
   const c = color || bioSignal.phosphorCyan;
-  const glowId = useId();
+  const reactId = useId();
+  const glowId = `${reactId}-glow`;
+  const areaId = `${reactId}-area`;
   const svgRef = useRef(null);
   const [activeIdx, setActiveIdx] = useState(null);
+  const reduced = useReducedMotion();
 
-  const { path, pts, bY, lastPt } = useMemo(() => {
-    if (!data.length) return { path: "", pts: [], bY: null, lastPt: null };
+  const { path, pts, bY, lastPt, minPt, maxPt, minIdx, maxIdx } = useMemo(() => {
+    if (!data.length) return { path: "", pts: [], bY: null, lastPt: null, minPt: null, maxPt: null, minIdx: -1, maxIdx: -1 };
     const n = data.length;
     const min = Math.min(...data);
     const max = Math.max(...data);
@@ -65,7 +76,21 @@ export default function BioSparkline({
       baseline != null
         ? padY + usableH - ((baseline - min) / range) * usableH
         : null;
-    return { path: d, pts: coords, bY: base, lastPt: coords[coords.length - 1] };
+    let mnI = 0, mxI = 0;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i] < data[mnI]) mnI = i;
+      if (data[i] > data[mxI]) mxI = i;
+    }
+    return {
+      path: d,
+      pts: coords,
+      bY: base,
+      lastPt: coords[coords.length - 1],
+      minPt: coords[mnI],
+      maxPt: coords[mxI],
+      minIdx: mnI,
+      maxIdx: mxI,
+    };
   }, [data, width, height, baseline]);
 
   const nearestIndex = useCallback(
@@ -90,15 +115,6 @@ export default function BioSparkline({
     if (i !== null) setActiveIdx(i);
   };
   const handleLeave = () => setActiveIdx(null);
-
-  if (!data.length) return null;
-
-  const activePt = activeIdx != null ? pts[activeIdx] : null;
-  const activeValue = activeIdx != null ? data[activeIdx] : null;
-  const tooltipText =
-    activeValue != null
-      ? (formatValue ? formatValue(activeValue, activeIdx) : String(Math.round(activeValue)))
-      : null;
 
   const trend = useMemo(() => {
     if (data.length < 2) return null;
@@ -126,6 +142,25 @@ export default function BioSparkline({
     return parts.join(". ") + ".";
   }, [ariaLabel, data, trend]);
 
+  if (!data.length) return null;
+
+  const activePt = activeIdx != null ? pts[activeIdx] : null;
+  const activeValue = activeIdx != null ? data[activeIdx] : null;
+  const tooltipText =
+    activeValue != null
+      ? (formatValue ? formatValue(activeValue, activeIdx) : String(Math.round(activeValue)))
+      : null;
+
+  const trendArrow = showTrend && trend && trend !== "estable" ? (
+    <g transform={`translate(${width - 7}, 5)`} opacity="0.55">
+      {trend === "ascendente" ? (
+        <path d="M0 4 L3 0 L6 4 Z" fill={c} />
+      ) : (
+        <path d="M0 0 L3 4 L6 0 Z" fill={c} />
+      )}
+    </g>
+  ) : null;
+
   return (
     <figure role={ariaLabel ? "figure" : "presentation"} aria-label={summary} style={{ position: "relative", display: "inline-block", lineHeight: 0, margin: 0 }}>
       <svg
@@ -141,8 +176,13 @@ export default function BioSparkline({
         onPointerLeave={interactive ? handleLeave : undefined}
         onPointerCancel={interactive ? handleLeave : undefined}
       >
-        {glow && (
-          <defs>
+        <defs>
+          <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={c} stopOpacity="0.28" />
+            <stop offset="70%" stopColor={c} stopOpacity="0.05" />
+            <stop offset="100%" stopColor={c} stopOpacity="0" />
+          </linearGradient>
+          {glow && (
             <filter id={glowId} x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="1.2" result="b" />
               <feMerge>
@@ -150,8 +190,22 @@ export default function BioSparkline({
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-          </defs>
-        )}
+          )}
+        </defs>
+
+        {showGrid && [0.25, 0.5, 0.75].map((frac) => (
+          <line
+            key={frac}
+            x1={0}
+            y1={height * frac}
+            x2={width}
+            y2={height * frac}
+            stroke={c}
+            strokeWidth="0.4"
+            opacity={frac === 0.5 ? 0.14 : 0.07}
+            strokeDasharray={frac === 0.5 ? "0" : "1 3"}
+          />
+        ))}
 
         {bY != null && (
           <line
@@ -168,8 +222,7 @@ export default function BioSparkline({
 
         <path
           d={`${path} L${width},${height} L0,${height} Z`}
-          fill={c}
-          opacity="0.08"
+          fill={`url(#${areaId})`}
         />
 
         <path
@@ -182,9 +235,24 @@ export default function BioSparkline({
           filter={glow ? `url(#${glowId})` : undefined}
         />
 
+        {showExtremes && minPt && maxPt && minIdx !== maxIdx && (
+          <>
+            <circle cx={maxPt[0]} cy={maxPt[1]} r="1.6" fill={bioSignal.ignition} opacity="0.85" />
+            <circle cx={minPt[0]} cy={minPt[1]} r="1.4" fill={c} opacity="0.55" />
+          </>
+        )}
+
         {showLast && lastPt && activeIdx == null && (
           <>
-            <circle cx={lastPt[0]} cy={lastPt[1]} r="3.5" fill={c} opacity="0.25" />
+            {!reduced && (
+              <circle cx={lastPt[0]} cy={lastPt[1]} r="3.5" fill={c} opacity="0.25">
+                <animate attributeName="r" values="3.5;5.5;3.5" dur="2.4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.3;0.05;0.3" dur="2.4s" repeatCount="indefinite" />
+              </circle>
+            )}
+            {reduced && (
+              <circle cx={lastPt[0]} cy={lastPt[1]} r="3.5" fill={c} opacity="0.25" />
+            )}
             <circle cx={lastPt[0]} cy={lastPt[1]} r="1.8" fill={bioSignal.ignition} />
           </>
         )}
@@ -205,6 +273,8 @@ export default function BioSparkline({
             <circle cx={activePt[0]} cy={activePt[1]} r="2.2" fill={bioSignal.ignition} />
           </>
         )}
+
+        {trendArrow}
       </svg>
 
       {activePt && tooltipText != null && (
@@ -221,7 +291,7 @@ export default function BioSparkline({
             color: "#E8ECF4",
             fontSize: 10,
             fontWeight: 700,
-            fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+            fontFamily: MONO,
             letterSpacing: 0.5,
             padding: "3px 6px",
             borderRadius: 4,
