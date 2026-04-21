@@ -19,6 +19,7 @@ export function computeAdaptiveRecommendation(st, options = {}) {
       banditArms: st?.banditArms || null,
       porDominio: options.nom35Dominios || null,
       readiness: options.readiness || null,
+      currentMood: options.currentMood ?? null,
     });
   } catch {
     return null;
@@ -26,9 +27,9 @@ export function computeAdaptiveRecommendation(st, options = {}) {
 }
 
 /** Hook React: memoiza por los campos que realmente cambian la recomendación. */
-export function useAdaptiveRecommendation(st, { nom35Dominios = null, readiness = null } = {}) {
+export function useAdaptiveRecommendation(st, { nom35Dominios = null, readiness = null, currentMood = null } = {}) {
   return useMemo(
-    () => computeAdaptiveRecommendation(st, { nom35Dominios, readiness }),
+    () => computeAdaptiveRecommendation(st, { nom35Dominios, readiness, currentMood }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       st?.moodLog,
@@ -40,6 +41,7 @@ export function useAdaptiveRecommendation(st, { nom35Dominios = null, readiness 
       st?.sleepTargetHours,
       nom35Dominios,
       readiness,
+      currentMood,
     ]
   );
 }

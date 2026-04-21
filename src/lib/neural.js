@@ -518,7 +518,7 @@ export function calcProtocolCorrelations(st) {
 //   - porDominio: sumatorios crudos NOM-035 por dominio → aplica sesgo
 //   - readiness: output de calcReadiness(...) — z-scores de HRV/RHR/sueño
 export function adaptiveProtocolEngine(st, options = {}) {
-  const { chronotype = null, banditArms = null, porDominio = null, readiness = null } = options;
+  const { chronotype = null, banditArms = null, porDominio = null, readiness = null, currentMood = null } = options;
   const now = new Date();
   const h = now.getHours();
   // Reloj circadiano personalizado por chronotype (fallback al real).
@@ -528,7 +528,11 @@ export function adaptiveProtocolEngine(st, options = {}) {
   const ml = st.moodLog || [];
   const hist = st.history || [];
   const burnout = calcBurnoutIndex(ml, hist);
-  const lastMood = ml.slice(-1)[0]?.mood || 3;
+  // Override lastMood con el estado declarado en el picker pre-sesión si existe.
+  // Esto vuelve el picker un controller vivo: el motor reacciona en tiempo real.
+  const lastMood = (typeof currentMood === "number" && currentMood >= 1 && currentMood <= 5)
+    ? currentMood
+    : (ml.slice(-1)[0]?.mood || 3);
   const sensitivity = calcProtoSensitivity(ml);
   const momentum = calcNeuralMomentum(st);
   const nom35Bias = porDominio ? protocolBiasFromDomain(porDominio) : null;

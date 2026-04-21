@@ -317,7 +317,7 @@ export default function BioIgnicion(){
   const toggleFav=useCallback((name)=>{setSt(s=>{const nf=(s.favs||[]).includes(name)?(s.favs||[]).filter(f=>f!==name):[...(s.favs||[]),name];return{...s,favs:nf};});},[setSt]);
   // Adaptive AI recommendation (replaces old smartPick)
   const readiness=useReadiness(st);
-  const aiRec=useAdaptiveRecommendation(st,{nom35Dominios,readiness});
+  const aiRec=useAdaptiveRecommendation(st,{nom35Dominios,readiness,currentMood:preMood>0?preMood:null});
   const smartPick=aiRec?.primary?.protocol||null;
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
   const progStep=PROG_7[(st.progDay||0)%7];
