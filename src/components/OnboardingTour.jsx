@@ -184,6 +184,7 @@ export default function OnboardingTour({ show, isDark = false, onClose }) {
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: space[2] }}>
               <button
+                type="button"
                 onClick={prev}
                 disabled={step === 0}
                 aria-label="Paso anterior"
@@ -197,6 +198,8 @@ export default function OnboardingTour({ show, isDark = false, onClose }) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  opacity: step === 0 ? 0.4 : 1,
+                  cursor: step === 0 ? "not-allowed" : "pointer",
                   transition: "opacity .2s",
                 }}
               >

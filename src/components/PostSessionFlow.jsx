@@ -202,10 +202,11 @@ export default function PostSessionFlow({
               </div>
 
               <motion.button
-                whileTap={reduced ? {} : { scale: 0.96 }}
-                onClick={submitCheckin}
-                disabled={checkMood <= 0}
+                type="button"
+                whileTap={reduced || checkMood <= 0 ? {} : { scale: 0.96 }}
+                onClick={checkMood > 0 ? submitCheckin : undefined}
                 aria-disabled={checkMood <= 0}
+                aria-label={checkMood <= 0 ? "Selecciona tu estado antes de continuar" : "Continuar al resumen"}
                 style={{
                   inlineSize: "100%",
                   padding: space[3],
@@ -215,6 +216,7 @@ export default function PostSessionFlow({
                   color: checkMood > 0 ? "#fff" : t3,
                   ...ty.button,
                   cursor: checkMood > 0 ? "pointer" : "not-allowed",
+                  opacity: checkMood > 0 ? 1 : 0.55,
                 }}
               >
                 {checkMood > 0 ? "CONTINUAR" : "SELECCIONA ESTADO"}

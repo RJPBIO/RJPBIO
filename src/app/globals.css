@@ -3417,7 +3417,7 @@ a.bi-partner-trigger { text-decoration: none; }
   .bi-ignite:active:not(:disabled) { animation: none !important; }
 }
 
-a:focus-visible, .bi-btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
   outline: none;
   box-shadow: var(--bi-focus-ring);
   border-radius: 6px;

@@ -442,8 +442,7 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
         <motion.button
           type="button"
           whileTap={reduced || !canAdvance ? {} : { scale: 0.97 }}
-          onClick={handlePrimary}
-          disabled={!canAdvance}
+          onClick={canAdvance ? handlePrimary : undefined}
           aria-disabled={!canAdvance}
           style={{
             inlineSize: "100%",

@@ -196,6 +196,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
           )}
 
           <button
+            type="button"
             onClick={startCalibration}
             disabled={!bleAvailable}
             aria-label="Iniciar calibración de resonancia"
@@ -205,6 +206,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
               color: "#fff", border: "none", borderRadius: 14,
               fontSize: 13, fontWeight: font.weight.black, letterSpacing: 1, textTransform: "uppercase",
               cursor: bleAvailable ? "pointer" : "not-allowed",
+              opacity: bleAvailable ? 1 : 0.55,
             }}
           >
             Conectar sensor e iniciar
@@ -295,6 +297,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
           </div>
 
           <button
+            type="button"
             onClick={save}
             disabled={!result.pick}
             aria-label="Guardar frecuencia de resonancia"
@@ -304,6 +307,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
               color: "#fff", border: "none", borderRadius: 14,
               fontSize: 13, fontWeight: font.weight.black, letterSpacing: 1, textTransform: "uppercase",
               cursor: result.pick ? "pointer" : "not-allowed",
+              opacity: result.pick ? 1 : 0.55,
             }}
           >
             Guardar

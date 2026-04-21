@@ -265,9 +265,8 @@ export default function SettingsSheet({
                       aria-checked={active}
                       aria-label={`${s.n}, ${status}`}
                       aria-disabled={!affordable}
-                      disabled={!affordable}
-                      whileTap={reduced ? {} : { scale: 0.95 }}
-                      onClick={onClick}
+                      whileTap={reduced || !affordable ? {} : { scale: 0.95 }}
+                      onClick={affordable ? onClick : undefined}
                       style={{
                         paddingBlock: 10,
                         paddingInline: 8,

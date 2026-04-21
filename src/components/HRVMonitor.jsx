@@ -180,6 +180,7 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
           )}
 
           <button
+            type="button"
             onClick={handleConnect}
             disabled={!bleAvailable}
             aria-label="Conectar sensor de frecuencia cardíaca"
@@ -195,6 +196,7 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               letterSpacing: 1,
               textTransform: "uppercase",
               cursor: bleAvailable ? "pointer" : "not-allowed",
+              opacity: bleAvailable ? 1 : 0.55,
             }}
           >
             Conectar sensor
