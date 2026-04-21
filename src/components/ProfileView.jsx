@@ -10,7 +10,7 @@ import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
 import { BioGlyph } from "./BioIgnicionMark";
 import AchievementBadge from "./AchievementBadge";
-import { MOODS, DS, AM } from "../lib/constants";
+import { MOODS, DS, AM, LVL } from "../lib/constants";
 import {
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, suggestOptimalTime, analyzeStreakChain,
@@ -113,7 +113,17 @@ export default function ProfileView({
                 boxShadow: `0 2px 8px ${withAlpha(lv.c, 40)}`,
               }}
             >
-              <span style={{ fontSize: font.size.sm, fontWeight: font.weight.black, color: "#fff" }}>{lv.n[0]}</span>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 14,
+                  fontWeight: font.weight.black,
+                  color: "#fff",
+                  lineHeight: 1,
+                }}
+              >
+                {lv.g || lv.n[0]}
+              </span>
             </div>
           </div>
         </motion.div>
@@ -233,6 +243,132 @@ export default function ProfileView({
           </div>
         </div>
       </motion.article>
+
+      <details
+        className="bi-rank-ladder"
+        style={{
+          background: cd,
+          borderRadius: 16,
+          border: `1px solid ${bd}`,
+          marginBlockEnd: 10,
+          overflow: "hidden",
+        }}
+      >
+        <summary
+          aria-label="Ver todos los rangos del operador neural"
+          style={{
+            listStyle: "none",
+            cursor: "pointer",
+            padding: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: space[2],
+            userSelect: "none",
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              inlineSize: 24,
+              blockSize: 24,
+              borderRadius: radius.full,
+              background: `linear-gradient(135deg,${lv.c},${lv.c}CC)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 13,
+              fontWeight: 900,
+              color: "#fff",
+              lineHeight: 1,
+            }}
+          >
+            {lv.g}
+          </div>
+          <div style={{ flex: 1, minInlineSize: 0 }}>
+            <div style={ty.title(t1)}>Rango · {lv.n}</div>
+            <div style={ty.caption(t3)}>
+              {nLv ? `→ ${nLv.n} en ${Math.max(0, nLv.m - (st.totalSessions || 0))} sesiones` : "Rango máximo alcanzado"}
+            </div>
+          </div>
+          <Icon name="chevron" size={14} color={t3} aria-hidden="true" />
+        </summary>
+        <ol
+          role="list"
+          aria-label="Progresión de rangos"
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: `0 14px 14px`,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            borderBlockStart: `1px solid ${bd}`,
+            paddingBlockStart: 14,
+          }}
+        >
+          {LVL.map((rank) => {
+            const isCurrent = rank.n === lv.n;
+            const isPast = (st.totalSessions || 0) >= rank.mx;
+            return (
+              <li
+                key={rank.n}
+                aria-current={isCurrent ? "true" : undefined}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "32px 1fr auto",
+                  gap: 10,
+                  alignItems: "center",
+                  padding: 10,
+                  borderRadius: 12,
+                  background: isCurrent ? withAlpha(rank.c, 8) : subtle,
+                  border: `1px solid ${isCurrent ? withAlpha(rank.c, 20) : "transparent"}`,
+                  opacity: isPast && !isCurrent ? 0.55 : 1,
+                }}
+              >
+                <div
+                  aria-hidden="true"
+                  style={{
+                    inlineSize: 32,
+                    blockSize: 32,
+                    borderRadius: radius.full,
+                    background: isCurrent
+                      ? `linear-gradient(135deg,${rank.c},${rank.c}CC)`
+                      : withAlpha(rank.c, 12),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    color: isCurrent ? "#fff" : rank.c,
+                    lineHeight: 1,
+                  }}
+                >
+                  {rank.g}
+                </div>
+                <div style={{ minInlineSize: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: isCurrent ? rank.c : t1, letterSpacing: -0.05 }}>
+                    {rank.n}
+                  </div>
+                  <div style={ty.caption(t3)}>{rank.d}</div>
+                </div>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: t3,
+                    letterSpacing: -0.1,
+                    fontVariantNumeric: "tabular-nums",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {rank.m}{rank.mx < 999 ? `–${rank.mx}` : "+"}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </details>
 
       {(() => {
         const unlocked = st.achievements || [];

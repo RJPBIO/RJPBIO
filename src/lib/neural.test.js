@@ -335,17 +335,17 @@ describe("predictSessionImpact", () => {
 
 // ─── levels (gL / lvPct / nxtLv) ─────────────────────────
 describe("levels", () => {
-  it("gL: 0 sesiones → INICIADO", () => {
-    expect(gL(0).n).toBe("INICIADO");
+  it("gL: 0 sesiones → Delta", () => {
+    expect(gL(0).n).toBe("Delta");
   });
-  it("gL: 5 sesiones → OPERADOR", () => {
-    expect(gL(5).n).toBe("OPERADOR");
+  it("gL: 5 sesiones → Theta", () => {
+    expect(gL(5).n).toBe("Theta");
   });
-  it("gL: 25 sesiones → ESTRATEGA", () => {
-    expect(gL(25).n).toBe("ESTRATEGA");
+  it("gL: 25 sesiones → Alpha", () => {
+    expect(gL(25).n).toBe("Alpha");
   });
-  it("gL: 500 sesiones → ARQUITECTO", () => {
-    expect(gL(500).n).toBe("ARQUITECTO");
+  it("gL: 500 sesiones → Ignición", () => {
+    expect(gL(500).n).toBe("Ignición");
   });
   it("lvPct: dentro del rango calcula porcentaje", () => {
     const p = lvPct(15);
@@ -355,8 +355,8 @@ describe("levels", () => {
   it("lvPct: supera max → 100", () => {
     expect(lvPct(9999)).toBe(100);
   });
-  it("nxtLv: INICIADO tiene siguiente OPERADOR", () => {
-    expect(nxtLv(0).n).toBe("OPERADOR");
+  it("nxtLv: Delta tiene siguiente Theta", () => {
+    expect(nxtLv(0).n).toBe("Theta");
   });
   it("nxtLv: último nivel → null", () => {
     expect(nxtLv(999)).toBeNull();

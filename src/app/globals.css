@@ -3152,6 +3152,17 @@ a.bi-partner-trigger { text-decoration: none; }
   word-break: break-all;
 }
 
+/* ─── Rank ladder (Profile) ───────────────────────────────
+   Hides the native marker on summary and rotates the chevron
+   icon when the <details> is open. */
+.bi-rank-ladder > summary { list-style: none; }
+.bi-rank-ladder > summary::-webkit-details-marker { display: none; }
+.bi-rank-ladder > summary svg { transition: transform .2s ease; }
+.bi-rank-ladder[open] > summary svg { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .bi-rank-ladder > summary svg { transition: none; }
+}
+
 .bi-mfa-backup { }
 .bi-mfa-codes {
   list-style: none;

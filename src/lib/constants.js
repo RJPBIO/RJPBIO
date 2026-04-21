@@ -4,13 +4,16 @@
 
 export const CATS = ["Reset", "Activación", "Protocolo"];
 
+// Ladder neuro-fisiológico: cada rango es un estado cerebral real.
+// g = glifo para avatar (letra griega, símbolo final para Ignición).
+// d = descripción corta del estado mostrada en el collapsible de progresión.
 export const LVL = [
-  { n: "INICIADO", m: 0, mx: 1, c: "#94A3B8" },
-  { n: "OPERADOR", m: 1, mx: 10, c: "#6366F1" },
-  { n: "EJECUTOR", m: 10, mx: 25, c: "#059669" },
-  { n: "ESTRATEGA", m: 25, mx: 50, c: "#D97706" },
-  { n: "COMANDANTE", m: 50, mx: 100, c: "#DC2626" },
-  { n: "ARQUITECTO", m: 100, mx: 999, c: "#7C3AED" },
+  { n: "Delta",    g: "δ", m: 0,   mx: 3,   c: "#94A3B8", d: "Reposo profundo. El sistema consolida aprendizajes." },
+  { n: "Theta",    g: "θ", m: 3,   mx: 10,  c: "#6366F1", d: "Meditación y creatividad. Baja el ruido externo." },
+  { n: "Alpha",    g: "α", m: 10,  mx: 30,  c: "#059669", d: "Calma alerta. El foco se sostiene sin esfuerzo." },
+  { n: "Beta",     g: "β", m: 30,  mx: 75,  c: "#D97706", d: "Atención activa. Rendimiento bajo carga cognitiva." },
+  { n: "Gamma",    g: "γ", m: 75,  mx: 175, c: "#DC2626", d: "Cognición pico. Integración multi-sensorial." },
+  { n: "Ignición", g: "★", m: 175, mx: 999, c: "#7C3AED", d: "Maestría del sistema. Operador neural completo." },
 ];
 
 export const DN = ["L", "M", "X", "J", "V", "S", "D"];
