@@ -2,23 +2,29 @@
 /* ═══════════════════════════════════════════════════════════════
    ACHIEVEMENT BADGE — insignias ilustradas por logro
    ═══════════════════════════════════════════════════════════════
-   Apple "close the ring" y Duolingo demostraron que un logro
-   debe verse como un objeto, no como texto en una lista. Cada
-   archetype aquí es una escena SVG única con paleta y tier.
+   Cada archetype es una escena SVG con paleta y tier. Las tiers
+   raras (gold/violet/rose) reciben capa de identidad adicional:
+   sparkles en golden-angle, arco conic rotatorio (solo gold) y
+   kicker mono con tier, para que un logro elite se lea como
+   artefacto — no como emoji.
    ═══════════════════════════════════════════════════════════════ */
 
 import { motion } from "framer-motion";
-import { bioSignal, font, space, radius } from "../lib/theme";
+import { bioSignal, font, space } from "../lib/theme";
 import { useReducedMotion } from "../lib/a11y";
 
 const TIERS = {
-  bronze: { primary: "#D97706", secondary: "#92400E", glow: "#FBBF24" },
-  silver: { primary: "#94A3B8", secondary: "#64748B", glow: "#E2E8F0" },
-  gold:   { primary: bioSignal.ignition, secondary: "#D97706", glow: "#FEF3C7" },
-  cyan:   { primary: bioSignal.phosphorCyan, secondary: "#0891B2", glow: "#A5F3FC" },
-  violet: { primary: bioSignal.neuralViolet, secondary: "#6D28D9", glow: "#C4B5FD" },
-  rose:   { primary: bioSignal.plasmaPink, secondary: "#DB2777", glow: "#FBCFE8" },
+  bronze: { primary: "#D97706", secondary: "#92400E", glow: "#FBBF24", name: "Bronce" },
+  silver: { primary: "#94A3B8", secondary: "#64748B", glow: "#E2E8F0", name: "Plata" },
+  gold:   { primary: bioSignal.ignition,     secondary: "#D97706", glow: "#FEF3C7", name: "Oro" },
+  cyan:   { primary: bioSignal.phosphorCyan, secondary: "#0891B2", glow: "#A5F3FC", name: "Cian" },
+  violet: { primary: bioSignal.neuralViolet, secondary: "#6D28D9", glow: "#C4B5FD", name: "Violeta" },
+  rose:   { primary: bioSignal.plasmaPink,   secondary: "#DB2777", glow: "#FBCFE8", name: "Rosa" },
 };
+
+const RARE = new Set(["gold", "violet", "rose"]);
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
 const META = {
   streak7:      { archetype: "flame",   tier: "bronze", label: "Chispa", caption: "7 días" },
@@ -45,28 +51,50 @@ const svgCommon = { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 64 64" };
 
 function FrameHex({ color, locked }) {
   return (
-    <polygon
-      points="32,4 56,18 56,46 32,60 8,46 8,18"
-      fill="none"
-      stroke={color}
-      strokeWidth="1.5"
-      opacity={locked ? 0.3 : 0.7}
-    />
+    <g>
+      <polygon
+        points="32,4 56,18 56,46 32,60 8,46 8,18"
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        opacity={locked ? 0.3 : 0.7}
+      />
+      <polygon
+        points="32,4 56,18 56,46 32,60 8,46 8,18"
+        fill="none"
+        stroke={color}
+        strokeWidth="0.5"
+        strokeDasharray="1 2"
+        opacity={locked ? 0.2 : 0.35}
+        transform="scale(0.88) translate(4.4 4.4)"
+      />
+    </g>
   );
 }
 
 function FrameRing({ color, locked }) {
   return (
-    <circle
-      cx="32"
-      cy="32"
-      r="28"
-      fill="none"
-      stroke={color}
-      strokeWidth="1.5"
-      opacity={locked ? 0.3 : 0.7}
-      strokeDasharray="1 4"
-    />
+    <g>
+      <circle
+        cx="32"
+        cy="32"
+        r="28"
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        opacity={locked ? 0.3 : 0.7}
+        strokeDasharray="1 4"
+      />
+      <circle
+        cx="32"
+        cy="32"
+        r="24"
+        fill="none"
+        stroke={color}
+        strokeWidth="0.5"
+        opacity={locked ? 0.2 : 0.35}
+      />
+    </g>
   );
 }
 
@@ -247,6 +275,19 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
   const arch = ARCHETYPES[meta.archetype] || ARCHETYPES.spark;
   const Frame = arch.frame;
   const Glyph = arch.glyph;
+  const isRare = unlocked && RARE.has(meta.tier);
+
+  const sparkles = Array.from({ length: 5 }, (_, i) => {
+    const angle = i * GOLDEN_ANGLE;
+    const radius = size * 0.48;
+    return {
+      id: i,
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+      delay: i * 0.35,
+      r: 1.4 + (i % 3) * 0.6,
+    };
+  });
 
   const ariaLabel = `${meta.label} · ${meta.caption}${unlocked ? "" : " (bloqueado)"}`;
 
@@ -263,7 +304,7 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
         gap: space[1],
         filter: unlocked ? "none" : "grayscale(1) brightness(0.6)",
         opacity: unlocked ? 1 : 0.55,
-        transition: "all 0.3s",
+        transition: "filter 0.3s, opacity 0.3s",
       }}
     >
       <div
@@ -288,6 +329,62 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
         )}
+
+        {meta.tier === "gold" && unlocked && !reduced && (
+          <motion.div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: -4,
+              borderRadius: "50%",
+              padding: 1,
+              background: `conic-gradient(from 0deg, transparent 0%, ${t.glow} 10%, ${t.primary} 25%, transparent 40%, transparent 60%, ${t.glow} 75%, transparent 90%)`,
+              WebkitMask: "radial-gradient(circle, transparent 66%, #000 68%)",
+              mask: "radial-gradient(circle, transparent 66%, #000 68%)",
+              opacity: 0.85,
+            }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+          />
+        )}
+
+        {isRare && !reduced && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              insetInlineStart: "50%",
+              insetBlockStart: "50%",
+              inlineSize: 0,
+              blockSize: 0,
+            }}
+          >
+            {sparkles.map((s) => (
+              <motion.span
+                key={s.id}
+                style={{
+                  position: "absolute",
+                  insetInlineStart: s.x,
+                  insetBlockStart: s.y,
+                  inlineSize: s.r * 2,
+                  blockSize: s.r * 2,
+                  borderRadius: "50%",
+                  background: t.glow,
+                  boxShadow: `0 0 6px ${t.primary}`,
+                  translate: "-50% -50%",
+                }}
+                animate={{ opacity: [0, 1, 0], scale: [0.6, 1.1, 0.6] }}
+                transition={{
+                  duration: 2.2,
+                  repeat: Infinity,
+                  delay: s.delay,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </div>
+        )}
+
         <svg
           {...svgCommon}
           width={size}
@@ -309,12 +406,25 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
         <div style={{ textAlign: "center", maxInlineSize: size + 16 }}>
           <div
             style={{
+              fontFamily: MONO,
+              fontSize: 8,
+              letterSpacing: 1.8,
+              color: unlocked ? t.primary : "rgba(148,163,184,0.7)",
+              opacity: 0.8,
+              textTransform: "uppercase",
+              marginBlockEnd: 2,
+            }}
+          >
+            ▸ {unlocked ? t.name : "Bloq."}
+          </div>
+          <div
+            style={{
               fontSize: 11,
               fontWeight: font.weight.black,
               color: unlocked ? t.primary : "rgba(148,163,184,0.8)",
               letterSpacing: 1.2,
               textTransform: "uppercase",
-              fontFamily: font.mono,
+              fontFamily: MONO,
               lineHeight: 1.2,
             }}
           >
