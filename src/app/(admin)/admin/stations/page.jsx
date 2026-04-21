@@ -11,7 +11,7 @@ export default async function StationsPage() {
   const session = await auth();
   if (!session?.user) redirect("/signin?next=/admin/stations");
   const adminOrgs = (session.memberships || []).filter((m) => ["OWNER", "ADMIN"].includes(m.role));
-  if (!adminOrgs.length) redirect("/");
+  if (!adminOrgs.length) redirect("/app");
 
   const orgId = adminOrgs[0].orgId;
   const orm = await db();

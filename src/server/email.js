@@ -76,6 +76,42 @@ export async function sendSecurityAlert({ to, event, ip, ua, when, locale = DEFA
   });
 }
 
+export async function sendMfaResetResolved({ to, status, orgName, reason, signinUrl, locale = DEFAULT_LOCALE }) {
+  const vars = { org: orgName || "" };
+  if (status === "approved") {
+    const Subject = tLocale(locale, "emails.mfaReset.approvedSubject");
+    const heading = tLocale(locale, "emails.mfaReset.approvedHeading");
+    const body    = tLocale(locale, "emails.mfaReset.approvedBody", vars);
+    const cta     = tLocale(locale, "emails.mfaReset.approvedCta");
+    const fine    = tLocale(locale, "emails.mfaReset.approvedFineprint");
+    const text    = tLocale(locale, "emails.mfaReset.approvedText");
+    const url     = signinUrl || "https://bio-ignicion.app/signin";
+    return postmark({
+      From: FROM, To: to, MessageStream: "outbound",
+      Subject,
+      HtmlBody: wrap(`<h2>${heading}</h2><p>${body}</p><p><a href="${url}" style="background:#10B981;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">${cta}</a></p><p style="color:#64748B;font-size:13px">${fine}</p>`, locale),
+      TextBody: text,
+    });
+  }
+  const Subject = tLocale(locale, "emails.mfaReset.rejectedSubject");
+  const heading = tLocale(locale, "emails.mfaReset.rejectedHeading");
+  const body    = tLocale(locale, "emails.mfaReset.rejectedBody", vars);
+  const reasonLabel = tLocale(locale, "emails.mfaReset.rejectedReasonLabel");
+  const fine    = tLocale(locale, "emails.mfaReset.rejectedFineprint");
+  const text    = tLocale(locale, "emails.mfaReset.rejectedText");
+  const reasonBlock = reason ? `<p style="color:#475569;font-size:14px"><b>${reasonLabel}</b> ${escapeHtml(reason)}</p>` : "";
+  return postmark({
+    From: FROM, To: to, MessageStream: "outbound",
+    Subject,
+    HtmlBody: wrap(`<h2>${heading}</h2><p>${body}</p>${reasonBlock}<p style="color:#64748B;font-size:13px">${fine}</p>`, locale),
+    TextBody: text,
+  });
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
 export async function sendReceipt({ to, amount, currency, invoiceUrl, locale = DEFAULT_LOCALE }) {
   const money = fmtCurrencyL(locale, amount, currency);
   const vars = { amount: money, url: invoiceUrl };

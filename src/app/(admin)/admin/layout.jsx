@@ -16,6 +16,7 @@ const GROUPS = [
     { href: "/admin/onboarding", label: "Onboarding" },
   ]},
   { label: "Seguridad", items: [
+    { href: "/admin/security", label: "Reset de MFA" },
     { href: "/admin/audit", label: "Auditoría" },
     { href: "/admin/api-keys", label: "API Keys" },
     { href: "/admin/integrations", label: "Integraciones" },
@@ -38,7 +39,7 @@ export default async function AdminLayout({ children }) {
   const session = await auth();
   if (!session?.user) redirect("/signin?next=/admin");
   const adminOrgs = (session.memberships || []).filter((m) => ["OWNER", "ADMIN"].includes(m.role));
-  if (!adminOrgs.length) redirect("/");
+  if (!adminOrgs.length) redirect("/app");
   return (
     <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100dvh", background: "#0B0E14", color: "#ECFDF5" }}>
       <aside style={{ borderRight: "1px solid #064E3B", padding: 20, background: "#052E16" }}>

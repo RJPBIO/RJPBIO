@@ -35,6 +35,15 @@ export async function beginAuthentication(user) {
   return generateAuthenticationOptions({ rpID: RP_ID, userVerification: "preferred", allowCredentials });
 }
 
+// Discoverable / resident-key flow (conditional UI). Empty allowCredentials
+// lets the authenticator enumerate its own discoverable credentials for this
+// RP. The browser then returns userHandle in response.response.userHandle,
+// which we registered as `Buffer.from(user.id)` at registration time.
+export async function beginDiscoverableAuthentication() {
+  const { generateAuthenticationOptions } = await import("@simplewebauthn/server");
+  return generateAuthenticationOptions({ rpID: RP_ID, userVerification: "preferred", allowCredentials: [] });
+}
+
 export async function finishAuthentication(response, expectedChallenge, credential) {
   const { verifyAuthenticationResponse } = await import("@simplewebauthn/server");
   return verifyAuthenticationResponse({

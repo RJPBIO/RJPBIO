@@ -11,6 +11,7 @@ import NextAuth from "next-auth";
 import Okta from "next-auth/providers/okta";
 import AzureAD from "next-auth/providers/azure-ad";
 import Google from "next-auth/providers/google";
+import Apple from "next-auth/providers/apple";
 import Email from "next-auth/providers/email";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "./db";
@@ -43,12 +44,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       authorization: { params: { hd: "*" } },
     }),
+    ...(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET ? [Apple({
+      clientId: process.env.APPLE_CLIENT_ID,
+      clientSecret: process.env.APPLE_CLIENT_SECRET,
+    })] : []),
     ...(process.env.EMAIL_SERVER ? [Email({
       server: process.env.EMAIL_SERVER,
       from: process.env.EMAIL_FROM || "no-reply@bio-ignicion.app",
     })] : []),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try { if (new URL(url).origin === baseUrl) return url; } catch {}
+      return `${baseUrl}/app`;
+    },
     async signIn({ user, account }) {
       const orm = await db();
       await orm.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});

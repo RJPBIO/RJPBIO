@@ -51,12 +51,18 @@ model User {
   id           String        @id @default(cuid())
   email        String        @unique
   emailVerified DateTime?
+  phone        String?       @unique     // E.164 (+521234567890). Alternate identity for SMS-OTP sign-in.
+  phoneVerified DateTime?
   name         String?
   image        String?
   locale       String        @default("es")
   timezone     String        @default("America/Mexico_City")
   mfaEnabled   Boolean       @default(false)
   mfaSecret    String?
+  mfaVerifiedAt DateTime?                    // last successful MFA challenge
+  mfaBackupCodes String[]    @default([])    // scrypt hashes; consumed on use
+  mfaFailCount Int           @default(0)     // resets on success; drives lockout
+  mfaLockedUntil DateTime?                   // 429 until this passes
   passkeyCredentials Json?   // [{ id, publicKey, counter, transports }]
   lastLoginAt  DateTime?
   deletedAt    DateTime?     // GDPR Art. 17 soft-delete
@@ -69,6 +75,57 @@ model User {
   impersonatedBy Impersonation[] @relation("ImpersonationTarget")
   impersonationsAsActor Impersonation[] @relation("ImpersonationActor")
   nom35Responses Nom35Response[]
+  trustedDevices TrustedDevice[]
+  mfaResetRequests MfaResetRequest[]
+}
+
+// Trusted-device cookie — lets a user skip MFA for 30 days on a specific
+// browser after a successful challenge with "remember device" checked.
+// Cookie value is random; only its sha256 is stored here. Rotate on expiry.
+model TrustedDevice {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  label      String?   // UA-derived, shown in /settings/sessions
+  ip         String?
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// Self-serve MFA reset ticket — created from /recover when user lost
+// their device. Admin resolves from /admin/mfa-resets (or support desk).
+model MfaResetRequest {
+  id         String   @id @default(cuid())
+  userId     String
+  email      String
+  reason     String?
+  ip         String?
+  userAgent  String?
+  status     String   @default("pending") // pending | approved | denied
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+  resolverId String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+// SMS-OTP — OTP de 6 dígitos hasheado (HMAC), TTL corto, contador de
+// intentos. Se borra al consumirse o al expirar. Clave por teléfono
+// normalizado E.164; una fila activa por número.
+model PhoneOtp {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  ip         String?
+  createdAt  DateTime @default(now())
+  @@index([expiresAt])
 }
 
 enum Role {
