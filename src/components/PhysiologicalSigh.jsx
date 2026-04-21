@@ -208,15 +208,15 @@ export default function PhysiologicalSigh({ show, isDark, onClose, onComplete })
             aria-label="Iniciar suspiro fisiológico"
             style={{
               flex: 1,
+              minBlockSize: 48,
               paddingBlock: 14,
               background: brand.primary,
               color: "#fff",
               border: "none",
               borderRadius: 14,
-              fontSize: 13,
-              fontWeight: font.weight.black,
-              letterSpacing: 1,
-              textTransform: "uppercase",
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: -0.1,
               cursor: "pointer",
             }}
           >
@@ -229,15 +229,14 @@ export default function PhysiologicalSigh({ show, isDark, onClose, onComplete })
             aria-label="Pausar ejercicio"
             style={{
               flex: 1,
+              minBlockSize: 48,
               paddingBlock: 14,
               background: "transparent",
               color: t1,
               border: `1px solid ${bd}`,
               borderRadius: 14,
-              fontSize: 13,
-              fontWeight: font.weight.black,
-              letterSpacing: 1,
-              textTransform: "uppercase",
+              fontSize: 15,
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
@@ -250,15 +249,15 @@ export default function PhysiologicalSigh({ show, isDark, onClose, onComplete })
             aria-label="Cerrar"
             style={{
               flex: 1,
+              minBlockSize: 48,
               paddingBlock: 14,
               background: brand.primary,
               color: "#fff",
               border: "none",
               borderRadius: 14,
-              fontSize: 13,
-              fontWeight: font.weight.black,
-              letterSpacing: 1,
-              textTransform: "uppercase",
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: -0.1,
               cursor: "pointer",
             }}
           >

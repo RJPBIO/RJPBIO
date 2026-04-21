@@ -163,7 +163,17 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
 
       {selectedDuration && !done && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 24 }}>
-          <div style={{ color: brand.primary, fontSize: 60, fontWeight: font.weight.black, lineHeight: 1 }}>
+          <div
+            style={{
+              color: brand.primary,
+              fontSize: 60,
+              fontWeight: 500,
+              lineHeight: 1,
+              fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+              letterSpacing: -1.5,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {formatTime(Math.max(0, selectedDuration.sec - elapsed))}
           </div>
           <AnimatePresence mode="wait">
@@ -233,7 +243,7 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
         <button
           onClick={onClose}
           aria-label="Cerrar"
-          style={{ paddingBlock: 14, background: brand.primary, color: "#fff", border: "none", borderRadius: 14, fontSize: 13, fontWeight: font.weight.black, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}
+          style={{ minBlockSize: 48, paddingBlock: 14, background: brand.primary, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, letterSpacing: -0.1, cursor: "pointer" }}
         >
           Listo
         </button>
