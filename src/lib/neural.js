@@ -530,7 +530,8 @@ export function adaptiveProtocolEngine(st, options = {}) {
   const burnout = calcBurnoutIndex(ml, hist);
   // Override lastMood con el estado declarado en el picker pre-sesión si existe.
   // Esto vuelve el picker un controller vivo: el motor reacciona en tiempo real.
-  const lastMood = (typeof currentMood === "number" && currentMood >= 1 && currentMood <= 5)
+  const moodIsExplicit = typeof currentMood === "number" && currentMood >= 1 && currentMood <= 5;
+  const lastMood = moodIsExplicit
     ? currentMood
     : (ml.slice(-1)[0]?.mood || 3);
   const sensitivity = calcProtoSensitivity(ml);
@@ -553,6 +554,16 @@ export function adaptiveProtocolEngine(st, options = {}) {
   // tendencias recientes y momentum, pero cede ante burnout crítico.
   else if (nom35Bias && nom35Bias.urgent) {
     primaryNeed = nom35Bias.intent;
+  }
+  // Override por estado declarado en el picker pre-sesión (mood inmediato).
+  // Solo cuando es explícito (no herencia del último log): el tap debe mover
+  // la recomendación en tiempo real. Estable (3) no override — deja que el
+  // circadiano/tendencia decidan.
+  else if (moodIsExplicit && lastMood !== 3) {
+    if (lastMood === 1) primaryNeed = "calma";
+    else if (lastMood === 2) primaryNeed = "reset";
+    else if (lastMood === 5) primaryNeed = "energia";
+    else if (lastMood === 4 && h >= 8 && h < 20) primaryNeed = "enfoque";
   }
   // Override por tendencia emocional reciente
   else if (ml.length >= 3) {
@@ -631,7 +642,7 @@ export function adaptiveProtocolEngine(st, options = {}) {
     if (nom35Bias) score = applyBiasToScore(score, p, nom35Bias);
 
     // Generar razón contextual (prioriza NOM-35 si aplica)
-    const reason = _generateReason(p, primaryNeed, sens, burnout, momentum, nom35Bias, readiness);
+    const reason = _generateReason(p, primaryNeed, sens, burnout, momentum, nom35Bias, readiness, moodIsExplicit, lastMood);
 
     return { protocol: p, score: +score.toFixed(2), reason };
   });
@@ -661,7 +672,7 @@ export function adaptiveProtocolEngine(st, options = {}) {
   };
 }
 
-function _generateReason(protocol, need, sensitivity, burnout, momentum, nom35Bias, readiness) {
+function _generateReason(protocol, need, sensitivity, burnout, momentum, nom35Bias, readiness, moodIsExplicit = false, lastMood = null) {
   if (burnout.risk === "crítico" || burnout.risk === "alto") {
     return "Prioridad: reducir riesgo de agotamiento sostenido";
   }
@@ -676,6 +687,12 @@ function _generateReason(protocol, need, sensitivity, burnout, momentum, nom35Bi
   }
   if (nom35Bias && protocol.int === nom35Bias.intent) {
     return `Tu perfil NOM-035 (${nom35Bias.dominioLabel || nom35Bias.dominio}) indica ${nom35Bias.intent} como prioridad`;
+  }
+  if (moodIsExplicit && lastMood !== null) {
+    if (lastMood === 1) return "Reportaste tensión alta: regulación parasimpática antes de cualquier carga";
+    if (lastMood === 2) return "Reportaste agotamiento: descarga cognitiva antes de activar";
+    if (lastMood === 5 && protocol.int === "energia") return "Estás en óptimo: ventana para capitalizar activación";
+    if (lastMood === 4 && protocol.int === "enfoque") return "Reportaste enfoque: aprovecha la activación prefrontal actual";
   }
   if (sensitivity && sensitivity.avgDelta > 0.5) {
     return `Tu historial muestra +${sensitivity.avgDelta} puntos con este protocolo`;
