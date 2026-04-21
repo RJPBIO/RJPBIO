@@ -9,6 +9,14 @@ updates:
       dev:  { dependency-type: development }
     labels: [deps]
     reviewers: [bio-ignicion/platform]
+    # Prisma 7 removed `url`/`directUrl` from schema.prisma and requires
+    # migrating to prisma.config.ts. Until that migration is done as a
+    # dedicated PR, ignore major bumps for both prisma packages.
+    ignore:
+      - dependency-name: "prisma"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@prisma/client"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
