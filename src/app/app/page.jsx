@@ -30,7 +30,7 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
 import { useMidSessionMessages } from "@/hooks/useMidSessionMessages";
 import {
-  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition,
+  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
@@ -89,6 +89,9 @@ export default function BioIgnicion(){
   const[bL,setBL]=useState("");const[bS,setBS]=useState(1);const[bCnt,setBCnt]=useState(0);
   const[midMsg,setMidMsg]=useState("");const[showMid,setShowMid]=useState(false);
   const[tp,setTp]=useState(false);
+  const[ignitionFlash,setIgnitionFlash]=useState(false);
+  const[phaseFlash,setPhaseFlash]=useState(false);
+  const[orbDoneFlash,setOrbDoneFlash]=useState(false);
   const[postStep,setPostStep]=useState("none");
   const[postVC,setPostVC]=useState(0);const[postMsg,setPostMsg]=useState("");
   const[checkMood,setCheckMood]=useState(0);const[checkEnergy,setCheckEnergy]=useState(0);const[checkTag,setCheckTag]=useState("");
@@ -231,6 +234,22 @@ export default function BioIgnicion(){
   useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection(({samples,stability})=>{setSessionData(d=>({...d,motionSamples:samples,stability:stability}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
 
   useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");hapRef.current("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>hapRef.current("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
+  // Ignition flash: destello one-shot cuando la sesión arranca. Firma audio+haptic
+  // hacen tangible la metáfora de "ignición" — no es solo visual.
+  useEffect(()=>{
+    if(ts==="running"){
+      setIgnitionFlash(true);
+      // Firma auditiva: 2-tone rise breve (880→1320Hz). Diferenciado del playIgnition() completo
+      // que queda reservado para completion.
+      if(st.soundOn!==false){try{playChord([880,1320],0.28,0.042);}catch(e){}}
+      // Firma háptica: crescendo corto (phaseShift pattern [12,18,24]ms).
+      if(st.hapticOn!==false){try{hapticSignature("phaseShift");}catch(e){}}
+      const t=setTimeout(()=>setIgnitionFlash(false),900);
+      return()=>clearTimeout(t);
+    }
+  },[ts]);
+  // Phase flash: pulso sutil cuando cambia de fase durante running (choreography entre fases).
+  useEffect(()=>{if(pi>0&&ts==="running"){setPhaseFlash(true);const t=setTimeout(()=>setPhaseFlash(false),700);return()=>clearTimeout(t);}},[pi,ts]);
   const totalDur=Math.round(pr.d*durMult);
   useEffect(()=>{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
     let speakTO=null;
@@ -281,7 +300,14 @@ export default function BioIgnicion(){
       if(st.soundOn!==false)try{playIgnition();}catch(e){}
       if(st.hapticOn!==false)hapticSignature("ignition");
     }
-    setCompFlash(true);setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},1600);
+    // Bridge orb → IgnitionBurst: 550ms de flash emerald dentro del orb ANTES de que el
+    // overlay full-screen tome el control. Da continuidad narrativa — el orb cierra su ciclo.
+    setOrbDoneFlash(true);
+    setTimeout(()=>{
+      setOrbDoneFlash(false);
+      setCompFlash(true);
+      setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},1600);
+    },550);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,...result.newState});
   }
@@ -303,7 +329,7 @@ export default function BioIgnicion(){
   }
 
   const lv=gL(st.totalSessions),ph=pr.ph[pi],fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc);
-  const pct=(totalDur-sec)/totalDur,CI=2*Math.PI*116,dO=CI*(1-pct),isBr=ts==="running"&&ph.br;
+  const pct=(totalDur-sec)/totalDur,isBr=ts==="running"&&ph.br;
   const perf=Math.round((st.coherencia+st.resiliencia+st.capacidad)/3);
   const protoSens=useMemo(()=>calcProtoSensitivity(st.moodLog),[st.moodLog]);
   const nSt=getStatus(perf);const lPct=lvPct(st.totalSessions);
@@ -927,51 +953,90 @@ export default function BioIgnicion(){
     })()}
 
 
-    {/* ═══ CORE DE IGNICIÓN — unificado: timer + respiración + fase en un solo foco ═══ */}
-    <div onClick={timerTap} role="button" tabIndex={0} aria-label={ts==="idle"?`Iniciar sesión de ${pr.n}, duración ${sec} segundos`:ts==="running"?`Pausar sesión. Fase ${ph.l}, ${sec} segundos restantes`:`Reanudar sesión. ${sec} segundos restantes`} aria-pressed={ts==="running"} onKeyDown={onTimerKey} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?240:250,height:isActive?240:250,margin:"4px auto 18px",cursor:"pointer",transform:tp?"scale(0.93)":"scale(1)",transition:reducedMotion?"none":"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
-      {/* Glow exterior — respira con bS cuando hay fase de respiración */}
-      <motion.div aria-hidden="true" animate={isBr&&!reducedMotion?{scale:bS,opacity:.55}:ts==="idle"?{scale:[1,1.06,1],opacity:[.3,.6,.3]}:isActive?{scale:[1,1.04,1],opacity:[.4,.7,.4]}:{}} transition={isBr&&!reducedMotion?{scale:{type:"spring",stiffness:30,damping:20,mass:1.2},opacity:{duration:.6}}:{duration:ts==="idle"?3.5:2.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:isActive?-22:-10,borderRadius:"50%",background:`radial-gradient(circle,${ac}${isActive?"14":"08"},transparent 65%)`,filter:"blur(8px)",pointerEvents:"none"}}/>
-      {/* Anillo exterior — respira con bS cuando hay fase de respiración */}
-      {ts!=="paused"&&<motion.div aria-hidden="true" animate={isBr&&!reducedMotion?{scale:bS}:{scale:[1,1.02,1]}} transition={isBr&&!reducedMotion?{type:"spring",stiffness:30,damping:20,mass:1.2}:{duration:5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:isActive?-10:-4,borderRadius:"50%",border:`1.5px solid ${ac}${isActive?"22":"0A"}`,pointerEvents:"none"}}/>}
-      {/* Halo interior de respiración (absorbe BreathOrb) */}
-      {isActive&&!reducedMotion&&<motion.div aria-hidden="true" animate={isBr?{scale:bS*0.92,opacity:.55}:{scale:[.94,1,.94],opacity:[.25,.45,.25]}} transition={isBr?{scale:{type:"spring",stiffness:30,damping:20,mass:1.2},opacity:{duration:.6}}:{duration:3,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:"20%",borderRadius:"50%",background:`radial-gradient(circle,${ac}22,${ac}08,transparent 72%)`,pointerEvents:"none"}}/>}
-      <svg width={isActive?"240":"250"} height={isActive?"240":"250"} viewBox="0 0 260 260" style={{transform:"rotate(-90deg)"}}>
-        {/* Track */}
-        <circle cx="130" cy="130" r="116" fill="none" stroke={bd} strokeWidth={ts==="idle"?"4":"3"} opacity=".4"/>
-        {/* Progreso */}
-        <circle cx="130" cy="130" r="116" fill="none" stroke={ac} strokeWidth={isActive?"7":ts==="idle"?"5":"3"} strokeLinecap="round" strokeDasharray={CI} strokeDashoffset={ts==="idle"?0:dO} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",filter:isActive?`drop-shadow(0 0 8px ${ac}60)`:`drop-shadow(0 0 4px ${ac}30)`}}/>
-        {/* Anillo interior */}
-        <circle cx="130" cy="130" r="98" fill="none" stroke={bd} strokeWidth=".5" strokeDasharray="3 8" style={{animation:isActive?"innerRing 10s linear infinite":"innerRing 30s linear infinite"}}/>
-        {/* Gradiente de fondo sutil en idle */}
-        {ts==="idle"&&<circle cx="130" cy="130" r="115" fill={`url(#timerGrad)`} opacity=".04"/>}
-        <defs><radialGradient id="timerGrad"><stop offset="0%" stopColor={ac}/><stop offset="100%" stopColor="transparent"/></radialGradient></defs>
+    {/* ═══ CORE DE IGNICIÓN — orb 3D sensorial (misma receta que el orb del landing)
+        Esfera dark-navy con highlight cyan arriba, drop-shadow pronunciado, beam vertical,
+        ripple rings en idle, progress ring como corona exterior brillante.
+        Interior con texto claro para contrastar con el orb oscuro. ═══ */}
+    <div onClick={timerTap} role="button" tabIndex={0} aria-label={ts==="idle"?`Iniciar sesión de ${pr.n}, duración ${sec} segundos`:ts==="running"?`Pausar sesión. Fase ${ph.l}, ${sec} segundos restantes`:`Reanudar sesión. ${sec} segundos restantes`} aria-pressed={ts==="running"} onKeyDown={onTimerKey} onMouseDown={()=>setTp(true)} onMouseUp={()=>setTp(false)} onMouseLeave={()=>setTp(false)} onTouchStart={()=>setTp(true)} onTouchEnd={()=>setTp(false)} style={{position:"relative",width:isActive?240:260,height:isActive?240:260,margin:"28px auto 32px",cursor:"pointer",transform:tp?"scale(0.94)":"scale(1)",transition:reducedMotion?"none":"all .6s cubic-bezier(.34,1.56,.64,1)",userSelect:"none"}}>
+      {/* Beam vertical — tallo neural persistente en todos los estados (ADN de marca: "Y" del logo).
+          Se intensifica en idle (invitación), se atenúa en running/paused (mecha encendida). */}
+      <motion.div aria-hidden="true" animate={reducedMotion?{opacity:ts==="idle"?.7:ts==="paused"?.25:.45}:ts==="idle"?{opacity:[.4,.9,.4]}:ts==="running"?{opacity:[.35,.55,.35]}:{opacity:.22}} transition={{duration:ts==="idle"?3:2.2,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",top:-46,left:"50%",width:2,height:44,background:`linear-gradient(to bottom, transparent 0%, ${withAlpha(ac,0)} 10%, ${ac} 100%)`,transform:"translateX(-50%)",filter:`drop-shadow(0 0 8px ${withAlpha(ac,75)})`,pointerEvents:"none",borderRadius:2}}/>
+      {/* Nodo-chispa en el punto donde beam toca el ring — conecta visualmente beam + orb.
+          En paused queda congelado (sin animación) para reforzar la sensación de "pausa". */}
+      <motion.div aria-hidden="true" animate={reducedMotion||ts==="paused"?{scale:1,opacity:ts==="paused"?.35:.85}:{scale:ts==="idle"?[1,1.3,1]:[1,1.15,1],opacity:[.65,1,.65]}} transition={ts==="paused"?{duration:.3}:{duration:ts==="idle"?2.8:1.8,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",top:-4,left:"50%",transform:"translate(-50%,-50%)",width:8,height:8,borderRadius:"50%",background:ac,boxShadow:`0 0 14px ${withAlpha(ac,90)}, 0 0 4px #fff`,pointerEvents:"none",zIndex:3}}/>
+      {/* Phosphor glow ambiental — grande y suave, se siente desde lejos */}
+      <motion.div aria-hidden="true" animate={isBr&&!reducedMotion?{scale:bS*1.08,opacity:.55}:ts==="idle"?{scale:[1,1.08,1],opacity:[.35,.6,.35]}:isActive?{scale:[1,1.05,1],opacity:[.45,.7,.45]}:{opacity:.3}} transition={isBr&&!reducedMotion?{scale:{type:"spring",stiffness:30,damping:20,mass:1.2},opacity:{duration:.6}}:{duration:ts==="idle"?4:2.8,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:-52,borderRadius:"50%",background:`radial-gradient(circle, ${withAlpha(ac,30)}, ${withAlpha(ac,10)} 45%, transparent 70%)`,filter:"blur(22px)",pointerEvents:"none"}}/>
+      {/* Ripple rings — se expanden en idle (invitación a tocar) y durante sesión activa (confirmación de pulso) */}
+      {(ts==="idle"||isActive)&&!reducedMotion&&[0,1].map(i=><motion.span key={i} aria-hidden="true" initial={{scale:.88,opacity:.5}} animate={{scale:1.45,opacity:0}} transition={{duration:isActive?2.2:3.2,delay:i*(isActive?1.1:1.6),ease:"easeOut",repeat:Infinity}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1px solid ${ac}`,pointerEvents:"none"}}/>)}
+      {/* Orb sphere — la esfera 3D: radial-gradient simula punto de luz arriba, sombra interna abajo da profundidad.
+          Readiness tint: el highlight superior se desplaza sutilmente según estado fisiológico
+          — recover (amber warm), primed/optimal (cyan-emerald bright), neutral (ac default). */}
+      {(()=>{const rInt=readiness?.interpretation;const rTint=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":rInt==="primed"?ac:ac;return(
+      <motion.div aria-hidden="true" animate={isBr&&!reducedMotion?{scale:bS}:ts==="idle"?{scale:[1,1.015,1]}:isActive?{scale:[1,1.01,1]}:{scale:.97}} transition={isBr&&!reducedMotion?{type:"spring",stiffness:30,damping:20,mass:1.2}:{duration:ts==="idle"?5:3.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle at 50% 30%, ${withAlpha(rTint,rInt==="primed"||rInt==="optimal"?50:40)} 0%, ${withAlpha(ac,22)} 18%, #101624 45%, #060810 85%, #040610 100%)`,border:`1px solid ${withAlpha(ac,42)}`,boxShadow:`0 30px 90px -22px ${withAlpha(rTint,55)}, 0 10px 30px -10px rgba(0,0,0,0.45), inset 0 2px 0 0 rgba(255,255,255,0.14), inset 0 -24px 50px -12px rgba(0,0,0,0.7)`,pointerEvents:"none",opacity:ts==="paused"?.75:1,transition:"opacity .4s ease, background .6s ease, box-shadow .6s ease"}}/>
+      );})()}
+      {/* Halo interior — breathing glow que pulsa con bS, refuerza el highlight superior.
+          Adopta el readiness tint. En paused se congela (sin pulso). */}
+      {!reducedMotion&&(()=>{const rInt=readiness?.interpretation;const rTint=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":ac;return(
+      <motion.div aria-hidden="true" animate={isBr?{scale:bS*0.9,opacity:.7}:ts==="idle"?{scale:[.92,1,.92],opacity:[.35,.55,.35]}:ts==="paused"?{scale:1,opacity:.3}:{scale:[.95,1,.95],opacity:[.4,.6,.4]}} transition={isBr?{scale:{type:"spring",stiffness:30,damping:20,mass:1.2},opacity:{duration:.6}}:ts==="paused"?{duration:.4}:{duration:ts==="idle"?3.5:2.8,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:"14%",borderRadius:"50%",background:`radial-gradient(circle at 50% 35%, ${withAlpha(rTint,32)}, ${withAlpha(ac,6)} 55%, transparent 80%)`,pointerEvents:"none",mixBlendMode:"screen",transition:"background .6s ease"}}/>
+      );})()}
+      {/* Ignition flash — destello one-shot de luz que emerge del centro cuando la sesión arranca.
+          Materializa la metáfora de "ignición": la chispa se enciende. */}
+      <AnimatePresence>
+        {ignitionFlash&&!reducedMotion&&<motion.div key="ignition" aria-hidden="true" initial={{scale:.15,opacity:1}} animate={{scale:2.4,opacity:0}} exit={{opacity:0}} transition={{duration:.85,ease:[.16,1,.3,1]}} style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle, #ffffff 0%, ${withAlpha(ac,80)} 30%, ${withAlpha(ac,20)} 60%, transparent 80%)`,pointerEvents:"none",zIndex:4,filter:"blur(2px)"}}/>}
+        {ignitionFlash&&!reducedMotion&&[0,1,2].map(i=><motion.span key={`spark-${i}`} aria-hidden="true" initial={{scale:.6,opacity:.9}} animate={{scale:2,opacity:0}} transition={{duration:.7,delay:i*.08,ease:"easeOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid ${ac}`,pointerEvents:"none",zIndex:4}}/>)}
+        {/* Phase flash — pulso sutil al transicionar entre fases, más suave que ignition */}
+        {phaseFlash&&!reducedMotion&&<motion.span key="phase-flash" aria-hidden="true" initial={{scale:.85,opacity:.55}} animate={{scale:1.3,opacity:0}} transition={{duration:.6,ease:"easeOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid ${ac}`,pointerEvents:"none",zIndex:4,boxShadow:`0 0 20px ${withAlpha(ac,60)}`}}/>}
+        {/* Orb-done flash — burst emerald que cierra el ciclo del orb antes de que el IgnitionBurst
+            full-screen tome el control. Signature end-state: el orb completa su propia narrativa. */}
+        {orbDoneFlash&&!reducedMotion&&<motion.div key="orb-done" aria-hidden="true" initial={{scale:.3,opacity:1}} animate={{scale:2.2,opacity:0}} transition={{duration:.55,ease:[.16,1,.3,1]}} style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle, #ffffff 0%, #34d39988 25%, #22c55e44 55%, transparent 80%)`,pointerEvents:"none",zIndex:5,filter:"blur(1px)"}}/>}
+        {orbDoneFlash&&!reducedMotion&&[0,1,2].map(i=><motion.span key={`done-ring-${i}`} aria-hidden="true" initial={{scale:.8,opacity:.8}} animate={{scale:1.8,opacity:0}} transition={{duration:.6,delay:i*.07,ease:"easeOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid #22c55e`,pointerEvents:"none",zIndex:5,boxShadow:`0 0 20px #22c55e88`}}/>)}
+      </AnimatePresence>
+      {/* Progress ring como corona exterior — brillante sobre el orb oscuro */}
+      <svg width={isActive?"240":"260"} height={isActive?"240":"260"} viewBox="0 0 260 260" style={{transform:"rotate(-90deg)",position:"absolute",inset:0,pointerEvents:"none"}}>
+        <circle cx="130" cy="130" r="122" fill="none" stroke={withAlpha(ac,18)} strokeWidth={ts==="idle"?"3":"2.5"}/>
+        <circle cx="130" cy="130" r="122" fill="none" stroke={ac} strokeWidth={isActive?"6":ts==="idle"?"4":"3"} strokeLinecap="round" strokeDasharray={2*Math.PI*122} strokeDashoffset={ts==="idle"?0:(2*Math.PI*122)*(sec/totalDur)} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",filter:`drop-shadow(0 0 10px ${withAlpha(ac,isActive?85:65)}) drop-shadow(0 0 4px ${withAlpha(ac,50)})`}}/>
       </svg>
-      {/* Punto central neural */}
-      <motion.div aria-hidden="true" animate={{opacity:[.3,.7,.3],boxShadow:[`0 0 8px ${ac}30`,`0 0 18px ${ac}50`,`0 0 8px ${ac}30`]}} transition={{duration:ts==="idle"?3:1.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:isActive?4:10,height:isActive?4:10,borderRadius:"50%",background:ac,pointerEvents:"none"}}/>
-      {/* Contenido central — jerarquía única: chip de fase · countdown · progreso · respiración */}
+      {/* Contenido central — countdown + labels en colores claros (contraste contra orb oscuro) */}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none",zIndex:2,width:"88%",display:"flex",flexDirection:"column",alignItems:"center"}}>
-        {isActive&&<motion.div key={pi} initial={reducedMotion?{opacity:1}:{opacity:0,y:-4}} animate={{opacity:1,y:0}} transition={{duration:reducedMotion?0:.35}} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:99,background:ac+"14",marginBottom:6}}>
+        {isActive&&<motion.div key={pi} initial={reducedMotion?{opacity:1}:{opacity:0,y:-4}} animate={{opacity:1,y:0}} transition={{duration:reducedMotion?0:.35}} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:99,background:withAlpha(ac,25),border:`1px solid ${withAlpha(ac,45)}`,marginBottom:6,backdropFilter:"blur(4px)"}}>
           <Icon name={ph.ic} size={9} color={ac} aria-hidden="true"/>
           <span aria-hidden="true" style={{fontSize:11,fontWeight:700,color:ac,letterSpacing:-0.05}}>Fase {pi+1}/{pr.ph.length} · {ph.l}</span>
         </motion.div>}
-        <div style={{...ty.biometric(t1,isActive?font.size.hero:56),lineHeight:font.leading.none,letterSpacing:"-2px"}}>{sec}</div>
-        {isActive&&<div style={{fontSize:11,fontWeight:600,color:ac,marginTop:4,opacity:.7,fontVariantNumeric:"tabular-nums"}}>{sessPct}%</div>}
+        <div style={{...ty.biometric("#ffffff",isActive?font.size.hero:60),lineHeight:font.leading.none,letterSpacing:"-2.5px",fontVariantNumeric:"tabular-nums",textShadow:`0 2px 12px ${withAlpha(ac,50)}, 0 0 30px ${withAlpha(ac,25)}`,filter:isBr?`drop-shadow(0 0 ${Math.round(4+Math.max(0,(bS-0.9))*55)}px ${withAlpha(ac,60)})`:"none",transition:isBr?"none":"filter .3s ease-out"}}>{sec}</div>
+        {isActive&&<div style={{fontSize:11,fontWeight:600,color:ac,marginTop:4,opacity:.85,fontVariantNumeric:"tabular-nums"}}>{sessPct}%</div>}
         <AnimatePresence mode="wait">
           {isBr&&bL&&<motion.div key={bL} initial={reducedMotion?{opacity:1}:{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={reducedMotion?{opacity:0}:{opacity:0,y:-6}} transition={{duration:reducedMotion?0:.3}} style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-            <span aria-hidden="true" style={{fontSize:15,fontWeight:700,letterSpacing:-0.1,color:ac,opacity:.95}}>{bL.charAt(0)+bL.slice(1).toLowerCase()}</span>
-            <span aria-hidden="true" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:22,height:18,padding:"0 6px",borderRadius:9,background:ac+"18",fontSize:11,fontWeight:700,color:ac,fontVariantNumeric:"tabular-nums"}}>{bCnt}s</span>
+            <span aria-hidden="true" style={{fontSize:15,fontWeight:700,letterSpacing:-0.1,color:ac}}>{bL.charAt(0)+bL.slice(1).toLowerCase()}</span>
+            <span aria-hidden="true" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:22,height:18,padding:"0 6px",borderRadius:9,background:withAlpha(ac,28),border:`1px solid ${withAlpha(ac,40)}`,fontSize:11,fontWeight:700,color:ac,fontVariantNumeric:"tabular-nums"}}>{bCnt}s</span>
           </motion.div>}
         </AnimatePresence>
         {ts==="idle"&&<>
-          <div style={{fontSize:12,fontWeight:600,letterSpacing:-0.05,color:t3,marginTop:space[1.5]}}>segundos</div>
-          <motion.div animate={reducedMotion?{}:{opacity:[.55,.9,.55]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:14,display:"flex",alignItems:"center",gap:6}}>
-            <span aria-hidden="true" style={{inlineSize:4,blockSize:4,borderRadius:"50%",background:ac,boxShadow:`0 0 8px ${withAlpha(ac,60)}`}}/>
-            <span style={{fontSize:10,fontWeight:700,color:t3,letterSpacing:1.8,textTransform:"uppercase"}}>Toca para iniciar</span>
+          <div style={{fontSize:12,fontWeight:600,letterSpacing:-0.05,color:"rgba(255,255,255,0.55)",marginTop:space[1.5]}}>segundos</div>
+          {/* Wordmark kicker — misma receta que BioIgnicionMark (BIO ligero · em-dash cyan · IGNICIÓN pesado).
+              Construye identidad de marca en el momento-cero del producto. */}
+          <motion.div animate={reducedMotion?{}:{opacity:[.7,1,.7]}} transition={{duration:3.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:14,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span aria-hidden="true" style={{inlineSize:3,blockSize:3,borderRadius:"50%",background:ac,boxShadow:`0 0 8px ${withAlpha(ac,90)}`}}/>
+              <span style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,0.55)",letterSpacing:2.5,textTransform:"uppercase"}}>Toca para</span>
+              <span aria-hidden="true" style={{inlineSize:3,blockSize:3,borderRadius:"50%",background:ac,boxShadow:`0 0 8px ${withAlpha(ac,90)}`}}/>
+            </div>
+            <span aria-hidden="true" style={{display:"inline-flex",alignItems:"baseline",gap:3,fontFamily:font.family,fontSize:14,letterSpacing:4,textTransform:"uppercase",lineHeight:1}}>
+              <span style={{fontWeight:font.weight.normal,color:"rgba(255,255,255,0.72)"}}>BIO</span>
+              <span style={{color:ac,fontWeight:font.weight.bold,transform:"translateY(-0.08em)",filter:`drop-shadow(0 0 4px ${withAlpha(ac,70)})`}}>—</span>
+              <span style={{fontWeight:font.weight.black,color:"#ffffff"}}>IGNICIÓN</span>
+            </span>
           </motion.div>
         </>}
-        {ts==="paused"&&<motion.div animate={{opacity:[.5,1,.5]}} transition={{duration:2,repeat:Infinity}} style={{marginTop:6}}><span style={{fontSize:13,fontWeight:600,color:ac,letterSpacing:-0.05}}>En pausa</span></motion.div>}
+        {ts==="paused"&&<motion.div animate={{opacity:[.55,1,.55]}} transition={{duration:2.2,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:10,display:"flex",alignItems:"center",gap:8}}>
+          {/* Símbolo de pausa visual — dos barras verticales, más reconocible que solo texto */}
+          <span aria-hidden="true" style={{display:"inline-flex",gap:3,alignItems:"center"}}>
+            <span style={{width:3,height:12,background:ac,borderRadius:1.5,boxShadow:`0 0 8px ${withAlpha(ac,70)}`}}/>
+            <span style={{width:3,height:12,background:ac,borderRadius:1.5,boxShadow:`0 0 8px ${withAlpha(ac,70)}`}}/>
+          </span>
+          <span style={{fontSize:11,fontWeight:800,color:ac,letterSpacing:2.5,textTransform:"uppercase"}}>En pausa</span>
+        </motion.div>}
       </div>
-      {tp&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"100%",height:"100%",borderRadius:"50%",border:`2px solid ${ac}20`,animation:"cdPulse .6s ease forwards",pointerEvents:"none"}}/>}
+      {tp&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"100%",height:"100%",borderRadius:"50%",border:`2px solid ${withAlpha(ac,50)}`,animation:"cdPulse .6s ease forwards",pointerEvents:"none"}}/>}
     </div>
 
     {/* Phase info — solo en preview (idle); durante sesión activa la fase vive dentro del core */}
