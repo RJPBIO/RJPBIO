@@ -21,6 +21,7 @@ import {
   calcProtoSensitivity, predictSessionImpact,
   estimateCognitiveLoad,
   calcSessionCompletion,
+  suggestOptimalTime,
 } from "@/lib/neural";
 import { useReadiness, computeReadiness } from "@/hooks/useReadiness";
 import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
@@ -140,6 +141,17 @@ export default function BioIgnicion(){
   // un gesto DENTRO de su call stack llame a resume(). wireAudioUnlock()
   // engancha el primer pointer/touch/key y desbloquea todo el grafo.
   useEffect(()=>{wireAudioUnlock();if(typeof window==="undefined"||!window.speechSynthesis)return;loadVoices();},[]);
+
+  // Pre-fill preMood silently from last session within 4h (reduces friction in Return flow)
+  useEffect(()=>{
+    if(preMood>0)return;
+    const ml=st.moodLog||[];if(!ml.length)return;
+    const last=ml[ml.length-1];const ageMs=Date.now()-(last.ts||0);
+    if(ageMs<=4*60*60*1000&&typeof last.mood==="number"&&last.mood>0&&last.mood<=5){
+      setPreMood(last.mood);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[st.moodLog]);
 
   // ═══ LOAD STATE (via Zustand) — await init BEFORE reading/writing ═══
   // iOS Safari + Home Screen PWA: IndexedDB a veces cuelga en modo privado o
@@ -310,6 +322,7 @@ export default function BioIgnicion(){
   const progStep=PROG_7[(st.progDay||0)%7];
   const prediction=useMemo(()=>predictSessionImpact(st,pr),[st.moodLog,pr.id]);
   const cogLoad=useMemo(()=>estimateCognitiveLoad(st),[st.todaySessions,st.moodLog]);
+  const optimalTime=useMemo(()=>{try{return suggestOptimalTime(st);}catch(e){return null;}},[st.history,st.moodLog]);
 
   const{bg,card:cd,surface,border:bd,t1,t2,t3,scrim}=resolveTheme(isDark);
   const ac=pr.cl;
@@ -754,12 +767,70 @@ export default function BioIgnicion(){
       <motion.button whileTap={{scale:.93}} onClick={()=>setShowIntent(true)} aria-label="Definir intención" title="Definir intención" style={{width:44,height:44,borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="target" size={18} color={t3} aria-hidden="true"/></motion.button>
     </div>
 
+    {/* Adaptive context strip — circadian + readiness + optimal time + prediction */}
+    {ts==="idle"&&aiRec&&(()=>{
+      const cPeriod=aiRec?.context?.circadian;
+      const rInt=aiRec?.context?.readiness?.interpretation;
+      const readinessMeta=({optimal:"óptimo",primed:"elevado",neutral:"neutral",recover:"bajo"})[rInt];
+      const showPred=prediction&&prediction.confidence>=50&&prediction.predictedDelta>0;
+      const optHour=optimalTime?.best?.hour;
+      return(
+        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",borderRadius:12,background:surface,border:`1px solid ${bd}`}}>
+          {cPeriod&&(
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              <span aria-hidden="true" style={{inlineSize:5,blockSize:5,borderRadius:"50%",background:ac,boxShadow:`0 0 6px ${withAlpha(ac,60)}`,flexShrink:0}}/>
+              <span style={{fontSize:10,fontWeight:700,color:t2,letterSpacing:0.3,textTransform:"uppercase"}}>Ventana · {cPeriod}</span>
+            </div>
+          )}
+          {readinessMeta&&(<>
+            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
+            <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2,textTransform:"uppercase"}}>Readiness {readinessMeta}</span>
+          </>)}
+          {typeof optHour==="number"&&(<>
+            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
+            <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2,textTransform:"uppercase",display:"inline-flex",alignItems:"center",gap:4}}>
+              Pico <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>{String(optHour).padStart(2,"0")}:00</span>
+            </span>
+          </>)}
+          {showPred&&(<>
+            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
+            <span style={{display:"inline-flex",alignItems:"center",gap:4}}>
+              <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontSize:10,fontWeight:700,color:semantic.success,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>+{prediction.predictedDelta.toFixed(1)}</span>
+              <span style={{fontSize:10,fontWeight:500,color:t3,letterSpacing:0.2}}>· {prediction.confidence}%</span>
+            </span>
+          </>)}
+        </div>
+      );
+    })()}
+    {ts==="idle"&&aiRec?.primary?.reason&&(
+      <div style={{fontSize:11,fontWeight:500,color:t3,lineHeight:1.5,marginBottom:14,fontStyle:"italic",paddingInline:4,letterSpacing:-0.02}}>
+        {aiRec.primary.reason}
+      </div>
+    )}
+
     {/* Duration selector */}
-    {ts==="idle"&&<div style={{display:"flex",justifyContent:"center",gap:4,marginBottom:16}}>
-      {[{v:.5,l:"60s"},{v:1,l:"120s"},{v:1.5,l:"180s"}].map(d=>(
-        <motion.button key={d.v} whileTap={{scale:.93}} onClick={()=>{setDurMult(d.v);setSec(Math.round(pr.d*d.v));H("tap");}} style={{padding:"6px 16px",borderRadius:20,border:durMult===d.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:durMult===d.v?ac+"08":cd,color:durMult===d.v?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer",transition:"all .2s"}}>{d.l}</motion.button>
-      ))}
-    </div>}
+    {ts==="idle"&&(()=>{
+      const need=aiRec?.need;
+      const rInt=aiRec?.context?.readiness?.interpretation;
+      const recommendedMult=rInt==="recover"?0.5
+        :rInt==="primed"&&(need==="enfoque"||need==="energia")?1.5
+        :need==="calma"||need==="reset"?0.5
+        :need==="energia"?1.5
+        :1;
+      return(
+        <div style={{display:"flex",justifyContent:"center",gap:4,marginBottom:16}}>
+          {[{v:.5,l:"60s"},{v:1,l:"120s"},{v:1.5,l:"180s"}].map(d=>{
+            const isRec=d.v===recommendedMult;
+            return(
+              <motion.button key={d.v} whileTap={{scale:.93}} onClick={()=>{setDurMult(d.v);setSec(Math.round(pr.d*d.v));H("tap");}} aria-label={isRec?`${d.l} — duración recomendada`:d.l} style={{position:"relative",padding:"6px 16px",borderRadius:20,border:durMult===d.v?`2px solid ${ac}`:`1.5px solid ${bd}`,background:durMult===d.v?ac+"08":cd,color:durMult===d.v?ac:t3,fontSize:10,fontWeight:700,cursor:"pointer",transition:"all .2s"}}>
+                {d.l}
+                {isRec&&<span aria-hidden="true" style={{position:"absolute",top:-3,right:-3,inlineSize:7,blockSize:7,borderRadius:"50%",background:semantic.success,boxShadow:`0 0 6px ${withAlpha(semantic.success,60)}`}}/>}
+              </motion.button>
+            );
+          })}
+        </div>
+      );
+    })()}
 
     {/* Pre-session mood */}
     {ts==="idle"&&<div style={{marginBottom:16}}>
@@ -808,9 +879,9 @@ export default function BioIgnicion(){
         </AnimatePresence>
         {ts==="idle"&&<>
           <div style={{fontSize:12,fontWeight:600,letterSpacing:-0.05,color:t3,marginTop:space[1.5]}}>segundos</div>
-          <motion.div animate={{opacity:[.5,1,.5],y:[0,-2,0]}} transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:12,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-            <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},${brand.accent})`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
-            <span style={{fontSize:12,fontWeight:600,color:ac,letterSpacing:-0.05}}>Iniciar</span>
+          <motion.div animate={reducedMotion?{}:{opacity:[.55,.9,.55]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:14,display:"flex",alignItems:"center",gap:6}}>
+            <span aria-hidden="true" style={{inlineSize:4,blockSize:4,borderRadius:"50%",background:ac,boxShadow:`0 0 8px ${withAlpha(ac,60)}`}}/>
+            <span style={{fontSize:10,fontWeight:700,color:t3,letterSpacing:1.8,textTransform:"uppercase"}}>Toca para iniciar</span>
           </motion.div>
         </>}
         {ts==="paused"&&<motion.div animate={{opacity:[.5,1,.5]}} transition={{duration:2,repeat:Infinity}} style={{marginTop:6}}><span style={{fontSize:13,fontWeight:600,color:ac,letterSpacing:-0.05}}>En pausa</span></motion.div>}
@@ -879,9 +950,72 @@ export default function BioIgnicion(){
     {isActive&&nextPh&&<div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",marginBottom:10,borderRadius:10,background:surface}}>
       <Icon name="chevron" size={10} color={t3}/><span style={{fontSize:10,color:t3,fontWeight:600}}>Siguiente: {nextPh.l}</span>
     </div>}
-    <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;const isCurr=pi===i;const isDone=i<pi;return<motion.div key={i} animate={isCurr?{scale:[1,1.03,1]}:{}} transition={isCurr?{duration:2,repeat:Infinity}:{}} style={{padding:"4px 10px",borderRadius:16,border:isCurr?`2px solid ${ac}`:isDone?`1.5px solid ${ac}30`:`1px solid ${bd}`,background:isCurr?ac+"10":isDone?ac+"06":cd,color:isCurr?ac:isDone?ac:t3,fontSize:10,fontWeight:isCurr?800:600,display:"flex",alignItems:"center",gap:4,opacity:i<=pi?1:.4,boxShadow:isCurr?`0 2px 8px ${ac}15`:"none",transition:"all .3s"}}><span style={{width:isCurr?7:5,height:isCurr?7:5,borderRadius:"50%",background:isDone?ac:isCurr?ac:bd,transition:"all .3s",boxShadow:isCurr?`0 0 6px ${ac}40`:"none"}}/>{isCurr&&<Icon name={p.ic} size={10} color={ac}/>}{sR}</motion.div>;})}</div>
+    {/* Phase timeline — proportional segments */}
+    <div style={{marginBottom:14}}>
+      <div role="list" aria-label="Fases del protocolo" style={{display:"flex",gap:2,blockSize:6,borderRadius:3,overflow:"hidden"}}>
+        {pr.ph.map((p,i)=>{
+          const segW=((p.e-p.s)/pr.d)*100;
+          const isCurr=pi===i;
+          const isDone=i<pi;
+          return(
+            <div key={i} role="listitem" aria-current={isCurr?"step":undefined} style={{
+              inlineSize:`${segW}%`,
+              background:isDone?ac:isCurr?`linear-gradient(90deg,${ac},${withAlpha(ac,70)})`:withAlpha(ac,14),
+              transition:"background .35s ease",
+            }}/>
+          );
+        })}
+      </div>
+      <div style={{display:"flex",marginBlockStart:8}}>
+        {pr.ph.map((p,i)=>{
+          const segW=((p.e-p.s)/pr.d)*100;
+          const isCurr=pi===i;
+          const isDone=i<pi;
+          const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;
+          const iconColor=isCurr?ac:isDone?withAlpha(ac,70):t3;
+          const labelColor=isCurr?ac:t3;
+          return(
+            <div key={i} style={{
+              inlineSize:`${segW}%`,
+              display:"flex",
+              alignItems:"center",
+              gap:4,
+              paddingInline:4,
+              opacity:i<=pi?1:0.55,
+              transition:"opacity .3s ease",
+              overflow:"hidden",
+            }}>
+              <Icon name={p.ic} size={10} color={iconColor} aria-hidden="true"/>
+              <span style={{
+                fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+                fontSize:9,
+                fontWeight:isCurr?800:600,
+                color:labelColor,
+                letterSpacing:-0.02,
+                fontVariantNumeric:"tabular-nums",
+                whiteSpace:"nowrap",
+                overflow:"hidden",
+                textOverflow:"ellipsis",
+              }}>{sR}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
-      {ts==="idle"&&<motion.button whileTap={{scale:.95}} onClick={go} style={{flex:1,maxWidth:260,minBlockSize:48,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},${brand.accent})`,border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:-0.1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:`0 4px 18px ${ac}28`}}><Icon name="bolt" size={15} color="#fff"/>Iniciar</motion.button>}
+      {ts==="idle"&&(()=>{
+        const intentLabelMap={calma:"Calma",enfoque:"Enfoque",energia:"Energía",reset:"Reset"};
+        const iconLabelMap={calma:"calm",enfoque:"focus",energia:"energy",reset:"reset"};
+        const intentKey=pr?.int;
+        const intentLabel=intentLabelMap[intentKey]||null;
+        const intentIcon=iconLabelMap[intentKey]||"bolt";
+        return(
+          <motion.button whileTap={{scale:.95}} onClick={go} aria-label={intentLabel?`Iniciar ${intentLabel.toLowerCase()} de ${sec} segundos`:`Iniciar sesión de ${sec} segundos`} style={{flex:1,maxWidth:260,minBlockSize:48,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},${brand.accent})`,border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:-0.1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:`0 4px 18px ${ac}28`}}>
+            <Icon name={intentIcon} size={15} color="#fff"/>
+            <span>Iniciar {intentLabel?`${intentLabel} `:""}<span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontVariantNumeric:"tabular-nums",letterSpacing:-0.1,fontWeight:700}}>{sec}s</span></span>
+          </motion.button>
+        );
+      })()}
       {ts==="running"&&<><motion.button whileTap={{scale:.95}} onClick={pa} style={{flex:1,maxWidth:180,minBlockSize:48,padding:"14px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:-0.1}}>Pausar</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:44,height:44,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
       {ts==="paused"&&<><motion.button whileTap={{scale:.95}} onClick={resume} style={{flex:1,maxWidth:180,minBlockSize:48,padding:"14px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:-0.1}}>Continuar</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:44,height:44,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
     </div>
