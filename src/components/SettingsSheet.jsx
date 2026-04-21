@@ -18,6 +18,15 @@ import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
 import { useT } from "../hooks/useT";
 
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+const numStyle = (color, weight = 700) => ({
+  fontFamily: MONO,
+  fontWeight: weight,
+  color,
+  letterSpacing: -0.1,
+  fontVariantNumeric: "tabular-nums",
+});
+
 export default function SettingsSheet({
   show, onClose, st, setSt, isDark, ac, voiceOn, setVoiceOn, H,
 }) {
@@ -286,8 +295,6 @@ export default function SettingsSheet({
                       {!unlocked && (
                         <div
                           style={{
-                            ...ty.caption(ac),
-                            fontWeight: font.weight.black,
                             marginBlockStart: 3,
                             display: "flex",
                             alignItems: "center",
@@ -296,7 +303,7 @@ export default function SettingsSheet({
                           }}
                         >
                           <Icon name="sparkle" size={9} color={ac} aria-hidden="true" />
-                          {s.cost}
+                          <span style={{ ...numStyle(ac, 800), fontSize: font.size.sm }}>{s.cost}</span>
                         </div>
                       )}
                       {unlocked && active && (
@@ -327,7 +334,9 @@ export default function SettingsSheet({
                 aria-label={t("settings.exportJsonLabel")}
                 style={{
                   flex: 1,
-                  padding: space[3],
+                  minBlockSize: 48,
+                  paddingBlock: 14,
+                  paddingInline: 12,
                   borderRadius: radius.md,
                   border: `1px solid ${bd}`,
                   background: cd,
@@ -336,10 +345,14 @@ export default function SettingsSheet({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: space[2],
+                  color: t2,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  letterSpacing: -0.05,
                 }}
               >
-                <Icon name="export" size={14} color={t2} aria-hidden="true" />
-                <span style={ty.title(t2)}>{t("settings.exportJson")}</span>
+                <Icon name="export" size={16} color={t2} aria-hidden="true" />
+                {t("settings.exportJson")}
               </motion.button>
               <motion.button
                 whileTap={reduced ? {} : { scale: 0.96 }}
@@ -347,7 +360,9 @@ export default function SettingsSheet({
                 aria-label={t("settings.exportNomLabel")}
                 style={{
                   flex: 1,
-                  padding: space[3],
+                  minBlockSize: 48,
+                  paddingBlock: 14,
+                  paddingInline: 12,
                   borderRadius: radius.md,
                   border: `1.5px solid ${semantic.success}`,
                   background: withAlpha(semantic.success, 4),
@@ -356,10 +371,14 @@ export default function SettingsSheet({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: space[2],
+                  color: semantic.success,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: -0.05,
                 }}
               >
-                <Icon name="file" size={14} color={semantic.success} aria-hidden="true" />
-                <span style={ty.title(semantic.success)}>{t("settings.exportNom")}</span>
+                <Icon name="file" size={16} color={semantic.success} aria-hidden="true" />
+                {t("settings.exportNom")}
               </motion.button>
             </div>
           </motion.div>
