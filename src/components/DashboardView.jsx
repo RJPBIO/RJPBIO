@@ -52,10 +52,12 @@ function colorForScore(score, goodThreshold = 70, mediumThreshold = 45) {
 }
 
 export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHist, bp = "mobile" }) {
-  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const { card: cd, surface: sf, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const reduced = useReducedMotion();
 
   const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
+  const weeklyTotal = (st.weeklyData || []).reduce((a, b) => a + (b || 0), 0);
+  const tint = isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)";
   const bioSignal = useMemo(() => calcBioSignal(st), [st.coherencia, st.resiliencia, st.capacidad, st.moodLog, st.weeklyData, st.history]);
   const burnout = useMemo(() => calcBurnoutIndex(st.moodLog, st.history), [st.moodLog, st.history]);
   const learnedArms = useMemo(() => topArms(st.banditArms || {}, 3), [st.banditArms]);
@@ -149,7 +151,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         transition={{ delay: reduced ? 0 : 0.12, duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
         aria-label={`Rendimiento neural ${perf}%`}
         style={{
-          background: `linear-gradient(145deg,${isDark ? "#0D1117" : "#FFFFFF"},${isDark ? "#141820" : withAlpha(ac, 4)})`,
+          background: `linear-gradient(145deg,${cd},${isDark ? sf : withAlpha(ac, 4)})`,
           borderRadius: radius["2xl"] - 6,
           padding: `${space[5]}px ${space[4] + 2}px`,
           marginBlockEnd: space[4],
@@ -198,7 +200,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2], marginBlockEnd: space[3] }}
         >
           {[
-            { v: st.weeklyData.reduce((a, b) => a + b, 0), l: "Semana", c: ac, aria: `Sesiones esta semana: ${st.weeklyData.reduce((a, b) => a + b, 0)}` },
+            { v: weeklyTotal, l: "Semana", c: ac, aria: `Sesiones esta semana: ${weeklyTotal}` },
             { v: bioSignal.score, l: "BioSignal", c: bioColor, aria: `BioSignal: ${bioSignal.score} por ciento` },
             { v: burnout.risk === "sin datos" ? "—" : burnout.index, l: "Burnout", c: burnout.risk === "bajo" ? semantic.success : semantic.danger, aria: `Índice de burnout: ${burnout.index}, riesgo ${burnout.risk}` },
           ].map((m, i) => (
@@ -210,7 +212,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
                 textAlign: "center",
                 paddingBlock: space[2],
                 paddingInline: space[1],
-                background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)",
+                background: tint,
                 borderRadius: radius.md,
               }}
             >
@@ -248,7 +250,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
             ...ty.body(t2),
             paddingBlock: space[2],
             paddingInline: space[2.5],
-            background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)",
+            background: tint,
             borderRadius: radius.sm,
             textAlign: "center",
           }}
@@ -494,15 +496,19 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         aria-label="Métricas clave"
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: space[1.5], marginBlockEnd: 14 }}
       >
-        {[
-          { l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? `+${rD.c}%` : "—", c: "#3B82F6", ic: "focus", suffix: "%" },
-          { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? `+${rD.r}%` : "—", c: "#8B5CF6", ic: "calm", suffix: "%" },
-          { l: "V-Cores", v: st.vCores || 0, d: `+${st.history?.slice(-1)[0]?.vc || 0}`, c: semantic.warning, ic: "sparkle", suffix: "" },
-          { l: "Sesiones", v: st.totalSessions, d: `${st.streak}d racha`, c: semantic.success, ic: "bolt", suffix: "" },
-        ].map((k, i) => (
+        {(() => {
+          const lastVc = st.history?.slice(-1)[0]?.vc || 0;
+          const streak = st.streak || 0;
+          return [
+            { l: "Enfoque", v: st.coherencia, d: rD.c > 0 ? `+${rD.c}%` : "—", dPositive: rD.c > 0, c: "#3B82F6", ic: "focus", suffix: "%" },
+            { l: "Calma", v: st.resiliencia, d: rD.r > 0 ? `+${rD.r}%` : "—", dPositive: rD.r > 0, c: "#8B5CF6", ic: "calm", suffix: "%" },
+            { l: "V-Cores", v: st.vCores || 0, d: lastVc > 0 ? `+${lastVc}` : "—", dPositive: lastVc > 0, c: semantic.warning, ic: "sparkle", suffix: "" },
+            { l: "Sesiones", v: st.totalSessions, d: streak > 0 ? `${streak}d racha` : "—", dPositive: streak > 0, c: semantic.success, ic: "bolt", suffix: "" },
+          ];
+        })().map((k, i) => (
           <article
             key={i}
-            aria-label={`${k.l}: ${k.v}${k.suffix}. ${k.d}`}
+            aria-label={`${k.l}: ${k.v}${k.suffix}. ${k.dPositive ? k.d : "sin cambio"}`}
             style={{ background: cd, borderRadius: radius.md + 2, padding: `${space[2.5] + 1}px ${space[2.5]}px`, border: `1px solid ${bd}` }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBlockEnd: space[1] }}>
@@ -510,7 +516,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
                 <Icon name={k.ic} size={10} color={t3} aria-hidden="true" />
                 <span style={ty.caption(t3)}>{k.l}</span>
               </div>
-              <span style={{ ...ty.caption(semantic.success), fontWeight: font.weight.bold }}>{k.d}</span>
+              <span style={{ ...ty.caption(k.dPositive ? semantic.success : t3), fontWeight: font.weight.bold }}>{k.d}</span>
             </div>
             <AnimatedNumber value={k.v} suffix={k.suffix} color={k.c} size={20} />
           </article>
