@@ -1,11 +1,9 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   StreakCalendar — contribution-graph de sesiones con identidad
-   BIO-IGNICIÓN: corner brackets, hoy marcado, cola de racha
-   con halo y estadísticas monumentales en mono blueprint.
-
-   Lógica pura en `buildStreakCalendar`. Este componente sólo
-   renderiza y añade la capa de identidad.
+   StreakCalendar — contribution-graph de sesiones.
+   Neural-DNA: mono+tabular solo en números, labels sentence case,
+   sin corner brackets, sin halos en live-data, sin ▸ glyphs.
+   Hoy se marca con outline sólido (no halo).
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
@@ -26,26 +24,8 @@ const WEEKDAY_LABELS = ["D", "L", "M", "X", "J", "V", "S"];
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
 function monthLabel(date) {
-  return date.toLocaleDateString("es", { month: "short" }).replace(".", "").toUpperCase();
-}
-
-function CornerBrackets({ color }) {
-  const L = 10;
-  const sw = 1;
-  const common = {
-    position: "absolute",
-    inlineSize: L,
-    blockSize: L,
-    pointerEvents: "none",
-  };
-  return (
-    <>
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockStart: 6, borderInlineStart: `${sw}px solid ${color}`, borderBlockStart: `${sw}px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockStart: 6, borderInlineEnd: `${sw}px solid ${color}`, borderBlockStart: `${sw}px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockEnd: 6, borderInlineStart: `${sw}px solid ${color}`, borderBlockEnd: `${sw}px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockEnd: 6, borderInlineEnd: `${sw}px solid ${color}`, borderBlockEnd: `${sw}px solid ${color}` }} />
-    </>
-  );
+  const s = date.toLocaleDateString("es", { month: "short" }).replace(".", "");
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) {
@@ -83,13 +63,6 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
     return run;
   }, [data.weeks]);
 
-  const streakTailKeys = useMemo(() => {
-    if (currentStreak <= 0) return new Set();
-    const flat = data.weeks.flat().filter((c) => !c.inFuture);
-    const tail = flat.slice(-currentStreak).map((c) => c.dayKey);
-    return new Set(tail);
-  }, [currentStreak, data.weeks]);
-
   const monthMarkers = useMemo(() => {
     const labels = [];
     let lastMonth = null;
@@ -104,9 +77,8 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
     return labels;
   }, [data.weeks]);
 
-  const cornerStroke = withAlpha(ac, isDark ? 38 : 30);
   const rule = withAlpha(ac, isDark ? 26 : 20);
-  const haloIgnition = withAlpha(bioSignal.ignition, 90);
+  const todayRing = withAlpha(bioSignal.ignition, 90);
 
   return (
     <article
@@ -120,8 +92,6 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
         overflow: "hidden",
       }}
     >
-      <CornerBrackets color={cornerStroke} />
-
       <header
         style={{
           display: "flex",
@@ -134,15 +104,18 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
         <div>
           <div
             style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              letterSpacing: 2,
+              fontSize: 11,
+              fontWeight: 600,
               color: withAlpha(ac, 80),
-              textTransform: "uppercase",
+              letterSpacing: -0.05,
               marginBlockEnd: 2,
             }}
           >
-            ▸ Calendario · Últimas {weeks} semanas
+            Últimas{" "}
+            <span style={{ fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>
+              {weeks}
+            </span>{" "}
+            semanas
           </div>
           <h3
             style={{
@@ -178,15 +151,14 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
           <div key={stat.label} style={{ minInlineSize: 0 }}>
             <div
               style={{
-                fontFamily: MONO,
-                fontSize: 9,
-                letterSpacing: 2,
+                fontSize: 10,
+                fontWeight: 600,
                 color: t3,
-                textTransform: "uppercase",
+                letterSpacing: -0.05,
                 marginBlockEnd: 2,
               }}
             >
-              ▸ {stat.label}
+              {stat.label}
             </div>
             <div
               style={{
@@ -196,7 +168,7 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
                 color: stat.tone,
                 lineHeight: 1,
                 letterSpacing: -0.5,
-                textShadow: stat.value > 0 ? `0 0 12px ${withAlpha(stat.tone, 30)}` : "none",
+                fontVariantNumeric: "tabular-nums",
               }}
             >
               {stat.value}
@@ -220,13 +192,14 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
               <span
                 key={i}
                 style={{
-                  fontFamily: MONO,
                   fontSize: 9,
+                  fontWeight: 600,
                   color: t3,
                   blockSize: CELL_SIZE,
                   display: "flex",
                   alignItems: "center",
                   inlineSize: 10,
+                  letterSpacing: -0.05,
                 }}
               >
                 {i % 2 === 1 ? l : ""}
@@ -242,10 +215,10 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
                 gridTemplateColumns: `repeat(${data.weeks.length}, ${CELL_SIZE}px)`,
                 gap: GAP,
                 blockSize: 14,
-                fontFamily: MONO,
-                fontSize: 9,
-                letterSpacing: 1,
+                fontSize: 10,
+                fontWeight: 600,
                 color: t3,
+                letterSpacing: -0.05,
               }}
             >
               {data.weeks.map((_, i) => {
@@ -271,18 +244,11 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
               {data.weeks.flat().map((cell) => {
                 const color = palette[cell.level] ?? palette[0];
                 const isToday = cell.dayKey === todayKey;
-                const isTail = streakTailKeys.has(cell.dayKey);
                 const label = cell.inFuture
                   ? ""
                   : cell.count === 0
                     ? `${cell.dayKey}: sin sesiones${isToday ? " · hoy" : ""}`
                     : `${cell.dayKey}: ${cell.count} ${cell.count === 1 ? "sesión" : "sesiones"}${isToday ? " · hoy" : ""}`;
-                let boxShadow = "none";
-                if (isToday) {
-                  boxShadow = `0 0 0 1.5px ${withAlpha(haloIgnition, 100)}, 0 0 10px ${withAlpha(bioSignal.ignition, 45)}`;
-                } else if (isTail) {
-                  boxShadow = `0 0 6px ${withAlpha(ac, 55)}`;
-                }
                 return (
                   <div
                     key={cell.dayKey}
@@ -295,9 +261,11 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
                       blockSize: CELL_SIZE,
                       background: cell.inFuture ? "transparent" : color,
                       borderRadius: 3,
-                      border: cell.inFuture ? `1px dashed ${withAlpha(bd, 60)}` : "none",
-                      boxShadow,
-                      transition: "box-shadow 200ms ease",
+                      border: cell.inFuture
+                        ? `1px dashed ${withAlpha(bd, 60)}`
+                        : isToday
+                          ? `1.5px solid ${todayRing}`
+                          : "none",
                     }}
                   />
                 );
@@ -314,11 +282,10 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
           justifyContent: "space-between",
           gap: space[2],
           marginBlockStart: space[3],
-          fontFamily: MONO,
-          fontSize: 9,
-          letterSpacing: 1.5,
+          fontSize: 10,
+          fontWeight: 500,
           color: t3,
-          textTransform: "uppercase",
+          letterSpacing: -0.05,
         }}
       >
         <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -327,9 +294,10 @@ export default function StreakCalendar({ history, isDark, accent, weeks = 12 }) 
               inlineSize: CELL_SIZE,
               blockSize: CELL_SIZE,
               borderRadius: 3,
-              boxShadow: `0 0 0 1.5px ${haloIgnition}, 0 0 8px ${withAlpha(bioSignal.ignition, 40)}`,
+              border: `1.5px solid ${todayRing}`,
               background: "transparent",
               display: "inline-block",
+              boxSizing: "border-box",
             }}
           />
           Hoy
