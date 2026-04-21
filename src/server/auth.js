@@ -14,16 +14,20 @@ import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import Email from "next-auth/providers/email";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import nodemailer from "nodemailer";
 import { db } from "./db";
 import { auditLog } from "./audit";
 
 /* Magic-link delivery. When EMAIL_SERVER is configured we send via
    nodemailer; otherwise we fall back to a console log so the instance
    is functional from day 0 without Postmark/SES. The console path is
-   acceptable for internal pilots — for real users, set EMAIL_SERVER. */
+   acceptable for internal pilots — for real users, set EMAIL_SERVER.
+
+   Nodemailer is dynamically imported because its module-level side
+   effects (net sockets, streams) break Next.js route analysis when
+   loaded from any server path that chain-imports this file. */
 async function sendMagicLink({ identifier, url, provider }) {
   if (provider.server) {
+    const { default: nodemailer } = await import("nodemailer");
     const t = nodemailer.createTransport(provider.server);
     const result = await t.sendMail({
       to: identifier,
@@ -83,7 +87,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.APPLE_CLIENT_SECRET,
     })] : []),
     Email({
-      server: process.env.EMAIL_SERVER || undefined,
+      // Dummy server satisfies NextAuth's init-time validation when
+      // EMAIL_SERVER is unset — it's never actually used because our
+      // sendMagicLink override handles both real-send and console paths.
+      server: process.env.EMAIL_SERVER || "smtp://noop:noop@localhost:25",
       from: process.env.EMAIL_FROM || "no-reply@bio-ignicion.app",
       sendVerificationRequest: sendMagicLink,
     }),
