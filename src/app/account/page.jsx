@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "../../server/auth";
 import { db } from "../../server/db";
+import { getServerLocale } from "@/lib/locale-server";
 import AccountClient from "./AccountClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Cuenta" };
+export const metadata = { title: "Cuenta · Account" };
 
 export default async function AccountPage() {
   const session = await auth();
@@ -27,5 +28,7 @@ export default async function AccountPage() {
 
   if (!user) redirect("/signin");
 
-  return <AccountClient user={user} memberships={memberships} />;
+  const locale = await getServerLocale();
+
+  return <AccountClient user={user} memberships={memberships} locale={locale} />;
 }

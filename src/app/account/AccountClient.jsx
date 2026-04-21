@@ -5,15 +5,86 @@ import { AuthShell } from "@/components/ui/AuthShell";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
-import { cssVar, radius, space, font } from "@/components/ui/tokens";
+import { cssVar, space, font } from "@/components/ui/tokens";
 
-export default function AccountClient({ user, memberships }) {
+const COPY = {
+  es: {
+    title: "Tu cuenta",
+    back: "← Volver a la app",
+    profile: "Perfil",
+    labelName: "Nombre",
+    labelLocale: "Idioma",
+    labelTz: "Zona horaria",
+    labelMfa: "MFA",
+    mfaOn: "Activado",
+    mfaOff: "Desactivado",
+    labelMemberSince: "Miembro desde",
+    labelLastLogin: "Último acceso",
+    cfgMfa: "Configurar MFA / passkey",
+    orgs: (n) => `Organizaciones (${n})`,
+    orgsEmpty: "No perteneces a ninguna organización todavía.",
+    planLabel: "plan",
+    adminCta: "Admin →",
+    security: "Seguridad",
+    signOutAll: "Cerrar sesión en todos los dispositivos",
+    signingOut: "Cerrando sesiones…",
+    viewSessions: "Ver sesiones activas →",
+    privacy: "Privacidad",
+    privacyBody:
+      "Puedes exportar tus datos en cualquier momento o solicitar la eliminación de tu cuenta (GDPR Art. 17). La eliminación inicia un periodo de gracia de 30 días.",
+    exportBtn: "Exportar mis datos",
+    deleteBtn: "Eliminar mi cuenta",
+    deleting: "Procesando…",
+    confirmDelete: "¿Eliminar tu cuenta? Esto inicia un periodo de gracia de 30 días antes del borrado definitivo.",
+    confirmSignOutAll: "¿Cerrar sesión en todos los dispositivos?",
+    deleteOk: (when) => `Solicitud registrada. Eliminación definitiva: ${when}`,
+    genericErr: "Error",
+  },
+  en: {
+    title: "Your account",
+    back: "← Back to the app",
+    profile: "Profile",
+    labelName: "Name",
+    labelLocale: "Language",
+    labelTz: "Time zone",
+    labelMfa: "MFA",
+    mfaOn: "Enabled",
+    mfaOff: "Disabled",
+    labelMemberSince: "Member since",
+    labelLastLogin: "Last login",
+    cfgMfa: "Configure MFA / passkey",
+    orgs: (n) => `Organizations (${n})`,
+    orgsEmpty: "You don't belong to any organization yet.",
+    planLabel: "plan",
+    adminCta: "Admin →",
+    security: "Security",
+    signOutAll: "Sign out of all devices",
+    signingOut: "Signing out…",
+    viewSessions: "View active sessions →",
+    privacy: "Privacy",
+    privacyBody:
+      "You can export your data any time or request account deletion (GDPR Art. 17). Deletion starts a 30-day grace period.",
+    exportBtn: "Export my data",
+    deleteBtn: "Delete my account",
+    deleting: "Processing…",
+    confirmDelete: "Delete your account? This starts a 30-day grace period before permanent removal.",
+    confirmSignOutAll: "Sign out of all devices?",
+    deleteOk: (when) => `Request recorded. Permanent deletion: ${when}`,
+    genericErr: "Error",
+  },
+};
+
+export default function AccountClient({ user, memberships, locale = "es" }) {
+  const L = locale === "en" ? "en" : "es";
+  const t = COPY[L];
+  const dateLocale = L === "en" ? "en-US" : "es-MX";
+
   const [deleting, setDeleting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [msg, setMsg] = useState(null);
 
   async function requestDeletion() {
-    if (!confirm("¿Eliminar tu cuenta? Esto inicia un periodo de gracia de 30 días antes del borrado definitivo.")) return;
+    if (!confirm(t.confirmDelete)) return;
     setDeleting(true); setMsg(null);
     try {
       const tokenR = await fetch("/api/auth/csrf");
@@ -24,14 +95,14 @@ export default function AccountClient({ user, memberships }) {
       });
       if (!r.ok) throw new Error(await r.text());
       const j = await r.json();
-      setMsg({ kind: "success", text: `Solicitud registrada. Eliminación definitiva: ${new Date(j.hardDeleteAt).toLocaleString()}` });
+      setMsg({ kind: "success", text: t.deleteOk(new Date(j.hardDeleteAt).toLocaleString(dateLocale)) });
     } catch (e) {
-      setMsg({ kind: "danger", text: e?.message || "Error" });
+      setMsg({ kind: "danger", text: e?.message || t.genericErr });
     } finally { setDeleting(false); }
   }
 
   async function signOutAll() {
-    if (!confirm("¿Cerrar sesión en todos los dispositivos?")) return;
+    if (!confirm(t.confirmSignOutAll)) return;
     setSigningOut(true); setMsg(null);
     try {
       const tokenR = await fetch("/api/auth/csrf");
@@ -43,34 +114,46 @@ export default function AccountClient({ user, memberships }) {
       if (!r.ok) throw new Error(await r.text());
       location.href = "/signin";
     } catch (e) {
-      setMsg({ kind: "danger", text: e?.message || "Error" });
+      setMsg({ kind: "danger", text: e?.message || t.genericErr });
       setSigningOut(false);
     }
   }
 
   return (
     <AuthShell
+      locale={L}
       size="lg"
-      title="Tu cuenta"
+      title={t.title}
       subtitle={user.email}
       footer={
-        <Link href="/" style={{ color: cssVar.textDim, fontWeight: font.weight.semibold, textDecoration: "none" }}>← Volver a la app</Link>
+        <Link href="/app" style={{ color: cssVar.textDim, fontWeight: font.weight.semibold, textDecoration: "none" }}>
+          {t.back}
+        </Link>
       }
     >
-      <Section title="Perfil">
-        <Row label="Nombre"         value={user.name || "—"} />
-        <Row label="Idioma"         value={user.locale} />
-        <Row label="Zona horaria"   value={user.timezone} />
-        <Row label="MFA"            value={user.mfaEnabled ? <Badge variant="success" size="sm">Activado</Badge> : <Badge variant="soft" size="sm">Desactivado</Badge>} />
-        <Row label="Miembro desde"  value={new Date(user.createdAt).toLocaleDateString()} />
-        {user.lastLoginAt && <Row label="Último acceso" value={new Date(user.lastLoginAt).toLocaleString()} />}
+      <Section title={t.profile}>
+        <Row label={t.labelName}        value={user.name || "—"} />
+        <Row label={t.labelLocale}      value={user.locale} />
+        <Row label={t.labelTz}          value={user.timezone} />
+        <Row
+          label={t.labelMfa}
+          value={
+            user.mfaEnabled
+              ? <Badge variant="success" size="sm">{t.mfaOn}</Badge>
+              : <Badge variant="soft" size="sm">{t.mfaOff}</Badge>
+          }
+        />
+        <Row label={t.labelMemberSince} value={new Date(user.createdAt).toLocaleDateString(dateLocale)} />
+        {user.lastLoginAt && (
+          <Row label={t.labelLastLogin} value={new Date(user.lastLoginAt).toLocaleString(dateLocale)} />
+        )}
         <div style={{ marginTop: space[3] }}>
-          <Button href="/mfa" variant="secondary" size="sm">Configurar MFA / passkey</Button>
+          <Button href="/settings/security/mfa" variant="secondary" size="sm">{t.cfgMfa}</Button>
         </div>
       </Section>
 
-      <Section title={`Organizaciones (${memberships.length})`}>
-        {memberships.length === 0 && <p style={{ color: cssVar.textMuted }}>No perteneces a ninguna organización todavía.</p>}
+      <Section title={t.orgs(memberships.length)}>
+        {memberships.length === 0 && <p style={{ color: cssVar.textMuted }}>{t.orgsEmpty}</p>}
         {memberships.map((m) => (
           <div key={m.id} style={{
             display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -80,50 +163,49 @@ export default function AccountClient({ user, memberships }) {
               <div style={{ fontWeight: font.weight.bold, color: cssVar.text }}>{m.org?.name}</div>
               <div style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: 2 }}>
                 <Badge variant="accent" size="sm" style={{ marginInlineEnd: space[2] }}>{m.role}</Badge>
-                plan {m.org?.plan}
+                {t.planLabel} {m.org?.plan}
               </div>
             </div>
             {(m.role === "OWNER" || m.role === "ADMIN") && (
-              <Button href="/admin" variant="ghost" size="sm">Admin →</Button>
+              <Button href="/admin" variant="ghost" size="sm">{t.adminCta}</Button>
             )}
           </div>
         ))}
       </Section>
 
-      <Section title="Seguridad">
+      <Section title={t.security}>
         <Button
           onClick={signOutAll}
           variant="secondary"
           size="sm"
           loading={signingOut}
-          loadingLabel="Cerrando sesiones…"
+          loadingLabel={t.signingOut}
           disabled={deleting}
         >
-          Cerrar sesión en todos los dispositivos
+          {t.signOutAll}
         </Button>
         <div style={{ marginTop: space[3] }}>
           <Link href="/settings/sessions" style={{ color: cssVar.accent, fontSize: font.size.sm, fontWeight: font.weight.semibold, textDecoration: "none" }}>
-            Ver sesiones activas →
+            {t.viewSessions}
           </Link>
         </div>
       </Section>
 
-      <Section title="Privacidad" last>
+      <Section title={t.privacy} last>
         <p style={{ margin: 0, color: cssVar.textDim, fontSize: font.size.sm, lineHeight: font.leading.normal }}>
-          Puedes exportar tus datos en cualquier momento o solicitar la eliminación de tu cuenta
-          (GDPR Art. 17). La eliminación inicia un periodo de gracia de 30 días.
+          {t.privacyBody}
         </p>
         <div style={{ display: "flex", gap: space[2], flexWrap: "wrap", marginTop: space[3] }}>
-          <Button href="/api/v1/users/me/export" variant="secondary" size="sm">Exportar mis datos</Button>
+          <Button href="/api/v1/users/me/export" variant="secondary" size="sm">{t.exportBtn}</Button>
           <Button
             onClick={requestDeletion}
             variant="danger"
             size="sm"
             loading={deleting}
-            loadingLabel="Procesando…"
+            loadingLabel={t.deleting}
             disabled={signingOut}
           >
-            Eliminar mi cuenta
+            {t.deleteBtn}
           </Button>
         </div>
       </Section>
