@@ -578,7 +578,7 @@ export default function BioIgnicion(){
 
     {/* Pre-session mood */}
     {ts==="idle"&&<div style={{marginBottom:16}}>
-      <div style={{fontSize:10,fontWeight:700,color:t3,marginBottom:7,letterSpacing:1.5,textTransform:"uppercase"}}>¿Cómo llegas a esta sesión?</div>
+      <div style={{fontSize:12,fontWeight:600,color:t3,marginBottom:8,letterSpacing:-0.05}}>¿Cómo llegas a esta sesión?</div>
       <div style={{display:"flex",gap:4}}>{MOODS.map(m=>(
         <motion.button key={m.id} whileTap={{scale:.9}} onClick={()=>{setPreMood(m.value);H("tap");}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"7px 2px",borderRadius:11,border:preMood===m.value?`2px solid ${m.color}`:`1.5px solid ${bd}`,background:preMood===m.value?m.color+"0A":cd,cursor:"pointer",transition:"all .2s"}}>
           <Icon name={m.icon} size={16} color={preMood===m.value?m.color:t3}/>
@@ -611,24 +611,24 @@ export default function BioIgnicion(){
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none",zIndex:2,width:"88%",display:"flex",flexDirection:"column",alignItems:"center"}}>
         {isActive&&<motion.div key={pi} initial={reducedMotion?{opacity:1}:{opacity:0,y:-4}} animate={{opacity:1,y:0}} transition={{duration:reducedMotion?0:.35}} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:99,background:ac+"14",marginBottom:6}}>
           <Icon name={ph.ic} size={9} color={ac} aria-hidden="true"/>
-          <span aria-hidden="true" style={{fontSize:9,fontWeight:800,color:ac,letterSpacing:1.5,textTransform:"uppercase"}}>Fase {pi+1}/{pr.ph.length} · {ph.l}</span>
+          <span aria-hidden="true" style={{fontSize:11,fontWeight:700,color:ac,letterSpacing:-0.05}}>Fase {pi+1}/{pr.ph.length} · {ph.l}</span>
         </motion.div>}
-        <div style={{...ty.biometric(t1,isActive?font.size.hero:56),lineHeight:font.leading.none,letterSpacing:"-2px",textShadow:isActive?`0 0 20px ${ac}15`:"none"}}>{sec}</div>
-        {isActive&&<div style={{fontSize:10,fontWeight:800,color:ac,marginTop:4,opacity:.75,letterSpacing:2}}>{sessPct}%</div>}
+        <div style={{...ty.biometric(t1,isActive?font.size.hero:56),lineHeight:font.leading.none,letterSpacing:"-2px"}}>{sec}</div>
+        {isActive&&<div style={{fontSize:11,fontWeight:600,color:ac,marginTop:4,opacity:.7,fontVariantNumeric:"tabular-nums"}}>{sessPct}%</div>}
         <AnimatePresence mode="wait">
           {isBr&&bL&&<motion.div key={bL} initial={reducedMotion?{opacity:1}:{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={reducedMotion?{opacity:0}:{opacity:0,y:-6}} transition={{duration:reducedMotion?0:.3}} style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-            <span aria-hidden="true" style={{fontSize:11,fontWeight:800,letterSpacing:4,color:ac,opacity:.9,textTransform:"uppercase"}}>{bL}</span>
-            <span aria-hidden="true" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:22,height:18,padding:"0 6px",borderRadius:9,background:ac+"18",fontSize:11,fontWeight:800,color:ac}}>{bCnt}s</span>
+            <span aria-hidden="true" style={{fontSize:15,fontWeight:700,letterSpacing:-0.1,color:ac,opacity:.95}}>{bL.charAt(0)+bL.slice(1).toLowerCase()}</span>
+            <span aria-hidden="true" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:22,height:18,padding:"0 6px",borderRadius:9,background:ac+"18",fontSize:11,fontWeight:700,color:ac,fontVariantNumeric:"tabular-nums"}}>{bCnt}s</span>
           </motion.div>}
         </AnimatePresence>
         {ts==="idle"&&<>
           <div style={{...ty.label(t3),fontWeight:font.weight.semibold,marginTop:space[1.5]}}>segundos</div>
           <motion.div animate={{opacity:[.5,1,.5],y:[0,-2,0]}} transition={{duration:2.5,repeat:Infinity,ease:"easeInOut"}} style={{marginTop:12,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
             <div style={{width:36,height:36,borderRadius:"50%",background:`linear-gradient(135deg,${ac},${brand.accent})`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 14px ${ac}35`}}><Icon name="bolt" size={16} color="#fff"/></div>
-            <span style={ty.label(ac)}>INICIAR</span>
+            <span style={{fontSize:12,fontWeight:600,color:ac,letterSpacing:-0.05}}>Iniciar</span>
           </motion.div>
         </>}
-        {ts==="paused"&&<motion.div animate={{opacity:[.5,1,.5]}} transition={{duration:2,repeat:Infinity}} style={{marginTop:6}}><span style={{fontSize:11,fontWeight:800,color:ac,letterSpacing:3}}>EN PAUSA</span></motion.div>}
+        {ts==="paused"&&<motion.div animate={{opacity:[.5,1,.5]}} transition={{duration:2,repeat:Infinity}} style={{marginTop:6}}><span style={{fontSize:13,fontWeight:600,color:ac,letterSpacing:-0.05}}>En pausa</span></motion.div>}
       </div>
       {tp&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"100%",height:"100%",borderRadius:"50%",border:`2px solid ${ac}20`,animation:"cdPulse .6s ease forwards",pointerEvents:"none"}}/>}
     </div>
@@ -667,7 +667,7 @@ export default function BioIgnicion(){
           onClick={()=>{const isExhale=bL==="EXHALA"||bL==="SOSTÉN";setSessionData(d=>({...d,interactions:(d.interactions||0)+(isExhale?1:0.7),reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");if(isExhale)speak("sincronizado",circadian,voiceOn);}}
           style={{width:"100%",padding:"14px 16px",borderRadius:16,border:`1.5px dashed ${ac}35`,background:ac+"06",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
           <div style={{width:9,height:9,borderRadius:"50%",background:bL==="EXHALA"?ac:"transparent",border:`2px solid ${ac}`,opacity:.6}}/><span style={{fontSize:13,fontWeight:700,color:ac}}>Toca al exhalar</span>
-          {bL==="EXHALA"&&<span style={{fontSize:11,fontWeight:800,color:ac}}>AHORA</span>}
+          {bL==="EXHALA"&&<span style={{fontSize:13,fontWeight:700,color:ac,letterSpacing:-0.05}}>Ahora</span>}
         </button></motion.div>);
         return(<motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{marginTop:12}}><button
           onClick={()=>{setSessionData(d=>({...d,interactions:(d.interactions||0)+1,reactionTimes:[...(d.reactionTimes||[]),Date.now()%1000]}));H("tap");speak("confirmado",circadian,voiceOn);}}
@@ -678,7 +678,7 @@ export default function BioIgnicion(){
 
       {/* Science */}
       <button onClick={()=>{setShowScience(!showScience);}} style={{display:"flex",alignItems:"center",gap:5,marginTop:12,padding:"6px 0",background:"none",border:"none",cursor:"pointer"}}>
-        <Icon name="mind" size={11} color={ac}/><span style={{fontSize:10,color:ac,fontWeight:700}}>NEUROCIENCIA</span>
+        <Icon name="mind" size={12} color={ac}/><span style={{fontSize:12,color:ac,fontWeight:600,letterSpacing:-0.05}}>Neurociencia</span>
         <span style={{fontSize:10,color:ac,transform:showScience?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>▾</span>
       </button>
       <AnimatePresence>
@@ -696,9 +696,9 @@ export default function BioIgnicion(){
     </div>}
     <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap",marginBottom:14}}>{pr.ph.map((p,i)=>{const sR=durMult!==1?Math.round(p.s*durMult)+"–"+Math.round(p.e*durMult)+"s":p.r;const isCurr=pi===i;const isDone=i<pi;return<motion.div key={i} animate={isCurr?{scale:[1,1.03,1]}:{}} transition={isCurr?{duration:2,repeat:Infinity}:{}} style={{padding:"4px 10px",borderRadius:16,border:isCurr?`2px solid ${ac}`:isDone?`1.5px solid ${ac}30`:`1px solid ${bd}`,background:isCurr?ac+"10":isDone?ac+"06":cd,color:isCurr?ac:isDone?ac:t3,fontSize:10,fontWeight:isCurr?800:600,display:"flex",alignItems:"center",gap:4,opacity:i<=pi?1:.4,boxShadow:isCurr?`0 2px 8px ${ac}15`:"none",transition:"all .3s"}}><span style={{width:isCurr?7:5,height:isCurr?7:5,borderRadius:"50%",background:isDone?ac:isCurr?ac:bd,transition:"all .3s",boxShadow:isCurr?`0 0 6px ${ac}40`:"none"}}/>{isCurr&&<Icon name={p.ic} size={10} color={ac}/>}{sR}</motion.div>;})}</div>
     <div style={{display:"flex",gap:8,justifyContent:"center",alignItems:"center"}}>
-      {ts==="idle"&&<motion.button whileTap={{scale:.95}} onClick={go} style={{flex:1,maxWidth:260,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},${brand.accent})`,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:2.5,display:"flex",alignItems:"center",justifyContent:"center",gap:7,textTransform:"uppercase",boxShadow:`0 4px 18px ${ac}28`}}><Icon name="bolt" size={13} color="#fff"/>INICIAR</motion.button>}
-      {ts==="running"&&<><motion.button whileTap={{scale:.95}} onClick={pa} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>PAUSAR</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
-      {ts==="paused"&&<><motion.button whileTap={{scale:.95}} onClick={resume} style={{flex:1,maxWidth:180,padding:"12px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:10,fontWeight:800,cursor:"pointer",letterSpacing:2,textTransform:"uppercase"}}>CONTINUAR</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:42,height:42,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
+      {ts==="idle"&&<motion.button whileTap={{scale:.95}} onClick={go} style={{flex:1,maxWidth:260,minBlockSize:48,padding:"14px 0",borderRadius:50,background:`linear-gradient(135deg,${ac},${brand.accent})`,border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:-0.1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:`0 4px 18px ${ac}28`}}><Icon name="bolt" size={15} color="#fff"/>Iniciar</motion.button>}
+      {ts==="running"&&<><motion.button whileTap={{scale:.95}} onClick={pa} style={{flex:1,maxWidth:180,minBlockSize:48,padding:"14px 0",borderRadius:50,background:cd,border:`2px solid ${ac}`,color:ac,fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:-0.1}}>Pausar</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:44,height:44,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
+      {ts==="paused"&&<><motion.button whileTap={{scale:.95}} onClick={resume} style={{flex:1,maxWidth:180,minBlockSize:48,padding:"14px 0",borderRadius:50,background:ac,border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:-0.1}}>Continuar</motion.button><motion.button whileTap={{scale:.9}} onClick={rs} style={{width:44,height:44,borderRadius:"50%",border:`1px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="reset" size={15} color={t3}/></motion.button></>}
     </div>
     {isActive&&<div style={{marginTop:14,height:26,borderRadius:13,overflow:"hidden",background:cd,border:`1.5px solid ${bd}`,position:"relative"}}><svg width="800" height="20" viewBox="0 0 800 20" style={{position:"absolute",top:0,left:0,animation:"wf 4s linear infinite",opacity:.2}}><path d={`M0,10 ${Array.from({length:40},(_,i)=>`Q${i*20+10},${i%2===0?3:17} ${(i+1)*20},10`).join(" ")}`} fill="none" stroke={ac} strokeWidth="1"/></svg><div style={{position:"absolute",left:0,top:0,bottom:0,width:(pct*100)+"%",background:`linear-gradient(90deg,${ac}25,${ac}10)`,transition:"width .95s linear",borderRadius:10}}/></div>}
   </>}
