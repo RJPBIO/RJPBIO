@@ -15,7 +15,6 @@ import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
 import ReadinessRing from "./ReadinessRing";
 import BioSparkline from "./BioSparkline";
-import IllustratedEmpty from "./IllustratedEmpty";
 import CalibrationPlan from "./CalibrationPlan";
 import StreakCalendar from "./StreakCalendar";
 import InstrumentDueCard from "./InstrumentDueCard";
@@ -51,11 +50,13 @@ function colorForScore(score, goodThreshold = 70, mediumThreshold = 45) {
   return semantic.danger;
 }
 
+const CALIBRATION_THRESHOLD = 3;
+
 export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHist, bp = "mobile" }) {
   const { card: cd, surface: sf, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const reduced = useReducedMotion();
 
-  const perf = Math.round((st.coherencia + st.resiliencia + st.capacidad) / 3);
+  const perf = Math.round(((st.coherencia || 0) + (st.resiliencia || 0) + (st.capacidad || 0)) / 3);
   const weeklyTotal = (st.weeklyData || []).reduce((a, b) => a + (b || 0), 0);
   const tint = isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.02)";
   const bioSignal = useMemo(() => calcBioSignal(st), [st.coherencia, st.resiliencia, st.capacidad, st.moodLog, st.weeklyData, st.history]);
@@ -82,8 +83,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
     if (h.length < 3) return [];
     return h.map((s) => Math.round(((s.c ?? 50) + (s.r ?? 50)) / 2));
   }, [st.history]);
-  const noData = st.totalSessions === 0;
-  const calibrating = st.totalSessions < 3;
+  const calibrating = (st.totalSessions || 0) < CALIBRATION_THRESHOLD;
   const bioColor = colorForScore(bioSignal.score, 70, 45);
   const burnoutColor = burnout.risk === "bajo" ? semantic.success : burnout.risk === "moderado" ? semantic.warning : semantic.danger;
 
@@ -101,25 +101,6 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           }
         }}
       />
-    );
-  }
-
-  // Reservado por si en el futuro queremos un empty state distinto al plan.
-  if (noData) {
-    return (
-      <section role="region" aria-label="Dashboard vacío" style={{ paddingBlock: 14, paddingInline: space[5], paddingBlockEnd: 180 }}>
-        <IllustratedEmpty
-          illustration="baseline"
-          kicker="Señal en reposo"
-          title="Tu dashboard espera tu primera señal."
-          body="Cada ignición deja una huella biométrica. Completa una sesión y el instrumento se activa."
-          action={() => switchTab("ignicion")}
-          actionLabel="Ir a Ignición"
-          accent={ac}
-          textPrimary={t1}
-          textMuted={t3}
-        />
-      </section>
     );
   }
 
@@ -206,7 +187,6 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           ].map((m, i) => (
             <div
               key={i}
-              role="group"
               aria-label={m.aria}
               style={{
                 textAlign: "center",
@@ -545,9 +525,9 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
         <span style={ty.caption(t2)}>Historial ({(st.history || []).length})</span>
       </motion.button>
 
-      {st.achievements.length > 0 && (
+      {(st.achievements || []).length > 0 && (
         <article
-          aria-label={`Logros: ${st.achievements.length}`}
+          aria-label={`Logros: ${(st.achievements || []).length}`}
           style={{
             background: withAlpha(ac, 2),
             borderRadius: radius.lg,
@@ -560,7 +540,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
             <span style={ty.title(ac)}>Logros</span>
           </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {st.achievements.map(a => (
+            {(st.achievements || []).map(a => (
               <li key={a} style={{ ...ty.caption(ac), paddingBlock: 2, display: "flex", alignItems: "center", gap: 5 }}>
                 <span aria-hidden="true" style={{ inlineSize: 3, blockSize: 3, borderRadius: radius.full, background: ac }} />
                 {AM[a] || a}
