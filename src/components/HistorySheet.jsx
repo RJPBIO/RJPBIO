@@ -13,6 +13,22 @@ import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/them
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+const numStyle = (color, weight = 700) => ({
+  fontFamily: MONO,
+  fontWeight: weight,
+  color,
+  letterSpacing: -0.1,
+  fontVariantNumeric: "tabular-nums",
+});
+const kickerStyle = (color) => ({
+  fontSize: 12,
+  fontWeight: 600,
+  color,
+  letterSpacing: -0.05,
+  margin: 0,
+});
+
 function groupHist(h) {
   const n = new Date();
   const td = n.toDateString();
@@ -160,8 +176,9 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <span style={{ ...ty.label(t3), fontSize: 9, letterSpacing: 1.5 }}>
-                    Señal · {trendData.length} sesiones
+                  <span style={kickerStyle(t3)}>
+                    Señal ·{" "}
+                    <span style={numStyle(t3, 600)}>{trendData.length}</span> sesiones
                   </span>
                   <span
                     style={{
@@ -205,15 +222,18 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                 <section key={k} aria-label={`${groupLabel}: ${gi.length} sesiones`}>
                   <h4
                     style={{
-                      ...ty.label(t3),
+                      ...kickerStyle(t3),
                       marginBlockEnd: space[2],
                       marginBlockStart: space[3],
                     }}
                   >
                     {groupLabel}
                     {isOlder && gi.length > OLDER_PAGE && (
-                      <span style={{ marginInlineStart: 6, color: t3, fontWeight: font.weight.medium, letterSpacing: 0 }}>
-                        · {visible.length}/{gi.length}
+                      <span style={{ marginInlineStart: 6, color: t3, fontWeight: 500 }}>
+                        ·{" "}
+                        <span style={numStyle(t3, 600)}>
+                          {visible.length}/{gi.length}
+                        </span>
                       </span>
                     )}
                   </h4>
@@ -269,7 +289,7 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                                 marginBlockStart: 1,
                               }}
                             >
-                              <span style={ty.caption(t3)}>{tm}</span>
+                              <span style={{ ...numStyle(t3, 600), fontSize: font.size.sm }}>{tm}</span>
                               {moodIcon && (
                                 <Icon
                                   name={moodIcon}
@@ -291,21 +311,21 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                                 <span
                                   title={`Sello: ${b.label}${h.partial ? " · parcial" : ""}${h.hiddenSec ? ` · ${h.hiddenSec}s en segundo plano` : ""}`}
                                   style={{
-                                    display: "inline-flex", alignItems: "center", gap: 2,
+                                    display: "inline-flex", alignItems: "center", gap: 3,
                                     marginInlineStart: 4, paddingInline: 6, paddingBlock: 1,
                                     borderRadius: 6, background: withAlpha(b.color, 10),
-                                    color: b.color, fontSize: 9, fontWeight: font.weight.bold,
-                                    letterSpacing: 0.3, textTransform: "uppercase",
+                                    color: b.color, fontSize: 10, fontWeight: 600,
+                                    letterSpacing: -0.05,
                                   }}
                                 >
-                                  <Icon name={b.icon} size={8} color={b.color} />
+                                  <Icon name={b.icon} size={9} color={b.color} />
                                   {b.label}
                                 </span>
                               ); })()}
                             </div>
                           </div>
                           <div style={{ textAlign: "end" }} aria-hidden="true">
-                            <div style={ty.title(ac)}>+{h.vc}</div>
+                            <div style={{ ...numStyle(ac, 700), fontSize: font.size.md }}>+{h.vc}</div>
                           </div>
                         </li>
                       );
@@ -334,7 +354,8 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                       }}
                       aria-label={`Cargar ${Math.min(OLDER_PAGE, hiddenCount)} sesiones más`}
                     >
-                      Ver {Math.min(OLDER_PAGE, hiddenCount)} más · {hiddenCount} restantes
+                      Ver <span style={numStyle(ac, 700)}>{Math.min(OLDER_PAGE, hiddenCount)}</span> más ·{" "}
+                      <span style={numStyle(ac, 600)}>{hiddenCount}</span> restantes
                     </button>
                   )}
                 </section>
