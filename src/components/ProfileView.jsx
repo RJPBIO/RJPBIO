@@ -22,6 +22,17 @@ import RemindersCard from "./RemindersCard";
 import InstrumentDueCard from "./InstrumentDueCard";
 
 const ACHIEVEMENT_IDS = Object.keys(AM);
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
+function sectionLabel(color) {
+  return {
+    fontSize: 12,
+    fontWeight: 600,
+    color,
+    letterSpacing: -0.05,
+    margin: 0,
+  };
+}
 
 export default function ProfileView({
   st, setSt, isDark, ac,
@@ -129,7 +140,6 @@ export default function ProfileView({
               blockSize: 5,
               borderRadius: radius.full,
               background: nSt.color,
-              animation: reduced ? "none" : "shimDot 2s ease infinite",
             }}
           />
           <span style={ty.title(nSt.color)}>{nSt.label} · {lv.n}</span>
@@ -184,9 +194,8 @@ export default function ProfileView({
               <div style={ty.metric(m.c, font.size["2xl"])}>{m.v}</div>
               <div
                 style={{
-                  ...ty.label(t3),
+                  ...sectionLabel(t3),
                   fontSize: font.size.xs,
-                  letterSpacing: font.tracking.wider,
                   marginBlockStart: 3,
                 }}
               >
@@ -219,7 +228,6 @@ export default function ProfileView({
                 blockSize: "100%",
                 borderRadius: 6,
                 background: `linear-gradient(90deg,${lv.c},${lv.c}BB)`,
-                boxShadow: `0 0 8px ${withAlpha(lv.c, 30)}`,
               }}
             />
           </div>
@@ -254,9 +262,18 @@ export default function ProfileView({
             >
               <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
                 <Icon name="trophy" size={12} color={t3} aria-hidden="true" />
-                <h3 style={ty.label(t3)}>Insignias</h3>
+                <h3 style={sectionLabel(t3)}>Insignias</h3>
               </div>
-              <span style={{ ...ty.caption(t3), fontFamily: font.mono, letterSpacing: 1 }}>
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: t3,
+                  letterSpacing: -0.1,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {unlockedCount}/{ACHIEVEMENT_IDS.length}
               </span>
             </header>
@@ -296,7 +313,7 @@ export default function ProfileView({
           >
             <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2.5] || 10 }}>
               <Icon name="fingerprint" size={12} color={t3} aria-hidden="true" />
-              <h3 style={ty.label(t3)}>Tu Firma Neural</h3>
+              <h3 style={sectionLabel(t3)}>Tu Firma Neural</h3>
             </header>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
               {[
@@ -353,7 +370,7 @@ export default function ProfileView({
             border: `1px solid ${bd}`,
           }}
         >
-          <div style={{ ...ty.label(t3), marginBlockEnd: 2 }}>Mood</div>
+          <div style={{ ...sectionLabel(t3), marginBlockEnd: 2 }}>Mood</div>
           {avgMood > 0 ? (
             <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
               <Icon
@@ -386,7 +403,7 @@ export default function ProfileView({
           >
             <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
               <Icon name="clock" size={12} color={t3} aria-hidden="true" />
-              <h3 style={ty.label(t3)}>Hora Óptima</h3>
+              <h3 style={sectionLabel(t3)}>Hora Óptima</h3>
             </header>
             <p style={ty.body(t2)}>{ot.recommendation}</p>
           </article>
@@ -409,7 +426,7 @@ export default function ProfileView({
           >
             <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
               <Icon name="fire" size={12} color={semantic.warning} aria-hidden="true" />
-              <h3 style={ty.label(t3)}>Análisis de Rachas</h3>
+              <h3 style={sectionLabel(t3)}>Análisis de Rachas</h3>
             </header>
             <div
               style={{
@@ -523,7 +540,7 @@ export default function ProfileView({
       >
         <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
           <Icon name="shield" size={12} color={t3} aria-hidden="true" />
-          <h3 style={ty.label(t3)}>Ciencia & Resultados</h3>
+          <h3 style={sectionLabel(t3)}>Ciencia & Resultados</h3>
         </header>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <Link
@@ -602,7 +619,7 @@ export default function ProfileView({
         >
           <header style={{ display: "flex", alignItems: "center", gap: space[1], marginBlockEnd: space[2] }}>
             <Icon name="fingerprint" size={12} color={t3} aria-hidden="true" />
-            <h3 style={ty.label(t3)}>Perfil Bioneural</h3>
+            <h3 style={sectionLabel(t3)}>Perfil Bioneural</h3>
           </header>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {onShowChronotype && (
@@ -681,12 +698,16 @@ export default function ProfileView({
         aria-label="Recalibrar baseline neural"
         style={{
           inlineSize: "100%",
-          padding: space[3],
+          paddingBlock: 14,
+          paddingInline: 18,
           borderRadius: radius.lg,
           border: `1.5px solid ${withAlpha(ac, 12)}`,
           background: `linear-gradient(135deg,${withAlpha(ac, 4)},${withAlpha(ac, 2)})`,
           color: ac,
-          ...ty.title(ac),
+          fontSize: 15,
+          fontWeight: 700,
+          letterSpacing: -0.1,
+          minBlockSize: 48,
           cursor: "pointer",
           marginBlockEnd: space[2],
           display: "flex",
@@ -696,7 +717,7 @@ export default function ProfileView({
         }}
       >
         <Icon name="radar" size={14} color={ac} aria-hidden="true" />
-        Recalibrar Baseline Neural
+        Recalibrar baseline neural
       </motion.button>
       <button
         onClick={() => {
@@ -707,16 +728,20 @@ export default function ProfileView({
         aria-label="Reiniciar todos los datos"
         style={{
           inlineSize: "100%",
-          padding: space[3],
+          paddingBlock: 12,
+          paddingInline: 16,
           borderRadius: radius.lg,
           border: `1px solid ${withAlpha(semantic.danger, 20)}`,
           background: withAlpha(semantic.danger, isDark ? 8 : 4),
           color: semantic.danger,
-          ...ty.caption(semantic.danger),
+          fontSize: 13,
+          fontWeight: 600,
+          letterSpacing: -0.05,
+          minBlockSize: 44,
           cursor: "pointer",
         }}
       >
-        Reiniciar Datos
+        Reiniciar datos
       </button>
     </section>
   );
