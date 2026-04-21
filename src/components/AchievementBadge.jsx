@@ -406,35 +406,35 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
         <div style={{ textAlign: "center", maxInlineSize: size + 16 }}>
           <div
             style={{
-              fontFamily: MONO,
-              fontSize: 8,
-              letterSpacing: 1.8,
+              fontSize: 9,
+              fontWeight: 600,
               color: unlocked ? t.primary : "rgba(148,163,184,0.7)",
-              opacity: 0.8,
-              textTransform: "uppercase",
+              opacity: 0.85,
+              letterSpacing: -0.05,
               marginBlockEnd: 2,
             }}
           >
-            ▸ {unlocked ? t.name : "Bloq."}
+            {unlocked ? t.name : "Bloqueado"}
           </div>
           <div
             style={{
-              fontSize: 11,
-              fontWeight: font.weight.black,
-              color: unlocked ? t.primary : "rgba(148,163,184,0.8)",
-              letterSpacing: 1.2,
-              textTransform: "uppercase",
               fontFamily: MONO,
+              fontSize: 12,
+              fontWeight: 700,
+              color: unlocked ? t.primary : "rgba(148,163,184,0.8)",
+              letterSpacing: -0.2,
               lineHeight: 1.2,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {meta.label}
           </div>
           <div
             style={{
-              fontSize: 9,
-              color: "rgba(148,163,184,0.6)",
-              letterSpacing: 0.5,
+              fontSize: 10,
+              fontWeight: 500,
+              color: "rgba(148,163,184,0.75)",
+              letterSpacing: -0.05,
               marginBlockStart: 2,
               lineHeight: 1.3,
             }}
