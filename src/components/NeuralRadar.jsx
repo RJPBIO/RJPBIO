@@ -142,8 +142,6 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
   const summary = data.map((d) => `${d.subject} ${d.value}%`).join(", ");
   const ariaLabel = `Radar neural. Rendimiento global ${perf}%, estado ${perfLabel}. ${summary}.`;
 
-  const cornerStroke = withAlpha(ac, isDark ? 30 : 22);
-
   // Lattice plus-marks — subtle DNA behind the chart area
   const lattice = useMemo(() => {
     const marks = [];
@@ -168,8 +166,6 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
         overflow: "hidden",
       }}
     >
-      <CornerBrackets color={cornerStroke} />
-
       <header
         style={{
           display: "flex",
@@ -182,16 +178,14 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
         <div>
           <div
             style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              fontWeight: font.weight.black,
-              letterSpacing: 3,
+              fontSize: 11,
+              fontWeight: 600,
               color: t3,
-              textTransform: "uppercase",
+              letterSpacing: -0.05,
               marginBlockEnd: 3,
             }}
           >
-            ▸ Estado Neural
+            Estado neural
           </div>
           <div
             style={{
@@ -201,11 +195,11 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
               color: t1,
               letterSpacing: -1.5,
               lineHeight: 1,
-              textShadow: `0 0 18px ${withAlpha(ac, 18)}`,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {perf}
-            <span style={{ fontSize: 14, color: t3, marginInlineStart: 2, letterSpacing: 0 }}>%</span>
+            <span style={{ fontSize: 14, color: t3, marginInlineStart: 2, letterSpacing: 0, fontVariantNumeric: "tabular-nums" }}>%</span>
           </div>
         </div>
         <div
@@ -229,18 +223,14 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
               blockSize: 7,
               borderRadius: "50%",
               background: perfColor,
-              boxShadow: `0 0 8px ${withAlpha(perfColor, 60)}`,
-              animation: reduced ? "none" : "shimDot 2s ease infinite",
             }}
           />
           <span
             style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: 1.5,
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: -0.05,
               color: perfColor,
-              textTransform: "uppercase",
             }}
           >
             {perfLabel}
@@ -368,16 +358,16 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
                   blockSize: 7,
                   borderRadius: "50%",
                   background: d.color,
-                  boxShadow: isActive ? `0 0 6px ${d.color}` : "none",
                 }}
               />
               <span
                 style={{
                   fontFamily: MONO,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: 1,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: -0.1,
                   color: isActive ? d.color : t3,
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
                 {d.value}%
@@ -402,13 +392,6 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
               animation: reduced ? "none" : "fi .3s",
             }}
           >
-            {/* Tiny corner brackets on the detail panel */}
-            <svg aria-hidden="true" style={{ position: "absolute", insetBlockStart: 4, insetInlineStart: 4, inlineSize: 8, blockSize: 8 }} viewBox="0 0 8 8">
-              <path d="M0 8 L0 0 L8 0" stroke={active.color} strokeWidth="1.25" fill="none" opacity="0.5" />
-            </svg>
-            <svg aria-hidden="true" style={{ position: "absolute", insetBlockStart: 4, insetInlineEnd: 4, inlineSize: 8, blockSize: 8 }} viewBox="0 0 8 8">
-              <path d="M0 0 L8 0 L8 8" stroke={active.color} strokeWidth="1.25" fill="none" opacity="0.5" />
-            </svg>
             <div
               style={{
                 display: "flex",
@@ -419,15 +402,13 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
             >
               <span
                 style={{
-                  fontFamily: MONO,
-                  fontSize: 12,
-                  fontWeight: font.weight.black,
+                  fontSize: 13,
+                  fontWeight: 700,
                   color: active.color,
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
+                  letterSpacing: -0.1,
                 }}
               >
-                ▸ {activeZone}
+                {activeZone}
               </span>
               <span
                 style={{
@@ -435,13 +416,14 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
                   fontSize: 20,
                   fontWeight: font.weight.black,
                   color: active.color,
-                  letterSpacing: -1,
+                  letterSpacing: -0.8,
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
                 {active.value}%
               </span>
             </div>
-            <div style={{ fontSize: 11, color: t2, lineHeight: 1.55 }}>{active.interp}</div>
+            <div style={{ fontSize: 12, color: t2, lineHeight: 1.55 }}>{active.interp}</div>
           </div>
         )}
       </div>
@@ -450,40 +432,18 @@ export default function NeuralRadar({ st, isDark, onZoneClick }) {
         <div
           aria-hidden="true"
           style={{
-            fontFamily: MONO,
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: 2.5,
+            fontSize: 11,
+            fontWeight: 500,
             color: t3,
             textAlign: "center",
             marginBlockStart: 10,
-            textTransform: "uppercase",
-            opacity: 0.7,
+            letterSpacing: -0.05,
+            opacity: 0.8,
           }}
         >
-          ▸ Tap · Explorar dimensión
+          Tap · Explorar dimensión
         </div>
       )}
     </section>
-  );
-}
-
-function CornerBrackets({ color }) {
-  const style = { position: "absolute", inlineSize: 12, blockSize: 12, pointerEvents: "none" };
-  return (
-    <>
-      <svg aria-hidden="true" style={{ ...style, insetBlockStart: 8, insetInlineStart: 8 }} viewBox="0 0 12 12">
-        <path d="M0 12 L0 0 L12 0" stroke={color} strokeWidth="1.4" fill="none" />
-      </svg>
-      <svg aria-hidden="true" style={{ ...style, insetBlockStart: 8, insetInlineEnd: 8 }} viewBox="0 0 12 12">
-        <path d="M0 0 L12 0 L12 12" stroke={color} strokeWidth="1.4" fill="none" />
-      </svg>
-      <svg aria-hidden="true" style={{ ...style, insetBlockEnd: 8, insetInlineStart: 8 }} viewBox="0 0 12 12">
-        <path d="M12 12 L0 12 L0 0" stroke={color} strokeWidth="1.4" fill="none" />
-      </svg>
-      <svg aria-hidden="true" style={{ ...style, insetBlockEnd: 8, insetInlineEnd: 8 }} viewBox="0 0 12 12">
-        <path d="M0 12 L12 12 L12 0" stroke={color} strokeWidth="1.4" fill="none" />
-      </svg>
-    </>
   );
 }
