@@ -130,36 +130,24 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
         overflow: "hidden",
       }}
     >
-      {/* Ambient particle field */}
-      {!reduced && (
-        <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-          {Array.from({ length: 18 }).map((_, i) => (
-            <motion.span
-              key={i}
-              style={{
-                position: "absolute",
-                insetBlockStart: `${(i * 53) % 100}%`,
-                insetInlineStart: `${(i * 37) % 100}%`,
-                inlineSize: 2,
-                blockSize: 2,
-                borderRadius: "50%",
-                background: bioSignal.phosphorCyan,
-                opacity: 0.25,
-              }}
-              animate={{
-                opacity: [0.1, 0.45, 0.1],
-                scale: [1, 1.6, 1],
-              }}
-              transition={{
-                duration: 3 + (i % 4),
-                repeat: Infinity,
-                delay: i * 0.15,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {/* Static particle field — cinematic texture, no ambient pulsing */}
+      <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {Array.from({ length: 18 }).map((_, i) => (
+          <span
+            key={i}
+            style={{
+              position: "absolute",
+              insetBlockStart: `${(i * 53) % 100}%`,
+              insetInlineStart: `${(i * 37) % 100}%`,
+              inlineSize: 2,
+              blockSize: 2,
+              borderRadius: "50%",
+              background: bioSignal.phosphorCyan,
+              opacity: 0.22,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Progress dots + Skip */}
       <div
@@ -194,10 +182,9 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
             background: "transparent",
             border: "none",
             color: "rgba(232,236,244,0.55)",
-            fontSize: font.size.xs,
-            letterSpacing: 1.2,
-            textTransform: "uppercase",
-            fontWeight: font.weight.bold,
+            fontSize: 12,
+            letterSpacing: -0.05,
+            fontWeight: 600,
             cursor: "pointer",
             padding: space[2],
           }}
@@ -238,14 +225,13 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
             />
           </div>
 
-          {/* Kicker */}
+          {/* Kicker — mono kept for brand identity, drop wide-LSp uppercase styling */}
           <div
             style={{
-              fontSize: font.size.xs,
-              letterSpacing: 4,
-              fontWeight: font.weight.black,
+              fontSize: 12,
+              letterSpacing: -0.05,
+              fontWeight: 700,
               color: bioSignal.phosphorCyan,
-              textTransform: "uppercase",
               fontFamily: font.mono,
             }}
           >
@@ -309,8 +295,8 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
                       cursor: "pointer",
                       textAlign: "start",
                       color: "#E8ECF4",
-                      boxShadow: active ? `0 0 0 1px ${opt.color}40 inset, 0 8px 24px -10px ${opt.color}` : "none",
-                      transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
+                      boxShadow: active ? `0 0 0 1px ${opt.color}40 inset` : "none",
+                      transition: "background 0.2s, border-color 0.2s",
                     }}
                   >
                     <div
@@ -331,17 +317,15 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
                     </div>
                     <div
                       style={{
-                        fontSize: font.size.sm,
-                        fontWeight: font.weight.black,
+                        fontSize: 14,
+                        fontWeight: 700,
                         color: active ? opt.color : "#E8ECF4",
-                        letterSpacing: 1,
-                        textTransform: "uppercase",
-                        fontFamily: font.mono,
+                        letterSpacing: -0.1,
                       }}
                     >
                       {opt.label}
                     </div>
-                    <div style={{ fontSize: font.size.xs, color: "rgba(232,236,244,0.65)", lineHeight: 1.35 }}>
+                    <div style={{ fontSize: 12, color: "rgba(232,236,244,0.65)", lineHeight: 1.4, letterSpacing: -0.05 }}>
                       {opt.desc}
                     </div>
                   </motion.button>
@@ -395,17 +379,15 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
                   <div style={{ flex: 1 }}>
                     <div
                       style={{
-                        fontSize: font.size.sm,
-                        fontWeight: font.weight.black,
+                        fontSize: 15,
+                        fontWeight: 700,
                         color: "#E8ECF4",
-                        letterSpacing: 1,
-                        textTransform: "uppercase",
-                        fontFamily: font.mono,
+                        letterSpacing: -0.1,
                       }}
                     >
                       {p.label}
                     </div>
-                    <div style={{ fontSize: font.size.sm, color: "rgba(232,236,244,0.7)", marginBlockStart: 2, lineHeight: 1.4 }}>
+                    <div style={{ fontSize: 13, color: "rgba(232,236,244,0.7)", marginBlockStart: 3, lineHeight: 1.45, letterSpacing: -0.05 }}>
                       {p.desc}
                     </div>
                   </div>
@@ -446,22 +428,21 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
           aria-disabled={!canAdvance}
           style={{
             inlineSize: "100%",
-            paddingBlock: space[4],
-            paddingInline: space[5],
+            minBlockSize: 48,
+            paddingBlock: 16,
+            paddingInline: 22,
             borderRadius: radius.full,
             border: "none",
             background: canAdvance
               ? `linear-gradient(135deg, ${bioSignal.phosphorCyan}, ${bioSignal.neuralViolet})`
               : "rgba(255,255,255,0.06)",
             color: canAdvance ? "#050810" : "rgba(232,236,244,0.45)",
-            fontSize: font.size.base || 15,
-            fontWeight: font.weight.black,
-            letterSpacing: 1.5,
-            textTransform: "uppercase",
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: -0.1,
             cursor: canAdvance ? "pointer" : "not-allowed",
-            boxShadow: canAdvance ? `0 8px 32px -8px ${bioSignal.phosphorCyan}` : "none",
             fontFamily: font.family,
-            transition: "background 0.25s, color 0.25s, box-shadow 0.25s",
+            transition: "background 0.25s, color 0.25s",
           }}
           aria-label={isLast ? "Empezar calibración" : isIntentStep && !intent ? "Elige una intención primero" : "Siguiente"}
         >
@@ -475,10 +456,9 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
               background: "transparent",
               border: "none",
               color: "rgba(232,236,244,0.55)",
-              fontSize: font.size.xs,
-              fontWeight: font.weight.bold,
-              letterSpacing: 1.2,
-              textTransform: "uppercase",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: -0.05,
               cursor: "pointer",
               paddingBlock: space[2],
             }}
