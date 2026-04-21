@@ -240,12 +240,11 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
                     style={{
                       paddingBlock: space[1.5] || 6,
                       paddingInline: space[4],
-                      fontSize: 10,
+                      fontSize: 11,
                       fontFamily: font.mono,
-                      fontWeight: font.weight.black,
-                      letterSpacing: 2.5,
-                      color: "rgba(232,236,244,0.4)",
-                      textTransform: "uppercase",
+                      fontWeight: 600,
+                      letterSpacing: -0.05,
+                      color: "rgba(232,236,244,0.48)",
                     }}
                   >
                     {groupName}
@@ -358,17 +357,25 @@ export default function CommandPalette({ open, onClose, commands = [], placehold
               paddingBlock: space[2],
               paddingInline: space[4],
               borderBlockStart: `1px solid rgba(255,255,255,0.06)`,
-              fontSize: 10,
-              fontFamily: font.mono,
-              letterSpacing: 1.2,
-              color: "rgba(232,236,244,0.4)",
+              fontSize: 11,
+              letterSpacing: -0.05,
+              color: "rgba(232,236,244,0.5)",
             }}
             aria-hidden="true"
           >
-            <span>{filtered.length} resultados</span>
-            <span style={{ display: "flex", gap: 10 }}>
-              <span>↑↓ NAVEGAR</span>
-              <span>ENTER EJECUTAR</span>
+            <span>
+              <span style={{ fontFamily: font.mono, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
+                {filtered.length}
+              </span>{" "}
+              resultados
+            </span>
+            <span style={{ display: "flex", gap: 12 }}>
+              <span>
+                <span style={{ fontFamily: font.mono }}>↑↓</span> navegar
+              </span>
+              <span>
+                <span style={{ fontFamily: font.mono }}>⏎</span> ejecutar
+              </span>
             </span>
           </div>
         </motion.div>
