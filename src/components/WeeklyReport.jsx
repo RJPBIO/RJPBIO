@@ -1,11 +1,8 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   WEEKLY REPORT — comparación semanal con delta
-   Base: Self-Determination Theory (Deci & Ryan 2000).
-
-   Ficha semanal instrumentada: corner brackets, mono kickers,
-   paleta bio-signal unificada, barras con halo y tiles con
-   sub-delta mono.
+   WEEKLY REPORT — comparación semanal con delta.
+   Neural-DNA: mono+tabular solo en números, labels sentence case,
+   sin corner brackets, sin halos en live-data, sin ▸ glyphs.
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
@@ -17,31 +14,6 @@ import { resolveTheme, withAlpha, brand, bioSignal } from "../lib/theme";
 import { useReducedMotion } from "../lib/a11y";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
-
-function CornerBrackets({ color, size = 10 }) {
-  const L = size;
-  const common = { position: "absolute", inlineSize: L, blockSize: L, pointerEvents: "none" };
-  return (
-    <>
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockStart: 6, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockStart: 6, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockEnd: 6, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockEnd: 6, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-    </>
-  );
-}
-
-function MiniCornerBrackets({ color }) {
-  const common = { position: "absolute", inlineSize: 5, blockSize: 5, pointerEvents: "none" };
-  return (
-    <>
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 3, insetBlockStart: 3, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 3, insetBlockStart: 3, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 3, insetBlockEnd: 3, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 3, insetBlockEnd: 3, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-    </>
-  );
-}
 
 export default function WeeklyReport({ st, isDark }) {
   const reduced = useReducedMotion();
@@ -111,7 +83,6 @@ export default function WeeklyReport({ st, isDark }) {
   const moodColor = report.moodDelta >= 0 ? brand.primary : bioSignal.plasmaPink;
   const cohColor = report.cohDelta >= 0 ? bioSignal.phosphorCyan : bioSignal.plasmaPink;
 
-  const cornerStroke = withAlpha(ac, isDark ? 30 : 24);
   const rule = withAlpha(ac, isDark ? 20 : 14);
 
   const ariaLabel =
@@ -134,8 +105,6 @@ export default function WeeklyReport({ st, isDark }) {
         overflow: "hidden",
       }}
     >
-      <CornerBrackets color={cornerStroke} />
-
       <header
         style={{
           display: "flex",
@@ -146,21 +115,18 @@ export default function WeeklyReport({ st, isDark }) {
           borderBlockEnd: `1px dashed ${rule}`,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="chart" size={12} color={ac} aria-hidden="true" />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="chart" size={14} color={ac} aria-hidden="true" />
           <h3
             style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: 3,
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: -0.05,
               color: ac,
-              textTransform: "uppercase",
               margin: 0,
-              opacity: 0.9,
             }}
           >
-            ▸ Reporte · Semanal
+            Reporte semanal
           </h3>
         </div>
         {report.hasPrev && (
@@ -179,18 +145,18 @@ export default function WeeklyReport({ st, isDark }) {
           >
             <Icon
               name={report.diff >= 0 ? "trending-up" : "trending-down"}
-              size={10}
+              size={11}
               color={diffColor}
               aria-hidden="true"
             />
             <span
               style={{
                 fontFamily: MONO,
-                fontSize: 11,
-                fontWeight: 800,
+                fontSize: 12,
+                fontWeight: 700,
                 color: diffColor,
-                letterSpacing: 0.3,
-                textShadow: `0 0 8px ${withAlpha(diffColor, 30)}`,
+                letterSpacing: -0.1,
+                fontVariantNumeric: "tabular-nums",
               }}
             >
               {report.diff >= 0 ? "+" : ""}
@@ -205,22 +171,21 @@ export default function WeeklyReport({ st, isDark }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: 10,
             marginBlockEnd: 12,
             paddingInline: 2,
           }}
         >
           <span
             style={{
-              fontFamily: MONO,
-              fontSize: 9,
-              letterSpacing: 2,
+              fontSize: 11,
+              fontWeight: 600,
               color: t3,
-              textTransform: "uppercase",
+              letterSpacing: -0.05,
               flexShrink: 0,
             }}
           >
-            ▸ Señal
+            Señal
           </span>
           <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
             <BioSparkline
@@ -287,21 +252,17 @@ export default function WeeklyReport({ st, isDark }) {
                     inlineSize: 10,
                     background: barColor,
                     borderRadius: 3,
-                    boxShadow:
-                      report.curr[i] > 0
-                        ? `0 0 8px ${withAlpha(barColor, 55)}`
-                        : "none",
                   }}
                 />
               </div>
               <span
                 style={{
                   fontFamily: MONO,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: -0.05,
                   color: report.curr[i] > 0 ? t2 : t3,
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
                 {d}
@@ -319,27 +280,35 @@ export default function WeeklyReport({ st, isDark }) {
             justifyContent: "center",
             gap: 16,
             marginBlockEnd: 10,
-            fontFamily: MONO,
-            fontSize: 9,
-            letterSpacing: 1.2,
-            textTransform: "uppercase",
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: -0.05,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div
               style={{
                 inlineSize: 8,
                 blockSize: 8,
                 borderRadius: 2,
                 background: ac,
-                boxShadow: `0 0 6px ${withAlpha(ac, 55)}`,
               }}
             />
-            <span style={{ color: t3 }}>Semana · {report.currTotal}</span>
+            <span style={{ color: t3 }}>
+              Semana ·{" "}
+              <span style={{ fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
+                {report.currTotal}
+              </span>
+            </span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ inlineSize: 8, blockSize: 8, borderRadius: 2, background: bd }} />
-            <span style={{ color: t3 }}>Previa · {report.prevTotal}</span>
+            <span style={{ color: t3 }}>
+              Previa ·{" "}
+              <span style={{ fontFamily: MONO, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
+                {report.prevTotal}
+              </span>
+            </span>
           </div>
         </div>
       )}
@@ -392,16 +361,15 @@ function StatTile({ label, value, delta, color, bgColor, ariaLabel }) {
         overflow: "hidden",
       }}
     >
-      <MiniCornerBrackets color={withAlpha(color, 50)} />
       <div
         style={{
           fontFamily: MONO,
-          fontSize: 15,
+          fontSize: 16,
           fontWeight: 700,
           color,
           lineHeight: 1,
           letterSpacing: -0.3,
-          textShadow: `0 0 10px ${withAlpha(color, 25)}`,
+          fontVariantNumeric: "tabular-nums",
         }}
       >
         {value}
@@ -410,10 +378,11 @@ function StatTile({ label, value, delta, color, bgColor, ariaLabel }) {
             style={{
               fontFamily: MONO,
               fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: 0.3,
+              fontWeight: 600,
+              letterSpacing: -0.05,
               marginInlineStart: 4,
               opacity: 0.85,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {delta > 0 ? "+" : ""}
@@ -423,15 +392,14 @@ function StatTile({ label, value, delta, color, bgColor, ariaLabel }) {
       </div>
       <div
         style={{
-          fontFamily: MONO,
-          fontSize: 9,
-          letterSpacing: 1.5,
+          fontSize: 10,
+          fontWeight: 600,
           color: "rgba(127,127,127,.9)",
-          textTransform: "uppercase",
+          letterSpacing: -0.05,
           marginBlockStart: 4,
         }}
       >
-        ▸ {label}
+        {label}
       </div>
     </div>
   );
