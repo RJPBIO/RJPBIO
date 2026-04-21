@@ -121,10 +121,10 @@ export default function InstrumentRunner({
     >
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 16 }}>
         <div>
-          <h2 id={titleId} style={{ fontSize: 14, fontWeight: font.weight.black, color: t1, margin: 0 }}>
+          <h2 id={titleId} style={{ fontSize: 15, fontWeight: 800, letterSpacing: -0.1, color: t1, margin: 0 }}>
             {instrument.name}
           </h2>
-          <p style={{ fontSize: 10, color: t3, margin: 0, marginBlockStart: 2, letterSpacing: 1 }}>
+          <p style={{ fontSize: 12, color: t3, margin: 0, marginBlockStart: 2, letterSpacing: -0.05, fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontVariantNumeric: "tabular-nums" }}>
             {instrument.version}
           </p>
         </div>

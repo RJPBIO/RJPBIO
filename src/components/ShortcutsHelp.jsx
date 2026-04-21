@@ -87,10 +87,9 @@ export default function ShortcutsHelp() {
               margin: 0,
               marginBlockEnd: space[2],
               fontSize: font.size.sm,
-              fontWeight: font.weight.bold,
+              fontWeight: 600,
               color: cssVar.textDim,
-              textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: -0.05,
             }}>
               {g.title}
             </h3>

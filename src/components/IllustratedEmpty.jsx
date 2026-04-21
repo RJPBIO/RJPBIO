@@ -186,12 +186,10 @@ export default function IllustratedEmpty({
       {kicker && (
         <div
           style={{
-            fontSize: font.size.xs,
-            letterSpacing: 3,
-            fontWeight: font.weight.black,
+            fontSize: 12,
+            letterSpacing: -0.05,
+            fontWeight: 600,
             color: accent,
-            textTransform: "uppercase",
-            fontFamily: font.mono,
             marginBlockStart: space[2],
           }}
         >
@@ -231,20 +229,18 @@ export default function IllustratedEmpty({
           onClick={action}
           style={{
             marginBlockStart: space[2],
-            paddingBlock: space[3],
-            paddingInline: space[6],
+            paddingBlock: 14,
+            paddingInline: 22,
             borderRadius: radius.full,
             border: "none",
             background: `linear-gradient(135deg, ${accent}, ${bioSignal.neuralViolet})`,
             color: "#050810",
-            fontSize: font.size.md,
-            fontWeight: font.weight.black,
-            letterSpacing: 1.5,
-            textTransform: "uppercase",
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: -0.1,
             cursor: "pointer",
-            boxShadow: `0 6px 24px -8px ${accent}`,
             fontFamily: "inherit",
-            minBlockSize: 44,
+            minBlockSize: 48,
           }}
         >
           {actionLabel}

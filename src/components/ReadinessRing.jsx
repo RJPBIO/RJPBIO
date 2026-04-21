@@ -308,13 +308,13 @@ export default function ReadinessRing({
         >
           <div
             style={{
-              ...ty.label(t3),
-              fontSize: font.size.xs,
-              fontFamily: "'JetBrains Mono', ui-monospace, Menlo, monospace",
-              letterSpacing: 4,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: -0.05,
+              color: t3,
             }}
           >
-            ▸ {centerKicker}
+            {centerKicker}
           </div>
           <AnimatePresence mode="wait">
             <motion.div

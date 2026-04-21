@@ -91,10 +91,10 @@ export default function NOM035Questionnaire({ show, isDark, onClose, onComplete 
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", marginBlockEnd: 12 }}>
-            <span style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase" }}>
+            <span style={{ color: t3, fontSize: 12, letterSpacing: -0.1, fontWeight: 600, fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontVariantNumeric: "tabular-nums" }}>
               {idx + 1} / {total}
             </span>
-            <span style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase" }}>
+            <span style={{ color: t3, fontSize: 12, letterSpacing: -0.05, fontWeight: 600 }}>
               {NOM035_CATEGORIES[item.cat]}
             </span>
           </div>
@@ -144,34 +144,36 @@ export default function NOM035Questionnaire({ show, isDark, onClose, onComplete 
       {result && (
         <section aria-label="Resultado NOM-035" style={{ maxInlineSize: 560, marginInline: "auto" }}>
           <div style={{ background: cd, border: `2px solid ${LEVEL_COLORS[result.level.key]}`, borderRadius: 16, padding: 20, marginBlockEnd: 16, textAlign: "center" }}>
-            <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 8 }}>
+            <p style={{ color: t3, fontSize: 12, letterSpacing: -0.05, fontWeight: 600, marginBlockEnd: 8 }}>
               Nivel de riesgo psicosocial
             </p>
-            <div style={{ color: LEVEL_COLORS[result.level.key], fontSize: 28, fontWeight: font.weight.black }}>
+            <div style={{ color: LEVEL_COLORS[result.level.key], fontSize: 28, fontWeight: font.weight.black, letterSpacing: -0.5 }}>
               {result.level.label}
             </div>
-            <p style={{ color: t2, fontSize: 12, marginBlockStart: 8 }}>Puntaje total: {result.total}</p>
+            <p style={{ color: t2, fontSize: 13, letterSpacing: -0.05, marginBlockStart: 8 }}>
+              Puntaje total: <span style={{ fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{result.total}</span>
+            </p>
           </div>
 
           <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 16, marginBlockEnd: 16 }}>
-            <h4 style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 12 }}>
+            <h4 style={{ color: t3, fontSize: 12, letterSpacing: -0.05, fontWeight: 600, margin: 0, marginBlockEnd: 12 }}>
               Puntaje por categoría
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {Object.entries(result.byCat).map(([cat, score]) => (
-                <div key={cat} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                <div key={cat} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, letterSpacing: -0.05 }}>
                   <span style={{ color: t1 }}>{NOM035_CATEGORIES[cat] || cat}</span>
-                  <span style={{ color: t2, fontWeight: 700 }}>{score}</span>
+                  <span style={{ color: t2, fontWeight: 700, fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontVariantNumeric: "tabular-nums" }}>{score}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div style={{ background: withAlpha(LEVEL_COLORS[result.level.key], 8), border: `1px solid ${withAlpha(LEVEL_COLORS[result.level.key], 30)}`, borderRadius: 12, padding: 14, marginBlockEnd: 16 }}>
-            <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 6 }}>
+            <p style={{ color: t3, fontSize: 12, letterSpacing: -0.05, fontWeight: 600, margin: 0, marginBlockEnd: 6 }}>
               Acción recomendada (NOM-035 Art. 7-8)
             </p>
-            <p style={{ color: t1, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: t1, fontSize: 13, letterSpacing: -0.05, lineHeight: 1.6, margin: 0 }}>
               {actionsFor(result.level.key)}
             </p>
           </div>
@@ -179,7 +181,7 @@ export default function NOM035Questionnaire({ show, isDark, onClose, onComplete 
           <button
             onClick={save}
             aria-label="Guardar evaluación"
-            style={{ inlineSize: "100%", paddingBlock: 14, background: brand.primary, color: "#fff", border: "none", borderRadius: 14, fontSize: 13, fontWeight: font.weight.black, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}
+            style={{ inlineSize: "100%", minBlockSize: 48, paddingBlock: 14, background: brand.primary, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, letterSpacing: -0.1, cursor: "pointer" }}
           >
             Guardar evaluación
           </button>

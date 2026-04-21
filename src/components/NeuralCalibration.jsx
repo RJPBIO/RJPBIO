@@ -290,10 +290,12 @@ export default function NeuralCalibration({ onComplete, isDark }) {
           position: "absolute",
           top: 16,
           right: 20,
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: 700,
           color: t3,
-          letterSpacing: 2,
+          letterSpacing: -0.1,
+          fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+          fontVariantNumeric: "tabular-nums",
         }}
       >
         {step + 1}/{CALIBRATION_STEPS.length}
