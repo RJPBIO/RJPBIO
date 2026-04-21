@@ -1,11 +1,12 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
    HRV MONITOR — Web Bluetooth → RR intervals → live HRV
-   Compatible with Polar H10, Wahoo TICKR, Garmin HRM-Dual, CooSpo.
+   Compatible con Polar H10, Wahoo TICKR, Garmin HRM-Dual, CooSpo.
 
-   Elevado a identidad BIO-IGNICIÓN: frame con corner brackets,
-   mono blueprint en kickers y números, gradientes bio-signal,
-   44-min tap targets y errores en plasmaPink.
+   DNA: neural-performance-first. La fase measuring es zona sagrada
+   — sin chrome decorativo. El usuario mide HRV en reposo, debe
+   entrar en parasimpático; nada compite con el número ni con la
+   respiración. Solo la fase done celebra con halo.
    ═══════════════════════════════════════════════════════════════ */
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -19,19 +20,6 @@ import { hrvSummary } from "../lib/hrv";
 const FULL_DURATION_SEC = 300;
 const QUICK_DURATION_SEC = 60;
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
-
-function CornerBrackets({ color, size = 10 }) {
-  const L = size;
-  const common = { position: "absolute", inlineSize: L, blockSize: L, pointerEvents: "none" };
-  return (
-    <>
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockStart: 6, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockStart: 6, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockEnd: 6, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockEnd: 6, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-    </>
-  );
-}
 
 export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMode = false }) {
   const TARGET_DURATION_SEC = quickMode ? QUICK_DURATION_SEC : FULL_DURATION_SEC;
@@ -125,8 +113,6 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
   if (!show) return null;
 
   const progress = Math.min(100, (elapsedSec / TARGET_DURATION_SEC) * 100);
-  const cornerStroke = withAlpha(brand.primary, isDark ? 32 : 26);
-  const errorStroke = withAlpha(bioSignal.plasmaPink, isDark ? 42 : 32);
 
   return (
     <motion.div
@@ -148,86 +134,57 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
         inlineSize: "100%",
       }}
     >
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 24, maxInlineSize: 500, marginInline: "auto" }}>
-        <div>
-          <div
-            style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              letterSpacing: 3,
-              color: brand.primary,
-              textTransform: "uppercase",
-              marginBlockEnd: 2,
-              opacity: 0.9,
-            }}
-          >
-            ▸ Sensor · Biometría
-          </div>
+      {phase !== "measuring" && (
+        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 24, maxInlineSize: 500, marginInline: "auto" }}>
           <h2
             id={titleId}
             style={{
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: font.weight.black,
               color: t1,
               margin: 0,
-              letterSpacing: -0.3,
+              letterSpacing: -0.4,
             }}
           >
             Medición HRV
           </h2>
-        </div>
-        <button
-          onClick={onClose}
-          aria-label="Cerrar medición HRV"
-          style={{
-            border: "none",
-            background: "transparent",
-            color: t2,
-            padding: 12,
-            minInlineSize: 44,
-            minBlockSize: 44,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon name="close" size={20} color={t2} aria-hidden="true" />
-        </button>
-      </header>
+          <button
+            onClick={onClose}
+            aria-label="Cerrar medición HRV"
+            style={{
+              border: "none",
+              background: "transparent",
+              color: t2,
+              padding: 12,
+              minInlineSize: 44,
+              minBlockSize: 44,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icon name="close" size={20} color={t2} aria-hidden="true" />
+          </button>
+        </header>
+      )}
 
       {phase === "intro" && (
         <section aria-label="Preparación" style={{ maxInlineSize: 500, marginInline: "auto" }}>
           <div
             style={{
-              position: "relative",
               background: cd,
               border: `1px solid ${bd}`,
               borderRadius: 16,
               padding: 20,
               marginBlockEnd: 16,
-              overflow: "hidden",
             }}
           >
-            <CornerBrackets color={cornerStroke} />
-            <div
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: 3,
-                color: brand.primary,
-                textTransform: "uppercase",
-                marginBlockEnd: 8,
-                opacity: 0.85,
-              }}
-            >
-              ▸ Protocolo · Task Force {quickMode ? "60s" : "5-min"}
-            </div>
-            <p style={{ color: t1, fontSize: 14, lineHeight: 1.6, margin: 0, marginBlockEnd: 12 }}>
+            <p style={{ color: t1, fontSize: 15, lineHeight: 1.55, margin: 0, marginBlockEnd: 12 }}>
               Conecta un sensor de frecuencia cardíaca compatible (Polar H10, Wahoo TICKR, Garmin HRM-Dual u otro BLE con Heart Rate Service).
             </p>
-            <p style={{ color: t2, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
-              Siéntate cómodo, con la espalda recta. Mantén la medición durante {quickMode ? "1 minuto" : "5 minutos"} en reposo para una lectura fiable (Task Force 1996, estándar clínico).
+            <p style={{ color: t2, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+              Siéntate cómodo, con la espalda recta. Mantén la medición durante {quickMode ? "1 minuto" : "5 minutos"} en reposo para una lectura fiable (protocolo Task Force 1996).
             </p>
           </div>
 
@@ -235,31 +192,18 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
             <div
               role="alert"
               style={{
-                position: "relative",
                 background: withAlpha(bioSignal.ignition, 10),
-                border: `1px solid ${withAlpha(bioSignal.ignition, 40)}`,
+                border: `1px solid ${withAlpha(bioSignal.ignition, 35)}`,
                 borderRadius: 12,
                 padding: 14,
                 marginBlockEnd: 16,
-                overflow: "hidden",
               }}
             >
-              <CornerBrackets color={withAlpha(bioSignal.ignition, 50)} size={8} />
-              <p
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  letterSpacing: 2,
-                  color: bioSignal.ignition,
-                  margin: 0,
-                  textTransform: "uppercase",
-                  fontWeight: 700,
-                }}
-              >
-                ▸ Web Bluetooth no disponible
+              <p style={{ color: bioSignal.ignition, fontSize: 13, fontWeight: 700, margin: 0, marginBlockEnd: 4 }}>
+                Web Bluetooth no disponible
               </p>
-              <p style={{ color: t2, fontSize: 11, margin: 0, marginBlockStart: 6, lineHeight: 1.5 }}>
-                Usa Chrome, Edge u Opera en desktop/Android con HTTPS. iOS Safari no soporta Web Bluetooth (restricción de Apple).
+              <p style={{ color: t2, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+                Usa Chrome, Edge u Opera en desktop/Android con HTTPS. iOS Safari no soporta Web Bluetooth.
               </p>
             </div>
           )}
@@ -273,39 +217,31 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               inlineSize: "100%",
               minBlockSize: 48,
               paddingBlock: 14,
-              background: bleAvailable
-                ? `linear-gradient(135deg, ${brand.primary}, ${bioSignal.phosphorCyan})`
-                : bd,
+              background: bleAvailable ? brand.primary : bd,
               color: "#fff",
               border: "none",
               borderRadius: 14,
-              fontFamily: MONO,
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: 2,
-              textTransform: "uppercase",
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: -0.1,
               cursor: bleAvailable ? "pointer" : "not-allowed",
               opacity: bleAvailable ? 1 : 0.55,
-              boxShadow: bleAvailable ? `0 12px 30px -14px ${withAlpha(brand.primary, 90)}` : "none",
             }}
           >
-            ▸ Conectar sensor
+            Conectar sensor
           </button>
 
-          <details style={{ marginBlockStart: 24 }}>
+          <details style={{ marginBlockStart: 20 }}>
             <summary
               style={{
-                fontFamily: MONO,
                 color: t3,
-                fontSize: 10,
-                letterSpacing: 1.5,
-                textTransform: "uppercase",
+                fontSize: 13,
                 cursor: "pointer",
               }}
             >
-              ▸ Dispositivos probados
+              Dispositivos probados
             </summary>
-            <ul style={{ color: t3, fontSize: 11, lineHeight: 1.7, marginBlockStart: 8, paddingInlineStart: 18 }}>
+            <ul style={{ color: t3, fontSize: 12, lineHeight: 1.7, marginBlockStart: 8, paddingInlineStart: 18 }}>
               <li>Polar H10, H9, OH1, Verity Sense</li>
               <li>Wahoo TICKR, TICKR X</li>
               <li>Garmin HRM-Dual, HRM-Pro</li>
@@ -327,172 +263,109 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
             transition={reduced ? {} : { duration: 1, repeat: Infinity, ease: "linear" }}
             style={{
               display: "inline-block",
-              inlineSize: 48,
-              blockSize: 48,
+              inlineSize: 40,
+              blockSize: 40,
               border: `3px solid ${bd}`,
               borderBlockStartColor: brand.primary,
               borderRadius: "50%",
               marginBlockEnd: 16,
-              boxShadow: `0 0 20px ${withAlpha(brand.primary, 30)}`,
             }}
           />
-          <div
-            style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              letterSpacing: 3,
-              color: brand.primary,
-              textTransform: "uppercase",
-              marginBlockEnd: 4,
-            }}
-          >
-            ▸ Handshake
-          </div>
-          <p style={{ color: t2, fontSize: 13, margin: 0 }}>Esperando sensor…</p>
+          <p style={{ color: t2, fontSize: 14, margin: 0 }}>Esperando sensor…</p>
         </div>
       )}
 
       {phase === "measuring" && (
-        <section aria-label="Medición en curso" style={{ maxInlineSize: 500, marginInline: "auto" }}>
-          <div
+        <section
+          aria-label="Medición en curso"
+          style={{
+            maxInlineSize: 420,
+            marginInline: "auto",
+            marginBlockStart: 40,
+            textAlign: "center",
+          }}
+        >
+          <motion.div
+            animate={reduced || !liveHr ? {} : { scale: [1, 1.035, 1] }}
+            transition={reduced || !liveHr ? {} : { duration: 60 / (liveHr || 60), repeat: Infinity, ease: "easeInOut" }}
             style={{
-              position: "relative",
-              background: cd,
-              border: `1px solid ${bd}`,
-              borderRadius: 16,
-              padding: 20,
-              marginBlockEnd: 16,
-              overflow: "hidden",
+              color: t1,
+              fontFamily: MONO,
+              fontSize: 96,
+              fontWeight: 500,
+              lineHeight: 1,
+              letterSpacing: -3,
+              marginBlockEnd: 8,
             }}
           >
-            <CornerBrackets color={cornerStroke} />
+            {liveHr || "--"}
+          </motion.div>
+          <div
+            style={{
+              color: t3,
+              fontSize: 12,
+              letterSpacing: 0.5,
+              marginBlockEnd: 48,
+            }}
+          >
+            bpm
+          </div>
 
-            <div
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress)}
+            aria-label={`Progreso: ${Math.round(elapsedSec)} de ${TARGET_DURATION_SEC} segundos`}
+            style={{
+              blockSize: 3,
+              background: withAlpha(t3, 20),
+              borderRadius: 2,
+              overflow: "hidden",
+              marginBlockEnd: 10,
+            }}
+          >
+            <motion.div
+              initial={{ inlineSize: 0 }}
+              animate={{ inlineSize: `${progress}%` }}
+              transition={reduced ? { duration: 0 } : { duration: 0.3, ease: "linear" }}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBlockEnd: 16,
-                paddingBlockEnd: 10,
-                borderBlockEnd: `1px dashed ${withAlpha(brand.primary, isDark ? 22 : 16)}`,
+                blockSize: "100%",
+                background: brand.primary,
               }}
-            >
-              <span
-                style={{
-                  fontFamily: MONO,
-                  color: t3,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                }}
-              >
-                ▸ {deviceName || "Sensor"}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontFamily: MONO,
+              fontSize: 12,
+              color: t3,
+              marginBlockEnd: 48,
+            }}
+          >
+            <span>{formatTime(elapsedSec)}</span>
+            <span>{formatTime(TARGET_DURATION_SEC)}</span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: 11,
+              color: t3,
+              marginBlockEnd: 32,
+              opacity: 0.7,
+            }}
+          >
+            <span>{deviceName || "Sensor"}</span>
+            {battery !== null && (
+              <span style={{ color: battery < 20 ? bioSignal.plasmaPink : t3 }}>
+                Batería {battery}%
               </span>
-              {battery !== null && (
-                <span
-                  style={{
-                    fontFamily: MONO,
-                    color: battery < 20 ? bioSignal.plasmaPink : t3,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: 1.5,
-                  }}
-                >
-                  BAT · {battery}%
-                </span>
-              )}
-            </div>
-
-            <div style={{ textAlign: "center", marginBlockEnd: 20 }}>
-              <motion.div
-                animate={reduced || !liveHr ? {} : { scale: [1, 1.04, 1] }}
-                transition={reduced || !liveHr ? {} : { duration: 60 / (liveHr || 60), repeat: Infinity, ease: "easeInOut" }}
-                style={{
-                  color: brand.primary,
-                  fontFamily: MONO,
-                  fontSize: 56,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: -1.5,
-                  textShadow: liveHr ? `0 0 24px ${withAlpha(brand.primary, 40)}` : "none",
-                }}
-              >
-                {liveHr || "--"}
-              </motion.div>
-              <div
-                style={{
-                  fontFamily: MONO,
-                  color: t3,
-                  fontSize: 10,
-                  letterSpacing: 2.5,
-                  textTransform: "uppercase",
-                  marginBlockStart: 6,
-                }}
-              >
-                ▸ BPM · En vivo
-              </div>
-            </div>
-
-            <div
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(progress)}
-              aria-label={`Progreso de medición: ${Math.round(elapsedSec)} de ${TARGET_DURATION_SEC} segundos`}
-              style={{
-                position: "relative",
-                blockSize: 6,
-                background: withAlpha(brand.primary, isDark ? 14 : 10),
-                borderRadius: 3,
-                overflow: "hidden",
-                marginBlockEnd: 8,
-              }}
-            >
-              <motion.div
-                initial={{ inlineSize: 0 }}
-                animate={{ inlineSize: `${progress}%` }}
-                transition={reduced ? { duration: 0 } : { duration: 0.3, ease: "linear" }}
-                style={{
-                  blockSize: "100%",
-                  background: `linear-gradient(90deg, ${brand.primary}, ${bioSignal.phosphorCyan})`,
-                  borderRadius: 3,
-                  boxShadow: `0 0 10px ${withAlpha(brand.primary, 60)}`,
-                }}
-              />
-              {[25, 50, 75].map((pct) => (
-                <span
-                  key={pct}
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    insetInlineStart: `${pct}%`,
-                    insetBlockStart: 0,
-                    inlineSize: 1,
-                    blockSize: "100%",
-                    background: withAlpha(isDark ? "#FFFFFF" : "#000000", 18),
-                  }}
-                />
-              ))}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontFamily: MONO,
-                fontSize: 11,
-                letterSpacing: 1,
-                color: t2,
-              }}
-            >
-              <span>{formatTime(elapsedSec)}</span>
-              <span>{formatTime(TARGET_DURATION_SEC)}</span>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBlockStart: 16 }}>
-              <Metric label="Latidos" value={rrBuffer.length} color={t1} />
-              <Metric label="Duración" value={`${Math.round(elapsedSec)}s`} color={t1} />
-            </div>
+            )}
           </div>
 
           <button
@@ -503,18 +376,13 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               minBlockSize: 44,
               paddingBlock: 12,
               background: "transparent",
-              color: t2,
-              border: `1px solid ${bd}`,
-              borderRadius: 12,
-              fontFamily: MONO,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
+              color: t3,
+              border: "none",
+              fontSize: 13,
               cursor: "pointer",
             }}
           >
-            ▸ Detener {rrBuffer.length >= 30 ? "· Guardar" : "· Descartar"}
+            {rrBuffer.length >= 30 ? "Detener y guardar" : "Cancelar"}
           </button>
         </section>
       )}
@@ -523,58 +391,45 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
         <section aria-label="Resultado HRV" style={{ maxInlineSize: 500, marginInline: "auto" }}>
           <div
             style={{
-              position: "relative",
               background: cd,
               border: `1px solid ${bd}`,
               borderRadius: 16,
-              padding: 20,
+              padding: 24,
               marginBlockEnd: 16,
-              overflow: "hidden",
+              textAlign: "center",
             }}
           >
-            <CornerBrackets color={cornerStroke} />
-
             <div
               style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: 3,
-                color: brand.primary,
-                textTransform: "uppercase",
-                textAlign: "center",
-                marginBlockEnd: 6,
-                opacity: 0.9,
+                color: t3,
+                fontSize: 12,
+                marginBlockEnd: 8,
               }}
             >
-              ▸ Registro completo
+              Medición completa
             </div>
-
-            <div style={{ textAlign: "center", marginBlockEnd: 20 }}>
-              <div
-                style={{
-                  color: brand.primary,
-                  fontFamily: MONO,
-                  fontSize: 48,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: -1.5,
-                  textShadow: `0 0 24px ${withAlpha(brand.primary, 40)}`,
-                }}
-              >
-                {result.rmssd}
-              </div>
-              <div
-                style={{
-                  fontFamily: MONO,
-                  color: t3,
-                  fontSize: 10,
-                  letterSpacing: 2.5,
-                  textTransform: "uppercase",
-                  marginBlockStart: 6,
-                }}
-              >
-                ▸ RMSSD · ms
-              </div>
+            <div
+              style={{
+                color: brand.primary,
+                fontFamily: MONO,
+                fontSize: 56,
+                fontWeight: 600,
+                lineHeight: 1,
+                letterSpacing: -1.5,
+                textShadow: `0 0 24px ${withAlpha(brand.primary, 35)}`,
+                marginBlockEnd: 4,
+              }}
+            >
+              {result.rmssd}
+            </div>
+            <div
+              style={{
+                color: t3,
+                fontSize: 12,
+                marginBlockEnd: 20,
+              }}
+            >
+              RMSSD (ms)
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -592,32 +447,28 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
                   padding: 12,
                   background: withAlpha(bioSignal.ignition, 10),
                   color: bioSignal.ignition,
-                  fontFamily: MONO,
-                  fontSize: 11,
+                  fontSize: 12,
                   lineHeight: 1.5,
-                  letterSpacing: 0.3,
                   borderRadius: 8,
-                  border: `1px solid ${withAlpha(bioSignal.ignition, 30)}`,
+                  textAlign: "start",
                 }}
               >
-                ▸ Medición corta (&lt;60 s o &lt;30 latidos). El valor se guarda pero podría ser menos fiable.
+                Medición corta (&lt;60 s o &lt;30 latidos). El valor se guarda pero podría ser menos fiable.
               </p>
             )}
-
-            <p
-              style={{
-                marginBlockStart: 16,
-                fontFamily: MONO,
-                color: t3,
-                fontSize: 9,
-                letterSpacing: 0.5,
-                lineHeight: 1.6,
-                textTransform: "uppercase",
-              }}
-            >
-              ▸ Referencia · Shaffer &amp; Ginsberg 2017 · 5-min reposo · RMSSD 19-75 ms · SDNN 32-93 ms
-            </p>
           </div>
+
+          <p
+            style={{
+              color: t3,
+              fontSize: 11,
+              lineHeight: 1.6,
+              textAlign: "center",
+              marginBlockEnd: 16,
+            }}
+          >
+            Referencia: Shaffer &amp; Ginsberg 2017 · 5 min reposo · RMSSD 19–75 ms · SDNN 32–93 ms
+          </p>
 
           <button
             onClick={handleSave}
@@ -626,20 +477,17 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               inlineSize: "100%",
               minBlockSize: 48,
               paddingBlock: 14,
-              background: `linear-gradient(135deg, ${brand.primary}, ${bioSignal.phosphorCyan})`,
+              background: brand.primary,
               color: "#fff",
               border: "none",
               borderRadius: 14,
-              fontFamily: MONO,
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: 2,
-              textTransform: "uppercase",
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: -0.1,
               cursor: "pointer",
-              boxShadow: `0 12px 30px -14px ${withAlpha(brand.primary, 90)}`,
             }}
           >
-            ▸ Guardar medición
+            Guardar medición
           </button>
         </section>
       )}
@@ -648,38 +496,17 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
         <div role="alert" style={{ maxInlineSize: 500, marginInline: "auto" }}>
           <div
             style={{
-              position: "relative",
               background: withAlpha(bioSignal.plasmaPink, 10),
-              border: `1px solid ${withAlpha(bioSignal.plasmaPink, 35)}`,
+              border: `1px solid ${withAlpha(bioSignal.plasmaPink, 30)}`,
               borderRadius: 12,
               padding: 16,
               marginBlockEnd: 16,
-              overflow: "hidden",
             }}
           >
-            <CornerBrackets color={errorStroke} size={8} />
-            <div
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: 3,
-                color: bioSignal.plasmaPink,
-                textTransform: "uppercase",
-                marginBlockEnd: 6,
-                fontWeight: 700,
-              }}
-            >
-              ▸ Error
-            </div>
-            <p
-              style={{
-                color: t1,
-                fontSize: 12,
-                fontWeight: 600,
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
+            <p style={{ color: bioSignal.plasmaPink, fontSize: 13, fontWeight: 700, margin: 0, marginBlockEnd: 4 }}>
+              Error
+            </p>
+            <p style={{ color: t1, fontSize: 13, margin: 0, lineHeight: 1.5 }}>
               {error}
             </p>
           </div>
@@ -693,15 +520,12 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               color: t1,
               border: `1px solid ${bd}`,
               borderRadius: 12,
-              fontFamily: MONO,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
+              fontSize: 14,
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
-            ▸ Reintentar
+            Reintentar
           </button>
         </div>
       )}
@@ -715,10 +539,8 @@ function Metric({ label, value, color }) {
       role="group"
       aria-label={`${label}: ${value}`}
       style={{
-        position: "relative",
         padding: 12,
         background: "rgba(127, 127, 127, .05)",
-        border: `1px solid ${withAlpha(brand.primary, 10)}`,
         borderRadius: 8,
         textAlign: "center",
       }}
@@ -728,7 +550,7 @@ function Metric({ label, value, color }) {
           color,
           fontFamily: MONO,
           fontSize: 14,
-          fontWeight: 700,
+          fontWeight: 600,
           letterSpacing: -0.2,
         }}
       >
@@ -736,11 +558,8 @@ function Metric({ label, value, color }) {
       </div>
       <div
         style={{
-          fontFamily: MONO,
           color: "rgba(127,127,127,.8)",
-          fontSize: 9,
-          letterSpacing: 1.5,
-          textTransform: "uppercase",
+          fontSize: 11,
           marginBlockStart: 3,
         }}
       >
