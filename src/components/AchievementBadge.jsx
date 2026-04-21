@@ -10,12 +10,17 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { motion } from "framer-motion";
-import { bioSignal, font, space } from "../lib/theme";
+import { bioSignal, font, space, radius, withAlpha } from "../lib/theme";
+import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
+// Bronze/Silver no tienen token propio en bioSignal porque literalmente
+// son colores de medalla (no del sistema neural). Bronze usa semantic.warning
+// porque coincide con el ámbar de warning; silver queda como gray neutral
+// (no mapea a ningún token — es "metal", no estado semántico).
 const TIERS = {
-  bronze: { primary: "#D97706", secondary: "#92400E", glow: "#FBBF24", name: "Bronce" },
-  silver: { primary: "#94A3B8", secondary: "#64748B", glow: "#E2E8F0", name: "Plata" },
+  bronze: { primary: semantic.warning,       secondary: "#92400E", glow: "#FBBF24", name: "Bronce" },
+  silver: { primary: "#94A3B8",              secondary: "#64748B", glow: "#E2E8F0", name: "Plata" },
   gold:   { primary: bioSignal.ignition,     secondary: "#D97706", glow: "#FEF3C7", name: "Oro" },
   cyan:   { primary: bioSignal.phosphorCyan, secondary: "#0891B2", glow: "#A5F3FC", name: "Cian" },
   violet: { primary: bioSignal.neuralViolet, secondary: "#6D28D9", glow: "#C4B5FD", name: "Violeta" },
@@ -268,7 +273,7 @@ export function achievementMeta(id) {
   return META[id] || { archetype: "spark", tier: "cyan", label: "?", caption: id };
 }
 
-export default function AchievementBadge({ id, unlocked = false, size = 72, showCaption = true }) {
+export default function AchievementBadge({ id, unlocked = false, size = 72, showCaption = true, recent = false }) {
   const reduced = useReducedMotion();
   const meta = META[id] || { archetype: "spark", tier: "cyan", label: "?", caption: id };
   const t = TIERS[meta.tier] || TIERS.cyan;
@@ -289,7 +294,7 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
     };
   });
 
-  const ariaLabel = `${meta.label} · ${meta.caption}${unlocked ? "" : " (bloqueado)"}`;
+  const ariaLabel = `${meta.label} · ${meta.caption}${unlocked ? (recent ? " (desbloqueado recientemente)" : "") : " (bloqueado)"}`;
 
   return (
     <motion.div
@@ -325,8 +330,24 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
               filter: "blur(8px)",
               opacity: 0.35,
             }}
-            animate={{ opacity: [0.2, 0.5, 0.2] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            animate={{ opacity: recent ? [0.4, 0.85, 0.4] : [0.2, 0.5, 0.2] }}
+            transition={{ duration: recent ? 1.6 : 3, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
+
+        {unlocked && recent && !reduced && (
+          <motion.div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: -4,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${bioSignal.ignition}, transparent 65%)`,
+              filter: "blur(12px)",
+              mixBlendMode: "screen",
+            }}
+            animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.95, 1.05, 0.95] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
           />
         )}
 
@@ -394,33 +415,55 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
           <Frame color={t.primary} locked={!unlocked} />
           <Glyph t={t} />
           {!unlocked && (
-            <g opacity="0.85">
-              <rect x="27" y="30" width="10" height="14" rx="1.5" fill="rgba(15,23,42,0.9)" stroke={t.primary} strokeWidth="0.8" />
-              <path d="M29 30 L 29 26 A 3 3 0 0 1 35 26 L 35 30" fill="none" stroke={t.primary} strokeWidth="1" />
-              <circle cx="32" cy="37" r="1.2" fill={t.primary} />
+            <g opacity="0.92">
+              <circle cx="32" cy="36" r="11" fill="rgba(15,23,42,0.88)" stroke="#64748B" strokeWidth="0.8" />
+              <rect x="26" y="33" width="12" height="10" rx="1.5" fill="#1A2330" stroke="#94A3B8" strokeWidth="0.9" />
+              <path d="M28.5 33 L 28.5 29.5 A 3.5 3.5 0 0 1 35.5 29.5 L 35.5 33" fill="none" stroke="#94A3B8" strokeWidth="1" />
+              <circle cx="32" cy="38" r="1.3" fill="#94A3B8" />
             </g>
           )}
         </svg>
       </div>
       {showCaption && (
-        <div style={{ textAlign: "center", maxInlineSize: size + 16 }}>
-          <div
-            style={{
-              fontSize: 9,
-              fontWeight: 600,
-              color: unlocked ? t.primary : "rgba(148,163,184,0.7)",
-              opacity: 0.85,
-              letterSpacing: -0.05,
-              marginBlockEnd: 2,
-            }}
-          >
-            {unlocked ? t.name : "Bloqueado"}
-          </div>
+        <div style={{ textAlign: "center", maxInlineSize: size + 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+          {unlocked && recent && (
+            <span
+              aria-label="Desbloqueado recientemente"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 3,
+                fontFamily: MONO,
+                fontSize: 8,
+                fontWeight: font.weight.black,
+                letterSpacing: "2px",
+                textTransform: "uppercase",
+                color: bioSignal.ignition,
+                paddingInline: 5,
+                paddingBlock: 1,
+                borderRadius: radius.full,
+                background: withAlpha(bioSignal.ignition, 12),
+                border: `1px solid ${withAlpha(bioSignal.ignition, 30)}`,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  inlineSize: 3,
+                  blockSize: 3,
+                  borderRadius: "50%",
+                  background: bioSignal.ignition,
+                  boxShadow: `0 0 4px ${bioSignal.ignition}`,
+                }}
+              />
+              Nuevo
+            </span>
+          )}
           <div
             style={{
               fontFamily: MONO,
               fontSize: 12,
-              fontWeight: 700,
+              fontWeight: font.weight.bold,
               color: unlocked ? t.primary : "rgba(148,163,184,0.8)",
               letterSpacing: -0.2,
               lineHeight: 1.2,
@@ -432,14 +475,13 @@ export default function AchievementBadge({ id, unlocked = false, size = 72, show
           <div
             style={{
               fontSize: 10,
-              fontWeight: 500,
-              color: "rgba(148,163,184,0.75)",
+              fontWeight: font.weight.medium,
+              color: unlocked ? "rgba(148,163,184,0.85)" : "rgba(148,163,184,0.6)",
               letterSpacing: -0.05,
-              marginBlockStart: 2,
               lineHeight: 1.3,
             }}
           >
-            {meta.caption}
+            {unlocked ? meta.caption : "Bloqueado"}
           </div>
         </div>
       )}

@@ -9,13 +9,13 @@ import Link from "next/link";
 import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
 import { BioGlyph } from "./BioIgnicionMark";
-import AchievementBadge from "./AchievementBadge";
+import AchievementBadge, { achievementMeta } from "./AchievementBadge";
 import { MOODS, DS, AM, LVL } from "../lib/constants";
 import {
   gL, lvPct, nxtLv, getStatus, getWeekNum,
   calcNeuralFingerprint, suggestOptimalTime, analyzeStreakChain,
 } from "../lib/neural";
-import { resolveTheme, withAlpha, ty, font, space, radius, bioSignal } from "../lib/theme";
+import { resolveTheme, withAlpha, ty, font, space, radius, bioSignal, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 import RemindersCard from "./RemindersCard";
@@ -373,6 +373,34 @@ export default function ProfileView({
       {(() => {
         const unlocked = st.achievements || [];
         const unlockedCount = ACHIEVEMENT_IDS.filter((id) => unlocked.includes(id)).length;
+        const recentId = unlocked[unlocked.length - 1];
+
+        // Tier breakdown — sólo tiers con unlocks > 0
+        const tierCounts = { bronze: 0, silver: 0, gold: 0, cyan: 0, violet: 0, rose: 0 };
+        unlocked.forEach((id) => {
+          const meta = achievementMeta(id);
+          if (meta && tierCounts[meta.tier] !== undefined) tierCounts[meta.tier]++;
+        });
+        const tierOrder = [
+          { k: "gold",   c: bioSignal.ignition,      n: "oro" },
+          { k: "rose",   c: bioSignal.plasmaPink,    n: "rosa" },
+          { k: "violet", c: bioSignal.neuralViolet,  n: "violeta" },
+          { k: "cyan",   c: bioSignal.phosphorCyan,  n: "cian" },
+          { k: "silver", c: "#94A3B8",               n: "plata" },
+          { k: "bronze", c: "#D97706",               n: "bronce" },
+        ];
+        const activeTiers = tierOrder.filter((tr) => tierCounts[tr.k] > 0);
+
+        // Unlocked primero, locked después (estable)
+        const sortedIds = [...ACHIEVEMENT_IDS].sort((a, b) => {
+          const ua = unlocked.includes(a) ? 1 : 0;
+          const ub = unlocked.includes(b) ? 1 : 0;
+          return ub - ua;
+        });
+
+        const pct = ACHIEVEMENT_IDS.length ? (unlockedCount / ACHIEVEMENT_IDS.length) * 100 : 0;
+        const bracketColor = withAlpha(brand.primary, isDark ? 30 : 22);
+
         return (
           <motion.article
             initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}
@@ -385,34 +413,154 @@ export default function ProfileView({
               padding: 14,
               marginBlockEnd: 10,
               border: `1px solid ${bd}`,
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <header
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: space[1],
-                marginBlockEnd: space[3],
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
-                <Icon name="trophy" size={12} color={t3} aria-hidden="true" />
-                <h3 style={sectionLabel(t3)}>Insignias</h3>
-              </div>
-              <span
+            {/* Corner brackets — Neural-DNA chrome */}
+            <svg aria-hidden="true" style={{ position: "absolute", inlineSize: 12, blockSize: 12, insetBlockStart: 8, insetInlineStart: 8, pointerEvents: "none" }} viewBox="0 0 12 12">
+              <path d="M0 12 L0 0 L12 0" stroke={bracketColor} strokeWidth="1.2" fill="none" />
+            </svg>
+            <svg aria-hidden="true" style={{ position: "absolute", inlineSize: 12, blockSize: 12, insetBlockStart: 8, insetInlineEnd: 8, pointerEvents: "none" }} viewBox="0 0 12 12">
+              <path d="M0 0 L12 0 L12 12" stroke={bracketColor} strokeWidth="1.2" fill="none" />
+            </svg>
+            <svg aria-hidden="true" style={{ position: "absolute", inlineSize: 12, blockSize: 12, insetBlockEnd: 8, insetInlineStart: 8, pointerEvents: "none" }} viewBox="0 0 12 12">
+              <path d="M12 12 L0 12 L0 0" stroke={bracketColor} strokeWidth="1.2" fill="none" />
+            </svg>
+            <svg aria-hidden="true" style={{ position: "absolute", inlineSize: 12, blockSize: 12, insetBlockEnd: 8, insetInlineEnd: 8, pointerEvents: "none" }} viewBox="0 0 12 12">
+              <path d="M0 12 L12 12 L12 0" stroke={bracketColor} strokeWidth="1.2" fill="none" />
+            </svg>
+
+            <header style={{ marginBlockEnd: space[3] }}>
+              {/* Kicker MONO tracked */}
+              <div
+                aria-hidden="true"
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBlockEnd: 6,
                   fontFamily: MONO,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: t3,
-                  letterSpacing: -0.1,
-                  fontVariantNumeric: "tabular-nums",
+                  fontSize: 9,
+                  fontWeight: font.weight.bold,
+                  letterSpacing: font.tracking.caps,
+                  textTransform: "uppercase",
+                  color: withAlpha(brand.primary, 70),
                 }}
               >
-                {unlockedCount}/{ACHIEVEMENT_IDS.length}
-              </span>
+                <span
+                  style={{
+                    inlineSize: 4,
+                    blockSize: 4,
+                    borderRadius: "50%",
+                    background: brand.primary,
+                    boxShadow: `0 0 6px ${withAlpha(brand.primary, 80)}`,
+                  }}
+                />
+                <span>Logros neurales</span>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: space[2] }}>
+                <div style={{ display: "flex", alignItems: "center", gap: space[1] }}>
+                  <Icon name="trophy" size={13} color={t2} aria-hidden="true" />
+                  <h3 style={{ ...ty.heading(t1), fontSize: font.size.lg, margin: 0 }}>Insignias</h3>
+                </div>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 3,
+                    fontFamily: MONO,
+                    fontVariantNumeric: "tabular-nums",
+                    letterSpacing: -0.15,
+                  }}
+                >
+                  <span style={{ fontSize: 18, fontWeight: font.weight.black, color: t1 }}>{unlockedCount}</span>
+                  <span style={{ fontSize: 12, fontWeight: font.weight.bold, color: t3 }}>/{ACHIEVEMENT_IDS.length}</span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={ACHIEVEMENT_IDS.length}
+                aria-valuenow={unlockedCount}
+                aria-label={`${unlockedCount} de ${ACHIEVEMENT_IDS.length} logros desbloqueados`}
+                style={{
+                  position: "relative",
+                  blockSize: 5,
+                  borderRadius: 3,
+                  background: withAlpha(brand.primary, 8),
+                  overflow: "hidden",
+                  marginBlockStart: space[2],
+                }}
+              >
+                <motion.div
+                  initial={{ inlineSize: 0 }}
+                  animate={{ inlineSize: `${pct}%` }}
+                  transition={{ duration: reduced ? 0 : 1.1, ease: [0.16, 1, 0.3, 1] }}
+                  style={{
+                    position: "absolute",
+                    insetBlockStart: 0,
+                    insetInlineStart: 0,
+                    blockSize: "100%",
+                    background: `linear-gradient(90deg, ${withAlpha(brand.primary, 55)}, ${brand.primary})`,
+                    boxShadow: `0 0 8px ${withAlpha(brand.primary, 60)}`,
+                  }}
+                />
+              </div>
+
+              {/* Tier breakdown chips — sólo tiers con count > 0 */}
+              {activeTiers.length > 0 && (
+                <div
+                  aria-label="Desglose por tier"
+                  style={{
+                    display: "flex",
+                    gap: 5,
+                    flexWrap: "wrap",
+                    marginBlockStart: space[2],
+                  }}
+                >
+                  {activeTiers.map((tr) => (
+                    <span
+                      key={tr.k}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        paddingInline: 7,
+                        paddingBlock: 2,
+                        borderRadius: radius.full,
+                        background: withAlpha(tr.c, 10),
+                        border: `1px solid ${withAlpha(tr.c, 28)}`,
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        fontWeight: font.weight.bold,
+                        color: tr.c,
+                        letterSpacing: -0.05,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          inlineSize: 4,
+                          blockSize: 4,
+                          borderRadius: "50%",
+                          background: tr.c,
+                          boxShadow: `0 0 4px ${withAlpha(tr.c, 80)}`,
+                        }}
+                      />
+                      <span>{tierCounts[tr.k]}</span>
+                      <span style={{ fontWeight: font.weight.semibold, opacity: 0.85 }}>{tr.n}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </header>
+
             <div
               role="list"
               aria-label="Cuadrícula de insignias"
@@ -423,9 +571,14 @@ export default function ProfileView({
                 justifyItems: "center",
               }}
             >
-              {ACHIEVEMENT_IDS.map((id) => (
+              {sortedIds.map((id) => (
                 <div key={id} role="listitem">
-                  <AchievementBadge id={id} unlocked={unlocked.includes(id)} size={64} />
+                  <AchievementBadge
+                    id={id}
+                    unlocked={unlocked.includes(id)}
+                    recent={unlocked.includes(id) && id === recentId}
+                    size={64}
+                  />
                 </div>
               ))}
             </div>
