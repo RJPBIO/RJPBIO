@@ -289,14 +289,13 @@ export default function SessionShareCard({
   const previewSrc = `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
 
   const btnBase = {
-    minBlockSize: 44,
-    paddingBlock: space[2.5],
-    paddingInline: space[3],
+    minBlockSize: 48,
+    paddingBlock: 14,
+    paddingInline: 22,
     borderRadius: radius.full,
-    fontSize: font.size.xs,
-    fontWeight: font.weight.black,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
+    fontSize: 15,
+    fontWeight: 700,
+    letterSpacing: -0.1,
     cursor: busy ? "wait" : "pointer",
     fontFamily: "inherit",
     opacity: busy ? 0.7 : 1,
@@ -336,15 +335,15 @@ export default function SessionShareCard({
       <div
         aria-hidden="true"
         style={{
-          fontFamily: FONT_MONO,
-          fontSize: 11,
-          letterSpacing: 3,
+          fontSize: 12,
+          fontWeight: 500,
+          letterSpacing: -0.05,
           color: textMuted,
           textAlign: "center",
           marginBlockStart: 2,
         }}
       >
-        SERIAL · #{code}
+        Serial · <span style={{ fontFamily: FONT_MONO, fontWeight: 700, letterSpacing: -0.1, fontVariantNumeric: "tabular-nums" }}>#{code}</span>
       </div>
 
       <div style={{ display: "flex", gap: space[1.5] }}>
@@ -399,7 +398,8 @@ export default function SessionShareCard({
         aria-live="polite"
         style={{
           textAlign: "center",
-          fontSize: font.size.xs,
+          fontSize: 12,
+          letterSpacing: -0.05,
           color: textMuted,
           marginBlockStart: 4,
           minBlockSize: 16,
