@@ -24,7 +24,6 @@ import { evaluateSafetySignals } from "../lib/coachSafety";
 import {
   resolveTheme,
   withAlpha,
-  ty,
   font,
   space,
   radius,
@@ -35,19 +34,6 @@ import { useReducedMotion } from "../lib/a11y";
 import { semantic } from "../lib/tokens";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
-
-function CornerBrackets({ color, size = 8 }) {
-  const L = size;
-  const common = { position: "absolute", inlineSize: L, blockSize: L, pointerEvents: "none" };
-  return (
-    <>
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 4, insetBlockStart: 4, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 4, insetBlockStart: 4, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineStart: 4, insetBlockEnd: 4, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 4, insetBlockEnd: 4, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
-    </>
-  );
-}
 
 export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
   const [expanded, setExpanded] = useState(null);
@@ -100,19 +86,16 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: space[1.5] }}>
-          <Icon name="cpu" size={13} color={brand.primary} aria-hidden="true" />
+          <Icon name="cpu" size={14} color={brand.primary} aria-hidden="true" />
           <span
             style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              letterSpacing: 3,
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: -0.05,
               color: brand.primary,
-              textTransform: "uppercase",
-              fontWeight: 800,
-              opacity: 0.9,
             }}
           >
-            ▸ Coach Neural · IA
+            Coach Neural · IA
           </span>
         </div>
         <button
@@ -120,22 +103,20 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
           aria-expanded={showDetail}
           aria-controls={`${baseId}-detail`}
           style={{
-            fontFamily: MONO,
-            fontSize: 10,
-            fontWeight: 800,
-            letterSpacing: 1.5,
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: -0.05,
             color: brand.primary,
             background: withAlpha(brand.primary, 8),
             border: `1px solid ${withAlpha(brand.primary, 22)}`,
             paddingBlock: 6,
-            paddingInline: 10,
+            paddingInline: 12,
             borderRadius: radius.sm,
-            textTransform: "uppercase",
-            minBlockSize: 28,
+            minBlockSize: 32,
             cursor: "pointer",
           }}
         >
-          ▸ {showDetail ? "Menos" : "Detalle"}
+          {showDetail ? "Menos" : "Detalle"}
         </button>
       </header>
 
@@ -153,20 +134,17 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
             overflow: "hidden",
           }}
         >
-          <CornerBrackets color={withAlpha(safetyTone, 55)} />
           <div style={{ display: "flex", alignItems: "center", gap: space[1.5], marginBlockEnd: space[1] }}>
-            <Icon name={safety.level === "crisis" ? "alert-triangle" : "shield"} size={14} color={safetyTone} aria-hidden="true" />
+            <Icon name={safety.level === "crisis" ? "alert-triangle" : "shield"} size={15} color={safetyTone} aria-hidden="true" />
             <span
               style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: 2,
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: -0.05,
                 color: safetyTone,
-                textTransform: "uppercase",
-                fontWeight: 800,
               }}
             >
-              ▸ {safety.level === "crisis" ? "Apoyo humano ahora" : "Carga alta detectada"}
+              {safety.level === "crisis" ? "Apoyo humano ahora" : "Carga alta detectada"}
             </span>
           </div>
           <p style={{ fontSize: font.size.sm, color: t2, margin: 0, lineHeight: font.leading.normal }}>
@@ -202,16 +180,14 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
         >
           <span
             style={{
-              fontFamily: MONO,
-              fontSize: 9,
-              letterSpacing: 2,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: -0.05,
               color: brand.primary,
-              textTransform: "uppercase",
-              fontWeight: 800,
               marginInlineEnd: space[1.5],
             }}
           >
-            ▸ Memoria
+            Memoria ·
           </span>
           {memorySummary}
         </div>
@@ -309,17 +285,14 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                   <div style={{ flex: 1, minInlineSize: 0 }} id={insightId}>
                     <div
                       style={{
-                        fontFamily: MONO,
-                        fontSize: 10,
-                        letterSpacing: 2,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: -0.05,
                         color: insight.color,
-                        textTransform: "uppercase",
-                        fontWeight: 800,
                         marginBlockEnd: 3,
-                        opacity: 0.9,
                       }}
                     >
-                      ▸ {insight.title}
+                      {insight.title}
                     </div>
                     <div style={{ fontSize: font.size.sm, color: t2, lineHeight: font.leading.normal }}>
                       {insight.message}
@@ -335,15 +308,14 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                           background: withAlpha(insight.color, 8),
                           border: `1px solid ${withAlpha(insight.color, 20)}`,
                           borderRadius: radius.sm,
-                          fontFamily: MONO,
-                          fontSize: 11,
-                          fontWeight: 700,
-                          letterSpacing: 0.5,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          letterSpacing: -0.05,
                           color: insight.color,
-                          textTransform: "uppercase",
+                          lineHeight: 1.5,
                         }}
                       >
-                        ▸ {insight.action}
+                        {insight.action}
                       </motion.div>
                     )}
                   </div>
@@ -423,20 +395,16 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                     overflow: "hidden",
                   }}
                 >
-                  <CornerBrackets color={withAlpha(qualityColor, 50)} />
                   <div
                     style={{
-                      fontFamily: MONO,
-                      fontSize: 9,
-                      letterSpacing: 2,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      letterSpacing: -0.05,
                       color: t3,
-                      textTransform: "uppercase",
-                      fontWeight: 700,
                       marginBlockEnd: 6,
-                      opacity: 0.8,
                     }}
                   >
-                    ▸ Calidad sesión
+                    Calidad de sesión
                   </div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span
@@ -447,7 +415,7 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                         color: qualityColor,
                         lineHeight: 1,
                         letterSpacing: -0.5,
-                        textShadow: `0 0 10px ${withAlpha(qualityColor, 25)}`,
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
                       {qualityTrend.current}%
@@ -456,10 +424,10 @@ export default function NeuralCoach({ st, isDark, onSelectProtocol }) {
                       <span
                         style={{
                           fontFamily: MONO,
-                          fontSize: 11,
-                          fontWeight: 700,
-                          letterSpacing: 0.5,
+                          fontSize: 12,
+                          fontWeight: 600,
                           color: qualityTrend.trend > 0 ? brand.primary : bioSignal.plasmaPink,
+                          fontVariantNumeric: "tabular-nums",
                         }}
                       >
                         {qualityTrend.trend > 0 ? "+" : ""}{qualityTrend.trend}
@@ -503,7 +471,6 @@ function MetricTile({ label, value, subtitle, color, iconName, iconColor, cd, bd
         overflow: "hidden",
       }}
     >
-      <CornerBrackets color={withAlpha(color, 50)} />
       <div
         style={{
           display: "flex",
@@ -514,18 +481,15 @@ function MetricTile({ label, value, subtitle, color, iconName, iconColor, cd, bd
       >
         <span
           style={{
-            fontFamily: MONO,
-            fontSize: 9,
-            letterSpacing: 2,
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: -0.05,
             color: t3,
-            textTransform: "uppercase",
-            fontWeight: 700,
-            opacity: 0.85,
           }}
         >
-          ▸ {label}
+          {label}
         </span>
-        {iconName && <Icon name={iconName} size={12} color={iconColor || color} aria-hidden="true" />}
+        {iconName && <Icon name={iconName} size={13} color={iconColor || color} aria-hidden="true" />}
       </div>
       <div
         style={{
@@ -535,7 +499,7 @@ function MetricTile({ label, value, subtitle, color, iconName, iconColor, cd, bd
           color,
           lineHeight: 1,
           letterSpacing: -0.5,
-          textShadow: `0 0 12px ${withAlpha(color, 25)}`,
+          fontVariantNumeric: "tabular-nums",
         }}
       >
         {value}
