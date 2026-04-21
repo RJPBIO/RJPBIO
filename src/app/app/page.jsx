@@ -1245,7 +1245,7 @@ export default function BioIgnicion(){
     const tintOpacity=neural>=70?(isDark?0.07:0.05):neural>=50?(isDark?0.05:0.035):0;
     const barAlpha=Math.round(tintOpacity*255).toString(16).padStart(2,"0");
     return <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:layout.bottomNav,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:`linear-gradient(180deg, ${vitalTint}${barAlpha}, ${vitalTint}00), ${resolveTheme(isDark).glass}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${neural>=70?bioSignal.phosphorCyan+"22":bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}${neural>=70?`, 0 0 28px ${bioSignal.phosphorCyan}14`:""}`,transition:"background .8s ease, border-color .8s ease, box-shadow .8s ease"}}>
-      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:"#3B82F6",ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:bioSignal.neuralViolet,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:brand.secondary,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
+      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:protoColor.enfoque,ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:protoColor.calma,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:protoColor.energia,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
         <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
         <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
       </div>)}
@@ -1254,13 +1254,36 @@ export default function BioIgnicion(){
 
   {/* ═══ BOTTOM NAV ═══ */}
   <nav role="tablist" aria-label="Navegación principal" aria-hidden={ts==="running"?"true":undefined} style={{position:"fixed",bottom:0,left:"50%",transform:`translateX(-50%) translateY(${ts==="running"?"72px":"0"})`,width:"100%",maxWidth:rootMaxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,padding:`6px ${space[4]}px max(10px, env(safe-area-inset-bottom))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav,opacity:ts==="running"?0:1,pointerEvents:ts==="running"?"none":"auto",transition:reducedMotion?"none":"transform .45s cubic-bezier(.16,1,.3,1), opacity .35s ease"}}>
-    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"chart",ac:brand.secondary},{id:"perfil",lb:"Perfil",ic:"user",ac:t1}].map((t,order)=>{const a=tab===t.id;return(<motion.button key={t.id} role="tab" aria-selected={a} aria-controls={`tab-${t.id}-panel`} id={`tab-${t.id}`} tabIndex={ts==="running"?-1:(a?0:-1)} onKeyDown={e=>onTabKey(e,t.id,order)} whileTap={reducedMotion?{}:{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
-      {a&&<motion.div layoutId="navIndicator" aria-hidden="true" style={{position:"absolute",top:0,left:"20%",right:"20%",height:3,borderRadius:"0 0 3px 3px",background:t.ac}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:400,damping:30}}/>}
-      <motion.div aria-hidden="true" animate={reducedMotion?{}:{scale:a?1:0.9,y:a?-1:0}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
-        <Icon name={t.ic} size={a?19:17} color={a?t.ac:t3}/>
-      </motion.div>
-      <span style={{fontSize:font.size.sm,fontWeight:a?font.weight.black:font.weight.semibold,color:a?t.ac:t3,transition:"all .2s",letterSpacing:a?font.tracking.wide:font.tracking.normal}}>{t.lb}</span>
-    </motion.button>);})}
+    {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"gauge",ac:bioSignal.phosphorCyan},{id:"perfil",lb:"Perfil",ic:"user",ac:brand.accent}].map((t,order)=>{
+      const a=tab===t.id;
+      const isIgnicion=t.id==="ignicion";
+      // Ignición siempre marca identidad: inactive conserva tint sutil del glyph + em-dash
+      const inactiveGlyphColor=isIgnicion?withAlpha(brand.primary,55):t3;
+      const inactiveSpark=isIgnicion?withAlpha(bioSignal.ignition,45):t3;
+      return(<motion.button key={t.id} role="tab" aria-selected={a} aria-controls={`tab-${t.id}-panel`} id={`tab-${t.id}`} tabIndex={ts==="running"?-1:(a?0:-1)} onKeyDown={e=>onTabKey(e,t.id,order)} whileTap={reducedMotion?{}:{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
+        {/* Active indicator — neural-spark dot con glow (reemplaza línea genérica) */}
+        {a&&<motion.div layoutId="navIndicator" aria-hidden="true" style={{position:"absolute",top:3,left:"50%",translateX:"-50%",width:5,height:5,borderRadius:"50%",background:t.ac,boxShadow:`0 0 8px ${withAlpha(t.ac,90)}, 0 0 2px #fff`}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:400,damping:30}}/>}
+        {/* Glyph slot: Ignición usa BioGlyph (trademark), los demás Icon */}
+        <motion.div aria-hidden="true" animate={reducedMotion?{}:{scale:a?1:0.9,y:a?-1:0}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":isIgnicion?withAlpha(brand.primary,6):"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
+          {isIgnicion?(
+            <BioGlyph size={a?20:18} color={a?t.ac:inactiveGlyphColor} spark={a?bioSignal.ignition:inactiveSpark} animated={a&&!reducedMotion}/>
+          ):(
+            <Icon name={t.ic} size={a?19:17} color={a?t.ac:t3}/>
+          )}
+        </motion.div>
+        {/* Label: Ignición usa wordmark trademark (BIO — IGNICIÓN); los demás label plain.
+            Trademark permanece marked even inactive — em-dash conserva tint emerald siempre. */}
+        {isIgnicion?(
+          <span aria-label="Ignición" style={{display:"inline-flex",alignItems:"baseline",gap:2,fontFamily:font.family,fontSize:9,letterSpacing:a?2.2:1.8,textTransform:"uppercase",lineHeight:1,transition:"all .2s"}}>
+            <span aria-hidden="true" style={{fontWeight:font.weight.normal,color:a?withAlpha(t.ac,80):withAlpha(brand.primary,55)}}>BIO</span>
+            <span aria-hidden="true" style={{color:a?t.ac:withAlpha(brand.primary,65),fontWeight:font.weight.bold,transform:"translateY(-0.08em)",filter:a?`drop-shadow(0 0 3px ${withAlpha(t.ac,60)})`:"none"}}>—</span>
+            <span aria-hidden="true" style={{fontWeight:font.weight.black,color:a?t.ac:withAlpha(brand.primary,70)}}>IGNICIÓN</span>
+          </span>
+        ):(
+          <span style={{fontSize:font.size.sm,fontWeight:a?font.weight.black:font.weight.semibold,color:a?t.ac:t3,transition:"all .2s",letterSpacing:a?font.tracking.wide:font.tracking.normal}}>{t.lb}</span>
+        )}
+      </motion.button>);
+    })}
   </nav>
   </div>);
 }
