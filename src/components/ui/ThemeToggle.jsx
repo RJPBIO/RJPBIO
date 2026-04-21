@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { cssVar, radius, space, font } from "./tokens";
 
 /**
  * Ciclo: system → light → dark → system. Persiste en localStorage bajo
@@ -48,28 +47,13 @@ export default function ThemeToggle() {
         onClick={cycle}
         aria-label={`Tema: ${LABELS[mode]}. Click para cambiar a ${LABELS[nextMode]}`}
         title={`Cambiar a ${LABELS[nextMode]}`}
-        className="bi-theme-toggle"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: space[2],
-          padding: `${space[2]}px ${space[3]}px`,
-          minBlockSize: 36,
-          borderRadius: radius.full,
-          background: "transparent",
-          color: cssVar.textDim,
-          border: `1px solid ${cssVar.border}`,
-          fontSize: font.size.sm,
-          fontWeight: font.weight.semibold,
-          cursor: "pointer",
-          fontFamily: "inherit",
-          transition: "border-color .15s ease, color .15s ease, background .15s ease",
-        }}
+        className="bi-shell-theme"
+        data-mode={mode}
       >
-        <span aria-hidden style={{ fontSize: font.size.md, lineHeight: 1 }}>
+        <span aria-hidden className="bi-shell-theme-icon">
           {mode === "light" ? "☀" : mode === "dark" ? "☾" : "◐"}
         </span>
-        <span>{LABELS[mode]}</span>
+        <span className="bi-shell-theme-label">{LABELS[mode]}</span>
       </button>
       <span role="status" aria-live="polite" className="bi-sr-only">{announcement}</span>
     </>

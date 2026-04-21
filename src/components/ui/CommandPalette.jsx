@@ -64,6 +64,12 @@ export default function CommandPalette() {
     return () => { clearTimeout(tm); document.body.style.overflow = prev; };
   }, [open]);
 
+  // Broadcast open/close state — header trigger refleja el anillo fósforo.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new Event(open ? "bio-cmd:open" : "bio-cmd:close"));
+  }, [open]);
+
   const items = useMemo(() => buildItems({ t, router, setLocale, close }), [t, router, setLocale, close]);
 
   const filtered = useMemo(() => {

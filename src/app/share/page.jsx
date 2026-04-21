@@ -50,7 +50,7 @@ export default async function Share({ searchParams }) {
         <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, margin: 0 }}>
           Guardado como nota en tu perfil.
         </p>
-        <Button href="/" variant="secondary" style={{ justifySelf: "start" }}>Volver</Button>
+        <Button href="/app" variant="secondary" style={{ justifySelf: "start" }}>Volver</Button>
       </article>
     </main>
   );

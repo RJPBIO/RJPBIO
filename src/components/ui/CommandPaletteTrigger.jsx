@@ -1,17 +1,30 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useT } from "../../hooks/useT";
-import { cssVar, radius, space, font } from "./tokens";
 
-// Pill visible en el header que abre el command palette. Cliente mínimo —
-// solo despacha el evento; la paleta está montada en GlobalChrome.
-export default function CommandPaletteTrigger() {
+// Pill visible en el header que abre el command palette. Escucha eventos
+// `bio-cmd:open` / `bio-cmd:close` para reflejar estado abierto con anillo
+// fósforo — el loop visual que confirma al usuario que el atajo funcionó.
+export default function CommandPaletteTrigger({ searchLabel = "Buscar" }) {
   const { t } = useT();
   const [isMac, setIsMac] = useState(false);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
     if (typeof navigator === "undefined") return;
     setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || ""));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onOpen = () => setActive(true);
+    const onClose = () => setActive(false);
+    window.addEventListener("bio-cmd:open", onOpen);
+    window.addEventListener("bio-cmd:close", onClose);
+    return () => {
+      window.removeEventListener("bio-cmd:open", onOpen);
+      window.removeEventListener("bio-cmd:close", onClose);
+    };
   }, []);
 
   const open = () => {
@@ -23,33 +36,16 @@ export default function CommandPaletteTrigger() {
       type="button"
       onClick={open}
       aria-label={t("cmd.open")}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: space[2],
-        padding: `${space[1.5]}px ${space[3]}px`,
-        borderRadius: radius.full,
-        background: "transparent",
-        color: cssVar.textDim,
-        border: `1px solid ${cssVar.border}`,
-        fontSize: font.size.sm,
-        fontWeight: font.weight.semibold,
-        cursor: "pointer",
-        fontFamily: "inherit",
-      }}
+      aria-expanded={active}
+      className="bi-shell-search"
+      data-active={active ? "true" : undefined}
     >
-      <span aria-hidden>⌕</span>
-      <kbd style={{
-        fontFamily: "var(--font-mono), monospace",
-        fontSize: 10,
-        padding: "1px 5px",
-        border: `1px solid ${cssVar.border}`,
-        borderRadius: 4,
-        background: cssVar.surface2,
-        color: cssVar.textMuted,
-      }}>
-        {isMac ? "⌘K" : "Ctrl K"}
-      </kbd>
+      <svg aria-hidden width="14" height="14" viewBox="0 0 14 14" className="bi-shell-search-icon">
+        <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.6" fill="none" />
+        <path d="M9.2 9.2l3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+      <span className="bi-shell-search-label">{searchLabel}</span>
+      <kbd className="bi-shell-search-kbd">{isMac ? "⌘K" : "Ctrl K"}</kbd>
     </button>
   );
 }

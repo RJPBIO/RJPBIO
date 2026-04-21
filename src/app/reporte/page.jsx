@@ -176,7 +176,7 @@ export default function ReportePage() {
       `}</style>
 
       <div className="actions">
-        <Link href="/">← Volver</Link>
+        <Link href="/app">← Volver</Link>
         <button className="primary" type="button" onClick={() => window.print()}>
           Descargar PDF
         </button>

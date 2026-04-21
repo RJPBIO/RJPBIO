@@ -82,23 +82,17 @@ export default function LocaleSelect({ variant = "compact", locales = QUICK }) {
 
   // compact (header público): select nativo = accesible, compacto, sin libs.
   return (
-    <label style={{ display: "inline-flex", alignItems: "center", gap: space[2] }}>
+    <label className="bi-shell-locale">
       <span className="bi-sr-only">Idioma</span>
+      <span aria-hidden className="bi-shell-locale-value">{locale.toUpperCase()}</span>
+      <svg aria-hidden width="10" height="10" viewBox="0 0 10 10" className="bi-shell-locale-caret">
+        <path d="M2 3.75L5 6.75 8 3.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </svg>
       <select
         value={locale}
         onChange={(e) => change(e.target.value)}
         aria-label="Idioma de la interfaz"
-        style={{
-          padding: `${space[1.5]}px ${space[3]}px`,
-          borderRadius: radius.full,
-          background: "transparent",
-          color: cssVar.textDim,
-          border: `1px solid ${cssVar.border}`,
-          fontSize: font.size.sm,
-          fontWeight: font.weight.semibold,
-          cursor: "pointer",
-          fontFamily: "inherit",
-        }}
+        className="bi-shell-locale-select"
       >
         {locales.map((l) => (
           <option key={l} value={l}>{LOCALE_LABELS[l] || l.toUpperCase()}</option>

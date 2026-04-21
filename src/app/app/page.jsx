@@ -11,71 +11,71 @@ import dynamic from "next/dynamic";
    ═══════════════════════════════════════════════════════════════ */
 
 // ─── Imports from modules ─────────────────────────────────
-import { P, SCIENCE_DEEP } from "../lib/protocols";
+import { P, SCIENCE_DEEP } from "@/lib/protocols";
 import {
   MOODS, INTENTS,
   POST_MSGS, PROG_7, DS,
-} from "../lib/constants";
+} from "@/lib/constants";
 import {
   gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
   calcProtoSensitivity, predictSessionImpact,
   estimateCognitiveLoad,
   calcSessionCompletion,
-} from "../lib/neural";
-import { useReadiness, computeReadiness } from "../hooks/useReadiness";
-import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "../hooks/useAdaptiveRecommendation";
-import { useCommandKey } from "../hooks/useCommandKey";
-import { useAutoSave } from "../hooks/useAutoSave";
-import { useSessionAudio } from "../hooks/useSessionAudio";
-import { useMidSessionMessages } from "../hooks/useMidSessionMessages";
+} from "@/lib/neural";
+import { useReadiness, computeReadiness } from "@/hooks/useReadiness";
+import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
+import { useCommandKey } from "@/hooks/useCommandKey";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { useSessionAudio } from "@/hooks/useSessionAudio";
+import { useMidSessionMessages } from "@/hooks/useMidSessionMessages";
 import {
   hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
   wireAudioUnlock,
-} from "../lib/audio";
-import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal, brand } from "../lib/theme";
-import { dark as darkPalette } from "../lib/tokens";
-import BioIgnicionMark, { BioGlyph } from "../components/BioIgnicionMark";
-import IgnitionBurst from "../components/IgnitionBurst";
-import { useStore } from "../store/useStore";
-import Icon from "../components/Icon";
-import { useSync } from "../hooks/useSync";
-import { useDeepLink } from "../hooks/useDeepLink";
-import { useBreakpoint } from "../hooks/useBreakpoint";
-import { useThemeDark } from "../hooks/useThemeDark";
-import { useTapEntry } from "../hooks/useTapEntry";
-import { uiSound } from "../lib/uiSound";
-import { buildCommands } from "../lib/commandPalette";
-import { computePhaseIndex, timeToNextPhase } from "../lib/phaseEngine";
-import { computeSessionMetrics, sessionQualityMessage, shouldPlayIgnitionSignature } from "../lib/sessionClose";
-import { buildCheckinEntry } from "../lib/sessionCheckin";
-import { computeBreathFrame } from "../lib/breathCycle";
-import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "../lib/nom35/recommend";
-import { useReducedMotion, useFocusTrap, KEY, announce } from "../lib/a11y";
-import { semantic } from "../lib/tokens";
+} from "@/lib/audio";
+import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal, brand } from "@/lib/theme";
+import { dark as darkPalette } from "@/lib/tokens";
+import BioIgnicionMark, { BioGlyph } from "@/components/BioIgnicionMark";
+import IgnitionBurst from "@/components/IgnitionBurst";
+import { useStore } from "@/store/useStore";
+import Icon from "@/components/Icon";
+import { useSync } from "@/hooks/useSync";
+import { useDeepLink } from "@/hooks/useDeepLink";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { useThemeDark } from "@/hooks/useThemeDark";
+import { useTapEntry } from "@/hooks/useTapEntry";
+import { uiSound } from "@/lib/uiSound";
+import { buildCommands } from "@/lib/commandPalette";
+import { computePhaseIndex, timeToNextPhase } from "@/lib/phaseEngine";
+import { computeSessionMetrics, sessionQualityMessage, shouldPlayIgnitionSignature } from "@/lib/sessionClose";
+import { buildCheckinEntry } from "@/lib/sessionCheckin";
+import { computeBreathFrame } from "@/lib/breathCycle";
+import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "@/lib/nom35/recommend";
+import { useReducedMotion, useFocusTrap, KEY, announce } from "@/lib/a11y";
+import { semantic } from "@/lib/tokens";
 
 // Dynamic imports (code-split)
-const NeuralCalibration = dynamic(() => import("../components/NeuralCalibration"), { ssr: false });
-const BioIgnitionWelcome = dynamic(() => import("../components/BioIgnitionWelcome"), { ssr: false });
-const CommandPalette = dynamic(() => import("../components/CommandPalette"), { ssr: false });
-const ProtocolDetail = dynamic(() => import("../components/ProtocolDetail"), { ssr: false });
-const StreakShield = dynamic(() => import("../components/StreakShield"), { ssr: false });
-const DashboardView = dynamic(() => import("../components/DashboardView"), { ssr: false });
-const ProfileView = dynamic(() => import("../components/ProfileView"), { ssr: false });
-const PostSessionFlow = dynamic(() => import("../components/PostSessionFlow"), { ssr: false });
-const SettingsSheet = dynamic(() => import("../components/SettingsSheet"), { ssr: false });
-const HistorySheet = dynamic(() => import("../components/HistorySheet"), { ssr: false });
-const ProtocolSelector = dynamic(() => import("../components/ProtocolSelector"), { ssr: false });
-const OnboardingTour = dynamic(() => import("../components/OnboardingTour"), { ssr: false });
-const HRVMonitor = dynamic(() => import("../components/HRVMonitor"), { ssr: false });
-const PhysiologicalSigh = dynamic(() => import("../components/PhysiologicalSigh"), { ssr: false });
-const NSDR = dynamic(() => import("../components/NSDR"), { ssr: false });
-const ChronotypeTest = dynamic(() => import("../components/ChronotypeTest"), { ssr: false });
-const ResonanceCalibration = dynamic(() => import("../components/ResonanceCalibration"), { ssr: false });
-const NOM035Questionnaire = dynamic(() => import("../components/NOM035Questionnaire"), { ssr: false });
-const ReadinessScore = dynamic(() => import("../components/ReadinessScore"), { ssr: false });
+const NeuralCalibration = dynamic(() => import("@/components/NeuralCalibration"), { ssr: false });
+const BioIgnitionWelcome = dynamic(() => import("@/components/BioIgnitionWelcome"), { ssr: false });
+const CommandPalette = dynamic(() => import("@/components/CommandPalette"), { ssr: false });
+const ProtocolDetail = dynamic(() => import("@/components/ProtocolDetail"), { ssr: false });
+const StreakShield = dynamic(() => import("@/components/StreakShield"), { ssr: false });
+const DashboardView = dynamic(() => import("@/components/DashboardView"), { ssr: false });
+const ProfileView = dynamic(() => import("@/components/ProfileView"), { ssr: false });
+const PostSessionFlow = dynamic(() => import("@/components/PostSessionFlow"), { ssr: false });
+const SettingsSheet = dynamic(() => import("@/components/SettingsSheet"), { ssr: false });
+const HistorySheet = dynamic(() => import("@/components/HistorySheet"), { ssr: false });
+const ProtocolSelector = dynamic(() => import("@/components/ProtocolSelector"), { ssr: false });
+const OnboardingTour = dynamic(() => import("@/components/OnboardingTour"), { ssr: false });
+const HRVMonitor = dynamic(() => import("@/components/HRVMonitor"), { ssr: false });
+const PhysiologicalSigh = dynamic(() => import("@/components/PhysiologicalSigh"), { ssr: false });
+const NSDR = dynamic(() => import("@/components/NSDR"), { ssr: false });
+const ChronotypeTest = dynamic(() => import("@/components/ChronotypeTest"), { ssr: false });
+const ResonanceCalibration = dynamic(() => import("@/components/ResonanceCalibration"), { ssr: false });
+const NOM035Questionnaire = dynamic(() => import("@/components/NOM035Questionnaire"), { ssr: false });
+const ReadinessScore = dynamic(() => import("@/components/ReadinessScore"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
