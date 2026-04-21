@@ -277,27 +277,6 @@ export default function IgnitionBurst({ show, onDone, accent }) {
                   </motion.div>
                 </div>
 
-                {/* Serial timestamp — cinematic fine print */}
-                <motion.div
-                  initial={{ opacity: 0, y: 110 }}
-                  animate={{ opacity: [0, 0.7, 0], y: [110, 120, 130] }}
-                  transition={{ duration: 1.4, times: [0, 0.45, 1], delay: 0.35 }}
-                  style={{
-                    position: "absolute",
-                    left: "-50vw",
-                    top: 0,
-                    width: "100vw",
-                    textAlign: "center",
-                    fontFamily: "'JetBrains Mono', ui-monospace, Menlo, monospace",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: "0.5em",
-                    color: signal,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  ▸ Señal estructurada · V-Core encendido ◂
-                </motion.div>
               </div>
             </>
           )}

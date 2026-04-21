@@ -155,8 +155,8 @@ export default function InstrumentRunner({
             <div style={{ blockSize: "100%", inlineSize: `${((idx + 1) / total) * 100}%`, background: brand.primary, transition: "inline-size .3s" }} />
           </div>
 
-          <div style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 12 }}>
-            {idx + 1} / {total}
+          <div style={{ color: t3, fontSize: 12, marginBlockEnd: 12 }}>
+            Pregunta {idx + 1} de {total}
           </div>
 
           <h3 style={{ color: t1, fontSize: 15, fontWeight: 700, lineHeight: 1.5, marginBlockEnd: 20 }}>
@@ -210,21 +210,18 @@ export default function InstrumentRunner({
           <div
             style={{
               background: cd,
-              border: `2px solid ${tone.color}`,
+              border: `1px solid ${withAlpha(tone.color, 40)}`,
               borderRadius: 16,
               padding: 20,
               marginBlockEnd: 16,
               textAlign: "center",
             }}
           >
-            <p style={{ color: t3, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBlockEnd: 8 }}>
-              Resultado
-            </p>
-            <div style={{ color: tone.color, fontSize: 28, fontWeight: font.weight.black }}>
+            <div style={{ color: tone.color, fontSize: 22, fontWeight: 700, letterSpacing: -0.3 }}>
               {tone.label}
             </div>
-            <p style={{ color: t2, fontSize: 12, marginBlockStart: 8 }}>
-              Puntaje: {displayScore} / {result.max ?? instrument.max}
+            <p style={{ color: t2, fontSize: 13, marginBlockStart: 8 }}>
+              Puntaje {displayScore} de {result.max ?? instrument.max}
             </p>
           </div>
 
@@ -238,10 +235,10 @@ export default function InstrumentRunner({
                 marginBlockEnd: 16,
               }}
             >
-              <p style={{ color: semantic.danger, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBlockEnd: 6 }}>
+              <p style={{ color: semantic.danger, fontSize: 13, fontWeight: 700, marginBlockEnd: 6 }}>
                 Recomendación clínica
               </p>
-              <p style={{ color: t1, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: t1, fontSize: 13, lineHeight: 1.55, margin: 0 }}>
                 Un screening positivo no equivale a un diagnóstico. Consulta con un profesional
                 de salud mental para una evaluación completa.
               </p>
@@ -253,15 +250,15 @@ export default function InstrumentRunner({
             aria-label="Guardar evaluación"
             style={{
               inlineSize: "100%",
+              minBlockSize: 48,
               paddingBlock: 14,
               background: brand.primary,
               color: "#fff",
               border: "none",
               borderRadius: 14,
-              fontSize: 13,
-              fontWeight: font.weight.black,
-              letterSpacing: 1,
-              textTransform: "uppercase",
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: -0.1,
               cursor: "pointer",
             }}
           >
