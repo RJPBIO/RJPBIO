@@ -1,7 +1,11 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   CORRELATION MATRIX — efectividad por protocolo
+   CORRELATION MATRIX — efectividad personal por protocolo
    Base: Metacognitive Monitoring (Flavell 1979).
+
+   Layout tipo ficha de laboratorio: corner brackets, mono
+   blueprint, delta monumental, gradientes bio-signal, left-rail
+   del color del protocolo en cada fila, 44-min tap target.
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
@@ -9,9 +13,23 @@ import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { calcProtocolCorrelations } from "../lib/neural";
 import { P } from "../lib/protocols";
-import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
-import { semantic } from "../lib/tokens";
+import { resolveTheme, withAlpha, font, brand, bioSignal } from "../lib/theme";
 import { useReducedMotion, onActivate } from "../lib/a11y";
+
+const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
+function CornerBrackets({ color }) {
+  const L = 10;
+  const common = { position: "absolute", inlineSize: L, blockSize: L, pointerEvents: "none" };
+  return (
+    <>
+      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockStart: 6, borderInlineStart: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
+      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockStart: 6, borderInlineEnd: `1px solid ${color}`, borderBlockStart: `1px solid ${color}` }} />
+      <span aria-hidden="true" style={{ ...common, insetInlineStart: 6, insetBlockEnd: 6, borderInlineStart: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
+      <span aria-hidden="true" style={{ ...common, insetInlineEnd: 6, insetBlockEnd: 6, borderInlineEnd: `1px solid ${color}`, borderBlockEnd: `1px solid ${color}` }} />
+    </>
+  );
+}
 
 export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
   const reduced = useReducedMotion();
@@ -24,41 +42,62 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
   const sorted = Object.entries(correlations).sort((a, b) => b[1].avgDelta - a[1].avgDelta);
   const maxDelta = Math.max(...sorted.map(([, d]) => Math.abs(d.avgDelta)), 0.1);
 
+  const frameStroke = withAlpha(brand.primary, isDark ? 32 : 24);
+  const rule = withAlpha(brand.primary, isDark ? 20 : 14);
+
   return (
     <section
       aria-label="Efectividad personal por protocolo"
       style={{
+        position: "relative",
         background: cd,
         borderRadius: 18,
         padding: "16px 14px",
         border: `1px solid ${bd}`,
         marginBlockEnd: 14,
+        overflow: "hidden",
       }}
     >
+      <CornerBrackets color={frameStroke} />
+
       <header
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           marginBlockEnd: 12,
+          paddingBlockEnd: 10,
+          borderBlockEnd: `1px dashed ${rule}`,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="radar" size={12} color={t3} aria-hidden="true" />
+          <Icon name="radar" size={12} color={brand.primary} aria-hidden="true" />
           <h3
             style={{
+              fontFamily: MONO,
               fontSize: 10,
-              fontWeight: font.weight.black,
+              fontWeight: 800,
               letterSpacing: 3,
-              color: t3,
+              color: brand.primary,
               textTransform: "uppercase",
               margin: 0,
+              opacity: 0.9,
             }}
           >
-            Efectividad Personal
+            ▸ Efectividad Personal
           </h3>
         </div>
-        <span style={{ fontSize: 10, color: t3 }}>{sorted.length} protocolos</span>
+        <span
+          style={{
+            fontFamily: MONO,
+            fontSize: 10,
+            letterSpacing: 1.5,
+            color: t3,
+            textTransform: "uppercase",
+          }}
+        >
+          N · {sorted.length} protocolos
+        </span>
       </header>
 
       <ul
@@ -75,7 +114,8 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
           const proto = P.find((p) => p.n === name);
           const isPositive = data.avgDelta > 0;
           const barWidth = Math.round((Math.abs(data.avgDelta) / maxDelta) * 100);
-          const protoColor = proto?.cl || "#6366F1";
+          const protoColor = proto?.cl || bioSignal.neuralViolet;
+          const deltaColor = isPositive ? brand.primary : bioSignal.plasmaPink;
           const interactive = !!proto && !!onSelectProtocol;
           const onClick = interactive ? () => onSelectProtocol(proto) : undefined;
           const ariaLabel =
@@ -93,27 +133,47 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
               onClick={onClick}
               onKeyDown={interactive ? onActivate(onClick) : undefined}
               style={{
+                position: "relative",
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
-                padding: "8px 10px",
+                gap: 10,
+                padding: "8px 10px 8px 12px",
                 borderRadius: 10,
                 background: isDark ? "#1A1E28" : "#F8FAFC",
+                border: `1px solid ${withAlpha(protoColor, isDark ? 14 : 10)}`,
                 cursor: interactive ? "pointer" : "default",
+                minBlockSize: interactive ? 56 : undefined,
+                overflow: "hidden",
               }}
             >
+              <span
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  insetInlineStart: 0,
+                  insetBlockStart: 0,
+                  insetBlockEnd: 0,
+                  inlineSize: 3,
+                  background: `linear-gradient(180deg, ${withAlpha(protoColor, 90)}, ${withAlpha(protoColor, 30)})`,
+                }}
+              />
+
               <div
                 aria-hidden="true"
                 style={{
-                  inlineSize: 28,
-                  blockSize: 28,
-                  borderRadius: 7,
-                  background: withAlpha(protoColor, 12),
+                  position: "relative",
+                  inlineSize: 32,
+                  blockSize: 32,
+                  borderRadius: 8,
+                  background: withAlpha(protoColor, 14),
+                  border: `1px solid ${withAlpha(protoColor, 28)}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 9,
-                  fontWeight: font.weight.black,
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 0.5,
                   color: protoColor,
                   flexShrink: 0,
                 }}
@@ -127,33 +187,49 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBlockEnd: 4,
+                    gap: 8,
+                    marginBlockEnd: 5,
                   }}
                 >
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: 700,
                       color: t1,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
+                      letterSpacing: -0.1,
                     }}
                   >
                     {name}
                   </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 5, flexShrink: 0 }}>
                     <span
                       style={{
-                        fontSize: 11,
-                        fontWeight: font.weight.black,
-                        color: isPositive ? semantic.success : semantic.danger,
+                        fontFamily: MONO,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: deltaColor,
+                        lineHeight: 1,
+                        letterSpacing: -0.3,
+                        textShadow: `0 0 8px ${withAlpha(deltaColor, 25)}`,
                       }}
                     >
                       {isPositive ? "+" : ""}
                       {data.avgDelta}
                     </span>
-                    <span style={{ fontSize: 9, color: t3 }}>{data.sessions}x</span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: t3,
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      · {data.sessions}×
+                    </span>
                   </div>
                 </div>
 
@@ -164,7 +240,7 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                   aria-valuenow={barWidth}
                   style={{
                     blockSize: 4,
-                    background: bd,
+                    background: withAlpha(bd, 60),
                     borderRadius: 2,
                     overflow: "hidden",
                   }}
@@ -176,15 +252,25 @@ export default function CorrelationMatrix({ st, isDark, onSelectProtocol }) {
                     style={{
                       blockSize: "100%",
                       background: isPositive
-                        ? `linear-gradient(90deg, ${semantic.success}, ${brand.secondary})`
-                        : `linear-gradient(90deg, ${semantic.danger}, #EF4444)`,
+                        ? `linear-gradient(90deg, ${brand.primary}, ${bioSignal.phosphorCyan})`
+                        : `linear-gradient(90deg, ${bioSignal.plasmaPink}, ${bioSignal.ignition})`,
                       borderRadius: 2,
+                      boxShadow: `0 0 8px ${withAlpha(deltaColor, 45)}`,
                     }}
                   />
                 </div>
 
-                <div style={{ fontSize: 9, color: t3, marginBlockStart: 3 }}>
-                  Mejor: {data.bestTimeOfDay} ·{" "}
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    color: t3,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    marginBlockStart: 4,
+                  }}
+                >
+                  ▸ Mejor · {data.bestTimeOfDay} ·{" "}
                   {data.bestTimeOfDay === "mañana"
                     ? `+${data.morningDelta}`
                     : `+${data.afternoonDelta}`}{" "}
