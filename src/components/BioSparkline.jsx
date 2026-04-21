@@ -33,7 +33,7 @@ export default function BioSparkline({
   showLast = true,
   baseline = null,
   strokeWidth = 1.5,
-  glow = true,
+  glow = false,
   ariaLabel,
   interactive = true,
   formatValue,
@@ -244,15 +244,7 @@ export default function BioSparkline({
 
         {showLast && lastPt && activeIdx == null && (
           <>
-            {!reduced && (
-              <circle cx={lastPt[0]} cy={lastPt[1]} r="3.5" fill={c} opacity="0.25">
-                <animate attributeName="r" values="3.5;5.5;3.5" dur="2.4s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.3;0.05;0.3" dur="2.4s" repeatCount="indefinite" />
-              </circle>
-            )}
-            {reduced && (
-              <circle cx={lastPt[0]} cy={lastPt[1]} r="3.5" fill={c} opacity="0.25" />
-            )}
+            <circle cx={lastPt[0]} cy={lastPt[1]} r="2.8" fill={c} opacity="0.22" />
             <circle cx={lastPt[0]} cy={lastPt[1]} r="1.8" fill={bioSignal.ignition} />
           </>
         )}
@@ -289,14 +281,14 @@ export default function BioSparkline({
             pointerEvents: "none",
             background: "rgba(13,17,23,0.94)",
             color: "#E8ECF4",
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: 700,
             fontFamily: MONO,
-            letterSpacing: 0.5,
-            padding: "3px 6px",
-            borderRadius: 4,
+            letterSpacing: -0.1,
+            fontVariantNumeric: "tabular-nums",
+            padding: "3px 7px",
+            borderRadius: 5,
             border: `1px solid ${c}55`,
-            boxShadow: `0 4px 14px -4px ${c}`,
             whiteSpace: "nowrap",
             zIndex: 2,
           }}
