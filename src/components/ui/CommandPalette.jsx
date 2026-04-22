@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useT } from "../../hooks/useT";
+import { docsSearchItems } from "../../lib/docsIndex";
 import { cssVar, space, font, radius } from "./tokens";
 
 // Command palette universal (Cmd/Ctrl+K). Open → filter → run.
@@ -29,7 +30,7 @@ export default function CommandPalette() {
   // Cedemos Cmd/Ctrl+K en esa ruta; el botón del header y el evento
   // "bio-cmd:open" siguen disponibles para invocarnos explícitamente.
   const yieldGlobalKey = pathname === "/";
-  const { t, setLocale } = useT();
+  const { t, locale, setLocale } = useT();
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
@@ -75,7 +76,7 @@ export default function CommandPalette() {
     window.dispatchEvent(new Event(open ? "bio-cmd:open" : "bio-cmd:close"));
   }, [open]);
 
-  const items = useMemo(() => buildItems({ t, router, setLocale, close }), [t, router, setLocale, close]);
+  const items = useMemo(() => buildItems({ t, router, setLocale, close, locale }), [t, router, setLocale, close, locale]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -264,7 +265,7 @@ const kbdStyle = {
   color: cssVar.textDim,
 };
 
-function buildItems({ t, router, setLocale, close }) {
+function buildItems({ t, router, setLocale, close, locale }) {
   const nav = t("cmd.navigation");
   const act = t("cmd.actions");
   const pref = t("cmd.preferences");
@@ -299,5 +300,7 @@ function buildItems({ t, router, setLocale, close }) {
     { id: "pref-theme-auto",  group: pref, icon: "◐", label: t("cmd.themeAuto"),  action: () => applyTheme("system"), keywords: "auto system" },
     { id: "pref-lang-es",     group: pref, icon: "ES", label: t("cmd.langEs"), action: () => setLocale("es"), keywords: "espanol spanish" },
     { id: "pref-lang-en",     group: pref, icon: "EN", label: t("cmd.langEn"), action: () => setLocale("en"), keywords: "english ingles" },
+
+    ...docsSearchItems(locale),
   ];
 }

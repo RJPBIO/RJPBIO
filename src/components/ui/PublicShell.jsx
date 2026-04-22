@@ -15,6 +15,7 @@ import StatusPulse from "@/components/StatusPulse";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import BookDemoTrigger from "@/components/BookDemoTrigger";
 import ScrollChrome from "@/components/ScrollChrome";
+import MobileStickyCTA from "@/components/MobileStickyCTA";
 
 async function hasSessionCookie() {
   const jar = await cookies();
@@ -175,6 +176,13 @@ export async function PublicShell({ children, activePath }) {
       <div style={{ minHeight: "calc(100dvh - 200px)" }}>
         {children}
       </div>
+
+      <MobileStickyCTA
+        primaryHref={ctaHref}
+        primaryLabel={ctaLabel}
+        secondaryHref="/demo"
+        secondaryLabel={locale === "en" ? "Book demo" : "Demo"}
+      />
 
       <footer role="contentinfo" className="bi-footer-root" style={{ marginTop: space[12] }}>
         <Container size="xl" style={{ paddingBlock: space[10] }}>

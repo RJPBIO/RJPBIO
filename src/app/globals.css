@@ -4508,6 +4508,76 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   }
 }
 
+/* ═══ Mobile sticky CTA ═══ */
+.bi-mobile-sticky-cta {
+  position: fixed;
+  inset-inline: 12px;
+  inset-block-end: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bi-bg) 92%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border: 1px solid color-mix(in srgb, #22D3EE 40%, var(--bi-border));
+  box-shadow: 0 14px 38px -18px rgba(34,211,238,0.55), 0 4px 12px rgba(0,0,0,0.25);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 220ms ease, transform 220ms ease;
+  pointer-events: none;
+}
+.bi-mobile-sticky-cta[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.bi-mobile-sticky-cta-primary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  background: linear-gradient(135deg, #22D3EE 0%, #0891B2 100%);
+  color: #0B0E14;
+  box-shadow: 0 6px 18px -8px rgba(34,211,238,0.65);
+}
+.bi-mobile-sticky-cta-primary:active { transform: scale(0.98); }
+.bi-mobile-sticky-cta-secondary {
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bi-text, #0F172A);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.bi-mobile-sticky-cta-close {
+  flex-shrink: 0;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--bi-border);
+  background: transparent;
+  color: var(--bi-text-dim, #64748B);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+@media (max-width: 768px) {
+  .bi-mobile-sticky-cta { display: flex; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-mobile-sticky-cta { transition: opacity 120ms linear; transform: none; }
+}
+
 /* ═══ HOME · Bento grid responsive ═══
    12-col grid on desktop; collapses to 2-col at tablet, 1-col on phone. */
 .bi-bento-grid {
