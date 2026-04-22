@@ -81,14 +81,6 @@ export const STATUS_MSGS = [
   { min: 82, max: 100, label: "Óptimo", color: "#059669" },
 ];
 
-export const MID_MSGS = [
-  "Vas bien. Tu cuerpo siente el cambio.",
-  "El ruido mental baja. Sigue.",
-  "Estás construyendo claridad.",
-  "Tu sistema se recalibra.",
-  "Este momento es tuyo.",
-];
-
 export const POST_MSGS = [
   "Dos minutos bien invertidos. Tu cerebro lo nota.",
   "Sesión potente. El efecto dura 60-90 minutos.",

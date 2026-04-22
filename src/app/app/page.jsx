@@ -28,7 +28,6 @@ import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "@/hook
 import { useCommandKey } from "@/hooks/useCommandKey";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
-import { useMidSessionMessages } from "@/hooks/useMidSessionMessages";
 import {
   hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord,
   startBinaural, stopBinaural,
@@ -89,7 +88,6 @@ export default function BioIgnicion(){
   const[pr,setPr]=useState(P[12]);const[sc,setSc]=useState("Protocolo");const[sl,setSl]=useState(false);
   const[ts,setTs]=useState("idle");const[sec,setSec]=useState(120);const[pi,setPi]=useState(0);
   const[bL,setBL]=useState("");const[bS,setBS]=useState(1);const[bCnt,setBCnt]=useState(0);
-  const[midMsg,setMidMsg]=useState("");const[showMid,setShowMid]=useState(false);
   const[tp,setTp]=useState(false);
   const[ignitionFlash,setIgnitionFlash]=useState(false);
   const[phaseFlash,setPhaseFlash]=useState(false);
@@ -126,6 +124,9 @@ export default function BioIgnicion(){
   const rootMaxWidth=bp==="desktop"?layout.maxWidthDesktop:bp==="tablet"?layout.maxWidthTablet:layout.maxWidth;
   const rootPadInline=bp==="desktop"?layout.contentPaddingDesktop:bp==="tablet"?layout.contentPaddingTablet:0;
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);const actLockRef=useRef(false);
+  // Wall-clock anchors: startMs = Date.now() al entrar "running"; startSec = valor de sec en ese instante.
+  // Cada tick recomputa sec a partir de la diferencia real — inmune a jitter de setInterval y tab throttling.
+  const startMsRef=useRef(null);const startSecRef=useRef(null);
 
   const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);store.update(nv);},[st]);
 
@@ -235,7 +236,23 @@ export default function BioIgnicion(){
   useSessionAudio({timerStatus:ts,soundOn:st.soundOn,soundscape:st.soundscape,intent:pr.int});
   useEffect(()=>{if(ts==="running"){motionRef.current=setupMotionDetection(({samples,stability})=>{setSessionData(d=>({...d,motionSamples:samples,stability:stability}));});}return()=>{if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}};},[ts]);
 
-  useEffect(()=>{if(ts==="running"){iR.current=setInterval(()=>{setSec(p=>{if(p<=1){clearInterval(iR.current);setTs("done");hapRef.current("ok");return 0;}return p-1;});},1000);tR.current=setInterval(()=>hapRef.current("tick"),4000);}return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};},[ts]);
+  useEffect(()=>{
+    if(ts!=="running")return;
+    // Anchor a Date.now() al entrar running (o resumir) usando el sec actual como punto de partida.
+    startMsRef.current=Date.now();
+    startSecRef.current=sec;
+    iR.current=setInterval(()=>{
+      const elapsed=Math.floor((Date.now()-startMsRef.current)/1000);
+      const next=Math.max(0,startSecRef.current-elapsed);
+      setSec(prev=>{
+        if(prev===next)return prev;
+        if(next<=0){clearInterval(iR.current);setTs("done");hapRef.current("ok");return 0;}
+        return next;
+      });
+    },250);
+    tR.current=setInterval(()=>hapRef.current("tick"),4000);
+    return()=>{if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);};
+  },[ts]);
   // Ignition flash: destello one-shot cuando la sesión arranca. Firma audio+haptic
   // hacen tangible la metáfora de "ignición" — no es solo visual.
   useEffect(()=>{
@@ -261,7 +278,6 @@ export default function BioIgnicion(){
     if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
     return()=>{if(speakTO)clearTimeout(speakTO);};}catch(e){}
   },[sec,pr,durMult]);
-  useMidSessionMessages({timerStatus:ts,secondsRemaining:sec,setMidMsg,setShowMid});
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr?.ph?.[pi]||pr?.ph?.[0];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph||!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
@@ -369,11 +385,6 @@ export default function BioIgnicion(){
 
   {/* Background aura — dims during running session (cinematic focus) */}
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s ease"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
-
-  {/* Mid-session message */}
-  <AnimatePresence>
-  {showMid&&<motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",zIndex:180,pointerEvents:"none"}}><div style={{background:cd,borderRadius:16,padding:"14px 22px",boxShadow:"0 8px 30px rgba(0,0,0,.08)",border:`1px solid ${bd}`,maxWidth:320,textAlign:"center"}}><div style={{fontSize:13,fontWeight:600,color:t1,lineHeight:1.6,fontStyle:"italic"}}>{midMsg}</div></div></motion.div>}
-  </AnimatePresence>
 
   {/* Session Runner — fullscreen cinematic overlay (countdown + running + paused) */}
   <SessionRunner
