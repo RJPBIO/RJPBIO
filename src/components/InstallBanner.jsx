@@ -27,7 +27,7 @@ export default function InstallBanner() {
       aria-label="Instalar aplicación"
       style={{
         position: "fixed",
-        insetBlockEnd: space[4],
+        insetBlockEnd: `calc(${space[4]}px + 68px + env(safe-area-inset-bottom, 0px))`,
         insetInlineStart: "50%",
         transform: "translateX(-50%)",
         zIndex: 310,
@@ -39,7 +39,7 @@ export default function InstallBanner() {
         border: `1px solid ${cssVar.borderStrong}`,
         borderRadius: radius.lg,
         boxShadow: "0 16px 40px -16px rgba(0,0,0,0.45)",
-        maxInlineSize: "min(460px, calc(100vw - 24px))",
+        maxInlineSize: "min(460px, calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 24px))",
       }}
     >
       <span
