@@ -10,7 +10,7 @@ import { useLocale } from "@/lib/locale-context";
 const HIDE_PREFIXES = [
   "/signin", "/signup", "/recover", "/mfa", "/verify", "/accept-invite",
   "/pricing", "/demo", "/docs", "/status", "/changelog", "/roi-calculator",
-  "/admin", "/settings", "/team", "/error",
+  "/admin", "/settings", "/team", "/account", "/error",
   "/for", "/for-healthcare", "/for-manufacturing", "/for-finance", "/for-logistics",
   "/for-tech", "/for-aviation", "/for-energy", "/for-public-sector",
   "/app",
