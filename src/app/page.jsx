@@ -14,6 +14,7 @@ import VideoPreview from "@/components/brand/VideoPreview";
 import PartnerApplyModal from "@/components/ui/PartnerApplyModal";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
 import CountUp from "@/components/brand/CountUp";
+import PWAShowcase from "@/components/brand/PWAShowcase";
 
 export const metadata = {
   title: { absolute: "BIO-IGNICIÓN — Neural Performance" },
@@ -213,6 +214,59 @@ const COPY = {
     trialCta: "Empezar gratis · 14 d",
     trialSub: "Plan Starter · sin tarjeta",
     shipChip: "Últimos envíos · changelog",
+
+    pwa: {
+      kicker: "EL MOTOR · EN TU BOLSILLO",
+      headline: "Tu app neural. Instalable en iOS y Android. Sin app store.",
+      sub: "BIO-IGNICIÓN es una Progressive Web App. Se instala desde el navegador en 15 segundos — Safari en iOS, Chrome en Android. Cero descarga desde tienda. Cero revisiones de Apple o Google. Cero actualizaciones forzadas. El motor vive en el bolsillo de tu equipo en minutos, no en semanas.",
+      stageAria: "Vista previa de tres pantallas clave de la PWA: Ignición, sesión en vivo y perfil del operador",
+      stageCapsAria: "Qué ves en cada pantalla",
+      stageCaps: [
+        "Ignición · el motor ya sabe qué protocolo hoy — basado en tu HRV, tu sueño y tu hora pico.",
+        "Sesión · respiras con la onda. Audio binaural, haptics y voz guiada laten al milisegundo.",
+        "Perfil · tu baseline inicial, composite neural 0–100, racha y delta semanal. Sync opcional.",
+      ],
+      screens: {
+        ignicion: {
+          todayLabel: "Enfoque · resonancia",
+          todayPhrase: "El viento sigue soplando.",
+          protoLabel: "Calma 4·8",
+          protoPhases: "3 fases",
+        },
+        runner: {
+          phaseKicker: "FASE · INHALA",
+          phase: "Inhala",
+          signalBtn: "SIG",
+          resetBtn: "RESET",
+        },
+        perfil: {
+          operatorLabel: "Operador Neural",
+          statusLabel: "ÓPTIMO · n3",
+          syncedName: "Ana · Acme",
+          syncedLabel: "Sincronizado",
+          compositeLabel: "COMPOSITE · RT · BR · FOC · STR",
+        },
+      },
+      benefitsAria: "Beneficios clave de la PWA",
+      benefits: [
+        { glyph: "download", t: "iOS + Android · 15 s", d: "Safari → Compartir → Añadir a inicio. Chrome → Instalar. Se comporta como una app nativa sin pasar por tienda." },
+        { glyph: "wifi-off", t: "Offline-first", d: "Respira sin señal. Service worker cachea protocolos, audios y tu baseline. Úsala en vuelo o en zona sin cobertura." },
+        { glyph: "lock",     t: "Local-first · cifrado", d: "Tu HRV y baseline viven en IndexedDB cifrado en el dispositivo. Cero telemetría por defecto. Export firmado en <24 h." },
+        { glyph: "brain",    t: "Motor adaptativo", d: "Tras 3 sesiones detecta tu hora pico, tu respuesta a cada protocolo y qué sensorialidad te ancla. Deja de ser plantilla." },
+        { glyph: "waves",    t: "Audio · Haptics · Binaural", d: "Sincronizados al milisegundo. Wake-lock para que la pantalla no se apague. Cada fase cita el estudio detrás." },
+        { glyph: "clock",    t: "<60 s por pulso", d: "Cabe en lo que tardas en preparar café. Hasta 800+ sesiones por usuario al año sin robar tiempo al equipo." },
+      ],
+      platformsAria: "Cómo instalar en tu plataforma",
+      platforms: {
+        ios:     { label: "Disponible en iOS",     sub: "Safari → Compartir → Añadir a inicio" },
+        android: { label: "Disponible en Android", sub: "Chrome → Menú → Instalar app" },
+        web:     { label: "Abrir en navegador",    sub: "Funciona sin instalar — cualquier dispositivo" },
+      },
+      fomo: `Design Partner · ${DESIGN_PARTNER.slotsTotal} cupos · −${DESIGN_PARTNER.discountPct}% por ${DESIGN_PARTNER.termMonths} meses`,
+      ctaPrimary: "Activar mi motor · 60 s · gratis",
+      ctaSecondary: "Agendar demo · 30 min",
+      ctaFoot: "Sin tarjeta · sin instalación · corre en tu navegador",
+    },
   },
   en: {
     hero: {
@@ -375,6 +429,59 @@ const COPY = {
     trialCta: "Start free · 14 d",
     trialSub: "Starter plan · no card",
     shipChip: "Latest ships · changelog",
+
+    pwa: {
+      kicker: "THE ENGINE · IN YOUR POCKET",
+      headline: "Your neural app. Installs on iOS and Android. No app store.",
+      sub: "BIO-IGNICIÓN is a Progressive Web App. It installs from the browser in 15 seconds — Safari on iOS, Chrome on Android. No store download. No Apple or Google review cycle. No forced updates. The engine lives in your team's pocket in minutes, not weeks.",
+      stageAria: "Preview of three key PWA screens: Ignition, live session and operator profile",
+      stageCapsAria: "What you see on each screen",
+      stageCaps: [
+        "Ignition · the engine already knows which protocol today — based on your HRV, sleep and peak hour.",
+        "Session · you breathe with the wave. Binaural audio, haptics and voice cues beat to the millisecond.",
+        "Profile · your baseline, 0–100 neural composite, streak and weekly delta. Optional sync.",
+      ],
+      screens: {
+        ignicion: {
+          todayLabel: "Focus · resonance",
+          todayPhrase: "The wind keeps blowing.",
+          protoLabel: "Calma 4·8",
+          protoPhases: "3 phases",
+        },
+        runner: {
+          phaseKicker: "PHASE · INHALE",
+          phase: "Inhale",
+          signalBtn: "SIG",
+          resetBtn: "RESET",
+        },
+        perfil: {
+          operatorLabel: "Neural Operator",
+          statusLabel: "OPTIMAL · n3",
+          syncedName: "Ana · Acme",
+          syncedLabel: "Synced",
+          compositeLabel: "COMPOSITE · RT · BR · FOC · STR",
+        },
+      },
+      benefitsAria: "Key PWA benefits",
+      benefits: [
+        { glyph: "download", t: "iOS + Android · 15 s",  d: "Safari → Share → Add to Home Screen. Chrome → Install. Behaves like a native app without the store." },
+        { glyph: "wifi-off", t: "Offline-first",          d: "Breathes without signal. Service worker caches protocols, audio and your baseline. Use it on a flight or off-grid." },
+        { glyph: "lock",     t: "Local-first · encrypted", d: "Your HRV and baseline live in encrypted IndexedDB on the device. Zero telemetry by default. Signed export within 24 h." },
+        { glyph: "brain",    t: "Adaptive engine",        d: "After 3 sessions it detects your peak hour, your response to each protocol and which sensory modality anchors you. No more one-size-fits-all." },
+        { glyph: "waves",    t: "Audio · Haptics · Binaural", d: "Synchronized to the millisecond. Wake-lock so the screen stays on. Every phase cites the study behind it." },
+        { glyph: "clock",    t: "<60 s per pulse",        d: "Fits in the time it takes to brew coffee. Up to 800+ sessions per user per year without stealing team time." },
+      ],
+      platformsAria: "How to install on your platform",
+      platforms: {
+        ios:     { label: "Available on iOS",     sub: "Safari → Share → Add to Home Screen" },
+        android: { label: "Available on Android", sub: "Chrome → Menu → Install app" },
+        web:     { label: "Open in browser",      sub: "Works without installing — any device" },
+      },
+      fomo: `Design Partner · ${DESIGN_PARTNER.slotsTotal} slots · −${DESIGN_PARTNER.discountPct}% for ${DESIGN_PARTNER.termMonths} months`,
+      ctaPrimary: "Activate my engine · 60 s · free",
+      ctaSecondary: "Book a demo · 30 min",
+      ctaFoot: "No card · no install · runs in your browser",
+    },
 
     faqKicker: "HONEST QUESTIONS",
     faqH: "What teams ask before they buy.",
@@ -560,6 +667,16 @@ export default async function HomePage() {
                 {T.howFootnoteLink}
               </Link>
             </p>
+          </IgnitionReveal>
+        </Container>
+      </section>
+
+      <PulseDivider intensity="dim" />
+
+      <section aria-labelledby="pwa-showcase" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+        <Container size="xl">
+          <IgnitionReveal sparkOrigin="50% 30%">
+            <PWAShowcase T={T.pwa} />
           </IgnitionReveal>
         </Container>
       </section>
