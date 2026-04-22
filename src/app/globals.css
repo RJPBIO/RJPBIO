@@ -1066,6 +1066,33 @@ input, textarea, select {
 }
 .bi-nav-cta:hover .bi-nav-cta-arrow { transform: translateX(2px); opacity: 1; }
 
+.bi-nav-cta-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  block-size: 40px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bi-text, #0F172A);
+  border: 1px solid color-mix(in srgb, #22D3EE 40%, var(--bi-border));
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 120ms ease;
+}
+.bi-nav-cta-ghost:hover {
+  border-color: #22D3EE;
+  background: color-mix(in srgb, #22D3EE 10%, transparent);
+  color: #0891B2;
+}
+.bi-nav-cta-ghost:active { transform: scale(0.97); }
+@media (max-width: 900px) {
+  .bi-nav-cta-ghost { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bi-shell-navlink,
   .bi-shell-navlink::after,
@@ -4384,6 +4411,13 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 }
 @media (prefers-reduced-motion: reduce) {
   .bi-status-pulse-dot > span { animation: none !important; }
+}
+@keyframes biDrawerIn {
+  0%   { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0);    opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="biDrawerIn"] { animation: none !important; }
 }
 
 /* ═══ HOME · Bento grid responsive ═══

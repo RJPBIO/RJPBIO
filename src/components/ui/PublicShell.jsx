@@ -13,6 +13,7 @@ import AmbientBackdrop from "@/components/brand/AmbientBackdrop";
 import ConsentManageLink from "@/components/ConsentManageLink";
 import StatusPulse from "@/components/StatusPulse";
 import AnnouncementBar from "@/components/AnnouncementBar";
+import BookDemoTrigger from "@/components/BookDemoTrigger";
 
 async function hasSessionCookie() {
   const jar = await cookies();
@@ -155,6 +156,10 @@ export async function PublicShell({ children, activePath }) {
             <CommandPaletteTrigger searchLabel={T("shell.search", locale === "en" ? "Search" : "Buscar")} />
             <span aria-hidden className="bi-shell-divider" />
             <LocaleSelect variant="compact" />
+            <BookDemoTrigger
+              label={locale === "en" ? "Book demo" : "Agendar demo"}
+              className="bi-nav-cta-ghost"
+            />
             <Link href={ctaHref} className="bi-nav-cta" aria-label={ctaLabel}>
               <span className="bi-nav-cta-label">{ctaLabel}</span>
               <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" className="bi-nav-cta-arrow">
