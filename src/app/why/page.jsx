@@ -183,6 +183,8 @@ const COPY = {
       "Comparamos con honestidad. Cada alternativa resuelve un pedazo — pero ninguna cierra el loop físico → decisión → evidencia.",
     vsHeader: "Alternativa",
     vsHeaderBio: "BIO-IGNICIÓN",
+    peerBioLabel: "BIO-IGNICIÓN",
+    peerBioValue: "Cierra el loop · evidencia + outcome + compliance",
     vsRows: [
       {
         label: "EAP clásico (línea 1-800)",
@@ -347,6 +349,10 @@ const COPY = {
       "Los porcentajes de outcome (+18 pp retención, −9 % prima) corresponden a rangos observados en pilotos internos 2024–2025 y literatura sectorial — no se presentan como garantía contractual. La adoption-guarantee y el exit de 30 días se documentan explícitamente en el MSA correspondiente.",
     disclaimer5:
       "Los términos 'outcome seat-por-seat', 'compliance-nativo' y 'evidencia, no narrativa' describen la arquitectura del producto y la postura operativa; no sustituyen el SLA, DPA, BAA o MSA firmado que constituye la relación contractual definitiva.",
+
+    jsonLdName: "Por qué BIO-IGNICIÓN · la tesis detrás del sistema",
+    jsonLdDesc:
+      "La tesis B2B enterprise: evidencia fisiológica, outcome seat-por-seat, local-first y compliance-nativo.",
   },
 
   en: {
@@ -440,6 +446,8 @@ const COPY = {
       "Honest comparison. Each alternative solves a slice — but none closes the physiology → decision → evidence loop.",
     vsHeader: "Alternative",
     vsHeaderBio: "BIO-IGNITION",
+    peerBioLabel: "BIO-IGNITION",
+    peerBioValue: "Closes the loop · evidence + outcome + compliance",
     vsRows: [
       {
         label: "Classic EAP (1-800 line)",
@@ -604,6 +612,10 @@ const COPY = {
       "Outcome percentages (+18 pp retention, −9 % premium) correspond to ranges observed in internal 2024–2025 pilots and sector literature — not presented as contractual guarantee. The adoption-guarantee and 30-day exit are documented explicitly in the corresponding MSA.",
     disclaimer5:
       "Terms 'seat-by-seat outcome', 'compliance-native' and 'evidence, not narrative' describe product architecture and operational posture; they do not substitute the SLA, DPA, BAA or signed MSA that constitutes the definitive contractual relationship.",
+
+    jsonLdName: "Why BIO-IGNITION · the thesis behind the system",
+    jsonLdDesc:
+      "The B2B enterprise thesis: physiological evidence, seat-by-seat outcome, local-first, and compliance-native.",
   },
 };
 
@@ -770,8 +782,8 @@ export default async function WhyPage() {
                     </tr>
                   ))}
                   <tr className="bio">
-                    <td><span className="bi-roi-peer-label">BIO-IGNICIÓN</span></td>
-                    <td>Cierra el loop · evidencia + outcome + compliance</td>
+                    <td><span className="bi-roi-peer-label">{t.peerBioLabel}</span></td>
+                    <td>{t.peerBioValue}</td>
                   </tr>
                 </tbody>
               </table>
@@ -1009,18 +1021,33 @@ export default async function WhyPage() {
           </Container>
         </section>
 
-        {/* JSON-LD · WebPage */}
+        {/* JSON-LD · WebPage + FAQPage (rich results) */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "WebPage",
-              name: "Por qué BIO-IGNICIÓN · la tesis detrás del sistema",
-              description: "La tesis B2B enterprise: evidencia fisiológica, outcome seat-por-seat, local-first y compliance-nativo.",
-              url: "https://bio-ignicion.app/why",
-              inLanguage: locale === "en" ? "en-US" : "es-MX",
-              dateModified: LAST_REVIEWED,
+              "@graph": [
+                {
+                  "@type": "WebPage",
+                  "@id": "https://bio-ignicion.app/why#webpage",
+                  name: t.jsonLdName,
+                  description: t.jsonLdDesc,
+                  url: "https://bio-ignicion.app/why",
+                  inLanguage: locale === "en" ? "en-US" : "es-MX",
+                  dateModified: LAST_REVIEWED,
+                },
+                {
+                  "@type": "FAQPage",
+                  "@id": "https://bio-ignicion.app/why#faq",
+                  inLanguage: locale === "en" ? "en-US" : "es-MX",
+                  mainEntity: t.faq.map((f) => ({
+                    "@type": "Question",
+                    name: f.q,
+                    acceptedAnswer: { "@type": "Answer", text: f.a },
+                  })),
+                },
+              ],
             }),
           }}
         />
