@@ -310,4 +310,4 @@ function Step({ icon, label, hint, children }) {
   );
 }
 
-const divider = { border: 0, borderTop: "1px solid var(--bi-border)", margin: `${space[6]}px 0` };
+const divider = { border: 0, borderTop: `1px solid ${cssVar.border}`, margin: `${space[6]}px 0` };
