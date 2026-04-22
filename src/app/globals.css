@@ -4368,6 +4368,13 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   75%  { transform: scale(2.2); opacity: 0;   }
   100% { transform: scale(2.2); opacity: 0;   }
 }
+@keyframes biAnnouncePulse {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%      { opacity: 0.55; transform: scale(1.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-announce [style*="biAnnouncePulse"] { animation: none !important; }
+}
 .bi-status-pulse {
   transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
 }

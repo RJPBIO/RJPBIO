@@ -12,6 +12,7 @@ import { BioGlyph } from "@/components/BioIgnicionMark";
 import AmbientBackdrop from "@/components/brand/AmbientBackdrop";
 import ConsentManageLink from "@/components/ConsentManageLink";
 import StatusPulse from "@/components/StatusPulse";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 async function hasSessionCookie() {
   const jar = await cookies();
@@ -94,6 +95,15 @@ export async function PublicShell({ children, activePath }) {
   return (
     <>
       <AmbientBackdrop />
+      <AnnouncementBar
+        id="kit-launch-2026-04"
+        label={{
+          es: "Nuevo · Activation Kit para equipos — QR + NFC · trademark B2B",
+          en: "New · Team Activation Kit — QR + NFC · B2B trademark",
+        }}
+        cta={{ es: "Ver placas", en: "See placards" }}
+        href="/kit"
+      />
       <header role="banner" className="bi-shell-header">
         <span aria-hidden className="bi-shell-header-aura" />
         <span aria-hidden className="bi-shell-header-aura bi-shell-header-aura-end" />
