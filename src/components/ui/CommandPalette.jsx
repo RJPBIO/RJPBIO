@@ -35,7 +35,7 @@ export default function CommandPalette() {
 
   const close = useCallback(() => { setOpen(false); setQuery(""); setIndex(0); }, []);
 
-  // Global keybind (Cmd/Ctrl+K). Respeta inputs de texto salvo que el meta sea pressed.
+  // Global keybind (Cmd/Ctrl+K o `/` sin foco en input). Respeta inputs de texto.
   useEffect(() => {
     const onKey = (e) => {
       const k = e.key?.toLowerCase();
@@ -43,6 +43,11 @@ export default function CommandPalette() {
         e.preventDefault();
         setOpen((v) => !v);
         return;
+      }
+      if (!yieldGlobalKey && !open && e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tgt = e.target;
+        const typing = tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.tagName === "SELECT" || tgt.isContentEditable);
+        if (!typing) { e.preventDefault(); setOpen(true); return; }
       }
       if (open && k === "escape") { e.preventDefault(); close(); }
     };

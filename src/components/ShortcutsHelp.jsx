@@ -14,6 +14,7 @@ const GROUPS = [
     title: "Global",
     items: [
       { keys: ["Ctrl", "K"], macKeys: ["⌘", "K"], label: "Abrir paleta de comandos" },
+      { keys: ["/"], label: "Abrir paleta (alternativa sin Cmd)" },
       { keys: ["?"], label: "Abrir esta ayuda" },
       { keys: ["Esc"], label: "Cerrar diálogo activo" },
     ],

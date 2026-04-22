@@ -11,6 +11,7 @@ const InstallBanner = dynamic(() => import("./InstallBanner"), { ssr: false });
 const OfflineChip = dynamic(() => import("./OfflineChip"), { ssr: false });
 const SWUpdateNotifier = dynamic(() => import("./SWUpdateNotifier"), { ssr: false });
 const ShortcutsHelp = dynamic(() => import("./ShortcutsHelp"), { ssr: false });
+const PrefetchCritical = dynamic(() => import("./PrefetchCritical"), { ssr: false });
 
 export default function GlobalChrome() {
   return (
@@ -22,6 +23,7 @@ export default function GlobalChrome() {
       <InstallBanner />
       <OfflineChip />
       <SWUpdateNotifier />
+      <PrefetchCritical />
     </>
   );
 }
