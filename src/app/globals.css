@@ -4362,6 +4362,23 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   .bi-kit-fleet-list li { transition: none; }
 }
 
+/* ═══ Live status pulse (footer badge) ═══ */
+@keyframes biPulseRing {
+  0%   { transform: scale(1);   opacity: 0.9; }
+  75%  { transform: scale(2.2); opacity: 0;   }
+  100% { transform: scale(2.2); opacity: 0;   }
+}
+.bi-status-pulse {
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+}
+.bi-status-pulse:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, #22D3EE 52%, var(--bi-border)) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-status-pulse-dot > span { animation: none !important; }
+}
+
 /* ═══ HOME · Bento grid responsive ═══
    12-col grid on desktop; collapses to 2-col at tablet, 1-col on phone. */
 .bi-bento-grid {

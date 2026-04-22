@@ -11,6 +11,7 @@ import { getServerLocale } from "@/lib/locale-server";
 import { BioGlyph } from "@/components/BioIgnicionMark";
 import AmbientBackdrop from "@/components/brand/AmbientBackdrop";
 import ConsentManageLink from "@/components/ConsentManageLink";
+import StatusPulse from "@/components/StatusPulse";
 
 async function hasSessionCookie() {
   const jar = await cookies();
@@ -168,8 +169,16 @@ export async function PublicShell({ children, activePath }) {
           </div>
           <hr style={{ border: 0, borderTop: `1px solid ${cssVar.border}`, margin: `${space[8]}px 0 ${space[4]}px` }} />
           <div style={{ display: "flex", flexWrap: "wrap", gap: space[3], alignItems: "center", justifyContent: "space-between", color: cssVar.textMuted, fontSize: font.size.sm }}>
-            <span style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
-              © {new Date().getFullYear()} BIO-IGNICIÓN · {T("footer.rights", "Todos los derechos reservados")}
+            <span style={{ display: "inline-flex", gap: space[4], alignItems: "center", flexWrap: "wrap" }}>
+              <StatusPulse
+                labelOk={locale === "en" ? "All systems operational" : "Todos los sistemas operativos"}
+                labelDegraded={locale === "en" ? "Partial degradation" : "Degradación parcial"}
+                labelOutage={locale === "en" ? "Service incident" : "Incidente de servicio"}
+                labelChecking={locale === "en" ? "Checking…" : "Verificando…"}
+              />
+              <span style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
+                © {new Date().getFullYear()} BIO-IGNICIÓN · {T("footer.rights", "Todos los derechos reservados")}
+              </span>
             </span>
             <span style={{ display: "inline-flex", gap: space[4], alignItems: "center", flexWrap: "wrap" }}>
               <ConsentManageLink label={T("consent.manage", "Gestionar cookies")} className="bi-footer-link" />
