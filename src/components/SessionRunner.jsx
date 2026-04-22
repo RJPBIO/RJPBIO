@@ -100,10 +100,13 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
 }
 
 /* ─── Breath waveform (instrumentation layer) ── */
+// Cuando isBr=true: amplitud se acopla a bS (respiración real).
+// Cuando isBr=false: amplitud basal con pulso sincronizado al ritmo del orb (3.2s),
+// así la instrumentación "respira" aunque la fase no lo requiera.
 function BreathWaveform({ accent, isBr, bS, reducedMotion }) {
-  const amp = isBr ? 6 + (bS - 0.9) * 18 : 4;
+  const amp = isBr ? 6 + (bS - 0.9) * 18 : 4.5;
   return (
-    <svg width="100%" height="24" viewBox="0 0 320 24" style={{ opacity: 0.55, pointerEvents: "none" }}>
+    <svg width="100%" height="24" viewBox="0 0 320 24" style={{ opacity: 0.55, pointerEvents: "none", overflow: "visible" }}>
       <motion.path
         d={`M0,12 ${Array.from({ length: 16 }, (_, i) => {
           const x = (i + 1) * 20;
@@ -114,8 +117,24 @@ function BreathWaveform({ accent, isBr, bS, reducedMotion }) {
         stroke={accent}
         strokeWidth="1.2"
         strokeLinecap="round"
-        animate={reducedMotion ? {} : { x: [-20, 0] }}
-        transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+        style={{ transformOrigin: "center", transformBox: "fill-box" }}
+        animate={
+          reducedMotion
+            ? {}
+            : isBr
+            ? { x: [-20, 0] }
+            : { x: [-20, 0], scaleY: [1, 1.7, 1] }
+        }
+        transition={
+          reducedMotion
+            ? {}
+            : isBr
+            ? { duration: 1.8, repeat: Infinity, ease: "linear" }
+            : {
+                x: { duration: 1.8, repeat: Infinity, ease: "linear" },
+                scaleY: { duration: 3.2, repeat: Infinity, ease: "easeInOut" },
+              }
+        }
       />
     </svg>
   );
@@ -195,6 +214,108 @@ function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused }) {
   );
 }
 
+/* ─── Phase burst (one-shot on phase transition) ── */
+function PhaseBurst({ burstKey, accent, reducedMotion }) {
+  if (reducedMotion) return null;
+  return (
+    <AnimatePresence>
+      {burstKey && (
+        <>
+          <motion.div
+            key={`phase-flash-${burstKey}`}
+            initial={{ scale: 0.6, opacity: 0.7 }}
+            animate={{ scale: 1.35, opacity: 0 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              margin: "auto",
+              width: 280,
+              height: 280,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${withAlpha(accent, 45)} 0%, ${withAlpha(accent, 18)} 45%, transparent 72%)`,
+              filter: "blur(10px)",
+              pointerEvents: "none",
+              zIndex: 4,
+            }}
+          />
+          <motion.span
+            key={`phase-ring-${burstKey}`}
+            initial={{ scale: 0.88, opacity: 0.85 }}
+            animate={{ scale: 1.32, opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              margin: "auto",
+              width: 280,
+              height: 280,
+              borderRadius: "50%",
+              border: `1.5px solid ${accent}`,
+              pointerEvents: "none",
+              zIndex: 4,
+            }}
+          />
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ─── Sealing ceremony (one-shot on session completion) ──
+   Inverso de ignición: anillos convergen hacia el centro, destello suave,
+   orb pulsa su última brillantez. Puente narrativo antes del IgnitionBurst global. */
+function Sealing({ show, accent, reducedMotion }) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <>
+          {!reducedMotion && [0, 1, 2].map((i) => (
+            <motion.span
+              key={`seal-ring-${i}`}
+              aria-hidden="true"
+              initial={{ scale: 1.55, opacity: 0.85 }}
+              animate={{ scale: 0.72, opacity: 0 }}
+              transition={{ duration: 0.55, delay: i * 0.07, ease: [0.32, 0, 0.15, 1] }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                margin: "auto",
+                width: 280,
+                height: 280,
+                borderRadius: "50%",
+                border: `1.5px solid ${accent}`,
+                pointerEvents: "none",
+                zIndex: 5,
+                boxShadow: `0 0 22px ${withAlpha(accent, 60)}`,
+              }}
+            />
+          ))}
+          <motion.div
+            key="seal-core"
+            aria-hidden="true"
+            initial={{ scale: 0.3, opacity: 0 }}
+            animate={{ scale: 1, opacity: [0, 0.95, 0] }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              margin: "auto",
+              width: 280,
+              height: 280,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, #ffffff 0%, ${withAlpha(accent, 70)} 28%, ${withAlpha(accent, 20)} 60%, transparent 80%)`,
+              filter: "blur(2px)",
+              pointerEvents: "none",
+              zIndex: 5,
+            }}
+          />
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /* ─── Ignition spark (one-shot on countdown→0 transition) ── */
 function IgnitionSpark({ show, accent, reducedMotion }) {
   if (reducedMotion) return null;
@@ -253,6 +374,7 @@ function SigButton({ onClick, children, variant = "glass", ariaLabel, accent }) 
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       aria-label={ariaLabel}
+      className="bi-runner-btn"
       style={{
         flex: 1,
         maxWidth: 210,
@@ -269,9 +391,11 @@ function SigButton({ onClick, children, variant = "glass", ariaLabel, accent }) 
         cursor: "pointer",
         letterSpacing: -0.1,
         backdropFilter: "blur(10px)",
+        outline: "none",
         boxShadow: isPrimary
           ? `0 4px 22px ${withAlpha(accent, 45)}, inset 0 1px 0 rgba(255,255,255,0.25)`
           : `inset 0 0 0 1px ${withAlpha(accent, 18)}, inset 0 1px 0 rgba(255,255,255,0.08)`,
+          ["--bi-focus-accent"]: accent,
       }}
     >
       {children}
@@ -279,12 +403,13 @@ function SigButton({ onClick, children, variant = "glass", ariaLabel, accent }) 
   );
 }
 
-function ResetButton({ onClick }) {
+function ResetButton({ onClick, accent }) {
   return (
     <motion.button
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
       aria-label="Reiniciar sesión"
+      className="bi-runner-btn"
       style={{
         width: 54,
         height: 54,
@@ -297,6 +422,8 @@ function ResetButton({ onClick }) {
         justifyContent: "center",
         flexShrink: 0,
         backdropFilter: "blur(8px)",
+        outline: "none",
+        ["--bi-focus-accent"]: accent,
       }}
     >
       <Icon name="reset" size={17} color="rgba(255,255,255,0.72)" />
@@ -460,6 +587,7 @@ export default function SessionRunner({
   onCheckpointResolve,
   onCheckpointTimeout,
   onVisibilityLoss,
+  sealing = false,
   reducedMotion = false,
 }) {
   const safePh = ph || PH_FALLBACK;
@@ -472,6 +600,9 @@ export default function SessionRunner({
   const phaseCount = safePr.ph?.length || 0;
   const [showScience, setShowScience] = useState(false);
   const [ignitionPlayed, setIgnitionPlayed] = useState(false);
+  const [phaseBurst, setPhaseBurst] = useState(null);
+  const [liveMsg, setLiveMsg] = useState("");
+  const lastPiRef = useRef(pi);
 
   useEffect(() => {
     if (!show) { setIgnitionPlayed(false); return; }
@@ -480,6 +611,19 @@ export default function SessionRunner({
       return () => clearTimeout(t);
     }
   }, [running, show, ignitionPlayed]);
+
+  // Phase transition celebration: fire when pi changes (skip initial mount)
+  useEffect(() => {
+    if (!show) { lastPiRef.current = pi; setPhaseBurst(null); return; }
+    if (lastPiRef.current !== pi && running && ignitionPlayed && !reducedMotion) {
+      const stamp = Date.now();
+      setPhaseBurst(stamp);
+      const t = setTimeout(() => setPhaseBurst((curr) => (curr === stamp ? null : curr)), 900);
+      lastPiRef.current = pi;
+      return () => clearTimeout(t);
+    }
+    lastPiRef.current = pi;
+  }, [pi, show, running, ignitionPlayed, reducedMotion]);
 
   /* ── Anti-cheat: jittered CP windows + auto-timeout + visibility ── */
   const cpTimesRef = useRef(null);
@@ -545,6 +689,49 @@ export default function SessionRunner({
     return () => document.removeEventListener("visibilitychange", handler);
   }, [running, onVisibilityLoss]);
 
+  // aria-live: anuncios para lector de pantalla
+  useEffect(() => {
+    if (!show || !running) return;
+    if (safePh.k) setLiveMsg(`Fase ${pi + 1} de ${phaseCount}. ${safePh.k}`);
+  }, [pi, show, running, safePh.k, phaseCount]);
+
+  useEffect(() => {
+    if (!show || !running || !activeCp) return;
+    const cue = activeCp.idx === 0
+      ? "Verificación: mantén presionado dos segundos"
+      : activeCp.idx === 1
+      ? "Verificación: toca al exhalar"
+      : "Verificación: confirma tu presencia";
+    setLiveMsg(cue);
+  }, [activeCp, show, running]);
+
+  useEffect(() => {
+    if (verifiedFlash) setLiveMsg("Verificado");
+  }, [verifiedFlash]);
+
+  useEffect(() => {
+    if (sealing) setLiveMsg("Sesión completada");
+    if (paused) setLiveMsg("Sesión en pausa");
+  }, [sealing, paused]);
+
+  // Teclado durante running: Space pausa/reanuda, Esc reinicia
+  useEffect(() => {
+    if (!show || countingDown) return;
+    const handler = (e) => {
+      if (e.target && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        if (running && onPause) onPause();
+        else if (paused && onResume) onResume();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        if (onReset) onReset();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [show, countingDown, running, paused, onPause, onResume, onReset]);
+
   const resolveCp = useCallback((payload) => {
     setActiveCp((curr) => {
       if (!curr) return curr;
@@ -585,8 +772,17 @@ export default function SessionRunner({
           <AmbientLattice accent={accent} reducedMotion={reducedMotion} opacity={0.4} />
           <Scanline reducedMotion={reducedMotion} />
 
+          {/* Live region for screen readers */}
+          <div
+            aria-live="polite"
+            aria-atomic="true"
+            style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 }}
+          >
+            {liveMsg}
+          </div>
+
           {/* ═══ TOP — minimal chrome during active; full during countdown ═══ */}
-          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
             {countingDown ? (
               <div aria-hidden="true" style={{ display: "inline-flex", alignItems: "baseline", gap: 3, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", lineHeight: 1, opacity: 0.9 }}>
                 <span style={{ fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>BIO</span>
@@ -632,16 +828,22 @@ export default function SessionRunner({
                 </div>
               </>
             ) : (
-              <div style={{ position: "relative" }}>
+              <motion.div
+                style={{ position: "relative" }}
+                animate={sealing && !reducedMotion ? { scale: [1, 1.04, 0.98] } : { scale: 1 }}
+                transition={{ duration: sealing ? 0.55 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+              >
                 <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} />
                 <IgnitionSpark show={running && !ignitionPlayed} accent={accent} reducedMotion={reducedMotion} />
-              </div>
+                <PhaseBurst burstKey={phaseBurst} accent={accent} reducedMotion={reducedMotion} />
+                <Sealing show={sealing} accent={accent} reducedMotion={reducedMotion} />
+              </motion.div>
             )}
           </div>
 
           {/* ═══ INSTRUCTION + WAVEFORM + SCIENCE (running only) ═══ */}
           {!countingDown && (
-            <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+            <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 10, marginTop: 8, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
               {/* Breath label (if active) */}
               <AnimatePresence mode="wait">
                 {isBr && bL && (
@@ -822,7 +1024,7 @@ export default function SessionRunner({
           )}
 
           {/* ═══ BOTTOM — segmented timeline + controls ═══ */}
-          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 14, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
             {!countingDown && phaseCount > 0 && (
               <div>
                 <div role="list" aria-label="Progreso de fases" style={{ display: "flex", gap: 3, height: 5, borderRadius: 3, overflow: "hidden" }}>
@@ -877,7 +1079,7 @@ export default function SessionRunner({
                     <SigButton onClick={onPause} variant="glass" accent={accent} ariaLabel="Pausar sesión">
                       Pausar
                     </SigButton>
-                    <ResetButton onClick={onReset} />
+                    <ResetButton onClick={onReset} accent={accent} />
                   </>
                 )}
                 {paused && (
@@ -885,7 +1087,7 @@ export default function SessionRunner({
                     <SigButton onClick={onResume} variant="primary" accent={accent} ariaLabel="Continuar sesión">
                       Continuar
                     </SigButton>
-                    <ResetButton onClick={onReset} />
+                    <ResetButton onClick={onReset} accent={accent} />
                   </>
                 )}
               </div>

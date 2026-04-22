@@ -273,7 +273,7 @@ export default function BioIgnicion(){
   useEffect(()=>{try{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
     let speakTO=null;
     const phAtIdx=pr?.ph?.[idx];
-    if(idx!==pi&&phAtIdx){setPi(idx);if(st.hapticOn!==false)hapticPhase(phAtIdx.ic);speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+phAtIdx.k,circadian,voiceOn);speakTO=setTimeout(()=>{try{if(document.visibilityState==="visible")speak(phAtIdx.i,circadian,voiceOn);}catch(e){}},2500);}
+    if(idx!==pi&&phAtIdx){setPi(idx);if(st.hapticOn!==false)hapticPhase(phAtIdx.ic);if(st.soundOn!==false)try{playChord([523,784],0.22,0.028);}catch(e){}speakNow("Fase "+(idx+1)+" de "+pr.ph.length+". "+phAtIdx.k,circadian,voiceOn);speakTO=setTimeout(()=>{try{if(document.visibilityState==="visible")speak(phAtIdx.i,circadian,voiceOn);}catch(e){}},2500);}
     const ttN=timeToNextPhase(elapsedSec,pr.ph,durMult,pi);
     if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
     return()=>{if(speakTO)clearTimeout(speakTO);};}catch(e){}
@@ -321,6 +321,8 @@ export default function BioIgnicion(){
     }
     // Bridge orb → IgnitionBurst: 550ms de flash emerald dentro del orb ANTES de que el
     // overlay full-screen tome el control. Da continuidad narrativa — el orb cierra su ciclo.
+    // Sello háptico universal: suave cadencia de cierre (independiente de la calidad).
+    if(st.hapticOn!==false&&typeof navigator!=="undefined"&&navigator.vibrate){try{navigator.vibrate([50,30,80]);}catch(e){}}
     setOrbDoneFlash(true);
     setTimeout(()=>{
       setOrbDoneFlash(false);
@@ -388,7 +390,7 @@ export default function BioIgnicion(){
 
   {/* Session Runner — fullscreen cinematic overlay (countdown + running + paused) */}
   <SessionRunner
-    show={countdown>0||ts==="running"||ts==="paused"}
+    show={countdown>0||ts==="running"||ts==="paused"||orbDoneFlash}
     countdown={countdown}
     ts={ts}
     sec={sec}
@@ -401,6 +403,7 @@ export default function BioIgnicion(){
     bCnt={bCnt}
     isBr={isBr}
     ac={ac}
+    sealing={orbDoneFlash}
     scienceDeep={pr&&SCIENCE_DEEP?SCIENCE_DEEP[pr.id]||"":""}
     onPause={pa}
     onResume={resume}

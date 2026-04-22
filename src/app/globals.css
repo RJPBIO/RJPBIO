@@ -119,6 +119,11 @@ body {
 }
 html.theme-dim :focus-visible { box-shadow: var(--focus-ring-inverse); }
 
+/* Session runner — focus ring uses phase accent color so it lives in the cinematic palette */
+.bi-runner-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.65), 0 0 0 4px var(--bi-focus-accent, #22D3EE), 0 0 12px var(--bi-focus-accent, #22D3EE);
+}
+
 button, [role="button"], a[href], input, select, textarea, [tabindex]:not([tabindex="-1"]) {
   /* ensure interactive elements receive focus ring */
 }
