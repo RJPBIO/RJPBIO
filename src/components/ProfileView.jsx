@@ -20,6 +20,7 @@ import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 import RemindersCard from "./RemindersCard";
 import InstrumentDueCard from "./InstrumentDueCard";
+import BaselineCard from "./BaselineCard";
 
 const ACHIEVEMENT_IDS = Object.keys(AM);
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
@@ -981,7 +982,9 @@ export default function ProfileView({
         </article>
       )}
 
-      <motion.button
+      <BaselineCard st={st} isDark={isDark} ac={ac} onRecalibrate={onShowCalibration} />
+
+      {st.neuralBaseline && <motion.button
         whileTap={reduced ? {} : { scale: 0.95 }}
         onClick={onShowCalibration}
         aria-label="Recalibrar baseline neural"
@@ -1007,7 +1010,7 @@ export default function ProfileView({
       >
         <Icon name="radar" size={14} color={ac} aria-hidden="true" />
         Recalibrar baseline neural
-      </motion.button>
+      </motion.button>}
       <button
         onClick={() => {
           if (typeof window !== "undefined" && window.confirm("¿Reiniciar todos los datos?")) {
