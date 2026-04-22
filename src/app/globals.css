@@ -3969,8 +3969,10 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   display: block;
   border-radius: 22px;
   box-shadow:
-    0 30px 60px -25px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(34, 211, 238, 0.08);
+    0 1px 0 0 color-mix(in srgb, #34D399 35%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, var(--bi-accent) 12%, transparent),
+    0 28px 56px -24px rgba(0, 0, 0, 0.72),
+    0 10px 24px -14px color-mix(in srgb, var(--bi-accent) 28%, transparent);
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 500ms ease;
 }
@@ -3982,10 +3984,12 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 }
 @media (hover: hover) {
   .bi-kit-fig:hover svg.bi-kit-svg {
-    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) translateY(-4px);
+    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) translateY(-5px);
     box-shadow:
-      0 44px 80px -28px rgba(0, 0, 0, 0.8),
-      0 0 0 1px rgba(34, 211, 238, 0.2);
+      0 1px 0 0 color-mix(in srgb, #34D399 55%, transparent) inset,
+      0 0 0 1px color-mix(in srgb, var(--bi-accent) 28%, transparent),
+      0 42px 76px -26px rgba(0, 0, 0, 0.8),
+      0 18px 36px -16px color-mix(in srgb, var(--bi-accent) 42%, transparent);
   }
 }
 .bi-kit-fig figcaption {
@@ -4112,11 +4116,14 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   transform: translateY(-2px);
 }
 .bi-kit-fleet-list li.is-feat {
-  border-color: color-mix(in srgb, var(--bi-accent) 52%, var(--bi-border));
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--bi-accent) 10%, var(--bi-surface)),
-    var(--bi-surface));
-  box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--bi-accent) 35%, transparent);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--bi-surface), var(--bi-surface)) padding-box,
+    linear-gradient(135deg, #34D399, #0D9488) border-box;
+  border: 1.5px solid transparent;
+  box-shadow:
+    0 12px 32px -18px color-mix(in srgb, var(--bi-accent) 48%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--bi-accent) 18%, transparent);
 }
 .bi-kit-fleet-list .q {
   font-size: 28px;
@@ -4145,23 +4152,25 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 18px;
+  padding: 9px 18px;
   border-radius: 999px;
-  background: color-mix(in srgb, #F59E0B 14%, transparent);
-  border: 1px solid color-mix(in srgb, #F59E0B 36%, transparent);
+  background: color-mix(in srgb, var(--bi-accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bi-accent) 38%, var(--bi-border));
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: color-mix(in srgb, #F59E0B 80%, var(--bi-text));
-  letter-spacing: 0.08em;
+  color: var(--bi-text);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   margin-block-end: 22px;
+  box-shadow: 0 4px 18px -10px color-mix(in srgb, var(--bi-accent) 50%, transparent);
 }
 .bi-kit-fomo .dot {
-  inline-size: 8px;
-  block-size: 8px;
+  inline-size: 7px;
+  block-size: 7px;
   border-radius: 50%;
-  background: #F59E0B;
-  box-shadow: 0 0 12px #F59E0B;
+  background: #FBBF24;
+  box-shadow: 0 0 10px #FBBF24, 0 0 2px #FBBF24;
   animation: biKitPulse 1.8s ease-in-out infinite;
 }
 @keyframes biKitPulse {
@@ -4180,7 +4189,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   gap: 10px;
   padding: 14px 26px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--bi-accent), color-mix(in srgb, var(--bi-accent) 70%, #8B5CF6));
+  background: linear-gradient(135deg, #34D399 0%, #059669 50%, #0D9488 100%);
   color: var(--bi-accent-ink);
   font-weight: 800;
   font-size: 15px;

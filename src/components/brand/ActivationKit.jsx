@@ -1,13 +1,25 @@
 /* ═══════════════════════════════════════════════════════════════
    ActivationKit — Workplace activation cards (QR + NFC).
    Pure SVG: desk card (front + back), wall placard, laptop disc.
-   Trademark DNA: matte black substrate, phosphor cyan laser etch,
-   lattice micro-texture, monospace serials, ignition ring motif.
+   Brand DNA (marketing · theme-light):
+     · emerald ring gradient #34D399 → #0D9488
+     · ignition mark: concentric rings + diamonds + core dot
+     · matte-black substrate with emerald aura
+     · wordmark "BIO-IGNICIÓN" (hyphen)
    ═══════════════════════════════════════════════════════════════ */
 
 import Link from "next/link";
 
-/* ──────────────────────────── QR matrix (deterministic) ───── */
+const EM_400 = "#34D399";
+const EM_500 = "#10B981";
+const EM_600 = "#059669";
+const EM_700 = "#0D9488";
+const EM_LIGHT = "#ECFDF5";
+const SUB_DARK_TOP = "#0A1410";
+const SUB_DARK_MID = "#122820";
+const SUB_DARK_BTM = "#08100C";
+
+/* ──────────────────────────── Deterministic QR matrix ─────── */
 function useQrCells(modules = 25) {
   const cells = [];
   const positions = [[0, 0], [modules - 7, 0], [0, modules - 7]];
@@ -28,56 +40,103 @@ function useQrCells(modules = 25) {
   return { cells, positions, modules };
 }
 
-function QRMatrix({ size = 300, color = "#22D3EE", bg = "#0B0B0D", modules = 25 }) {
+function QRMatrix({ size = 300, modules = 25, gradientId }) {
   const { cells, positions } = useQrCells(modules);
   const m = size / modules;
+  const fill = gradientId ? `url(#${gradientId})` : EM_400;
   return (
     <g>
-      <rect width={size} height={size} rx={m * 1.2} fill={bg} />
+      <rect width={size} height={size} rx={m * 1.2} fill="#07100C" />
       {cells.map(([x, y], i) => (
         <rect
           key={i}
-          x={x * m + m * 0.1}
-          y={y * m + m * 0.1}
-          width={m * 0.8}
-          height={m * 0.8}
-          rx={m * 0.18}
-          fill={color}
+          x={x * m + m * 0.12}
+          y={y * m + m * 0.12}
+          width={m * 0.76}
+          height={m * 0.76}
+          rx={m * 0.16}
+          fill={fill}
         />
       ))}
       {positions.map(([px, py], i) => (
         <g key={i} transform={`translate(${px * m},${py * m})`}>
-          <rect width={m * 7} height={m * 7} rx={m * 1.6} fill={color} />
-          <rect x={m} y={m} width={m * 5} height={m * 5} rx={m * 1.1} fill={bg} />
-          <rect x={m * 2} y={m * 2} width={m * 3} height={m * 3} rx={m * 0.6} fill={color} />
+          <rect width={m * 7} height={m * 7} rx={m * 1.6} fill={fill} />
+          <rect x={m} y={m} width={m * 5} height={m * 5} rx={m * 1.1} fill="#07100C" />
+          <rect x={m * 2} y={m * 2} width={m * 3} height={m * 3} rx={m * 0.6} fill={fill} />
         </g>
       ))}
     </g>
   );
 }
 
-/* ──────────────────────────── NFC tap zone ──────────────────── */
-function NFCZone({ r = 78, color = "#22D3EE", bg = "#0B0B0D" }) {
+/* ──────────────────────────── Brand ignition mark ──────────── */
+function IgnitionMark({ size = 48, filtered = true, markId = "im" }) {
+  const s = size;
+  const r1 = s * 0.48;
+  const r2 = s * 0.34;
+  const r3 = s * 0.20;
   return (
     <g>
-      <circle r={r + 12} fill={bg} />
-      <circle r={r} fill="none" stroke={color} strokeWidth="1.5" opacity="0.55" />
-      <circle r={r * 0.74} fill="none" stroke={color} strokeWidth="1.25" opacity="0.4" />
-      <circle r={r * 0.48} fill="none" stroke={color} strokeWidth="1" opacity="0.3" />
+      <g
+        fill="none"
+        stroke={`url(#${markId}-ring)`}
+        strokeWidth={s * 0.04}
+        strokeLinecap="round"
+        filter={filtered ? `url(#${markId}-glow)` : undefined}
+      >
+        <circle r={r1} opacity="0.92" />
+        <circle r={r2} opacity="0.62" />
+        <circle r={r3} opacity="0.42" />
+      </g>
+      <g fill={EM_LIGHT} filter={filtered ? `url(#${markId}-glow)` : undefined}>
+        <path d={`M0 ${-s * 0.38} L${s * 0.05} ${-s * 0.14} L0 ${-s * 0.09} L${-s * 0.05} ${-s * 0.14} Z`} opacity="0.94" />
+        <path d={`M0 ${s * 0.38} L${-s * 0.05} ${s * 0.14} L0 ${s * 0.09} L${s * 0.05} ${s * 0.14} Z`} opacity="0.94" />
+        <circle r={s * 0.07} />
+      </g>
+    </g>
+  );
+}
+
+function IgnitionMarkDefs({ id = "im" }) {
+  return (
+    <defs>
+      <linearGradient id={`${id}-ring`} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor={EM_400} />
+        <stop offset="100%" stopColor={EM_700} />
+      </linearGradient>
+      <filter id={`${id}-glow`} x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="1.6" result="b" />
+        <feMerge>
+          <feMergeNode in="b" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+  );
+}
+
+/* ──────────────────────────── NFC tap zone ──────────────────── */
+function NFCZone({ r = 78, gradientId }) {
+  const stroke = gradientId ? `url(#${gradientId})` : EM_500;
+  return (
+    <g>
+      <circle r={r} fill="none" stroke={stroke} strokeWidth="1.6" opacity="0.58" />
+      <circle r={r * 0.74} fill="none" stroke={stroke} strokeWidth="1.3" opacity="0.45" />
+      <circle r={r * 0.48} fill="none" stroke={stroke} strokeWidth="1.1" opacity="0.32" />
       <g>
-        <circle r={5} fill={color} />
+        <circle r={5.2} fill={EM_400} />
         <path
           d={`M${-r * 0.22} ${-r * 0.32} Q 0 ${-r * 0.12} ${r * 0.22} ${-r * 0.32}`}
           fill="none"
-          stroke={color}
-          strokeWidth="2"
+          stroke={EM_400}
+          strokeWidth="2.2"
           strokeLinecap="round"
         />
         <path
           d={`M${-r * 0.36} ${-r * 0.46} Q 0 ${-r * 0.18} ${r * 0.36} ${-r * 0.46}`}
           fill="none"
-          stroke={color}
-          strokeWidth="1.5"
+          stroke={EM_400}
+          strokeWidth="1.6"
           strokeLinecap="round"
           opacity="0.7"
         />
@@ -87,82 +146,61 @@ function NFCZone({ r = 78, color = "#22D3EE", bg = "#0B0B0D" }) {
 }
 
 /* ──────────────────────────── Wordmark ──────────────────────── */
-function Wordmark({ size = 32, withTm = true, color = "#F6F7F9", accent = "#22D3EE" }) {
-  const gap = size * 0.14;
-  const letter = size * 0.56;
+function Wordmark({ size = 30, withTm = true }) {
   return (
-    <g>
+    <g fontFamily="'Geist', Inter, system-ui, sans-serif">
       <text
         x="0"
-        y={size * 0.78}
+        y={size * 0.82}
         fontSize={size}
         fontWeight="800"
-        letterSpacing={letter * 0.08}
-        fill={color}
-        fontFamily="'Geist', Inter, system-ui, sans-serif"
+        letterSpacing={size * 0.04}
       >
-        BIO
+        <tspan fill={EM_LIGHT}>BIO-</tspan>
+        <tspan fill={EM_400}>IGNICIÓN</tspan>
+        {withTm && (
+          <tspan
+            dx={size * 0.15}
+            dy={-size * 0.38}
+            fontSize={size * 0.36}
+            fontWeight="600"
+            fill={EM_LIGHT}
+            opacity="0.7"
+          >
+            TM
+          </tspan>
+        )}
       </text>
-      <text
-        x={letter * 1.95 + gap}
-        y={size * 0.78}
-        fontSize={size}
-        fontWeight="300"
-        fill={color}
-        fontFamily="'Geist', Inter, system-ui, sans-serif"
-      >
-        —
-      </text>
-      <text
-        x={letter * 2.8 + gap * 2}
-        y={size * 0.78}
-        fontSize={size}
-        fontWeight="800"
-        letterSpacing={letter * 0.08}
-        fill={accent}
-        fontFamily="'Geist', Inter, system-ui, sans-serif"
-      >
-        IGNICIÓN
-      </text>
-      {withTm && (
-        <text
-          x={letter * 9.8 + gap * 3}
-          y={size * 0.4}
-          fontSize={size * 0.32}
-          fontWeight="600"
-          fill={color}
-          opacity="0.7"
-          fontFamily="'Geist', Inter, system-ui, sans-serif"
-        >
-          TM
-        </text>
-      )}
     </g>
   );
 }
 
-/* ──────────────────────────── Substrate defs (shared) ──────── */
+/* ──────────────────────────── Substrate defs / layers ──────── */
 function SubstrateDefs({ id }) {
   return (
     <defs>
       <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor="#08080A" />
-        <stop offset="0.5" stopColor="#14141A" />
-        <stop offset="1" stopColor="#08080A" />
+        <stop offset="0" stopColor={SUB_DARK_TOP} />
+        <stop offset="0.55" stopColor={SUB_DARK_MID} />
+        <stop offset="1" stopColor={SUB_DARK_BTM} />
       </linearGradient>
       <pattern id={`${id}-lat`} width="22" height="22" patternUnits="userSpaceOnUse">
-        <path d="M11 0v22M0 11h22" stroke="#22D3EE" strokeWidth="0.35" opacity="0.08" />
-        <circle cx="11" cy="11" r="0.7" fill="#22D3EE" opacity="0.12" />
+        <path d="M11 0v22M0 11h22" stroke={EM_400} strokeWidth="0.35" opacity="0.06" />
+        <circle cx="11" cy="11" r="0.7" fill={EM_400} opacity="0.12" />
       </pattern>
-      <radialGradient id={`${id}-glow`} cx="50%" cy="50%" r="65%">
-        <stop offset="0" stopColor="#22D3EE" stopOpacity="0" />
-        <stop offset="0.7" stopColor="#22D3EE" stopOpacity="0" />
-        <stop offset="1" stopColor="#22D3EE" stopOpacity="0.14" />
+      <radialGradient id={`${id}-aura`} cx="50%" cy="0%" r="80%">
+        <stop offset="0" stopColor={EM_500} stopOpacity="0.12" />
+        <stop offset="0.6" stopColor={EM_500} stopOpacity="0.03" />
+        <stop offset="1" stopColor={EM_500} stopOpacity="0" />
       </radialGradient>
-      <linearGradient id={`${id}-scan`} x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="#22D3EE" stopOpacity="0" />
-        <stop offset="0.5" stopColor="#22D3EE" stopOpacity="0.06" />
-        <stop offset="1" stopColor="#22D3EE" stopOpacity="0" />
+      <linearGradient id={`${id}-rim`} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor={EM_400} stopOpacity="0.55" />
+        <stop offset="0.5" stopColor={EM_500} stopOpacity="0.3" />
+        <stop offset="1" stopColor={EM_700} stopOpacity="0.55" />
+      </linearGradient>
+      <linearGradient id={`${id}-etch`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor={EM_400} />
+        <stop offset="1" stopColor={EM_700} />
       </linearGradient>
     </defs>
   );
@@ -173,18 +211,16 @@ function SubstrateLayers({ id, w, h, rx }) {
     <>
       <rect width={w} height={h} rx={rx} fill={`url(#${id}-bg)`} />
       <rect width={w} height={h} rx={rx} fill={`url(#${id}-lat)`} />
-      <rect width={w} height={h} rx={rx} fill={`url(#${id}-glow)`} />
-      <rect width={w} height={h} rx={rx} fill={`url(#${id}-scan)`} opacity="0.6" />
+      <rect width={w} height={h} rx={rx} fill={`url(#${id}-aura)`} />
       <rect
-        x="0.5"
-        y="0.5"
-        width={w - 1}
-        height={h - 1}
-        rx={rx - 0.5}
+        x="0.75"
+        y="0.75"
+        width={w - 1.5}
+        height={h - 1.5}
+        rx={rx - 0.75}
         fill="none"
-        stroke="#22D3EE"
-        strokeWidth="1.2"
-        opacity="0.24"
+        stroke={`url(#${id}-rim)`}
+        strokeWidth="1.5"
       />
     </>
   );
@@ -201,17 +237,19 @@ export function DeskCardFront({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
       className="bi-kit-svg"
     >
       <SubstrateDefs id="df" />
+      <IgnitionMarkDefs id="df-im" />
       <SubstrateLayers id="df" w={860} h={540} rx={44} />
 
+      {/* Header row */}
       <g transform="translate(48,42)">
         <Wordmark size={30} />
       </g>
-
       <text
         x="812"
         y="60"
         fontSize="11"
-        fill="#9CA3AF"
+        fill={EM_LIGHT}
+        opacity="0.58"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="2"
         textAnchor="end"
@@ -219,94 +257,98 @@ export function DeskCardFront({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
         {serial}
       </text>
 
-      <g transform="translate(204,300)">
-        <NFCZone r={86} />
+      {/* Left column · NFC */}
+      <g transform="translate(204,308)">
+        <NFCZone r={90} gradientId="df-etch" />
       </g>
       <text
         x="204"
-        y="424"
+        y="438"
         fontSize="13"
         fontWeight="700"
-        fill="#22D3EE"
+        fill={EM_400}
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
-        letterSpacing="6"
+        letterSpacing="7"
         textAnchor="middle"
       >
         TAP · NFC
       </text>
       <text
         x="204"
-        y="446"
+        y="460"
         fontSize="10"
-        fill="#9CA3AF"
+        fill={EM_LIGHT}
+        opacity="0.6"
         textAnchor="middle"
         letterSpacing="1.5"
       >
         {T.tapSub}
       </text>
 
-      {/* divider */}
+      {/* Divider */}
       <line
         x1="430"
         y1="120"
         x2="430"
-        y2="420"
-        stroke="#22D3EE"
+        y2="430"
+        stroke={EM_500}
         strokeWidth="1"
-        opacity="0.18"
-        strokeDasharray="3 5"
+        opacity="0.22"
+        strokeDasharray="3 6"
       />
 
-      {/* QR block */}
-      <g transform="translate(516,150)">
+      {/* Right column · QR */}
+      <g transform="translate(516,140)">
         <rect
           x="-14"
           y="-14"
           width="248"
           height="248"
           rx="20"
-          fill="#0E0E12"
-          stroke="#22D3EE"
-          strokeOpacity="0.28"
+          fill="#06120D"
+          stroke={EM_500}
+          strokeOpacity="0.32"
           strokeWidth="1"
         />
-        <QRMatrix size={220} modules={25} />
+        <QRMatrix size={220} modules={25} gradientId="df-etch" />
+        {/* Ignition mark at center */}
         <g transform="translate(110,110)">
-          <circle r="22" fill="#0E0E12" />
-          <circle r="20" fill="none" stroke="#22D3EE" strokeWidth="1.8" />
-          <circle r="11" fill="none" stroke="#22D3EE" strokeWidth="1.2" opacity="0.7" />
-          <circle r="3" fill="#22D3EE" />
+          <circle r="26" fill="#06120D" />
+          <circle r="26" fill="none" stroke={EM_500} strokeWidth="1" opacity="0.4" />
+          <IgnitionMark size={36} markId="df-im" />
         </g>
       </g>
       <text
         x="632"
-        y="424"
+        y="438"
         fontSize="13"
         fontWeight="700"
-        fill="#22D3EE"
+        fill={EM_400}
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
-        letterSpacing="6"
+        letterSpacing="7"
         textAnchor="middle"
       >
         SCAN · QR
       </text>
       <text
         x="632"
-        y="446"
+        y="460"
         fontSize="10"
-        fill="#9CA3AF"
+        fill={EM_LIGHT}
+        opacity="0.6"
         textAnchor="middle"
         letterSpacing="1.5"
       >
         {T.scanSub}
       </text>
 
-      {/* bottom strip */}
+      {/* Footer microtype */}
       <text
         x="48"
         y="510"
         fontSize="9"
-        fill="#4B5563"
+        fill={EM_LIGHT}
+        opacity="0.4"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="2.4"
       >
@@ -316,7 +358,8 @@ export function DeskCardFront({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
         x="812"
         y="510"
         fontSize="9"
-        fill="#4B5563"
+        fill={EM_LIGHT}
+        opacity="0.4"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="2.4"
         textAnchor="end"
@@ -338,6 +381,7 @@ export function DeskCardBack({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
       className="bi-kit-svg"
     >
       <SubstrateDefs id="db" />
+      <IgnitionMarkDefs id="db-im" />
       <SubstrateLayers id="db" w={860} h={540} rx={44} />
 
       <g transform="translate(48,42)">
@@ -347,7 +391,8 @@ export function DeskCardBack({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
         x="812"
         y="58"
         fontSize="10"
-        fill="#9CA3AF"
+        fill={EM_LIGHT}
+        opacity="0.58"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="2"
         textAnchor="end"
@@ -357,62 +402,73 @@ export function DeskCardBack({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
 
       <text
         x="48"
-        y="132"
-        fontSize="16"
-        fontWeight="700"
-        fill="#F6F7F9"
-        letterSpacing="1"
+        y="140"
+        fontSize="15"
+        fontWeight="800"
+        fill={EM_LIGHT}
+        letterSpacing="3"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
       >
         {T.installTitle}
       </text>
 
-      {/* 3 steps */}
+      {/* Install steps */}
       {T.steps.map((s, i) => (
-        <g key={i} transform={`translate(${60 + i * 248},190)`}>
-          <circle cx="22" cy="22" r="22" fill="none" stroke="#22D3EE" strokeWidth="1.4" />
+        <g key={i} transform={`translate(${60 + i * 252},200)`}>
+          <circle cx="24" cy="24" r="24" fill="none" stroke={`url(#db-etch)`} strokeWidth="1.6" />
           <text
-            x="22"
-            y="29"
+            x="24"
+            y="31"
             textAnchor="middle"
             fontSize="16"
             fontWeight="800"
-            fill="#22D3EE"
+            fill={EM_400}
             fontFamily="ui-monospace, 'JetBrains Mono', monospace"
           >
             {String(i + 1).padStart(2, "0")}
           </text>
           <text
-            x="60"
+            x="64"
             y="20"
             fontSize="13"
             fontWeight="800"
-            fill="#F6F7F9"
-            letterSpacing="2"
+            fill={EM_LIGHT}
+            letterSpacing="2.2"
             fontFamily="ui-monospace, 'JetBrains Mono', monospace"
           >
             {s.t}
           </text>
-          <text x="60" y="42" fontSize="11" fill="#9CA3AF" letterSpacing="0.5">
-            <tspan x="60" dy="0">{s.d1}</tspan>
-            <tspan x="60" dy="15">{s.d2}</tspan>
+          <text x="64" y="42" fontSize="11" fill={EM_LIGHT} opacity="0.65" letterSpacing="0.5">
+            <tspan x="64" dy="0">{s.d1}</tspan>
+            <tspan x="64" dy="15">{s.d2}</tspan>
           </text>
         </g>
       ))}
 
-      {/* middle ring motif */}
-      <g transform="translate(430,360)" opacity="0.35">
-        <circle r="58" fill="none" stroke="#22D3EE" strokeWidth="1" />
-        <circle r="38" fill="none" stroke="#22D3EE" strokeWidth="0.8" />
-        <circle r="18" fill="none" stroke="#22D3EE" strokeWidth="0.6" />
+      {/* Centered ignition seal */}
+      <g transform="translate(430,376)" opacity="0.9">
+        <IgnitionMark size={96} markId="db-im" />
       </g>
+      <text
+        x="430"
+        y="448"
+        fontSize="9"
+        fill={EM_LIGHT}
+        opacity="0.55"
+        fontFamily="ui-monospace, 'JetBrains Mono', monospace"
+        letterSpacing="4"
+        textAnchor="middle"
+      >
+        NEURAL · PERFORMANCE
+      </text>
 
-      {/* legal microtext */}
+      {/* Legal footer */}
       <text
         x="48"
-        y="480"
+        y="498"
         fontSize="9"
-        fill="#6B7280"
+        fill={EM_LIGHT}
+        opacity="0.4"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="1.8"
       >
@@ -420,9 +476,10 @@ export function DeskCardBack({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
       </text>
       <text
         x="48"
-        y="498"
+        y="516"
         fontSize="9"
-        fill="#6B7280"
+        fill={EM_LIGHT}
+        opacity="0.4"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="1.8"
       >
@@ -430,9 +487,10 @@ export function DeskCardBack({ T, serial = "KIT · 24.104 · FLEET-ACME" }) {
       </text>
       <text
         x="812"
-        y="498"
+        y="516"
         fontSize="9"
-        fill="#6B7280"
+        fill={EM_LIGHT}
+        opacity="0.4"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="1.8"
         textAnchor="end"
@@ -454,6 +512,7 @@ export function WallPlacard({ T, serial = "SALA · NEURAL · 04" }) {
       className="bi-kit-svg"
     >
       <SubstrateDefs id="wp" />
+      <IgnitionMarkDefs id="wp-im" />
       <SubstrateLayers id="wp" w={420} h={594} rx={24} />
 
       <g transform="translate(28,36)">
@@ -463,7 +522,8 @@ export function WallPlacard({ T, serial = "SALA · NEURAL · 04" }) {
         x="392"
         y="48"
         fontSize="9"
-        fill="#9CA3AF"
+        fill={EM_LIGHT}
+        opacity="0.6"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="2"
         textAnchor="end"
@@ -471,16 +531,16 @@ export function WallPlacard({ T, serial = "SALA · NEURAL · 04" }) {
         {serial}
       </text>
 
-      {/* NFC zone big */}
-      <g transform="translate(210,170)">
-        <NFCZone r={82} />
+      {/* NFC big */}
+      <g transform="translate(210,178)">
+        <NFCZone r={86} gradientId="wp-etch" />
       </g>
       <text
         x="210"
-        y="290"
+        y="302"
         fontSize="11"
         fontWeight="700"
-        fill="#22D3EE"
+        fill={EM_400}
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="6"
         textAnchor="middle"
@@ -489,48 +549,48 @@ export function WallPlacard({ T, serial = "SALA · NEURAL · 04" }) {
       </text>
 
       {/* OR divider */}
-      <g transform="translate(210,320)">
-        <line x1="-80" y1="0" x2="-18" y2="0" stroke="#22D3EE" opacity="0.3" />
+      <g transform="translate(210,332)">
+        <line x1="-80" y1="0" x2="-20" y2="0" stroke={EM_500} opacity="0.35" />
         <text
           x="0"
           y="4"
           fontSize="9"
-          fill="#9CA3AF"
+          fill={EM_LIGHT}
+          opacity="0.6"
           fontFamily="ui-monospace, 'JetBrains Mono', monospace"
           textAnchor="middle"
           letterSpacing="3"
         >
           {T.orLabel}
         </text>
-        <line x1="18" y1="0" x2="80" y2="0" stroke="#22D3EE" opacity="0.3" />
+        <line x1="20" y1="0" x2="80" y2="0" stroke={EM_500} opacity="0.35" />
       </g>
 
-      {/* QR block */}
-      <g transform="translate(130,350)">
+      {/* QR */}
+      <g transform="translate(130,360)">
         <rect
           x="-8"
           y="-8"
           width="176"
           height="176"
           rx="14"
-          fill="#0E0E12"
-          stroke="#22D3EE"
-          strokeOpacity="0.28"
+          fill="#06120D"
+          stroke={EM_500}
+          strokeOpacity="0.32"
           strokeWidth="1"
         />
-        <QRMatrix size={160} modules={25} />
+        <QRMatrix size={160} modules={25} gradientId="wp-etch" />
         <g transform="translate(80,80)">
-          <circle r="16" fill="#0E0E12" />
-          <circle r="14" fill="none" stroke="#22D3EE" strokeWidth="1.4" />
-          <circle r="2.5" fill="#22D3EE" />
+          <circle r="18" fill="#06120D" />
+          <IgnitionMark size={26} markId="wp-im" />
         </g>
       </g>
       <text
         x="210"
-        y="560"
+        y="566"
         fontSize="11"
         fontWeight="700"
-        fill="#22D3EE"
+        fill={EM_400}
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="6"
         textAnchor="middle"
@@ -539,9 +599,10 @@ export function WallPlacard({ T, serial = "SALA · NEURAL · 04" }) {
       </text>
       <text
         x="210"
-        y="578"
+        y="582"
         fontSize="9"
-        fill="#6B7280"
+        fill={EM_LIGHT}
+        opacity="0.5"
         textAnchor="middle"
         letterSpacing="1.8"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
@@ -552,7 +613,7 @@ export function WallPlacard({ T, serial = "SALA · NEURAL · 04" }) {
   );
 }
 
-/* ──────────────────────────── Laptop Disc (round 60mm) ──────── */
+/* ──────────────────────────── Laptop Disc (round 60 mm) ─────── */
 export function LaptopDisc({ T }) {
   return (
     <svg
@@ -563,14 +624,21 @@ export function LaptopDisc({ T }) {
       className="bi-kit-svg"
     >
       <defs>
-        <radialGradient id="ld-bg" cx="50%" cy="50%" r="55%">
-          <stop offset="0" stopColor="#14141A" />
-          <stop offset="1" stopColor="#08080A" />
+        <radialGradient id="ld-bg" cx="50%" cy="50%" r="60%">
+          <stop offset="0" stopColor="#102820" />
+          <stop offset="0.7" stopColor="#0A1410" />
+          <stop offset="1" stopColor="#060C09" />
         </radialGradient>
         <pattern id="ld-lat" width="14" height="14" patternUnits="userSpaceOnUse">
-          <circle cx="7" cy="7" r="0.6" fill="#22D3EE" opacity="0.14" />
+          <circle cx="7" cy="7" r="0.7" fill={EM_400} opacity="0.16" />
         </pattern>
+        <linearGradient id="ld-rim" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={EM_400} stopOpacity="0.6" />
+          <stop offset="1" stopColor={EM_700} stopOpacity="0.6" />
+        </linearGradient>
       </defs>
+      <IgnitionMarkDefs id="ld-im" />
+
       <circle cx="120" cy="120" r="118" fill="url(#ld-bg)" />
       <circle cx="120" cy="120" r="118" fill="url(#ld-lat)" />
       <circle
@@ -578,64 +646,54 @@ export function LaptopDisc({ T }) {
         cy="120"
         r="117"
         fill="none"
-        stroke="#22D3EE"
-        strokeWidth="1"
-        opacity="0.35"
+        stroke="url(#ld-rim)"
+        strokeWidth="1.4"
       />
 
-      {/* concentric ignition ring */}
-      <g transform="translate(120,120)" opacity="0.95">
-        <circle r="78" fill="none" stroke="#22D3EE" strokeWidth="1" opacity="0.35" />
-        <circle r="58" fill="none" stroke="#22D3EE" strokeWidth="1" opacity="0.3" />
+      {/* outer ignition rings */}
+      <g transform="translate(120,120)" opacity="0.9">
+        <circle r="82" fill="none" stroke={EM_500} strokeWidth="0.8" opacity="0.35" />
+        <circle r="62" fill="none" stroke={EM_500} strokeWidth="0.8" opacity="0.3" />
       </g>
 
-      {/* center brand ring + micro QR */}
-      <g transform="translate(120,92)">
-        <g transform="translate(-18,-18)">
-          <QRMatrix size={36} modules={17} />
-        </g>
+      {/* ignition glyph at top */}
+      <g transform="translate(120,86)">
+        <IgnitionMark size={48} markId="ld-im" />
       </g>
+
+      {/* micro QR below */}
+      <g transform="translate(96,126)">
+        <QRMatrix size={48} modules={17} />
+      </g>
+
       <text
         x="120"
-        y="148"
-        fontSize="12"
-        fontWeight="800"
-        fill="#22D3EE"
-        fontFamily="ui-monospace, 'JetBrains Mono', monospace"
-        letterSpacing="4"
-        textAnchor="middle"
-      >
-        TAP · SCAN
-      </text>
-      <text
-        x="120"
-        y="168"
-        fontSize="8"
-        fill="#9CA3AF"
-        fontFamily="ui-monospace, 'JetBrains Mono', monospace"
-        textAnchor="middle"
-        letterSpacing="2"
-      >
-        {T.discSub}
-      </text>
-      {/* micro wordmark */}
-      <text
-        x="120"
-        y="200"
+        y="198"
         fontSize="9"
         fontWeight="800"
-        fill="#F6F7F9"
+        fill={EM_LIGHT}
         fontFamily="'Geist', Inter, system-ui, sans-serif"
         letterSpacing="3"
         textAnchor="middle"
       >
-        BIO—IGNICIÓN
+        BIO-IGNICIÓN
+      </text>
+      <text
+        x="120"
+        y="214"
+        fontSize="7.5"
+        fill={EM_400}
+        fontFamily="ui-monospace, 'JetBrains Mono', monospace"
+        letterSpacing="2.4"
+        textAnchor="middle"
+      >
+        TAP · SCAN
       </text>
     </svg>
   );
 }
 
-/* ──────────────────────────── Context · Desk scene ──────────── */
+/* ──────────────────────────── Desk context scene ────────────── */
 function DeskContext({ T }) {
   return (
     <svg
@@ -646,63 +704,72 @@ function DeskContext({ T }) {
       className="bi-kit-scene"
     >
       <defs>
-        <linearGradient id="desk-surf" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#1A1C22" />
-          <stop offset="1" stopColor="#0C0D11" />
+        <linearGradient id="scene-wall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#081410" />
+          <stop offset="1" stopColor="#0F201A" />
         </linearGradient>
-        <linearGradient id="desk-wall" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#0A0B0F" />
-          <stop offset="1" stopColor="#131419" />
+        <linearGradient id="scene-surf" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#162923" />
+          <stop offset="1" stopColor="#09120E" />
         </linearGradient>
       </defs>
-      <rect width="640" height="200" fill="url(#desk-wall)" />
-      <rect y="200" width="640" height="160" fill="url(#desk-surf)" />
-      <line x1="0" y1="200" x2="640" y2="200" stroke="#22D3EE" opacity="0.15" />
+      <SubstrateDefs id="ctx" />
+      <IgnitionMarkDefs id="ctx-im" />
+      <rect width="640" height="210" fill="url(#scene-wall)" />
+      <rect y="210" width="640" height="150" fill="url(#scene-surf)" />
+      <line x1="0" y1="210" x2="640" y2="210" stroke={EM_500} opacity="0.18" />
 
-      {/* laptop silhouette */}
-      <g transform="translate(48,92)">
-        <rect width="240" height="150" rx="8" fill="#0E0F14" stroke="#22D3EE" strokeOpacity="0.2" />
-        <rect x="14" y="14" width="212" height="122" rx="4" fill="#08080A" />
-        <circle cx="120" cy="75" r="28" fill="none" stroke="#22D3EE" strokeWidth="1" opacity="0.35" />
-        <circle cx="120" cy="75" r="14" fill="none" stroke="#22D3EE" strokeWidth="0.8" opacity="0.25" />
-      </g>
-      <rect x="40" y="240" width="256" height="6" rx="3" fill="#0E0F14" />
-
-      {/* card on desk, tilted */}
-      <g transform="translate(370,240) rotate(-6)">
-        <g transform="scale(0.28)">
-          <svg viewBox="0 0 860 540" width="860" height="540">
-            <SubstrateDefs id="ctx-card" />
-            <SubstrateLayers id="ctx-card" w={860} h={540} rx={44} />
-            <g transform="translate(48,42)">
-              <Wordmark size={30} />
-            </g>
-            <g transform="translate(204,300)">
-              <NFCZone r={86} />
-            </g>
-            <g transform="translate(516,150)">
-              <rect x="-14" y="-14" width="248" height="248" rx="20" fill="#0E0E12" stroke="#22D3EE" strokeOpacity="0.28" />
-              <QRMatrix size={220} modules={25} />
-              <g transform="translate(110,110)">
-                <circle r="22" fill="#0E0E12" />
-                <circle r="20" fill="none" stroke="#22D3EE" strokeWidth="1.8" />
-              </g>
-            </g>
-          </svg>
+      {/* laptop */}
+      <g transform="translate(52,96)">
+        <rect width="240" height="148" rx="8" fill="#0A1410" stroke={EM_500} strokeOpacity="0.22" />
+        <rect x="14" y="14" width="212" height="120" rx="4" fill="#04090A" />
+        <g transform="translate(120,74)">
+          <circle r="26" fill="none" stroke={EM_500} strokeWidth="0.8" opacity="0.35" />
+          <circle r="14" fill="none" stroke={EM_500} strokeWidth="0.8" opacity="0.25" />
+          <circle r="3" fill={EM_400} />
         </g>
       </g>
+      <rect x="44" y="240" width="256" height="6" rx="3" fill="#0A1410" />
 
-      {/* coffee + pen as context props */}
-      <g transform="translate(320,280)">
-        <ellipse cx="0" cy="0" rx="18" ry="6" fill="#0E0F14" />
-        <rect x="-14" y="-28" width="28" height="28" rx="2" fill="#131419" stroke="#22D3EE" strokeOpacity="0.18" />
+      {/* tilted card */}
+      <g transform="translate(338,232) rotate(-7)">
+        <g transform="scale(0.30)">
+          <rect width="860" height="540" rx="44" fill="url(#ctx-bg)" />
+          <rect width="860" height="540" rx="44" fill="url(#ctx-lat)" />
+          <rect width="860" height="540" rx="44" fill="url(#ctx-aura)" />
+          <rect
+            x="0.75"
+            y="0.75"
+            width="858.5"
+            height="538.5"
+            rx="43.25"
+            fill="none"
+            stroke="url(#ctx-rim)"
+            strokeWidth="1.5"
+          />
+          <g transform="translate(48,42)">
+            <Wordmark size={30} />
+          </g>
+          <g transform="translate(204,308)">
+            <NFCZone r={90} gradientId="ctx-etch" />
+          </g>
+          <g transform="translate(516,140)">
+            <rect x="-14" y="-14" width="248" height="248" rx="20" fill="#06120D" stroke={EM_500} strokeOpacity="0.32" />
+            <QRMatrix size={220} modules={25} gradientId="ctx-etch" />
+            <g transform="translate(110,110)">
+              <circle r="26" fill="#06120D" />
+              <IgnitionMark size={36} markId="ctx-im" />
+            </g>
+          </g>
+        </g>
       </g>
 
       <text
         x="48"
         y="340"
         fontSize="10"
-        fill="#6B7280"
+        fill={EM_LIGHT}
+        opacity="0.45"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
         letterSpacing="2"
       >
