@@ -49,13 +49,11 @@ export const metadata = {
     siteName: "BIO-IGNICIÓN",
     title: "BIO-IGNICIÓN — Neural Performance",
     description: "Plataforma de Optimización Humana",
-    images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "BIO-IGNICIÓN",
     description: "Plataforma de Optimización Humana — entrena el sistema nervioso con evidencia.",
-    images: ["/screenshots/ignicion-wide.svg"],
   },
   robots: { index: true, follow: true },
   icons: {
