@@ -10,6 +10,7 @@ import { tLocale } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
 import { BioGlyph } from "@/components/BioIgnicionMark";
 import AmbientBackdrop from "@/components/brand/AmbientBackdrop";
+import ConsentManageLink from "@/components/ConsentManageLink";
 
 async function hasSessionCookie() {
   const jar = await cookies();
@@ -170,7 +171,8 @@ export async function PublicShell({ children, activePath }) {
             <span style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
               © {new Date().getFullYear()} BIO-IGNICIÓN · {T("footer.rights", "Todos los derechos reservados")}
             </span>
-            <span>
+            <span style={{ display: "inline-flex", gap: space[4], alignItems: "center", flexWrap: "wrap" }}>
+              <ConsentManageLink label={T("consent.manage", "Gestionar cookies")} className="bi-footer-link" />
               <address style={{ display: "inline", fontStyle: "normal" }}>
                 <a href="mailto:hello@bio-ignicion.app" className="bi-footer-link">hello@bio-ignicion.app</a>
               </address>

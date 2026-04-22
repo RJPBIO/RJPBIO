@@ -154,12 +154,16 @@ export default async function RootLayout({ children }) {
             position: "absolute",
             insetInlineStart: "-9999px",
             insetBlockStart: 8,
-            padding: "8px 12px",
-            background: "#059669",
-            color: "#fff",
-            borderRadius: 8,
-            zIndex: 9999,
-            fontWeight: 700,
+            padding: "10px 16px",
+            background: "linear-gradient(135deg,#22D3EE,#0891B2)",
+            color: "#042933",
+            borderRadius: 10,
+            zIndex: 10000,
+            fontWeight: 800,
+            fontSize: 13,
+            letterSpacing: "0.01em",
+            textDecoration: "none",
+            boxShadow: "0 12px 32px -12px rgba(34,211,238,0.6)",
           }}
         >
           {skipLabel}
