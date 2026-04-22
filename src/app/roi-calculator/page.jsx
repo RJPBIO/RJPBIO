@@ -15,13 +15,13 @@ import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
-  title: "Calculadora ROI",
+  title: "Calculadora ROI · modelo abierto · corre en tu navegador",
   description:
     "Modelo ROI transparente · supuestos conservadores con caps auditables · fuentes públicas · corre íntegramente en tu navegador sin email wall.",
   alternates: { canonical: "/roi-calculator" },
   openGraph: {
-    title: "BIO-IGNICIÓN · Calculadora ROI",
-    description: "Corre el cálculo en tu navegador. No guardamos tus inputs.",
+    title: "BIO-IGNICIÓN · Calculadora ROI · modelo abierto",
+    description: "Corre el cálculo en tu navegador. Sin email wall, sin telemetría, sin inputs en servidor.",
     images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
 };
