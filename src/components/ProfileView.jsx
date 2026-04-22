@@ -21,6 +21,7 @@ import { useReducedMotion } from "../lib/a11y";
 import RemindersCard from "./RemindersCard";
 import InstrumentDueCard from "./InstrumentDueCard";
 import BaselineCard from "./BaselineCard";
+import ProfileAuthCard from "./ProfileAuthCard";
 
 const ACHIEVEMENT_IDS = Object.keys(AM);
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
@@ -156,6 +157,8 @@ export default function ProfileView({
           <span style={ty.title(nSt.color)}>{nSt.label} · {lv.n}</span>
         </div>
       </header>
+
+      <ProfileAuthCard isDark={isDark} ac={ac} />
 
       <motion.article
         initial={reduced ? { opacity: 1 } : { opacity: 0, y: 10 }}

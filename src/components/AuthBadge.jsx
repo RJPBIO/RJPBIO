@@ -13,6 +13,7 @@ const HIDE_PREFIXES = [
   "/admin", "/settings", "/team", "/error",
   "/for", "/for-healthcare", "/for-manufacturing", "/for-finance", "/for-logistics",
   "/for-tech", "/for-aviation", "/for-energy", "/for-public-sector",
+  "/app",
 ];
 
 const COPY = {
