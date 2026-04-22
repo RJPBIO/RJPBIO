@@ -36,6 +36,48 @@ function profileColor(profile) {
   }
 }
 
+// Interpretación semántica por métrica — convierte el número en un estado legible.
+function interpretRT(ms) {
+  if (!ms) return "—";
+  if (ms < 280) return "Ágil";
+  if (ms < 380) return "Óptimo";
+  if (ms < 500) return "Estable";
+  return "Recuperando";
+}
+function interpretBreath(s) {
+  if (!s) return "—";
+  if (s >= 35) return "Tono vagal alto";
+  if (s >= 25) return "Buen tono";
+  if (s >= 15) return "Funcional";
+  return "En desarrollo";
+}
+function interpretFocus(acc) {
+  if (acc == null) return "—";
+  if (acc >= 85) return "Foco sostenido";
+  if (acc >= 65) return "Estable";
+  if (acc >= 45) return "Disperso";
+  return "Bajo control";
+}
+function interpretStress(lv) {
+  if (!lv) return "—";
+  if (lv >= 5) return "En calma";
+  if (lv >= 4) return "Tranquilo";
+  if (lv >= 3) return "Neutral";
+  if (lv >= 2) return "Agitado";
+  return "Tenso";
+}
+
+// Delta: diferencia vs calibración anterior. `betterWhen` indica si "mejor"
+// significa valor más alto ("higher") o más bajo ("lower" — ej. reacción).
+function computeDelta(curr, prev, betterWhen) {
+  if (curr == null || prev == null || prev === 0) return null;
+  const raw = curr - prev;
+  const pct = Math.round((raw / Math.abs(prev)) * 100);
+  if (Math.abs(pct) < 1) return { raw, pct, tone: "neutral" };
+  const improved = betterWhen === "higher" ? raw > 0 : raw < 0;
+  return { raw, pct, tone: improved ? "up" : "down" };
+}
+
 function Sparkline({ values, color, width = 120, height = 28 }) {
   if (!values || values.length < 2) return null;
   const min = Math.min(...values);
@@ -66,18 +108,51 @@ function Sparkline({ values, color, width = 120, height = 28 }) {
   );
 }
 
-function Metric({ label, value, unit, color, t1, t3 }) {
+function DeltaBadge({ delta, unit, betterWhen }) {
+  if (!delta || delta.tone === "neutral") return null;
+  const color = delta.tone === "up" ? "#059669" : "#DC2626";
+  const arrow = delta.tone === "up" ? "↑" : "↓";
+  const absPct = Math.abs(delta.pct);
+  return (
+    <span
+      aria-label={`Cambio ${delta.tone === "up" ? "mejoró" : "empeoró"} ${absPct} por ciento`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 2,
+        fontSize: 9,
+        fontWeight: 700,
+        color,
+        letterSpacing: 0.2,
+        padding: "1px 5px",
+        borderRadius: 4,
+        background: delta.tone === "up" ? "rgba(5,150,105,0.10)" : "rgba(220,38,38,0.10)",
+        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      }}
+    >
+      {arrow}{absPct}%
+    </span>
+  );
+}
+
+function Metric({ label, value, unit, color, interp, delta, betterWhen, t1, t3 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <div style={{ fontSize: 10, color: t3, letterSpacing: 0.4, textTransform: "uppercase", fontWeight: 600 }}>
         {label}
       </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 5, flexWrap: "wrap" }}>
         <span style={{ fontSize: 17, fontWeight: 700, color: color || t1, letterSpacing: -0.3, fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontVariantNumeric: "tabular-nums" }}>
           {value}
         </span>
         {unit && <span style={{ fontSize: 10, color: t3, fontWeight: 600 }}>{unit}</span>}
+        <DeltaBadge delta={delta} unit={unit} betterWhen={betterWhen} />
       </div>
+      {interp && (
+        <div style={{ fontSize: 9.5, color: t3, fontWeight: 500, letterSpacing: 0.1, lineHeight: 1.2 }}>
+          {interp}
+        </div>
+      )}
     </div>
   );
 }
@@ -93,6 +168,21 @@ export default function BaselineCard({ st, isDark, ac, onRecalibrate }) {
     if (history.length < 2) return null;
     return history.map(h => h.composite ?? 0);
   }, [history]);
+
+  // Delta: comparamos el baseline actual vs el inmediatamente anterior en historial.
+  // Sólo tiene sentido cuando hay ≥2 calibraciones completadas.
+  const deltas = useMemo(() => {
+    if (!baseline || history.length < 2) return null;
+    const prev = history[history.length - 2];
+    if (!prev) return null;
+    return {
+      rt:      computeDelta(baseline.avgRT, prev.avgRT, "lower"),
+      breath:  computeDelta(baseline.breathHold, prev.breathHold, "higher"),
+      focus:   computeDelta(baseline.focusAccuracy, prev.focusAccuracy, "higher"),
+      stress:  computeDelta(baseline.stressLevel, prev.stressLevel, "higher"),
+      comp:    computeDelta(baseline.composite, prev.composite, "higher"),
+    };
+  }, [baseline, history]);
 
   const capturedAt = baseline?.timestamp || history[history.length - 1]?.ts;
   const days = daysSince(capturedAt);
@@ -204,10 +294,16 @@ export default function BaselineCard({ st, isDark, ac, onRecalibrate }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 13, fontWeight: 700, color: pColor,
-            letterSpacing: -0.2, marginBlockEnd: 2,
+            display: "flex", alignItems: "center", gap: 6,
+            marginBlockEnd: 2, flexWrap: "wrap",
           }}>
-            {baseline.profileLabel || "Perfil"}
+            <span style={{
+              fontSize: 13, fontWeight: 700, color: pColor,
+              letterSpacing: -0.2,
+            }}>
+              {baseline.profileLabel || "Perfil"}
+            </span>
+            <DeltaBadge delta={deltas?.comp} betterWhen="higher" />
           </div>
           <div style={{ fontSize: 10, color: t3, letterSpacing: 0.2 }}>
             {days === 0 ? "Capturado hoy" : days === 1 ? "Capturado ayer" : `Capturado hace ${days} días`}
@@ -235,6 +331,9 @@ export default function BaselineCard({ st, isDark, ac, onRecalibrate }) {
           label="Reacción"
           value={baseline.avgRT ? Math.round(baseline.avgRT) : "—"}
           unit="ms"
+          interp={interpretRT(baseline.avgRT)}
+          delta={deltas?.rt}
+          betterWhen="lower"
           t1={t1}
           t3={t3}
         />
@@ -242,6 +341,9 @@ export default function BaselineCard({ st, isDark, ac, onRecalibrate }) {
           label="Respiración"
           value={baseline.breathHold ?? "—"}
           unit="s"
+          interp={interpretBreath(baseline.breathHold)}
+          delta={deltas?.breath}
+          betterWhen="higher"
           t1={t1}
           t3={t3}
         />
@@ -249,6 +351,9 @@ export default function BaselineCard({ st, isDark, ac, onRecalibrate }) {
           label="Foco"
           value={baseline.focusAccuracy != null ? Math.round(baseline.focusAccuracy) : "—"}
           unit="/100"
+          interp={interpretFocus(baseline.focusAccuracy)}
+          delta={deltas?.focus}
+          betterWhen="higher"
           t1={t1}
           t3={t3}
         />
@@ -256,9 +361,25 @@ export default function BaselineCard({ st, isDark, ac, onRecalibrate }) {
           label="Estrés"
           value={baseline.stressLevel ? `${baseline.stressLevel}/5` : "—"}
           unit=""
+          interp={interpretStress(baseline.stressLevel)}
+          delta={deltas?.stress}
+          betterWhen="higher"
           t1={t1}
           t3={t3}
         />
+      </div>
+
+      {/* Composite decomposition: transparencia del score */}
+      <div style={{
+        fontSize: 9.5,
+        color: t3,
+        letterSpacing: 0.2,
+        lineHeight: 1.4,
+        marginBlockEnd: 10,
+        padding: "0 2px",
+        textAlign: "center",
+      }}>
+        Composite {composite}/100 · RT · Respiración · Foco · Estrés ponderados 25% c/u
       </div>
 
       {/* Recomendación derivada */}
