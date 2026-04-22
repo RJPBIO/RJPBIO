@@ -68,7 +68,6 @@ const PostSessionFlow = dynamic(() => import("@/components/PostSessionFlow"), { 
 const SettingsSheet = dynamic(() => import("@/components/SettingsSheet"), { ssr: false });
 const HistorySheet = dynamic(() => import("@/components/HistorySheet"), { ssr: false });
 const ProtocolSelector = dynamic(() => import("@/components/ProtocolSelector"), { ssr: false });
-const OnboardingTour = dynamic(() => import("@/components/OnboardingTour"), { ssr: false });
 const HRVMonitor = dynamic(() => import("@/components/HRVMonitor"), { ssr: false });
 const PhysiologicalSigh = dynamic(() => import("@/components/PhysiologicalSigh"), { ssr: false });
 const NSDR = dynamic(() => import("@/components/NSDR"), { ssr: false });
@@ -109,7 +108,6 @@ export default function BioIgnicion(){
   const[showCalibration,setShowCalibration]=useState(false);
   const[showProtoDetail,setShowProtoDetail]=useState(false);
   const[showMore,setShowMore]=useState(false);
-  const[showTour,setShowTour]=useState(false);
   const[showHRV,setShowHRV]=useState(false);
   const[showSigh,setShowSigh]=useState(false);
   const[showNSDR,setShowNSDR]=useState(false);
@@ -188,7 +186,6 @@ export default function BioIgnicion(){
     setSt_(l);
     setMt(true);
     if(!l.onboardingComplete){setOnboard(true);}
-    else if(!l.onboardingTourComplete){setShowTour(true);}
     // Cargamos dominios NOM-035 antes del motor para que el sesgo psicosocial
     // participe en la primera recomendación.
     let domLocal=null;
@@ -292,11 +289,10 @@ export default function BioIgnicion(){
   function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused")resume();}
   function switchTab(id){if(id===tab)return;setTab(id);H("tap");uiSound.nav(st.soundOn);announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
   const swipeRef=useRef(null);
-  const onSwipeStart=useCallback(e=>{if(ts==="running"||ts==="paused"||postStep!=="none"||countdown>0||sl||showCmd||showIntent||showProtoDetail||showTour||showHist||showCalibration||onboard)return;if(e.pointerType==="mouse")return;swipeRef.current={x:e.clientX,y:e.clientY,t:Date.now()};},[ts,postStep,countdown,sl,showCmd,showIntent,showProtoDetail,showTour,showHist,showCalibration,onboard]);
+  const onSwipeStart=useCallback(e=>{if(ts==="running"||ts==="paused"||postStep!=="none"||countdown>0||sl||showCmd||showIntent||showProtoDetail||showHist||showCalibration||onboard)return;if(e.pointerType==="mouse")return;swipeRef.current={x:e.clientX,y:e.clientY,t:Date.now()};},[ts,postStep,countdown,sl,showCmd,showIntent,showProtoDetail,showHist,showCalibration,onboard]);
   const onSwipeEnd=useCallback(e=>{const s=swipeRef.current;swipeRef.current=null;if(!s)return;const dx=e.clientX-s.x;const dy=e.clientY-s.y;const dt=Date.now()-s.t;if(dt>700)return;if(Math.abs(dx)<64)return;if(Math.abs(dx)<Math.abs(dy)*1.4)return;const ids=["ignicion","dashboard","perfil"];const cur=ids.indexOf(tab);const next=dx<0?cur+1:cur-1;if(next>=0&&next<ids.length)switchTab(ids[next]);},[tab]);
   const onTimerKey=useCallback(e=>{if(e.key===KEY.ENTER||e.key===KEY.SPACE){e.preventDefault();timerTap();}},[ts,pr.int,st.soundOn]);
   const onTabKey=useCallback((e,id,order)=>{const ids=["ignicion","dashboard","perfil"];if(e.key===KEY.RIGHT||e.key===KEY.DOWN){e.preventDefault();switchTab(ids[(order+1)%ids.length]);}else if(e.key===KEY.LEFT||e.key===KEY.UP){e.preventDefault();switchTab(ids[(order-1+ids.length)%ids.length]);}else if(e.key===KEY.HOME){e.preventDefault();switchTab(ids[0]);}else if(e.key===KEY.END){e.preventDefault();switchTab(ids[ids.length-1]);}},[]);
-  const completeTour=useCallback(()=>{setShowTour(false);setSt(s=>({...s,onboardingTourComplete:true}));},[setSt]);
 
   const cmdCommands=useMemo(()=>buildCommands({
     timerStatus:ts,tab,state:st,protocol:pr,durationMultiplier:durMult,protocols:P,
@@ -462,16 +458,12 @@ export default function BioIgnicion(){
     if(intentProto){setPr(intentProto);setSec(Math.round(intentProto.d*durMult));}
     else{const d=getDailyIgn(nst);if(d&&d.proto){setPr(d.proto);setSec(Math.round(d.proto.d*durMult));}}
     const ach=[...nst.achievements];if(!ach.includes("calibrated")){ach.push("calibrated");setSt({...nst,achievements:ach});}
-    setShowTour(true);
   }}/>}
   </AnimatePresence>
 
-  {/* ═══ ONBOARDING TOUR — 3-step guided intro ═══ */}
-  <OnboardingTour show={showTour&&!onboard&&!showCalibration} isDark={isDark} onClose={completeTour}/>
-
   {/* ═══ RETURN CARD — frosted welcome-back overlay (Ignición tab, idle, hasSessions) ═══ */}
   <AnimatePresence>
-  {tab==="ignicion"&&!entryDone&&ts==="idle"&&st.totalSessions>0&&!onboard&&!showCalibration&&!showTour&&(()=>{
+  {tab==="ignicion"&&!entryDone&&ts==="idle"&&st.totalSessions>0&&!onboard&&!showCalibration&&(()=>{
     const now=new Date();
     const today=now.toISOString().slice(0,10);
     const y=new Date(now);y.setDate(y.getDate()-1);
@@ -738,6 +730,31 @@ export default function BioIgnicion(){
             <span style={{fontWeight:font.weight.black,color:t1}}>IGNICIÓN</span>
           </span>
         </span>
+      </div>
+    )}
+    {/* Adaptive hint — "tu sistema se afina tras 3 sesiones". Único valor rescatado del tour.
+        Auto-hide al llegar a 3. Dismissible con flag local (adaptiveHintDismissed). */}
+    {ts==="idle"&&(st.totalSessions||0)<3&&!st.adaptiveHintDismissed&&(
+      <div role="status" aria-live="polite" style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",marginBlockEnd:space[3],borderRadius:12,background:withAlpha(ac,6),border:`1px solid ${withAlpha(ac,16)}`}}>
+        <div aria-hidden="true" style={{display:"flex",gap:3,alignItems:"center"}}>
+          {[0,1,2].map(i=>(
+            <span key={i} style={{inlineSize:6,blockSize:6,borderRadius:"50%",background:i<(st.totalSessions||0)?ac:withAlpha(ac,22),boxShadow:i<(st.totalSessions||0)?`0 0 4px ${withAlpha(ac,60)}`:"none",transition:"background .3s"}}/>
+          ))}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:11,fontWeight:700,color:t1,letterSpacing:-0.1,lineHeight:1.25}}>
+            Día {(st.totalSessions||0)+1}/3 · tu sistema se afina
+          </div>
+          <div style={{fontSize:10,color:t3,lineHeight:1.3,marginBlockStart:1}}>
+            Tras 3 sesiones detectamos tu hora pico y protocolos sensibles.
+          </div>
+        </div>
+        <button
+          type="button"
+          aria-label="Descartar este mensaje"
+          onClick={()=>setSt(s=>({...s,adaptiveHintDismissed:true}))}
+          style={{flexShrink:0,inlineSize:22,blockSize:22,borderRadius:"50%",border:"none",background:"transparent",color:t3,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,lineHeight:1}}
+        >×</button>
       </div>
     )}
     {/* NFC Context */}
