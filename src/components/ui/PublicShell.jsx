@@ -14,6 +14,7 @@ import ConsentManageLink from "@/components/ConsentManageLink";
 import StatusPulse from "@/components/StatusPulse";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import BookDemoTrigger from "@/components/BookDemoTrigger";
+import ScrollChrome from "@/components/ScrollChrome";
 
 async function hasSessionCookie() {
   const jar = await cookies();
@@ -96,6 +97,7 @@ export async function PublicShell({ children, activePath }) {
   return (
     <>
       <AmbientBackdrop />
+      <ScrollChrome />
       <AnnouncementBar
         id="kit-launch-2026-04"
         label={{

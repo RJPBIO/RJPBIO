@@ -4420,6 +4420,94 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   [style*="biDrawerIn"] { animation: none !important; }
 }
 
+/* ═══ ScrollChrome — progress bar + back-to-top ═══ */
+.bi-scroll-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 2px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, #22D3EE 0%, #0891B2 55%, #A78BFA 100%);
+  box-shadow: 0 0 10px rgba(34,211,238,0.55);
+  z-index: 9998;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  will-change: transform;
+}
+.bi-back-to-top {
+  position: fixed;
+  inset-block-end: 24px;
+  inset-inline-end: 24px;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #22D3EE 45%, var(--bi-border));
+  background: color-mix(in srgb, var(--bi-bg) 92%, transparent);
+  backdrop-filter: saturate(160%) blur(10px);
+  -webkit-backdrop-filter: saturate(160%) blur(10px);
+  color: var(--bi-text, #0F172A);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9997;
+  box-shadow: 0 10px 30px -14px rgba(34,211,238,0.45);
+  opacity: 0;
+  transform: translateY(8px) scale(0.95);
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease, background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+.bi-back-to-top[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.bi-back-to-top:hover {
+  border-color: #22D3EE;
+  color: #0891B2;
+  background: color-mix(in srgb, #22D3EE 12%, var(--bi-bg));
+  transform: translateY(-2px) scale(1);
+}
+.bi-back-to-top:active { transform: translateY(0) scale(0.95); }
+@media (max-width: 540px) {
+  .bi-back-to-top { inset-block-end: 16px; inset-inline-end: 16px; inline-size: 40px; block-size: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-back-to-top { transition: opacity 120ms linear; }
+  .bi-scroll-progress { transition: none; }
+}
+
+/* Fallback for browsers without animation-timeline: scroll(). Mirrors the
+   compressed state as a binary toggle keyed on data-scrolled. */
+@supports not (animation-timeline: scroll()) {
+  .bi-shell-header,
+  .bi-shell-header-row,
+  .bi-shell-brand-glyph,
+  .bi-shell-wordmark {
+    transition:
+      background 240ms ease,
+      padding 240ms ease,
+      font-size 240ms ease,
+      letter-spacing 240ms ease,
+      transform 240ms ease,
+      box-shadow 240ms ease;
+  }
+  :root[data-scrolled="true"] .bi-shell-header {
+    background: color-mix(in srgb, var(--bi-bg) 94%, transparent);
+    box-shadow: 0 10px 40px -28px color-mix(in srgb, #22D3EE 40%, var(--bi-border));
+  }
+  :root[data-scrolled="true"] .bi-shell-header-row {
+    padding-block: 12px !important;
+  }
+  :root[data-scrolled="true"] .bi-shell-brand-glyph {
+    transform: scale(0.86);
+  }
+  :root[data-scrolled="true"] .bi-shell-wordmark {
+    font-size: 17px;
+    letter-spacing: 0.2em;
+  }
+}
+
 /* ═══ HOME · Bento grid responsive ═══
    12-col grid on desktop; collapses to 2-col at tablet, 1-col on phone. */
 .bi-bento-grid {
