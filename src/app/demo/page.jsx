@@ -12,12 +12,12 @@ import PulseDivider from "@/components/brand/PulseDivider";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
 
 export const metadata = {
-  title: "Demo",
-  description: "30 minutos con un especialista. Protocolo en vivo + dashboard de equipo con datos simulados.",
+  title: "Reserva demo 1:1 · 30 min sin slides",
+  description: "30 minutos con un especialista. Protocolo neural en vivo + panel de equipo con datos simulados. Respuesta humana en < 24 h hábiles.",
   alternates: { canonical: "/demo" },
   openGraph: {
-    title: "BIO-IGNICIÓN · Demo 1:1",
-    description: "Ve un protocolo neural en vivo. Sin slides.",
+    title: "BIO-IGNICIÓN · Demo 1:1 · 30 min sin slides",
+    description: "Ve un protocolo neural en vivo. Sin slides, sin deck, sin bots.",
     images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
 };
@@ -46,6 +46,7 @@ const COPY = {
     eyebrow: "DEMO 1:1",
     h1: "Vívelo primero. Decide con evidencia.",
     editorial: "30 minutos, en vivo, sin slides — respiras, escuchas, ves el panel.",
+    scarcityLabel: "6 VENTANAS ESTA SEMANA · RESPUESTA < 24 H HÁBILES",
     p: "Corremos un protocolo neural contigo — respiración coherente + audio binaural + medición HRV. Te mostramos el panel de equipo con datos simulados reales y respondemos preguntas de seguridad y compliance sobre la mesa.",
     bullets: [
       "Sesión neural en vivo (breath + audio + binaural).",
@@ -147,11 +148,16 @@ const COPY = {
         a: "Starter: self-serve el mismo día. Growth: piloto 30 d con onboarding guiado, firma de MSA en paralelo. Enterprise: 60 d con DPA firmado, SSO federado y primer reporte NOM-035. Timelines detallados en /pricing.",
       },
     ],
+
+    legalKicker: "Legal · Avisos",
+    legalHint: "Leer",
+    legalDisclaimer: "Avisos: La disponibilidad semanal (~6 ventanas) es estimación operativa y puede variar por festivo o capacidad del equipo; el SLA de respuesta de < 24 h aplica a días hábiles. Apple Watch, Fitbit, Oura, Google Meet y otras marcas o nombres comerciales citados pertenecen a sus respectivos titulares y se mencionan bajo fair use nominativo (sin afiliación, patrocinio ni endoso). Las estimaciones de ROI mencionadas son cálculos basados en literatura pública y no constituyen garantía ni promesa contractual. La sesión no se graba por ninguna de las partes; el resumen escrito post-demo es el artefacto oficial. Tu contexto durante la demo es confidencial por default bajo DPA estándar. Para términos vinculantes, consulta MSA, DPA y ToS en /trust.",
   },
   en: {
     eyebrow: "1:1 DEMO",
     h1: "Experience it live. Decide with evidence.",
     editorial: "30 minutes, live, no slides — you breathe, you listen, you see the panel.",
+    scarcityLabel: "6 WINDOWS THIS WEEK · REPLY WITHIN 24 BUSINESS HOURS",
     p: "We run a live neural protocol with you — coherent breathing + binaural audio + HRV measurement. We show you the team panel with real simulated data and answer security & compliance questions on the table.",
     bullets: [
       "Live neural session (breath + audio + binaural).",
@@ -253,6 +259,10 @@ const COPY = {
         a: "Starter: self-serve the same day. Growth: 30-day pilot with guided onboarding, MSA signed in parallel. Enterprise: 60 days with signed DPA, federated SSO and first NOM-035 report. Detailed timelines at /pricing.",
       },
     ],
+
+    legalKicker: "Legal · Disclaimers",
+    legalHint: "Read",
+    legalDisclaimer: "Disclaimers: Weekly availability (~6 windows) is an operational estimate and may vary with holidays or team capacity; the < 24 h reply SLA applies to business days. Apple Watch, Fitbit, Oura, Google Meet and other brand or trade names mentioned belong to their respective owners and are cited under nominative fair use (no affiliation, sponsorship or endorsement). ROI estimates mentioned are calculations based on public literature and do not constitute a guarantee or contractual promise. The session is not recorded by either party; the written post-demo recap is the official artifact. Your context during the demo is confidential by default under the standard DPA. For binding terms, see MSA, DPA and ToS at /trust.",
   },
 };
 
@@ -303,6 +313,10 @@ export default async function DemoPage() {
                 {c.bullets.map((b, i) => <li key={i}>{b}</li>)}
               </ul>
 
+              <div className="bi-roi-scarcity" aria-label={c.scarcityLabel} style={{ marginBlockStart: space[4], marginBlockEnd: space[5] }}>
+                <span className="bi-roi-scarcity-label">{c.scarcityLabel}</span>
+              </div>
+
               <div className="bi-demo-hero-chips" aria-label={L === "en" ? "Compliance preview" : "Vista previa de cumplimiento"}>
                 {c.trust.slice(0, 3).map((t) => (
                   <span key={t.label} className="bi-demo-hero-chip" data-tone={t.tone}>
@@ -330,7 +344,19 @@ export default async function DemoPage() {
                 borderStartStartRadius: "inherit",
               }}
             />
-            <h2 id="demo-form-title" style={{ margin: 0, letterSpacing: "-0.02em" }}>{c.formTitle}</h2>
+            <h2
+              id="demo-form-title"
+              style={{
+                margin: 0,
+                fontSize: "clamp(22px, 2.6vw, 28px)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.1,
+                fontWeight: font.weight.black,
+                color: cssVar.text,
+              }}
+            >
+              {c.formTitle}
+            </h2>
             <p className="bi-demo-form-subtitle">{c.formSubtitle}</p>
             <DemoForm source="demo" locale={locale} />
           </Card>
@@ -554,6 +580,19 @@ export default async function DemoPage() {
           </IgnitionReveal>
         </Container>
       </section>
+
+      <Container size="lg">
+        <details className="bi-pricing-legal" role="note">
+          <summary className="bi-pricing-legal-summary">
+            <span className="bi-pricing-legal-kicker">{c.legalKicker}</span>
+            <span className="bi-pricing-legal-hint">
+              {c.legalHint}
+              <span className="chev" aria-hidden>▾</span>
+            </span>
+          </summary>
+          <p className="bi-pricing-legal-body">{c.legalDisclaimer}</p>
+        </details>
+      </Container>
 
       <script
         type="application/ld+json"
