@@ -393,4 +393,4 @@ export default function SignUpClient({ locale = "es" }) {
   );
 }
 
-const linkStyle = { color: "var(--bi-accent)", fontWeight: 600 };
+const linkStyle = { color: cssVar.accent, fontWeight: font.weight.semibold };
