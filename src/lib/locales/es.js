@@ -19,6 +19,7 @@ export const es = {
     roi: "ROI",
     signin: "Entrar",
     for: "Por sector",
+    why: "Por qué",
   },
   session: {
     start: "Iniciar",

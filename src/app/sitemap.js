@@ -3,6 +3,7 @@ export default function sitemap() {
   const now = new Date();
   const paths = [
     "/",
+    "/why",
     "/pricing",
     "/demo",
     "/roi-calculator",
@@ -36,7 +37,7 @@ export default function sitemap() {
   ];
   const priority = (p) => {
     if (p === "/") return 1;
-    if (["/pricing", "/demo", "/for"].includes(p)) return 0.9;
+    if (["/pricing", "/demo", "/for", "/why"].includes(p)) return 0.9;
     if (p.startsWith("/for-")) return 0.8;
     if (["/docs", "/roi-calculator", "/changelog", "/trust", "/learn", "/evidencia", "/nom35", "/team-preview"].includes(p)) return 0.7;
     if (p.startsWith("/learn/") || p === "/nom35/aplicador") return 0.6;

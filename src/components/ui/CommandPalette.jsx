@@ -285,6 +285,7 @@ function buildItems({ t, router, setLocale, close, locale }) {
     { id: "nav-historial", group: nav, icon: "⎚", label: t("nav.historial"), href: "/?tab=historial", keywords: "history sessions" },
     { id: "nav-perfil",    group: nav, icon: "◎", label: t("nav.perfil"),    href: "/?tab=perfil",    keywords: "profile account" },
     { id: "nav-ajustes",   group: nav, icon: "⚙", label: t("nav.ajustes"),   href: "/?tab=ajustes",   keywords: "settings preferencias" },
+    { id: "nav-why",       group: nav, icon: "?", label: t("nav.why"),       href: "/why",             keywords: "porque thesis tesis why sell convence" },
     { id: "nav-pricing",   group: nav, icon: "$", label: t("nav.pricing"),   href: "/pricing",         keywords: "precios plans" },
     { id: "nav-docs",      group: nav, icon: "§", label: t("nav.docs"),      href: "/docs",            keywords: "api openapi" },
     { id: "nav-status",    group: nav, icon: "●", label: t("nav.status"),    href: "/status",          keywords: "uptime" },

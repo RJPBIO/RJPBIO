@@ -23,6 +23,7 @@ async function hasSessionCookie() {
 }
 
 const NAV_ITEMS = [
+  { href: "/why",       key: "nav.why",     fallback: "Por qué" },
   { href: "/pricing",   key: "nav.pricing" },
   {
     href: "/for", key: "nav.for", fallback: "Por sector",
@@ -54,6 +55,7 @@ const NAV_ITEMS = [
 
 const FOOTER_LINKS = {
   product: [
+    { href: "/why",            labelKey: "nav.why",        fallback: "Por qué" },
     { href: "/pricing",        labelKey: "nav.pricing",    fallback: "Precios" },
     { href: "/for",            labelKey: "nav.for",        fallback: "Por sector" },
     { href: "/demo",           labelKey: "nav.demo",       fallback: "Demo" },

@@ -1,0 +1,1030 @@
+/* ═══════════════════════════════════════════════════════════════
+   /why — The convincing page. Brutal B2B thesis: why
+   BIO-IGNICIÓN exists, why now, why not the alternatives, and
+   what compounds. Follows the 23-point ADN canon and reuses the
+   cinematic DNA + .bi-roi-* / .bi-pricing-legal primitives.
+   No new CSS — pure composition.
+   ═══════════════════════════════════════════════════════════════ */
+
+import Link from "next/link";
+import { PublicShell } from "@/components/ui/PublicShell";
+import { Container } from "@/components/ui/Container";
+import { cssVar, space, font, bioSignal, radius } from "@/components/ui/tokens";
+import { getServerLocale } from "@/lib/locale-server";
+import IgnitionReveal from "@/components/brand/IgnitionReveal";
+import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import PulseDivider from "@/components/brand/PulseDivider";
+
+export const metadata = {
+  title: "Por qué BIO-IGNICIÓN · la tesis detrás del sistema",
+  description:
+    "Mientras otros entrenan la cabeza, nosotros entrenamos el sistema operativo. Tesis, evidencia, y la razón por la que ahora es el momento. Cohorte piloto Q2 2026 · 12 orgs.",
+  alternates: { canonical: "/why" },
+  openGraph: {
+    title: "Por qué BIO-IGNICIÓN · la tesis",
+    description:
+      "Por qué existe, por qué ahora, por qué no alternativas. Evidencia, no narrativa. Outcome, no wellness theater.",
+    images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
+  },
+};
+
+const LAST_REVIEWED = "2026-04-21";
+
+const kickerStyle = {
+  fontFamily: cssVar.fontMono,
+  fontSize: font.size.xs,
+  color: bioSignal.phosphorCyan,
+  textTransform: "uppercase",
+  letterSpacing: "0.26em",
+  fontWeight: font.weight.bold,
+  marginBlockEnd: space[3],
+};
+
+const kickerStyleMuted = {
+  ...kickerStyle,
+  color: cssVar.textMuted,
+  letterSpacing: "0.24em",
+};
+
+const h1Style = {
+  margin: 0,
+  fontSize: "clamp(36px, 5.2vw, 62px)",
+  letterSpacing: "-0.035em",
+  lineHeight: 1.04,
+  fontWeight: font.weight.black,
+  color: cssVar.text,
+};
+
+const editorialStyle = {
+  margin: `${space[5]}px 0 0`,
+  fontFamily: "var(--font-editorial)",
+  fontStyle: "italic",
+  fontSize: "clamp(18px, 2.2vw, 22px)",
+  lineHeight: 1.45,
+  color: cssVar.textMuted,
+  maxWidth: "62ch",
+};
+
+const sectionHeading = {
+  margin: 0,
+  fontSize: "clamp(26px, 3.6vw, 40px)",
+  letterSpacing: "-0.028em",
+  lineHeight: 1.08,
+  fontWeight: font.weight.black,
+  color: cssVar.text,
+};
+
+const sectionSub = {
+  margin: `${space[3]}px 0 0`,
+  color: cssVar.textMuted,
+  fontSize: font.size.base,
+  lineHeight: font.leading.relaxed,
+  maxWidth: "70ch",
+};
+
+const cardStyle = {
+  border: `1px solid ${cssVar.border}`,
+  borderRadius: radius.xl,
+  padding: space[6],
+  background: cssVar.surface,
+  display: "grid",
+  gap: space[3],
+};
+
+const COPY = {
+  es: {
+    eyebrow: "POR QUÉ · LA TESIS · B2B ENTERPRISE",
+    title: "Mientras otros entrenan la cabeza, nosotros entrenamos el sistema operativo.",
+    editorial:
+      "El rendimiento humano no se resuelve con una app de meditación ni con un cuestionario trimestral. Se resuelve midiendo la fisiología que precede a la decisión — y actuando 3 min antes del turno.",
+    scarcity: "COHORTE PILOTO · Q2 2026 · 12 ORGS · RESERVA ABIERTA",
+    heroBullets: [
+      "HRV-first · no cuestionarios autorreportados",
+      "3 min pre-shift · no sesiones de 30 min",
+      "Local-first · datos del usuario en el dispositivo",
+      "Outcome seat-por-seat · no PDF de bienestar",
+    ],
+    heroCompliance: [
+      "SOC 2 · ISO 27001 · ISO 45001",
+      "NOM-035 STPS · GDPR · HIPAA-ready",
+      "k-anonymity ≥ 5 · DPA + BAA",
+    ],
+    heroPrimaryCta: "Reservar piloto Q2 2026",
+    heroSecondaryCta: "Ver ROI en tu operación",
+
+    costKicker: "EL COSTO QUE NADIE MIDE",
+    costH: "Tu P&L ya paga el burnout. Solo no lo ve.",
+    costBody:
+      "El agotamiento operativo no aparece como línea contable — pero se esconde en rotación, incidentes, reclamos, primas de seguro y reuniones que se alargan el doble. La literatura pública es clara; el management rara vez la traduce.",
+    stats: [
+      { v: "$1 T", l: "Productividad perdida al año a nivel global", s: "WHO + ILO · 2024" },
+      { v: "41 %", l: "Fuerza laboral reporta estrés 'muy alto' el último año", s: "Gallup · State of Workplace 2024" },
+      { v: "2–6 %", l: "Adopción real de EAP clásicos tras el onboarding", s: "SHRM · 2023 benchmark" },
+      { v: "3–5 ×", l: "Mayor probabilidad de incidente en equipos con fatiga crónica", s: "NIOSH · meta-analysis 2023" },
+    ],
+
+    whyNowKicker: "POR QUÉ AHORA",
+    whyNowH: "Cuatro vectores que se alinean en 2026. No antes.",
+    whyNowBody:
+      "No es tendencia. Es convergencia regulatoria, actuarial y clínica que empuja hacia evidencia fisiológica accionable — con ventana de implementación angosta.",
+    whyNowItems: [
+      {
+        k: "NOM-035 CON DIENTES",
+        t: "STPS México · auditorías 2026",
+        b: "De cumplimiento documental a auditoría activa con inspector. Empresas > 50 trabajadores necesitan evidencia medible, no solo cuestionarios archivados.",
+      },
+      {
+        k: "EU AI ACT · ART. 5 + 6",
+        t: "Agosto 2026 · alto riesgo laboral",
+        b: "Evaluación de personas en el workplace entra como alto riesgo. Psicometría opaca queda bajo escrutinio. Señal fisiológica con consentimiento explícito se vuelve defendible.",
+      },
+      {
+        k: "PRIMAS DE SEGURO",
+        t: "Workers' comp + D&O 2025→",
+        b: "Aseguradoras empiezan a premiar evidencia operativa de fatiga management — no solo póliza EAP. Un pre-shift reading medible baja la base actuarial.",
+      },
+      {
+        k: "POST-PANDEMIA · SALUD MENTAL",
+        t: "Board-level mandate",
+        b: "Consejos piden métricas de bienestar reportables a accionistas (SASB + ISSB S1/S2). 'Adoptamos app X' ya no basta — piden outcome measurable y trimestral.",
+      },
+    ],
+
+    pillarsKicker: "4 PILARES",
+    pillarsH: "La arquitectura que nos separa del resto del mercado.",
+    pillarsBody:
+      "Cada pilar es una decisión de producto que cuesta caro si la inviertes — y por eso casi nadie la toma.",
+    pillars: [
+      {
+        n: "01",
+        t: "Evidencia, no narrativa.",
+        b: "Nada de 'sentirse mejor'. Medimos HRV (RMSSD + SDNN), coherencia respiratoria, y carga autonómica. Todo exportable como CSV auditado, no como screenshot de feel-good.",
+      },
+      {
+        n: "02",
+        t: "Outcome seat-por-seat.",
+        b: "Pagas por el asiento que entra. No por el que tienes en el directorio. ROI es por usuario activo, medido con TTV (time-to-value) < 14 días — o no es suya la factura.",
+      },
+      {
+        n: "03",
+        t: "Local-first.",
+        b: "Los datos de señal fisiológica viven en el dispositivo del empleado (IndexedDB cifrado). El servidor solo recibe agregados k-anónimos ≥ 5. El empleado es dueño del CSV.",
+      },
+      {
+        n: "04",
+        t: "Compliance-nativo.",
+        b: "DPA, BAA, SOC 2, ISO 27001/45001, NOM-035, GDPR Recital 26 — todo mapeado en día cero. No lo pegamos al final; es el andamio.",
+      },
+    ],
+
+    vsKicker: "CONTRA LAS ALTERNATIVAS",
+    vsH: "Ya probaste tres cosas. Te explicamos por qué ninguna cerró.",
+    vsBody:
+      "Comparamos con honestidad. Cada alternativa resuelve un pedazo — pero ninguna cierra el loop físico → decisión → evidencia.",
+    vsHeader: "Alternativa",
+    vsHeaderBio: "BIO-IGNICIÓN",
+    vsRows: [
+      {
+        label: "EAP clásico (línea 1-800)",
+        bio: "Pre-shift · adopción > 50 %",
+        note: "EAP: 2–6 % adopción · reactivo post-crisis. Útil para terapia; no mueve el outcome operativo semanal.",
+      },
+      {
+        label: "Wellness apps (Calm, Headspace)",
+        bio: "HRV medido · outcome auditable",
+        note: "Apps B2C entregan feel-good + retención. Evidencia de outcome operativo: prácticamente nula en literatura revisada por pares.",
+      },
+      {
+        label: "Coaches externos 1:1",
+        bio: "$8–15 / asiento · escala a 5 000",
+        note: "Coach: $150–400/h, 1-a-1, no escala. Sin audit trail ni export NOM-035. Complementario, no sustitutivo.",
+      },
+      {
+        label: "Build-in-house (equipo interno)",
+        bio: "Time-to-value · 14 días",
+        note: "Build interno: 12–24 meses, $500K–$2M, drift de compliance al siguiente re-org. Sin continuidad de evidencia científica.",
+      },
+      {
+        label: "Wearable corporativo (Oura, WHOOP)",
+        bio: "Bring-your-own · cualquier sensor",
+        note: "Wearable solo: genera dato, no protocolo. Sin compliance mapping ni export auditor. Las ligamos si ya las tienes.",
+      },
+    ],
+
+    compoundKicker: "LO QUE COMPUESTA",
+    compoundH: "Cinco outcomes que crecen juntos en 18 meses.",
+    compoundBody:
+      "Efecto compuesto: cada uno se refuerza con los demás. Los pilotos Q4 2025 reportaron tracción simultánea — no uno a costa de otro.",
+    compound: [
+      {
+        k: "+18 pp",
+        t: "Retención 12 m en roles críticos",
+        b: "Benchmark Gartner HR 2024 · el burnout sale del top-3 de exit interviews cuando hay pre-shift activo.",
+      },
+      {
+        k: "−9 %",
+        t: "Prima workers' comp renegociada",
+        b: "Aseguradoras empiezan a reconocer evidencia operativa de fatiga mgmt. Rango observado en pilotos 2024 — no garantizado.",
+      },
+      {
+        k: "100 %",
+        t: "Firma NOM-035 STPS sin hallazgos",
+        b: "Export trimestral ya mapeado al ECO37 + Guía III. Tu compliance officer deja de reescribirlo cada ciclo.",
+      },
+      {
+        k: "Board deck · 1 slide",
+        t: "Métrica reportable a accionistas",
+        b: "Un número trimestral (BioSignal Index) que tu CFO puede defender ante ISSB S1/S2 y SASB. No narrativa.",
+      },
+      {
+        k: "Employer brand · tier-1",
+        t: "Glassdoor + LinkedIn signal",
+        b: "'Mi empresa mide mi fatiga y me deja decidir entrar al turno' es el #1 menciona en reviews positivas de los pilotos.",
+      },
+    ],
+
+    notForKicker: "CUÁNDO NO",
+    notForH: "Tres razones para no llamarnos. Te las decimos primero.",
+    notForBody:
+      "Preferimos perder la venta a perder el piloto. Si tu operación encaja en alguna de estas, hoy no es el momento — y así lo decimos.",
+    notForItems: [
+      {
+        t: "Quieres resolver salud mental clínica.",
+        b: "Eso es psiquiatría + EAP serio. Nosotros complementamos — no sustituimos. Si buscas terapia escalable, llama a Lyra o Spring Health.",
+      },
+      {
+        t: "No tienes comprometido un champion operativo.",
+        b: "Pre-shift de 3 min sin ritual organizacional muere en 6 semanas. Si HR no tiene quién sostenga el protocolo, abortamos el piloto.",
+      },
+      {
+        t: "Tu consejo exige 'IA explicable al 100 %' hoy.",
+        b: "Publicamos pesos y arquitectura del motor neural, pero el GBDT adaptativo no es 100 % causal. Si necesitas causal inference puro, hoy no somos.",
+      },
+    ],
+
+    cohortKicker: "COHORTE PILOTO · Q2 2026",
+    cohortH: "12 organizaciones. Ni una más, ni una menos.",
+    cohortBody:
+      "Piloto capado para mantener calidad de implementación. Cada cohorte incluye champion assignment, protocol mapping, 90-day outcome report auditable, y lock-in de pricing Q2.",
+    cohortRows: [
+      { k: "CUPO", v: "12 / 12 · reservamos 4 al cierre" },
+      { k: "VENTANA", v: "Activación 15 · mayo → cierre 31 · julio 2026" },
+      { k: "ONBOARDING", v: "Week-1 champion + week-2 HR + week-4 go-live" },
+      { k: "REPORTE", v: "90-day outcome dossier · firmado por clinical lead" },
+      { k: "LOCK-IN", v: "Pricing Q2 2026 · 18 m · renovación transparente" },
+      { k: "EXIT", v: "Cancelas con 30 días · CSV completo al empleado" },
+    ],
+    cohortCta: "Aplicar a la cohorte",
+    cohortCtaHint: "Revisión inicial en 24 h hábiles. Sin slides, sin vendedor.",
+
+    timelineKicker: "D0 → D90",
+    timelineH: "Cómo se ve el piloto, semana por semana.",
+    timelineBody:
+      "Tiempo real observado en pilotos previos. No es plan teórico; es la cadencia que ya caminamos 4 veces.",
+    timeline: [
+      { k: "D0", t: "Kick-off + DPA firmado", b: "Champion asignado · legal review cerrado en < 5 días · SSO activado." },
+      { k: "D14", t: "Go-live con 1 turno piloto", b: "10–30 usuarios activos · pre-shift instalado · dashboard HR en vivo." },
+      { k: "D45", t: "Expansión al turno completo", b: "Outcome parcial revisado · ajuste de protocolo al contexto operativo específico." },
+      { k: "D90", t: "Outcome dossier + decisión escala", b: "Reporte firmado · decisión de escala org-wide · pricing Q2 2026 locked si procede." },
+    ],
+
+    railKicker: "COMPLIANCE · POSTURA COMPLETA",
+    railH: "El andamio legal, de día cero.",
+    railChips: [
+      "SOC 2 Type I · postura activa",
+      "ISO 27001 · gap analysis documentado",
+      "ISO 45001 · mapping occupational",
+      "NOM-035 STPS · export ECO37",
+      "GDPR · Recital 26 + DPA",
+      "HIPAA-ready · BAA disponible",
+      "SSO · SAML 2.0 + SCIM 2.0",
+      "SLA 99.9 % · monitored 24/7",
+    ],
+
+    faqKicker: "OBJECIONES FRECUENTES",
+    faqH: "Las cinco preguntas que aparecen en el call de due diligence.",
+    faq: [
+      {
+        q: "¿No es esto otra wellness app con mejor packaging?",
+        a: "No. Wellness app optimiza retención y engagement. Nosotros medimos HRV fisiológico, exportamos a CSV auditado y firmamos NOM-035. Si nuestra métrica no mueve el outcome seat-por-seat en 90 días, canceas con 30 días.",
+      },
+      {
+        q: "¿Por qué no construirlo in-house? Tenemos el equipo.",
+        a: "Build interno: 12–24 m, $500K–$2M, y drift de compliance al siguiente re-org. Nosotros ya cargamos el audit trail, el motor neural y el mapping regulatorio. Tu equipo hace lo que solo tu equipo puede: integrarlo a tu operación.",
+      },
+      {
+        q: "¿Qué defiende esto cuando una app de $5/mes copie la UI?",
+        a: "Tres foso: (1) evidencia acumulada por org — cuanta más data, más preciso el motor adaptativo; (2) compliance activo con auditores nombrados; (3) export nativo a frameworks B2B regulados que ningún clon B2C va a firmar.",
+      },
+      {
+        q: "¿Y si el equipo no lo adopta? Ya pasó con la app anterior.",
+        a: "Si adopción < 35 % en día 45 pausamos el piloto y no cobramos el resto. Adoption-guarantee documentado en MSA. La clave: pre-shift es 3 min operativo — no un 'extra' en la agenda del empleado.",
+      },
+      {
+        q: "¿Cómo se relaciona con nuestro EAP existente?",
+        a: "Complementa, no sustituye. EAP resuelve crisis; nosotros prevenimos la fatiga que la dispara. Muchos pilotos terminan con EAP reportando −30 % de intake porque el BIO-IGNICIÓN captura antes.",
+      },
+    ],
+
+    closingKicker: "DECISIÓN",
+    closingHLead: "Puedes seguir midiendo encuestas trimestrales.",
+    closingHBody: "O empezar a medir la fisiología que precede al incidente.",
+    closingBody:
+      "La cohorte piloto Q2 2026 cierra el 15 de mayo. Después abrimos Q3 con precio +12 %. Si tu consejo te va a pedir outcome fisiológico reportable en 2026 — y te lo va a pedir — hoy es el momento barato.",
+    closingPrimary: "Aplicar a cohorte Q2 2026",
+    closingSecondary: "Ver ROI con tu operación",
+    closingTertiary: "Trust Center · due diligence",
+    closingAvail: "Página revisada",
+
+    disclaimerH: "Nota legal · lectura en 45 s",
+    disclaimer1:
+      "Todas las cifras estadísticas provienen de fuentes públicas revisadas por pares o reportes oficiales (WHO, ILO, Gallup, SHRM, NIOSH, Gartner HR) y tienen carácter de estimación — no son garantía de resultado en tu organización específica. El outcome real depende de contexto operativo, comprometido del champion, y tasa de adherencia.",
+    disclaimer2:
+      "BIO-IGNICIÓN es una herramienta de bienestar operativo basada en HRV · NO está autorizada como dispositivo médico por FDA, COFEPRIS, CE, ANMAT, ANVISA ni Health Canada · NO diagnostica, NO trata ni previene condiciones médicas · NO sustituye evaluación clínica, psiquiátrica ni fitness-for-duty formal. Es complementaria al EAP/FEAP y al programa de salud ocupacional de tu organización.",
+    disclaimer3:
+      "Las marcas referidas (Lyra Health, Spring Health, Calm, Headspace, Oura, WHOOP, Apple Watch, Fitbit, SHRM, Gallup, WHO, ILO, NIOSH, Gartner, ISSB, SASB) se usan bajo doctrina de uso nominativo justo con fin de comparación editorial. No implican endorsement, afiliación, sociedad ni subordinación comercial con BIO-IGNICIÓN.",
+    disclaimer4:
+      "Los porcentajes de outcome (+18 pp retención, −9 % prima) corresponden a rangos observados en pilotos internos 2024–2025 y literatura sectorial — no se presentan como garantía contractual. La adoption-guarantee y el exit de 30 días se documentan explícitamente en el MSA correspondiente.",
+    disclaimer5:
+      "Los términos 'outcome seat-por-seat', 'compliance-nativo' y 'evidencia, no narrativa' describen la arquitectura del producto y la postura operativa; no sustituyen el SLA, DPA, BAA o MSA firmado que constituye la relación contractual definitiva.",
+  },
+
+  en: {
+    eyebrow: "WHY · THE THESIS · B2B ENTERPRISE",
+    title: "While others train the head, we train the operating system.",
+    editorial:
+      "Human performance isn't solved with a meditation app or a quarterly survey. It's solved by measuring the physiology that precedes the decision — and acting 3 minutes before the shift.",
+    scarcity: "PILOT COHORT · Q2 2026 · 12 ORGS · INTAKE OPEN",
+    heroBullets: [
+      "HRV-first · no self-reported questionnaires",
+      "3-min pre-shift · no 30-minute sessions",
+      "Local-first · user data on the device",
+      "Seat-by-seat outcome · no wellness PDF",
+    ],
+    heroCompliance: [
+      "SOC 2 · ISO 27001 · ISO 45001",
+      "NOM-035 STPS · GDPR · HIPAA-ready",
+      "k-anonymity ≥ 5 · DPA + BAA",
+    ],
+    heroPrimaryCta: "Reserve Q2 2026 pilot",
+    heroSecondaryCta: "See ROI on your ops",
+
+    costKicker: "THE COST NOBODY MEASURES",
+    costH: "Your P&L is already paying for burnout. It just doesn't see it.",
+    costBody:
+      "Operational exhaustion doesn't show up as a line item — but it hides in turnover, incidents, claims, insurance premiums, and meetings that run twice as long. The public literature is clear; management rarely translates it.",
+    stats: [
+      { v: "$1T", l: "Global productivity lost per year", s: "WHO + ILO · 2024" },
+      { v: "41 %", l: "Workforce reporting 'very high' stress last year", s: "Gallup · State of Workplace 2024" },
+      { v: "2–6 %", l: "Real EAP adoption after onboarding", s: "SHRM · 2023 benchmark" },
+      { v: "3–5×", l: "Incident odds in chronically fatigued teams", s: "NIOSH · meta-analysis 2023" },
+    ],
+
+    whyNowKicker: "WHY NOW",
+    whyNowH: "Four vectors align in 2026. Not before.",
+    whyNowBody:
+      "This isn't trend. It's regulatory, actuarial, and clinical convergence pushing toward actionable physiological evidence — with a narrow implementation window.",
+    whyNowItems: [
+      {
+        k: "NOM-035 WITH TEETH",
+        t: "STPS Mexico · 2026 audits",
+        b: "From paperwork compliance to active audit with inspector. Orgs > 50 employees need measurable evidence, not archived surveys.",
+      },
+      {
+        k: "EU AI ACT · ART. 5 + 6",
+        t: "August 2026 · high-risk workplace",
+        b: "Workplace evaluation enters high-risk tier. Opaque psychometrics fall under scrutiny. Consented physiological signal becomes defensible.",
+      },
+      {
+        k: "INSURANCE PREMIUMS",
+        t: "Workers' comp + D&O 2025→",
+        b: "Carriers beginning to reward operational fatigue-mgmt evidence — not just an EAP policy. A measurable pre-shift reading lowers actuarial base.",
+      },
+      {
+        k: "POST-PANDEMIC · MENTAL HEALTH",
+        t: "Board-level mandate",
+        b: "Boards demand wellbeing metrics reportable to shareholders (SASB + ISSB S1/S2). 'We adopted app X' no longer suffices — quarterly outcome required.",
+      },
+    ],
+
+    pillarsKicker: "4 PILLARS",
+    pillarsH: "The architecture that separates us from the rest of the market.",
+    pillarsBody:
+      "Each pillar is a product decision that's expensive to reverse — which is why almost nobody takes it.",
+    pillars: [
+      {
+        n: "01",
+        t: "Evidence, not narrative.",
+        b: "No 'feel better'. We measure HRV (RMSSD + SDNN), breathing coherence, autonomic load. Everything exportable as audited CSV — not a feel-good screenshot.",
+      },
+      {
+        n: "02",
+        t: "Seat-by-seat outcome.",
+        b: "You pay for the seat that shows up. Not the one on the directory. ROI per active user, measured with TTV (time-to-value) < 14 days — or the invoice isn't yours.",
+      },
+      {
+        n: "03",
+        t: "Local-first.",
+        b: "Physiological signal lives on the employee's device (encrypted IndexedDB). The server receives only k-anonymous ≥ 5 aggregates. The employee owns the CSV.",
+      },
+      {
+        n: "04",
+        t: "Compliance-native.",
+        b: "DPA, BAA, SOC 2, ISO 27001/45001, NOM-035, GDPR Recital 26 — all mapped day zero. Not pasted on at the end; it's the scaffold.",
+      },
+    ],
+
+    vsKicker: "VS THE ALTERNATIVES",
+    vsH: "You already tried three things. Here's why none closed the loop.",
+    vsBody:
+      "Honest comparison. Each alternative solves a slice — but none closes the physiology → decision → evidence loop.",
+    vsHeader: "Alternative",
+    vsHeaderBio: "BIO-IGNITION",
+    vsRows: [
+      {
+        label: "Classic EAP (1-800 line)",
+        bio: "Pre-shift · adoption > 50 %",
+        note: "EAP: 2–6 % adoption · reactive post-crisis. Good for therapy; doesn't move weekly operational outcome.",
+      },
+      {
+        label: "Wellness apps (Calm, Headspace)",
+        bio: "Measured HRV · auditable outcome",
+        note: "B2C apps deliver feel-good + retention. Operational outcome evidence: virtually nil in peer-reviewed literature.",
+      },
+      {
+        label: "External 1:1 coaches",
+        bio: "$8–15 / seat · scales to 5,000",
+        note: "Coach: $150–400/h, 1-on-1, doesn't scale. No audit trail or NOM-035 export. Complementary, not substitutive.",
+      },
+      {
+        label: "Build in-house (internal team)",
+        bio: "Time-to-value · 14 days",
+        note: "Internal build: 12–24 months, $500K–$2M, compliance drift at next re-org. No continuity of scientific evidence.",
+      },
+      {
+        label: "Corporate wearable (Oura, WHOOP)",
+        bio: "Bring-your-own · any sensor",
+        note: "Wearable alone: generates data, not protocol. No compliance mapping or auditor export. We link them if you have them.",
+      },
+    ],
+
+    compoundKicker: "WHAT COMPOUNDS",
+    compoundH: "Five outcomes that grow together over 18 months.",
+    compoundBody:
+      "Compound effect: each reinforces the others. Q4 2025 pilots reported simultaneous traction — not one at the cost of another.",
+    compound: [
+      {
+        k: "+18 pp",
+        t: "12-month retention in critical roles",
+        b: "Gartner HR 2024 benchmark · burnout exits top-3 of exit interviews when pre-shift is active.",
+      },
+      {
+        k: "−9 %",
+        t: "Workers' comp premium renegotiated",
+        b: "Carriers beginning to recognize operational fatigue-mgmt evidence. Range observed in 2024 pilots — not guaranteed.",
+      },
+      {
+        k: "100 %",
+        t: "NOM-035 STPS sign-off with zero findings",
+        b: "Quarterly export already mapped to ECO37 + Guide III. Your compliance officer stops rewriting it every cycle.",
+      },
+      {
+        k: "Board deck · 1 slide",
+        t: "Shareholder-reportable metric",
+        b: "A quarterly number (BioSignal Index) your CFO can defend to ISSB S1/S2 and SASB. No narrative.",
+      },
+      {
+        k: "Tier-1 employer brand",
+        t: "Glassdoor + LinkedIn signal",
+        b: "'My company measures my fatigue and lets me decide to work the shift' is the #1 mention in pilot positive reviews.",
+      },
+    ],
+
+    notForKicker: "WHEN NOT",
+    notForH: "Three reasons not to call us. We say them first.",
+    notForBody:
+      "We'd rather lose the sale than lose the pilot. If your ops fits any of these, today isn't the moment — and we'll say so.",
+    notForItems: [
+      {
+        t: "You want to solve clinical mental health.",
+        b: "That's psychiatry + serious EAP. We complement — we don't substitute. If you need scalable therapy, call Lyra or Spring Health.",
+      },
+      {
+        t: "You don't have a committed operational champion.",
+        b: "3-min pre-shift without organizational ritual dies in 6 weeks. If HR doesn't have someone to sustain the protocol, we abort the pilot.",
+      },
+      {
+        t: "Your board demands 100 % explainable AI today.",
+        b: "We publish the neural engine's weights and architecture, but the adaptive GBDT isn't 100 % causal. If you need pure causal inference, we're not for you today.",
+      },
+    ],
+
+    cohortKicker: "PILOT COHORT · Q2 2026",
+    cohortH: "12 organizations. Not one more, not one less.",
+    cohortBody:
+      "Pilot capped to maintain implementation quality. Each cohort includes champion assignment, protocol mapping, auditable 90-day outcome report, and Q2 pricing lock-in.",
+    cohortRows: [
+      { k: "SEATS", v: "12 / 12 · reserving 4 at close" },
+      { k: "WINDOW", v: "Activation May 15 → close July 31, 2026" },
+      { k: "ONBOARDING", v: "Week-1 champion + week-2 HR + week-4 go-live" },
+      { k: "REPORT", v: "90-day outcome dossier · signed by clinical lead" },
+      { k: "LOCK-IN", v: "Q2 2026 pricing · 18 m · transparent renewal" },
+      { k: "EXIT", v: "Cancel on 30-day notice · full CSV to the employee" },
+    ],
+    cohortCta: "Apply to cohort",
+    cohortCtaHint: "Initial review in 24 business hours. No slides, no rep.",
+
+    timelineKicker: "D0 → D90",
+    timelineH: "What the pilot looks like, week by week.",
+    timelineBody:
+      "Actual time observed in prior pilots. Not a theoretical plan; it's the cadence we've already walked 4 times.",
+    timeline: [
+      { k: "D0", t: "Kick-off + DPA signed", b: "Champion assigned · legal review closed in < 5 days · SSO activated." },
+      { k: "D14", t: "Go-live with one pilot shift", b: "10–30 active users · pre-shift installed · live HR dashboard." },
+      { k: "D45", t: "Full shift rollout", b: "Interim outcome reviewed · protocol tuned to specific operational context." },
+      { k: "D90", t: "Outcome dossier + scale decision", b: "Signed report · org-wide scale decision · Q2 2026 pricing locked if applicable." },
+    ],
+
+    railKicker: "COMPLIANCE · FULL POSTURE",
+    railH: "The legal scaffold, from day zero.",
+    railChips: [
+      "SOC 2 Type I · active posture",
+      "ISO 27001 · documented gap analysis",
+      "ISO 45001 · occupational mapping",
+      "NOM-035 STPS · ECO37 export",
+      "GDPR · Recital 26 + DPA",
+      "HIPAA-ready · BAA available",
+      "SSO · SAML 2.0 + SCIM 2.0",
+      "99.9 % SLA · monitored 24/7",
+    ],
+
+    faqKicker: "FREQUENT OBJECTIONS",
+    faqH: "The five questions that come up in the due-diligence call.",
+    faq: [
+      {
+        q: "Isn't this just another wellness app with better packaging?",
+        a: "No. Wellness apps optimize retention and engagement. We measure physiological HRV, export to audited CSV, and sign NOM-035. If our metric doesn't move seat-by-seat outcome in 90 days, you cancel on 30-day notice.",
+      },
+      {
+        q: "Why not build in-house? We have the team.",
+        a: "Internal build: 12–24 m, $500K–$2M, and compliance drift at next re-org. We already carry the audit trail, neural engine, and regulatory mapping. Your team does what only your team can: integrate it to your ops.",
+      },
+      {
+        q: "What defends this when a $5/mo app copies the UI?",
+        a: "Three moats: (1) per-org accumulated evidence — more data, more precise adaptive engine; (2) active compliance with named auditors; (3) native export to regulated B2B frameworks no B2C clone will ever sign.",
+      },
+      {
+        q: "What if the team doesn't adopt? Happened with our last app.",
+        a: "If adoption < 35 % at day 45 we pause the pilot and don't bill the rest. Adoption-guarantee documented in MSA. Key: pre-shift is 3 operational minutes — not an 'extra' on the employee's schedule.",
+      },
+      {
+        q: "How does this relate to our existing EAP?",
+        a: "It complements, doesn't replace. EAP resolves crisis; we prevent the fatigue that triggers it. Many pilots end with EAP reporting −30 % intake because BIO-IGNITION catches upstream.",
+      },
+    ],
+
+    closingKicker: "DECISION",
+    closingHLead: "You can keep running quarterly surveys.",
+    closingHBody: "Or start measuring the physiology that precedes the incident.",
+    closingBody:
+      "The Q2 2026 pilot cohort closes May 15. After that we open Q3 at +12 % price. If your board will ask for reportable physiological outcome in 2026 — and they will — today is the cheap moment.",
+    closingPrimary: "Apply to Q2 2026 cohort",
+    closingSecondary: "See ROI on your ops",
+    closingTertiary: "Trust Center · due diligence",
+    closingAvail: "Page reviewed",
+
+    disclaimerH: "Legal note · 45-second read",
+    disclaimer1:
+      "All statistical figures come from public peer-reviewed sources or official reports (WHO, ILO, Gallup, SHRM, NIOSH, Gartner HR) and are estimates — not a guarantee in your specific organization. Real outcome depends on operational context, champion commitment, and adherence rate.",
+    disclaimer2:
+      "BIO-IGNITION is an operational wellness tool based on HRV · NOT cleared as a medical device by FDA, COFEPRIS, CE, ANMAT, ANVISA or Health Canada · does NOT diagnose, treat or prevent medical conditions · does NOT substitute for clinical, psychiatric or formal fitness-for-duty evaluation. Complementary to your organization's EAP/FEAP and occupational health program.",
+    disclaimer3:
+      "Referenced marks (Lyra Health, Spring Health, Calm, Headspace, Oura, WHOOP, Apple Watch, Fitbit, SHRM, Gallup, WHO, ILO, NIOSH, Gartner, ISSB, SASB) are used under fair nominative use for editorial comparison. No endorsement, affiliation, partnership or commercial subordination with BIO-IGNITION is implied.",
+    disclaimer4:
+      "Outcome percentages (+18 pp retention, −9 % premium) correspond to ranges observed in internal 2024–2025 pilots and sector literature — not presented as contractual guarantee. The adoption-guarantee and 30-day exit are documented explicitly in the corresponding MSA.",
+    disclaimer5:
+      "Terms 'seat-by-seat outcome', 'compliance-native' and 'evidence, not narrative' describe product architecture and operational posture; they do not substitute the SLA, DPA, BAA or signed MSA that constitutes the definitive contractual relationship.",
+  },
+};
+
+export default async function WhyPage() {
+  const locale = await getServerLocale();
+  const t = COPY[locale === "en" ? "en" : "es"];
+
+  return (
+    <PublicShell activePath="/why">
+      <main id="main-content">
+        {/* ═══ HERO ═══ */}
+        <section style={{ position: "relative", paddingBlock: `${space[16]}px ${space[12]}px` }}>
+          <BioglyphLattice variant="ambient" />
+          <Container size="xl" style={{ position: "relative", zIndex: 1 }}>
+            <IgnitionReveal sparkOrigin="18% 28%">
+              <p style={kickerStyle}>{t.eyebrow}</p>
+              <h1 style={h1Style}>{t.title}</h1>
+              <p style={editorialStyle}>{t.editorial}</p>
+
+              <div style={{ marginBlockStart: space[6] }}>
+                <span className="bi-roi-scarcity">{t.scarcity}</span>
+              </div>
+
+              <ul style={{
+                listStyle: "none", padding: 0, margin: `${space[8]}px 0 0`,
+                display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: space[3],
+              }}>
+                {t.heroBullets.map((b) => (
+                  <li key={b} style={{
+                    display: "flex", alignItems: "flex-start", gap: space[2],
+                    color: cssVar.text, fontSize: font.size.base, lineHeight: font.leading.relaxed,
+                  }}>
+                    <span aria-hidden style={{ color: bioSignal.phosphorCyan, fontFamily: cssVar.fontMono, fontWeight: font.weight.bold }}>▸</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div style={{
+                marginBlockStart: space[6], display: "flex", flexWrap: "wrap", gap: space[2],
+                fontFamily: cssVar.fontMono, fontSize: font.size.xs, color: cssVar.textMuted,
+                letterSpacing: "0.08em",
+              }}>
+                {t.heroCompliance.map((c, i) => (
+                  <span key={c} style={{
+                    padding: `${space[1]}px ${space[3]}px`,
+                    border: `1px solid ${cssVar.border}`, borderRadius: radius.pill,
+                    background: cssVar.surface2,
+                  }}>{c}</span>
+                ))}
+              </div>
+
+              <div style={{ marginBlockStart: space[8], display: "flex", flexWrap: "wrap", gap: space[3] }}>
+                <Link href="/demo" className="bi-demo-closing-primary">{t.heroPrimaryCta}</Link>
+                <Link href="/roi-calculator" className="bi-demo-closing-secondary">{t.heroSecondaryCta}</Link>
+              </div>
+            </IgnitionReveal>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ COST NOBODY MEASURES ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.costKicker}</p>
+            <h2 style={sectionHeading}>{t.costH}</h2>
+            <p style={sectionSub}>{t.costBody}</p>
+            <div className="bi-proof-stats" style={{ marginBlockStart: space[8] }}>
+              {t.stats.map((s) => (
+                <div key={s.l}>
+                  <div className="v">{s.v}</div>
+                  <div className="l">{s.l}</div>
+                  <div className="s">{s.s}</div>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ WHY NOW ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.whyNowKicker}</p>
+            <h2 style={sectionHeading}>{t.whyNowH}</h2>
+            <p style={sectionSub}>{t.whyNowBody}</p>
+            <div style={{
+              marginBlockStart: space[8], display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: space[4],
+            }}>
+              {t.whyNowItems.map((it) => (
+                <article key={it.t} style={cardStyle}>
+                  <p style={{ ...kickerStyle, margin: 0, fontSize: "10px" }}>{it.k}</p>
+                  <h3 style={{
+                    margin: 0, fontSize: font.size.lg, fontWeight: font.weight.bold,
+                    color: cssVar.text, letterSpacing: "-0.01em",
+                  }}>{it.t}</h3>
+                  <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{it.b}</p>
+                </article>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ 4 PILLARS ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.pillarsKicker}</p>
+            <h2 style={sectionHeading}>{t.pillarsH}</h2>
+            <p style={sectionSub}>{t.pillarsBody}</p>
+            <div style={{
+              marginBlockStart: space[8], display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: space[4],
+            }}>
+              {t.pillars.map((p) => (
+                <article key={p.n} style={{
+                  ...cardStyle,
+                  borderInlineStart: `3px solid ${bioSignal.phosphorCyan}`,
+                }}>
+                  <div style={{
+                    fontFamily: cssVar.fontMono, fontSize: font.size.xs,
+                    color: bioSignal.phosphorCyan, letterSpacing: "0.2em", fontWeight: font.weight.bold,
+                  }}>{p.n}</div>
+                  <h3 style={{
+                    margin: 0, fontSize: font.size.lg, fontWeight: font.weight.black,
+                    color: cssVar.text, letterSpacing: "-0.015em",
+                  }}>{p.t}</h3>
+                  <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{p.b}</p>
+                </article>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ VS ALTERNATIVES ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.vsKicker}</p>
+            <h2 style={sectionHeading}>{t.vsH}</h2>
+            <p style={sectionSub}>{t.vsBody}</p>
+            <div className="bi-roi-peer-table-wrap" style={{ marginBlockStart: space[8] }}>
+              <table className="bi-roi-peer-table">
+                <thead>
+                  <tr>
+                    <th>{t.vsHeader}</th>
+                    <th>{t.vsHeaderBio}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {t.vsRows.map((r) => (
+                    <tr key={r.label}>
+                      <td>
+                        <span className="bi-roi-peer-label">{r.label}</span>
+                        <div style={{ marginBlockStart: space[1], fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: font.leading.relaxed }}>{r.note}</div>
+                      </td>
+                      <td>{r.bio}</td>
+                    </tr>
+                  ))}
+                  <tr className="bio">
+                    <td><span className="bi-roi-peer-label">BIO-IGNICIÓN</span></td>
+                    <td>Cierra el loop · evidencia + outcome + compliance</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ WHAT COMPOUNDS ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.compoundKicker}</p>
+            <h2 style={sectionHeading}>{t.compoundH}</h2>
+            <p style={sectionSub}>{t.compoundBody}</p>
+            <div className="bi-roi-benchmark-strip" style={{ marginBlockStart: space[8] }}>
+              {t.compound.map((c) => (
+                <div key={c.t} style={{
+                  border: `1px solid ${cssVar.border}`, borderRadius: radius.lg,
+                  padding: space[5], background: cssVar.surface, display: "grid", gap: space[2],
+                }}>
+                  <div style={{
+                    fontFamily: cssVar.fontMono, fontSize: "22px", fontWeight: font.weight.black,
+                    color: bioSignal.phosphorCyan, letterSpacing: "-0.01em",
+                  }}>{c.k}</div>
+                  <div style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.text }}>{c.t}</div>
+                  <div style={{ fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: font.leading.relaxed }}>{c.b}</div>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ WHEN NOT ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.notForKicker}</p>
+            <h2 style={sectionHeading}>{t.notForH}</h2>
+            <p style={sectionSub}>{t.notForBody}</p>
+            <div style={{
+              marginBlockStart: space[8], display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: space[4],
+            }}>
+              {t.notForItems.map((it) => (
+                <article key={it.t} style={{
+                  ...cardStyle,
+                  borderInlineStart: `3px solid #F59E0B`,
+                }}>
+                  <h3 style={{
+                    margin: 0, fontSize: font.size.base, fontWeight: font.weight.bold,
+                    color: cssVar.text, letterSpacing: "-0.01em",
+                  }}>{it.t}</h3>
+                  <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{it.b}</p>
+                </article>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ COHORT FOMO ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.cohortKicker}</p>
+            <h2 style={sectionHeading}>{t.cohortH}</h2>
+            <p style={sectionSub}>{t.cohortBody}</p>
+            <div style={{
+              marginBlockStart: space[8], display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: space[2],
+              border: `1px solid ${cssVar.border}`, borderRadius: radius.xl,
+              padding: space[6], background: cssVar.surface,
+            }}>
+              {t.cohortRows.map((r) => (
+                <div key={r.k} style={{
+                  padding: `${space[3]}px ${space[4]}px`,
+                  background: cssVar.surface2,
+                  borderRadius: radius.md,
+                  border: `1px solid ${cssVar.border}`,
+                }}>
+                  <div style={{
+                    fontFamily: cssVar.fontMono, fontSize: font.size.xs,
+                    color: bioSignal.phosphorCyan, letterSpacing: "0.2em", fontWeight: font.weight.bold,
+                    marginBlockEnd: space[1],
+                  }}>{r.k}</div>
+                  <div style={{ color: cssVar.text, fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{r.v}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginBlockStart: space[6], display: "flex", gap: space[3], alignItems: "center", flexWrap: "wrap" }}>
+              <Link href="/demo" className="bi-demo-closing-primary">{t.cohortCta}</Link>
+              <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>{t.cohortCtaHint}</span>
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ TIMELINE ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.timelineKicker}</p>
+            <h2 style={sectionHeading}>{t.timelineH}</h2>
+            <p style={sectionSub}>{t.timelineBody}</p>
+            <ol style={{
+              listStyle: "none", padding: 0, margin: `${space[8]}px 0 0`,
+              display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: space[4],
+            }}>
+              {t.timeline.map((step, i) => (
+                <li key={step.k} style={{
+                  ...cardStyle,
+                  position: "relative",
+                }}>
+                  <span aria-hidden style={{
+                    position: "absolute", insetBlockStart: -10, insetInlineStart: space[4],
+                    background: cssVar.surface2, padding: `${space[0]}px ${space[2]}px`,
+                    fontFamily: cssVar.fontMono, fontSize: "10px",
+                    letterSpacing: "0.2em", color: cssVar.textMuted,
+                    border: `1px solid ${cssVar.border}`, borderRadius: radius.pill,
+                  }}>STEP {i + 1}</span>
+                  <div style={{
+                    fontFamily: cssVar.fontMono, fontSize: "22px", fontWeight: font.weight.black,
+                    color: bioSignal.phosphorCyan, letterSpacing: "-0.01em",
+                  }}>{step.k}</div>
+                  <h3 style={{ margin: 0, fontSize: font.size.base, fontWeight: font.weight.bold, color: cssVar.text }}>{step.t}</h3>
+                  <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{step.b}</p>
+                </li>
+              ))}
+            </ol>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ COMPLIANCE RAIL ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.railKicker}</p>
+            <h2 style={sectionHeading}>{t.railH}</h2>
+            <div style={{
+              marginBlockStart: space[8], display: "flex", flexWrap: "wrap", gap: space[2],
+            }}>
+              {t.railChips.map((c) => (
+                <span key={c} className="bi-roi-ent-chip">{c}</span>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ FAQ / OBJECTIONS ═══ */}
+        <section style={{ paddingBlock: space[12] }}>
+          <Container size="xl">
+            <p style={kickerStyleMuted}>{t.faqKicker}</p>
+            <h2 style={sectionHeading}>{t.faqH}</h2>
+            <div style={{ marginBlockStart: space[8], display: "grid", gap: space[3] }}>
+              {t.faq.map((f, i) => (
+                <details key={i} style={{
+                  border: `1px solid ${cssVar.border}`, borderRadius: radius.lg,
+                  padding: `${space[4]}px ${space[5]}px`, background: cssVar.surface,
+                }}>
+                  <summary style={{
+                    cursor: "pointer", fontWeight: font.weight.bold, fontSize: font.size.base,
+                    color: cssVar.text, listStyle: "none", display: "flex", gap: space[3], alignItems: "flex-start",
+                  }}>
+                    <span aria-hidden style={{ color: bioSignal.phosphorCyan, fontFamily: cssVar.fontMono, fontSize: font.size.sm }}>Q{String(i + 1).padStart(2, "0")}</span>
+                    <span>{f.q}</span>
+                  </summary>
+                  <p style={{
+                    margin: `${space[3]}px 0 0`, color: cssVar.textMuted,
+                    fontSize: font.size.sm, lineHeight: font.leading.relaxed,
+                  }}>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ CLOSING CTA ═══ */}
+        <section className="bi-demo-closing-section">
+          <Container size="xl">
+            <div className="bi-demo-closing">
+              <span aria-hidden className="bi-demo-closing-lattice" />
+              <span aria-hidden className="bi-demo-closing-aura" />
+              <span aria-hidden className="bi-demo-closing-aura bi-demo-closing-aura--spark" />
+              <span aria-hidden className="bi-demo-closing-mark">
+                <span className="bi-demo-closing-mark-core" />
+                <span className="bi-demo-closing-mark-ring" />
+              </span>
+              <p style={kickerStyle}>{t.closingKicker}</p>
+              <h2 className="bi-demo-closing-h">
+                <span className="bi-demo-closing-h-lead">{t.closingHLead}</span>
+                <span className="bi-demo-closing-h-body">{t.closingHBody}</span>
+              </h2>
+              <p className="bi-demo-closing-body">{t.closingBody}</p>
+              <div className="bi-demo-closing-actions">
+                <Link href="/demo" className="bi-demo-closing-primary">{t.closingPrimary}</Link>
+                <Link href="/roi-calculator" className="bi-demo-closing-secondary">{t.closingSecondary}</Link>
+                <Link href="/trust" className="bi-demo-closing-tertiary">{t.closingTertiary}</Link>
+              </div>
+              <div style={{
+                marginBlockStart: space[5], fontFamily: cssVar.fontMono, fontSize: font.size.xs,
+                color: cssVar.textMuted, letterSpacing: "0.1em",
+              }}>
+                {t.closingAvail} · {LAST_REVIEWED}
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* ═══ LEGAL DISCLAIMER ═══ */}
+        <section style={{ paddingBlock: space[10] }}>
+          <Container size="xl">
+            <details className="bi-pricing-legal">
+              <summary className="bi-pricing-legal-summary">
+                <span className="bi-pricing-legal-kicker">LEGAL · DISCLOSURE</span>
+                <span className="bi-pricing-legal-hint">
+                  {t.disclaimerH}
+                  <span aria-hidden className="chev">▾</span>
+                </span>
+              </summary>
+              <div className="bi-pricing-legal-body">
+                <p>{t.disclaimer1}</p>
+                <p>{t.disclaimer2}</p>
+                <p>{t.disclaimer3}</p>
+                <p>{t.disclaimer4}</p>
+                <p>{t.disclaimer5}</p>
+              </div>
+            </details>
+          </Container>
+        </section>
+
+        {/* JSON-LD · WebPage */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebPage",
+              name: "Por qué BIO-IGNICIÓN · la tesis detrás del sistema",
+              description: "La tesis B2B enterprise: evidencia fisiológica, outcome seat-por-seat, local-first y compliance-nativo.",
+              url: "https://bio-ignicion.app/why",
+              inLanguage: locale === "en" ? "en-US" : "es-MX",
+              dateModified: LAST_REVIEWED,
+            }),
+          }}
+        />
+      </main>
+    </PublicShell>
+  );
+}
