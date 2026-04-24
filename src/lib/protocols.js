@@ -44,9 +44,19 @@ export const P = [
 
   /* ═══ #4 PULSE SHIFT ═══ */
   {id:4,n:"Pulse Shift",ct:"Activación",d:120,sb:"Reset neurocardíaco",tg:"PS",cl:"#F59E0B",int:"energia",dif:2,
-  ph:[{l:"Activación Rítmica",r:"0–30s",s:0,e:30,k:"Ritmo con los talones. Despierta el cuerpo.",i:"De pie o sentado, alterna elevar cada talón rítmicamente. Izquierdo. Derecho. Izquierdo. Derecho. Encuentra un ritmo constante como metrónomo. Siente cómo el movimiento sube por piernas y activa tu centro. Respira naturalmente. El ritmo bilateral despierta ambos hemisferios.",sc:"Movimiento bilateral cruza línea media corporal, activa ambos hemisferios y rompe congelamiento por estrés",ic:"body",br:null},
-  {l:"Apertura y Oxigenación",r:"30–90s",s:30,e:90,k:"Pecho abierto. Inhala expansión. Exhala liberación.",i:"Mantén el ritmo de talones si puedes, o detente suavemente. Lleva manos detrás de la cabeza, codos abiertos. Inhala expandiendo pecho 4 segundos. Mantén 1 segundo en máxima apertura. Exhala relajando hombros 5 segundos. Repite — cada ciclo más profundo. Tu postura se corrige. Tu oxigenación aumenta.",sc:"Apertura torácica revierte postura de estrés. Incrementa oxigenación cerebral 15-20%",ic:"breath",br:{in:4,h1:1,ex:5,h2:0}},
-  {l:"Liberación Progresiva",r:"90–120s",s:90,e:120,k:"Aprieta puños 3s. Suelta todo 7s. Libertad.",i:"Baja las manos. Cierra ambos puños con fuerza moderada 3 segundos mientras inhala. Siente la tensión subir por antebrazos. Suelta todo de golpe con exhalación larga de 7 segundos. Siente la ola de relajación. Repite una vez: aprieta 3s, suelta 7s. Abre los ojos con energía limpia.",sc:"Relajación progresiva de Jacobson. Contraste tensión-liberación genera relajación neuromuscular profunda",ic:"body",br:null}]},
+  ph:[{l:"Activación Rítmica",r:"0–30s",s:0,e:30,k:"Ritmo con los talones. Despierta el cuerpo.",i:"De pie o sentado, alterna elevar cada talón rítmicamente. Izquierdo. Derecho. Izquierdo. Derecho. Encuentra un ritmo constante como metrónomo. Siente cómo el movimiento sube por piernas y activa tu centro. Respira naturalmente. El ritmo bilateral despierta ambos hemisferios.",iExec:[
+    {from:0,to:10,text:"De pie o sentado. Alterna talones: izquierdo, derecho, izquierdo, derecho."},
+    {from:10,to:30,text:"Ritmo constante como metrónomo. Respira suave. La energía sube por las piernas."}
+  ],sc:"Movimiento bilateral cruza línea media corporal, activa ambos hemisferios y rompe congelamiento por estrés",ic:"body",br:null},
+  {l:"Apertura y Oxigenación",r:"30–90s",s:30,e:90,k:"Pecho abierto. Inhala expansión. Exhala liberación.",i:"Mantén el ritmo de talones si puedes, o detente suavemente. Lleva manos detrás de la cabeza, codos abiertos. Inhala expandiendo pecho 4 segundos. Mantén 1 segundo en máxima apertura. Exhala relajando hombros 5 segundos. Repite — cada ciclo más profundo. Tu postura se corrige. Tu oxigenación aumenta.",iExec:[
+    {from:0,to:20,text:"Manos detrás de la cabeza, codos abiertos. Inhala 4s expandiendo, sostén 1s, exhala 5s soltando hombros."},
+    {from:20,to:40,text:"Cada ciclo más profundo. Los hombros bajan más."},
+    {from:40,to:60,text:"La postura se corrige. El oxígeno sube al cerebro."}
+  ],sc:"Apertura torácica revierte postura de estrés. Incrementa oxigenación cerebral 15-20%",ic:"breath",br:{in:4,h1:1,ex:5,h2:0}},
+  {l:"Liberación Progresiva",r:"90–120s",s:90,e:120,k:"Aprieta puños 3s. Suelta todo 7s. Libertad.",i:"Baja las manos. Cierra ambos puños con fuerza moderada 3 segundos mientras inhala. Siente la tensión subir por antebrazos. Suelta todo de golpe con exhalación larga de 7 segundos. Siente la ola de relajación. Repite una vez: aprieta 3s, suelta 7s. Abre los ojos con energía limpia.",iExec:[
+    {from:0,to:15,text:"Baja las manos. Cierra los puños 3s al inhalar. Suelta al exhalar 7s."},
+    {from:15,to:30,text:"Repite. Siente la ola de relajación. Abre los ojos."}
+  ],sc:"Relajación progresiva de Jacobson. Contraste tensión-liberación genera relajación neuromuscular profunda",ic:"body",br:null}]},
 
   /* ═══ #5 SKYLINE FOCUS ═══ */
   {id:5,n:"Skyline Focus",ct:"Activación",d:120,sb:"Recalibración visual-cognitiva",tg:"SF",cl:"#22D3EE",int:"enfoque",dif:1,
