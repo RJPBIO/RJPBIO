@@ -12,9 +12,19 @@ export const P = [
 
   /* ═══ #2 ACTIVACIÓN COGNITIVA ═══ */
   {id:2,n:"Activación Cognitiva",ct:"Activación",d:120,sb:"Enfoque y autorregulación",tg:"AC",cl:"#22D3EE",int:"enfoque",dif:1,
-  ph:[{l:"Coherencia Cardíaca",r:"0–30s",s:0,e:30,k:"Inhala 6. Sostén 2. Exhala 8. Fluye.",i:"Cierra los ojos. Inhala por la nariz 6 segundos expandiendo abdomen y costillas. Mantén 2 segundos con suavidad. Exhala por la boca 8 segundos como si soplaras por una pajita. Repite sin pausa. El ritmo sincroniza corazón y respiración automáticamente.",sc:"Ratio 1:1.3 genera coherencia cardíaca. Variabilidad de frecuencia cardíaca mejora en 20-30 segundos",ic:"breath",br:{in:6,h1:2,ex:8,h2:0}},
-  {l:"Etiquetado Emocional",r:"30–90s",s:30,e:90,k:"Nombra exactamente lo que sientes. Sin juzgar.",i:"Mantén el ritmo 6-2-8 como base. Escanea tu cuerpo. ¿Qué sientes exactamente? No 'mal' — busca la palabra precisa: ¿frustración? ¿agotamiento? ¿incertidumbre? Nombrar reduce la intensidad. Sigue respirando mientras observas cómo la emoción pierde fuerza al ser nombrada. Sin juzgar, sin resolver — solo nombra y respira.",sc:"Affect labeling reduce activación amigdalar 30-40%. Nombrar activa corteza prefrontal ventrolateral",ic:"mind",br:{in:6,h1:2,ex:8,h2:0}},
-  {l:"Visualización Dirigida",r:"90–120s",s:90,e:120,k:"Visualízate resolviendo. Hoy avanzo paso a paso.",i:"Sin cambiar la respiración, visualízate dentro de 2 horas habiendo completado tu tarea principal con calma. Observa tu postura, tu expresión. Di internamente: 'Hoy avanzo, paso a paso.' Repite una vez. En la próxima exhalación, abre los ojos con esa imagen clara.",sc:"Visualización prospectiva activa dopamina orientada a objetivos y reduce ansiedad anticipatoria",ic:"focus",br:{in:6,h1:2,ex:8,h2:0}}]},
+  ph:[{l:"Coherencia Cardíaca",r:"0–30s",s:0,e:30,k:"Inhala 6. Sostén 2. Exhala 8. Fluye.",i:"Cierra los ojos. Inhala por la nariz 6 segundos expandiendo abdomen y costillas. Mantén 2 segundos con suavidad. Exhala por la boca 8 segundos como si soplaras por una pajita. Repite sin pausa. El ritmo sincroniza corazón y respiración automáticamente.",iExec:[
+    {from:0,to:10,text:"Cierra los ojos. Primera respiración: 6s ensanchando, sostén 2s, 8s como apagando una vela."},
+    {from:10,to:30,text:"Repite el ritmo. Corazón y respiración se alinean solos."}
+  ],sc:"Ratio 1:1.3 genera coherencia cardíaca. Variabilidad de frecuencia cardíaca mejora en 20-30 segundos",ic:"breath",br:{in:6,h1:2,ex:8,h2:0}},
+  {l:"Etiquetado Emocional",r:"30–90s",s:30,e:90,k:"Nombra exactamente lo que sientes. Sin juzgar.",i:"Mantén el ritmo 6-2-8 como base. Escanea tu cuerpo. ¿Qué sientes exactamente? No 'mal' — busca la palabra precisa: ¿frustración? ¿agotamiento? ¿incertidumbre? Nombrar reduce la intensidad. Sigue respirando mientras observas cómo la emoción pierde fuerza al ser nombrada. Sin juzgar, sin resolver — solo nombra y respira.",iExec:[
+    {from:0,to:20,text:"Escanea tu cuerpo. ¿Qué sientes exactamente?"},
+    {from:20,to:40,text:"Busca la palabra precisa. Nómbrala."},
+    {from:40,to:60,text:"Quédate con la palabra. La intensidad baja. Deja espacio para la imagen que viene."}
+  ],sc:"Affect labeling reduce activación amigdalar 30-40%. Nombrar activa corteza prefrontal ventrolateral",ic:"mind",br:{in:6,h1:2,ex:8,h2:0}},
+  {l:"Visualización Dirigida",r:"90–120s",s:90,e:120,k:"Visualízate resolviendo. Hoy avanzo paso a paso.",i:"Sin cambiar la respiración, visualízate dentro de 2 horas habiendo completado tu tarea principal con calma. Observa tu postura, tu expresión. Di internamente: 'Hoy avanzo, paso a paso.' Repite una vez. En la próxima exhalación, abre los ojos con esa imagen clara.",iExec:[
+    {from:0,to:15,text:"Visualízate en 2 horas — tarea hecha, postura serena."},
+    {from:15,to:30,text:"Di dentro: \"Hoy avanzo, paso a paso.\" Abre los ojos en una exhalación."}
+  ],sc:"Visualización prospectiva activa dopamina orientada a objetivos y reduce ansiedad anticipatoria",ic:"focus",br:{in:6,h1:2,ex:8,h2:0}}]},
 
   /* ═══ #3 RESET EJECUTIVO ═══ */
   {id:3,n:"Reset Ejecutivo",ct:"Reset",d:120,sb:"Para líderes bajo presión",tg:"RE",cl:"#8B5CF6",int:"reset",dif:1,

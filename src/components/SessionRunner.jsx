@@ -888,15 +888,85 @@ export default function SessionRunner({
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.35, letterSpacing: -0.3 }}>
                     {safePh.k}
                   </div>
-                  {(safePh.iExec || safePh.i) && (
-                    <div style={{ marginTop: 6, fontSize: 12, lineHeight: 1.55, color: "rgba(255,255,255,0.62)", maxWidth: 340, marginInline: "auto" }}>
-                      {/* iExec: versión breve para la ejecución activa
-                          (menos fricción cognitiva al leer mid-sesión).
-                          Fallback a i si aún no se ha migrado el
-                          protocolo. La pantalla de selección usa i. */}
-                      {safePh.iExec || safePh.i}
-                    </div>
-                  )}
+                  {/* iExec render — acepta 3 formas:
+                      (1) Array<{from,to,text}>  → steps cronometrados
+                          con highlight del paso activo. El usuario ve
+                          el arco completo de la fase y nunca se pierde.
+                          Tiempos se escalan automáticamente con durMult
+                          (media / normal / larga).
+                      (2) string                 → instrucción breve
+                          monolítica (legacy iExec o simple phase).
+                      (3) undefined              → fallback a safePh.i
+                          (texto largo original de selección).
+                      La pantalla de selección sigue usando safePh.i. */}
+                  {(() => {
+                    const raw = safePh.iExec || safePh.i;
+                    if (!raw) return null;
+                    if (typeof raw === "string") {
+                      return (
+                        <div style={{ marginTop: 6, fontSize: 12, lineHeight: 1.55, color: "rgba(255,255,255,0.62)", maxWidth: 340, marginInline: "auto" }}>
+                          {raw}
+                        </div>
+                      );
+                    }
+                    if (!Array.isArray(raw)) return null;
+                    const durMult = safePr && safePr.d > 0 ? totalDur / safePr.d : 1;
+                    const elapsedTotal = Math.max(0, totalDur - sec);
+                    const phaseStartActual = (safePh.s || 0) * durMult;
+                    const phaseElapsedBase = durMult > 0 ? (elapsedTotal - phaseStartActual) / durMult : 0;
+                    const activeIdx = raw.findIndex((s) => phaseElapsedBase >= s.from && phaseElapsedBase < s.to);
+                    return (
+                      <div style={{ marginTop: 8, maxWidth: 380, marginInline: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+                        {raw.map((step, i) => {
+                          const isActive = i === activeIdx;
+                          const isPast = activeIdx >= 0 && i < activeIdx;
+                          const fromAct = Math.round(step.from * durMult);
+                          const toAct = Math.round(step.to * durMult);
+                          return (
+                            <div
+                              key={i}
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "52px 1fr",
+                                gap: 10,
+                                alignItems: "start",
+                                opacity: isActive ? 1 : isPast ? 0.36 : 0.58,
+                                transform: isActive ? "translateX(0)" : "translateX(0)",
+                                transition: "opacity .35s ease",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+                                  fontSize: 10,
+                                  letterSpacing: "0.04em",
+                                  color: isActive ? accent : "rgba(255,255,255,0.5)",
+                                  fontWeight: isActive ? 700 : 500,
+                                  paddingTop: 3,
+                                  textAlign: "right",
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                {fromAct}–{toAct}s
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 13,
+                                  lineHeight: 1.5,
+                                  color: isActive ? "#fff" : "rgba(255,255,255,0.72)",
+                                  fontWeight: isActive ? 600 : 400,
+                                  textAlign: "left",
+                                  letterSpacing: isActive ? -0.05 : 0,
+                                }}
+                              >
+                                {step.text}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               )}
 
