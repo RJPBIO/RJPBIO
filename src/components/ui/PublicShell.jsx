@@ -62,6 +62,7 @@ const FOOTER_LINKS = {
     { href: "/learn",          labelKey: "nav.learn",      fallback: "Aprende" },
     { href: "/evidencia",      labelKey: null,             fallback: "Evidencia" },
     { href: "/roi-calculator", labelKey: "nav.roi",        fallback: "ROI" },
+    { href: "/vs",             labelKey: null,             fallback: "Comparativas" },
     { href: "/changelog",      labelKey: "nav.changelog",  fallback: "Changelog" },
   ],
   developers: [
