@@ -87,7 +87,6 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
         justifyContent: "center",
       }}
       onClick={onClose}
-      aria-hidden="true"
     >
       <motion.div
         ref={dialogRef}

@@ -249,7 +249,7 @@ function RunnerScreen({ T }) {
         <circle r="28" fill="none" stroke="#22D3EE" strokeWidth="1.8" opacity="0.85">
           <animate attributeName="r" values="28;34;28" dur="4s" repeatCount="indefinite" />
         </circle>
-        <text textAnchor="middle" y="5" fontFamily="ui-monospace, monospace" fontSize="16" fontWeight="800" fill="#E5E7EB" fontVariantNumeric="tabular-nums">00:24</text>
+        <text textAnchor="middle" y="5" fontFamily="ui-monospace, monospace" fontSize="16" fontWeight="800" fill="#E5E7EB" style={{ fontVariantNumeric: "tabular-nums" }}>00:24</text>
       </g>
       {/* waveform */}
       <g transform="translate(0, 360)">
@@ -341,7 +341,7 @@ function PerfilScreen({ T }) {
       <g transform="translate(14, 240)">
         <rect width="232" height="142" rx="12" fill="url(#pfCard)" stroke="#22D3EE22" />
         <text x="14" y="20" fontFamily="ui-monospace, monospace" fontSize="8" fill="#22D3EE" letterSpacing="2" fontWeight="700">BASELINE · NEURAL</text>
-        <text x="14" y="48" fontFamily="Manrope, system-ui, sans-serif" fontSize="28" fontWeight="800" fill="#E5E7EB" fontVariantNumeric="tabular-nums">78</text>
+        <text x="14" y="48" fontFamily="Manrope, system-ui, sans-serif" fontSize="28" fontWeight="800" fill="#E5E7EB" style={{ fontVariantNumeric: "tabular-nums" }}>78</text>
         <text x="50" y="48" fontFamily="ui-monospace, monospace" fontSize="9" fill="#10B981" fontWeight="700">+4 · 7d</text>
         {[
           { x: 14, y: 64, k: "RT", v: "318" },
@@ -351,7 +351,7 @@ function PerfilScreen({ T }) {
         ].map((m) => (
           <g key={m.k}>
             <text x={m.x} y={m.y} fontFamily="ui-monospace, monospace" fontSize="7" fill="#6B7280" letterSpacing="1.5">{m.k}</text>
-            <text x={m.x} y={m.y + 14} fontFamily="Manrope, system-ui, sans-serif" fontSize="12" fontWeight="800" fill="#E5E7EB" fontVariantNumeric="tabular-nums">{m.v}</text>
+            <text x={m.x} y={m.y + 14} fontFamily="Manrope, system-ui, sans-serif" fontSize="12" fontWeight="800" fill="#E5E7EB" style={{ fontVariantNumeric: "tabular-nums" }}>{m.v}</text>
           </g>
         ))}
         {/* sparkline */}
@@ -373,7 +373,7 @@ function PerfilScreen({ T }) {
         ].map((s) => (
           <g key={s.l} transform={`translate(${s.x}, 0)`}>
             <rect width="68" height="52" rx="10" fill="url(#pfCard)" stroke="#1F232B" />
-            <text x="34" y="24" textAnchor="middle" fontFamily="Manrope, system-ui, sans-serif" fontSize="16" fontWeight="800" fill="#E5E7EB" fontVariantNumeric="tabular-nums">{s.v}</text>
+            <text x="34" y="24" textAnchor="middle" fontFamily="Manrope, system-ui, sans-serif" fontSize="16" fontWeight="800" fill="#E5E7EB" style={{ fontVariantNumeric: "tabular-nums" }}>{s.v}</text>
             <text x="34" y="40" textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="7" fill="#6B7280" letterSpacing="1">{s.l}</text>
           </g>
         ))}

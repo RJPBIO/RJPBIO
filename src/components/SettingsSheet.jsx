@@ -61,7 +61,6 @@ export default function SettingsSheet({
             justifyContent: "center",
           }}
           onClick={onClose}
-          aria-hidden="true"
         >
           <motion.div
             ref={dialogRef}
