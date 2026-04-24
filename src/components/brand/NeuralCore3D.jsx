@@ -122,6 +122,72 @@ const INTENT = {
 };
 const DEFAULT_INTENT = INTENT.enfoque;
 
+// ─── Performance tier detection ─────────────────────────────────
+// Detecta capacidad del dispositivo en mount (una vez). La degradación
+// se aplica quirúrgicamente sobre 3 hot paths identificados: backdrop-
+// filter (caro en GPU ARM), drop-shadow animado en firing glow, y
+// conteo de nodos (React reconciliation por frame).
+// Fallback seguro en SSR (no navigator) → "high".
+function detectPerfTier() {
+  if (typeof navigator === "undefined") return "high";
+  const cores = navigator.hardwareConcurrency || 8;
+  const mem = navigator.deviceMemory; // undefined en iOS/Safari
+  const ua = navigator.userAgent || "";
+  const isAndroid = /Android/.test(ua);
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+
+  // Desktop: asume high. El fallback cubre casos raros (VMs).
+  if (!isAndroid && !isIOS) {
+    if (cores <= 2) return "mid";
+    return "high";
+  }
+
+  // iOS: GPU Metal, backdrop-filter hardware-acelerado. Mod iPhones
+  // sostienen 60fps sin problema. Sólo degradar en iPhone 7 o anterior.
+  if (isIOS) {
+    if (cores <= 2) return "low";
+    return "high";
+  }
+
+  // Android: la zona gris. deviceMemory es la señal más confiable
+  // cuando existe. hardwareConcurrency engaña (MediaTek 8-core puede
+  // ser más lento que un Snapdragon 4-core).
+  if (mem !== undefined) {
+    if (mem <= 2) return "low";
+    if (mem <= 3) return "mid";
+    if (mem <= 4) return "mid";
+    return "high";
+  }
+  // Fallback por cores si mem no reportado
+  if (cores <= 4) return "low";
+  if (cores <= 6) return "mid";
+  return "high";
+}
+
+const PERF = {
+  high: {
+    nodes: 24, baseVisible: 16,
+    blurPx: 16, saturatePct: 170,
+    sparkGlow: true, boxShadowLayers: 5,
+    conicAura: true, nebula: true,
+    maxFirings: 99, targetFrameMs: 0, // sin throttle
+  },
+  mid: {
+    nodes: 20, baseVisible: 13,
+    blurPx: 10, saturatePct: 140,
+    sparkGlow: true, boxShadowLayers: 4,
+    conicAura: true, nebula: true,
+    maxFirings: 6, targetFrameMs: 0,
+  },
+  low: {
+    nodes: 16, baseVisible: 16, // crystallization off: siempre todos
+    blurPx: 0, saturatePct: 100, // sin backdrop-filter
+    sparkGlow: false, boxShadowLayers: 3,
+    conicAura: false, nebula: false, // reemplazados por rgba sólido
+    maxFirings: 3, targetFrameMs: 33, // throttle a ~30fps
+  },
+};
+
 // Mapeo breath-phase label → modifiers. Las variantes sin acento
 // son defensivas por si el servidor envía sin diacríticos.
 function resolveBreathPhase(label) {
@@ -142,10 +208,7 @@ export const EMBER_FADE_IN_MS = 1400;
 export const EMBER_FADE_OUT_MS = 30000;
 
 // ─── Component ────────────────────────────────────────────────────
-const N_NODES = 24;
 const K_NEIGHBORS = 3;
-const BASE_VISIBLE = 16;           // motes visibles en idle/arranque
-const GOLDEN_NODES = [2, 8, 14, 20]; // posiciones que reciben oro a coherence alta
 
 export default function NeuralCore3D({
   size = 260,
@@ -158,14 +221,33 @@ export default function NeuralCore3D({
   phaseIndex = 0,
   progress = 0,
   secondTick = 0,
-  breathPhase = "",   // NUEVO: "INHALA" | "SOSTÉN" | "EXHALA" | "VACÍO" | ""
+  breathPhase = "",
+  // Permite forzar un tier específico (debug, o override explícito).
+  // Si se omite, auto-detectado en mount por detectPerfTier().
+  perfTierOverride = null,
 }) {
   const cfg = INTENT[intent] || DEFAULT_INTENT;
   const bp = resolveBreathPhase(breathPhase);
 
-  const nodes = useMemo(() => fibSphere(N_NODES), []);
+  // Perf tier estable para el ciclo de vida del componente. Si el
+  // usuario cambia de dispositivo (poco probable) tendría que recargar.
+  const perf = useMemo(() => {
+    const tier = perfTierOverride || detectPerfTier();
+    return PERF[tier] || PERF.high;
+  }, [perfTierOverride]);
+
+  const N_NODES = perf.nodes;
+  // 4 nodos dorados distribuidos homogéneamente sobre la lattice
+  const GOLDEN_NODES = useMemo(() => [
+    Math.floor(N_NODES * 0.08),
+    Math.floor(N_NODES * 0.35),
+    Math.floor(N_NODES * 0.60),
+    Math.floor(N_NODES * 0.85),
+  ], [N_NODES]);
+
+  const nodes = useMemo(() => fibSphere(N_NODES), [N_NODES]);
   const edges = useMemo(() => buildEdges(nodes, K_NEIGHBORS), [nodes]);
-  const neighbors = useMemo(() => buildNeighbors(N_NODES, edges), [edges]);
+  const neighbors = useMemo(() => buildNeighbors(N_NODES, edges), [edges, N_NODES]);
 
   // Emergence order (crystallization): del ecuador hacia los polos
   const nodeEmergeIndex = useMemo(() => {
@@ -223,13 +305,23 @@ export default function NeuralCore3D({
   }, [state]);
 
   // ─── rAF loop ──────────────────────────────────────────────────
+  const lastRafRenderRef = useRef(0);
   useEffect(() => {
     if (reducedMotion) return undefined;
     let alive = true;
     lastTickRef.current = 0;
+    lastRafRenderRef.current = 0;
 
     const tick = (now) => {
       if (!alive) return;
+      // Throttle: en low tier saltamos frames para limitar a ~30fps.
+      // El dt se sigue acumulando correctamente porque lastTickRef
+      // se actualiza dentro del block de render (abajo), no aquí.
+      if (perf.targetFrameMs > 0 && now - lastRafRenderRef.current < perf.targetFrameMs) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      lastRafRenderRef.current = now;
       const prevLast = lastTickRef.current || now;
       lastTickRef.current = now;
       const dt = Math.min(0.1, (now - prevLast) / 1000); // cap tras pausas largas
@@ -304,8 +396,10 @@ export default function NeuralCore3D({
       rotYRef.current = (rotYRef.current + dt * 360 * ySpeed) % 360;
       rotXPhaseRef.current += dt * (2 * Math.PI / 36); // X oscillation period 36s
 
-      // Spawn organic firings
-      // ember permite firings esporádicos (cada 20-30s) para el glow residual
+      // Spawn organic firings (respeta el cap concurrente del perf tier
+      // para mantener el rendering barato en dispositivos débiles).
+      // Los firings coreografiados (ignition/ring/collapse) bypasean
+      // el cap — son eventos cortos y valen el costo.
       if (state === "running" || state === "idle" || state === "ember") {
         const emberFactor = state === "ember" ? 15 : 1;
         const intensityBoost = (state === "running" && progress > 0.8)
@@ -314,7 +408,8 @@ export default function NeuralCore3D({
         const baseMs = cfg.fireBase * (state === "idle" ? 1.6 : intensityBoost) * emberFactor;
         const jit = cfg.fireJit * emberFactor;
         const chaosFire = state === "running" && cfg.chaos > 0 && Math.random() < cfg.chaos * 0.02;
-        if (chaosFire || now - lastFireRef.current > baseMs + Math.random() * jit) {
+        const canSpawn = firingsRef.current.length < perf.maxFirings;
+        if (canSpawn && (chaosFire || now - lastFireRef.current > baseMs + Math.random() * jit)) {
           lastFireRef.current = now;
           if (edges.length > 0) {
             const e = edges[Math.floor(Math.random() * edges.length)];
@@ -338,7 +433,7 @@ export default function NeuralCore3D({
       alive = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [reducedMotion, state, cfg, edges, neighbors, progress, bp, isBreathing]);
+  }, [reducedMotion, state, cfg, edges, neighbors, progress, bp, isBreathing, perf]);
 
   // ─── Ignition wave & resonance collapse ────────────────────────
   const prevStateRef = useRef(state);
@@ -446,11 +541,11 @@ export default function NeuralCore3D({
 
   // Crystallization: ramp lineal de motes visibles durante running/done/ember
   const emergeFraction = (state === "running" || state === "done" || state === "ember")
-    ? BASE_VISIBLE + progress * (N_NODES - BASE_VISIBLE)
+    ? perf.baseVisible + progress * (N_NODES - perf.baseVisible)
     : N_NODES;
   const emergeAlpha = (i) => {
     const pos = nodeEmergeIndex[i];
-    if (pos < BASE_VISIBLE) return 1;
+    if (pos < perf.baseVisible) return 1;
     const delta = emergeFraction - pos;
     if (delta <= 0) return 0;
     if (delta >= 1) return 1;
@@ -554,17 +649,29 @@ export default function NeuralCore3D({
           position: "absolute",
           inset: 0,
           borderRadius: "50%",
-          background:
-            `radial-gradient(circle at ${hx}% ${hy}%, rgba(255,255,255,${0.11 * brightMultRef.current}) 0%, rgba(10,19,14,0.12) 40%, rgba(6,8,16,0.28) 82%, rgba(4,6,16,0.40) 100%)`,
-          backdropFilter: "blur(16px) saturate(170%)",
-          WebkitBackdropFilter: "blur(16px) saturate(170%)",
+          // En low tier, backdrop-filter es el hot path que mata FPS en
+          // GPU ARM. Sustituyo por un background más opaco que mantiene
+          // la sensación de cristal sin el costo de composite blur.
+          background: perf.blurPx === 0
+            ? `radial-gradient(circle at ${hx}% ${hy}%, rgba(255,255,255,${0.14 * brightMultRef.current}) 0%, rgba(10,19,14,0.62) 40%, rgba(6,8,16,0.82) 82%, rgba(4,6,16,0.92) 100%)`
+            : `radial-gradient(circle at ${hx}% ${hy}%, rgba(255,255,255,${0.11 * brightMultRef.current}) 0%, rgba(10,19,14,0.12) 40%, rgba(6,8,16,0.28) 82%, rgba(4,6,16,0.40) 100%)`,
+          backdropFilter: perf.blurPx > 0 ? `blur(${perf.blurPx}px) saturate(${perf.saturatePct}%)` : "none",
+          WebkitBackdropFilter: perf.blurPx > 0 ? `blur(${perf.blurPx}px) saturate(${perf.saturatePct}%)` : "none",
           border: `1px solid ${color}44`,
-          boxShadow:
-            `0 32px 90px -22px ${color}55,` +
-            `0 10px 30px -10px rgba(0,0,0,0.38),` +
-            `inset 0 2px 0 0 rgba(255,255,255,${0.14 * brightMultRef.current}),` +
-            `inset 0 -26px 56px -20px rgba(0,0,0,0.55),` +
-            `inset 0 0 72px -12px ${color}26`,
+          boxShadow: perf.boxShadowLayers >= 5
+            ? `0 32px 90px -22px ${color}55,` +
+              `0 10px 30px -10px rgba(0,0,0,0.38),` +
+              `inset 0 2px 0 0 rgba(255,255,255,${0.14 * brightMultRef.current}),` +
+              `inset 0 -26px 56px -20px rgba(0,0,0,0.55),` +
+              `inset 0 0 72px -12px ${color}26`
+            : perf.boxShadowLayers >= 4
+              ? `0 26px 70px -20px ${color}4d,` +
+                `inset 0 2px 0 0 rgba(255,255,255,${0.12 * brightMultRef.current}),` +
+                `inset 0 -24px 48px -18px rgba(0,0,0,0.5),` +
+                `inset 0 0 60px -12px ${color}20`
+              : `0 20px 56px -18px ${color}44,` +
+                `inset 0 1px 0 0 rgba(255,255,255,0.10),` +
+                `inset 0 -20px 40px -16px rgba(0,0,0,0.45)`,
           pointerEvents: "none",
           opacity: baseSphereOp,
           transition: "opacity .4s ease, border-color .6s ease, box-shadow .6s ease",
@@ -592,8 +699,8 @@ export default function NeuralCore3D({
         />
       )}
 
-      {/* ─── 3. Aurora nebula interior ───────────────────────── */}
-      {!reducedMotion && (
+      {/* ─── 3. Aurora nebula interior (omitted on low tier) ─── */}
+      {!reducedMotion && perf.nebula && (
         <motion.div
           aria-hidden
           animate={{ rotate: -360 }}
@@ -614,8 +721,8 @@ export default function NeuralCore3D({
         />
       )}
 
-      {/* ─── 4. Aura cónica exterior ─────────────────────────── */}
-      {!reducedMotion && (
+      {/* ─── 4. Aura cónica exterior (simplified on low tier) ─── */}
+      {!reducedMotion && perf.conicAura && (
         <motion.div
           aria-hidden
           animate={{ rotate: 360 }}
@@ -627,6 +734,24 @@ export default function NeuralCore3D({
             background: `conic-gradient(from 0deg, transparent 0%, ${color}48 10%, transparent 24%, transparent 52%, ${color}30 68%, transparent 84%)`,
             maskImage: "radial-gradient(circle, transparent 57%, black 60%, black 62%, transparent 65%)",
             WebkitMaskImage: "radial-gradient(circle, transparent 57%, black 60%, black 62%, transparent 65%)",
+            pointerEvents: "none",
+            opacity: baseAuraOp * auraMultRef.current,
+            transition: "opacity .4s ease",
+          }}
+        />
+      )}
+      {/* Fallback de aro para low tier: borde estático teñido sin
+          conic-gradient ni rotación. Preserva la identidad visual
+          (aro brillante) con costo cero. */}
+      {!reducedMotion && !perf.conicAura && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: -1,
+            borderRadius: "50%",
+            border: `1px solid ${color}55`,
+            boxShadow: `0 0 24px -4px ${color}44, inset 0 0 16px -6px ${color}33`,
             pointerEvents: "none",
             opacity: baseAuraOp * auraMultRef.current,
             transition: "opacity .4s ease",
@@ -696,8 +821,10 @@ export default function NeuralCore3D({
                   strokeWidth={1.4}
                   opacity={lineOp}
                 />
-                <circle cx={sx} cy={sy} r={glowR} fill={color}
-                  opacity={0.38 * (1 - Math.abs(0.5 - t) * 2)} filter="blur(3px)" />
+                {perf.sparkGlow && (
+                  <circle cx={sx} cy={sy} r={glowR} fill={color}
+                    opacity={0.38 * (1 - Math.abs(0.5 - t) * 2)} filter="blur(3px)" />
+                )}
                 <circle cx={sx} cy={sy} r={sparkR} fill="#ffffff" />
               </g>
             );
@@ -741,7 +868,10 @@ export default function NeuralCore3D({
               : color;
             const coreFill = totalBoost > 0.35 ? "#ffffff" : moteColor;
             const glowColor = goldStrength > 0.3 ? "#FBBF24" : color;
-            const glow = totalBoost > 0.25 || goldStrength > 0.3
+            // drop-shadow es moderadamente caro en mobile GPU; en low
+            // tier lo desactivamos y la identidad visual la carga el
+            // boost de radio + alpha ya presentes arriba.
+            const glow = perf.sparkGlow && (totalBoost > 0.25 || goldStrength > 0.3)
               ? `drop-shadow(0 0 ${6 + totalBoost * 8 + goldStrength * 4}px ${glowColor})`
               : undefined;
 
