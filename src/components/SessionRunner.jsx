@@ -888,9 +888,13 @@ export default function SessionRunner({
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.35, letterSpacing: -0.3 }}>
                     {safePh.k}
                   </div>
-                  {safePh.i && (
+                  {(safePh.iExec || safePh.i) && (
                     <div style={{ marginTop: 6, fontSize: 12, lineHeight: 1.55, color: "rgba(255,255,255,0.62)", maxWidth: 340, marginInline: "auto" }}>
-                      {safePh.i}
+                      {/* iExec: versión breve para la ejecución activa
+                          (menos fricción cognitiva al leer mid-sesión).
+                          Fallback a i si aún no se ha migrado el
+                          protocolo. La pantalla de selección usa i. */}
+                      {safePh.iExec || safePh.i}
                     </div>
                   )}
                 </motion.div>
