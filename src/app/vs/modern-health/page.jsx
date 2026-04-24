@@ -538,9 +538,9 @@ export default async function VsModernHealthPage() {
     <PublicShell activePath="/vs/modern-health">
       <main id="main-content">
         {/* ═══ HERO ═══ */}
-        <section style={{ position: "relative", paddingBlock: `${space[16]}px ${space[10]}px` }}>
+        <section style={{ position: "relative", paddingBlock: `clamp(40px, 6vw, 72px) clamp(40px, 7vw, 80px)` }}>
           <BioglyphLattice variant="ambient" />
-          <Container size="xl" style={{ position: "relative", zIndex: 1 }}>
+          <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="22% 30%">
               <p style={kickerStyle}>{t.eyebrow}</p>
               <h1 style={h1Style}>{t.title}</h1>

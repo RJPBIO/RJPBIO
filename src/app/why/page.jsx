@@ -558,9 +558,14 @@ export default async function WhyPage() {
     <PublicShell activePath="/why">
       <main id="main-content">
         {/* ═══ HERO ═══ */}
-        <section style={{ position: "relative", paddingBlock: `${space[16]}px ${space[12]}px` }}>
+        {/* Hero paddings tightened — the default <Container> adds its own
+            clamp(32–64) block padding, which was stacking on top of the
+            section padding and leaving visible dead space above the
+            eyebrow. Section alone now owns the hero offset; Container
+            block padding is zeroed to prevent the double-padding. */}
+        <section style={{ position: "relative", paddingBlock: `clamp(40px, 6vw, 72px) clamp(48px, 8vw, 96px)` }}>
           <BioglyphLattice variant="ambient" />
-          <Container size="xl" style={{ position: "relative", zIndex: 1 }}>
+          <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="18% 28%">
               <p style={kickerStyle}>{t.eyebrow}</p>
               {/* Two-line H1 with gradient on line 2 — mirrors home's
