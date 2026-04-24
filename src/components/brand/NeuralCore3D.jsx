@@ -640,6 +640,24 @@ export default function NeuralCore3D({
     return boost;
   };
 
+  // Collapse progress — 0 al arrancar "done", 1 al completar 1.6s.
+  // Gate para todas las capas cinemáticas del cierre.
+  const COLLAPSE_MS = 1600;
+  const collapseT = (state === "done" && doneAtRef.current)
+    ? Math.min(1, (now - doneAtRef.current) / COLLAPSE_MS)
+    : null;
+  const isCollapsing = collapseT !== null && collapseT < 1;
+
+  // Envelope del supernova central (implosion→explosion→fade):
+  // t<0.08 ramp fast to 1, t<0.35 sustain, then exponential fade.
+  const supernovaEnv = (() => {
+    if (collapseT === null) return 0;
+    const t = collapseT;
+    if (t < 0.08) return t / 0.08;
+    if (t < 0.35) return 1 - (t - 0.08) * 0.3;   // cae suave durante sustain
+    return Math.max(0, 0.92 - (t - 0.35) * 1.4); // fade final
+  })();
+
   // Ember opacity multiplier (fades in post 1.4s and fades out at 30s)
   const emberOp = (() => {
     if (!ember) return 1;
@@ -799,6 +817,59 @@ export default function NeuralCore3D({
         />
       )}
 
+      {/* ─── 4.5. COLLAPSE shockwave rings (solo durante done) ───
+          3 ondas concéntricas staggered que expanden más allá del
+          sphere boundary (transform: scale 1 → 3.2x). Cada una
+          recorre el color protocolo → gold → blanco → transparente.
+          Este es el elemento que el compFlash previo NO lograba:
+          una explosión *emergiendo del núcleo* y propagándose al
+          mundo, no un parpadeo genérico. */}
+      {isCollapsing && !reducedMotion && [0, 0.12, 0.26].map((delay, i) => {
+        const rt = Math.max(0, (collapseT - delay) / (1 - delay));
+        if (rt <= 0 || rt >= 1) return null;
+        const scale = 1 + rt * 2.2;
+        const ringOp = (1 - rt) * 0.85;
+        // Color sweep: inicio color → gold mid → white late → transparent
+        const stageColor = rt < 0.4 ? color : rt < 0.75 ? "#FBBF24" : "#FFFFFF";
+        return (
+          <div
+            key={`sw-${i}`}
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              border: `${2.5 + rt * 1.5}px solid ${stageColor}`,
+              transform: `scale(${scale})`,
+              opacity: ringOp,
+              pointerEvents: "none",
+              filter: `blur(${rt * 1.2}px)`,
+              boxShadow: `0 0 ${20 + rt * 30}px ${stageColor}, inset 0 0 ${8 + rt * 18}px ${stageColor}`,
+            }}
+          />
+        );
+      })}
+
+      {/* Supernova central — disco blanco que implosiona-explota al
+          arrancar el collapse. Bloom breve que llena el sphere y se
+          desvanece rápido. Aterriza en el punto temporal donde el
+          compFlash previo hacía su white-wash global. */}
+      {isCollapsing && !reducedMotion && supernovaEnv > 0 && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: `${16 - supernovaEnv * 16}%`,
+            borderRadius: "50%",
+            background:
+              `radial-gradient(circle, rgba(255,255,255,${0.95 * supernovaEnv}) 0%, rgba(255,255,255,${0.6 * supernovaEnv}) 30%, ${color}${toHex2(0.35 * supernovaEnv)} 60%, transparent 85%)`,
+            filter: `blur(${6 - supernovaEnv * 3}px)`,
+            pointerEvents: "none",
+            mixBlendMode: "screen",
+          }}
+        />
+      )}
+
       {/* ─── 5. SVG lattice ──────────────────────────────────── */}
       <svg
         width={size}
@@ -935,6 +1006,35 @@ export default function NeuralCore3D({
             );
           })}
         </g>
+
+        {/* Radial rays del collapse — 8 líneas blancas emergiendo
+            del centro hacia afuera con longitud creciente. Funciona
+            como "rayos de supernova" y se perciben muy bien contra
+            la lattice. Duración ~600ms, peak al 25%. */}
+        {isCollapsing && !reducedMotion && collapseT < 0.55 && (
+          <g opacity={Math.max(0, 1 - collapseT / 0.55)}>
+            {Array.from({ length: 8 }, (_, i) => {
+              const ang = (i / 8) * Math.PI * 2;
+              const progress = Math.min(1, collapseT / 0.35);
+              const len = (size / 2) * progress;
+              const x2 = center + Math.cos(ang) * len;
+              const y2 = center + Math.sin(ang) * len;
+              const w = 2 + (1 - collapseT) * 2;
+              return (
+                <line
+                  key={i}
+                  x1={center} y1={center}
+                  x2={x2} y2={y2}
+                  stroke="#FFFFFF"
+                  strokeWidth={w}
+                  strokeLinecap="round"
+                  opacity={1 - progress * 0.35}
+                  style={perf.sparkGlow ? { filter: `drop-shadow(0 0 6px ${color})` } : undefined}
+                />
+              );
+            })}
+          </g>
+        )}
 
         {/* Anchor mote durante VACÍO — blanco central, pulso suave.
             Aparece sólo en VACÍO/EMPTY para anclar la atención del

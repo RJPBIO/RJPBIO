@@ -357,16 +357,25 @@ export default function BioIgnicion(){
       if(st.soundOn!==false)try{playIgnition();}catch(e){}
       if(st.hapticOn!==false)hapticSignature("ignition");
     }
-    // Bridge orb → IgnitionBurst: 550ms de flash emerald dentro del orb ANTES de que el
-    // overlay full-screen tome el control. Da continuidad narrativa — el orb cierra su ciclo.
-    // Sello háptico universal: suave cadencia de cierre (independiente de la calidad).
-    if(st.hapticOn!==false&&typeof navigator!=="undefined"&&navigator.vibrate){try{navigator.vibrate([50,30,80]);}catch(e){}}
+    // Cierre ceremonial: el NeuralCore3D ejecuta ~1600ms de collapse
+    // (supernova central + 3 shockwave rings + 8 radial rays + todos
+    // los motes bloomean). Mantenemos SessionRunner visible toda la
+    // duración para que se perciba completo. El compFlash previo (la
+    // explosión blanca full-screen que apenas se notaba) queda como
+    // bridge breve de 500ms — los shockwaves ya entregan el wash
+    // global, no hace falta otro overlay.
+    // Chord de resolución (C major spread) + haptic signature de 3
+    // pulsos sincronizan el cierre sensorial.
+    if(st.soundOn!==false)try{playChord([523.25,659.25,783.99,1046.5],1.4,0.065);}catch(e){}
+    if(st.hapticOn!==false&&typeof navigator!=="undefined"&&navigator.vibrate){
+      try{navigator.vibrate([90,60,40,140,40,60,20]);}catch(e){}
+    }
     setOrbDoneFlash(true);
     setTimeout(()=>{
       setOrbDoneFlash(false);
       setCompFlash(true);
-      setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},1600);
-    },550);
+      setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},500);
+    },1600);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,...result.newState});
   }
