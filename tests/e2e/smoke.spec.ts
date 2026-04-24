@@ -17,7 +17,9 @@ test.describe("Smoke — marketing + PWA", () => {
   });
 
   test("manifest is served and valid", async ({ request }) => {
-    const res = await request.get("/manifest.json");
+    // Canonical endpoint is /manifest.webmanifest (Next app router route).
+    // layout.js advertises it via `<link rel="manifest" ...>`.
+    const res = await request.get("/manifest.webmanifest");
     expect(res.ok()).toBeTruthy();
     const m = await res.json();
     expect(m.name).toMatch(/BIO-IGNI/i);
@@ -37,7 +39,9 @@ test.describe("Smoke — marketing + PWA", () => {
 
   test("subprocessors table renders", async ({ page }) => {
     await page.goto("/trust/subprocessors");
-    await expect(page.locator("table")).toBeVisible();
+    // Page ships its own table class (plus hidden tables from shell shims).
+    // Match the visible data table directly to avoid strict-mode violations.
+    await expect(page.locator("table.bi-trust-table--subs")).toBeVisible();
     await expect(page.locator("body")).toContainText("Stripe");
   });
 });

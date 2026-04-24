@@ -22,8 +22,13 @@
   --bi-border-strong: #CBD5E1;
   --bi-text: #0F172A;
   --bi-text-dim: #475569;
-  --bi-text-muted: #64748B;
+  /* #64748B failed WCAG AA on --bi-bg (#F1F4F9) at 4.31:1 for small text.
+     Bumped one step darker — stays visually distinct from --bi-text-dim. */
+  --bi-text-muted: #4F5B6E;
   --bi-accent: #059669;
+  /* Text-safe emerald: brand --bi-accent (#059669) fails AA for small text
+     on white (3.76:1). Emerald-700 passes at ~4.57:1 and keeps the family. */
+  --bi-link: #047857;
   --bi-accent-soft: rgba(5, 150, 105, 0.08);
   --bi-accent-ink: #FFFFFF;
   --bi-danger: #DC2626;
@@ -46,8 +51,11 @@ html.theme-light {
   --bi-border-strong: #CBD5E1;
   --bi-text: #0F172A;
   --bi-text-dim: #475569;
-  --bi-text-muted: #64748B;
+  /* #64748B failed WCAG AA on --bi-bg (#F1F4F9) at 4.31:1 for small text.
+     Bumped one step darker — stays visually distinct from --bi-text-dim. */
+  --bi-text-muted: #4F5B6E;
   --bi-accent: #059669;
+  --bi-link: #047857;
   --bi-accent-soft: rgba(5, 150, 105, 0.08);
   --bi-accent-ink: #FFFFFF;
   --bi-focus-ring: var(--focus-ring);
@@ -1760,7 +1768,9 @@ input, textarea, select {
   font-family: var(--font-mono);
   font-size: clamp(32px, 3.6vw, 44px);
   font-weight: 800;
-  color: #22D3EE;
+  /* #22D3EE on --bi-bg failed even the large-text 3:1 threshold at 1.63:1.
+     Cyan-800 lands at ~5.9:1 — same trademark family, readable on slate. */
+  color: #155E75;
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -2055,7 +2065,9 @@ input, textarea, select {
   animation: biDotPulse 2.2s ease-in-out infinite;
 }
 .bi-trust-chip[data-tone="pending"] .trust-status {
-  color: #F59E0B;
+  /* Amber-500 (#F59E0B) on pending-chip bg fails AA at 2.06:1. Amber-800
+     (#92400E) lands at ~6.4:1 while staying inside the warn/pending hue. */
+  color: #92400E;
   border-inline-start-color: color-mix(in srgb, #F59E0B 30%, var(--bi-border));
 }
 @keyframes biDotPulse { 0%,100% { opacity: 1 } 50% { opacity: 0.45 } }
@@ -2086,7 +2098,9 @@ input, textarea, select {
   color: var(--bi-text-muted);
 }
 .bi-strip-footnote a {
-  color: #22D3EE;
+  /* #22D3EE on light bg fails WCAG AA at 1.63:1. Darker cyan (cyan-800)
+     reaches ~5.9:1 while keeping the brand family legible. */
+  color: #155E75;
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 700;
@@ -3512,7 +3526,10 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 .bi-prose code { background: color-mix(in srgb, var(--bi-surface) 60%, transparent); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--bi-border); font-size: 0.9em; }
 .bi-prose pre code { background: transparent; padding: 0; border: 0; border-radius: 0; font-size: inherit; }
 .bi-prose pre { background: var(--bi-surface); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--bi-border); font-size: 12.5px; overflow: auto; line-height: 1.6; }
-.bi-prose a { color: var(--bi-accent); text-decoration: underline; text-underline-offset: 2px; }
+/* Prose links need to sit inside body copy on white — brand emerald #059669
+   fails WCAG AA at 3.76:1 for small text. Use the ink-emerald token so the
+   accent family reads legibly. Falls back to --bi-accent when unset. */
+.bi-prose a { color: var(--bi-link, var(--bi-accent)); text-decoration: underline; text-underline-offset: 2px; }
 .bi-prose ul, .bi-prose ol { padding-inline-start: 22px; margin-block: 8px 12px; }
 .bi-prose li { margin-block-end: 6px; line-height: 1.6; color: var(--bi-text-dim); }
 .bi-prose li::marker { color: var(--bi-accent); }
