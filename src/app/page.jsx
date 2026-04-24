@@ -768,9 +768,14 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <PulseDivider intensity="dim" />
-
-      <section aria-labelledby="pwa-showcase" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+      {/* PWA Showcase runs as an intentional dark moment inside the
+          light home — Stripe/Linear-style section alternation. It's
+          also thematically right: the PWA itself runs in theme-dark
+          so the marketing preview breathes the same color field the
+          user will land in when they install. The component was
+          already authored with dark-bg colors; this wrapper gives it
+          the surface it was designed for. */}
+      <section aria-labelledby="pwa-showcase" className="bi-pwa-darkframe">
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <PWAShowcase T={T.pwa} />

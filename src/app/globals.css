@@ -4029,7 +4029,39 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
    End-user product reveal on marketing home. Three tilted iPhone-frame
    SVG mockups on desktop; flattens to stacked on narrow viewports.
    Kicker/heading/sub up top; capability captions under frames;
-   6-card benefit grid; 3 platform install badges; FOMO + dual CTA. */
+   6-card benefit grid; 3 platform install badges; FOMO + dual CTA.
+
+   The component was authored for a dark surface (colors fall back to
+   #E5E7EB / #9CA3AF — native to theme-dark, washed out on the light
+   marketing page). The darkframe wrapper below gives it the substrate
+   it was designed for and turns the section into an intentional
+   "dark moment" inside the light home (Stripe-style alternation). */
+.bi-pwa-darkframe {
+  position: relative;
+  isolation: isolate;
+  padding-block: clamp(80px, 12vw, 140px);
+  padding-inline: clamp(16px, 4vw, 40px);
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, color-mix(in srgb, #22D3EE 18%, transparent), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 85% 100%, color-mix(in srgb, #8B5CF6 14%, transparent), transparent 65%),
+    linear-gradient(180deg, #0A130E 0%, #050810 100%);
+  color: #E6F1EA;  /* theme-dark text, inherited by children without their own color */
+  overflow: hidden;
+}
+.bi-pwa-darkframe::before {
+  /* Subtle scanline, same trick as SensoryHero, to pull the section
+     into the cinematic-DNA family (lattice + vignette + scanline). */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0, transparent 2px, color-mix(in srgb, #000 8%, transparent) 2px, color-mix(in srgb, #000 8%, transparent) 3px);
+  mix-blend-mode: overlay;
+  opacity: 0.45;
+  z-index: 0;
+}
+.bi-pwa-darkframe > * { position: relative; z-index: 1; }
+
 .bi-pwa-showcase {
   position: relative;
   isolation: isolate;
@@ -4038,7 +4070,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 .bi-pwa-kicker {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-size: 12px;
-  color: var(--color-accent, #22D3EE);
+  color: #22D3EE;
   text-transform: uppercase;
   letter-spacing: 0.28em;
   font-weight: 800;
@@ -4050,7 +4082,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   line-height: 1.12;
   letter-spacing: -0.025em;
   font-weight: 900;
-  color: var(--color-text, #E5E7EB);
+  color: #E6F1EA;
   max-inline-size: 720px;
   margin-inline: auto;
 }
@@ -4058,7 +4090,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   margin-block-start: 14px;
   margin-inline: auto;
   max-inline-size: 640px;
-  color: var(--color-text-dim, #9CA3AF);
+  color: #A7F3D0;
   font-size: 15px;
   line-height: 1.6;
 }
@@ -4151,7 +4183,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-size: 11px;
   font-weight: 800;
-  color: var(--color-accent, #22D3EE);
+  color: #22D3EE;
   letter-spacing: 0.15em;
   padding-block-start: 2px;
   flex-shrink: 0;
@@ -4159,7 +4191,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 .bi-pwa-caps .txt {
   font-size: 13px;
   line-height: 1.5;
-  color: var(--color-text-dim, #9CA3AF);
+  color: #A7F3D0;
 }
 .bi-pwa-benefits {
   list-style: none;
@@ -4174,8 +4206,11 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   gap: 14px;
   padding: 18px;
   border-radius: 16px;
-  background: linear-gradient(155deg, rgba(34, 211, 238, 0.04), rgba(11, 14, 19, 0.6));
-  border: 1px solid rgba(34, 211, 238, 0.12);
+  /* Gradient tightened — previous end-stop #0B0E1399 (.6 alpha) faded
+     body text into the card. Solid dark end-stop with a small cyan
+     wash keeps the card legible and gives the text a stable ground. */
+  background: linear-gradient(155deg, rgba(34, 211, 238, 0.05) 0%, #0F1B14 100%);
+  border: 1px solid rgba(34, 211, 238, 0.16);
   transition: transform 200ms var(--bi-ease-breath), border-color 200ms var(--bi-ease-breath);
 }
 @media (hover: hover) {
@@ -4192,14 +4227,14 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-accent, #22D3EE);
+  color: #22D3EE;
   background: rgba(34, 211, 238, 0.1);
   border: 1px solid rgba(34, 211, 238, 0.22);
 }
 .bi-pwa-bt {
   font-size: 14px;
   font-weight: 800;
-  color: var(--color-text, #E5E7EB);
+  color: #E6F1EA;
   letter-spacing: -0.01em;
   line-height: 1.3;
   margin-block-end: 4px;
@@ -4207,7 +4242,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 .bi-pwa-bd {
   font-size: 12.5px;
   line-height: 1.5;
-  color: var(--color-text-dim, #9CA3AF);
+  color: #A7F3D0;
 }
 .bi-pwa-platforms {
   display: grid;
@@ -4223,7 +4258,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   border-radius: 14px;
   background: linear-gradient(145deg, #12161D, #0B0E13);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--color-text, #E5E7EB);
+  color: #E6F1EA;
   text-decoration: none;
   transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms var(--bi-ease-breath), box-shadow 160ms var(--bi-ease-breath);
 }
@@ -4235,11 +4270,14 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   }
 }
 .bi-pwa-badge.is-soft {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.1);
+  /* Previously transparent over white — text disappeared. On the new
+     dark frame, this tertiary "just open in browser" option stays
+     visible but subordinate to the iOS/Android tiles. */
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 .bi-pwa-badge-icon {
-  color: var(--color-text, #E5E7EB);
+  color: #E6F1EA;
   display: inline-flex;
   flex-shrink: 0;
 }
@@ -4248,11 +4286,11 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   font-size: 13px;
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: var(--color-text, #E5E7EB);
+  color: #E6F1EA;
 }
 .bi-pwa-badge-text .sub {
   font-size: 11px;
-  color: var(--color-text-dim, #9CA3AF);
+  color: #A7F3D0;
   letter-spacing: 0.02em;
 }
 .bi-pwa-cta { text-align: center; }
@@ -4322,7 +4360,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   border-radius: 999px;
   background: transparent;
   border: 1px solid rgba(34, 211, 238, 0.4);
-  color: var(--color-text, #E5E7EB);
+  color: #E6F1EA;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
@@ -4337,7 +4375,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 .bi-pwa-cta-foot {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-size: 11px;
-  color: var(--color-text-dim, #9CA3AF);
+  color: #A7F3D0;
   letter-spacing: 0.05em;
   margin: 0;
 }
