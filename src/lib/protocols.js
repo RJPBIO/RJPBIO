@@ -144,9 +144,19 @@ export const P = [
 
   /* ═══ #10 ATOMIC PULSE ═══ */
   {id:10,n:"Atomic Pulse",ct:"Protocolo",d:120,sb:"Sincronización neurosomática",tg:"AP",cl:"#F59E0B",int:"energia",dif:2,
-  ph:[{l:"Pulso Respiratorio",r:"0–30s",s:0,e:30,k:"Inhala profundo. Exhala en 5 micro-pulsos.",i:"Inhala profundo 4 segundos llenando desde el abdomen. Al exhalar, hazlo en 5 micro-pulsos cortos — como si rieras sin sonido: ja-ja-ja-ja-ja. Repite 3 ciclos. Cada serie más controlada. Siente cómo el diafragma se despierta con cada micro-pulso rítmico.",sc:"Micro-pulsos espiratorios activan coordinación sensoriomotora fina del sistema respiratorio y diafragma",ic:"breath",br:{in:4,h1:0,ex:5,h2:1}},
-  {l:"Escaneo Ascendente",r:"30–80s",s:30,e:80,k:"Atención a los pies. Sube lento hasta la cabeza.",i:"Cierra los ojos. Lleva atención a los pies — siente el contacto con el suelo. Sube lentamente: pantorrillas, rodillas, muslos. Pausa en abdomen 3 segundos. Sube al pecho 3 segundos. Cuello, mandíbula, frente. Respira suave todo el tiempo. Cada zona recibe tu atención plena por un momento.",sc:"Body scan activa ínsula cerebral — centro de interocepción. Integra conciencia mente-cuerpo completa",ic:"mind",br:null},
-  {l:"Micro-Pulsación de Cierre",r:"80–120s",s:80,e:120,k:"Dedos contra pulgares. Pulsa 8 veces. Sincroniza.",i:"Cierra manos al 10% de fuerza. Genera micro-pulsos con dedos contra pulgares: 8 pulsos en 8 segundos. Descansa 2 segundos. Repite 3 veces. Ritmo constante como metrónomo. Respira naturalmente. Siente cómo la pulsación sincroniza tu sistema completo. Termina con manos abiertas y relajadas.",sc:"Ritmo somatosensorial fino genera sincronización neural global e induce estado de coherencia completa",ic:"body",br:null}]},
+  ph:[{l:"Pulso Respiratorio",r:"0–30s",s:0,e:30,k:"Inhala profundo. Exhala en 5 micro-pulsos.",i:"Inhala profundo 4 segundos llenando desde el abdomen. Al exhalar, hazlo en 5 micro-pulsos cortos — como si rieras sin sonido: ja-ja-ja-ja-ja. Repite 3 ciclos. Cada serie más controlada. Siente cómo el diafragma se despierta con cada micro-pulso rítmico.",iExec:[
+    {from:0,to:10,text:"Inhala 4s profundo desde el abdomen."},
+    {from:10,to:30,text:"Exhala en 5 micro-pulsos: ja-ja-ja-ja-ja. Repite. El diafragma despierta."}
+  ],sc:"Micro-pulsos espiratorios activan coordinación sensoriomotora fina del sistema respiratorio y diafragma",ic:"breath",br:{in:4,h1:0,ex:5,h2:1}},
+  {l:"Escaneo Ascendente",r:"30–80s",s:30,e:80,k:"Atención a los pies. Sube lento hasta la cabeza.",i:"Cierra los ojos. Lleva atención a los pies — siente el contacto con el suelo. Sube lentamente: pantorrillas, rodillas, muslos. Pausa en abdomen 3 segundos. Sube al pecho 3 segundos. Cuello, mandíbula, frente. Respira suave todo el tiempo. Cada zona recibe tu atención plena por un momento.",iExec:[
+    {from:0,to:15,text:"Cierra los ojos. Atención a los pies. Contacto con el suelo."},
+    {from:15,to:35,text:"Sube: pantorrillas, rodillas, muslos. Pausa 3s abdomen, 3s pecho."},
+    {from:35,to:50,text:"Cuello, mandíbula, frente. Respira suave."}
+  ],sc:"Body scan activa ínsula cerebral — centro de interocepción. Integra conciencia mente-cuerpo completa",ic:"mind",br:null},
+  {l:"Micro-Pulsación de Cierre",r:"80–120s",s:80,e:120,k:"Dedos contra pulgares. Pulsa 8 veces. Sincroniza.",i:"Cierra manos al 10% de fuerza. Genera micro-pulsos con dedos contra pulgares: 8 pulsos en 8 segundos. Descansa 2 segundos. Repite 3 veces. Ritmo constante como metrónomo. Respira naturalmente. Siente cómo la pulsación sincroniza tu sistema completo. Termina con manos abiertas y relajadas.",iExec:[
+    {from:0,to:20,text:"Manos al 10%. Dedos contra pulgares: 8 pulsos en 8s, descansa 2s. Repite."},
+    {from:20,to:40,text:"Ritmo metrónomo. Termina con manos abiertas, relajadas."}
+  ],sc:"Ritmo somatosensorial fino genera sincronización neural global e induce estado de coherencia completa",ic:"body",br:null}]},
 
   /* ═══ #11 QUANTUM GROUNDING ═══ */
   {id:11,n:"Quantum Grounding",ct:"Protocolo",d:120,sb:"Anclaje profundo",tg:"QG",cl:"#059669",int:"calma",dif:2,
