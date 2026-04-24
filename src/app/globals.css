@@ -4036,7 +4036,14 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
    marketing page). The darkframe wrapper below gives it the substrate
    it was designed for and turns the section into an intentional
    "dark moment" inside the light home (Stripe-style alternation). */
-.bi-pwa-darkframe {
+/* Generic dark-moment wrapper — any marketing section can wear it to
+   create Stripe-style light/dark alternation. Used on /home by the
+   Evidence receipts (technical proof), PWA Showcase (product preview)
+   and Final CTA (decision weight). Three dark moments separated by
+   light sections establishes rhythm; a single dark moment reads as a
+   bug, which is why we had to add parallel treatments after landing
+   the first one. */
+.bi-darkframe {
   position: relative;
   isolation: isolate;
   padding-block: clamp(80px, 12vw, 140px);
@@ -4045,12 +4052,12 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
     radial-gradient(ellipse 70% 40% at 50% 0%, color-mix(in srgb, #22D3EE 18%, transparent), transparent 60%),
     radial-gradient(ellipse 60% 45% at 85% 100%, color-mix(in srgb, #8B5CF6 14%, transparent), transparent 65%),
     linear-gradient(180deg, #0A130E 0%, #050810 100%);
-  color: #E6F1EA;  /* theme-dark text, inherited by children without their own color */
+  color: #E6F1EA;  /* inherited by children without their own color */
   overflow: hidden;
 }
-.bi-pwa-darkframe::before {
-  /* Subtle scanline, same trick as SensoryHero, to pull the section
-     into the cinematic-DNA family (lattice + vignette + scanline). */
+.bi-darkframe::before {
+  /* Scanline tint — pulls the section into the cinematic-DNA family
+     (lattice + vignette + scanline), same trick as SensoryHero. */
   content: "";
   position: absolute;
   inset: 0;
@@ -4060,7 +4067,38 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   opacity: 0.45;
   z-index: 0;
 }
-.bi-pwa-darkframe > * { position: relative; z-index: 1; }
+.bi-darkframe > * { position: relative; z-index: 1; }
+
+/* Button overrides inside dark frames — secondary / tertiary buttons
+   normally inherit `color: var(--bi-text)` (black), which turns them
+   into ghosts on the dark gradient. Scoped overrides preserve the
+   exact same shapes/transitions — only the text + border color
+   shift. Primary cyan button (`bi-pricing-peek-cta`) already pops
+   on dark (solid cyan fill with dark ink) so no override needed. */
+.bi-darkframe .bi-trial-cta,
+.bi-darkframe a.bi-trial-cta {
+  color: #E6F1EA;
+  border-color: color-mix(in srgb, #8B5CF6 55%, rgba(255, 255, 255, 0.18));
+  background: color-mix(in srgb, #8B5CF6 18%, transparent);
+}
+.bi-darkframe .bi-trial-cta:hover,
+.bi-darkframe .bi-trial-cta:focus-visible {
+  border-color: #A78BFA;
+  background: color-mix(in srgb, #8B5CF6 28%, transparent);
+}
+.bi-darkframe .bi-trial-sub {
+  color: #C4B5FD;
+}
+.bi-darkframe .bi-partner-trigger {
+  color: #E6F1EA;
+  border-color: color-mix(in srgb, #22D3EE 45%, rgba(255, 255, 255, 0.16));
+}
+.bi-darkframe .bi-partner-trigger:hover,
+.bi-darkframe .bi-partner-trigger:focus-visible {
+  border-color: #22D3EE;
+  background: color-mix(in srgb, #22D3EE 14%, transparent);
+}
+
 
 .bi-pwa-showcase {
   position: relative;

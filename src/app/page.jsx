@@ -646,18 +646,22 @@ export default async function HomePage() {
           export + GDPR-shaped JSON export + hash-chain audit log.
           Sample org is "Empresa Ejemplo" — placeholders, not fake
           customer names. */}
-      <section aria-labelledby="evidence" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+      {/* Evidence as the first of three dark moments on /home.
+          Thematically fits: these are terminal/monospace receipts,
+          darkness is their native habitat. Header colors bumped to
+          dark-bg-safe variants — phosphorCyan (not cyanInk) reads
+          fine on the dark frame; heading + sub use explicit light
+          colors so they don't inherit from the light-theme cascade. */}
+      <section aria-labelledby="evidence" className="bi-darkframe">
         <Container size="xl">
           <div style={{ textAlign: "center", marginBlockEnd: space[8] }}>
-            {/* Use phosphorCyanInk (AA-safe cyan) not phosphorCyan — the
-                brand cyan fails 4.5:1 on light bg for 11px small text. */}
-            <div style={{ ...kickerStyle, color: bioSignal.phosphorCyanInk }}>{T.evidenceKicker}</div>
-            <h3 id="evidence" style={sectionHeading}>{T.evidenceH}</h3>
+            <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.evidenceKicker}</div>
+            <h3 id="evidence" style={{ ...sectionHeading, color: "#E6F1EA" }}>{T.evidenceH}</h3>
             <p style={{
               marginBlockStart: space[3],
               marginInline: "auto",
               maxInlineSize: 640,
-              color: cssVar.textDim,
+              color: "#A7F3D0",
               fontSize: font.size.md,
               lineHeight: 1.55,
             }}>
@@ -775,7 +779,7 @@ export default async function HomePage() {
           user will land in when they install. The component was
           already authored with dark-bg colors; this wrapper gives it
           the surface it was designed for. */}
-      <section aria-labelledby="pwa-showcase" className="bi-pwa-darkframe">
+      <section aria-labelledby="pwa-showcase" className="bi-darkframe">
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <PWAShowcase T={T.pwa} />
@@ -947,21 +951,23 @@ export default async function HomePage() {
         </h2>
       </section>
 
-      <section style={{
-        paddingBlock: "clamp(80px, 12vw, 140px)",
-        paddingInline: space[5],
-        textAlign: "center",
-      }}>
+      {/* Final CTA as the third dark moment — weight of decision.
+          Creates narrative bracket: light hero opens, dark CTA
+          closes. Text colors explicit dark-bg-safe; gradient accent
+          on "Una sesión en vivo." already works because gradient
+          text is self-contained. Button styles get dark-frame
+          overrides in globals.css. */}
+      <section className="bi-darkframe" style={{ textAlign: "center" }}>
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 40%">
-            <div style={kickerStyle}>{T.finalKicker}</div>
+            <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.finalKicker}</div>
             <h3 style={{
               margin: 0,
               fontSize: "clamp(40px, 6vw, 72px)",
               lineHeight: 1.05,
               letterSpacing: "-0.035em",
               fontWeight: font.weight.black,
-              color: cssVar.text,
+              color: "#E6F1EA",
             }}>
               {T.finalH1}
               <br />
@@ -977,7 +983,7 @@ export default async function HomePage() {
               maxInlineSize: 560,
               fontSize: font.size.lg,
               lineHeight: 1.5,
-              color: cssVar.textDim,
+              color: "#A7F3D0",
             }}>
               {T.finalBody}
             </p>
@@ -1013,9 +1019,11 @@ export default async function HomePage() {
                 gap: space[2],
                 padding: `6px 14px`,
                 borderRadius: radius.full,
-                background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 8%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${bioSignal.phosphorCyan} 30%, ${cssVar.border})`,
-                color: cssVar.textDim,
+                background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 12%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${bioSignal.phosphorCyan} 40%, rgba(255,255,255,0.16))`,
+                // Dark-frame: use light mint text (theme-dark text-dim) so the
+                // changelog chip stays legible against the dark gradient.
+                color: "#A7F3D0",
                 fontFamily: cssVar.fontMono,
                 fontSize: 11,
                 letterSpacing: "0.18em",
