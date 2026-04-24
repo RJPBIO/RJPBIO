@@ -57,6 +57,53 @@ describe("buildReadinessInput", () => {
     expect(inp.sleepHours).toBe(6.5);
     expect(inp.sleepTarget).toBe(8);
   });
+
+  it("excluye entradas cámara con SQI bajo del baseline", () => {
+    const st = {
+      hrvLog: [
+        { ts: 1, lnRmssd: 4.1, source: "camera", sqi: 85 },
+        { ts: 2, lnRmssd: 3.0, source: "camera", sqi: 30 }, // garbage
+        { ts: 3, lnRmssd: 4.3, source: "camera", sqi: 70 },
+      ],
+    };
+    const inp = buildReadinessInput(st);
+    expect(inp.hrvHistory).toHaveLength(2);
+    expect(inp.hrvHistory.map((h) => h.lnRmssd)).toEqual([4.1, 4.3]);
+  });
+
+  it("entradas BLE (sin SQI) siempre entran al baseline", () => {
+    const st = {
+      hrvLog: [
+        { ts: 1, lnRmssd: 4.0 }, // legacy/BLE
+        { ts: 2, lnRmssd: 4.2, source: "camera", sqi: 80 },
+      ],
+    };
+    const inp = buildReadinessInput(st);
+    expect(inp.hrvHistory).toHaveLength(2);
+  });
+
+  it("entrada cámara sin SQI se considera no confiable", () => {
+    const st = {
+      hrvLog: [
+        { ts: 1, lnRmssd: 4.0 }, // BLE legacy
+        { ts: 2, lnRmssd: 4.5, source: "camera" }, // sin SQI explícito
+      ],
+    };
+    const inp = buildReadinessInput(st);
+    expect(inp.hrvHistory).toHaveLength(1);
+    expect(inp.hrvHistory[0].lnRmssd).toBe(4.0);
+  });
+
+  it("currentHRV es la última entrada CONFIABLE, no la más reciente", () => {
+    const st = {
+      hrvLog: [
+        { ts: 1, lnRmssd: 4.0, rhr: 62 }, // BLE confiable
+        { ts: 2, lnRmssd: 3.0, rhr: 90, source: "camera", sqi: 25 }, // basura
+      ],
+    };
+    const inp = buildReadinessInput(st);
+    expect(inp.currentHRV).toEqual({ lnRmssd: 4.0, rhr: 62 });
+  });
 });
 
 describe("computeReadiness", () => {

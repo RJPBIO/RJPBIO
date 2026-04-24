@@ -73,6 +73,7 @@ const SettingsSheet = dynamic(() => import("@/components/SettingsSheet"), { ssr:
 const HistorySheet = dynamic(() => import("@/components/HistorySheet"), { ssr: false });
 const ProtocolSelector = dynamic(() => import("@/components/ProtocolSelector"), { ssr: false });
 const HRVMonitor = dynamic(() => import("@/components/HRVMonitor"), { ssr: false });
+const HRVCameraMeasure = dynamic(() => import("@/components/HRVCameraMeasure"), { ssr: false });
 const PhysiologicalSigh = dynamic(() => import("@/components/PhysiologicalSigh"), { ssr: false });
 const NSDR = dynamic(() => import("@/components/NSDR"), { ssr: false });
 const ChronotypeTest = dynamic(() => import("@/components/ChronotypeTest"), { ssr: false });
@@ -122,6 +123,7 @@ export default function BioIgnicion(){
   const[showProtoDetail,setShowProtoDetail]=useState(false);
   const[showMore,setShowMore]=useState(false);
   const[showHRV,setShowHRV]=useState(false);
+  const[showHRVCam,setShowHRVCam]=useState(false);
   const[showSigh,setShowSigh]=useState(false);
   const[showNSDR,setShowNSDR]=useState(false);
   const[showChronoTest,setShowChronoTest]=useState(false);
@@ -797,6 +799,7 @@ export default function BioIgnicion(){
 
   {/* ═══ BIONEURAL MODALS ═══ */}
   <HRVMonitor show={showHRV} isDark={isDark} onClose={()=>setShowHRV(false)} onComplete={(entry)=>{store.logHRV(entry);setSt_(useStore.getState());}}/>
+  <HRVCameraMeasure show={showHRVCam} isDark={isDark} onClose={()=>setShowHRVCam(false)} onComplete={(entry)=>{store.logHRV(entry);setSt_(useStore.getState());}} onUseBLE={()=>setShowHRV(true)}/>
   <PhysiologicalSigh show={showSigh} isDark={isDark} onClose={()=>setShowSigh(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
   <NSDR show={showNSDR} isDark={isDark} onClose={()=>setShowNSDR(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
   <ChronotypeTest show={showChronoTest} isDark={isDark} onClose={()=>setShowChronoTest(false)} onComplete={(ct)=>{store.setChronotype(ct);setSt_(useStore.getState());}}/>
@@ -950,7 +953,7 @@ export default function BioIgnicion(){
     })()}
 
     {/* Readiness Score — bioneural composite */}
-    {ts==="idle"&&<ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRV(true)}/>}
+    {ts==="idle"&&<ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRVCam(true)}/>}
 
     {/* Evidence Strip — respaldo clínico visible (transparente, no friccionante).
         Transmite rigor: X estudios peer-reviewed, Y instrumentos validados,
@@ -988,10 +991,10 @@ export default function BioIgnicion(){
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
         <span style={{fontSize:8,color:t3}}>60s · calma</span>
       </motion.button>
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRV(true);H("tap");}} aria-label="Medir HRV con sensor Bluetooth" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRVCam(true);H("tap");}} aria-label="Medir HRV con la cámara" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
         <Icon name="predict" size={14} color={protoColor.enfoque}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
-        <span style={{fontSize:8,color:t3}}>5 min · BLE</span>
+        <span style={{fontSize:8,color:t3}}>1 min · cámara</span>
       </motion.button>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
         <Icon name="mind" size={14} color={protoColor.reset}/>
