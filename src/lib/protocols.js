@@ -108,10 +108,22 @@ export const P = [
 
   /* ═══ #8 LIGHTNING FOCUS ═══ */
   {id:8,n:"Lightning Focus",ct:"Activación",d:120,sb:"Enfoque extremo",tg:"LF",cl:"#22D3EE",int:"enfoque",dif:3,
-  ph:[{l:"Reset Hemisférico",r:"0–20s",s:0,e:20,k:"Ojos izquierda-derecha rápido. 10 veces.",i:"Sin mover la cabeza, mueve tus ojos rápidamente de izquierda a derecha 10 veces. Rápido pero controlado. Esto integra ambos hemisferios y rompe patrones estancados. Respira normalmente. Al terminar, cierra los ojos un momento y nota el efecto de limpieza mental.",sc:"Movimiento ocular bilateral integra hemisferios cerebrales y desensibiliza carga emocional. Principio EMDR",ic:"focus",br:null},
-  {l:"Fijación de Control",r:"20–50s",s:20,e:50,k:"Un punto fijo. No parpadees. Control total.",i:"Abre los ojos. Elige un punto fijo frente a ti. Míralo sin pestañear. Cuando sientas urgencia de pestañear, resiste 2 segundos más. Respira lento: inhala 4, exhala 6. Tu corteza prefrontal está tomando control total de tu atención. Sigue fijando sin romper la mirada.",sc:"Fijación visual forzada activa masivamente corteza prefrontal dorsolateral — centro de control ejecutivo",ic:"focus",br:{in:4,h1:0,ex:6,h2:0}},
-  {l:"Mantra de Enfoque",r:"50–90s",s:50,e:90,k:"Aquí. Ahora. Una sola tarea. Repite con convicción.",i:"Cierra los ojos. Repite internamente: 'Aquí. Ahora. Una sola tarea.' Cada repetición más lenta, más firme. Si divaga, vuelve sin juicio. 8-10 repeticiones. Respiración: inhala 4, exhala 6. No cambies nada más. Solo repite y respira.",sc:"Mantra repetitivo elimina multitarea neural y dirige toda la energía cognitiva a un solo punto",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}},
-  {l:"Integración Silenciosa",r:"90–120s",s:90,e:120,k:"Deja el mantra. Solo silencio. El enfoque ya está.",i:"Deja de repetir. Quédate en el silencio que creaste. Tu mente ya está enfocada — no fuerces. Si un pensamiento aparece, déjalo pasar. Respira suave: inhala 4, exhala 6. Siente la claridad. En la última exhalación, abre los ojos con dirección absoluta.",sc:"Silencio post-mantra consolida activación prefrontal en modo sostenido. Puerta al estado de flow",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}}]},
+  ph:[{l:"Reset Hemisférico",r:"0–20s",s:0,e:20,k:"Ojos izquierda-derecha rápido. 10 veces.",i:"Sin mover la cabeza, mueve tus ojos rápidamente de izquierda a derecha 10 veces. Rápido pero controlado. Esto integra ambos hemisferios y rompe patrones estancados. Respira normalmente. Al terminar, cierra los ojos un momento y nota el efecto de limpieza mental.",iExec:[
+    {from:0,to:10,text:"Sin mover la cabeza, ojos rápido izquierda-derecha. 10 veces, controlado."},
+    {from:10,to:20,text:"Cierra los ojos. La mente se despeja."}
+  ],sc:"Movimiento ocular bilateral integra hemisferios cerebrales y desensibiliza carga emocional. Principio EMDR",ic:"focus",br:null},
+  {l:"Fijación de Control",r:"20–50s",s:20,e:50,k:"Un punto fijo. No parpadees. Control total.",i:"Abre los ojos. Elige un punto fijo frente a ti. Míralo sin pestañear. Cuando sientas urgencia de pestañear, resiste 2 segundos más. Respira lento: inhala 4, exhala 6. Tu corteza prefrontal está tomando control total de tu atención. Sigue fijando sin romper la mirada.",iExec:[
+    {from:0,to:15,text:"Abre los ojos. Un punto fijo. Inhala 4s, exhala 6s. No pestañees."},
+    {from:15,to:30,text:"Cuando llegue la urgencia de pestañear, resiste 2s más."}
+  ],sc:"Fijación visual forzada activa masivamente corteza prefrontal dorsolateral — centro de control ejecutivo",ic:"focus",br:{in:4,h1:0,ex:6,h2:0}},
+  {l:"Mantra de Enfoque",r:"50–90s",s:50,e:90,k:"Aquí. Ahora. Una sola tarea. Repite con convicción.",i:"Cierra los ojos. Repite internamente: 'Aquí. Ahora. Una sola tarea.' Cada repetición más lenta, más firme. Si divaga, vuelve sin juicio. 8-10 repeticiones. Respiración: inhala 4, exhala 6. No cambies nada más. Solo repite y respira.",iExec:[
+    {from:0,to:20,text:"Cierra los ojos. Repite dentro: \"Aquí. Ahora. Una sola tarea.\""},
+    {from:20,to:40,text:"Cada repetición más lenta y firme. Si divagas, vuelve sin juicio."}
+  ],sc:"Mantra repetitivo elimina multitarea neural y dirige toda la energía cognitiva a un solo punto",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}},
+  {l:"Integración Silenciosa",r:"90–120s",s:90,e:120,k:"Deja el mantra. Solo silencio. El enfoque ya está.",i:"Deja de repetir. Quédate en el silencio que creaste. Tu mente ya está enfocada — no fuerces. Si un pensamiento aparece, déjalo pasar. Respira suave: inhala 4, exhala 6. Siente la claridad. En la última exhalación, abre los ojos con dirección absoluta.",iExec:[
+    {from:0,to:15,text:"Deja el mantra. Quédate en el silencio que creaste."},
+    {from:15,to:30,text:"Los pensamientos pasan. Abre los ojos en una exhalación."}
+  ],sc:"Silencio post-mantra consolida activación prefrontal en modo sostenido. Puerta al estado de flow",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}}]},
 
   /* ═══ #9 STEEL CORE RESET ═══ */
   {id:9,n:"Steel Core Reset",ct:"Reset",d:120,sb:"Reinicio nervioso máximo",tg:"SC",cl:"#8B5CF6",int:"reset",dif:3,
