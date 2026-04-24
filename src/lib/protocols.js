@@ -76,9 +76,19 @@ export const P = [
 
   /* ═══ #6 GROUNDED STEEL ═══ */
   {id:6,n:"Grounded Steel",ct:"Protocolo",d:120,sb:"Presencia ejecutiva",tg:"GS",cl:"#059669",int:"calma",dif:2,
-  ph:[{l:"Anclaje Postural",r:"0–30s",s:0,e:30,k:"Pies firmes. Columna recta. Hombros abajo. Respira.",i:"Planta ambos pies firmemente en el suelo. Siente tu peso distribuirse. Espalda recta — como si un hilo tirara de tu coronilla. Hombros lejos de las orejas. Inhala 3 segundos. Mantén 3 segundos. Exhala 6 segundos. Repite sin alterar la postura. Tu cuerpo le dice a tu cerebro: 'Estoy seguro.'",sc:"Postura erguida suprime cortisol y eleva testosterona. Señal de seguridad al sistema nervioso autónomo",ic:"body",br:{in:3,h1:3,ex:6,h2:0}},
-  {l:"Ritmo Triangular",r:"30–90s",s:30,e:90,k:"3 dentro. 3 sostén. 6 fuera. Sin cambiar nada.",i:"Mantén la postura de acero. Sigue el ritmo triangular: inhala 3, sostén 3, exhala 6. Con cada ciclo sientes más control. Pies anclados. Columna recta. La exhalación larga es el doble de la inhalación — calma sin perder presencia. No cambies nada. Solo profundiza lo que ya tienes.",sc:"Ratio 1:2 inhalación:exhalación maximiza tono parasimpático manteniendo estado de alerta controlada",ic:"breath",br:{in:3,h1:3,ex:6,h2:0}},
-  {l:"Tensión de Dominio",r:"90–120s",s:90,e:120,k:"Core al 15%. Mantén respirando. Presencia total.",i:"Sin cambiar respiración ni postura, activa abdomen y glúteos al 15% de fuerza — solo activa, no aprietes. Mantén esta base mientras respiras. La tensión mínima te ancla completamente al presente. Cada exhalación refuerza tu presencia. Mantén hasta el final. Abre los ojos: inquebrantable.",sc:"Micro-tensión isométrica activa propioceptores de estabilidad. Genera sensación de fortaleza embodied",ic:"body",br:{in:3,h1:3,ex:6,h2:0}}]},
+  ph:[{l:"Anclaje Postural",r:"0–30s",s:0,e:30,k:"Pies firmes. Columna recta. Hombros abajo. Respira.",i:"Planta ambos pies firmemente en el suelo. Siente tu peso distribuirse. Espalda recta — como si un hilo tirara de tu coronilla. Hombros lejos de las orejas. Inhala 3 segundos. Mantén 3 segundos. Exhala 6 segundos. Repite sin alterar la postura. Tu cuerpo le dice a tu cerebro: 'Estoy seguro.'",iExec:[
+    {from:0,to:10,text:"Pies firmes en el suelo. Espalda recta — hilo tirando de tu coronilla. Hombros abajo."},
+    {from:10,to:30,text:"Inhala 3s, sostén 3s, exhala 6s. El cuerpo le dice al cerebro: \"estoy seguro\"."}
+  ],sc:"Postura erguida suprime cortisol y eleva testosterona. Señal de seguridad al sistema nervioso autónomo",ic:"body",br:{in:3,h1:3,ex:6,h2:0}},
+  {l:"Ritmo Triangular",r:"30–90s",s:30,e:90,k:"3 dentro. 3 sostén. 6 fuera. Sin cambiar nada.",i:"Mantén la postura de acero. Sigue el ritmo triangular: inhala 3, sostén 3, exhala 6. Con cada ciclo sientes más control. Pies anclados. Columna recta. La exhalación larga es el doble de la inhalación — calma sin perder presencia. No cambies nada. Solo profundiza lo que ya tienes.",iExec:[
+    {from:0,to:20,text:"Postura de acero. El ritmo se sostiene solo."},
+    {from:20,to:40,text:"Cada ciclo da más control. Calma sin perder presencia."},
+    {from:40,to:60,text:"Profundiza. Acero y calma a la vez."}
+  ],sc:"Ratio 1:2 inhalación:exhalación maximiza tono parasimpático manteniendo estado de alerta controlada",ic:"breath",br:{in:3,h1:3,ex:6,h2:0}},
+  {l:"Tensión de Dominio",r:"90–120s",s:90,e:120,k:"Core al 15%. Mantén respirando. Presencia total.",i:"Sin cambiar respiración ni postura, activa abdomen y glúteos al 15% de fuerza — solo activa, no aprietes. Mantén esta base mientras respiras. La tensión mínima te ancla completamente al presente. Cada exhalación refuerza tu presencia. Mantén hasta el final. Abre los ojos: inquebrantable.",iExec:[
+    {from:0,to:15,text:"Activa abdomen y glúteos al 15% — solo activar, no apretar."},
+    {from:15,to:30,text:"Cada exhalación refuerza tu presencia. Abre los ojos: inquebrantable."}
+  ],sc:"Micro-tensión isométrica activa propioceptores de estabilidad. Genera sensación de fortaleza embodied",ic:"body",br:{in:3,h1:3,ex:6,h2:0}}]},
 
   /* ═══ #7 HYPERSHIFT ═══ */
   {id:7,n:"HyperShift",ct:"Protocolo",d:120,sb:"Descarga emocional rápida",tg:"HS",cl:"#8B5CF6",int:"reset",dif:2,
