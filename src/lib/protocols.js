@@ -266,9 +266,22 @@ export const P = [
 
   /* ═══ #16 RESONANCIA VAGAL · Lehrer & Gevirtz 2014 ═══ */
   {id:16,n:"Resonancia Vagal",ct:"Protocolo",d:600,sb:"Entrenamiento de baroreflex a 5.5 rpm",tg:"RV",cl:"#059669",int:"calma",dif:2,
-  ph:[{l:"Calibración Inicial",r:"0–60s",s:0,e:60,k:"Respira a 5.5 rpm. Inhala 5s. Exhala 6s.",i:"Siéntate con la espalda recta pero relajada. Inhala por la nariz 5 segundos, expandiendo el abdomen. Exhala por la boca 6 segundos, vaciando desde abajo. No fuerces. El ritmo exacto es 5.5 respiraciones por minuto — el punto donde el barorreflejo entra en resonancia con la respiración.",sc:"Vaschillo et al. 2006: a ~5.5 rpm la amplitud de HRV se maximiza. Goessl et al. 2017 meta-análisis: d=0.83 en ansiedad-estrés.",ic:"breath",br:{in:5,h1:0,ex:6,h2:0}},
-  {l:"Entrenamiento Sostenido",r:"60–480s",s:60,e:480,k:"Mantén el ritmo 7 minutos. Corazón y respiración se sincronizan.",i:"Mantén el ritmo 5-6 durante 7 minutos sin interrupción. Si pierdes el foco, vuelve al ritmo sin juzgar. La ganancia baroreflex se entrena con consistencia, no con intensidad. Siente cómo el corazón acelera sutilmente al inhalar y desacelera al exhalar — esa es la arritmia sinusal respiratoria (RSA) en su pico.",sc:"Lehrer & Gevirtz 2014: 4 semanas × 20 min/día mejoran ganancia baroreflex y HRV basal de forma sostenida.",ic:"breath",br:{in:5,h1:0,ex:6,h2:0}},
-  {l:"Consolidación",r:"480–600s",s:480,e:600,k:"Últimos 2 minutos. Respiración automática al ritmo.",i:"En esta fase final, el ritmo debe sentirse automático. Observa tu estado: tu sistema nervioso está en modo óptimo. Al terminar, lleva contigo esta sensación de equilibrio autonómico. Con práctica diaria, se vuelve tu nuevo baseline.",sc:"Steffen et al. 2017: 20 min de RFB bajan presión sistólica 6 mmHg vs control y mejoran afecto positivo.",ic:"mind",br:{in:5,h1:0,ex:6,h2:0}}]},
+  ph:[{l:"Calibración Inicial",r:"0–60s",s:0,e:60,k:"Respira a 5.5 rpm. Inhala 5s. Exhala 6s.",i:"Siéntate con la espalda recta pero relajada. Inhala por la nariz 5 segundos, expandiendo el abdomen. Exhala por la boca 6 segundos, vaciando desde abajo. No fuerces. El ritmo exacto es 5.5 respiraciones por minuto — el punto donde el barorreflejo entra en resonancia con la respiración.",iExec:[
+    {from:0,to:20,text:"Espalda recta pero relajada. Inhala 5s por la nariz, expande el abdomen."},
+    {from:20,to:40,text:"Exhala 6s por la boca, vacía desde abajo."},
+    {from:40,to:60,text:"5.5 respiraciones/minuto: el punto de resonancia."}
+  ],sc:"Vaschillo et al. 2006: a ~5.5 rpm la amplitud de HRV se maximiza. Goessl et al. 2017 meta-análisis: d=0.83 en ansiedad-estrés.",ic:"breath",br:{in:5,h1:0,ex:6,h2:0}},
+  {l:"Entrenamiento Sostenido",r:"60–480s",s:60,e:480,k:"Mantén el ritmo 7 minutos. Corazón y respiración se sincronizan.",i:"Mantén el ritmo 5-6 durante 7 minutos sin interrupción. Si pierdes el foco, vuelve al ritmo sin juzgar. La ganancia baroreflex se entrena con consistencia, no con intensidad. Siente cómo el corazón acelera sutilmente al inhalar y desacelera al exhalar — esa es la arritmia sinusal respiratoria (RSA) en su pico.",iExec:[
+    {from:0,to:105,text:"Mantén el ritmo 5-6. Si pierdes el foco, vuelve sin juzgar."},
+    {from:105,to:210,text:"Consistencia, no intensidad. La baroreflex se entrena así."},
+    {from:210,to:315,text:"El corazón acelera al inhalar, desacelera al exhalar."},
+    {from:315,to:420,text:"Esa oscilación es la RSA en su pico."}
+  ],sc:"Lehrer & Gevirtz 2014: 4 semanas × 20 min/día mejoran ganancia baroreflex y HRV basal de forma sostenida.",ic:"breath",br:{in:5,h1:0,ex:6,h2:0}},
+  {l:"Consolidación",r:"480–600s",s:480,e:600,k:"Últimos 2 minutos. Respiración automática al ritmo.",i:"En esta fase final, el ritmo debe sentirse automático. Observa tu estado: tu sistema nervioso está en modo óptimo. Al terminar, lleva contigo esta sensación de equilibrio autonómico. Con práctica diaria, se vuelve tu nuevo baseline.",iExec:[
+    {from:0,to:40,text:"El ritmo ya es automático. El sistema está en modo óptimo."},
+    {from:40,to:80,text:"Observa este equilibrio autonómico."},
+    {from:80,to:120,text:"Con práctica diaria, se vuelve tu baseline."}
+  ],sc:"Steffen et al. 2017: 20 min de RFB bajan presión sistólica 6 mmHg vs control y mejoran afecto positivo.",ic:"mind",br:{in:5,h1:0,ex:6,h2:0}}]},
 
   /* ═══ #17 NSDR · Kjaer et al. 2002 / Datta et al. 2017 ═══ */
   {id:17,n:"NSDR 10 min",ct:"Reset",d:600,sb:"Descanso profundo no-sueño",tg:"NS",cl:"#8B5CF6",int:"reset",dif:1,
