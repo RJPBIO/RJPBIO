@@ -64,6 +64,33 @@ export function playChord(f, d, v) {
   } catch (e) {}
 }
 
+// Spark blip — tono breve, suave, para sincronía audio-visual con
+// los firings sinápticos del NeuralCore3D. Sine wave, ataque casi
+// instantáneo (4 ms), decay exponencial (~55 ms). Muy sutil: un
+// blip debajo del umbral de "interrupción" — se percibe como un
+// "chispazo" en el fondo, no como música. Frecuencia mapeada a
+// la altura del mote destino para que la red neuronal "suene"
+// como una red.
+export function playSpark(freq, volume) {
+  try {
+    const c = gAC(); if (!c) return;
+    if (c.state === "suspended") c.resume();
+    const f = Math.max(200, Math.min(1400, freq || 640));
+    const v = Math.max(0.01, Math.min(0.12, volume || 0.055));
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = "sine";
+    o.frequency.value = f;
+    const now = c.currentTime;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(v, now + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+    o.start(now);
+    o.stop(now + 0.08);
+  } catch (e) {}
+}
+
 // ─── Noise buffers (pre-generados) ────────────────────────
 // Reemplazamos createScriptProcessor (deprecado, inestable en iOS/Android)
 // por un AudioBuffer estático reproducido en loop. Más portable, sin

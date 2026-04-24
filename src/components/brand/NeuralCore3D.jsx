@@ -225,6 +225,14 @@ export default function NeuralCore3D({
   // Permite forzar un tier específico (debug, o override explícito).
   // Si se omite, auto-detectado en mount por detectPerfTier().
   perfTierOverride = null,
+  // Callback que el parent conecta a audio/haptics para sincronía
+  // sensorial. Se invoca UNA vez por firing, cuando el spark alcanza
+  // su mote destino (t≈0.95). El argumento:
+  //   { pitch }  — frecuencia sugerida (Hz) derivada de la y del
+  //                nodo destino; el parent puede ignorarla.
+  // Si es null o no se pasa, no hay audio/haptic. El parent decide
+  // cuándo está activo (p.ej., sólo durante ts==="running").
+  onSparkHit = null,
 }) {
   const cfg = INTENT[intent] || DEFAULT_INTENT;
   const bp = resolveBreathPhase(breathPhase);
@@ -279,6 +287,21 @@ export default function NeuralCore3D({
   // Done timestamp (for ember internal tail timing reference)
   const doneAtRef = useRef(null);
 
+  // Dynamic props mirror en refs para que el rAF loop no tenga que
+  // reiniciarse cada vez que cambian (progress 1×/s, bp cada 2-8s,
+  // onSparkHit en cada ts transition). El tick lee siempre el valor
+  // más reciente sin reestructurar el loop.
+  const stateRef = useRef(state);
+  const progressRef = useRef(progress);
+  const bpRef = useRef(bp);
+  const isBreathingRef = useRef(isBreathing);
+  const onSparkHitRef = useRef(onSparkHit);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => { progressRef.current = progress; }, [progress]);
+  useEffect(() => { bpRef.current = bp; }, [bp]);
+  useEffect(() => { isBreathingRef.current = isBreathing; }, [isBreathing]);
+  useEffect(() => { onSparkHitRef.current = onSparkHit; }, [onSparkHit]);
+
   // Coherence penalty tracking + ember anchor timestamp
   useEffect(() => {
     const prev = prevStateForCohRef.current;
@@ -326,13 +349,37 @@ export default function NeuralCore3D({
       lastTickRef.current = now;
       const dt = Math.min(0.1, (now - prevLast) / 1000); // cap tras pausas largas
 
-      // Cull + cascadas
+      // Lee valores volátiles desde refs (actualizados por useEffects
+      // dedicados). Evita que el rAF se reinicie cada vez que cambian.
+      const curState = stateRef.current;
+      const curProgress = progressRef.current;
+      const curBp = bpRef.current;
+      const curIsBreathing = isBreathingRef.current;
+
+      // Cull + cascadas + detección de arrival (audio/haptic sync)
       const nextFirings = [];
       firingsRef.current.forEach((f) => {
+        // Detección edge: primera vez que t cruza 0.93 disparamos el
+        // callback onSparkHit. Usamos flag para que no se repita por
+        // frame. La frecuencia se deriva de la y del mote destino
+        // (arriba→agudo, abajo→grave) mapeada exponencialmente.
+        if (!f.hit && now >= f.startMs) {
+          const t = (now - f.startMs) / f.duration;
+          if (t >= 0.93 && t <= 1.05) {
+            f.hit = true;
+            const cb = onSparkHitRef.current;
+            if (typeof cb === "function") {
+              const ny = nodes[f.to]?.y || 0;
+              const pitch = Math.round(640 * Math.pow(1.4, ny));
+              try { cb({ pitch, nodeIndex: f.to }); } catch (e) {}
+            }
+          }
+        }
+
         const end = f.startMs + f.duration;
         if (now >= end) {
           if (
-            state === "running" &&
+            curState === "running" &&
             f.gen < 2 &&
             Math.random() < cfg.cascadeP
           ) {
@@ -360,54 +407,44 @@ export default function NeuralCore3D({
       );
 
       // Targets para easing por fase respiratoria + ember
-      // rotMult target: 1 normal, 0.15 SOSTÉN, 0.25 VACÍO
-      // brightMult target: 1.1 INHALA, 1.05 HOLD, 0.92 EXHALA, 0.78 VACÍO
-      // auraMult target: 1.05 INHALA, 1.0 HOLD, 0.88 EXHALA, 0.7 VACÍO
       let rotTarget = 1;
       let brightTarget = 1;
       let auraTarget = 1;
-      if (bp && isBreathing) {
-        if (bp === "IN") { rotTarget = 1; brightTarget = 1.1; auraTarget = 1.05; }
-        else if (bp === "HOLD") { rotTarget = 0.15; brightTarget = 1.05; auraTarget = 1; }
-        else if (bp === "OUT") { rotTarget = 1; brightTarget = 0.92; auraTarget = 0.88; }
-        else if (bp === "EMPTY") { rotTarget = 0.25; brightTarget = 0.78; auraTarget = 0.7; }
+      if (curBp && curIsBreathing) {
+        if (curBp === "IN") { rotTarget = 1; brightTarget = 1.1; auraTarget = 1.05; }
+        else if (curBp === "HOLD") { rotTarget = 0.15; brightTarget = 1.05; auraTarget = 1; }
+        else if (curBp === "OUT") { rotTarget = 1; brightTarget = 0.92; auraTarget = 0.88; }
+        else if (curBp === "EMPTY") { rotTarget = 0.25; brightTarget = 0.78; auraTarget = 0.7; }
       }
-      // Ease (tau ~0.2s at 60fps → factor 0.08 per frame)
-      const ease = 1 - Math.pow(0.35, dt * 5); // framerate-independent low-pass
+      const ease = 1 - Math.pow(0.35, dt * 5);
       rotMultRef.current += (rotTarget - rotMultRef.current) * ease;
       brightMultRef.current += (brightTarget - brightMultRef.current) * ease;
       auraMultRef.current += (auraTarget - auraMultRef.current) * ease;
 
       // Base rotation speed por state
       let ySpeed;
-      if (state === "running") ySpeed = 1 / cfg.rotRun;
-      else if (state === "idle") ySpeed = 1 / cfg.rotIdle;
-      else if (state === "paused") ySpeed = 1 / (cfg.rotIdle * 1.8);
-      else if (state === "ember") ySpeed = 1 / (cfg.rotIdle * 3.5);
+      if (curState === "running") ySpeed = 1 / cfg.rotRun;
+      else if (curState === "idle") ySpeed = 1 / cfg.rotIdle;
+      else if (curState === "paused") ySpeed = 1 / (cfg.rotIdle * 1.8);
+      else if (curState === "ember") ySpeed = 1 / (cfg.rotIdle * 3.5);
       else ySpeed = 1 / cfg.rotIdle;
-      // Chaos shimmer (energia)
       if (cfg.chaos > 0) {
         ySpeed *= 1 + Math.sin(now / 200) * cfg.chaos * 0.35;
       }
-      // Breath-phase easing applied
       ySpeed *= rotMultRef.current;
 
-      // Integrate rotation (no jumps ever)
       rotYRef.current = (rotYRef.current + dt * 360 * ySpeed) % 360;
-      rotXPhaseRef.current += dt * (2 * Math.PI / 36); // X oscillation period 36s
+      rotXPhaseRef.current += dt * (2 * Math.PI / 36);
 
-      // Spawn organic firings (respeta el cap concurrente del perf tier
-      // para mantener el rendering barato en dispositivos débiles).
-      // Los firings coreografiados (ignition/ring/collapse) bypasean
-      // el cap — son eventos cortos y valen el costo.
-      if (state === "running" || state === "idle" || state === "ember") {
-        const emberFactor = state === "ember" ? 15 : 1;
-        const intensityBoost = (state === "running" && progress > 0.8)
-          ? 1 - (progress - 0.8) * 1.5
+      // Spawn organic firings (respeta el cap concurrente del perf tier)
+      if (curState === "running" || curState === "idle" || curState === "ember") {
+        const emberFactor = curState === "ember" ? 15 : 1;
+        const intensityBoost = (curState === "running" && curProgress > 0.8)
+          ? 1 - (curProgress - 0.8) * 1.5
           : 1;
-        const baseMs = cfg.fireBase * (state === "idle" ? 1.6 : intensityBoost) * emberFactor;
+        const baseMs = cfg.fireBase * (curState === "idle" ? 1.6 : intensityBoost) * emberFactor;
         const jit = cfg.fireJit * emberFactor;
-        const chaosFire = state === "running" && cfg.chaos > 0 && Math.random() < cfg.chaos * 0.02;
+        const chaosFire = curState === "running" && cfg.chaos > 0 && Math.random() < cfg.chaos * 0.02;
         const canSpawn = firingsRef.current.length < perf.maxFirings;
         if (canSpawn && (chaosFire || now - lastFireRef.current > baseMs + Math.random() * jit)) {
           lastFireRef.current = now;
@@ -416,7 +453,7 @@ export default function NeuralCore3D({
             const fromFirst = Math.random() < 0.5;
             firingsRef.current.push({
               startMs: now,
-              duration: cfg.sparkMs * (state === "ember" ? 1.4 : 1),
+              duration: cfg.sparkMs * (curState === "ember" ? 1.4 : 1),
               from: fromFirst ? e.a : e.b,
               to: fromFirst ? e.b : e.a,
               gen: 0,
@@ -433,7 +470,10 @@ export default function NeuralCore3D({
       alive = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [reducedMotion, state, cfg, edges, neighbors, progress, bp, isBreathing, perf]);
+    // Deps minimales: sólo cambios estructurales (tier, intent, grafo,
+    // reducedMotion) reinician el loop. Props volátiles (state, progress,
+    // bp, isBreathing, onSparkHit) se leen vía refs dentro del tick.
+  }, [reducedMotion, cfg, edges, neighbors, nodes, perf]);
 
   // ─── Ignition wave & resonance collapse ────────────────────────
   const prevStateRef = useRef(state);

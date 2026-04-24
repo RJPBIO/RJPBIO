@@ -29,7 +29,7 @@ import { useCommandKey } from "@/hooks/useCommandKey";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
 import {
-  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord,
+  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
@@ -413,6 +413,27 @@ export default function BioIgnicion(){
   const{bg,card:cd,surface,border:bd,t1,t2,t3,scrim}=resolveTheme(isDark);
   const ac=pr.cl;
 
+  // ─── Spark arrival callback (audio + haptic lockstep) ────
+  // Se invoca 1 vez por firing sináptico del NeuralCore3D, cuando
+  // el spark alcanza su mote destino. Multisensorial:
+  //   · audio: blip corto (~55ms) a la frecuencia propuesta
+  //   · haptic: vibrate 10ms, rate-limited a 100ms mínimo entre
+  //     eventos para evitar rechazo en Android durante ráfagas
+  // Respeta settings y solo activa durante running/done para no
+  // molestar en idle (donde los firings son decorativos).
+  const sparkHapticRef=useRef(0);
+  const handleSparkHit=useCallback(({pitch})=>{
+    if(ts!=="running"&&ts!=="done")return;
+    if(st.soundOn!==false){try{playSpark(pitch,0.055);}catch(e){}}
+    if(st.hapticOn!==false&&typeof navigator!=="undefined"&&navigator.vibrate){
+      const now=Date.now();
+      if(now-sparkHapticRef.current>100){
+        sparkHapticRef.current=now;
+        try{navigator.vibrate(10);}catch(e){}
+      }
+    }
+  },[ts,st.soundOn,st.hapticOn]);
+
   // ─── Loading screen — identidad BIO-IGNICIÓN ─────────────
   // Siempre en paleta oscura (deepField), sin importar el modo del sistema.
   if(!mt)return(<div style={{minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:bioSignal.deepField,gap:space[5],paddingInline:space[5]}}>
@@ -427,6 +448,14 @@ export default function BioIgnicion(){
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s ease"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
 
   {/* Session Runner — fullscreen cinematic overlay (countdown + running + paused) */}
+  {/* Handler para sincronía audio-háptica con los firings del core.
+      Se dispara 1 vez por spark cuando alcanza su destino. Audio:
+      blip de ~55ms a la frecuencia derivada de la y del mote
+      (arriba agudo, abajo grave → la red neuronal "suena" como
+      red). Háptica: vibrate breve, rate-limited a 100ms para evitar
+      rechazo en Android o fatiga en ignition wave / resonance
+      collapse (que traen ráfagas densas).
+      Respeta settings st.soundOn / st.hapticOn. */}
   <SessionRunner
     show={countdown>0||ts==="running"||ts==="paused"||orbDoneFlash}
     countdown={countdown}
@@ -475,6 +504,7 @@ export default function BioIgnicion(){
       setSessionData(d=>({...d,tabAways:(d.tabAways||0)+1,interactions:Math.max(0,(d.interactions||0)-0.5)}));
     }}
     reducedMotion={reducedMotion}
+    onSparkHit={handleSparkHit}
   />
 
 
