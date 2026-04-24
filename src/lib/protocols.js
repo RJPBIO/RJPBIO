@@ -285,10 +285,26 @@ export const P = [
 
   /* ═══ #17 NSDR · Kjaer et al. 2002 / Datta et al. 2017 ═══ */
   {id:17,n:"NSDR 10 min",ct:"Reset",d:600,sb:"Descanso profundo no-sueño",tg:"NS",cl:"#8B5CF6",int:"reset",dif:1,
-  ph:[{l:"Instalación Corporal",r:"0–90s",s:0,e:90,k:"Acuéstate. Ojos cerrados. Respiración natural.",i:"Acuéstate boca arriba, manos a los lados con las palmas hacia arriba. Pies relajados abiertos en V. Cierra los ojos. No controles la respiración — deja que sea como sea. Toma 3 respiraciones profundas para señalar al cuerpo que comienza el descenso.",sc:"Hipnagogia protegida: el cuerpo se relaja pero la consciencia permanece testigo. Kjaer 2002 (PET): +65% dopamina estriatal.",ic:"body",br:null},
-  {l:"Barrido Corporal",r:"90–420s",s:90,e:420,k:"Atención pasea por cada región. Sin forzar.",i:"Lleva la atención a la frente. Ojos. Mandíbula. Cuello. Hombros. Brazos hasta las manos. Pecho. Abdomen. Cadera. Muslos. Rodillas. Pantorrillas. Pies. Permanece 20–30 segundos en cada región. No hagas nada — solo observa. Si te quedas dormido, el beneficio también ocurre.",sc:"Activación insular: el barrido corporal entrena interocepción, base de regulación autonómica consciente.",ic:"mind",br:null},
-  {l:"Visualización Silenciosa",r:"420–540s",s:420,e:540,k:"Lugar seguro. Sin narrativa. Solo sensación.",i:"Evoca un lugar donde te sentiste profundamente en paz. No cuentes una historia — deja que las sensaciones emerjan: olores, sonidos, temperatura. Permanece 2 minutos. Tu cerebro está en ondas alfa-theta; este estado consolida aprendizajes y restaura dopamina.",sc:"Datta et al. 2017: yoga nidra mejora calidad de sueño en adultos con insomnio crónico.",ic:"mind",br:null},
-  {l:"Retorno Gradual",r:"540–600s",s:540,e:600,k:"Mueve dedos. Respiración profunda. Abre los ojos.",i:"Mueve lentamente los dedos de manos y pies. Respira 3 veces con intención creciente. Estira brazos sobre la cabeza. Gira hacia un costado antes de sentarte. Abre los ojos con suavidad. Sin inercia de sueño — solo claridad.",sc:"Protocolo de salida evita la inercia de sueño (sleep inertia) que sí aparece en siestas reales de ≥30 min.",ic:"body",br:null}]}
+  ph:[{l:"Instalación Corporal",r:"0–90s",s:0,e:90,k:"Acuéstate. Ojos cerrados. Respiración natural.",i:"Acuéstate boca arriba, manos a los lados con las palmas hacia arriba. Pies relajados abiertos en V. Cierra los ojos. No controles la respiración — deja que sea como sea. Toma 3 respiraciones profundas para señalar al cuerpo que comienza el descenso.",iExec:[
+    {from:0,to:30,text:"Acuéstate boca arriba. Palmas arriba, pies en V."},
+    {from:30,to:90,text:"Ojos cerrados. No controles la respiración. 3 respiraciones profundas para descender."}
+  ],sc:"Hipnagogia protegida: el cuerpo se relaja pero la consciencia permanece testigo. Kjaer 2002 (PET): +65% dopamina estriatal.",ic:"body",br:null},
+  {l:"Barrido Corporal",r:"90–420s",s:90,e:420,k:"Atención pasea por cada región. Sin forzar.",i:"Lleva la atención a la frente. Ojos. Mandíbula. Cuello. Hombros. Brazos hasta las manos. Pecho. Abdomen. Cadera. Muslos. Rodillas. Pantorrillas. Pies. Permanece 20–30 segundos en cada región. No hagas nada — solo observa. Si te quedas dormido, el beneficio también ocurre.",iExec:[
+    {from:0,to:60,text:"Atención en frente, ojos, mandíbula. Solo observa."},
+    {from:60,to:120,text:"Cuello, hombros."},
+    {from:120,to:180,text:"Brazos, manos, pecho."},
+    {from:180,to:240,text:"Abdomen, cadera."},
+    {from:240,to:330,text:"Muslos, rodillas, pantorrillas, pies. Si te duermes, el beneficio también ocurre."}
+  ],sc:"Activación insular: el barrido corporal entrena interocepción, base de regulación autonómica consciente.",ic:"mind",br:null},
+  {l:"Visualización Silenciosa",r:"420–540s",s:420,e:540,k:"Lugar seguro. Sin narrativa. Solo sensación.",i:"Evoca un lugar donde te sentiste profundamente en paz. No cuentes una historia — deja que las sensaciones emerjan: olores, sonidos, temperatura. Permanece 2 minutos. Tu cerebro está en ondas alfa-theta; este estado consolida aprendizajes y restaura dopamina.",iExec:[
+    {from:0,to:60,text:"Evoca un lugar donde te sentiste en paz. No cuentes la historia."},
+    {from:60,to:120,text:"Deja emerger olores, sonidos, temperatura."}
+  ],sc:"Datta et al. 2017: yoga nidra mejora calidad de sueño en adultos con insomnio crónico.",ic:"mind",br:null},
+  {l:"Retorno Gradual",r:"540–600s",s:540,e:600,k:"Mueve dedos. Respiración profunda. Abre los ojos.",i:"Mueve lentamente los dedos de manos y pies. Respira 3 veces con intención creciente. Estira brazos sobre la cabeza. Gira hacia un costado antes de sentarte. Abre los ojos con suavidad. Sin inercia de sueño — solo claridad.",iExec:[
+    {from:0,to:20,text:"Mueve dedos de manos y pies. 3 respiraciones profundas."},
+    {from:20,to:40,text:"Estira brazos sobre la cabeza. Gira hacia un costado."},
+    {from:40,to:60,text:"Abre los ojos suave. Sin inercia — solo claridad."}
+  ],sc:"Protocolo de salida evita la inercia de sueño (sleep inertia) que sí aparece en siestas reales de ≥30 min.",ic:"body",br:null}]}
 ];
 
 export const SCIENCE_DEEP = {
