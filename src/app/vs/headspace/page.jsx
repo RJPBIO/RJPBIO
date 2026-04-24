@@ -511,8 +511,10 @@ export default async function VsHeadspacePage() {
     <PublicShell activePath="/vs/headspace">
       <main id="main-content">
         {/* ═══ HERO ═══ */}
-        <section style={{ position: "relative", paddingBlock: `clamp(40px, 6vw, 72px) clamp(40px, 7vw, 80px)` }}>
-          <BioglyphLattice variant="ambient" />
+        <section style={{ position: "relative", overflow: "hidden", paddingBlock: `clamp(40px, 6vw, 72px) clamp(40px, 7vw, 80px)` }}>
+          <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.55, maskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)" }}>
+            <BioglyphLattice variant="ambient" />
+          </div>
           <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="22% 30%">
               <p style={kickerStyle}>{t.eyebrow}</p>

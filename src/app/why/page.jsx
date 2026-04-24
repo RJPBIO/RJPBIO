@@ -563,8 +563,14 @@ export default async function WhyPage() {
             section padding and leaving visible dead space above the
             eyebrow. Section alone now owns the hero offset; Container
             block padding is zeroed to prevent the double-padding. */}
-        <section style={{ position: "relative", paddingBlock: `clamp(40px, 6vw, 72px) clamp(48px, 8vw, 96px)` }}>
-          <BioglyphLattice variant="ambient" />
+        <section style={{ position: "relative", overflow: "hidden", paddingBlock: `clamp(40px, 6vw, 72px) clamp(48px, 8vw, 96px)` }}>
+          {/* Ambient lattice is decorative — absolute so it doesn't
+              inflate the hero's in-flow height (the SVG viewBox scales
+              to section width otherwise, producing ~100vh of dead
+              space before the content). */}
+          <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.55, maskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 60%, transparent 100%)" }}>
+            <BioglyphLattice variant="ambient" />
+          </div>
           <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="18% 28%">
               <p style={kickerStyle}>{t.eyebrow}</p>
