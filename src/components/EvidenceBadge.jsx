@@ -22,25 +22,20 @@ import { useMemo } from "react";
 import { withAlpha, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { evidenceForProtocol } from "../lib/evidence";
+import { useT } from "../hooks/useT";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
-const TIER_LABEL = {
-  high: "CLÍNICO",
-  moderate: "VALIDADO",
-  limited: "INICIAL",
+const TIER_KEY = {
+  high: "clinical",
+  moderate: "validated",
+  limited: "limited",
 };
 
 const TIER_COLOR = {
   high: brand.primary,
   moderate: semantic.info,
   limited: semantic.warning,
-};
-
-const TIER_DESCRIPTION = {
-  high: "Evidencia clínica peer-reviewed con tamaño de efecto reportado",
-  moderate: "Mecanismo neurofisiológico validado en literatura",
-  limited: "Evidencia inicial, efectos heterogéneos",
 };
 
 /**
@@ -51,6 +46,7 @@ const TIER_DESCRIPTION = {
  * @param {boolean} [props.showIcon=false] — punto decorativo inicial
  */
 export default function EvidenceBadge({ protocol, evidence, size = "sm", showIcon = false }) {
+  const { t } = useT();
   const resolved = useMemo(() => {
     if (evidence) return evidence;
     if (protocol) return evidenceForProtocol(protocol);
@@ -59,11 +55,12 @@ export default function EvidenceBadge({ protocol, evidence, size = "sm", showIco
 
   if (!resolved) return null;
   const tier = resolved.evidenceLevel;
-  if (!tier || !TIER_LABEL[tier]) return null;
+  if (!tier || !TIER_KEY[tier]) return null;
 
   const color = TIER_COLOR[tier];
-  const label = TIER_LABEL[tier];
-  const desc = TIER_DESCRIPTION[tier];
+  const tierKey = TIER_KEY[tier];
+  const label = t(`evidence.tier.${tierKey}`);
+  const desc = t(`evidence.tierDesc.${tierKey}`);
 
   const isMd = size === "md";
 

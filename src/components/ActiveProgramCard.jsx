@@ -21,6 +21,7 @@ import Icon from "./Icon";
 import { resolveTheme, withAlpha, space, font } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
+import { useT } from "../hooks/useT";
 import {
   getProgramById,
   getProtocolById,
@@ -29,6 +30,7 @@ import {
   programProgress,
   programLagStatus,
 } from "../lib/programs";
+import { programDisplayName, protocolDisplayName } from "../lib/localize";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
@@ -40,6 +42,7 @@ export default function ActiveProgramCard({
   onAbandon,
 }) {
   const reduced = useReducedMotion();
+  const { t, locale } = useT();
   const { card: cd, border: bd, t1, t2, t3, surface } = resolveTheme(isDark);
 
   const info = useMemo(() => {
@@ -78,17 +81,17 @@ export default function ActiveProgramCard({
       : accent;
 
   const stateLabel = completedToday
-    ? "HECHO HOY"
+    ? t("programs.activeHeader.doneToday")
     : !session
-      ? "DÍA DE REPOSO"
+      ? t("programs.activeHeader.restDay")
       : lag.isLagging
-        ? `ATRASADO · ${lag.daysBehind} SESIONES`
-        : `DÍA ${day}/${program.duration}`;
+        ? t("programs.activeHeader.lagging", { count: lag.daysBehind })
+        : t("programs.activeHeader.todayIs", { day, total: program.duration });
 
   return (
     <motion.article
       role="region"
-      aria-label={`Programa activo: ${program.n}`}
+      aria-label={`${programDisplayName(program, locale)}`}
       initial={reduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -149,7 +152,7 @@ export default function ActiveProgramCard({
               lineHeight: 1.25,
             }}
           >
-            {program.n}
+            {programDisplayName(program, locale)}
           </h3>
           <p
             style={{
@@ -160,7 +163,7 @@ export default function ActiveProgramCard({
               lineHeight: 1.4,
             }}
           >
-            {progress.completed} de {progress.total} sesiones · {Math.round(progress.fraction * 100)}%
+            {progress.completed} / {progress.total} {t("programs.sessionsLabel")} · {Math.round(progress.fraction * 100)}%
           </p>
         </div>
 
@@ -218,14 +221,14 @@ export default function ActiveProgramCard({
         >
           <Icon name="check" size={16} color={semantic.success} />
           <span style={{ fontSize: 12, color: t2, fontWeight: 600 }}>
-            Hoy ya completaste tu sesión del programa. Mañana continúa.
+            {t("programs.activeBody.doneToday")}
           </span>
         </div>
       ) : session && proto ? (
         <button
           type="button"
           onClick={() => typeof onStartDay === "function" && onStartDay(session, program)}
-          aria-label={`Iniciar día ${day}: ${proto.n}`}
+          aria-label={t("programs.activeCta.startDay", { day, protocol: protocolDisplayName(proto, locale) })}
           style={{
             display: "flex",
             alignItems: "center",
@@ -271,7 +274,7 @@ export default function ActiveProgramCard({
                 marginBlockEnd: 2,
               }}
             >
-              Hoy · {proto.ct}
+              {t("programs.activeCta.today")} · {proto.ct}
             </div>
             <div
               style={{
@@ -284,7 +287,7 @@ export default function ActiveProgramCard({
                 whiteSpace: "nowrap",
               }}
             >
-              {proto.n}
+              {protocolDisplayName(proto, locale)}
             </div>
             {session.note && (
               <div
@@ -324,10 +327,13 @@ export default function ActiveProgramCard({
               marginBlockEnd: 4,
             }}
           >
-            Hoy · Día de reposo
+            {t("programs.activeBody.restDay")}
           </div>
           <div style={{ fontSize: 12, color: t2, lineHeight: 1.45 }}>
-            Próxima sesión en {nextSession.day - day} {nextSession.day - day === 1 ? "día" : "días"}.
+            {t("programs.activeBody.nextSessionIn", {
+              count: nextSession.day - day,
+              label: nextSession.day - day === 1 ? t("programs.activeBody.day") : t("programs.activeBody.days"),
+            })}
           </div>
         </div>
       ) : null}
@@ -351,7 +357,7 @@ export default function ActiveProgramCard({
               textAlign: "center",
             }}
           >
-            Ver programa
+            {t("programs.activeCta.viewProgram")}
           </button>
         )}
         {typeof onAbandon === "function" && (
@@ -368,9 +374,9 @@ export default function ActiveProgramCard({
               fontWeight: 500,
               cursor: "pointer",
             }}
-            aria-label="Abandonar programa"
+            aria-label={t("programs.activeCta.abandon")}
           >
-            Abandonar
+            {t("programs.activeCta.abandon")}
           </button>
         )}
       </div>

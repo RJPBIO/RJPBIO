@@ -14,6 +14,8 @@ import { useRef, useEffect } from "react";
 import Icon from "./Icon";
 import EvidenceBadge from "./EvidenceBadge";
 import { CATS, INTENTS, DIF_LABELS } from "../lib/constants";
+import { protocolDisplayName, protocolDisplaySubtitle } from "../lib/localize";
+import { useT } from "../hooks/useT";
 import { predictSessionImpact } from "../lib/neural";
 import { resolveTheme, withAlpha, ty, font, space, radius, z, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
@@ -33,6 +35,7 @@ export default function ProtocolSelector({
   lastProto, smartPick, protoSens, sp, H,
 }) {
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const { locale } = useT();
   const reduced = useReducedMotion();
   const dialogRef = useFocusTrap(show, onClose);
   const listRef = useRef(null);
@@ -342,7 +345,7 @@ export default function ProtocolSelector({
                       </motion.div>
                       <div style={{ flex: 1, minInlineSize: 0 }}>
                         <div style={{ ...ty.title(t1), display: "flex", alignItems: "center", gap: space[1], flexWrap: "wrap" }}>
-                          {p.n}
+                          {protocolDisplayName(p, locale)}
                           <EvidenceBadge protocol={p} />
                           {isLast && <span style={ty.badge(t3, isDark ? "#1A1E28" : "#F1F5F9")}>último</span>}
                           {isSmart && (
@@ -379,7 +382,7 @@ export default function ProtocolSelector({
                             </span>
                           )}
                         </div>
-                        <div style={{ ...ty.caption(t2), marginBlockEnd: 2 }}>{p.sb}</div>
+                        <div style={{ ...ty.caption(t2), marginBlockEnd: 2 }}>{protocolDisplaySubtitle(p, locale)}</div>
                         <div style={{ ...ty.caption(t3), display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                           <span><span style={numStyle(t2, 700)}>{p.ph.length}</span> fases</span>
                           <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>

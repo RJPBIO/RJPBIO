@@ -23,33 +23,61 @@ import Icon from "./Icon";
 import { resolveTheme, withAlpha, space, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
+import { useT } from "../hooks/useT";
 import { P as PROTOCOLS } from "../lib/protocols";
 import { EVIDENCE, evidenceForProtocol } from "../lib/evidence";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
 // Instrumentos clínicos validados que usa el sistema (replica de
-// CLINICAL_STACK en OrgDashboard; esta lista refleja lo que ve el
-// HR director en el dashboard org, replicable aquí para transparency
-// con el usuario individual).
-const CLINICAL_INSTRUMENTS = [
-  { name: "PSS-4", full: "Perceived Stress Scale", cite: "Cohen & Williamson 1988" },
-  { name: "SWEMWBS", full: "Short Warwick-Edinburgh Well-being Scale", cite: "Stewart-Brown 2009" },
-  { name: "PHQ-2", full: "Patient Health Questionnaire", cite: "Kroenke et al. 2003" },
-  { name: "HRV RMSSD", full: "Heart Rate Variability", cite: "Task Force 1996 · Shaffer 2017" },
-  { name: "NOM-035", full: "Riesgo psicosocial (Guía II)", cite: "DOF México · 46 ítems" },
+// CLINICAL_STACK en OrgDashboard). Los nombres son siglas estables
+// (identificadores clínicos universales, no se traducen); la
+// descripción larga se localiza.
+const CLINICAL_INSTRUMENTS_LOC = [
+  { name: "PSS-4", fullKey: "pss4Full", citeKey: "pss4Cite" },
+  { name: "SWEMWBS", fullKey: "swemwbsFull", citeKey: "swemwbsCite" },
+  { name: "PHQ-2", fullKey: "phq2Full", citeKey: "phq2Cite" },
+  { name: "HRV RMSSD", fullKey: "hrvFull", citeKey: "hrvCite" },
+  { name: "NOM-035", fullKey: "nomFull", citeKey: "nomCite" },
 ];
 
-const COMPLIANCE = [
-  "LFPDPPP — datos despersonalizados",
-  "GDPR Art. 89 — fines estadísticos",
-  "k-anonimato k≥5 en agregaciones",
-];
+const COMPLIANCE_KEYS = ["lfpdppp", "gdpr", "kanon"];
+
+// Diccionario local con fallback — las descripciones de instrumentos
+// son bilingües y técnicas; las leemos con el mapping abajo.
+const INSTRUMENT_FALLBACK = {
+  es: {
+    pss4Full: "Perceived Stress Scale",
+    pss4Cite: "Cohen & Williamson 1988",
+    swemwbsFull: "Short Warwick-Edinburgh Well-being Scale",
+    swemwbsCite: "Stewart-Brown 2009",
+    phq2Full: "Patient Health Questionnaire",
+    phq2Cite: "Kroenke et al. 2003",
+    hrvFull: "Heart Rate Variability",
+    hrvCite: "Task Force 1996 · Shaffer 2017",
+    nomFull: "Riesgo psicosocial (Guía II)",
+    nomCite: "DOF México · 46 ítems",
+  },
+  en: {
+    pss4Full: "Perceived Stress Scale",
+    pss4Cite: "Cohen & Williamson 1988",
+    swemwbsFull: "Short Warwick-Edinburgh Well-being Scale",
+    swemwbsCite: "Stewart-Brown 2009",
+    phq2Full: "Patient Health Questionnaire",
+    phq2Cite: "Kroenke et al. 2003",
+    hrvFull: "Heart Rate Variability",
+    hrvCite: "Task Force 1996 · Shaffer 2017",
+    nomFull: "Psychosocial risk (Guide II)",
+    nomCite: "DOF Mexico · 46 items",
+  },
+};
 
 export default function EvidenceStrip({ isDark, onOpenEvidence }) {
   const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  const { t, locale } = useT();
   const [expanded, setExpanded] = useState(false);
+  const localInstr = INSTRUMENT_FALLBACK[locale] || INSTRUMENT_FALLBACK.en;
 
   // Cuenta de protocolos con evidencia high/moderate (los que muestran
   // badge). Usamos evidenceForProtocol (name-match) igual que EvidenceCard.
@@ -70,7 +98,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
       seen.add(card.id);
       totalStudies += (card.studies || []).length;
     });
-    return { high, moderate, total, totalStudies, instrumentCount: CLINICAL_INSTRUMENTS.length };
+    return { high, moderate, total, totalStudies, instrumentCount: CLINICAL_INSTRUMENTS_LOC.length };
   }, []);
 
   return (
@@ -129,7 +157,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
               marginBlockEnd: 2,
             }}
           >
-            RESPALDO CLÍNICO
+            {t("evidence.stripLabel")}
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
             <span
@@ -145,7 +173,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
               {counts.totalStudies}
             </span>
             <span style={{ fontSize: 12, color: t2 }}>
-              estudios · {counts.instrumentCount} instrumentos
+              {t("evidence.studiesWord")} · {counts.instrumentCount} {t("evidence.instrumentsWord")}
             </span>
           </div>
         </div>
@@ -186,11 +214,11 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                     marginBlockEnd: 6,
                   }}
                 >
-                  PROTOCOLOS RESPALDADOS
+                  {t("evidence.protocolsBackedLabel")}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <PillStat count={counts.high} label="Clínico" color={brand.primary} />
-                  <PillStat count={counts.moderate} label="Validado" color={semantic.info} />
+                  <PillStat count={counts.high} label={t("evidence.tier.clinical")} color={brand.primary} />
+                  <PillStat count={counts.moderate} label={t("evidence.tier.validated")} color={semantic.info} />
                 </div>
               </div>
 
@@ -206,7 +234,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                     marginBlockEnd: 8,
                   }}
                 >
-                  INSTRUMENTOS VALIDADOS
+                  {t("evidence.instrumentsLabel")}
                 </div>
                 <ul
                   style={{
@@ -218,7 +246,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                     gap: 6,
                   }}
                 >
-                  {CLINICAL_INSTRUMENTS.map((ins) => (
+                  {CLINICAL_INSTRUMENTS_LOC.map((ins) => (
                     <li
                       key={ins.name}
                       style={{
@@ -240,7 +268,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                         {ins.name}
                       </span>
                       <span style={{ color: t2 }}>
-                        {ins.full} · <span style={{ color: t3 }}>{ins.cite}</span>
+                        {localInstr[ins.fullKey]} · <span style={{ color: t3 }}>{localInstr[ins.citeKey]}</span>
                       </span>
                     </li>
                   ))}
@@ -259,7 +287,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                     marginBlockEnd: 8,
                   }}
                 >
-                  CUMPLIMIENTO
+                  {t("evidence.complianceLabel")}
                 </div>
                 <ul
                   style={{
@@ -271,9 +299,9 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                     gap: 4,
                   }}
                 >
-                  {COMPLIANCE.map((line) => (
+                  {COMPLIANCE_KEYS.map((key) => (
                     <li
-                      key={line}
+                      key={key}
                       style={{
                         display: "flex",
                         alignItems: "flex-start",
@@ -284,13 +312,13 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                       }}
                     >
                       <Icon name="check" size={12} color={brand.primary} aria-hidden="true" />
-                      <span>{line}</span>
+                      <span>{t(`evidence.compliance.${key}`)}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* CTA a /evidencia (si está en modo web, podemos linkear) */}
+              {/* CTA a /evidencia */}
               {typeof onOpenEvidence === "function" && (
                 <button
                   type="button"
@@ -309,7 +337,7 @@ export default function EvidenceStrip({ isDark, onOpenEvidence }) {
                     letterSpacing: -0.05,
                   }}
                 >
-                  Ver todos los estudios con DOI
+                  {t("evidence.viewAll")}
                 </button>
               )}
             </div>

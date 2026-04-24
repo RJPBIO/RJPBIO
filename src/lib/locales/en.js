@@ -219,4 +219,133 @@ export const en = {
     hintSelect: "select",
     hintClose: "close",
   },
+
+  // ─── Programs (multi-day curated journeys) ─────────────────
+  programs: {
+    section: "PROGRAMS",
+    sectionSub: "Curated journeys spanning several days. Each program uses the 17 protocols as ingredients.",
+    schedule: "SCHEDULE",
+    whyArc: "Why this arc",
+    evidence: "Evidence",
+    daysLabel: "days",
+    sessionsLabel: "sessions",
+    moreSessions: "{count} more {label} during the program",
+    morning: "morning",
+    afternoon: "afternoon",
+    evening: "evening",
+    doneBadge: "✓ DONE",
+    startButton: "Start program",
+    startNowButton: "Start now",
+    recommendedForYou: "RECOMMENDED FOR YOU",
+    activeHeader: {
+      doneToday: "DONE TODAY",
+      restDay: "REST DAY",
+      lagging: "BEHIND · {count} SESSIONS",
+      todayIs: "DAY {day}/{total}",
+    },
+    activeBody: {
+      doneToday: "You already completed today's program session. Continue tomorrow.",
+      restDay: "Today · Rest day",
+      nextSessionIn: "Next session in {count} {label}.",
+      day: "day",
+      days: "days",
+    },
+    activeCta: {
+      today: "Today",
+      startDay: "Start day {day}: {protocol}",
+      viewProgram: "View program",
+      abandon: "Abandon",
+      abandonConfirm: "Abandon \"{name}\"? Progress will be archived.",
+    },
+    startAnnounce: "{name} program started. Day 1: {note}",
+    abandonAnnounce: "Program abandoned.",
+    dayCompleteAnnounce: "Day {day} of program {name} completed.",
+    programCompleteAnnounce: "Program {name} completed! +20 vCores.",
+  },
+
+  // ─── Evidence surfacing (Claims layer) ─────────────────────
+  evidence: {
+    stripLabel: "CLINICAL BACKING",
+    stripDetail: "{studies} studies · {instruments} instruments",
+    studiesWord: "studies",
+    instrumentsWord: "instruments",
+    protocolsBackedLabel: "BACKED PROTOCOLS",
+    instrumentsLabel: "VALIDATED INSTRUMENTS",
+    complianceLabel: "COMPLIANCE",
+    viewAll: "See all studies with DOI",
+    tier: {
+      clinical: "CLINICAL",
+      validated: "VALIDATED",
+      limited: "INITIAL",
+    },
+    tierDesc: {
+      clinical: "Peer-reviewed clinical evidence with reported effect size",
+      validated: "Neurophysiological mechanism validated in the literature",
+      limited: "Initial evidence, heterogeneous effects",
+    },
+    tierAria: "Evidence level: {tier}. {desc}",
+    compliance: {
+      lfpdppp: "LFPDPPP — data depersonalized before aggregation",
+      gdpr: "GDPR Art. 89 — statistical purposes with technical safeguards",
+      kanon: "k-anonymity k≥5 in all aggregations",
+    },
+  },
+
+  // ─── Protocol display names + subtitles (for UI, short form) ───
+  // The long content (phase instructions, iExec steps, science) stays
+  // in the source Spanish — full translation scheduled for later phase.
+  protocols: {
+    "1":  { n: "Parasympathetic Reset",       sb: "Restores executive function" },
+    "2":  { n: "Cognitive Activation",        sb: "Focus and self-regulation" },
+    "3":  { n: "Executive Reset",             sb: "For leaders under pressure" },
+    "4":  { n: "Pulse Shift",                 sb: "Neurocardiac reset" },
+    "5":  { n: "Skyline Focus",               sb: "Visual-cognitive recalibration" },
+    "6":  { n: "Grounded Steel",              sb: "Executive presence" },
+    "7":  { n: "HyperShift",                  sb: "Rapid emotional discharge" },
+    "8":  { n: "Lightning Focus",             sb: "Extreme focus" },
+    "9":  { n: "Steel Core Reset",            sb: "Maximum nervous reset" },
+    "10": { n: "Atomic Pulse",                sb: "Neurosomatic synchronization" },
+    "11": { n: "Quantum Grounding",           sb: "Deep anchoring" },
+    "12": { n: "Neural Ascension",            sb: "Mental ascent and clarity" },
+    "13": { n: "Protocol OMEGA",              sb: "Full neural realignment" },
+    "14": { n: "Protocol OMNIA",              sb: "Total Human Activation" },
+    "15": { n: "Physiological Sigh",          sb: "Acute parasympathetic release" },
+    "16": { n: "Vagal Resonance",             sb: "Baroreflex training at 5.5 rpm" },
+    "17": { n: "NSDR 10 min",                 sb: "Deep non-sleep rest" },
+  },
+
+  // ─── Program display names + subtitles + rationale (short) ───
+  programsData: {
+    "neural-baseline": {
+      n: "Neural Baseline",
+      sb: "14 days · discover your winning intent",
+      sbLong: "Systematic arc through the 4 intents: calm, focus, energy and reset. In 14 days you discover which one your system responds to best — the final days adapt to what worked.",
+      rationale: "Without initial personal data, the adaptive engine can't choose well. Neural Baseline collects response signals to each intent so that after 14 days the system recommends with precision calibrated to your physiology.",
+    },
+    "recovery-week": {
+      n: "Recovery Week",
+      sb: "7 days · progressive post-crisis release",
+      sbLong: "After an intense week, emotional crisis, or sustained load. 7-day arc starting with gentle release and closing with deep integration. Calm dominant with reset interspersed.",
+      rationale: "Neural recovery after acute stress is not linear: it requires discharge (days 1-3), consolidation (days 4-5), and integration (days 6-7). Sequence designed to rebuild parasympathetic reserves without over-demanding.",
+    },
+    "focus-sprint": {
+      n: "Focus Sprint",
+      sb: "5 morning days · extreme focus",
+      sbLong: "Deadline week, launch, or any period of high cognitive demand. 5 consecutive morning days that progressively train focus: from cardiac coherence (day 1) to extreme focus (day 5).",
+      rationale: "Focus protocols require a stable autonomic substrate. Starting with cardiac coherence calibrates the nervous system; visual recalibration + mental ascent prepare the prefrontal cortex; Lightning Focus and OMNIA are the peaks — applicable only once the base exists.",
+    },
+    "burnout-recovery": {
+      n: "Burnout Recovery",
+      sb: "4 weeks · MBI-aware clinical recovery",
+      sbLong: "4-week program for burnout recovery (MBI classification: exhaustion + disengagement + reduced efficacy). Scaled with rest days. Does NOT replace clinical care — it complements.",
+      rationale: "Burnout is not just high stress: it includes depersonalization and loss of efficacy. Clinical 4-week protocol with progressive discharge (W1), body anchoring (W2), controlled re-activation (W3), and integration with relapse prevention (W4). Includes explicit rest days — over-exercising protocols during burnout is counterproductive.",
+      evidence: "Aligned with Maslach & Leiter (2016) MBI model, Schaufeli (2017) work engagement, and Goessl et al. 2017 HRV-biofeedback meta-analysis in burnout.",
+    },
+    "executive-presence": {
+      n: "Executive Presence",
+      sb: "10 days · unshakeable executive presence",
+      sbLong: "For leaders in positions of high public exposure and critical decision-making. 10 alternating days (5 sessions + 5 rest) centered on the Steel family: presence that combines calm with non-surrender.",
+      rationale: "Executive presence is not pure calm (boring) or pure energy (anxious) — it's the steel+calm paradox. 10-day arc alternating Grounded Steel, Steel Core Reset, Quantum Grounding, and OMEGA to consolidate the \"unshakeable\" callback as a repeatable operational state.",
+    },
+  },
 };

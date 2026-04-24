@@ -17,13 +17,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import { resolveTheme, withAlpha, space, font } from "../lib/theme";
 import { useReducedMotion } from "../lib/a11y";
+import { useT } from "../hooks/useT";
 import { PROGRAMS, getProtocolById, programRequiredSessions } from "../lib/programs";
+import {
+  programDisplayName,
+  programDisplaySubtitle,
+  programDisplayLong,
+  programDisplayRationale,
+  programDisplayEvidence,
+  protocolDisplayName,
+} from "../lib/localize";
 import { semantic } from "../lib/tokens";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
 export default function ProgramBrowser({ isDark, programHistory = [], suggestion = null, onStart }) {
   const reduced = useReducedMotion();
+  const { t, locale } = useT();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const [expandedId, setExpandedId] = useState(null);
 
@@ -55,7 +65,7 @@ export default function ProgramBrowser({ isDark, programHistory = [], suggestion
             fontWeight: 700,
           }}
         >
-          PROGRAMAS
+          {t("programs.section")}
         </div>
         <p
           style={{
@@ -66,7 +76,7 @@ export default function ProgramBrowser({ isDark, programHistory = [], suggestion
             lineHeight: 1.45,
           }}
         >
-          Trayectorias curadas de varios días. Cada programa usa los 17 protocolos como ingredientes.
+          {t("programs.sectionSub")}
         </p>
       </header>
 
@@ -75,6 +85,8 @@ export default function ProgramBrowser({ isDark, programHistory = [], suggestion
           suggestion={suggestion}
           onStart={() => typeof onStart === "function" && onStart(suggestion.programId)}
           theme={{ t1, t2, t3, cd, bd }}
+          t={t}
+          locale={locale}
         />
       )}
 
@@ -89,6 +101,8 @@ export default function ProgramBrowser({ isDark, programHistory = [], suggestion
             completionStats={completionMap[program.id]}
             reduced={reduced}
             theme={{ cd, bd, t1, t2, t3 }}
+            t={t}
+            locale={locale}
           />
         ))}
       </div>
@@ -96,11 +110,16 @@ export default function ProgramBrowser({ isDark, programHistory = [], suggestion
   );
 }
 
-function ProgramCard({ program, expanded, onToggle, onStart, completionStats, reduced, theme }) {
+function ProgramCard({ program, expanded, onToggle, onStart, completionStats, reduced, theme, t, locale }) {
   const { cd, bd, t1, t2, t3 } = theme;
   const accent = program.cl || "#22D3EE";
   const required = programRequiredSessions(program);
   const completedBefore = completionStats && completionStats.completed > 0;
+  const displayName = programDisplayName(program, locale);
+  const displaySubtitle = programDisplaySubtitle(program, locale);
+  const displayLong = programDisplayLong(program, locale);
+  const displayRationale = programDisplayRationale(program, locale);
+  const displayEvidence = programDisplayEvidence(program, locale);
 
   return (
     <article
@@ -172,11 +191,11 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
                 letterSpacing: -0.15,
               }}
             >
-              {program.n}
+              {displayName}
             </h3>
             {completedBefore && (
               <span
-                aria-label="Completado anteriormente"
+                aria-label={t("programs.doneBadge")}
                 style={{
                   fontFamily: MONO,
                   fontSize: 9,
@@ -188,7 +207,7 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
                   letterSpacing: "0.06em",
                 }}
               >
-                ✓ HECHO
+                {t("programs.doneBadge")}
               </span>
             )}
           </div>
@@ -202,7 +221,7 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
               whiteSpace: "nowrap",
             }}
           >
-            {program.sb}
+            {displaySubtitle}
           </div>
         </div>
         {/* Chevron */}
@@ -236,21 +255,21 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
                   lineHeight: 1.55,
                 }}
               >
-                {program.sb_long}
+                {displayLong}
               </p>
 
               {/* Meta chips */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBlockEnd: space[3] }}>
-                <Chip label={`${program.duration} días`} color={accent} />
-                <Chip label={`${required} sesiones`} color={t3} outlined />
+                <Chip label={`${program.duration} ${t("programs.daysLabel")}`} color={accent} />
+                <Chip label={`${required} ${t("programs.sessionsLabel")}`} color={t3} outlined />
                 <Chip label={program.intent} color={accent} outlined />
                 {program.window && program.window !== "any" && (
-                  <Chip label={program.window === "morning" ? "matutino" : program.window === "afternoon" ? "tarde" : program.window === "evening" ? "noche" : program.window} color={t3} outlined />
+                  <Chip label={program.window === "morning" ? t("programs.morning") : program.window === "afternoon" ? t("programs.afternoon") : program.window === "evening" ? t("programs.evening") : program.window} color={t3} outlined />
                 )}
               </div>
 
               {/* Rationale (colapsado opcional — lo mostramos inline, es breve) */}
-              {program.rationale && (
+              {displayRationale && (
                 <details
                   style={{
                     marginBlockEnd: space[3],
@@ -270,12 +289,12 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
                       listStyle: "none",
                     }}
                   >
-                    Por qué este arco
+                    {t("programs.whyArc")}
                   </summary>
                   <p style={{ margin: "8px 0 0", fontSize: 11, color: t2, lineHeight: 1.6 }}>
-                    {program.rationale}
+                    {displayRationale}
                   </p>
-                  {program.evidence && (
+                  {displayEvidence && (
                     <p
                       style={{
                         margin: "6px 0 0",
@@ -285,14 +304,14 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
                         letterSpacing: "0.02em",
                       }}
                     >
-                      Evidencia: {program.evidence}
+                      {t("programs.evidence")}: {displayEvidence}
                     </p>
                   )}
                 </details>
               )}
 
               {/* Schedule compacto: lista de primeros 7 días + "+N más" */}
-              <ProgramSchedule program={program} accent={accent} t1={t1} t2={t2} t3={t3} />
+              <ProgramSchedule program={program} accent={accent} t1={t1} t2={t2} t3={t3} t={t} locale={locale} />
 
               {/* CTA */}
               <button
@@ -313,7 +332,7 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
                   boxShadow: `0 4px 14px -4px ${withAlpha(accent, 60)}`,
                 }}
               >
-                Iniciar programa
+                {t("programs.startButton")}
               </button>
             </div>
           </motion.div>
@@ -323,11 +342,12 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
   );
 }
 
-function ProgramSchedule({ program, accent, t1, t2, t3 }) {
+function ProgramSchedule({ program, accent, t1, t2, t3, t, locale }) {
   // Mostramos los primeros 7 días con sesión + contador de restantes
   const sessions = program.sessions || [];
   const visible = sessions.slice(0, 7);
   const remaining = Math.max(0, sessions.length - visible.length);
+  const dayLabel = t("programs.activeBody.day");
 
   return (
     <div>
@@ -341,7 +361,7 @@ function ProgramSchedule({ program, accent, t1, t2, t3 }) {
           marginBlockEnd: 8,
         }}
       >
-        AGENDA
+        {t("programs.schedule")}
       </div>
       <ol
         style={{
@@ -356,12 +376,13 @@ function ProgramSchedule({ program, accent, t1, t2, t3 }) {
         {visible.map((s) => {
           const proto = getProtocolById(s.protocolId);
           if (!proto) return null;
+          const protoName = protocolDisplayName(proto, locale);
           return (
             <li
               key={s.day}
               style={{
                 display: "grid",
-                gridTemplateColumns: "42px 1fr",
+                gridTemplateColumns: "58px 1fr",
                 gap: 10,
                 alignItems: "center",
                 fontSize: 11,
@@ -375,12 +396,13 @@ function ProgramSchedule({ program, accent, t1, t2, t3 }) {
                   fontWeight: 700,
                   letterSpacing: "0.04em",
                   textAlign: "right",
+                  textTransform: "capitalize",
                 }}
               >
-                Día {s.day}
+                {dayLabel} {s.day}
               </span>
               <span style={{ color: t2 }}>
-                <span style={{ color: t1, fontWeight: 600 }}>{proto.n}</span>
+                <span style={{ color: t1, fontWeight: 600 }}>{protoName}</span>
                 {s.note && <span style={{ color: t3 }}> · {s.note.replace(/^[a-zà-ÿ]+ · /, "")}</span>}
               </span>
             </li>
@@ -394,19 +416,23 @@ function ProgramSchedule({ program, accent, t1, t2, t3 }) {
             fontSize: 10,
             color: t3,
             fontWeight: 500,
-            paddingLeft: 52,
+            paddingLeft: 58 + 10,
           }}
         >
-          + {remaining} {remaining === 1 ? "sesión más" : "sesiones más"} durante el programa
+          {t("programs.moreSessions", {
+            count: remaining,
+            label: remaining === 1 ? t("programs.activeBody.day") : t("programs.activeBody.days"),
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function SuggestionBanner({ suggestion, onStart, theme }) {
+function SuggestionBanner({ suggestion, onStart, theme, t, locale }) {
   const { t1, t2, t3 } = theme;
   const { program, reason, urgency } = suggestion;
+  const displayName = programDisplayName(program, locale);
   // Urgency → color mapping
   const color =
     urgency === "critical"
@@ -436,7 +462,7 @@ function SuggestionBanner({ suggestion, onStart, theme }) {
           marginBlockEnd: 6,
         }}
       >
-        RECOMENDADO PARA TI
+        {t("programs.recommendedForYou")}
       </div>
       <h4
         style={{
@@ -448,7 +474,7 @@ function SuggestionBanner({ suggestion, onStart, theme }) {
           marginBlockEnd: 4,
         }}
       >
-        {program.n}
+        {displayName}
       </h4>
       <p
         style={{
@@ -478,7 +504,7 @@ function SuggestionBanner({ suggestion, onStart, theme }) {
           boxShadow: `0 3px 12px -3px ${withAlpha(color, 50)}`,
         }}
       >
-        Empezar ahora
+        {t("programs.startNowButton")}
       </button>
     </div>
   );
