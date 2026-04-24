@@ -250,9 +250,19 @@ export const P = [
 
   /* ═══ #15 SUSPIRO FISIOLÓGICO · Balban et al. 2023 ═══ */
   {id:15,n:"Suspiro Fisiológico",ct:"Reset",d:90,sb:"Descarga parasimpática aguda",tg:"SF",cl:"#059669",int:"calma",dif:1,
-  ph:[{l:"Doble Inhalación",r:"0–30s",s:0,e:30,k:"Inhala nasal. Segunda inhalación corta. Exhala largo por la boca.",i:"Inhala por la nariz llenando los pulmones al 80% en 2 segundos. Sin exhalar, toma una segunda inhalación corta que complete el llenado pulmonar. Exhala lenta y completamente por la boca en 6–8 segundos. Repite el ciclo. La doble inhalación reinfla alvéolos colapsados; la exhalación prolongada descarga CO₂ y activa el vago.",sc:"Balban et al. 2023 (Cell Rep Med, N=114): 5 min/día × 28 días superaron mindfulness en reducción de ansiedad (d≈0.45).",ic:"breath",br:{in:2,h1:0,ex:7,h2:0}},
-  {l:"Ciclos de Reset",r:"30–75s",s:30,e:75,k:"Repite 6–8 ciclos. Exhalación cada vez más larga.",i:"Continúa el patrón: doble inhalación nasal, exhalación larga bucal. Cada exhalación puede ser un poco más larga que la anterior. Nota cómo tu frecuencia cardíaca baja. El cuerpo recupera control autonómico en menos de 90 segundos.",sc:"Vlemincx et al. 2013: suspiros espontáneos son un mecanismo de reset de la variabilidad respiratoria durante estrés.",ic:"breath",br:{in:2,h1:0,ex:8,h2:0}},
-  {l:"Retorno",r:"75–90s",s:75,e:90,k:"Respira normal. Observa el cambio.",i:"Deja que la respiración vuelva a su ritmo natural. Sin controlar. Sólo observar. La activación bajó. El sistema nervioso ya regresó a línea base. Abre los ojos cuando quieras.",sc:"Ventana post-ejercicio parasimpático: recuperación espontánea consolida adaptación aguda.",ic:"mind",br:null}]},
+  ph:[{l:"Doble Inhalación",r:"0–30s",s:0,e:30,k:"Inhala nasal. Segunda inhalación corta. Exhala largo por la boca.",i:"Inhala por la nariz llenando los pulmones al 80% en 2 segundos. Sin exhalar, toma una segunda inhalación corta que complete el llenado pulmonar. Exhala lenta y completamente por la boca en 6–8 segundos. Repite el ciclo. La doble inhalación reinfla alvéolos colapsados; la exhalación prolongada descarga CO₂ y activa el vago.",iExec:[
+    {from:0,to:10,text:"Inhala 2s nariz al 80%. Segunda inhalación corta hasta llenar."},
+    {from:10,to:30,text:"Exhala 6-8s largo por la boca. Repite."}
+  ],sc:"Balban et al. 2023 (Cell Rep Med, N=114): 5 min/día × 28 días superaron mindfulness en reducción de ansiedad (d≈0.45).",ic:"breath",br:{in:2,h1:0,ex:7,h2:0}},
+  {l:"Ciclos de Reset",r:"30–75s",s:30,e:75,k:"Repite 6–8 ciclos. Exhalación cada vez más larga.",i:"Continúa el patrón: doble inhalación nasal, exhalación larga bucal. Cada exhalación puede ser un poco más larga que la anterior. Nota cómo tu frecuencia cardíaca baja. El cuerpo recupera control autonómico en menos de 90 segundos.",iExec:[
+    {from:0,to:15,text:"Continúa el patrón. Cada exhalación un poco más larga."},
+    {from:15,to:30,text:"Nota cómo tu frecuencia cardíaca baja."},
+    {from:30,to:45,text:"El cuerpo recupera control autonómico."}
+  ],sc:"Vlemincx et al. 2013: suspiros espontáneos son un mecanismo de reset de la variabilidad respiratoria durante estrés.",ic:"breath",br:{in:2,h1:0,ex:8,h2:0}},
+  {l:"Retorno",r:"75–90s",s:75,e:90,k:"Respira normal. Observa el cambio.",i:"Deja que la respiración vuelva a su ritmo natural. Sin controlar. Sólo observar. La activación bajó. El sistema nervioso ya regresó a línea base. Abre los ojos cuando quieras.",iExec:[
+    {from:0,to:8,text:"Deja que la respiración vuelva natural. Solo observa."},
+    {from:8,to:15,text:"La activación bajó. Abre los ojos cuando quieras."}
+  ],sc:"Ventana post-ejercicio parasimpático: recuperación espontánea consolida adaptación aguda.",ic:"mind",br:null}]},
 
   /* ═══ #16 RESONANCIA VAGAL · Lehrer & Gevirtz 2014 ═══ */
   {id:16,n:"Resonancia Vagal",ct:"Protocolo",d:600,sb:"Entrenamiento de baroreflex a 5.5 rpm",tg:"RV",cl:"#059669",int:"calma",dif:2,
