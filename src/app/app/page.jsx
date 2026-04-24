@@ -83,6 +83,7 @@ const SessionRunner = dynamic(() => import("@/components/SessionRunner"), { ssr:
 const AmbientLattice = dynamic(() => import("@/components/AmbientLattice"), { ssr: false });
 const ProgramBrowser = dynamic(() => import("@/components/ProgramBrowser"), { ssr: false });
 const ActiveProgramCard = dynamic(() => import("@/components/ActiveProgramCard"), { ssr: false });
+const EvidenceStrip = dynamic(() => import("@/components/EvidenceStrip"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -950,6 +951,13 @@ export default function BioIgnicion(){
 
     {/* Readiness Score — bioneural composite */}
     {ts==="idle"&&<ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRV(true)}/>}
+
+    {/* Evidence Strip — respaldo clínico visible (transparente, no friccionante).
+        Transmite rigor: X estudios peer-reviewed, Y instrumentos validados,
+        cumplimiento NOM-035 / GDPR / LFPDPPP. Tap expande el detalle. */}
+    {ts==="idle"&&<EvidenceStrip isDark={isDark} onOpenEvidence={()=>{
+      try{if(typeof window!=="undefined")window.open("/evidencia","_blank","noopener,noreferrer");}catch{}
+    }}/>}
 
     {/* Program Browser — 5 trayectorias curadas. Se muestra SOLO si no hay programa activo
         (si ya hay uno, el ActiveProgramCard en la zona superior cubre el call-to-action).

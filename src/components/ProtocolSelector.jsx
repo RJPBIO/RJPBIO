@@ -12,6 +12,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef, useEffect } from "react";
 import Icon from "./Icon";
+import EvidenceBadge from "./EvidenceBadge";
 import { CATS, INTENTS, DIF_LABELS } from "../lib/constants";
 import { predictSessionImpact } from "../lib/neural";
 import { resolveTheme, withAlpha, ty, font, space, radius, z, brand } from "../lib/theme";
@@ -342,6 +343,7 @@ export default function ProtocolSelector({
                       <div style={{ flex: 1, minInlineSize: 0 }}>
                         <div style={{ ...ty.title(t1), display: "flex", alignItems: "center", gap: space[1], flexWrap: "wrap" }}>
                           {p.n}
+                          <EvidenceBadge protocol={p} />
                           {isLast && <span style={ty.badge(t3, isDark ? "#1A1E28" : "#F1F5F9")}>último</span>}
                           {isSmart && (
                             <span
