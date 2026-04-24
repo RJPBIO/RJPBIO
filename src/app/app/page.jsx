@@ -38,6 +38,7 @@ import {
 import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal, brand } from "@/lib/theme";
 import { dark as darkPalette } from "@/lib/tokens";
 import BioIgnicionMark, { BioGlyph } from "@/components/BioIgnicionMark";
+import NeuralCore3D from "@/components/brand/NeuralCore3D";
 import IgnitionBurst from "@/components/IgnitionBurst";
 import { useStore } from "@/store/useStore";
 import Icon from "@/components/Icon";
@@ -1123,16 +1124,21 @@ export default function BioIgnicion(){
       <motion.div aria-hidden="true" animate={isBr&&!reducedMotion?{scale:bS*1.08,opacity:.55}:ts==="idle"?{scale:[1,1.08,1],opacity:[.35,.6,.35]}:isActive?{scale:[1,1.05,1],opacity:[.45,.7,.45]}:{opacity:.3}} transition={isBr&&!reducedMotion?{scale:{type:"spring",stiffness:30,damping:20,mass:1.2},opacity:{duration:.6}}:{duration:ts==="idle"?4:2.8,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:-52,borderRadius:"50%",background:`radial-gradient(circle, ${withAlpha(ac,30)}, ${withAlpha(ac,10)} 45%, transparent 70%)`,filter:"blur(22px)",pointerEvents:"none"}}/>
       {/* Ripple rings — se expanden en idle (invitación a tocar) y durante sesión activa (confirmación de pulso) */}
       {(ts==="idle"||isActive)&&!reducedMotion&&[0,1].map(i=><motion.span key={i} aria-hidden="true" initial={{scale:.88,opacity:.5}} animate={{scale:1.45,opacity:0}} transition={{duration:isActive?2.2:3.2,delay:i*(isActive?1.1:1.6),ease:"easeOut",repeat:Infinity}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1px solid ${ac}`,pointerEvents:"none"}}/>)}
-      {/* Orb sphere — la esfera 3D: radial-gradient simula punto de luz arriba, sombra interna abajo da profundidad.
-          Readiness tint: el highlight superior se desplaza sutilmente según estado fisiológico
-          — recover (amber warm), primed/optimal (cyan-emerald bright), neutral (ac default). */}
-      {(()=>{const rInt=readiness?.interpretation;const rTint=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":rInt==="primed"?ac:ac;return(
-      <motion.div aria-hidden="true" animate={isBr&&!reducedMotion?{scale:bS}:ts==="idle"?{scale:[1,1.015,1]}:isActive?{scale:[1,1.01,1]}:{scale:.97}} transition={isBr&&!reducedMotion?{type:"spring",stiffness:30,damping:20,mass:1.2}:{duration:ts==="idle"?5:3.5,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle at 50% 30%, ${withAlpha(rTint,rInt==="primed"||rInt==="optimal"?50:40)} 0%, ${withAlpha(ac,22)} 18%, #101624 45%, #060810 85%, #040610 100%)`,border:`1px solid ${withAlpha(ac,42)}`,boxShadow:`0 30px 90px -22px ${withAlpha(rTint,55)}, 0 10px 30px -10px rgba(0,0,0,0.45), inset 0 2px 0 0 rgba(255,255,255,0.14), inset 0 -24px 50px -12px rgba(0,0,0,0.7)`,pointerEvents:"none",opacity:ts==="paused"?.75:1,transition:"opacity .4s ease, background .6s ease, box-shadow .6s ease"}}/>
-      );})()}
-      {/* Halo interior — breathing glow que pulsa con bS, refuerza el highlight superior.
-          Adopta el readiness tint. En paused se congela (sin pulso). */}
-      {!reducedMotion&&(()=>{const rInt=readiness?.interpretation;const rTint=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":ac;return(
-      <motion.div aria-hidden="true" animate={isBr?{scale:bS*0.9,opacity:.7}:ts==="idle"?{scale:[.92,1,.92],opacity:[.35,.55,.35]}:ts==="paused"?{scale:1,opacity:.3}:{scale:[.95,1,.95],opacity:[.4,.6,.4]}} transition={isBr?{scale:{type:"spring",stiffness:30,damping:20,mass:1.2},opacity:{duration:.6}}:ts==="paused"?{duration:.4}:{duration:ts==="idle"?3.5:2.8,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:"14%",borderRadius:"50%",background:`radial-gradient(circle at 50% 35%, ${withAlpha(rTint,32)}, ${withAlpha(ac,6)} 55%, transparent 80%)`,pointerEvents:"none",mixBlendMode:"screen",transition:"background .6s ease"}}/>
+      {/* ── Núcleo neural 3D — reemplaza el orb sólido previo.
+          Una cámara glass translúcida con la lattice del trademark
+          rotando en 3D (parallax multidimensional) y motes pulsando
+          con fases independientes (sinapsis). El color se tiñe al
+          protocolo en ejecución, con readiness override: recover→
+          amber warm, optimal→emerald, primed/default→accent. */}
+      {(()=>{const rInt=readiness?.interpretation;const coreColor=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":ac;return(
+        <NeuralCore3D
+          size={isActive?240:260}
+          color={coreColor}
+          state={ts}
+          breathScale={bS}
+          isBreathing={isBr}
+          reducedMotion={reducedMotion}
+        />
       );})()}
       {/* Ignition flash — destello one-shot de luz que emerge del centro cuando la sesión arranca.
           Materializa la metáfora de "ignición": la chispa se enciende. */}
