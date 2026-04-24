@@ -107,28 +107,83 @@ export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃ
                 </svg>
               </button>
             </div>
-            <nav aria-label={triggerLabel} style={{ display: "grid", gap: space[1] }}>
+            <nav
+              aria-label={triggerLabel}
+              style={{ display: "grid", gap: space[2], overflowY: "auto", flex: 1 }}
+            >
               {items.map((it) => {
-                const active = activePath === it.href;
+                const hasSub = Array.isArray(it.submenu) && it.submenu.length > 0;
+                const parentActive = activePath === it.href;
+                const childActive = hasSub && it.submenu.some(
+                  (s) => activePath === s.href || activePath?.startsWith(s.href + "/")
+                );
+                // Parent row: always rendered as a primary link. When it has
+                // a submenu, we render the submenu below as a quiet sublist â€”
+                // no accordion toggling, so the drawer reveals the full IA
+                // in one glance (mobile users shouldn't have to tap-to-expand
+                // every section to understand what's here).
                 return (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    onClick={() => setOpen(false)}
-                    aria-current={active ? "page" : undefined}
-                    className="bi-mobile-navlink"
-                    data-active={active ? "true" : undefined}
-                    style={{
-                      padding: `${space[3]}px ${space[4]}px`,
-                      borderRadius: radius.sm,
-                      color: cssVar.text,
-                      fontWeight: font.weight.semibold,
-                      fontSize: font.size.lg,
-                      textDecoration: "none",
-                    }}
-                  >
-                    {it.label}
-                  </Link>
+                  <div key={it.href} style={{ display: "grid", gap: space[1] }}>
+                    <Link
+                      href={it.href}
+                      onClick={() => setOpen(false)}
+                      aria-current={parentActive ? "page" : undefined}
+                      className="bi-mobile-navlink"
+                      data-active={parentActive || childActive ? "true" : undefined}
+                      style={{
+                        padding: `${space[3]}px ${space[4]}px`,
+                        borderRadius: radius.sm,
+                        color: cssVar.text,
+                        fontWeight: font.weight.bold,
+                        fontSize: font.size.lg,
+                        textDecoration: "none",
+                      }}
+                    >
+                      {it.label}
+                    </Link>
+                    {hasSub && (
+                      <ul
+                        role="list"
+                        aria-label={it.label}
+                        style={{
+                          listStyle: "none",
+                          padding: 0,
+                          margin: 0,
+                          display: "grid",
+                          gap: 2,
+                          marginInlineStart: space[3],
+                          borderInlineStart: `1px solid ${cssVar.border}`,
+                          paddingInlineStart: space[3],
+                        }}
+                      >
+                        {it.submenu.map((s) => {
+                          const subActive = activePath === s.href || activePath?.startsWith(s.href + "/");
+                          return (
+                            <li key={s.href}>
+                              <Link
+                                href={s.href}
+                                onClick={() => setOpen(false)}
+                                aria-current={subActive ? "page" : undefined}
+                                className="bi-mobile-navlink"
+                                data-active={subActive ? "true" : undefined}
+                                style={{
+                                  display: "block",
+                                  padding: `${space[2]}px ${space[3]}px`,
+                                  borderRadius: radius.sm,
+                                  color: cssVar.textMuted,
+                                  fontWeight: font.weight.medium,
+                                  fontSize: font.size.base,
+                                  textDecoration: "none",
+                                }}
+                              >
+                                {s.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
                 );
               })}
             </nav>
