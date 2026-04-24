@@ -127,9 +127,20 @@ export const P = [
 
   /* ═══ #9 STEEL CORE RESET ═══ */
   {id:9,n:"Steel Core Reset",ct:"Reset",d:120,sb:"Reinicio nervioso máximo",tg:"SC",cl:"#8B5CF6",int:"reset",dif:3,
-  ph:[{l:"Exhale Explosivo",r:"0–25s",s:0,e:25,k:"Llena 4s. Sostén 2s. Explota el aire. Resetea.",i:"Inhala profundo llenando abdomen 4 segundos. Mantén 2 segundos creando presión interna. Exhala EXPLOSIVAMENTE por la boca — todo el aire de golpe. Repite 3 veces. Cada explosión más fuerte. Siente el reset completo del sistema nervioso con cada ciclo.",sc:"Exhalación explosiva genera pico de presión intratorácica que resetea barorreceptores y tono autonómico",ic:"breath",br:{in:4,h1:2,ex:2,h2:0}},
-  {l:"Núcleo de Acero",r:"25–70s",s:25,e:70,k:"Core al 30%. Respira encima. Fuerza interior.",i:"Activa abdomen al 30% de fuerza. No contengas la respiración — respira normalmente encima de la activación. Mantén 10 segundos. Suelta 5 segundos. Repite 3 veces. Cada activación es más precisa. Siente la fuerza emocional que viene de tu centro. Esta es tu base de estabilidad.",sc:"Activación isométrica del core genera sensación de fortaleza emocional y estabiliza sistema nervioso",ic:"body",br:null},
-  {l:"Alineamiento Vertical",r:"70–120s",s:70,e:120,k:"Columna de acero. Respira 4-6. Presencia total.",i:"Suelta la tensión del core suavemente. Siente tu columna como una barra de acero desde el sacro hasta la coronilla. Respira: inhala 4, exhala 6. Con cada respiración la barra se solidifica. Hombros relajados pero eje fuerte. Mantén 50 segundos. Abre los ojos desde esa verticalidad inquebrantable.",sc:"Propiocepción vertical activa sistema vestibular. Genera presencia somática y confianza embodied",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}}]},
+  ph:[{l:"Exhale Explosivo",r:"0–25s",s:0,e:25,k:"Llena 4s. Sostén 2s. Explota el aire. Resetea.",i:"Inhala profundo llenando abdomen 4 segundos. Mantén 2 segundos creando presión interna. Exhala EXPLOSIVAMENTE por la boca — todo el aire de golpe. Repite 3 veces. Cada explosión más fuerte. Siente el reset completo del sistema nervioso con cada ciclo.",iExec:[
+    {from:0,to:10,text:"Inhala 4s profundo en el abdomen. Sostén 2s con presión."},
+    {from:10,to:25,text:"Exhala EXPLOSIVO por la boca — todo el aire de golpe. Repite 3 veces."}
+  ],sc:"Exhalación explosiva genera pico de presión intratorácica que resetea barorreceptores y tono autonómico",ic:"breath",br:{in:4,h1:2,ex:2,h2:0}},
+  {l:"Núcleo de Acero",r:"25–70s",s:25,e:70,k:"Core al 30%. Respira encima. Fuerza interior.",i:"Activa abdomen al 30% de fuerza. No contengas la respiración — respira normalmente encima de la activación. Mantén 10 segundos. Suelta 5 segundos. Repite 3 veces. Cada activación es más precisa. Siente la fuerza emocional que viene de tu centro. Esta es tu base de estabilidad.",iExec:[
+    {from:0,to:15,text:"Activa abdomen al 30%. Respira normal encima — no contengas."},
+    {from:15,to:30,text:"10s tensión, 5s suelta. Repite."},
+    {from:30,to:45,text:"La fuerza emocional viene del centro."}
+  ],sc:"Activación isométrica del core genera sensación de fortaleza emocional y estabiliza sistema nervioso",ic:"body",br:null},
+  {l:"Alineamiento Vertical",r:"70–120s",s:70,e:120,k:"Columna de acero. Respira 4-6. Presencia total.",i:"Suelta la tensión del core suavemente. Siente tu columna como una barra de acero desde el sacro hasta la coronilla. Respira: inhala 4, exhala 6. Con cada respiración la barra se solidifica. Hombros relajados pero eje fuerte. Mantén 50 segundos. Abre los ojos desde esa verticalidad inquebrantable.",iExec:[
+    {from:0,to:15,text:"Suelta el core. Columna como barra de acero, sacro a coronilla."},
+    {from:15,to:35,text:"Inhala 4s, exhala 6s. La barra se solidifica."},
+    {from:35,to:50,text:"Hombros sueltos, eje fuerte. Abre los ojos: inquebrantable."}
+  ],sc:"Propiocepción vertical activa sistema vestibular. Genera presencia somática y confianza embodied",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}}]},
 
   /* ═══ #10 ATOMIC PULSE ═══ */
   {id:10,n:"Atomic Pulse",ct:"Protocolo",d:120,sb:"Sincronización neurosomática",tg:"AP",cl:"#F59E0B",int:"energia",dif:2,
