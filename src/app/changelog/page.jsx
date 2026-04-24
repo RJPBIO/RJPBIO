@@ -31,7 +31,7 @@ const API_GA_DATE = "2025-11-01";
 const kickerStyle = {
   fontFamily: cssVar.fontMono,
   fontSize: font.size.xs,
-  color: bioSignal.phosphorCyan,
+  color: bioSignal.phosphorCyanInk,
   textTransform: "uppercase",
   letterSpacing: "0.24em",
   fontWeight: font.weight.bold,

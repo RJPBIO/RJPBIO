@@ -5285,7 +5285,10 @@ html.theme-dim .bi-pricing-card .bi-refined {
   align-items: center;
   gap: 4px;
   font-size: 9.5px;
-  opacity: 0.7;
+  /* opacity:0.7 pushed --bi-text-muted to ~#808998 on --bi-bg (3.2:1).
+     Drop the opacity and lean on the full muted ink instead — still
+     reads as secondary without failing AA. */
+  color: var(--bi-text-muted);
 }
 .bi-pricing-legal-hint .chev {
   transition: transform .2s ease;
@@ -7954,7 +7957,9 @@ section[aria-labelledby^="trust-"]:focus-within h2[id^="trust-"]::before {
   animation: biTrustLivePulse 2.2s ease-in-out infinite;
 }
 .bi-trust-live-label {
-  color: #10B981;
+  /* #10B981 on live-kicker tint (~#dfefef) failed AA at 2.14:1.
+     Emerald-800 reaches WCAG AA while staying in the live/success family. */
+  color: #065F46;
   font-weight: 800;
   letter-spacing: 0.24em;
 }
@@ -11434,7 +11439,9 @@ a.bi-learn-trail-link,
   background: color-mix(in srgb, #22D3EE 4%, var(--bi-surface));
   border-color: color-mix(in srgb, #22D3EE 22%, var(--bi-border));
 }
-.bi-legal-callout--moat .bi-legal-callout-kicker { color: #22D3EE; }
+/* Was #22D3EE on callout bg — failed AA at 1.73:1 for kicker text.
+   Cyan-800 keeps trademark family and passes ~5.6:1 on the tinted fill. */
+.bi-legal-callout--moat .bi-legal-callout-kicker { color: #155E75; }
 
 .bi-legal-callout--warn::before {
   background: linear-gradient(to bottom,
@@ -11473,7 +11480,9 @@ a.bi-learn-trail-link,
   background: color-mix(in srgb, #22D3EE 70%, transparent);
 }
 .bi-prose a.bi-legal-link {
-  color: #22D3EE;
+  /* Legal body links need AA on --bi-bg; brand cyan was 1.63:1.
+     Cyan-800 (#155E75) reaches ~5.9:1 while keeping the hue family. */
+  color: #155E75;
   font-weight: 600;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
@@ -11545,7 +11554,9 @@ a.bi-learn-trail-link,
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, #22D3EE 28%, var(--bi-border));
   background: color-mix(in srgb, #22D3EE 6%, transparent);
-  color: color-mix(in srgb, #22D3EE 90%, var(--bi-text));
+  /* Pill text on a cyan-tinted fill (~#f0fbfe) failed AA at ~2.07:1 with
+     the brand cyan. Text-safe cyan ink (#155E75) reaches WCAG AA. */
+  color: #155E75;
   font-family: var(--font-mono);
   font-size: 11.5px;
   letter-spacing: 0.02em;

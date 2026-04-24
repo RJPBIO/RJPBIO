@@ -108,6 +108,11 @@ export const brand = {
 // instrument, not a wellness template.
 export const bioSignal = {
   phosphorCyan: "#22D3EE",   // primary bio-electric signal
+  // Text-safe variant of phosphor cyan for use as small-text color on the
+  // light --bi-bg (#F1F4F9). Brand cyan fails WCAG AA (1.63:1); cyan-800
+  // lands at ~5.9:1 while staying inside the trademark family. Use for
+  // kicker labels, numeric footnote chips, inline citations.
+  phosphorCyanInk: "#155E75",
   ghostCyan:    "#A5F3FC",   // pale halo
   neuralViolet: "#8B5CF6",   // brain/cognition signal
   plasmaPink:   "#F472B6",   // ignition peak

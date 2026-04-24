@@ -23,7 +23,7 @@ export const metadata = {
 const kickerStyle = {
   fontSize: font.size.xs,
   fontFamily: cssVar.fontMono,
-  color: bioSignal.phosphorCyan,
+  color: bioSignal.phosphorCyanInk,
   textTransform: "uppercase",
   letterSpacing: "0.28em",
   fontWeight: font.weight.bold,

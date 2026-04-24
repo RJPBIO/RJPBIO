@@ -117,7 +117,7 @@ export default async function TeamPreviewPage({ searchParams }) {
         <div style={{
           fontFamily: cssVar.fontMono,
           fontSize: font.size.xs,
-          color: bioSignal.phosphorCyan,
+          color: bioSignal.phosphorCyanInk,
           textTransform: "uppercase",
           letterSpacing: "0.22em",
           fontWeight: font.weight.bold,

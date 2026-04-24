@@ -33,7 +33,7 @@ const LAST_REVIEWED = "2026-04-21";
 const kickerStyle = {
   fontFamily: cssVar.fontMono,
   fontSize: font.size.xs,
-  color: bioSignal.phosphorCyan,
+  color: bioSignal.phosphorCyanInk,
   textTransform: "uppercase",
   letterSpacing: "0.26em",
   fontWeight: font.weight.bold,
