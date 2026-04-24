@@ -160,9 +160,19 @@ export const P = [
 
   /* ═══ #11 QUANTUM GROUNDING ═══ */
   {id:11,n:"Quantum Grounding",ct:"Protocolo",d:120,sb:"Anclaje profundo",tg:"QG",cl:"#059669",int:"calma",dif:2,
-  ph:[{l:"Anclaje Diafragmático",r:"0–30s",s:0,e:30,k:"Diafragma abajo. Exhala hacia el suelo. Raíces.",i:"Inhala expandiendo diafragma hacia abajo 4 segundos. Mantén 1 segundo en máxima expansión. Exhala con dirección hacia abajo 3 segundos — como si empujaras el aire al suelo. Siente la solidez. Repite 3 veces, cada vez más profundo. Tu respiración te ancla como raíces.",sc:"Respiración diafragmática descendente estabiliza eje respiratorio y activa conexión gravitacional",ic:"breath",br:{in:4,h1:1,ex:3,h2:0}},
-  {l:"Gravitación Consciente",r:"30–80s",s:30,e:80,k:"Peso abajo. Gravedad trabaja. Solo suelta.",i:"Mantén la respiración descendente. Siente cómo tu peso cae naturalmente hacia la pelvis. Deja que la gravedad haga el trabajo. Relaja hombros — suéltalos. Relaja cara — mandíbula y frente. Cada parte que relajas te ancla más. No hagas nada nuevo — solo sigue soltando peso hacia abajo con cada exhalación.",sc:"Relajación descendente progresiva activa sistema propioceptivo de seguridad gravitacional",ic:"mind",br:{in:4,h1:1,ex:3,h2:0}},
-  {l:"Expansión desde la Raíz",r:"80–120s",s:80,e:120,k:"Desde la base, expándete. Sin moverte. Más grande.",i:"Desde esa base anclada, siente tu presencia expandirse sutilmente — 1 cm hacia atrás, hacia los lados, hacia arriba. No es movimiento físico, es intención. Siente tu espalda ocupar más espacio. Hombros se abren sin moverse. Mantén con cada respiración. Abre los ojos: estable y expandido.",sc:"Expansión propioceptiva interna genera ondas alfa asociadas con calma alerta y creatividad",ic:"mind",br:{in:4,h1:1,ex:3,h2:0}}]},
+  ph:[{l:"Anclaje Diafragmático",r:"0–30s",s:0,e:30,k:"Diafragma abajo. Exhala hacia el suelo. Raíces.",i:"Inhala expandiendo diafragma hacia abajo 4 segundos. Mantén 1 segundo en máxima expansión. Exhala con dirección hacia abajo 3 segundos — como si empujaras el aire al suelo. Siente la solidez. Repite 3 veces, cada vez más profundo. Tu respiración te ancla como raíces.",iExec:[
+    {from:0,to:10,text:"Inhala 4s expandiendo el diafragma hacia abajo. Sostén 1s."},
+    {from:10,to:30,text:"Exhala 3s empujando el aire al suelo. Raíces que se hunden."}
+  ],sc:"Respiración diafragmática descendente estabiliza eje respiratorio y activa conexión gravitacional",ic:"breath",br:{in:4,h1:1,ex:3,h2:0}},
+  {l:"Gravitación Consciente",r:"30–80s",s:30,e:80,k:"Peso abajo. Gravedad trabaja. Solo suelta.",i:"Mantén la respiración descendente. Siente cómo tu peso cae naturalmente hacia la pelvis. Deja que la gravedad haga el trabajo. Relaja hombros — suéltalos. Relaja cara — mandíbula y frente. Cada parte que relajas te ancla más. No hagas nada nuevo — solo sigue soltando peso hacia abajo con cada exhalación.",iExec:[
+    {from:0,to:17,text:"Deja que tu peso caiga a la pelvis. La gravedad trabaja."},
+    {from:17,to:34,text:"Suelta hombros. Suelta mandíbula y frente."},
+    {from:34,to:50,text:"Cada exhalación hunde más. Cada relajación ancla más."}
+  ],sc:"Relajación descendente progresiva activa sistema propioceptivo de seguridad gravitacional",ic:"mind",br:{in:4,h1:1,ex:3,h2:0}},
+  {l:"Expansión desde la Raíz",r:"80–120s",s:80,e:120,k:"Desde la base, expándete. Sin moverte. Más grande.",i:"Desde esa base anclada, siente tu presencia expandirse sutilmente — 1 cm hacia atrás, hacia los lados, hacia arriba. No es movimiento físico, es intención. Siente tu espalda ocupar más espacio. Hombros se abren sin moverse. Mantén con cada respiración. Abre los ojos: estable y expandido.",iExec:[
+    {from:0,to:20,text:"Desde la base, expándete 1cm — atrás, lados, arriba. No te muevas, es intención."},
+    {from:20,to:40,text:"La espalda ocupa más espacio. Abre los ojos: estable y expandido."}
+  ],sc:"Expansión propioceptiva interna genera ondas alfa asociadas con calma alerta y creatividad",ic:"mind",br:{in:4,h1:1,ex:3,h2:0}}]},
 
   /* ═══ #12 NEURAL ASCENSION ═══ */
   {id:12,n:"Neural Ascension",ct:"Protocolo",d:120,sb:"Ascenso mental y claridad",tg:"NA",cl:"#22D3EE",int:"enfoque",dif:2,
