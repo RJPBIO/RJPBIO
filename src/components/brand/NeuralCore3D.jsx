@@ -5,37 +5,40 @@ import { motion } from "framer-motion";
 /* ═══════════════════════════════════════════════════════════════
    NeuralCore3D — núcleo sensorial del orb de ignición
 
-   EL momento wow del sistema. La esfera es una cámara translúcida
-   donde la lattice del trademark vive en 3D real, respira con el
-   usuario, y se comporta como red neuronal sintonizada al protocolo
-   en ejecución. Cada protocolo tiene personalidad distinta; cada
-   fase dispara una señal coreografiada; cada respiración altera la
-   materia dentro del cristal.
+   EL momento wow del sistema. Cámara cristalina translúcida donde
+   la lattice del trademark vive en 3D, respira con el usuario, se
+   comporta como red neuronal sintonizada al protocolo en curso, y
+   entrega feedback del estado de coherencia en tiempo real.
 
-   Arquitectura de capas:
-   ─────────────────────
-   1. Glass sphere — backdrop-filter + highlight superior que deriva
-      lentamente (specular drift), no pétreo.
-   2. Aurora nebula interior — radial tintada rotando opuesto al aro.
-   3. Aura cónica exterior — energía rotando en el rim.
-   4. Lattice SVG 3D (proyección manual rAF):
-      — 24 motes (trademark: 3 rayos asimétricos) en fib-sphere
-      — 42 edges KNN(k=3) depth-faded
-      — firing events orgánicos con cadencia protocolar
-      — firings programados (ignition wave · phase ring · collapse)
-      — cascadas: un hit puede propagarse a un vecino
-      — depth-sorting, escala y opacidad por z
-      — breath coupling: cada mote pulsa con la curva del usuario
-      — countdown tick: 3 motes random brillan cada segundo
-      — últimos 20% de sesión: firing rate +30% (anticipación)
+   Capas:
+     1. Glass sphere (specular drift)
+     2. Coherence halo (outer, breath-rewarding aura)
+     3. Aurora nebula interior
+     4. Aura cónica exterior
+     5. SVG lattice 3D: edges + firings + motes trademark
+     6. Anchor mote (solo durante VACÍO): blanco al centro
 
-   Personalidad por intent (pr.int):
-   ─────────────────────────────────
-     calma       → rotación lenta, firings espaciados, poco chaos
-     enfoque     → ritmo medio, firings regulares, nebula intensa
-     reset       → cadencia rítmica (jitter=0), sin chaos
-     energia     → rotación rápida, firings densos, chaos alto
-     (default)   → enfoque
+   Comportamientos:
+     • Personalidad por intent (calma/enfoque/reset/energia)
+     • Ignition wave · phase ring wave · resonance collapse
+     • Cascadas sinápticas (probabilidad por intent)
+     • Breath coupling individual por mote
+     • Breath-phase visual: INHALA expande, SOSTÉN freeze, EXHALA
+       atenúa, VACÍO stillness + anchor mote
+     • Coherence biofeedback (grows con progreso, penaliza pausas)
+       → halo exterior + flecks dorados en 4 motes al coherence>0.7
+     • Crystallization: 16→24 motes van emergiendo con progreso
+     • Countdown micro-pulse (tick por segundo)
+     • Últimos 20% intensifican firing rate
+     • Ember mode: tras done + 1.4s, firings esporádicos, 30s fade
+     • Rotación INTEGRADA (no elapsed*speed) para que los cambios de
+       velocidad por fase respiratoria nunca causen jumps visibles.
+     • reducedMotion: proyección estática, sin firings
+
+   Contratos de props:
+     state: "idle" | "running" | "paused" | "done" | "ember"
+     breathPhase: "INHALA" | "SOSTÉN"/"SOSTEN" | "EXHALA" | "VACÍO"/"VACIO" | ""
+     intent: "calma" | "enfoque" | "reset" | "energia"
    ═══════════════════════════════════════════════════════════════ */
 
 // ─── Geometry ─────────────────────────────────────────────────────
@@ -93,6 +96,11 @@ function rotateXY(p, cy, sy, cx, sx) {
   return { x: x1, y: y2, z: z2 };
 }
 
+function toHex2(a) {
+  const v = Math.max(0, Math.min(255, Math.round(a * 255)));
+  return v.toString(16).padStart(2, "0");
+}
+
 // ─── Intent personalities ─────────────────────────────────────────
 const INTENT = {
   calma: {
@@ -114,9 +122,30 @@ const INTENT = {
 };
 const DEFAULT_INTENT = INTENT.enfoque;
 
+// Mapeo breath-phase label → modifiers. Las variantes sin acento
+// son defensivas por si el servidor envía sin diacríticos.
+function resolveBreathPhase(label) {
+  if (!label) return null;
+  const p = String(label).toUpperCase();
+  if (p.startsWith("INHAL")) return "IN";
+  if (p.startsWith("SOST")) return "HOLD";
+  if (p.startsWith("EXHAL")) return "OUT";
+  if (p.startsWith("VAC") || p.startsWith("EMPT")) return "EMPTY";
+  return null;
+}
+
+// Ember timings (ms) desde state="done":
+// — antes de EMBER_FADE_IN_MS: se deja la colapso + tail respirar
+// — tras EMBER_FADE_OUT_MS: se considera terminado (parent debe volver a idle)
+// Valores documentados aquí por si el parent quiere coincidir con sus timers.
+export const EMBER_FADE_IN_MS = 1400;
+export const EMBER_FADE_OUT_MS = 30000;
+
 // ─── Component ────────────────────────────────────────────────────
 const N_NODES = 24;
 const K_NEIGHBORS = 3;
+const BASE_VISIBLE = 16;           // motes visibles en idle/arranque
+const GOLDEN_NODES = [2, 8, 14, 20]; // posiciones que reciben oro a coherence alta
 
 export default function NeuralCore3D({
   size = 260,
@@ -125,44 +154,91 @@ export default function NeuralCore3D({
   breathScale = 1,
   isBreathing = false,
   reducedMotion = false,
-  // Integración con sesión
   intent = "enfoque",
   phaseIndex = 0,
-  progress = 0,      // 0–1, fracción transcurrida de la sesión
-  secondTick = 0,    // cambia cada segundo (parent pasa `sec`); trigger de micro-pulso
+  progress = 0,
+  secondTick = 0,
+  breathPhase = "",   // NUEVO: "INHALA" | "SOSTÉN" | "EXHALA" | "VACÍO" | ""
 }) {
   const cfg = INTENT[intent] || DEFAULT_INTENT;
+  const bp = resolveBreathPhase(breathPhase);
 
   const nodes = useMemo(() => fibSphere(N_NODES), []);
   const edges = useMemo(() => buildEdges(nodes, K_NEIGHBORS), [nodes]);
   const neighbors = useMemo(() => buildNeighbors(N_NODES, edges), [edges]);
 
-  // rAF frame counter
+  // Emergence order (crystallization): del ecuador hacia los polos
+  const nodeEmergeIndex = useMemo(() => {
+    const byY = nodes
+      .map((n, i) => ({ i, absY: Math.abs(n.y) }))
+      .sort((a, b) => a.absY - b.absY);
+    const idx = new Array(N_NODES);
+    byY.forEach((item, pos) => { idx[item.i] = pos; });
+    return idx;
+  }, [nodes]);
+
+  // ─── rAF state (rotation integrated, not time×speed) ───────────
   const [, setFrame] = useState(0);
   const rafRef = useRef(0);
-  const startRef = useRef(0);
-  const firingsRef = useRef([]);   // { startMs, duration, from, to, gen }
-  const pulsesRef = useRef([]);    // { startMs, duration, nodes: number[] | "all", intensity }
+  const firingsRef = useRef([]);
+  const pulsesRef = useRef([]);
   const lastFireRef = useRef(0);
-  const pausedAccumRef = useRef(0);
+  const lastTickRef = useRef(0);
+  const pauseCountRef = useRef(0);
+  const prevStateForCohRef = useRef(state);
 
-  // Re-create startRef on mount only; subsequent renders use stable ref
+  // Integrated angles + eased multipliers
+  const rotYRef = useRef(0);
+  const rotXPhaseRef = useRef(0);   // phase accumulator for X oscillation
+  const rotMultRef = useRef(1);     // eased per-frame to target
+  const brightMultRef = useRef(1);
+  const auraMultRef = useRef(1);
+
+  // Done timestamp (for ember internal tail timing reference)
+  const doneAtRef = useRef(null);
+
+  // Coherence penalty tracking + ember anchor timestamp
   useEffect(() => {
-    startRef.current = performance.now();
-  }, []);
+    const prev = prevStateForCohRef.current;
+    prevStateForCohRef.current = state;
+    if (prev === "running" && state === "paused") {
+      pauseCountRef.current += 1;
+    }
+    if (state === "idle" || (prev === "idle" && state === "running")) {
+      pauseCountRef.current = 0;
+    }
+    if (prev !== "done" && state === "done") {
+      doneAtRef.current = performance.now();
+    }
+    // Ember entry — si el componente monta directo en ember (parent ya
+    // transicionó done→idle antes de que este core se montara), ancla
+    // doneAtRef a "ahora" para que el fade-out de 30s funcione desde
+    // la entrada visual.
+    if (state === "ember" && doneAtRef.current === null) {
+      doneAtRef.current = performance.now();
+    }
+    if (state === "running") {
+      doneAtRef.current = null;
+    }
+  }, [state]);
 
-  // rAF loop
+  // ─── rAF loop ──────────────────────────────────────────────────
   useEffect(() => {
     if (reducedMotion) return undefined;
     let alive = true;
+    lastTickRef.current = 0;
+
     const tick = (now) => {
       if (!alive) return;
-      // Cull completed firings, handle cascades on completion
+      const prevLast = lastTickRef.current || now;
+      lastTickRef.current = now;
+      const dt = Math.min(0.1, (now - prevLast) / 1000); // cap tras pausas largas
+
+      // Cull + cascadas
       const nextFirings = [];
       firingsRef.current.forEach((f) => {
         const end = f.startMs + f.duration;
         if (now >= end) {
-          // Cascade: chance to propagate from `to` → random neighbor
           if (
             state === "running" &&
             f.gen < 2 &&
@@ -170,12 +246,12 @@ export default function NeuralCore3D({
           ) {
             const targets = neighbors[f.to].filter((n) => n !== f.from);
             if (targets.length) {
-              const next = targets[Math.floor(Math.random() * targets.length)];
+              const nxt = targets[Math.floor(Math.random() * targets.length)];
               nextFirings.push({
                 startMs: now + 40,
                 duration: cfg.sparkMs,
                 from: f.to,
-                to: next,
+                to: nxt,
                 gen: f.gen + 1,
               });
             }
@@ -186,28 +262,66 @@ export default function NeuralCore3D({
       });
       firingsRef.current = nextFirings;
 
-      // Cull completed pulses
+      // Cull pulses
       pulsesRef.current = pulsesRef.current.filter(
         (p) => now - p.startMs < p.duration
       );
 
-      // Spawn organic firings (not during paused / done)
-      if (state === "running" || state === "idle") {
-        const intensityBoost = progress > 0.8 ? 1 - (progress - 0.8) * 1.5 : 1;
-        // state==="idle" uses slower base by 1.6x (suggestive, not busy)
-        const baseMs = cfg.fireBase * (state === "idle" ? 1.6 : intensityBoost);
-        const jit = cfg.fireJit;
-        // Off-beat chaos: occasional rogue early fire
-        const chaosFire = cfg.chaos > 0 && Math.random() < cfg.chaos * 0.02;
+      // Targets para easing por fase respiratoria + ember
+      // rotMult target: 1 normal, 0.15 SOSTÉN, 0.25 VACÍO
+      // brightMult target: 1.1 INHALA, 1.05 HOLD, 0.92 EXHALA, 0.78 VACÍO
+      // auraMult target: 1.05 INHALA, 1.0 HOLD, 0.88 EXHALA, 0.7 VACÍO
+      let rotTarget = 1;
+      let brightTarget = 1;
+      let auraTarget = 1;
+      if (bp && isBreathing) {
+        if (bp === "IN") { rotTarget = 1; brightTarget = 1.1; auraTarget = 1.05; }
+        else if (bp === "HOLD") { rotTarget = 0.15; brightTarget = 1.05; auraTarget = 1; }
+        else if (bp === "OUT") { rotTarget = 1; brightTarget = 0.92; auraTarget = 0.88; }
+        else if (bp === "EMPTY") { rotTarget = 0.25; brightTarget = 0.78; auraTarget = 0.7; }
+      }
+      // Ease (tau ~0.2s at 60fps → factor 0.08 per frame)
+      const ease = 1 - Math.pow(0.35, dt * 5); // framerate-independent low-pass
+      rotMultRef.current += (rotTarget - rotMultRef.current) * ease;
+      brightMultRef.current += (brightTarget - brightMultRef.current) * ease;
+      auraMultRef.current += (auraTarget - auraMultRef.current) * ease;
+
+      // Base rotation speed por state
+      let ySpeed;
+      if (state === "running") ySpeed = 1 / cfg.rotRun;
+      else if (state === "idle") ySpeed = 1 / cfg.rotIdle;
+      else if (state === "paused") ySpeed = 1 / (cfg.rotIdle * 1.8);
+      else if (state === "ember") ySpeed = 1 / (cfg.rotIdle * 3.5);
+      else ySpeed = 1 / cfg.rotIdle;
+      // Chaos shimmer (energia)
+      if (cfg.chaos > 0) {
+        ySpeed *= 1 + Math.sin(now / 200) * cfg.chaos * 0.35;
+      }
+      // Breath-phase easing applied
+      ySpeed *= rotMultRef.current;
+
+      // Integrate rotation (no jumps ever)
+      rotYRef.current = (rotYRef.current + dt * 360 * ySpeed) % 360;
+      rotXPhaseRef.current += dt * (2 * Math.PI / 36); // X oscillation period 36s
+
+      // Spawn organic firings
+      // ember permite firings esporádicos (cada 20-30s) para el glow residual
+      if (state === "running" || state === "idle" || state === "ember") {
+        const emberFactor = state === "ember" ? 15 : 1;
+        const intensityBoost = (state === "running" && progress > 0.8)
+          ? 1 - (progress - 0.8) * 1.5
+          : 1;
+        const baseMs = cfg.fireBase * (state === "idle" ? 1.6 : intensityBoost) * emberFactor;
+        const jit = cfg.fireJit * emberFactor;
+        const chaosFire = state === "running" && cfg.chaos > 0 && Math.random() < cfg.chaos * 0.02;
         if (chaosFire || now - lastFireRef.current > baseMs + Math.random() * jit) {
           lastFireRef.current = now;
           if (edges.length > 0) {
-            const edgeIdx = Math.floor(Math.random() * edges.length);
-            const e = edges[edgeIdx];
+            const e = edges[Math.floor(Math.random() * edges.length)];
             const fromFirst = Math.random() < 0.5;
             firingsRef.current.push({
               startMs: now,
-              duration: cfg.sparkMs,
+              duration: cfg.sparkMs * (state === "ember" ? 1.4 : 1),
               from: fromFirst ? e.a : e.b,
               to: fromFirst ? e.b : e.a,
               gen: 0,
@@ -224,9 +338,9 @@ export default function NeuralCore3D({
       alive = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [reducedMotion, state, cfg, edges, neighbors, progress]);
+  }, [reducedMotion, state, cfg, edges, neighbors, progress, bp, isBreathing]);
 
-  // ─── Ignition wave & resonance collapse on state changes ─────
+  // ─── Ignition wave & resonance collapse ────────────────────────
   const prevStateRef = useRef(state);
   useEffect(() => {
     const prev = prevStateRef.current;
@@ -235,10 +349,8 @@ export default function NeuralCore3D({
     const now = performance.now();
 
     if (prev === "idle" && state === "running") {
-      // IGNITION WAVE: radial burst from seed
       const seed = Math.floor(Math.random() * N_NODES);
       const lv1 = neighbors[seed].slice(0, 3);
-      // Seed → lv1 at t=0
       lv1.forEach((n, i) => {
         firingsRef.current.push({
           startMs: now + i * 60,
@@ -246,7 +358,6 @@ export default function NeuralCore3D({
           from: seed, to: n, gen: 0,
         });
       });
-      // lv1 → lv2 at t=220ms
       lv1.forEach((n1, i) => {
         const lv2 = neighbors[n1].filter((x) => x !== seed).slice(0, 2);
         lv2.forEach((n2, j) => {
@@ -257,34 +368,27 @@ export default function NeuralCore3D({
           });
         });
       });
-      // Big pulse on seed + all lv1 to sell the ignition
       pulsesRef.current.push({
-        startMs: now,
-        duration: 700,
-        nodes: [seed, ...lv1],
-        intensity: 0.9,
+        startMs: now, duration: 700,
+        nodes: [seed, ...lv1], intensity: 0.9,
       });
     } else if (prev !== "done" && state === "done") {
-      // RESONANCE COLLAPSE: every node blooms simultaneously, decays 1.4s
+      // Resonance collapse — 24 motes bloom + 8 concentric-staggered firings
       pulsesRef.current.push({
-        startMs: now,
-        duration: 1400,
-        nodes: "all",
-        intensity: 1.0,
+        startMs: now, duration: 1400,
+        nodes: "all", intensity: 1.0,
       });
-      // Also spawn ~8 concentric firings for texture
       for (let i = 0; i < 8; i++) {
         const e = edges[Math.floor(Math.random() * edges.length)];
         firingsRef.current.push({
-          startMs: now + i * 45,
-          duration: cfg.sparkMs,
+          startMs: now + i * 45, duration: cfg.sparkMs,
           from: e.a, to: e.b, gen: 0,
         });
       }
     }
   }, [state, reducedMotion, neighbors, edges, cfg]);
 
-  // ─── Phase ring wave on phase change ──────────────────────────
+  // ─── Phase ring wave ────────────────────────────────────────────
   const prevPiRef = useRef(phaseIndex);
   useEffect(() => {
     const prev = prevPiRef.current;
@@ -293,7 +397,6 @@ export default function NeuralCore3D({
     if (prev === phaseIndex) return;
     if (state !== "running") return;
 
-    // Pick 6 nodes near the equator, order by azimuth, fire in sequence
     const band = nodes
       .map((n, i) => ({ i, theta: Math.atan2(n.z, n.x), absY: Math.abs(n.y) }))
       .filter((m) => m.absY < 0.45)
@@ -308,16 +411,13 @@ export default function NeuralCore3D({
         from: m.i, to: next.i, gen: 0,
       });
     });
-    // Briefly pulse the whole ring for legibility
     pulsesRef.current.push({
-      startMs: now,
-      duration: 900,
-      nodes: ring.map((m) => m.i),
-      intensity: 0.55,
+      startMs: now, duration: 900,
+      nodes: ring.map((m) => m.i), intensity: 0.55,
     });
   }, [phaseIndex, state, reducedMotion, nodes, cfg]);
 
-  // ─── Countdown micro-pulse (per-second tick, active only) ─────
+  // ─── Countdown micro-pulse ─────────────────────────────────────
   const prevSecRef = useRef(secondTick);
   useEffect(() => {
     const prev = prevSecRef.current;
@@ -325,35 +425,42 @@ export default function NeuralCore3D({
     if (reducedMotion) return;
     if (state !== "running") return;
     if (prev === secondTick) return;
-
     const chosen = [];
-    for (let i = 0; i < 3; i++) {
-      chosen.push(Math.floor(Math.random() * N_NODES));
-    }
+    for (let i = 0; i < 3; i++) chosen.push(Math.floor(Math.random() * N_NODES));
     pulsesRef.current.push({
-      startMs: performance.now(),
-      duration: 280,
-      nodes: chosen,
-      intensity: 0.45,
+      startMs: performance.now(), duration: 280,
+      nodes: chosen, intensity: 0.45,
     });
   }, [secondTick, state, reducedMotion]);
 
-  // ─── Compute current rotation (deterministic from elapsed time) ─
+  // ─── Valores derivados para el render ─────────────────────────
   const now = performance.now();
-  const elapsed = reducedMotion ? 0 : (now - startRef.current) / 1000;
-  const baseSpeed = state === "running"
-    ? 1 / cfg.rotRun
-    : state === "idle"
-      ? 1 / cfg.rotIdle
-      : state === "paused"
-        ? 1 / (cfg.rotIdle * 1.8)
-        : 1 / cfg.rotIdle;
-  // Chaos shimmer on rotation speed (energia)
-  const chaosMod = cfg.chaos > 0
-    ? 1 + Math.sin(elapsed * 5.2) * cfg.chaos * 0.4
-    : 1;
-  const rotY = (elapsed * 360 * baseSpeed * chaosMod) % 360;
-  const rotX = Math.sin((elapsed * 2 * Math.PI) / 36) * 10;
+
+  // Coherence: grows con progress, penalized por pauses
+  const coherenceRaw = 0.4 + progress * 0.6 - pauseCountRef.current * 0.15;
+  const runningCoh = Math.max(0.2, Math.min(1, coherenceRaw));
+  let coherence;
+  if (state === "ember") coherence = Math.max(runningCoh, 0.82);
+  else if (state === "idle") coherence = 0.5;
+  else coherence = runningCoh;
+
+  // Crystallization: ramp lineal de motes visibles durante running/done/ember
+  const emergeFraction = (state === "running" || state === "done" || state === "ember")
+    ? BASE_VISIBLE + progress * (N_NODES - BASE_VISIBLE)
+    : N_NODES;
+  const emergeAlpha = (i) => {
+    const pos = nodeEmergeIndex[i];
+    if (pos < BASE_VISIBLE) return 1;
+    const delta = emergeFraction - pos;
+    if (delta <= 0) return 0;
+    if (delta >= 1) return 1;
+    return delta;
+  };
+
+  // Rotación integrada (no elapsed*speed, evita saltos)
+  const rotY = reducedMotion ? 0 : rotYRef.current;
+  const rotXAmp = state === "ember" ? 4 : 10;
+  const rotX = reducedMotion ? 0 : Math.sin(rotXPhaseRef.current) * rotXAmp * rotMultRef.current;
 
   const cosY = Math.cos((rotY * Math.PI) / 180);
   const sinY = Math.sin((rotY * Math.PI) / 180);
@@ -362,20 +469,15 @@ export default function NeuralCore3D({
 
   const R = size * 0.36;
   const center = size / 2;
-
-  // Breath coupling factor for individual motes
   const breathK = isBreathing ? (breathScale - 1) * 0.45 : 0;
 
-  // Project all nodes
   const projected = nodes.map((n, i) => {
     const r = rotateXY(n, cosY, sinY, cosX, sinX);
     const depth = (r.z + 1) / 2;
     return {
       i,
-      x: center + r.x * R,
-      y: center + r.y * R,
-      z: r.z,
-      depth,
+      x: center + r.x * R, y: center + r.y * R,
+      z: r.z, depth,
       scale: 0.72 + depth * 0.56,
       alpha: 0.28 + depth * 0.72,
     };
@@ -384,24 +486,46 @@ export default function NeuralCore3D({
 
   const active = state === "running" || state === "paused";
   const paused = state === "paused";
+  const ember = state === "ember";
 
-  // Specular drift (only the highlight position in the glass gradient)
-  const hx = 50 + Math.sin(elapsed / 6) * 4;
-  const hy = 22 + Math.cos(elapsed / 7) * 3;
+  // Specular drift del highlight — período ~38s/44s (premium, sutil)
+  const elapsedForDrift = now / 1000;
+  const hx = 50 + Math.sin(elapsedForDrift / 6) * 4;
+  const hy = 22 + Math.cos(elapsedForDrift / 7) * 3;
 
-  // ─── Helper: compute aggregate pulse boost for a given mote ────
   const getPulseBoost = (idx) => {
     let boost = 0;
     for (const p of pulsesRef.current) {
       if (p.nodes !== "all" && !p.nodes.includes(idx)) continue;
       const t = (now - p.startMs) / p.duration;
       if (t < 0 || t > 1) continue;
-      // Ease: fast ramp, slow fade
       const env = t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85;
       boost = Math.max(boost, env * p.intensity);
     }
     return boost;
   };
+
+  // Ember opacity multiplier (fades in post 1.4s and fades out at 30s)
+  const emberOp = (() => {
+    if (!ember) return 1;
+    if (!doneAtRef.current) return 0.6;
+    const dt = now - doneAtRef.current;
+    if (dt < EMBER_FADE_IN_MS) return 0.3 + (dt / EMBER_FADE_IN_MS) * 0.3;
+    const fadeOutStart = EMBER_FADE_OUT_MS - 4000;
+    if (dt > fadeOutStart) {
+      const fadeT = (dt - fadeOutStart) / 4000;
+      return Math.max(0, 0.6 * (1 - fadeT));
+    }
+    return 0.6;
+  })();
+
+  // Aura + nebula + sphere global opacity multipliers
+  const baseSphereOp = paused ? 0.78 : ember ? 0.72 * emberOp : 1;
+  const baseNebulaOp = paused ? 0.35 : ember ? 0.28 * emberOp : cfg.nebulaOp;
+  const baseAuraOp = paused ? 0.3 : ember ? 0.22 * emberOp : 0.9;
+
+  // Coherence halo intensity
+  const haloIntensity = Math.max(0, (coherence - 0.35) / 0.65); // 0–1 above 0.35
 
   return (
     <>
@@ -415,42 +539,65 @@ export default function NeuralCore3D({
               ? { scale: breathScale }
               : state === "idle"
                 ? { scale: [1, 1.015, 1] }
-                : active
-                  ? { scale: [1, 1.008, 1] }
-                  : { scale: 0.97 }
+                : ember
+                  ? { scale: [1, 1.005, 1] }
+                  : active
+                    ? { scale: [1, 1.008, 1] }
+                    : { scale: 0.97 }
         }
         transition={
           isBreathing && !reducedMotion
             ? { type: "spring", stiffness: 30, damping: 20, mass: 1.2 }
-            : { duration: state === "idle" ? 5 : 3.5, repeat: Infinity, ease: "easeInOut" }
+            : { duration: state === "idle" ? 5 : ember ? 8 : 3.5, repeat: Infinity, ease: "easeInOut" }
         }
         style={{
           position: "absolute",
           inset: 0,
           borderRadius: "50%",
           background:
-            `radial-gradient(circle at ${hx}% ${hy}%, rgba(255,255,255,0.11) 0%, rgba(10,19,14,0.12) 40%, rgba(6,8,16,0.28) 82%, rgba(4,6,16,0.40) 100%)`,
+            `radial-gradient(circle at ${hx}% ${hy}%, rgba(255,255,255,${0.11 * brightMultRef.current}) 0%, rgba(10,19,14,0.12) 40%, rgba(6,8,16,0.28) 82%, rgba(4,6,16,0.40) 100%)`,
           backdropFilter: "blur(16px) saturate(170%)",
           WebkitBackdropFilter: "blur(16px) saturate(170%)",
           border: `1px solid ${color}44`,
           boxShadow:
             `0 32px 90px -22px ${color}55,` +
             `0 10px 30px -10px rgba(0,0,0,0.38),` +
-            `inset 0 2px 0 0 rgba(255,255,255,0.14),` +
+            `inset 0 2px 0 0 rgba(255,255,255,${0.14 * brightMultRef.current}),` +
             `inset 0 -26px 56px -20px rgba(0,0,0,0.55),` +
             `inset 0 0 72px -12px ${color}26`,
           pointerEvents: "none",
-          opacity: paused ? 0.78 : 1,
+          opacity: baseSphereOp,
           transition: "opacity .4s ease, border-color .6s ease, box-shadow .6s ease",
         }}
       />
 
-      {/* ─── 2. Aurora nebula interior ───────────────────────────── */}
+      {/* ─── 2. Coherence halo exterior ─────────────────────────
+          Crece suave con coherence. Feedback positivo: respiras bien,
+          el halo se enciende. Se difumina con blur para que nunca
+          compita con el aro ni con el texto central. */}
+      {!reducedMotion && haloIntensity > 0.01 && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: -6,
+            borderRadius: "50%",
+            background:
+              `radial-gradient(circle, transparent 54%, ${color}${toHex2(0.10 + haloIntensity * 0.30)} 60%, ${color}${toHex2(0.03 + haloIntensity * 0.12)} 66%, transparent 74%)`,
+            filter: `blur(${4 + haloIntensity * 5}px)`,
+            opacity: (ember ? emberOp : 1) * (0.5 + haloIntensity * 0.5),
+            pointerEvents: "none",
+            transition: "opacity .5s ease, filter .5s ease",
+          }}
+        />
+      )}
+
+      {/* ─── 3. Aurora nebula interior ───────────────────────── */}
       {!reducedMotion && (
         <motion.div
           aria-hidden
           animate={{ rotate: -360 }}
-          transition={{ duration: active ? 38 : 52, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: active ? 38 : ember ? 80 : 52, repeat: Infinity, ease: "linear" }}
           style={{
             position: "absolute",
             inset: "8%",
@@ -461,35 +608,33 @@ export default function NeuralCore3D({
             filter: "blur(6px)",
             pointerEvents: "none",
             mixBlendMode: "screen",
-            opacity: paused ? 0.35 : cfg.nebulaOp,
+            opacity: baseNebulaOp,
             transition: "opacity .4s ease",
           }}
         />
       )}
 
-      {/* ─── 3. Aura cónica exterior ─────────────────────────────── */}
+      {/* ─── 4. Aura cónica exterior ─────────────────────────── */}
       {!reducedMotion && (
         <motion.div
           aria-hidden
           animate={{ rotate: 360 }}
-          transition={{ duration: active ? 14 : 18, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: active ? 14 : ember ? 40 : 18, repeat: Infinity, ease: "linear" }}
           style={{
             position: "absolute",
             inset: -1,
             borderRadius: "50%",
             background: `conic-gradient(from 0deg, transparent 0%, ${color}48 10%, transparent 24%, transparent 52%, ${color}30 68%, transparent 84%)`,
-            maskImage:
-              "radial-gradient(circle, transparent 57%, black 60%, black 62%, transparent 65%)",
-            WebkitMaskImage:
-              "radial-gradient(circle, transparent 57%, black 60%, black 62%, transparent 65%)",
+            maskImage: "radial-gradient(circle, transparent 57%, black 60%, black 62%, transparent 65%)",
+            WebkitMaskImage: "radial-gradient(circle, transparent 57%, black 60%, black 62%, transparent 65%)",
             pointerEvents: "none",
-            opacity: paused ? 0.3 : 0.9,
+            opacity: baseAuraOp * auraMultRef.current,
             transition: "opacity .4s ease",
           }}
         />
       )}
 
-      {/* ─── 4. SVG lattice (edges + firings + motes) ───────────── */}
+      {/* ─── 5. SVG lattice ──────────────────────────────────── */}
       <svg
         width={size}
         height={size}
@@ -499,21 +644,23 @@ export default function NeuralCore3D({
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          maskImage:
-            "radial-gradient(circle, transparent 0%, transparent 26%, rgba(0,0,0,0.5) 36%, black 52%, black 100%)",
-          WebkitMaskImage:
-            "radial-gradient(circle, transparent 0%, transparent 26%, rgba(0,0,0,0.5) 36%, black 52%, black 100%)",
-          opacity: paused ? 0.55 : 1,
+          maskImage: "radial-gradient(circle, transparent 0%, transparent 26%, rgba(0,0,0,0.5) 36%, black 52%, black 100%)",
+          WebkitMaskImage: "radial-gradient(circle, transparent 0%, transparent 26%, rgba(0,0,0,0.5) 36%, black 52%, black 100%)",
+          opacity: (paused ? 0.55 : 1) * (ember ? emberOp : 1),
           transition: "opacity .4s ease",
         }}
       >
-        {/* Edges */}
+        {/* Edges — depth-faded, respetan emerge alpha */}
         <g>
           {edges.map((e, ei) => {
             const a = projected[e.a];
             const b = projected[e.b];
+            const eaA = emergeAlpha(e.a);
+            const eaB = emergeAlpha(e.b);
+            const eaMin = Math.min(eaA, eaB);
+            if (eaMin <= 0) return null;
             const avgDepth = (a.depth + b.depth) / 2;
-            const op = (0.08 + avgDepth * 0.22) * cfg.edgeOp;
+            const op = (0.08 + avgDepth * 0.22) * cfg.edgeOp * eaMin * brightMultRef.current;
             return (
               <line
                 key={ei}
@@ -527,16 +674,18 @@ export default function NeuralCore3D({
           })}
         </g>
 
-        {/* Firing edges — bright line + traveling spark */}
+        {/* Firings — sparks viajando */}
         <g>
           {firingsRef.current.map((f, fi) => {
             if (now < f.startMs) return null;
+            // Silenciar firing si mote origen o destino aún no emerge
+            if (emergeAlpha(f.from) < 0.5 || emergeAlpha(f.to) < 0.5) return null;
             const t = Math.min(1, (now - f.startMs) / f.duration);
             const a = projected[f.from];
             const b = projected[f.to];
             const sx = a.x + (b.x - a.x) * t;
             const sy = a.y + (b.y - a.y) * t;
-            const lineOp = (1 - t) * 0.75;
+            const lineOp = (1 - t) * 0.75 * brightMultRef.current;
             const sparkR = 2.2 + (1 - t) * 1.6;
             const glowR = 4 + (1 - Math.abs(0.5 - t) * 2) * 4;
             return (
@@ -547,12 +696,8 @@ export default function NeuralCore3D({
                   strokeWidth={1.4}
                   opacity={lineOp}
                 />
-                <circle
-                  cx={sx} cy={sy} r={glowR}
-                  fill={color}
-                  opacity={0.38 * (1 - Math.abs(0.5 - t) * 2)}
-                  filter="blur(3px)"
-                />
+                <circle cx={sx} cy={sy} r={glowR} fill={color}
+                  opacity={0.38 * (1 - Math.abs(0.5 - t) * 2)} filter="blur(3px)" />
                 <circle cx={sx} cy={sy} r={sparkR} fill="#ffffff" />
               </g>
             );
@@ -560,10 +705,13 @@ export default function NeuralCore3D({
         </g>
 
         {/* Motes — trademark glyph depth-sorted, breath-coupled,
-            pulse-boosted (countdown, phase ring, ignition, collapse) */}
+            pulse-boosted, crystallization-aware, coherence-gold */}
         <g>
           {drawOrder.map((p) => {
-            // Firing arrival boost (spark hitting the destination)
+            const ea = emergeAlpha(p.i);
+            if (ea <= 0) return null;
+
+            // Firing arrival boost
             let hitBoost = 0;
             for (const f of firingsRef.current) {
               if (f.to !== p.i) continue;
@@ -574,16 +722,27 @@ export default function NeuralCore3D({
             const pulseBoost = getPulseBoost(p.i);
             const totalBoost = Math.max(hitBoost, pulseBoost);
 
-            // Base radius + breath coupling + boost
             const breath = 1 + breathK;
             const r = cfg.moteBase * p.scale * breath * (1 + totalBoost * 0.8);
-            const alpha = Math.min(1, p.alpha * breath + totalBoost * 0.6);
+            const alpha = Math.min(1,
+              p.alpha * breath * brightMultRef.current * ea + totalBoost * 0.6
+            );
             const rayLen = r * 2.8;
             const strokeW = Math.max(0.5, r * 0.34);
             const rays = [-Math.PI / 6, (7 * Math.PI) / 6, Math.PI / 2];
-            const coreFill = totalBoost > 0.35 ? "#ffffff" : color;
-            const glow = totalBoost > 0.25
-              ? `drop-shadow(0 0 ${6 + totalBoost * 8}px ${color})`
+
+            // Coherence gold: 4 nodos específicos reciben tinte dorado
+            // cuando coherence > 0.65. Transición suave.
+            const goldStrength = GOLDEN_NODES.includes(p.i)
+              ? Math.max(0, Math.min(1, (coherence - 0.65) / 0.25))
+              : 0;
+            const moteColor = goldStrength > 0
+              ? mixHex(color, "#FBBF24", goldStrength * 0.6)
+              : color;
+            const coreFill = totalBoost > 0.35 ? "#ffffff" : moteColor;
+            const glowColor = goldStrength > 0.3 ? "#FBBF24" : color;
+            const glow = totalBoost > 0.25 || goldStrength > 0.3
+              ? `drop-shadow(0 0 ${6 + totalBoost * 8 + goldStrength * 4}px ${glowColor})`
               : undefined;
 
             return (
@@ -594,22 +753,50 @@ export default function NeuralCore3D({
                     x1={p.x} y1={p.y}
                     x2={p.x + Math.cos(ang) * rayLen}
                     y2={p.y + Math.sin(ang) * rayLen}
-                    stroke={color}
+                    stroke={moteColor}
                     strokeWidth={strokeW}
                     strokeLinecap="round"
                     opacity={ri === 0 ? 0.95 : ri === 1 ? 0.55 : 0.78}
                   />
                 ))}
-                <circle
-                  cx={p.x} cy={p.y} r={r}
-                  fill={coreFill}
-                  style={glow ? { filter: glow } : undefined}
-                />
+                <circle cx={p.x} cy={p.y} r={r} fill={coreFill}
+                  style={glow ? { filter: glow } : undefined} />
               </g>
             );
           })}
         </g>
+
+        {/* Anchor mote durante VACÍO — blanco central, pulso suave.
+            Aparece sólo en VACÍO/EMPTY para anclar la atención del
+            usuario durante la quietud. */}
+        {bp === "EMPTY" && isBreathing && !reducedMotion && (
+          <g>
+            <circle
+              cx={center} cy={center}
+              r={3 + Math.sin(now / 350) * 0.8}
+              fill="#ffffff"
+              opacity={0.6 + Math.sin(now / 350) * 0.15}
+              style={{ filter: `drop-shadow(0 0 6px ${color})` }}
+            />
+          </g>
+        )}
       </svg>
     </>
   );
+}
+
+// Mezcla dos colores hex (#RRGGBB) con factor 0..1
+function mixHex(a, b, t) {
+  const pa = parseHex(a);
+  const pb = parseHex(b);
+  if (!pa || !pb) return a;
+  const r = Math.round(pa[0] + (pb[0] - pa[0]) * t);
+  const g = Math.round(pa[1] + (pb[1] - pa[1]) * t);
+  const bl = Math.round(pa[2] + (pb[2] - pa[2]) * t);
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
+}
+function parseHex(h) {
+  const s = String(h || "").replace("#", "");
+  if (s.length !== 6) return null;
+  return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)];
 }

@@ -92,6 +92,12 @@ export default function BioIgnicion(){
   const[ignitionFlash,setIgnitionFlash]=useState(false);
   const[phaseFlash,setPhaseFlash]=useState(false);
   const[orbDoneFlash,setOrbDoneFlash]=useState(false);
+  // Ember mode — tras completar sesión, el núcleo queda en modo brasa
+  // por ~30s (firings esporádicos, rotación lentísima) para recompensar
+  // quedarse en la app post-sesión. El parent activa tras ts==="done"
+  // con 1.4s de delay (deja que el resonance collapse respire) y lo
+  // limpia a los 30s o si el usuario arranca otra sesión.
+  const[emberActive,setEmberActive]=useState(false);
   const[postStep,setPostStep]=useState("none");
   const[postVC,setPostVC]=useState(0);const[postMsg,setPostMsg]=useState("");
   const[checkMood,setCheckMood]=useState(0);const[checkEnergy,setCheckEnergy]=useState(0);const[checkTag,setCheckTag]=useState("");
@@ -277,6 +283,24 @@ export default function BioIgnicion(){
     return()=>{if(speakTO)clearTimeout(speakTO);};}catch(e){}
   },[sec,pr,durMult]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
+  // Ember activation. Durante ts="done" la vista es SessionRunner +
+  // compFlash + post-session UI (puede durar 10-40s). El núcleo
+  // idle no se ve hasta que el usuario termina el post-session flow
+  // y ts vuelve a "idle". Ancla el ember a esa transición: al
+  // regresar a idle desde done, enciende brasa por 30s. Limpia si
+  // arranca otra sesión.
+  const prevTsForEmberRef=useRef(ts);
+  useEffect(()=>{
+    const prev=prevTsForEmberRef.current;
+    prevTsForEmberRef.current=ts;
+    if(prev==="done"&&ts==="idle"){
+      setEmberActive(true);
+      const fadeOut=setTimeout(()=>setEmberActive(false),30000);
+      return ()=>clearTimeout(fadeOut);
+    }
+    if(ts==="running"||ts==="paused"){setEmberActive(false);}
+    return undefined;
+  },[ts]);
   useEffect(()=>{if(bR.current)clearInterval(bR.current);const ph=pr?.ph?.[pi]||pr?.ph?.[0];if(ts!=="running"){setBL("");setBS(1);setBCnt(0);return;}if(!ph||!ph.br){setBL("");setBS(1);setBCnt(0);const elapsed=totalDur-sec;if(elapsed>0&&elapsed%20===0&&ts==="running")speak("Mantén la atención en la instrucción",circadian,voiceOn);return;}let t=0;let lastLabel="";function tk(){const f=computeBreathFrame(t,ph.br);if(!f){t++;return;}setBL(f.label);setBS(f.scale);setBCnt(f.countdown);if(f.label!==lastLabel){if(t%2===0||f.label==="INHALA")speak(f.label.toLowerCase(),circadian,voiceOn);hapticBreath(f.label);lastLabel=f.label;}t++;}tk();bR.current=setInterval(tk,1000);return()=>{if(bR.current)clearInterval(bR.current);};},[ts,pi,pr]);
 
   function startCountdown(){setCountdown(3);if(st.hapticOn!==false)hapticCountdown(3);try{speakNow("Tres",circadian,voiceOn);}catch(e){}cdR.current=setInterval(()=>{setCountdown(p=>{try{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow((pr?.ph?.[0]?.k)||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);if(st.hapticOn!==false)hapticCountdown(p-1);return p-1;}catch(e){clearInterval(cdR.current);setTs("running");return 0;}});},1000);}
@@ -1136,11 +1160,16 @@ export default function BioIgnicion(){
             · últimos 20 %: firing rate +30 % (anticipación)
             · resonance collapse al terminar
           Readiness override: recover→amber, optimal→emerald. */}
-      {(()=>{const rInt=readiness?.interpretation;const coreColor=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":ac;const prog=totalDur>0?1-(sec/totalDur):0;return(
+      {(()=>{const rInt=readiness?.interpretation;const coreColor=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":ac;const prog=totalDur>0?1-(sec/totalDur):0;
+        // Ember override: cuando emberActive, el core entra en modo
+        // brasa. Se mantiene intent y color del último protocolo para
+        // continuidad visual; el propio componente gestiona el fade.
+        const coreState=emberActive&&ts==="idle"?"ember":ts;
+        return(
         <NeuralCore3D
           size={isActive?240:260}
           color={coreColor}
-          state={ts}
+          state={coreState}
           breathScale={bS}
           isBreathing={isBr}
           reducedMotion={reducedMotion}
@@ -1148,6 +1177,7 @@ export default function BioIgnicion(){
           phaseIndex={pi}
           progress={prog}
           secondTick={sec}
+          breathPhase={bL}
         />
       );})()}
       {/* Ignition flash — destello one-shot de luz que emerge del centro cuando la sesión arranca.

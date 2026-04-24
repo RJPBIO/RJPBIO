@@ -147,7 +147,7 @@ function BreathWaveform({ accent, isBr, bS, reducedMotion }) {
    3D y firings neuronales coreografiados al protocolo. Los rings de
    emanación externos también se retiran (NeuralCore3D los absorbe
    vía su aura cónica + nebula interior, evitando duplicación). */
-function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused, ts, intent, pi, progress }) {
+function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused, ts, intent, pi, progress, bL }) {
   const r = 122;
   const circ = 2 * Math.PI * r;
   return (
@@ -163,6 +163,7 @@ function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused, ts, intent, pi
         phaseIndex={pi || 0}
         progress={progress || 0}
         secondTick={sec}
+        breathPhase={bL || ""}
       />
       <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)", pointerEvents: "none" }}>
         <circle cx="140" cy="140" r={r} fill="none" stroke={withAlpha(accent, 18)} strokeWidth="2.5" />
@@ -821,7 +822,7 @@ export default function SessionRunner({
                 animate={sealing && !reducedMotion ? { scale: [1, 1.04, 0.98] } : { scale: 1 }}
                 transition={{ duration: sealing ? 0.55 : 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} ts={ts} intent={safePr.int} pi={pi} progress={pct} />
+                <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} ts={ts} intent={safePr.int} pi={pi} progress={pct} bL={bL} />
                 <IgnitionSpark show={running && !ignitionPlayed} accent={accent} reducedMotion={reducedMotion} />
                 <PhaseBurst burstKey={phaseBurst} accent={accent} reducedMotion={reducedMotion} />
                 <Sealing show={sealing} accent={accent} reducedMotion={reducedMotion} />
