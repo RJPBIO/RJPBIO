@@ -92,9 +92,19 @@ export const P = [
 
   /* ═══ #7 HYPERSHIFT ═══ */
   {id:7,n:"HyperShift",ct:"Protocolo",d:120,sb:"Descarga emocional rápida",tg:"HS",cl:"#8B5CF6",int:"reset",dif:2,
-  ph:[{l:"Percusión Vagal",r:"0–30s",s:0,e:30,k:"Golpea suave el pecho. Siente la vibración.",i:"Yemas de los dedos sobre el esternón. Golpea suavemente a 2-3 toques por segundo. Siente la vibración propagarse por tu pecho. Respira naturalmente. Esta percusión estimula el nervio vago directamente y desactiva la alarma. Mantén el ritmo constante 30 segundos completos.",sc:"Percusión torácica estimula nervio vago por vibración mecánica directa. Desactiva respuesta de lucha-huida",ic:"body",br:null},
-  {l:"Contracción y Liberación",r:"30–90s",s:30,e:90,k:"Todo al 10%. Sostén 10s. Suelta 5s. Repite.",i:"Detén la percusión suavemente. Contrae TODO tu cuerpo al 10% — apenas perceptible. Manos, brazos, abdomen, piernas, mandíbula. Mantén 10 segundos respirando normalmente. Suelta completamente 5 segundos. Siente la diferencia. Repite: 10s tensión, 5s liberación. La segunda es más profunda. Tercera ronda. Cada liberación se siente como dejar caer un peso.",sc:"Relajación muscular progresiva. Cada ciclo de contracción-liberación profundiza la descarga neuromuscular",ic:"body",br:null},
-  {l:"Exhalación de Descarga",r:"90–120s",s:90,e:120,k:"Inhala corto 2s. Exhala largo 10s. Vacía todo.",i:"Sin tensión residual, inhala corto por la nariz 2 segundos. Exhala muy largo por la boca 10 segundos — tan lento como puedas. Cada exhalación descarga lo último de tensión. Repite 2 ciclos. La última exhalación es la más larga. Abre los ojos sintiéndote más ligero.",sc:"Ratio exhalación:inhalación 5:1 activa máximamente el sistema parasimpático de descarga profunda",ic:"breath",br:{in:2,h1:0,ex:10,h2:0}}]},
+  ph:[{l:"Percusión Vagal",r:"0–30s",s:0,e:30,k:"Golpea suave el pecho. Siente la vibración.",i:"Yemas de los dedos sobre el esternón. Golpea suavemente a 2-3 toques por segundo. Siente la vibración propagarse por tu pecho. Respira naturalmente. Esta percusión estimula el nervio vago directamente y desactiva la alarma. Mantén el ritmo constante 30 segundos completos.",iExec:[
+    {from:0,to:10,text:"Yemas de los dedos sobre el esternón. Golpea suave — 2-3 toques por segundo."},
+    {from:10,to:30,text:"Respira suave. La vibración recorre tu pecho. La alarma se apaga."}
+  ],sc:"Percusión torácica estimula nervio vago por vibración mecánica directa. Desactiva respuesta de lucha-huida",ic:"body",br:null},
+  {l:"Contracción y Liberación",r:"30–90s",s:30,e:90,k:"Todo al 10%. Sostén 10s. Suelta 5s. Repite.",i:"Detén la percusión suavemente. Contrae TODO tu cuerpo al 10% — apenas perceptible. Manos, brazos, abdomen, piernas, mandíbula. Mantén 10 segundos respirando normalmente. Suelta completamente 5 segundos. Siente la diferencia. Repite: 10s tensión, 5s liberación. La segunda es más profunda. Tercera ronda. Cada liberación se siente como dejar caer un peso.",iExec:[
+    {from:0,to:20,text:"Detén la percusión. Contrae todo el cuerpo al 10% — manos, brazos, abdomen, piernas, mandíbula."},
+    {from:20,to:40,text:"10s tensión, 5s liberación. Repite."},
+    {from:40,to:60,text:"Cada liberación, como dejar caer un peso."}
+  ],sc:"Relajación muscular progresiva. Cada ciclo de contracción-liberación profundiza la descarga neuromuscular",ic:"body",br:null},
+  {l:"Exhalación de Descarga",r:"90–120s",s:90,e:120,k:"Inhala corto 2s. Exhala largo 10s. Vacía todo.",i:"Sin tensión residual, inhala corto por la nariz 2 segundos. Exhala muy largo por la boca 10 segundos — tan lento como puedas. Cada exhalación descarga lo último de tensión. Repite 2 ciclos. La última exhalación es la más larga. Abre los ojos sintiéndote más ligero.",iExec:[
+    {from:0,to:15,text:"Inhala 2s por la nariz. Exhala 10s por la boca — lo más lento que puedas."},
+    {from:15,to:30,text:"Cada exhalación descarga lo último. Abre los ojos más ligero."}
+  ],sc:"Ratio exhalación:inhalación 5:1 activa máximamente el sistema parasimpático de descarga profunda",ic:"breath",br:{in:2,h1:0,ex:10,h2:0}}]},
 
   /* ═══ #8 LIGHTNING FOCUS ═══ */
   {id:8,n:"Lightning Focus",ct:"Activación",d:120,sb:"Enfoque extremo",tg:"LF",cl:"#22D3EE",int:"enfoque",dif:3,
