@@ -255,6 +255,22 @@ export default function SensoryHero({ T }) {
               <span aria-hidden style={{ color: bioSignal.phosphorCyan }}>→</span>
             </Link>
           )}
+
+          {/* Design Partner scarcity chip — visible signal in hero so
+              the prospect sees the cohort window before they decide to
+              leave. Copy drawn from lib/pricing.js DESIGN_PARTNER —
+              single source of truth, honest numbers. */}
+          {T.partnerChip && T.partnerChipHref && (
+            <Link
+              href={T.partnerChipHref}
+              className="bi-hero-partner-chip"
+              aria-label={T.partnerChipAria || T.partnerChip}
+            >
+              <span className="dot" aria-hidden />
+              <span className="label">{T.partnerChip}</span>
+              <span className="arrow" aria-hidden>→</span>
+            </Link>
+          )}
         </div>
 
         <svg viewBox="0 0 900 60" preserveAspectRatio="none"

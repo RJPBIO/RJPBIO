@@ -1733,6 +1733,173 @@ input, textarea, select {
 }
 .bi-category-card[data-kind="us"]::before { opacity: 1; }
 
+/* ═══ Hero Design Partner chip — scarcity signal directly under
+       hero CTAs. Copy sourced from lib/pricing.js DESIGN_PARTNER so
+       the slots/discount numbers stay in a single source of truth. */
+.bi-hero-partner-chip {
+  margin-block-start: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px 9px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #22D3EE 32%, transparent);
+  background: color-mix(in srgb, #22D3EE 7%, transparent);
+  color: var(--bi-text);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+}
+.bi-hero-partner-chip:hover,
+.bi-hero-partner-chip:focus-visible {
+  border-color: color-mix(in srgb, #22D3EE 55%, transparent);
+  background: color-mix(in srgb, #22D3EE 12%, transparent);
+  transform: translateY(-1px);
+  outline: none;
+}
+.bi-hero-partner-chip .dot {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  background: #22D3EE;
+  box-shadow: 0 0 8px color-mix(in srgb, #22D3EE 70%, transparent);
+  animation: biPartnerPulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.bi-hero-partner-chip .label {
+  color: var(--bi-text);
+  white-space: nowrap;
+}
+.bi-hero-partner-chip .arrow {
+  color: #155E75;
+  font-weight: 900;
+  margin-inline-start: 2px;
+  transition: transform .2s ease;
+}
+.bi-hero-partner-chip:hover .arrow { transform: translateX(2px); }
+@keyframes biPartnerPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-hero-partner-chip { transition: none; }
+  .bi-hero-partner-chip:hover { transform: none; }
+  .bi-hero-partner-chip .dot { animation: none; }
+  .bi-hero-partner-chip:hover .arrow { transform: none; }
+}
+
+/* ═══ Product Evidence receipts — Stripe-style code snippet blocks
+       adapted to our compliance artifacts (NOM-035 export, GDPR data
+       export, audit-log hash chain). Three monospace inkwell cards
+       that prove what the platform ships on day one. */
+.bi-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  margin-block: 0 8px;
+}
+.bi-evidence-card {
+  border: 1px solid var(--bi-border);
+  border-radius: 18px;
+  padding: 22px 22px 20px;
+  background: var(--bi-surface);
+  display: grid;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.bi-evidence-card::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: 2px;
+  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, #22D3EE 55%, transparent) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+.bi-evidence-card:hover,
+.bi-evidence-card:focus-within {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, #22D3EE 35%, var(--bi-border));
+  box-shadow: 0 16px 42px -26px color-mix(in srgb, #22D3EE 55%, transparent);
+}
+.bi-evidence-card:hover::before,
+.bi-evidence-card:focus-within::before { opacity: 1; }
+.bi-evidence-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #155E75;
+}
+.bi-evidence-dot {
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50%;
+  background: #22D3EE;
+  box-shadow: 0 0 6px color-mix(in srgb, #22D3EE 70%, transparent);
+}
+.bi-evidence-title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--bi-text);
+  letter-spacing: -0.01em;
+  line-height: 1.28;
+}
+.bi-evidence-code {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #0A130E;      /* deep inkwell — echoes PWA theme-dark bg */
+  color: #A7F3D0;           /* --bi-text-dim in dark */
+  border: 1px solid color-mix(in srgb, #22D3EE 16%, #1A2922);
+  overflow-x: auto;
+  white-space: pre;
+  min-block-size: 180px;
+  max-block-size: 260px;
+  overflow-y: auto;
+  font-variant-numeric: tabular-nums;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, #22D3EE 30%, transparent) transparent;
+}
+.bi-evidence-code::-webkit-scrollbar { inline-size: 6px; block-size: 6px; }
+.bi-evidence-code::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, #22D3EE 30%, transparent);
+  border-radius: 3px;
+}
+.bi-evidence-line          { color: #A7F3D0; }        /* default */
+.bi-evidence-line.kicker   { color: #22D3EE; font-weight: 700; }
+.bi-evidence-line.meta     { color: #8FA598; }        /* muted metadata */
+.bi-evidence-line.rule     { color: #26382E; }        /* separator */
+.bi-evidence-line.value    { color: #E6F1EA; font-weight: 600; }
+.bi-evidence-line.delta    { color: #22D3EE; font-weight: 700; }
+.bi-evidence-line.hash     { color: #A78BFA; letter-spacing: 0.02em; }
+.bi-evidence-line.ok       { color: #10B981; font-weight: 700; }
+.bi-evidence-caption {
+  margin: 0;
+  font-size: 12px;
+  color: var(--bi-text-muted);
+  line-height: 1.55;
+}
+@media (max-width: 640px) {
+  .bi-evidence-grid { grid-template-columns: 1fr; gap: 16px; }
+  .bi-evidence-code { font-size: 10.5px; padding: 12px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-evidence-card { transition: none; }
+  .bi-evidence-card:hover { transform: none; }
+}
+
 /* ═══ Market anchor ladder — replaces the category-map + vs-table
        combo on /pricing. Vertical stack of price bands; our own band
        highlighted mid-ladder so buyers see the positioning at once. */

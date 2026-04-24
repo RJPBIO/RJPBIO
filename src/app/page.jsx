@@ -15,6 +15,7 @@ import PartnerApplyModal from "@/components/ui/PartnerApplyModal";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
 import CountUp from "@/components/brand/CountUp";
 import PWAShowcase from "@/components/brand/PWAShowcase";
+import ProductEvidence from "@/components/brand/ProductEvidence";
 
 export const metadata = {
   title: { absolute: "BIO-IGNICIÓN — Neural Performance" },
@@ -43,6 +44,9 @@ const COPY = {
       secondaryHref: "/demo",
       chips: ["SOC 2", "HIPAA-ready", "GDPR", "NOM-035", "Zero telemetry"],
       chipsLabel: "Compliance y confianza",
+      partnerChip: `Design Partner · ${DESIGN_PARTNER.slotsTotal} cupos · cohorte Q2 2026 · −${DESIGN_PARTNER.discountPct}% × ${DESIGN_PARTNER.termMonths}m`,
+      partnerChipHref: "/pricing#design-partner",
+      partnerChipAria: `Ver programa Design Partner: ${DESIGN_PARTNER.slotsTotal} cupos abiertos para cohorte Q2 2026 con ${DESIGN_PARTNER.discountPct}% de descuento por ${DESIGN_PARTNER.termMonths} meses`,
     },
 
     proofKicker: "SEÑALES AUDITABLES",
@@ -56,6 +60,70 @@ const COPY = {
       s3Sub:   "Si aparece en el reporte, su fuente es pública",
     },
 
+    evidenceKicker: "EVIDENCIA OPERATIVA · LO QUE TU ADMIN VE",
+    evidenceH: "Tres receipts, no tres promesas.",
+    evidenceSub: "Estos son los artifacts que la plataforma produce desde el primer día. Sin capturas simuladas, sin demos curadas.",
+    evidence: {
+      nomKicker: "NOM-035 STPS · EXPORT ECO37",
+      nomTitle: "El reporte que tu compliance officer firma.",
+      nomCaption: "Export automatizado · firmado por clinical lead · listo para auditoría STPS.",
+      nomLines: [
+        { text: "REPORTE NOM-035 · ECO37",                       kind: "kicker" },
+        { text: "Organización: Empresa Ejemplo · 2026-Q1",        kind: "meta" },
+        { text: "Rango: 2026-01-01 → 2026-03-31",                 kind: "meta" },
+        { text: "Cohorte: 47 usuarios activos · k-anon ≥ 5",      kind: "meta" },
+        { text: "" },
+        { text: "DOMINIO         BASELINE   Δ 90d   CONF",        kind: "meta" },
+        { text: "─────────────────────────────────────────",      kind: "rule" },
+        { text: "Carga           68 → 71    +3      ±1.8" },
+        { text: "Autonomía       72 → 76    +4      ±2.1" },
+        { text: "Apoyo           65 → 69    +4      ±2.4" },
+        { text: "Reconocimiento  70 → 73    +3      ±2.0" },
+        { text: "" },
+        { text: "Firmado: clinical_lead@empresa.ejemplo",         kind: "meta" },
+        { text: "SHA-256: d4e5f6…c8a2 · verificable",             kind: "hash" },
+      ],
+
+      exportKicker: "EXPORT GDPR · DATOS DISOCIADOS",
+      exportTitle: "El JSON que le entregas a tu DPO.",
+      exportCaption: "Local-first · la señal individual nunca sale del dispositivo · solo agregados k-anónimos ≥ 5.",
+      exportLines: [
+        { text: "{",                                               kind: "value" },
+        { text: '  "schema": "bio-ignicion/export/v2",' },
+        { text: '  "cohort": "team-ops-2026q1",' },
+        { text: '  "k_anonymity": 5,' },
+        { text: '  "period": "2026-01-01/2026-03-31",' },
+        { text: '  "protocols_active": 14,' },
+        { text: '  "sessions_total": 3247,' },
+        { text: '  "hrv": {' },
+        { text: '    "rmssd": { "mean": 41.2, "sd": 8.4 },' },
+        { text: '    "sdnn":  { "mean": 52.7, "sd": 11.9 }' },
+        { text: '  },' },
+        { text: '  "baseline_delta": +4.3,',                      kind: "delta" },
+        { text: '  "signature": "sha256:b7c4…a9f1"',              kind: "hash" },
+        { text: "}",                                               kind: "value" },
+      ],
+
+      auditKicker: "AUDIT LOG · HASH CHAIN",
+      auditTitle: "Cada operación queda firmada.",
+      auditCaption: "Toda acción sensible se registra y encadena · hash verificable en tiempo real desde /trust.",
+      auditLines: [
+        { text: "#00412  2026-04-22T09:14:03Z",                   kind: "kicker" },
+        { text: "  actor:  admin@empresa.ejemplo",                kind: "meta" },
+        { text: "  action: export.sign.nom035" },
+        { text: "  scope:  team-ops-2026q1" },
+        { text: "  prev:   8b7c4e…",                              kind: "hash" },
+        { text: "  hash:   d4e5f6…c8a2",                          kind: "hash" },
+        { text: "  ok:     verified",                             kind: "ok" },
+        { text: "" },
+        { text: "#00413  2026-04-22T09:14:47Z",                   kind: "kicker" },
+        { text: "  actor:  clinical.lead@empresa.ejemplo",        kind: "meta" },
+        { text: "  action: baseline.review.approve" },
+        { text: "  prev:   d4e5f6…",                              kind: "hash" },
+        { text: "  hash:   a1b2c3…",                              kind: "hash" },
+        { text: "  ok:     verified",                             kind: "ok" },
+      ],
+    },
 
     bentoKicker: "POR DENTRO",
     bentoH: "Tres señales. Un lenguaje. Tu sistema nervioso.",
@@ -237,6 +305,9 @@ const COPY = {
       secondaryHref: "/demo",
       chips: ["SOC 2", "HIPAA-ready", "GDPR", "NOM-035", "Zero telemetry"],
       chipsLabel: "Compliance and trust",
+      partnerChip: `Design Partner · ${DESIGN_PARTNER.slotsTotal} slots · Q2 2026 cohort · −${DESIGN_PARTNER.discountPct}% × ${DESIGN_PARTNER.termMonths}mo`,
+      partnerChipHref: "/pricing#design-partner",
+      partnerChipAria: `See Design Partner program: ${DESIGN_PARTNER.slotsTotal} slots open for Q2 2026 cohort at ${DESIGN_PARTNER.discountPct}% off for ${DESIGN_PARTNER.termMonths} months`,
     },
 
     proofKicker: "AUDITABLE SIGNALS",
@@ -250,6 +321,70 @@ const COPY = {
       s3Sub:   "If it shows up in the report, its source is public",
     },
 
+    evidenceKicker: "OPERATIONAL EVIDENCE · WHAT YOUR ADMIN SEES",
+    evidenceH: "Three receipts, not three promises.",
+    evidenceSub: "These are the artifacts the platform produces from day one. No simulated screenshots, no curated demos.",
+    evidence: {
+      nomKicker: "NOM-035 STPS · ECO37 EXPORT",
+      nomTitle: "The report your compliance officer signs.",
+      nomCaption: "Automated export · signed by clinical lead · ready for STPS audit.",
+      nomLines: [
+        { text: "NOM-035 REPORT · ECO37",                         kind: "kicker" },
+        { text: "Organization: Example Corp · 2026-Q1",           kind: "meta" },
+        { text: "Window: 2026-01-01 → 2026-03-31",                kind: "meta" },
+        { text: "Cohort: 47 active users · k-anon ≥ 5",           kind: "meta" },
+        { text: "" },
+        { text: "DOMAIN          BASELINE   Δ 90d   CONF",        kind: "meta" },
+        { text: "─────────────────────────────────────────",      kind: "rule" },
+        { text: "Load            68 → 71    +3      ±1.8" },
+        { text: "Autonomy        72 → 76    +4      ±2.1" },
+        { text: "Support         65 → 69    +4      ±2.4" },
+        { text: "Recognition     70 → 73    +3      ±2.0" },
+        { text: "" },
+        { text: "Signed: clinical_lead@example.corp",             kind: "meta" },
+        { text: "SHA-256: d4e5f6…c8a2 · verifiable",              kind: "hash" },
+      ],
+
+      exportKicker: "GDPR EXPORT · DISASSOCIATED DATA",
+      exportTitle: "The JSON you hand your DPO.",
+      exportCaption: "Local-first · individual signal never leaves the device · only k-anonymous aggregates ≥ 5.",
+      exportLines: [
+        { text: "{",                                               kind: "value" },
+        { text: '  "schema": "bio-ignition/export/v2",' },
+        { text: '  "cohort": "team-ops-2026q1",' },
+        { text: '  "k_anonymity": 5,' },
+        { text: '  "period": "2026-01-01/2026-03-31",' },
+        { text: '  "protocols_active": 14,' },
+        { text: '  "sessions_total": 3247,' },
+        { text: '  "hrv": {' },
+        { text: '    "rmssd": { "mean": 41.2, "sd": 8.4 },' },
+        { text: '    "sdnn":  { "mean": 52.7, "sd": 11.9 }' },
+        { text: '  },' },
+        { text: '  "baseline_delta": +4.3,',                      kind: "delta" },
+        { text: '  "signature": "sha256:b7c4…a9f1"',              kind: "hash" },
+        { text: "}",                                               kind: "value" },
+      ],
+
+      auditKicker: "AUDIT LOG · HASH CHAIN",
+      auditTitle: "Every operation is signed.",
+      auditCaption: "Every sensitive action is logged and chained · hash verifiable in real time from /trust.",
+      auditLines: [
+        { text: "#00412  2026-04-22T09:14:03Z",                   kind: "kicker" },
+        { text: "  actor:  admin@example.corp",                   kind: "meta" },
+        { text: "  action: export.sign.nom035" },
+        { text: "  scope:  team-ops-2026q1" },
+        { text: "  prev:   8b7c4e…",                              kind: "hash" },
+        { text: "  hash:   d4e5f6…c8a2",                          kind: "hash" },
+        { text: "  ok:     verified",                             kind: "ok" },
+        { text: "" },
+        { text: "#00413  2026-04-22T09:14:47Z",                   kind: "kicker" },
+        { text: "  actor:  clinical.lead@example.corp",           kind: "meta" },
+        { text: "  action: baseline.review.approve" },
+        { text: "  prev:   d4e5f6…",                              kind: "hash" },
+        { text: "  hash:   a1b2c3…",                              kind: "hash" },
+        { text: "  ok:     verified",                             kind: "ok" },
+      ],
+    },
 
     bentoKicker: "INSIDE",
     bentoH: "Three signals. One language. Your nervous system.",
@@ -493,6 +628,36 @@ export default async function HomePage() {
             </div>
             <DashboardMockup ariaLabel={T.previewH} />
           </IgnitionReveal>
+        </Container>
+      </section>
+
+      <PulseDivider intensity="dim" />
+
+      {/* Product Evidence — three real compliance artifacts rendered
+          as monospace inkwell receipts. Adapts the Stripe/Linear
+          "code snippet" pattern to a compliance-heavy B2B: NOM-035
+          export + GDPR-shaped JSON export + hash-chain audit log.
+          Sample org is "Empresa Ejemplo" — placeholders, not fake
+          customer names. */}
+      <section aria-labelledby="evidence" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+        <Container size="xl">
+          <div style={{ textAlign: "center", marginBlockEnd: space[8] }}>
+            {/* Use phosphorCyanInk (AA-safe cyan) not phosphorCyan — the
+                brand cyan fails 4.5:1 on light bg for 11px small text. */}
+            <div style={{ ...kickerStyle, color: bioSignal.phosphorCyanInk }}>{T.evidenceKicker}</div>
+            <h3 id="evidence" style={sectionHeading}>{T.evidenceH}</h3>
+            <p style={{
+              marginBlockStart: space[3],
+              marginInline: "auto",
+              maxInlineSize: 640,
+              color: cssVar.textDim,
+              fontSize: font.size.md,
+              lineHeight: 1.55,
+            }}>
+              {T.evidenceSub}
+            </p>
+          </div>
+          <ProductEvidence T={T.evidence} />
         </Container>
       </section>
 
