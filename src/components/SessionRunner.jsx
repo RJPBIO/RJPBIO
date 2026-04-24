@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { bioSignal } from "@/lib/theme";
 import Icon from "@/components/Icon";
 import AmbientLattice from "@/components/AmbientLattice";
+import NeuralCore3D from "@/components/brand/NeuralCore3D";
 
 /* ═══════════════════════════════════════════════════════════════
    SESSION RUNNER — fullscreen cinematic overlay
@@ -140,41 +141,28 @@ function BreathWaveform({ accent, isBr, bS, reducedMotion }) {
   );
 }
 
-/* ─── Orb with phosphor halo, emanation rings, progress corona ── */
-function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused }) {
+/* ─── Orb: NeuralCore3D + progress corona + countdown ───────────
+   El radial-gradient sólido + halo blur previos se reemplazan por
+   NeuralCore3D — glass translúcido con la lattice del trademark en
+   3D y firings neuronales coreografiados al protocolo. Los rings de
+   emanación externos también se retiran (NeuralCore3D los absorbe
+   vía su aura cónica + nebula interior, evitando duplicación). */
+function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused, ts, intent, pi, progress }) {
   const r = 122;
   const circ = 2 * Math.PI * r;
   return (
     <div style={{ position: "relative", width: 280, height: 280, margin: "0 auto" }}>
-      <motion.div
-        aria-hidden="true"
-        animate={reducedMotion ? { opacity: paused ? 0.25 : 0.5 } : isBr ? { scale: bS * 1.06, opacity: 0.55 } : paused ? { opacity: 0.3 } : { scale: [1, 1.05, 1], opacity: [0.45, 0.7, 0.45] }}
-        transition={isBr ? { scale: { type: "spring", stiffness: 30, damping: 20, mass: 1.2 }, opacity: { duration: 0.6 } } : { duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-        style={{ position: "absolute", inset: -44, borderRadius: "50%", background: `radial-gradient(circle, ${withAlpha(accent, 38)}, ${withAlpha(accent, 14)} 48%, transparent 72%)`, filter: "blur(26px)", pointerEvents: "none" }}
-      />
-      {!reducedMotion && !paused && [0, 1].map((i) => (
-        <motion.span
-          key={i}
-          aria-hidden="true"
-          initial={{ scale: 0.9, opacity: 0.5 }}
-          animate={{ scale: 1.45, opacity: 0 }}
-          transition={{ duration: 2.4, delay: i * 1.2, ease: "easeOut", repeat: Infinity }}
-          style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `1px solid ${accent}`, pointerEvents: "none" }}
-        />
-      ))}
-      <motion.div
-        aria-hidden="true"
-        animate={reducedMotion ? { scale: paused ? 0.97 : 1 } : isBr ? { scale: bS } : paused ? { scale: 0.97 } : { scale: [1, 1.012, 1] }}
-        transition={isBr ? { type: "spring", stiffness: 30, damping: 20, mass: 1.2 } : paused ? { duration: 0.4 } : { duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
-        style={{
-          position: "absolute",
-          inset: 10,
-          borderRadius: "50%",
-          background: `radial-gradient(circle at 50% 28%, ${withAlpha(accent, 55)} 0%, ${withAlpha(accent, 22)} 18%, #0B1320 48%, #050810 88%)`,
-          border: `1px solid ${withAlpha(accent, 42)}`,
-          boxShadow: `0 24px 80px -18px ${withAlpha(accent, 60)}, inset 0 2px 0 0 rgba(255,255,255,0.14), inset 0 -28px 50px -12px rgba(0,0,0,0.72)`,
-          opacity: paused ? 0.75 : 1,
-        }}
+      <NeuralCore3D
+        size={280}
+        color={accent}
+        state={ts || (paused ? "paused" : "running")}
+        breathScale={bS}
+        isBreathing={isBr}
+        reducedMotion={reducedMotion}
+        intent={intent || "enfoque"}
+        phaseIndex={pi || 0}
+        progress={progress || 0}
+        secondTick={sec}
       />
       <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)", pointerEvents: "none" }}>
         <circle cx="140" cy="140" r={r} fill="none" stroke={withAlpha(accent, 18)} strokeWidth="2.5" />
@@ -833,7 +821,7 @@ export default function SessionRunner({
                 animate={sealing && !reducedMotion ? { scale: [1, 1.04, 0.98] } : { scale: 1 }}
                 transition={{ duration: sealing ? 0.55 : 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} />
+                <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} ts={ts} intent={safePr.int} pi={pi} progress={pct} />
                 <IgnitionSpark show={running && !ignitionPlayed} accent={accent} reducedMotion={reducedMotion} />
                 <PhaseBurst burstKey={phaseBurst} accent={accent} reducedMotion={reducedMotion} />
                 <Sealing show={sealing} accent={accent} reducedMotion={reducedMotion} />
