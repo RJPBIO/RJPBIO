@@ -609,7 +609,7 @@ export default async function HomePage() {
           real admin dashboard is visible within the first 2 scrolls.
           Linear/Stripe pattern: ship the product view above the
           value-prop copy, not after it. */}
-      <section aria-labelledby="preview" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+      <section aria-labelledby="preview" style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
@@ -638,14 +638,6 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <PulseDivider intensity="dim" />
-
-      {/* Product Evidence — three real compliance artifacts rendered
-          as monospace inkwell receipts. Adapts the Stripe/Linear
-          "code snippet" pattern to a compliance-heavy B2B: NOM-035
-          export + GDPR-shaped JSON export + hash-chain audit log.
-          Sample org is "Empresa Ejemplo" — placeholders, not fake
-          customer names. */}
       {/* Evidence as the first of three dark moments on /home.
           Thematically fits: these are terminal/monospace receipts,
           darkness is their native habitat. Header colors bumped to
@@ -686,7 +678,7 @@ export default async function HomePage() {
         </h2>
       </section>
 
-      <section style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+      <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 50%">
             <div style={{ marginBlockEnd: space[8], textAlign: "center" }}>
@@ -708,7 +700,7 @@ export default async function HomePage() {
 
       <PulseDivider intensity="dim" />
 
-      <section aria-labelledby="how-it-works" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+      <section aria-labelledby="how-it-works" style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[8] }}>
@@ -787,7 +779,7 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <section style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+      <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 40%">
             <div style={{ marginBlockEnd: space[7], textAlign: "center" }}>
@@ -889,7 +881,7 @@ export default async function HomePage() {
           current 2026 homepage). */}
       <PulseDivider intensity="dim" />
 
-      <section style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+      <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 40%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
