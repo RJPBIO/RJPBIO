@@ -50,7 +50,7 @@ import { useTapEntry } from "@/hooks/useTapEntry";
 import { uiSound } from "@/lib/uiSound";
 import { buildCommands } from "@/lib/commandPalette";
 import { computePhaseIndex, timeToNextPhase } from "@/lib/phaseEngine";
-import { computeSessionMetrics, sessionQualityMessage, shouldPlayIgnitionSignature } from "@/lib/sessionClose";
+import { computeSessionMetrics, sessionQualityMessage } from "@/lib/sessionClose";
 import { buildCheckinEntry } from "@/lib/sessionCheckin";
 import { computeBreathFrame } from "@/lib/breathCycle";
 import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "@/lib/nom35/recommend";
@@ -353,28 +353,25 @@ export default function BioIgnicion(){
     const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData:sessionDataFull,nfcCtx,circadian});
     setPostVC(result.eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
     releaseWakeLock();speakNow(sessionQualityMessage(result.bioQ.quality),circadian,voiceOn);
-    if(shouldPlayIgnitionSignature(result.bioQ.quality)){
-      if(st.soundOn!==false)try{playIgnition();}catch(e){}
-      if(st.hapticOn!==false)hapticSignature("ignition");
-    }
-    // Cierre ceremonial: el NeuralCore3D ejecuta ~1600ms de collapse
-    // (supernova central + 3 shockwave rings + 8 radial rays + todos
-    // los motes bloomean). Mantenemos SessionRunner visible toda la
-    // duración para que se perciba completo. El compFlash previo (la
-    // explosión blanca full-screen que apenas se notaba) queda como
-    // bridge breve de 500ms — los shockwaves ya entregan el wash
-    // global, no hace falta otro overlay.
-    // Chord de resolución (C major spread) + haptic signature de 3
-    // pulsos sincronizan el cierre sensorial.
-    if(st.soundOn!==false)try{playChord([523.25,659.25,783.99,1046.5],1.4,0.065);}catch(e){}
-    if(st.hapticOn!==false&&typeof navigator!=="undefined"&&navigator.vibrate){
-      try{navigator.vibrate([90,60,40,140,40,60,20]);}catch(e){}
-    }
+    // Finale unificado para TODOS los protocolos y duraciones.
+    // Visual: NeuralCore3D collapse (supernova + 3 shockwave rings +
+    //   8 radial rays + bloom + firings), 1600ms gated por
+    //   orbDoneFlash. Es el único cierre visual — el Sealing legacy
+    //   + compFlash/IgnitionBurst quedaron retirados.
+    // Audio: playIgnition — brand-established 3-layer chord (spark
+    //   1320/1760, core 528/792/1056/1320, tail 264/396) que respira
+    //   durante los 1.6s del collapse. Un solo audio hero, no hay
+    //   rama de calidad distinta para mantener la firma consistente.
+    // Haptic: hapticSignature("ignition") — patrón 7-beat de ignición.
+    // La antigua rama condicional por quality queda eliminada para
+    // que cada sesión termine IDÉNTICA en el canal sensorial de
+    // cierre, independiente de completación/protocolo/duración.
+    if(st.soundOn!==false)try{playIgnition();}catch(e){}
+    if(st.hapticOn!==false)hapticSignature("ignition");
     setOrbDoneFlash(true);
     setTimeout(()=>{
       setOrbDoneFlash(false);
-      setCompFlash(true);
-      setTimeout(()=>{setCompFlash(false);setPostStep("breathe");},500);
+      setPostStep("breathe");
     },1600);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,...result.newState});

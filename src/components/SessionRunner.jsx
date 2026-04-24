@@ -827,7 +827,10 @@ export default function SessionRunner({
                 <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} ts={ts} intent={safePr.int} pi={pi} progress={pct} bL={bL} onSparkHit={onSparkHit} />
                 <IgnitionSpark show={running && !ignitionPlayed} accent={accent} reducedMotion={reducedMotion} />
                 <PhaseBurst burstKey={phaseBurst} accent={accent} reducedMotion={reducedMotion} />
-                <Sealing show={sealing} accent={accent} reducedMotion={reducedMotion} />
+                {/* <Sealing> removido — el NeuralCore3D ahora entrega el
+                    finale (supernova + shockwaves + radial rays). Los
+                    3 anillos contraídos + white core del Sealing legacy
+                    competían visualmente con el nuevo collapse. */}
               </motion.div>
             )}
           </div>
