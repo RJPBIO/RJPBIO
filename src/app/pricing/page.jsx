@@ -5,7 +5,6 @@ import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font, radius, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
-import { EVIDENCE } from "@/lib/evidence";
 import { PARTNER_COPY } from "@/lib/pricing";
 import PricingCards from "./PricingCards";
 import PricingROICalc from "./PricingROICalc";
@@ -14,7 +13,6 @@ import PricingSectionNav from "./PricingSectionNav";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
-import CountUp from "@/components/brand/CountUp";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
 import PartnerApplyModal from "@/components/ui/PartnerApplyModal";
 
@@ -242,13 +240,6 @@ const COPY = {
     ],
     proofTitle: "Por qué puedes creer esto sin un muro de logos",
     proofSub: "Estamos en pre-lanzamiento — no vamos a inventar testimonios. Las señales que importan aquí son auditables, no decorativas.",
-    proofStat1Label: "protocolos con mecanismo documentado",
-    proofStat2Label: "estudios citados con DOI verificable",
-    proofStat3Value: "0",
-    proofStat3Label: "puntajes propietarios sin referencia pública",
-    proofStat1Sub: (n) => `Ver los ${n} en /evidencia`,
-    proofStat2Sub: "Cohen 1988 · Task Force 1996 · Shaffer 2017…",
-    proofStat3Sub: "Si aparece en el reporte, su fuente es pública",
     partnerTitle: PARTNER_COPY.es.title,
     partnerBody: PARTNER_COPY.es.body,
     partnerCta: PARTNER_COPY.es.cta,
@@ -320,8 +311,6 @@ const COPY = {
     procurementCta: "Ver centro de confianza completo",
     procurementHref: "/trust",
 
-    onePagerTitle: "Descargar one-pager para procurement",
-    onePagerBody: "Hoja imprimible con precios, add-ons, seguridad y cláusulas — lista para anexar a la requisición.",
     onePagerCta: "Imprimir / guardar PDF",
 
     faqTitle: "Preguntas frecuentes",
@@ -544,13 +533,6 @@ const COPY = {
     ],
     proofTitle: "Why you can trust this without a wall of logos",
     proofSub: "We're pre-launch — we won't fake testimonials. The signals that matter here are auditable, not decorative.",
-    proofStat1Label: "protocols with documented mechanism",
-    proofStat2Label: "studies cited with verifiable DOIs",
-    proofStat3Value: "0",
-    proofStat3Label: "proprietary scores without public reference",
-    proofStat1Sub: (n) => `See all ${n} at /evidencia`,
-    proofStat2Sub: "Cohen 1988 · Task Force 1996 · Shaffer 2017…",
-    proofStat3Sub: "If it shows up in the report, its source is public",
     partnerTitle: PARTNER_COPY.en.title,
     partnerBody: PARTNER_COPY.en.body,
     partnerCta: PARTNER_COPY.en.cta,
@@ -621,8 +603,6 @@ const COPY = {
     procurementCta: "See the full trust center",
     procurementHref: "/trust",
 
-    onePagerTitle: "Download a one-pager for procurement",
-    onePagerBody: "Printable sheet with prices, add-ons, security and clauses — ready to attach to your requisition.",
     onePagerCta: "Print / save as PDF",
 
     faqTitle: "Frequently asked questions",
@@ -664,10 +644,6 @@ export default async function PricingPage() {
   const L = locale === "en" ? "en" : "es";
   const c = COPY[L];
   const nonce = (await headers()).get("x-nonce") || undefined;
-
-  const evidenceEntries = Object.values(EVIDENCE);
-  const protocolCount = evidenceEntries.length;
-  const studyCount = evidenceEntries.reduce((n, e) => n + (e.studies?.length || 0), 0);
 
   const plans = [
     {
@@ -938,29 +914,41 @@ export default async function PricingPage() {
 
         <PulseDivider intensity="dim" />
 
-        <section aria-labelledby="overage" style={{ marginTop: space[8] }}>
+        {/* Overage — buyer detail, not browsing content. Collapsed so
+            the main flow runs Plans → Market → ROI → Compare without
+            a full-width table interrupting the scan. */}
+        <section aria-labelledby="overage" style={{ marginTop: space[8], maxWidth: 820, marginInline: "auto" }}>
          <IgnitionReveal sparkOrigin="50% 40%">
-          <header style={{ textAlign: "center", marginBottom: space[5] }}>
-            <div style={kickerStyleMuted}>{c.overageKicker}</div>
-            <h2 id="overage" style={{ ...sectionHeading, fontSize: "clamp(26px, 3.4vw, 38px)", letterSpacing: "-0.02em" }}>{c.overageTitle}</h2>
-            <p style={{ color: cssVar.textDim, marginTop: space[2], maxWidth: 640, marginInline: "auto", lineHeight: 1.5 }}>
+          <details className="bi-pricing-legal">
+            <summary>
+              <span>
+                <span style={{ fontFamily: cssVar.fontMono, fontSize: 10, letterSpacing: "0.24em", textTransform: "uppercase", color: bioSignal.phosphorCyanInk, fontWeight: font.weight.bold, display: "block", marginBlockEnd: 4 }}>
+                  {c.overageKicker}
+                </span>
+                <span id="overage" style={{ fontSize: font.size.lg, fontWeight: font.weight.bold, color: cssVar.text, letterSpacing: "-0.01em" }}>
+                  {c.overageTitle}
+                </span>
+              </span>
+              <span className="bi-pricing-legal-hint" aria-hidden><span className="chev">▾</span></span>
+            </summary>
+            <p style={{ color: cssVar.textDim, marginTop: space[3], lineHeight: 1.5 }}>
               {c.overageSub}
             </p>
-          </header>
-          <table className="bi-overage-table" aria-label={c.overageTitle}>
-            <thead>
-              <tr>{c.overageCols.map((h) => <th key={h}>{h}</th>)}</tr>
-            </thead>
-            <tbody>
-              {c.overageRows.map((r) => (
-                <tr key={r.plan}>
-                  <td className="plan">{r.plan}</td>
-                  <td>{r.cap}</td>
-                  <td className="rate">{r.rate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <table className="bi-overage-table" aria-label={c.overageTitle} style={{ marginTop: space[4] }}>
+              <thead>
+                <tr>{c.overageCols.map((h) => <th key={h}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {c.overageRows.map((r) => (
+                  <tr key={r.plan}>
+                    <td className="plan">{r.plan}</td>
+                    <td>{r.cap}</td>
+                    <td className="rate">{r.rate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
          </IgnitionReveal>
         </section>
 
@@ -1120,113 +1108,71 @@ export default async function PricingPage() {
             })}
           </SpotlightGrid>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-            gap: space[4],
-            alignItems: "start",
-          }} className="bi-data-sla-grid">
-            <article
-              className="bi-spot"
-              style={{
-                padding: space[5],
-                borderRadius: radius.lg,
-                border: `1px solid ${cssVar.border}`,
-                background: cssVar.surface,
-              }}
-            >
-              <h3 style={{
-                margin: 0,
-                marginBlockEnd: 4,
-                fontSize: font.size.lg,
-                color: cssVar.text,
-                letterSpacing: "-0.01em",
-              }}>{c.slaTitle}</h3>
-              <p style={{
-                margin: 0,
-                marginBlockEnd: 12,
-                fontSize: font.size.sm,
-                color: cssVar.textDim,
-                lineHeight: 1.5,
-              }}>{c.slaSub}</p>
-              <ul style={{
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-                display: "grid",
-                gap: 6,
-              }}>
-                {c.slaRows.map((row) => (
-                  <li key={row.uptime} style={{
-                    display: "grid",
-                    gridTemplateColumns: "120px 1fr",
-                    gap: 12,
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    border: `1px solid ${cssVar.border}`,
-                    background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 3%, transparent)`,
-                    fontFamily: cssVar.fontMono,
-                    fontSize: 12,
-                    alignItems: "baseline",
-                  }}>
-                    <span style={{
-                      color: bioSignal.phosphorCyan,
-                      fontWeight: font.weight.bold,
-                      letterSpacing: "0.04em",
-                    }}>{row.uptime}</span>
-                    <span style={{ color: cssVar.text }}>{row.credit}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
+          {/* SLA credits → <details> (procurement detail, not browsing
+              flow). One-pager card retired; PrintButton + /trust link
+              live as a single compact action row beneath. */}
+          <details className="bi-pricing-legal" style={{ marginBlockStart: space[4] }}>
+            <summary>
+              <span style={{ fontWeight: font.weight.bold, color: cssVar.text, letterSpacing: "-0.01em" }}>
+                {c.slaTitle}
+              </span>
+              <span className="bi-pricing-legal-hint" aria-hidden><span className="chev">▾</span></span>
+            </summary>
+            <p style={{ margin: `${space[2]}px 0 ${space[3]}px`, fontSize: font.size.sm, color: cssVar.textDim, lineHeight: 1.5 }}>
+              {c.slaSub}
+            </p>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 6 }}>
+              {c.slaRows.map((row) => (
+                <li key={row.uptime} style={{
+                  display: "grid",
+                  gridTemplateColumns: "120px 1fr",
+                  gap: 12,
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: `1px solid ${cssVar.border}`,
+                  background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 3%, transparent)`,
+                  fontFamily: cssVar.fontMono,
+                  fontSize: 12,
+                  alignItems: "baseline",
+                }}>
+                  <span style={{
+                    color: bioSignal.phosphorCyanInk,
+                    fontWeight: font.weight.bold,
+                    letterSpacing: "0.04em",
+                  }}>{row.uptime}</span>
+                  <span style={{ color: cssVar.text }}>{row.credit}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
 
-            <article
-              className="bi-spot"
-              style={{
-                padding: space[5],
-                borderRadius: radius.lg,
-                border: `2px solid ${cssVar.accent}`,
-                background: cssVar.accentSoft,
-                display: "flex",
-                flexDirection: "column",
-                gap: space[3],
-                justifyContent: "space-between",
-                minHeight: "100%",
-              }}
-            >
-              <div>
-                <h3 style={{
-                  margin: 0,
-                  marginBlockEnd: 6,
-                  fontSize: font.size.lg,
-                  color: cssVar.text,
-                  letterSpacing: "-0.01em",
-                }}>{c.onePagerTitle}</h3>
-                <p style={{
-                  margin: 0,
-                  fontSize: font.size.sm,
-                  color: cssVar.textDim,
-                  lineHeight: 1.55,
-                }}>{c.onePagerBody}</p>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-                <PrintButton label={c.onePagerCta} />
-                <a href={c.procurementHref} className="bi-partner-trigger" style={{ textDecoration: "none" }}>
-                  <span>{c.procurementCta}</span>
-                  <span aria-hidden style={{ fontSize: 14, lineHeight: 1 }}>→</span>
-                </a>
-              </div>
-            </article>
+          <div style={{
+            marginBlockStart: space[4],
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: space[3],
+          }}>
+            <PrintButton label={c.onePagerCta} />
+            <a href={c.procurementHref} className="bi-partner-trigger" style={{ textDecoration: "none" }}>
+              <span>{c.procurementCta}</span>
+              <span aria-hidden style={{ fontSize: 14, lineHeight: 1 }}>→</span>
+            </a>
           </div>
          </IgnitionReveal>
         </section>
 
         <PulseDivider />
 
-        <section aria-labelledby="proof" style={{ marginTop: space[8], maxWidth: 960, marginInline: "auto" }}>
+        {/* Partner + founder cards. The big proof-stats trio (protocols,
+            studies, proprietary) lived here but duplicates /home and
+            inflates the scan; cut. The italic lede is kept — it frames
+            the two credibility cards that follow. */}
+        <section aria-labelledby="partners" style={{ marginTop: space[8], maxWidth: 960, marginInline: "auto" }}>
          <IgnitionReveal sparkOrigin="50% 40%">
           <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <h2 id="proof" style={{ ...sectionHeading, marginBottom: space[2] }}>{c.proofTitle}</h2>
+            <h2 id="partners" style={{ ...sectionHeading, marginBottom: space[2] }}>{c.proofTitle}</h2>
             <p style={{
               fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
               fontStyle: "italic",
@@ -1238,23 +1184,6 @@ export default async function PricingPage() {
               letterSpacing: "-0.01em",
             }}>{c.proofSub}</p>
           </header>
-
-          <SpotlightGrid
-            as="ul"
-            style={{
-              listStyle: "none",
-              padding: 0,
-              margin: 0,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: space[3],
-              marginBlockEnd: space[6],
-            }}
-          >
-            <ProofStat numeric={protocolCount} label={c.proofStat1Label} sub={c.proofStat1Sub(protocolCount)} />
-            <ProofStat numeric={studyCount}    label={c.proofStat2Label} sub={c.proofStat2Sub} />
-            <ProofStat value={c.proofStat3Value} label={c.proofStat3Label} sub={c.proofStat3Sub} />
-          </SpotlightGrid>
 
           <SpotlightGrid
             style={{
@@ -1456,40 +1385,6 @@ function CompareTable({ groups, cols }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-function ProofStat({ value, numeric, label, sub }) {
-  return (
-    <li
-      className="bi-spot"
-      style={{
-        padding: space[5],
-        borderRadius: radius.lg,
-        border: `1px solid ${cssVar.border}`,
-        background: cssVar.surface,
-        display: "flex",
-        flexDirection: "column",
-        gap: space[1],
-      }}
-    >
-      <span style={{
-        fontSize: 44,
-        fontWeight: font.weight.black,
-        fontFamily: cssVar.fontMono,
-        color: cssVar.accent,
-        letterSpacing: "-1px",
-        lineHeight: 1,
-      }}>
-        {typeof numeric === "number" ? <CountUp value={numeric} /> : value}
-      </span>
-      <span style={{ fontSize: font.size.md, color: cssVar.text, fontWeight: font.weight.semibold, lineHeight: 1.3 }}>
-        {label}
-      </span>
-      <span style={{ fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: 1.5 }}>
-        {sub}
-      </span>
-    </li>
   );
 }
 
