@@ -184,6 +184,13 @@ export const DS = {
   reminderMinute: 0,
   // v11 — historial de instrumentos psicométricos (PSS-4, SWEMWBS, PHQ-2)
   instruments: [],
+  // v12 — programs: trayectorias curadas multi-día.
+  // activeProgram: el programa en curso (null si no hay).
+  //   { id: string, startedAt: ms, completedSessionDays: number[] }
+  // programHistory: programas completados (archivo).
+  //   { id: string, startedAt: ms, completedAt: ms, completionFraction: 0-1 }
+  activeProgram: null,
+  programHistory: [],
 };
 
 // ─── Neural State Color Mapping ──────────────────────────

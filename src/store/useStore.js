@@ -12,7 +12,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 11;
+const STORE_VERSION = 12;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
@@ -39,6 +39,9 @@ function migrate(data) {
     if (typeof merged.reminderMinute !== "number") merged.reminderMinute = 0;
     // v11: historial de instrumentos psicométricos (PSS-4, SWEMWBS-7, PHQ-2).
     if (!Array.isArray(merged.instruments)) merged.instruments = [];
+    // v12: programs — trayectorias curadas multi-día.
+    if (typeof merged.activeProgram === "undefined") merged.activeProgram = null;
+    if (!Array.isArray(merged.programHistory)) merged.programHistory = [];
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -320,6 +323,142 @@ export const useStore = create((set, get) => ({
     const update = { banditArms: nextArms, predictionResiduals: nextResiduals };
     set(update);
     scheduleSave({ ...st, ...update });
+  },
+
+  // ─── Programs (v12) ───────────────────────────────────────
+  // Trayectorias multi-día curadas. Cada sesión que coincida con
+  // el protocolo del día del programa activo avanza el progreso.
+  // Si se completa el programa → se archiva a programHistory +
+  // desbloquea achievement.
+
+  /**
+   * Inicia un programa. Si ya hay uno activo, lo sustituye (el
+   * anterior queda archivado con su fracción parcial de completación).
+   * Idempotente para el mismo id — si ya está iniciado hoy, no hace nada.
+   */
+  startProgram: (programId) => {
+    if (typeof programId !== "string" || !programId) return;
+    const st = get();
+    const now = Date.now();
+    // Si ya hay un programa activo igual, no reiniciar (evitar pérdida de progreso)
+    if (st.activeProgram && st.activeProgram.id === programId) return;
+    // Archivar programa anterior con su progreso parcial
+    let programHistory = [...(st.programHistory || [])];
+    if (st.activeProgram && st.activeProgram.id) {
+      programHistory.push({
+        id: st.activeProgram.id,
+        startedAt: st.activeProgram.startedAt || now,
+        completedAt: now,
+        completionFraction: 0, // parcial — completamos un cálculo preciso en abandonProgram
+        abandoned: true,
+      });
+    }
+    const activeProgram = {
+      id: programId,
+      startedAt: now,
+      completedSessionDays: [],
+    };
+    set({ activeProgram, programHistory });
+    scheduleSave({ ...st, activeProgram, programHistory });
+    outboxAdd({ kind: "program_start", payload: { id: programId, startedAt: now }, userId: st._userId ?? null }).catch(() => {});
+  },
+
+  /**
+   * Marca el día `day` como completado para el programa activo.
+   * Idempotente — no duplica días. Si el programa se completa
+   * (todos los días requeridos hechos), se archiva automáticamente
+   * y desbloquea achievement "program_complete".
+   * NOTA: esta action es genérica — NO valida que el día corresponda
+   * al día actual del programa. La lógica de "qué día cuenta como
+   * completado" vive en el caller (page.jsx session completion).
+   */
+  completeProgramDay: (day, completionMeta = {}) => {
+    const st = get();
+    if (!st.activeProgram || !st.activeProgram.id) return;
+    if (typeof day !== "number" || day < 1) return;
+    const existing = Array.isArray(st.activeProgram.completedSessionDays)
+      ? st.activeProgram.completedSessionDays
+      : [];
+    if (existing.includes(day)) return; // ya completado
+    const completedSessionDays = [...existing, day].sort((a, b) => a - b);
+    const activeProgram = { ...st.activeProgram, completedSessionDays };
+    set({ activeProgram });
+    scheduleSave({ ...st, activeProgram });
+    outboxAdd({
+      kind: "program_day_complete",
+      payload: { id: activeProgram.id, day, meta: completionMeta },
+      userId: st._userId ?? null,
+    }).catch(() => {});
+  },
+
+  /**
+   * Llamar cuando el progreso del programa alcanza 100%.
+   * Archiva el programa y desbloquea achievement.
+   * Retorna true si se completó, false si no.
+   * Espera un objeto con { totalRequired } para verificar.
+   */
+  finalizeProgram: ({ totalRequired } = {}) => {
+    const st = get();
+    if (!st.activeProgram || !st.activeProgram.id) return false;
+    const completed = Array.isArray(st.activeProgram.completedSessionDays)
+      ? st.activeProgram.completedSessionDays.length
+      : 0;
+    if (typeof totalRequired !== "number" || totalRequired <= 0) return false;
+    if (completed < totalRequired) return false;
+    const now = Date.now();
+    const programHistory = [
+      ...(st.programHistory || []),
+      {
+        id: st.activeProgram.id,
+        startedAt: st.activeProgram.startedAt || now,
+        completedAt: now,
+        completionFraction: 1,
+        abandoned: false,
+      },
+    ].slice(-50);
+    const ach = [...(st.achievements || [])];
+    if (!ach.includes("program_complete")) ach.push("program_complete");
+    // Bonus XP: +20 vCores por programa completado
+    const vCores = (st.vCores || 0) + 20;
+    set({ activeProgram: null, programHistory, achievements: ach, vCores });
+    scheduleSave({ ...st, activeProgram: null, programHistory, achievements: ach, vCores });
+    outboxAdd({
+      kind: "program_complete",
+      payload: { id: st.activeProgram.id, startedAt: st.activeProgram.startedAt, completedAt: now },
+      userId: st._userId ?? null,
+    }).catch(() => {});
+    return true;
+  },
+
+  /**
+   * Abandona el programa actual sin completarlo. Archiva con
+   * completionFraction calculada. Usuario puede iniciar otro.
+   */
+  abandonProgram: () => {
+    const st = get();
+    if (!st.activeProgram || !st.activeProgram.id) return;
+    const completed = Array.isArray(st.activeProgram.completedSessionDays)
+      ? st.activeProgram.completedSessionDays.length
+      : 0;
+    const now = Date.now();
+    const programHistory = [
+      ...(st.programHistory || []),
+      {
+        id: st.activeProgram.id,
+        startedAt: st.activeProgram.startedAt || now,
+        completedAt: now,
+        completedSessionDays: completed,
+        completionFraction: null, // calculable desde completedSessionDays + program.sessions.length
+        abandoned: true,
+      },
+    ].slice(-50);
+    set({ activeProgram: null, programHistory });
+    scheduleSave({ ...st, activeProgram: null, programHistory });
+    outboxAdd({
+      kind: "program_abandon",
+      payload: { id: st.activeProgram.id, completedDays: completed },
+      userId: st._userId ?? null,
+    }).catch(() => {});
   },
 
   resetAll: async () => {

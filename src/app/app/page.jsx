@@ -12,6 +12,8 @@ import dynamic from "next/dynamic";
 
 // ─── Imports from modules ─────────────────────────────────
 import { P, SCIENCE_DEEP } from "@/lib/protocols";
+import { programTodayStatus, programRequiredSessions, getProgramById } from "@/lib/programs";
+import { resolveProgramSuggestion } from "@/lib/programSuggestion";
 import {
   MOODS, INTENTS,
   POST_MSGS, PROG_7, DS,
@@ -22,6 +24,7 @@ import {
   estimateCognitiveLoad,
   calcSessionCompletion,
   suggestOptimalTime,
+  calcBurnoutIndex,
 } from "@/lib/neural";
 import { useReadiness, computeReadiness } from "@/hooks/useReadiness";
 import { useAdaptiveRecommendation, computeAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
@@ -78,6 +81,8 @@ const NOM035Questionnaire = dynamic(() => import("@/components/NOM035Questionnai
 const ReadinessScore = dynamic(() => import("@/components/ReadinessScore"), { ssr: false });
 const SessionRunner = dynamic(() => import("@/components/SessionRunner"), { ssr: false });
 const AmbientLattice = dynamic(() => import("@/components/AmbientLattice"), { ssr: false });
+const ProgramBrowser = dynamic(() => import("@/components/ProgramBrowser"), { ssr: false });
+const ActiveProgramCard = dynamic(() => import("@/components/ActiveProgramCard"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -375,6 +380,30 @@ export default function BioIgnicion(){
     },1600);
     setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setSt({...st,...result.newState});
+    // ─── Programs — avance del día si aplica ───────────────
+    // Si el usuario tiene un activeProgram y el protocolo recién
+    // completado coincide con la sesión del día de hoy (dentro del
+    // programa), marcamos ese día como completado y, si el programa
+    // termina ahí, lo finalizamos (archivo + XP bonus + achievement).
+    // Idempotente: completeProgramDay ignora días ya marcados.
+    if(st.activeProgram&&st.activeProgram.id&&pr?.id){
+      const todayStatus=programTodayStatus(st.activeProgram);
+      if(todayStatus.shouldSession&&todayStatus.session&&todayStatus.session.protocolId===pr.id){
+        store.completeProgramDay(todayStatus.day,{protocolId:pr.id,bioQ:result.bioQ?.quality});
+        const program=todayStatus.program;
+        const totalRequired=programRequiredSessions(program);
+        const completedNow=(st.activeProgram.completedSessionDays?.length||0)+1;
+        if(completedNow>=totalRequired){
+          const finalized=store.finalizeProgram({totalRequired});
+          if(finalized){
+            announce(`¡Programa ${program.n} completado! +20 vCores.`,"polite");
+          }
+        }else{
+          announce(`Día ${todayStatus.day} del programa ${program.n} completado.`,"polite");
+        }
+        setSt_(useStore.getState());
+      }
+    }
   }
   function submitCheckin(){
     const built=buildCheckinEntry({
@@ -847,6 +876,31 @@ export default function BioIgnicion(){
     {/* Streak Shield (replaces simple streak warning) */}
     {ts==="idle"&&<StreakShield st={st} isDark={isDark} onQuickSession={()=>{setDurMult(0.5);const calmP=P.find(p=>p.int==="calma"&&p.dif===1)||P[0];setPr(calmP);setSec(Math.round(calmP.d*0.5));go();}} onFreezeStreak={()=>{const r=store.freezeStreak();if(r.ok){setSt_(useStore.getState());announce(`Racha congelada honestamente. Te quedan ${r.remaining} pausas este mes.`,"polite");}else{announce(r.reason==="already_today"?"Ya usaste tu pausa hoy.":"Agotaste tus pausas del mes.","polite");}}}/>}
 
+    {/* Active Program Card — muestra la trayectoria en curso si existe */}
+    {ts==="idle"&&st.activeProgram&&<ActiveProgramCard
+      activeProgram={st.activeProgram}
+      isDark={isDark}
+      onStartDay={(session,program)=>{
+        const proto=P.find(p=>p.id===session.protocolId);
+        if(!proto)return;
+        const mult=session.durMult||durMult||1;
+        setPr(proto);
+        setDurMult(mult);
+        setSec(Math.round((proto.d||120)*mult));
+        go();
+      }}
+      onViewProgram={(program)=>{
+        announce(`Programa ${program.n}: ${program.sb_long}`,"polite");
+      }}
+      onAbandon={(program)=>{
+        if(typeof window!=="undefined"&&window.confirm(`¿Abandonar "${program.n}"? Se archivará con el progreso actual.`)){
+          store.abandonProgram();
+          setSt_(useStore.getState());
+          announce("Programa abandonado.","polite");
+        }
+      }}
+    />}
+
     {/* NOM-035 hint — solo si hay un nivel medio/alto guardado y no fue descartado */}
     {ts==="idle"&&nom35Hint&&(()=>{const nomTone=nom35Hint.intent==="calma"?semantic.danger:semantic.warning;return(
       <div role="status" aria-live="polite" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:space[3],padding:`${space[3]}px ${space[4]}px`,marginBottom:space[3],background:withAlpha(nomTone,12),border:`1px solid ${withAlpha(nomTone,30)}`,borderRadius:radius.md}}>
@@ -896,6 +950,28 @@ export default function BioIgnicion(){
 
     {/* Readiness Score — bioneural composite */}
     {ts==="idle"&&<ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRV(true)}/>}
+
+    {/* Program Browser — 5 trayectorias curadas. Se muestra SOLO si no hay programa activo
+        (si ya hay uno, el ActiveProgramCard en la zona superior cubre el call-to-action).
+        Sugerencia personalizada se calcula inline: burnout alto/crítico → Burnout Recovery;
+        readiness "recover" + 5+ sesiones → Recovery Week; 3+ sesiones sin historial → Neural Baseline. */}
+    {ts==="idle"&&!st.activeProgram&&(()=>{
+      const burnout=calcBurnoutIndex(st.moodLog||[],st.history||[]);
+      const suggestion=resolveProgramSuggestion(st,{burnout,readiness});
+      return(
+        <ProgramBrowser
+          isDark={isDark}
+          programHistory={st.programHistory||[]}
+          suggestion={suggestion}
+          onStart={(programId)=>{
+            store.startProgram(programId);
+            setSt_(useStore.getState());
+            const p=getProgramById(programId);
+            if(p)announce(`Programa ${p.n} iniciado. Día 1: ${p.sessions?.[0]?.note||p.sb}`,"polite");
+          }}
+        />
+      );
+    })()}
 
     {/* Bioneural quick actions — evidence-based rescue protocols */}
     {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
