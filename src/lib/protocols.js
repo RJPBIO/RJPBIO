@@ -28,9 +28,19 @@ export const P = [
 
   /* ═══ #3 RESET EJECUTIVO ═══ */
   {id:3,n:"Reset Ejecutivo",ct:"Reset",d:120,sb:"Para líderes bajo presión",tg:"RE",cl:"#8B5CF6",int:"reset",dif:1,
-  ph:[{l:"Descarga Rápida",r:"0–30s",s:0,e:30,k:"Inhala corto. Exhala el doble de largo. Desinfla.",i:"Cierra los ojos. Inhala por la nariz en 2 segundos. Exhala muy lento por la boca en 6 segundos — como si desinflaras un globo. Siente cómo tu cuerpo se afloja con cada exhalación larga. Repite 3 veces. Cada exhalación más lenta y profunda.",sc:"Ratio 1:3 inhalación:exhalación activa tono vagal parasimpático en menos de 20 segundos",ic:"breath",br:{in:2,h1:0,ex:6,h2:0}},
-  {l:"Filtro de Prioridad",r:"30–90s",s:30,e:90,k:"Tres tareas. Filtra. Solo queda una.",i:"Mantén las exhalaciones largas. Piensa en tus 3 tareas más urgentes. Para cada una: ¿es importante o solo urgente? ¿Puedo eliminarlo? ¿Delegarlo? Quédate solo con lo genuinamente importante. Confía en tu primera respuesta — sin analizar en exceso. Sigue exhalando largo mientras el ruido se despeja.",sc:"Filtro de Eisenhower conectado a estado parasimpático mejora calidad de decisiones ejecutivas",ic:"mind",br:{in:2,h1:0,ex:6,h2:0}},
-  {l:"Compromiso Motor",r:"90–120s",s:90,e:120,k:"Un puño cerrado. Una tarea. 60 minutos.",i:"Elige UNA tarea para los próximos 60 minutos. Solo una. Cierra el puño derecho con firmeza mientras exhalas. Di internamente: 'Los próximos 60 minutos son para esto.' Siente la decisión en tu cuerpo. Mantén 3 segundos. Suelta el puño y abre los ojos con dirección clara.",sc:"Compromiso motor ancla decisiones en memoria procedimental. Aumenta probabilidad de ejecución",ic:"focus",br:{in:2,h1:0,ex:6,h2:0}}]},
+  ph:[{l:"Descarga Rápida",r:"0–30s",s:0,e:30,k:"Inhala corto. Exhala el doble de largo. Desinfla.",i:"Cierra los ojos. Inhala por la nariz en 2 segundos. Exhala muy lento por la boca en 6 segundos — como si desinflaras un globo. Siente cómo tu cuerpo se afloja con cada exhalación larga. Repite 3 veces. Cada exhalación más lenta y profunda.",iExec:[
+    {from:0,to:10,text:"Cierra los ojos. Primera respiración: 2s nariz, 6s boca — como desinflando un globo."},
+    {from:10,to:30,text:"Cada exhalación más lenta. El cuerpo se afloja solo."}
+  ],sc:"Ratio 1:3 inhalación:exhalación activa tono vagal parasimpático en menos de 20 segundos",ic:"breath",br:{in:2,h1:0,ex:6,h2:0}},
+  {l:"Filtro de Prioridad",r:"30–90s",s:30,e:90,k:"Tres tareas. Filtra. Solo queda una.",i:"Mantén las exhalaciones largas. Piensa en tus 3 tareas más urgentes. Para cada una: ¿es importante o solo urgente? ¿Puedo eliminarlo? ¿Delegarlo? Quédate solo con lo genuinamente importante. Confía en tu primera respuesta — sin analizar en exceso. Sigue exhalando largo mientras el ruido se despeja.",iExec:[
+    {from:0,to:20,text:"Trae 3 tareas urgentes a la mente."},
+    {from:20,to:40,text:"¿Importante o solo urgente? Elimina o delega lo demás."},
+    {from:40,to:60,text:"Queda una. Confía en la primera respuesta."}
+  ],sc:"Filtro de Eisenhower conectado a estado parasimpático mejora calidad de decisiones ejecutivas",ic:"mind",br:{in:2,h1:0,ex:6,h2:0}},
+  {l:"Compromiso Motor",r:"90–120s",s:90,e:120,k:"Un puño cerrado. Una tarea. 60 minutos.",i:"Elige UNA tarea para los próximos 60 minutos. Solo una. Cierra el puño derecho con firmeza mientras exhalas. Di internamente: 'Los próximos 60 minutos son para esto.' Siente la decisión en tu cuerpo. Mantén 3 segundos. Suelta el puño y abre los ojos con dirección clara.",iExec:[
+    {from:0,to:15,text:"Una tarea. 60 minutos. Cierra el puño al exhalar."},
+    {from:15,to:30,text:"Di dentro: \"Los próximos 60 minutos son para esto.\" Sostén 3s. Suelta. Abre los ojos."}
+  ],sc:"Compromiso motor ancla decisiones en memoria procedimental. Aumenta probabilidad de ejecución",ic:"focus",br:{in:2,h1:0,ex:6,h2:0}}]},
 
   /* ═══ #4 PULSE SHIFT ═══ */
   {id:4,n:"Pulse Shift",ct:"Activación",d:120,sb:"Reset neurocardíaco",tg:"PS",cl:"#F59E0B",int:"energia",dif:2,
