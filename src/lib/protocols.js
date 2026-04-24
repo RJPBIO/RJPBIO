@@ -176,9 +176,19 @@ export const P = [
 
   /* ═══ #12 NEURAL ASCENSION ═══ */
   {id:12,n:"Neural Ascension",ct:"Protocolo",d:120,sb:"Ascenso mental y claridad",tg:"NA",cl:"#22D3EE",int:"enfoque",dif:2,
-  ph:[{l:"Ola Vertical",r:"0–30s",s:0,e:30,k:"Aire sube pelvis a cabeza. Baja cabeza a pelvis.",i:"Inhala 4 segundos imaginando que el aire sube desde la pelvis hasta la coronilla como una ola ascendente. Exhala 4 segundos — la ola desciende de cabeza a pelvis. 3 ciclos completos. Siente el eje vertical activarse. No fuerces la imagen — solo sigue el movimiento interno con cada respiración.",sc:"Visualización de flujo vertical integra eje mente-cuerpo y conecta sistema nervioso de arriba a abajo",ic:"breath",br:{in:4,h1:0,ex:4,h2:0}},
-  {l:"Cruce Interhemisférico",r:"30–80s",s:30,e:80,k:"Mano al pecho opuesto. Siente. Cruza. Conecta.",i:"Mano derecha sobre pecho izquierdo. Siente el latido 10 segundos. Cambia: mano izquierda sobre costilla derecha 10 segundos. Repite el cruce 2 veces más. Respira al ritmo de ola ascendente-descendente. No analices — solo siente cada contacto cruzado. Los hemisferios se comunican.",sc:"Cruce bilateral forzado activa comunicación interhemisférica. Mejora integración cognitiva y creatividad",ic:"body",br:{in:4,h1:0,ex:4,h2:0}},
-  {l:"Perspectiva Elevada",r:"80–120s",s:80,e:120,k:"Conciencia sube sobre tu cabeza. Observa desde ahí.",i:"Cierra los ojos. Respira suavemente con la ola. Imagina que tu punto de conciencia sube 5 centímetros por encima de tu cabeza. Observa todo desde ahí arriba. Los problemas se ven más pequeños. Las soluciones más claras. Mantén la perspectiva 40 segundos. Abre los ojos trayendo esa claridad.",sc:"Meta-cognición vertical activa red de modo por defecto en modo expansivo. Genera perspectiva y distancia",ic:"mind",br:{in:4,h1:0,ex:4,h2:0}}]},
+  ph:[{l:"Ola Vertical",r:"0–30s",s:0,e:30,k:"Aire sube pelvis a cabeza. Baja cabeza a pelvis.",i:"Inhala 4 segundos imaginando que el aire sube desde la pelvis hasta la coronilla como una ola ascendente. Exhala 4 segundos — la ola desciende de cabeza a pelvis. 3 ciclos completos. Siente el eje vertical activarse. No fuerces la imagen — solo sigue el movimiento interno con cada respiración.",iExec:[
+    {from:0,to:10,text:"Inhala 4s: una ola sube de la pelvis a la coronilla."},
+    {from:10,to:30,text:"Exhala 4s: la ola baja. Repite. No fuerces — solo sigue el flujo."}
+  ],sc:"Visualización de flujo vertical integra eje mente-cuerpo y conecta sistema nervioso de arriba a abajo",ic:"breath",br:{in:4,h1:0,ex:4,h2:0}},
+  {l:"Cruce Interhemisférico",r:"30–80s",s:30,e:80,k:"Mano al pecho opuesto. Siente. Cruza. Conecta.",i:"Mano derecha sobre pecho izquierdo. Siente el latido 10 segundos. Cambia: mano izquierda sobre costilla derecha 10 segundos. Repite el cruce 2 veces más. Respira al ritmo de ola ascendente-descendente. No analices — solo siente cada contacto cruzado. Los hemisferios se comunican.",iExec:[
+    {from:0,to:17,text:"Mano derecha sobre pecho izquierdo. Siente el latido 10s."},
+    {from:17,to:34,text:"Cambia: mano izquierda sobre costilla derecha. 10s."},
+    {from:34,to:50,text:"Repite el cruce. No analices — solo siente."}
+  ],sc:"Cruce bilateral forzado activa comunicación interhemisférica. Mejora integración cognitiva y creatividad",ic:"body",br:{in:4,h1:0,ex:4,h2:0}},
+  {l:"Perspectiva Elevada",r:"80–120s",s:80,e:120,k:"Conciencia sube sobre tu cabeza. Observa desde ahí.",i:"Cierra los ojos. Respira suavemente con la ola. Imagina que tu punto de conciencia sube 5 centímetros por encima de tu cabeza. Observa todo desde ahí arriba. Los problemas se ven más pequeños. Las soluciones más claras. Mantén la perspectiva 40 segundos. Abre los ojos trayendo esa claridad.",iExec:[
+    {from:0,to:20,text:"Cierra los ojos. Tu conciencia sube 5cm sobre tu cabeza. Observa desde ahí."},
+    {from:20,to:40,text:"Los problemas se ven pequeños. Abre los ojos con claridad."}
+  ],sc:"Meta-cognición vertical activa red de modo por defecto en modo expansivo. Genera perspectiva y distancia",ic:"mind",br:{in:4,h1:0,ex:4,h2:0}}]},
 
   /* ═══ #13 PROTOCOLO OMEGA ═══ */
   {id:13,n:"Protocolo OMEGA",ct:"Protocolo",d:120,sb:"Realineación neuronal completa",tg:"\u03A9",cl:"#8B5CF6",int:"reset",dif:3,
