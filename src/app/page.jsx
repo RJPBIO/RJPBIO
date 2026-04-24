@@ -56,10 +56,6 @@ const COPY = {
       s3Sub:   "Si aparece en el reporte, su fuente es pública",
     },
 
-    manifestoKicker: "MANIFIESTO",
-    manifesto1: "La optimización no se grafica.",
-    manifesto2: "Se siente.",
-    manifestoBody: "Los datos existen para ajustar el pulso — no para decorar un dashboard. Si no podemos convertir un marcador en una acción sensorial, no lo mostramos.",
 
     bentoKicker: "POR DENTRO",
     bentoH: "Tres señales. Un lenguaje. Tu sistema nervioso.",
@@ -138,11 +134,6 @@ const COPY = {
       },
     ],
 
-    scienceEyebrow: "PRINCIPIO · NEURAL",
-    scienceQuote: "HRV, respiración resonante y binaurales no son placebo — son cuarenta años de literatura revisada. Lo que cambia aquí es que los convertimos en un pulso que puedes sentir, no en un gráfico que tienes que interpretar.",
-    scienceAttr: "Evidencia revisada por pares",
-    scienceAttrHref: "/evidencia",
-
     intKicker: "ECOSISTEMA",
     intH: "Habla con las herramientas que ya usas.",
     integrations: [
@@ -163,48 +154,11 @@ const COPY = {
     intNote: "Integraciones disponibles y roadmap público en",
     intNoteLink: "/changelog",
 
-    credKicker: "CREDIBILIDAD · SIN LOGOS FALSOS",
-    credH: "Las pruebas que sí puedes abrir.",
-    credSub: "Somos pre-lanzamiento — no inventamos testimonios. Todo lo que decimos vive en un artefacto público que puedes inspeccionar ahora mismo.",
-    credItems: [
-      { href: "/evidencia", label: "Evidencia clínica",  meta: (studies, protos) => `${studies} estudios · ${protos} protocolos · DOI verificable` },
-      { href: "/api/openapi", label: "OpenAPI pública",  meta: () => "Spec OpenAPI 3.1 · versionada" },
-      { href: "/changelog",  label: "Changelog público", meta: () => "Envíos quincenales · RSS" },
-      { href: "/status",     label: "Status del sistema",meta: () => "Uptime e incidencias en vivo" },
-      { href: "/.well-known/security.txt", label: "Security.txt", meta: () => "Canal de disclosure responsable" },
-      { href: "/trust",      label: "Trust Center",      meta: () => "DPA · subprocesadores · pentest" },
-    ],
-
     priceKicker: "PRECIOS · EN LA LUZ",
     priceH: "Starter. Growth. Enterprise.",
     priceSub: "Por usuario activo. 20 % off anual. Volume discount hasta −20 %. MXN · USD · EUR. Cero setup oculto.",
     priceCta: "Ver precios completos",
     priceNote: "Starter trial 14 d · Growth piloto 30 d · Enterprise 60 d con DPA",
-
-    faqKicker: "PREGUNTAS HONESTAS",
-    faqH: "Lo que preguntan antes de comprar.",
-    faq: [
-      {
-        q: "¿Dónde viven los datos?",
-        a: "Residencia elegible US · UE · LATAM (AWS). Cifrado en reposo y en tránsito, IndexedDB cifrado en el dispositivo del usuario. Export JSON firmado o borrado en menos de 24 h. Detalle firmado en /trust.",
-      },
-      {
-        q: "¿Es HIPAA y NOM-035?",
-        a: "BAA HIPAA firmable en Growth y Enterprise. Reporte NOM-035 STPS automatizado con agregados k-anonymity ≥5 — sin nombres, sin datos crudos. Auditable con hash chain verificable.",
-      },
-      {
-        q: "¿Cómo integra con nuestro stack?",
-        a: "SSO vía SAML 2.0, OIDC federado y SCIM 2.0. Slack y Google Calendar para nudges opt-in. Wearables: Apple Health, Fitbit, Garmin, Oura. REST API + Webhooks HMAC. Funciona sin wearable — la PWA lleva el pulso sola.",
-      },
-      {
-        q: "¿Cuánto tarda poner al equipo en marcha?",
-        a: "Starter: trial 14 d self-serve, hoy. Growth: piloto 30 d con onboarding guiado. Enterprise: 60 d con DPA firmado, SSO federado y primer reporte NOM-035. Sin setup fees ocultos.",
-      },
-      {
-        q: "¿Puedo cancelar cuando quiera?",
-        a: "Starter y Growth: mes a mes o anual, cancelas cuando decidas. Design Partner: 24 meses con 50% off (el compromiso está en la luz en /pricing). Export firmado de todos tus datos antes de salir.",
-      },
-    ],
 
     finalKicker: "SIGUIENTE",
     finalH1: "30 minutos.",
@@ -296,10 +250,6 @@ const COPY = {
       s3Sub:   "If it shows up in the report, its source is public",
     },
 
-    manifestoKicker: "MANIFESTO",
-    manifesto1: "Optimization isn't plotted.",
-    manifesto2: "It's felt.",
-    manifestoBody: "Data exists to tune the pulse — not to decorate a dashboard. If we can't turn a metric into a sensory action, we don't show it.",
 
     bentoKicker: "INSIDE",
     bentoH: "Three signals. One language. Your nervous system.",
@@ -378,11 +328,6 @@ const COPY = {
       },
     ],
 
-    scienceEyebrow: "NEURAL PRINCIPLE",
-    scienceQuote: "HRV, resonance breathing and binaurals aren't placebo — they're forty years of reviewed literature. What changes here is that we turn them into a pulse you can feel, not a chart you have to interpret.",
-    scienceAttr: "Peer-reviewed evidence",
-    scienceAttrHref: "/evidencia",
-
     intKicker: "ECOSYSTEM",
     intH: "Speaks to the tools you already use.",
     integrations: [
@@ -402,18 +347,6 @@ const COPY = {
     trustNoteLink: "/trust",
     intNote: "Live integrations and public roadmap at",
     intNoteLink: "/changelog",
-
-    credKicker: "CREDIBILITY · WITHOUT FAKE LOGOS",
-    credH: "Proof you can open yourself.",
-    credSub: "We're pre-launch — we don't fake testimonials. Everything we claim lives in a public artifact you can inspect right now.",
-    credItems: [
-      { href: "/evidencia", label: "Clinical evidence",  meta: (studies, protos) => `${studies} studies · ${protos} protocols · verifiable DOIs` },
-      { href: "/api/openapi", label: "Public OpenAPI",   meta: () => "OpenAPI 3.1 · versioned" },
-      { href: "/changelog",  label: "Public changelog",  meta: () => "Biweekly ships · RSS" },
-      { href: "/status",     label: "System status",     meta: () => "Live uptime and incidents" },
-      { href: "/.well-known/security.txt", label: "Security.txt", meta: () => "Responsible disclosure channel" },
-      { href: "/trust",      label: "Trust Center",      meta: () => "DPA · subprocessors · pentest" },
-    ],
 
     priceKicker: "PRICING · IN THE OPEN",
     priceH: "Starter. Growth. Enterprise.",
@@ -483,30 +416,6 @@ const COPY = {
       ctaFoot: "No card · no install · runs in your browser",
     },
 
-    faqKicker: "HONEST QUESTIONS",
-    faqH: "What teams ask before they buy.",
-    faq: [
-      {
-        q: "Where does the data live?",
-        a: "Choose residency US · EU · LATAM (AWS). Encryption at rest and in transit, encrypted IndexedDB on the user's device. Signed JSON export or full erase in under 24 h. Signed detail at /trust.",
-      },
-      {
-        q: "Is it HIPAA and NOM-035?",
-        a: "HIPAA BAA signable on Growth and Enterprise. Automated NOM-035 STPS report with k-anonymity ≥5 aggregates — no names, no raw data. Auditable via verifiable hash chain.",
-      },
-      {
-        q: "How does it integrate with our stack?",
-        a: "SSO via SAML 2.0, federated OIDC and SCIM 2.0. Slack and Google Calendar for opt-in nudges. Wearables: Apple Health, Fitbit, Garmin, Oura. REST API + HMAC webhooks. Works with no wearable — the PWA carries the pulse alone.",
-      },
-      {
-        q: "How fast can the team start?",
-        a: "Starter: 14 d trial, self-serve, today. Growth: 30 d guided pilot. Enterprise: 60 d with signed DPA, federated SSO and first NOM-035 report. No hidden setup fees.",
-      },
-      {
-        q: "Can I cancel any time?",
-        a: "Starter and Growth: monthly or annual, cancel whenever. Design Partner: 24 months at 50% off (the commitment is in the open at /pricing). Signed export of all your data before you leave.",
-      },
-    ],
   },
 };
 
@@ -547,43 +456,47 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <PulseDivider intensity="dim" />
+      <PulseDivider />
 
-      <section style={{
-        paddingBlock: "clamp(80px, 12vw, 160px)",
-        paddingInline: space[5],
-        textAlign: "center",
-      }}>
-        <Container size="md">
-          <IgnitionReveal sparkOrigin="50% 40%">
-            <div style={kickerStyle}>{T.manifestoKicker}</div>
-            <h2 style={{
-              margin: 0,
-              fontSize: "clamp(40px, 6vw, 72px)",
-              lineHeight: 1.05,
-              letterSpacing: "-0.035em",
-              fontWeight: font.weight.black,
-              color: cssVar.text,
-            }}>
-              {T.manifesto1}
-              <br />
-              <span style={{ color: cssVar.textDim }}>{T.manifesto2}</span>
-            </h2>
-            <p style={{
-              marginBlockStart: space[6],
-              marginInline: "auto",
-              maxInlineSize: 620,
-              fontSize: font.size.lg,
-              lineHeight: 1.55,
-              color: cssVar.textDim,
-            }}>
-              {T.manifestoBody}
-            </p>
+      {/* Manifesto section lived here — cut. The full thesis (incl.
+          this copy + editorial framing + supporting stats) lives on
+          /why. Home's job is to get the prospect into /why or /demo
+          faster, not to recite the thesis twice. */}
+
+      {/* Product preview — moved up from post-PWA position so the
+          real admin dashboard is visible within the first 2 scrolls.
+          Linear/Stripe pattern: ship the product view above the
+          value-prop copy, not after it. */}
+      <section aria-labelledby="preview" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
+        <Container size="xl">
+          <IgnitionReveal sparkOrigin="50% 30%">
+            <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
+              <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.previewKicker}</div>
+              <h3 id="preview" style={sectionHeading}>{T.previewH}</h3>
+              <p style={{
+                marginBlockStart: space[3],
+                marginInline: "auto",
+                maxInlineSize: 640,
+                color: cssVar.textDim,
+                fontSize: font.size.md,
+                lineHeight: 1.55,
+              }}>
+                {T.previewBody}
+              </p>
+              <div style={{ marginBlockStart: space[5], display: "inline-flex", justifyContent: "center" }}>
+                <VideoPreview
+                  label={T.previewVideoCta}
+                  placeholder={T.previewVideoPlaceholder}
+                  title="BIO-IGNICIÓN · 90s overview"
+                />
+              </div>
+            </div>
+            <DashboardMockup ariaLabel={T.previewH} />
           </IgnitionReveal>
         </Container>
       </section>
 
-      <PulseDivider />
+      <PulseDivider intensity="dim" />
 
       <section style={{ paddingBlock: space[12], paddingInline: space[5] }}>
         <Container size="xl">
@@ -681,35 +594,6 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <section aria-labelledby="preview" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
-        <Container size="xl">
-          <IgnitionReveal sparkOrigin="50% 30%">
-            <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.previewKicker}</div>
-              <h3 id="preview" style={sectionHeading}>{T.previewH}</h3>
-              <p style={{
-                marginBlockStart: space[3],
-                marginInline: "auto",
-                maxInlineSize: 640,
-                color: cssVar.textDim,
-                fontSize: font.size.md,
-                lineHeight: 1.55,
-              }}>
-                {T.previewBody}
-              </p>
-              <div style={{ marginBlockStart: space[5], display: "inline-flex", justifyContent: "center" }}>
-                <VideoPreview
-                  label={T.previewVideoCta}
-                  placeholder={T.previewVideoPlaceholder}
-                  title="BIO-IGNICIÓN · 90s overview"
-                />
-              </div>
-            </div>
-            <DashboardMockup ariaLabel={T.previewH} />
-          </IgnitionReveal>
-        </Container>
-      </section>
-
       <section style={{ paddingBlock: space[12], paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 40%">
@@ -739,57 +623,13 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <section style={{
-        position: "relative",
-        paddingBlock: "clamp(80px, 12vw, 140px)",
-        paddingInline: space[5],
-        background: `linear-gradient(180deg, transparent, ${bioSignal.phosphorCyan}08 50%, transparent)`,
-        overflow: "hidden",
-      }}>
-        <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0, opacity: 0.35, pointerEvents: "none" }}>
-          <BioglyphLattice variant="ambient" />
-        </div>
-        <Container size="md">
-          <IgnitionReveal sparkOrigin="50% 50%">
-            <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan, textAlign: "center" }}>
-              {T.scienceEyebrow}
-            </div>
-            <blockquote style={{
-              margin: 0,
-              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
-              fontStyle: "italic",
-              fontSize: "clamp(28px, 3.6vw, 48px)",
-              lineHeight: 1.25,
-              color: cssVar.text,
-              textAlign: "center",
-              letterSpacing: "-0.02em",
-              fontWeight: 400,
-            }}>
-              &ldquo;{T.scienceQuote}&rdquo;
-            </blockquote>
-            <div style={{
-              marginBlockStart: space[5],
-              textAlign: "center",
-              fontFamily: cssVar.fontMono, fontSize: font.size.xs,
-              color: cssVar.textDim,
-              textTransform: "uppercase", letterSpacing: "0.22em",
-            }}>
-              —{" "}
-              <Link
-                href={T.scienceAttrHref}
-                style={{
-                  color: bioSignal.phosphorCyan,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                  fontWeight: 700,
-                }}
-              >
-                {T.scienceAttr}
-              </Link>
-            </div>
-          </IgnitionReveal>
-        </Container>
-      </section>
+      {/* Science pull-quote lived here — cut. The claim it makes
+          ("HRV / breathing / binaurals are not placebo, they're 40
+          years of peer-reviewed literature") is already built into
+          the /why thesis and the citations attached to each step of
+          "How it works" above. Repeating it as a giant italic
+          centerpiece inflated scroll length for a signal the reader
+          already got. */}
 
       <section aria-label={T.intKicker} style={{ paddingBlock: space[10], paddingInline: 0 }}>
         <Container size="xl" style={{ paddingInline: space[5] }}>
@@ -844,62 +684,16 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <PulseDivider intensity="dim" />
+      {/* Credibility 6-artifact grid lived here — cut. Every link
+          (evidencia / OpenAPI / changelog / status / security.txt /
+          trust) is already in the site footer AND prominently on
+          /trust. Duplicating a full section on home just to repeat
+          those six links inflated the scroll.
 
-      <section aria-labelledby="credibility" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
-        <Container size="xl">
-          <IgnitionReveal sparkOrigin="50% 30%">
-            <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.credKicker}</div>
-              <h3 id="credibility" style={sectionHeading}>{T.credH}</h3>
-              <p style={{
-                marginBlockStart: space[3],
-                marginInline: "auto",
-                maxInlineSize: 640,
-                color: cssVar.textDim,
-                fontSize: font.size.md,
-                lineHeight: 1.55,
-              }}>
-                {T.credSub}
-              </p>
-            </div>
-            <SpotlightGrid className="bi-cred-grid" role="list">
-              {T.credItems.map((c) => (
-                <Link key={c.href} href={c.href} className="bi-cred-card bi-spot" role="listitem">
-                  <span className="bi-cred-label">{c.label}</span>
-                  <span className="bi-cred-meta">{c.meta(studyCount, protocolCount)}</span>
-                  <span className="bi-cred-arrow" aria-hidden>→</span>
-                </Link>
-              ))}
-            </SpotlightGrid>
-          </IgnitionReveal>
-        </Container>
-      </section>
-
-      <PulseDivider />
-
-      <section aria-labelledby="faq" style={{ paddingBlock: space[12], paddingInline: space[5] }}>
-        <Container size="md">
-          <IgnitionReveal sparkOrigin="50% 30%">
-            <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{T.faqKicker}</div>
-              <h3 id="faq" style={sectionHeading}>{T.faqH}</h3>
-            </div>
-            <div className="bi-faq">
-              {T.faq.map((item, i) => (
-                <details key={item.q} className="bi-faq-item" open={i === 0}>
-                  <summary>
-                    <span>{item.q}</span>
-                    <span className="chev" aria-hidden>+</span>
-                  </summary>
-                  <div className="bi-faq-a">{item.a}</div>
-                </details>
-              ))}
-            </div>
-          </IgnitionReveal>
-        </Container>
-      </section>
-
+          FAQ section also lived here — cut. The same 5 questions now
+          live on /pricing where a buyer is actually evaluating. Home
+          FAQ is a Stripe/Linear anti-pattern (neither does it on the
+          current 2026 homepage). */}
       <PulseDivider intensity="dim" />
 
       <section style={{ paddingBlock: space[12], paddingInline: space[5] }}>
