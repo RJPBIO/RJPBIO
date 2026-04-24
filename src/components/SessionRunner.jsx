@@ -909,17 +909,29 @@ export default function SessionRunner({
                         </div>
                       );
                     }
-                    if (!Array.isArray(raw)) return null;
+                    if (!Array.isArray(raw) || raw.length === 0) return null;
                     const durMult = safePr && safePr.d > 0 ? totalDur / safePr.d : 1;
                     const elapsedTotal = Math.max(0, totalDur - sec);
                     const phaseStartActual = (safePh.s || 0) * durMult;
                     const phaseElapsedBase = durMult > 0 ? (elapsedTotal - phaseStartActual) / durMult : 0;
-                    const activeIdx = raw.findIndex((s) => phaseElapsedBase >= s.from && phaseElapsedBase < s.to);
+                    // Resolución robusta del step activo:
+                    //   — Primero busca el step cuyo rango [from, to) contiene el tiempo
+                    //     transcurrido (caso normal mid-fase).
+                    //   — Si no hay match y elapsedBase < primer from → primer step
+                    //     (seguridad ante micro-offsets negativos por float math).
+                    //   — Si elapsedBase >= último to → último step sigue activo
+                    //     (el momento exacto del fin de fase NO debe dejar todos
+                    //     los steps en gris futuro; el user está viendo el último).
+                    let activeIdx = raw.findIndex((s) => phaseElapsedBase >= s.from && phaseElapsedBase < s.to);
+                    if (activeIdx === -1) {
+                      if (phaseElapsedBase < raw[0].from) activeIdx = 0;
+                      else activeIdx = raw.length - 1;
+                    }
                     return (
                       <div style={{ marginTop: 8, maxWidth: 380, marginInline: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
                         {raw.map((step, i) => {
                           const isActive = i === activeIdx;
-                          const isPast = activeIdx >= 0 && i < activeIdx;
+                          const isPast = i < activeIdx;
                           const fromAct = Math.round(step.from * durMult);
                           const toAct = Math.round(step.to * durMult);
                           return (
@@ -931,7 +943,6 @@ export default function SessionRunner({
                                 gap: 10,
                                 alignItems: "start",
                                 opacity: isActive ? 1 : isPast ? 0.36 : 0.58,
-                                transform: isActive ? "translateX(0)" : "translateX(0)",
                                 transition: "opacity .35s ease",
                               }}
                             >
