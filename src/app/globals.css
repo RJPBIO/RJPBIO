@@ -1773,6 +1773,18 @@ input, textarea, select {
   overflow: hidden;
   isolation: isolate;
 }
+/* Mid-page variant is slightly shorter so the final pause retains
+   primacy. Final pause = 22vh moment, mid-pause = 16vh bridge. */
+.bi-cine-pause--mid {
+  padding-block: clamp(100px, 16vh, 180px);
+}
+.bi-cine-pause--mid::before {
+  inline-size: clamp(280px, 38vw, 500px);
+  block-size: clamp(280px, 38vw, 500px);
+}
+.bi-cine-pause--mid .bi-cine-pause-line {
+  font-size: clamp(28px, 5.2vw, 64px);
+}
 .bi-cine-pause::before {
   /* Soft phosphor halo behind the glyph — subtle, not a spotlight. */
   content: "";
@@ -1801,9 +1813,11 @@ input, textarea, select {
   font-family: var(--font-editorial), "Instrument Serif", Georgia, serif;
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(30px, 5.2vw, 60px);
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  /* Bumped upper clamp 60→84 so the pause carries weight proportional
+     to the 128px hero — both moments feel "big" without competing. */
+  font-size: clamp(32px, 6.4vw, 84px);
+  line-height: 1.05;
+  letter-spacing: -0.028em;
   color: var(--bi-text);
 }
 @keyframes biCinePulse {
@@ -1893,6 +1907,21 @@ input, textarea, select {
 .bi-hero-partner-chip .label {
   color: var(--bi-text);
   white-space: nowrap;
+}
+/* On narrow phones the full partner string overflows the pill's flex
+   row. Allow wrapping + shrink padding so the chip stays inside the
+   viewport without breaking the visual hierarchy. */
+@media (max-width: 480px) {
+  .bi-hero-partner-chip {
+    max-inline-size: calc(100vw - 32px);
+    padding-inline: 12px;
+    font-size: 10.5px;
+  }
+  .bi-hero-partner-chip .label {
+    white-space: normal;
+    text-align: start;
+    line-height: 1.35;
+  }
 }
 .bi-hero-partner-chip .arrow {
   color: #155E75;
@@ -4320,14 +4349,21 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   .bi-pwa-platforms { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
+  /* At phone widths, 3 stacked phones produce ~2000px of scroll for
+     a single section. Hide the flanking phones and let the featured
+     runner screen carry the full section. Screen readers never saw
+     them (SVG decorative) so no a11y loss. The adjacent caption list
+     still describes all three views in text. */
   .bi-pwa-stage {
-    flex-wrap: wrap;
-    gap: 20px;
+    gap: 0;
     margin-block: 36px 28px;
   }
   .bi-phone {
-    inline-size: min(78vw, 260px);
+    inline-size: min(78vw, 280px);
     transform: none !important;
+  }
+  .bi-phone:not(.is-featured) {
+    display: none;
   }
   .bi-phone-body { box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06) inset; }
   .bi-pwa-benefits { grid-template-columns: 1fr; gap: 10px; }

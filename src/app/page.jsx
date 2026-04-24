@@ -229,6 +229,7 @@ const COPY = {
     priceCta: "Ver precios completos",
     priceNote: "Starter trial 14 d · Growth piloto 30 d · Enterprise 60 d con DPA",
 
+    cineMidLine: "Todo late por una razón.",
     cinePauseLine: "Ya viste cómo late. Ahora tócalo.",
 
     finalKicker: "SIGUIENTE",
@@ -492,6 +493,7 @@ const COPY = {
     priceCta: "See full pricing",
     priceNote: "Starter trial 14 d · Growth pilot 30 d · Enterprise 60 d with DPA",
 
+    cineMidLine: "Everything pulses for a reason.",
     cinePauseLine: "You've seen the pulse. Now touch it.",
 
     finalKicker: "NEXT",
@@ -666,7 +668,19 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <PulseDivider intensity="dim" />
+      {/* Mid-page cinematic pause — bridges the density of Product
+          Evidence (3 monospace receipts) into the density of Bento
+          (4-6 feature cards). Same scaffolding as the final pause,
+          shorter copy to keep the beat distinct. Replaces the plain
+          PulseDivider that lived here. */}
+      <section aria-labelledby="cinematic-pause-mid" className="bi-cine-pause bi-cine-pause--mid">
+        <div className="bi-cine-pause-glyph">
+          <BioGlyph size={76} />
+        </div>
+        <h2 id="cinematic-pause-mid" className="bi-cine-pause-line">
+          {T.cineMidLine}
+        </h2>
+      </section>
 
       <section style={{ paddingBlock: space[12], paddingInline: space[5] }}>
         <Container size="xl">

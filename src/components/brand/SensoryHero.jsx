@@ -122,7 +122,7 @@ export default function SensoryHero({ T }) {
         backgroundImage: `radial-gradient(45% 55% at 50% 58%, ${bioSignal.phosphorCyan}22, transparent 70%)`,
       }} />
 
-      <div style={{ position: "relative", zIndex: 4, maxWidth: 860, marginInline: "auto" }}>
+      <div style={{ position: "relative", zIndex: 4, maxWidth: 980, marginInline: "auto" }}>
         <div style={{
           fontFamily: cssVar.fontMono, fontSize: font.size.xs,
           color: cssVar.textMuted,
@@ -133,10 +133,14 @@ export default function SensoryHero({ T }) {
           {T.kicker}
         </div>
 
+        {/* Monumental scale on desktop. Upper clamp 96→128 makes the
+            title the unambiguous focal point on ≥1280px viewports,
+            matching Stripe/Linear's big-type moments. Mobile minimum
+            unchanged (48px) so small screens still read cleanly. */}
         <h1 style={{
-          fontSize: "clamp(48px, 8vw, 96px)",
-          lineHeight: 1.02,
-          letterSpacing: "-0.045em",
+          fontSize: "clamp(48px, 9.5vw, 128px)",
+          lineHeight: 1.01,
+          letterSpacing: "-0.05em",
           fontWeight: font.weight.black,
           color: cssVar.text,
           margin: 0,
