@@ -60,9 +60,19 @@ export const P = [
 
   /* ═══ #5 SKYLINE FOCUS ═══ */
   {id:5,n:"Skyline Focus",ct:"Activación",d:120,sb:"Recalibración visual-cognitiva",tg:"SF",cl:"#22D3EE",int:"enfoque",dif:1,
-  ph:[{l:"Horizonte y Calma",r:"0–30s",s:0,e:30,k:"Mira lejos. Suaviza la mirada. Respira distancia.",i:"Busca el punto más lejano visible — ventana, cielo, horizonte. Fija la mirada sin forzar. Deja que tus ojos se relajen. Respira suavemente: inhala 4 segundos, exhala 4 segundos. Nota cómo tu respiración se calma al mirar lejos. La visión panorámica desactiva el modo de alerta.",sc:"Visión panorámica desactiva sistema de detección de amenazas (visión de túnel) y reduce activación simpática",ic:"focus",br:{in:4,h1:0,ex:4,h2:0}},
-  {l:"Recalibración Visual",r:"30–90s",s:30,e:90,k:"Cerca 5s. Lejos 5s. Alterna 4 veces. Recalibra.",i:"Mantén respiración 4-4. Mira tu mano a 30cm de tu cara 5 segundos. Cambia al punto más lejano 5 segundos. Alterna 4 veces sin prisa. Nota cómo tus ojos recalibran la profundidad. Sigue respirando al mismo ritmo. Deja que los ojos se ajusten naturalmente. Esto reinicia tu sistema atencional completo.",sc:"Alternancia de foco reinicia corteza parietal posterior — centro del sistema de orientación atencional",ic:"focus",br:{in:4,h1:0,ex:4,h2:0}},
-  {l:"Foco Láser",r:"90–120s",s:90,e:120,k:"Una tarea. Visualiza el inicio. Claridad total.",i:"Cierra los ojos. Piensa en UNA sola tarea que harás después. Visualiza exactamente cómo empiezas: dónde te sientas, qué abres, qué haces primero. Di internamente: 'Una tarea. Un resultado.' Abre los ojos en la próxima exhalación con dirección absoluta.",sc:"Foco unidireccional canaliza dopamina hacia objetivo concreto. Corteza prefrontal dorsolateral en máxima activación",ic:"focus",br:{in:4,h1:0,ex:4,h2:0}}]},
+  ph:[{l:"Horizonte y Calma",r:"0–30s",s:0,e:30,k:"Mira lejos. Suaviza la mirada. Respira distancia.",i:"Busca el punto más lejano visible — ventana, cielo, horizonte. Fija la mirada sin forzar. Deja que tus ojos se relajen. Respira suavemente: inhala 4 segundos, exhala 4 segundos. Nota cómo tu respiración se calma al mirar lejos. La visión panorámica desactiva el modo de alerta.",iExec:[
+    {from:0,to:10,text:"Busca el punto más lejano visible — ventana, cielo, horizonte. Fija la mirada sin forzar."},
+    {from:10,to:30,text:"Inhala 4s, exhala 4s. Los ojos se relajan. Mirar lejos baja la alerta."}
+  ],sc:"Visión panorámica desactiva sistema de detección de amenazas (visión de túnel) y reduce activación simpática",ic:"focus",br:{in:4,h1:0,ex:4,h2:0}},
+  {l:"Recalibración Visual",r:"30–90s",s:30,e:90,k:"Cerca 5s. Lejos 5s. Alterna 4 veces. Recalibra.",i:"Mantén respiración 4-4. Mira tu mano a 30cm de tu cara 5 segundos. Cambia al punto más lejano 5 segundos. Alterna 4 veces sin prisa. Nota cómo tus ojos recalibran la profundidad. Sigue respirando al mismo ritmo. Deja que los ojos se ajusten naturalmente. Esto reinicia tu sistema atencional completo.",iExec:[
+    {from:0,to:20,text:"Levanta la mano a 30cm. 5s cerca. 5s horizonte. Alterna."},
+    {from:20,to:40,text:"Los ojos recalibran la profundidad."},
+    {from:40,to:60,text:"El sistema atencional se reinicia. Todo se aclara."}
+  ],sc:"Alternancia de foco reinicia corteza parietal posterior — centro del sistema de orientación atencional",ic:"focus",br:{in:4,h1:0,ex:4,h2:0}},
+  {l:"Foco Láser",r:"90–120s",s:90,e:120,k:"Una tarea. Visualiza el inicio. Claridad total.",i:"Cierra los ojos. Piensa en UNA sola tarea que harás después. Visualiza exactamente cómo empiezas: dónde te sientas, qué abres, qué haces primero. Di internamente: 'Una tarea. Un resultado.' Abre los ojos en la próxima exhalación con dirección absoluta.",iExec:[
+    {from:0,to:15,text:"Cierra los ojos. Una tarea. Visualiza el inicio: dónde, qué, cómo."},
+    {from:15,to:30,text:"Di dentro: \"Una tarea. Un resultado.\" Abre los ojos en una exhalación."}
+  ],sc:"Foco unidireccional canaliza dopamina hacia objetivo concreto. Corteza prefrontal dorsolateral en máxima activación",ic:"focus",br:{in:4,h1:0,ex:4,h2:0}}]},
 
   /* ═══ #6 GROUNDED STEEL ═══ */
   {id:6,n:"Grounded Steel",ct:"Protocolo",d:120,sb:"Presencia ejecutiva",tg:"GS",cl:"#059669",int:"calma",dif:2,
