@@ -219,13 +219,34 @@ export const P = [
 
   /* ═══ #14 PROTOCOLO OMNIA ═══ */
   {id:14,n:"Protocolo OMNIA",ct:"Protocolo",d:120,sb:"Activación Humana Total",tg:"\u221E",cl:"#F59E0B",int:"energia",dif:3,
-  ph:[{l:"Golpe de Silencio",r:"0–12s",s:0,e:12,k:"Silencio total. Apago todo. Cero ruido mental.",i:"Inhala 4 segundos. Exhala 6 segundos. Sostén vacío 2 segundos. Di internamente: 'Apago todo.' El silencio es el punto de partida. Sin él, nada funciona. Quédate en el vacío un momento más.",sc:"Reset neural completo. Silencio reduce actividad del córtex prefrontal lateral para recalibrar base",ic:"breath",br:{in:4,h1:0,ex:6,h2:2}},
-  {l:"Presencia Doble",r:"12–27s",s:12,e:27,k:"Pecho y abdomen. Dos puntos. Doble presencia.",i:"Sin romper el ritmo, mano derecha en pecho, izquierda en abdomen. Siente ambos puntos simultáneamente. ¿Cuál se mueve más? Esta doble atención entrena tu ínsula cerebral. 15 segundos de pura presencia corporal.",sc:"Interocepción dual activa ínsula y precúneo — centros de conciencia corporal y autoconciencia",ic:"body",br:{in:4,h1:0,ex:6,h2:2}},
-  {l:"Cruce Neural Triple",r:"27–47s",s:27,e:47,k:"Ojos + sonido imaginario + dedos. Triple canal.",i:"Simultáneamente: mueve ojos en 4 direcciones (3s cada una), imagina un sonido de oreja a oreja, mantén meñiques al 15% de tensión. Tres canales sensoriales a la vez. Respira normalmente. No importa si no es perfecto — el intento ya activa las redes neurales.",sc:"Triple sincronización sensorial simultánea fuerza integración neural máxima entre cortezas",ic:"focus",br:null},
-  {l:"Ola Ascendente",r:"47–67s",s:47,e:67,k:"Calor que sube. Pies a cabeza. Lento, continuo.",i:"Cierra los ojos. Siente una ola de calor que nace en los pies y sube lentamente: pantorrillas, rodillas, muslos, abdomen, pecho, cuello, cabeza. No la fuerces — solo sigue su recorrido natural durante 20 segundos. Cuando llega arriba, deja que se disipe suavemente. Respira al ritmo que ya tienes.",sc:"Ola propioceptiva ascendente activa red frontoparietal de atención sostenida. Integración corporal total",ic:"mind",br:null},
-  {l:"Eje Central",r:"67–92s",s:67,e:92,k:"Línea dorada sacro a coronilla. Brilla más fuerte.",i:"Imagina una línea dorada desde tu sacro hasta la coronilla. Un láser estable y brillante. Inhala 4 segundos — la línea brilla más. Exhala 6 — se estabiliza. Este eje te mantiene erguido, centrado e inquebrantable durante 25 segundos.",sc:"Eje propioceptivo vertical genera presencia somática total y alineación del sistema vestibular",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}},
-  {l:"Expansión del Campo",r:"92–112s",s:92,e:112,k:"Tu presencia se expande. Sin límites. Luminoso.",i:"Tu conciencia se expande 20-40 centímetros alrededor de tu cuerpo. Los límites de tu presencia se extienden más allá de tu piel. No estás solo dentro — tu campo abarca todo a tu alrededor. Luminoso. Expandido. Presente. Respira suave y mantén la expansión.",sc:"Metaestado expandido asociado con flow, rendimiento máximo y creatividad óptima",ic:"mind",br:null},
-  {l:"Sello OMNIA",r:"112–120s",s:112,e:120,k:"Estoy encendido. Ojos abiertos. A conquistar.",i:"Di internamente con absoluta convicción: 'Estoy encendido.' Inhala una última vez profundamente. Abre los ojos lentamente con la exhalación. Mira el mundo como si lo vieras por primera vez. Lleva toda esta activación contigo. Este es tu estado natural.",sc:"Sello de activación neural. Declaración intencional consolida el estado alcanzado y apertura sensorial",ic:"focus",br:null}]},
+  ph:[{l:"Golpe de Silencio",r:"0–12s",s:0,e:12,k:"Silencio total. Apago todo. Cero ruido mental.",i:"Inhala 4 segundos. Exhala 6 segundos. Sostén vacío 2 segundos. Di internamente: 'Apago todo.' El silencio es el punto de partida. Sin él, nada funciona. Quédate en el vacío un momento más.",iExec:[
+    {from:0,to:6,text:"Inhala 4s. Exhala 6s. Sostén vacío 2s. Di dentro: \"Apago todo.\""},
+    {from:6,to:12,text:"El silencio es el punto de partida. Quédate ahí."}
+  ],sc:"Reset neural completo. Silencio reduce actividad del córtex prefrontal lateral para recalibrar base",ic:"breath",br:{in:4,h1:0,ex:6,h2:2}},
+  {l:"Presencia Doble",r:"12–27s",s:12,e:27,k:"Pecho y abdomen. Dos puntos. Doble presencia.",i:"Sin romper el ritmo, mano derecha en pecho, izquierda en abdomen. Siente ambos puntos simultáneamente. ¿Cuál se mueve más? Esta doble atención entrena tu ínsula cerebral. 15 segundos de pura presencia corporal.",iExec:[
+    {from:0,to:8,text:"Mano derecha en pecho, izquierda en abdomen. Siente ambos."},
+    {from:8,to:15,text:"¿Cuál se mueve más? Doble presencia corporal."}
+  ],sc:"Interocepción dual activa ínsula y precúneo — centros de conciencia corporal y autoconciencia",ic:"body",br:{in:4,h1:0,ex:6,h2:2}},
+  {l:"Cruce Neural Triple",r:"27–47s",s:27,e:47,k:"Ojos + sonido imaginario + dedos. Triple canal.",i:"Simultáneamente: mueve ojos en 4 direcciones (3s cada una), imagina un sonido de oreja a oreja, mantén meñiques al 15% de tensión. Tres canales sensoriales a la vez. Respira normalmente. No importa si no es perfecto — el intento ya activa las redes neurales.",iExec:[
+    {from:0,to:10,text:"Simultáneo: ojos 4 direcciones 3s + sonido oreja a oreja + meñiques al 15%."},
+    {from:10,to:20,text:"Tres canales a la vez. No importa si no es perfecto."}
+  ],sc:"Triple sincronización sensorial simultánea fuerza integración neural máxima entre cortezas",ic:"focus",br:null},
+  {l:"Ola Ascendente",r:"47–67s",s:47,e:67,k:"Calor que sube. Pies a cabeza. Lento, continuo.",i:"Cierra los ojos. Siente una ola de calor que nace en los pies y sube lentamente: pantorrillas, rodillas, muslos, abdomen, pecho, cuello, cabeza. No la fuerces — solo sigue su recorrido natural durante 20 segundos. Cuando llega arriba, deja que se disipe suavemente. Respira al ritmo que ya tienes.",iExec:[
+    {from:0,to:10,text:"Cierra los ojos. Una ola de calor sube desde los pies."},
+    {from:10,to:20,text:"Pantorrillas, rodillas, muslos, abdomen, pecho, cuello, cabeza. No la fuerces."}
+  ],sc:"Ola propioceptiva ascendente activa red frontoparietal de atención sostenida. Integración corporal total",ic:"mind",br:null},
+  {l:"Eje Central",r:"67–92s",s:67,e:92,k:"Línea dorada sacro a coronilla. Brilla más fuerte.",i:"Imagina una línea dorada desde tu sacro hasta la coronilla. Un láser estable y brillante. Inhala 4 segundos — la línea brilla más. Exhala 6 — se estabiliza. Este eje te mantiene erguido, centrado e inquebrantable durante 25 segundos.",iExec:[
+    {from:0,to:12,text:"Línea dorada del sacro a la coronilla. Un láser estable."},
+    {from:12,to:25,text:"Inhala 4s: brilla más. Exhala 6s: se estabiliza. Erguido, centrado, inquebrantable."}
+  ],sc:"Eje propioceptivo vertical genera presencia somática total y alineación del sistema vestibular",ic:"mind",br:{in:4,h1:0,ex:6,h2:0}},
+  {l:"Expansión del Campo",r:"92–112s",s:92,e:112,k:"Tu presencia se expande. Sin límites. Luminoso.",i:"Tu conciencia se expande 20-40 centímetros alrededor de tu cuerpo. Los límites de tu presencia se extienden más allá de tu piel. No estás solo dentro — tu campo abarca todo a tu alrededor. Luminoso. Expandido. Presente. Respira suave y mantén la expansión.",iExec:[
+    {from:0,to:10,text:"Tu conciencia se expande 20-40cm alrededor. Más allá de tu piel."},
+    {from:10,to:20,text:"Tu campo abarca todo. Luminoso. Expandido. Presente."}
+  ],sc:"Metaestado expandido asociado con flow, rendimiento máximo y creatividad óptima",ic:"mind",br:null},
+  {l:"Sello OMNIA",r:"112–120s",s:112,e:120,k:"Estoy encendido. Ojos abiertos. A conquistar.",i:"Di internamente con absoluta convicción: 'Estoy encendido.' Inhala una última vez profundamente. Abre los ojos lentamente con la exhalación. Mira el mundo como si lo vieras por primera vez. Lleva toda esta activación contigo. Este es tu estado natural.",iExec:[
+    {from:0,to:4,text:"Di dentro con convicción: \"Estoy encendido.\""},
+    {from:4,to:8,text:"Inhala profundo. Abre los ojos en la exhalación. Este es tu estado natural."}
+  ],sc:"Sello de activación neural. Declaración intencional consolida el estado alcanzado y apertura sensorial",ic:"focus",br:null}]},
 
   /* ═══ #15 SUSPIRO FISIOLÓGICO · Balban et al. 2023 ═══ */
   {id:15,n:"Suspiro Fisiológico",ct:"Reset",d:90,sb:"Descarga parasimpática aguda",tg:"SF",cl:"#059669",int:"calma",dif:1,
