@@ -55,7 +55,11 @@ export default function ConsentBanner() {
         insetInlineStart: 12,
         insetInlineEnd: 12,
         insetBlockEnd: 12,
-        zIndex: 9998,
+        // Banner is aria-modal="false" — a notification, not a dialog — so it
+        // must NOT overlay app modals (ProtocolSelector, intent picker, etc.
+        // sit at z.overlay/modal = 200-230). Previously 9998 intercepted
+        // clicks on sheet items near the bottom, blocking protocol selection.
+        zIndex: 70,
         padding: 18,
         borderRadius: 20,
         background: SURFACE,

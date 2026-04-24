@@ -284,8 +284,25 @@ export default function BioIgnicion(){
   useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);},[]);
   function pa(){if(actLockRef.current||ts!=="running")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
   function resume(){if(actLockRef.current||ts!=="paused")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}
-  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setShowMid(false);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
-  function sp(p){rs();setPr(p);setSl(false);setShowIntent(false);setSec(Math.round(p.d*durMult));setShowScience(false);}
+  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
+  function sp(p){
+    // Inline reset against the NEW protocol so we don't batch a setSec that
+    // races with rs()'s stale-closure setSec(pr.d). Keeps sheet-to-idle
+    // transitions deterministic even under React Compiler.
+    releaseWakeLock();
+    if(pauseTRef.current)clearTimeout(pauseTRef.current);
+    try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}
+    if(iR.current)clearInterval(iR.current);
+    if(bR.current)clearInterval(bR.current);
+    if(tR.current)clearInterval(tR.current);
+    if(cdR.current)clearInterval(cdR.current);
+    setTs("idle");setPi(0);setBL("");setBS(1);setBCnt(0);
+    setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");
+    setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();
+    setPr(p);setSl(false);setShowIntent(false);
+    setSec(Math.round(p.d*durMult));
+    setShowScience(false);
+  }
   function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused")resume();}
   function switchTab(id){if(id===tab)return;setTab(id);H("tap");uiSound.nav(st.soundOn);announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
   const swipeRef=useRef(null);

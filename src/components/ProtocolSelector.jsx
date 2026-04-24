@@ -80,7 +80,6 @@ export default function ProtocolSelector({
             justifyContent: "center",
           }}
           onClick={onClose}
-          aria-hidden="true"
         >
           <motion.div
             ref={dialogRef}

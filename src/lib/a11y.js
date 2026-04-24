@@ -64,6 +64,11 @@ const FOCUSABLE = [
 export function useFocusTrap(active, onEscape) {
   const ref = useRef(null);
   const lastFocused = useRef(null);
+  // Stable ref lets us accept inline onEscape arrows from callers
+  // without retriggering the effect on every parent render (which would
+  // thrash focus and briefly restore it outside the dialog).
+  const onEscapeRef = useRef(onEscape);
+  useEffect(() => { onEscapeRef.current = onEscape; }, [onEscape]);
 
   useEffect(() => {
     if (!active || typeof document === "undefined") return;
@@ -80,7 +85,7 @@ export function useFocusTrap(active, onEscape) {
     else root.setAttribute("tabindex", "-1"), root.focus({ preventScroll: true });
 
     function onKey(e) {
-      if (e.key === KEY.ESC && onEscape) { e.stopPropagation(); onEscape(); return; }
+      if (e.key === KEY.ESC && onEscapeRef.current) { e.stopPropagation(); onEscapeRef.current(); return; }
       if (e.key !== KEY.TAB) return;
       const list = focusables();
       if (!list.length) { e.preventDefault(); return; }
@@ -94,7 +99,7 @@ export function useFocusTrap(active, onEscape) {
       document.removeEventListener("keydown", onKey);
       try { lastFocused.current?.focus?.({ preventScroll: true }); } catch {}
     };
-  }, [active, onEscape]);
+  }, [active]);
 
   return ref;
 }
