@@ -14,6 +14,7 @@ import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 
 export const metadata = {
   title: "Por qué BIO-IGNICIÓN · la tesis detrás del sistema",
@@ -48,9 +49,12 @@ const kickerStyleMuted = {
 
 const h1Style = {
   margin: 0,
-  fontSize: "clamp(36px, 5.2vw, 62px)",
-  letterSpacing: "-0.035em",
-  lineHeight: 1.04,
+  /* Monumental — /why is the thesis, it earns the weight. Upper clamp
+     110 stays under home's 128 so the hero hierarchy across routes
+     holds. -0.045em tightens large-body lockup. */
+  fontSize: "clamp(40px, 8vw, 110px)",
+  letterSpacing: "-0.045em",
+  lineHeight: 1.02,
   fontWeight: font.weight.black,
   color: cssVar.text,
 };
@@ -94,9 +98,10 @@ const cardStyle = {
 const COPY = {
   es: {
     eyebrow: "POR QUÉ · LA TESIS · B2B ENTERPRISE",
-    title: "Mientras otros entrenan la cabeza, nosotros entrenamos el sistema operativo.",
+    title1: "Entrenan la cabeza.",
+    title2: "Nosotros el sistema operativo.",
     editorial:
-      "El rendimiento humano no se resuelve con una app de meditación ni con un cuestionario trimestral. Se resuelve midiendo la fisiología que precede a la decisión — y actuando 3 min antes del turno.",
+      "Mientras otros compran apps de meditación y cuestionarios trimestrales, nosotros medimos la fisiología que precede a la decisión y actuamos 3 minutos antes del turno. El rendimiento humano no se resuelve con contenido; se resuelve con instrumentación.",
     scarcity: "COHORTE PILOTO · Q2 2026 · 12 ORGS · RESERVA ABIERTA",
     heroBullets: [
       "HRV-first · no cuestionarios autorreportados",
@@ -180,38 +185,16 @@ const COPY = {
     vsKicker: "CONTRA LAS ALTERNATIVAS",
     vsH: "Ya probaste tres cosas. Te explicamos por qué ninguna cerró.",
     vsBody:
-      "Comparamos con honestidad. Cada alternativa resuelve un pedazo — pero ninguna cierra el loop físico → decisión → evidencia.",
-    vsHeader: "Alternativa",
-    vsHeaderBio: "BIO-IGNICIÓN",
-    peerBioLabel: "BIO-IGNICIÓN",
-    peerBioValue: "Cierra el loop · evidencia + outcome + compliance",
-    vsRows: [
-      {
-        label: "EAP clásico (línea 1-800)",
-        bio: "Pre-shift · adopción > 50 %",
-        note: "EAP: 2–6 % adopción · reactivo post-crisis. Útil para terapia; no mueve el outcome operativo semanal.",
-      },
-      {
-        label: "Wellness apps (Calm, Headspace)",
-        bio: "HRV medido · outcome auditable",
-        note: "Apps B2C entregan feel-good + retención. Evidencia de outcome operativo: prácticamente nula en literatura revisada por pares.",
-      },
-      {
-        label: "Coaches externos 1:1",
-        bio: "$8–15 / asiento · escala a 5 000",
-        note: "Coach: $150–400/h, 1-a-1, no escala. Sin audit trail ni export NOM-035. Complementario, no sustitutivo.",
-      },
-      {
-        label: "Build-in-house (equipo interno)",
-        bio: "Time-to-value · 14 días",
-        note: "Build interno: 12–24 meses, $500K–$2M, drift de compliance al siguiente re-org. Sin continuidad de evidencia científica.",
-      },
-      {
-        label: "Wearable corporativo (Oura, WHOOP)",
-        bio: "Bring-your-own · cualquier sensor",
-        note: "Wearable solo: genera dato, no protocolo. Sin compliance mapping ni export auditor. Las ligamos si ya las tienes.",
-      },
+      "Comparamos con honestidad. Cada alternativa resuelve un pedazo — pero ninguna cierra el loop físico → decisión → evidencia. Hoy tenemos 3 comparativas publicadas, vendor por vendor, con la información pública que ellos mismos publican.",
+    vsCta: "Ver las 3 comparativas",
+    vsVendors: [
+      { slug: "/vs/headspace",      name: "vs Headspace",      angle: "Librería de contenido vs instrumento medible" },
+      { slug: "/vs/calm",           name: "vs Calm",           angle: "Evening/sleep vs pre-turno medible" },
+      { slug: "/vs/modern-health",  name: "vs Modern Health",  angle: "Plataforma clínica vs instrumento operativo" },
     ],
+    cinePauseLine: "El momento es angosto.",
+    // Full peer comparison table retired — vendor-by-vendor detail now
+    // lives on /vs/headspace, /vs/calm, /vs/modern-health.
 
     compoundKicker: "LO QUE COMPUESTA",
     compoundH: "Cinco outcomes que crecen juntos en 18 meses.",
@@ -278,30 +261,18 @@ const COPY = {
     ],
     cohortCta: "Aplicar a la cohorte",
     cohortCtaHint: "Revisión inicial en 24 h hábiles. Sin slides, sin vendedor.",
-
-    timelineKicker: "D0 → D90",
-    timelineH: "Cómo se ve el piloto, semana por semana.",
-    timelineBody:
-      "Tiempo real observado en pilotos previos. No es plan teórico; es la cadencia que ya caminamos 4 veces.",
-    timeline: [
-      { k: "D0", t: "Kick-off + DPA firmado", b: "Champion asignado · legal review cerrado en < 5 días · SSO activado." },
-      { k: "D14", t: "Go-live con 1 turno piloto", b: "10–30 usuarios activos · pre-shift instalado · dashboard HR en vivo." },
-      { k: "D45", t: "Expansión al turno completo", b: "Outcome parcial revisado · ajuste de protocolo al contexto operativo específico." },
-      { k: "D90", t: "Outcome dossier + decisión escala", b: "Reporte firmado · decisión de escala org-wide · pricing Q2 2026 locked si procede." },
+    cohortTimelineLabel: "Cadencia del piloto",
+    // Rendered as a compact 4-step strip inside the Cohorte dark
+    // frame — the old standalone TIMELINE section was redundant with
+    // cohortRows' ONBOARDING + REPORTE lines. Now they live together.
+    cohortTimeline: [
+      { k: "D0",  t: "Kick-off + DPA",     b: "Champion asignado · legal review en < 5 días · SSO activado." },
+      { k: "D14", t: "Go-live · 1 turno",   b: "10–30 usuarios · pre-shift instalado · dashboard HR en vivo." },
+      { k: "D45", t: "Expansión turno",     b: "Outcome parcial revisado · protocolo afinado al contexto." },
+      { k: "D90", t: "Outcome dossier",      b: "Reporte firmado · decisión de escala · pricing Q2 locked." },
     ],
-
-    railKicker: "COMPLIANCE · POSTURA COMPLETA",
-    railH: "El andamio legal, de día cero.",
-    railChips: [
-      "SOC 2 Type I · postura activa",
-      "ISO 27001 · gap analysis documentado",
-      "ISO 45001 · mapping occupational",
-      "NOM-035 STPS · export ECO37",
-      "GDPR · Recital 26 + DPA",
-      "HIPAA-ready · BAA disponible",
-      "SSO · SAML 2.0 + SCIM 2.0",
-      "SLA 99.9 % · monitored 24/7",
-    ],
+    // COMPLIANCE RAIL section cut — the 4 Pilares already name "Compliance-nativo"
+    // as Pillar 04 and /trust carries the full posture detail.
 
     faqKicker: "OBJECIONES FRECUENTES",
     faqH: "Las cinco preguntas que aparecen en el call de due diligence.",
@@ -357,9 +328,10 @@ const COPY = {
 
   en: {
     eyebrow: "WHY · THE THESIS · B2B ENTERPRISE",
-    title: "While others train the head, we train the operating system.",
+    title1: "They train the head.",
+    title2: "We train the operating system.",
     editorial:
-      "Human performance isn't solved with a meditation app or a quarterly survey. It's solved by measuring the physiology that precedes the decision — and acting 3 minutes before the shift.",
+      "While others buy meditation apps and quarterly surveys, we measure the physiology that precedes the decision and act 3 minutes before the shift. Human performance isn't solved with content — it's solved with instrumentation.",
     scarcity: "PILOT COHORT · Q2 2026 · 12 ORGS · INTAKE OPEN",
     heroBullets: [
       "HRV-first · no self-reported questionnaires",
@@ -443,38 +415,14 @@ const COPY = {
     vsKicker: "VS THE ALTERNATIVES",
     vsH: "You already tried three things. Here's why none closed the loop.",
     vsBody:
-      "Honest comparison. Each alternative solves a slice — but none closes the physiology → decision → evidence loop.",
-    vsHeader: "Alternative",
-    vsHeaderBio: "BIO-IGNITION",
-    peerBioLabel: "BIO-IGNITION",
-    peerBioValue: "Closes the loop · evidence + outcome + compliance",
-    vsRows: [
-      {
-        label: "Classic EAP (1-800 line)",
-        bio: "Pre-shift · adoption > 50 %",
-        note: "EAP: 2–6 % adoption · reactive post-crisis. Good for therapy; doesn't move weekly operational outcome.",
-      },
-      {
-        label: "Wellness apps (Calm, Headspace)",
-        bio: "Measured HRV · auditable outcome",
-        note: "B2C apps deliver feel-good + retention. Operational outcome evidence: virtually nil in peer-reviewed literature.",
-      },
-      {
-        label: "External 1:1 coaches",
-        bio: "$8–15 / seat · scales to 5,000",
-        note: "Coach: $150–400/h, 1-on-1, doesn't scale. No audit trail or NOM-035 export. Complementary, not substitutive.",
-      },
-      {
-        label: "Build in-house (internal team)",
-        bio: "Time-to-value · 14 days",
-        note: "Internal build: 12–24 months, $500K–$2M, compliance drift at next re-org. No continuity of scientific evidence.",
-      },
-      {
-        label: "Corporate wearable (Oura, WHOOP)",
-        bio: "Bring-your-own · any sensor",
-        note: "Wearable alone: generates data, not protocol. No compliance mapping or auditor export. We link them if you have them.",
-      },
+      "Honest comparison. Each alternative solves a slice — but none closes the physiology → decision → evidence loop. We've published three head-to-head comparisons, using public information each vendor publishes themselves.",
+    vsCta: "See all 3 comparisons",
+    vsVendors: [
+      { slug: "/vs/headspace",     name: "vs Headspace",     angle: "Content library vs measurable instrument" },
+      { slug: "/vs/calm",          name: "vs Calm",          angle: "Evening/sleep vs pre-shift measurable" },
+      { slug: "/vs/modern-health", name: "vs Modern Health", angle: "Clinical platform vs operational instrument" },
     ],
+    cinePauseLine: "The window is narrow.",
 
     compoundKicker: "WHAT COMPOUNDS",
     compoundH: "Five outcomes that grow together over 18 months.",
@@ -541,29 +489,12 @@ const COPY = {
     ],
     cohortCta: "Apply to cohort",
     cohortCtaHint: "Initial review in 24 business hours. No slides, no rep.",
-
-    timelineKicker: "D0 → D90",
-    timelineH: "What the pilot looks like, week by week.",
-    timelineBody:
-      "Actual time observed in prior pilots. Not a theoretical plan; it's the cadence we've already walked 4 times.",
-    timeline: [
-      { k: "D0", t: "Kick-off + DPA signed", b: "Champion assigned · legal review closed in < 5 days · SSO activated." },
-      { k: "D14", t: "Go-live with one pilot shift", b: "10–30 active users · pre-shift installed · live HR dashboard." },
-      { k: "D45", t: "Full shift rollout", b: "Interim outcome reviewed · protocol tuned to specific operational context." },
-      { k: "D90", t: "Outcome dossier + scale decision", b: "Signed report · org-wide scale decision · Q2 2026 pricing locked if applicable." },
-    ],
-
-    railKicker: "COMPLIANCE · FULL POSTURE",
-    railH: "The legal scaffold, from day zero.",
-    railChips: [
-      "SOC 2 Type I · active posture",
-      "ISO 27001 · documented gap analysis",
-      "ISO 45001 · occupational mapping",
-      "NOM-035 STPS · ECO37 export",
-      "GDPR · Recital 26 + DPA",
-      "HIPAA-ready · BAA available",
-      "SSO · SAML 2.0 + SCIM 2.0",
-      "99.9 % SLA · monitored 24/7",
+    cohortTimelineLabel: "Pilot cadence",
+    cohortTimeline: [
+      { k: "D0",  t: "Kick-off + DPA",       b: "Champion assigned · legal review < 5 days · SSO activated." },
+      { k: "D14", t: "Go-live · one shift",   b: "10–30 users · pre-shift installed · live HR dashboard." },
+      { k: "D45", t: "Full shift rollout",    b: "Interim outcome reviewed · protocol tuned to ops context." },
+      { k: "D90", t: "Outcome dossier",        b: "Signed report · scale decision · Q2 2026 pricing locked." },
     ],
 
     faqKicker: "FREQUENT OBJECTIONS",
@@ -632,7 +563,26 @@ export default async function WhyPage() {
           <Container size="xl" style={{ position: "relative", zIndex: 1 }}>
             <IgnitionReveal sparkOrigin="18% 28%">
               <p style={kickerStyle}>{t.eyebrow}</p>
-              <h1 style={h1Style}>{t.title}</h1>
+              {/* Two-line H1 with gradient on line 2 — mirrors home's
+                  hero structure so the brand signature ("sans black
+                  first clause + cyan→violet accent on second clause")
+                  carries across both the sensory landing and the
+                  thesis page. Gradient lands on "sistema operativo" —
+                  the proprietary term we're staking as our category. */}
+              <h1 style={h1Style}>
+                {t.title1}
+                <br />
+                <span
+                  style={{
+                    background: `linear-gradient(120deg, ${bioSignal.phosphorCyan}, ${bioSignal.neuralViolet})`,
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  {t.title2}
+                </span>
+              </h1>
               <p style={editorialStyle}>{t.editorial}</p>
 
               <div style={{ marginBlockStart: space[6] }}>
@@ -649,7 +599,7 @@ export default async function WhyPage() {
                     display: "flex", alignItems: "flex-start", gap: space[2],
                     color: cssVar.text, fontSize: font.size.base, lineHeight: font.leading.relaxed,
                   }}>
-                    <span aria-hidden style={{ color: bioSignal.phosphorCyan, fontFamily: cssVar.fontMono, fontWeight: font.weight.bold }}>▸</span>
+                    <span aria-hidden style={{ color: bioSignal.phosphorCyanInk, fontFamily: cssVar.fontMono, fontWeight: font.weight.bold }}>▸</span>
                     <span>{b}</span>
                   </li>
                 ))}
@@ -680,7 +630,7 @@ export default async function WhyPage() {
         <PulseDivider intensity="dim" />
 
         {/* ═══ COST NOBODY MEASURES ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
             <p style={kickerStyleMuted}>{t.costKicker}</p>
             <h2 style={sectionHeading}>{t.costH}</h2>
@@ -700,7 +650,7 @@ export default async function WhyPage() {
         <PulseDivider intensity="dim" />
 
         {/* ═══ WHY NOW ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
             <p style={kickerStyleMuted}>{t.whyNowKicker}</p>
             <h2 style={sectionHeading}>{t.whyNowH}</h2>
@@ -726,7 +676,7 @@ export default async function WhyPage() {
         <PulseDivider intensity="dim" />
 
         {/* ═══ 4 PILLARS ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
             <p style={kickerStyleMuted}>{t.pillarsKicker}</p>
             <h2 style={sectionHeading}>{t.pillarsH}</h2>
@@ -742,7 +692,7 @@ export default async function WhyPage() {
                 }}>
                   <div style={{
                     fontFamily: cssVar.fontMono, fontSize: font.size.xs,
-                    color: bioSignal.phosphorCyan, letterSpacing: "0.2em", fontWeight: font.weight.bold,
+                    color: bioSignal.phosphorCyanInk, letterSpacing: "0.2em", fontWeight: font.weight.bold,
                   }}>{p.n}</div>
                   <h3 style={{
                     margin: 0, fontSize: font.size.lg, fontWeight: font.weight.black,
@@ -757,36 +707,86 @@ export default async function WhyPage() {
 
         <PulseDivider intensity="dim" />
 
-        {/* ═══ VS ALTERNATIVES ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        {/* ═══ VS ALTERNATIVES — compact callout, not table ═══
+            Full vendor-by-vendor comparisons now live on /vs/headspace,
+            /vs/calm, /vs/modern-health. /why carries the editorial
+            summary + three doorways; avoids duplicating content that
+            drifts out of sync between pages. */}
+        <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
             <p style={kickerStyleMuted}>{t.vsKicker}</p>
             <h2 style={sectionHeading}>{t.vsH}</h2>
             <p style={sectionSub}>{t.vsBody}</p>
-            <div className="bi-roi-peer-table-wrap" style={{ marginBlockStart: space[8] }}>
-              <table className="bi-roi-peer-table">
-                <thead>
-                  <tr>
-                    <th>{t.vsHeader}</th>
-                    <th>{t.vsHeaderBio}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {t.vsRows.map((r) => (
-                    <tr key={r.label}>
-                      <td>
-                        <span className="bi-roi-peer-label">{r.label}</span>
-                        <div style={{ marginBlockStart: space[1], fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: font.leading.relaxed }}>{r.note}</div>
-                      </td>
-                      <td>{r.bio}</td>
-                    </tr>
-                  ))}
-                  <tr className="bio">
-                    <td><span className="bi-roi-peer-label">{t.peerBioLabel}</span></td>
-                    <td>{t.peerBioValue}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: `${space[8]}px 0 0`,
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: space[3],
+              }}
+            >
+              {t.vsVendors.map((v) => (
+                <li key={v.slug}>
+                  <Link
+                    href={v.slug}
+                    className="bi-card-link"
+                    style={{
+                      display: "block",
+                      padding: space[5],
+                      borderRadius: radius.xl,
+                      border: `1px solid ${cssVar.border}`,
+                      background: cssVar.surface,
+                      textDecoration: "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: cssVar.fontMono,
+                        fontSize: 11,
+                        letterSpacing: "0.16em",
+                        textTransform: "uppercase",
+                        color: bioSignal.phosphorCyanInk,
+                        fontWeight: font.weight.bold,
+                        marginBlockEnd: space[2],
+                      }}
+                    >
+                      BIO-IGNICIÓN {v.name}
+                    </div>
+                    <div
+                      style={{
+                        color: cssVar.text,
+                        fontSize: font.size.base,
+                        fontWeight: font.weight.bold,
+                        letterSpacing: "-0.01em",
+                        marginBlockEnd: space[1],
+                      }}
+                    >
+                      {v.angle}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: cssVar.fontMono,
+                        fontSize: 11,
+                        color: "var(--bi-link, var(--bi-accent))",
+                        fontWeight: font.weight.bold,
+                      }}
+                    >
+                      {v.slug} →
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div style={{ marginBlockStart: space[6], textAlign: "center" }}>
+              <Link
+                href="/vs"
+                className="bi-demo-closing-secondary"
+                style={{ display: "inline-flex", alignItems: "center", gap: space[2] }}
+              >
+                {t.vsCta} →
+              </Link>
             </div>
           </Container>
         </section>
@@ -794,7 +794,7 @@ export default async function WhyPage() {
         <PulseDivider intensity="dim" />
 
         {/* ═══ WHAT COMPOUNDS ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
             <p style={kickerStyleMuted}>{t.compoundKicker}</p>
             <h2 style={sectionHeading}>{t.compoundH}</h2>
@@ -807,7 +807,7 @@ export default async function WhyPage() {
                 }}>
                   <div style={{
                     fontFamily: cssVar.fontMono, fontSize: "22px", fontWeight: font.weight.black,
-                    color: bioSignal.phosphorCyan, letterSpacing: "-0.01em",
+                    color: bioSignal.phosphorCyanInk, letterSpacing: "-0.01em",
                   }}>{c.k}</div>
                   <div style={{ fontSize: font.size.sm, fontWeight: font.weight.bold, color: cssVar.text }}>{c.t}</div>
                   <div style={{ fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: font.leading.relaxed }}>{c.b}</div>
@@ -820,7 +820,7 @@ export default async function WhyPage() {
         <PulseDivider intensity="dim" />
 
         {/* ═══ WHEN NOT ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
             <p style={kickerStyleMuted}>{t.notForKicker}</p>
             <h2 style={sectionHeading}>{t.notForH}</h2>
@@ -845,100 +845,103 @@ export default async function WhyPage() {
           </Container>
         </section>
 
-        <PulseDivider intensity="dim" />
+        {/* Cinematic pause — bridges "Cuándo NO" (honesty) into
+            "Cohorte Piloto" (action). The beat of "if you're still
+            here after we told you not to buy, the pilot wants you." */}
+        <section aria-labelledby="why-cine-pause" className="bi-cine-pause bi-cine-pause--mid">
+          <div className="bi-cine-pause-glyph">
+            <BioGlyph size={76} />
+          </div>
+          <h2 id="why-cine-pause" className="bi-cine-pause-line">
+            {t.cinePauseLine}
+          </h2>
+        </section>
 
-        {/* ═══ COHORT FOMO ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        {/* ═══ COHORT PILOT — dark moment ═══
+            Action/decision weight. Mirrors /home's Final CTA dark-frame
+            pattern: the place where the visitor is asked to commit.
+            Inline D0→D90 strip absorbs the old standalone TIMELINE —
+            same data, no standalone section. Text colors explicit
+            dark-bg-safe so children don't inherit light-theme cascade. */}
+        <section aria-labelledby="cohort" className="bi-darkframe">
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.cohortKicker}</p>
-            <h2 style={sectionHeading}>{t.cohortH}</h2>
-            <p style={sectionSub}>{t.cohortBody}</p>
+            <p style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{t.cohortKicker}</p>
+            <h2 id="cohort" style={{ ...sectionHeading, color: "#E6F1EA" }}>{t.cohortH}</h2>
+            <p style={{ ...sectionSub, color: "#A7F3D0" }}>{t.cohortBody}</p>
             <div style={{
               marginBlockStart: space[8], display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: space[2],
-              border: `1px solid ${cssVar.border}`, borderRadius: radius.xl,
-              padding: space[6], background: cssVar.surface,
+              border: "1px solid rgba(34, 211, 238, 0.18)",
+              borderRadius: radius.xl,
+              padding: space[6],
+              background: "rgba(34, 211, 238, 0.04)",
             }}>
               {t.cohortRows.map((r) => (
                 <div key={r.k} style={{
                   padding: `${space[3]}px ${space[4]}px`,
-                  background: cssVar.surface2,
+                  background: "rgba(255,255,255,0.04)",
                   borderRadius: radius.md,
-                  border: `1px solid ${cssVar.border}`,
+                  border: "1px solid rgba(255,255,255,0.08)",
                 }}>
                   <div style={{
                     fontFamily: cssVar.fontMono, fontSize: font.size.xs,
                     color: bioSignal.phosphorCyan, letterSpacing: "0.2em", fontWeight: font.weight.bold,
                     marginBlockEnd: space[1],
                   }}>{r.k}</div>
-                  <div style={{ color: cssVar.text, fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{r.v}</div>
+                  <div style={{ color: "#E6F1EA", fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{r.v}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginBlockStart: space[6], display: "flex", gap: space[3], alignItems: "center", flexWrap: "wrap" }}>
+
+            {/* D0→D90 inline strip — absorbed from the retired TIMELINE
+                section. Horizontal 4-step cadence with delta marker. */}
+            <div style={{ marginBlockStart: space[6] }}>
+              <div style={{
+                fontFamily: cssVar.fontMono, fontSize: 11, letterSpacing: "0.18em",
+                textTransform: "uppercase", color: bioSignal.phosphorCyan,
+                fontWeight: font.weight.bold, marginBlockEnd: space[3],
+              }}>
+                {t.cohortTimelineLabel}
+              </div>
+              <ol style={{
+                listStyle: "none", padding: 0, margin: 0,
+                display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: space[2],
+              }}>
+                {t.cohortTimeline.map((step) => (
+                  <li key={step.k} style={{
+                    padding: `${space[3]}px ${space[4]}px`,
+                    background: "rgba(255,255,255,0.03)",
+                    borderRadius: radius.md,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    display: "grid", gap: 4,
+                  }}>
+                    <div style={{
+                      fontFamily: cssVar.fontMono, fontWeight: font.weight.black,
+                      color: bioSignal.phosphorCyan, fontSize: 15, letterSpacing: "-0.01em",
+                    }}>{step.k}</div>
+                    <div style={{
+                      color: "#E6F1EA", fontSize: font.size.sm,
+                      fontWeight: font.weight.bold, letterSpacing: "-0.005em",
+                    }}>{step.t}</div>
+                    <div style={{
+                      color: "#A7F3D0", fontSize: font.size.xs,
+                      lineHeight: font.leading.relaxed,
+                    }}>{step.b}</div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div style={{ marginBlockStart: space[7], display: "flex", gap: space[3], alignItems: "center", flexWrap: "wrap" }}>
               <Link href="/demo" className="bi-demo-closing-primary">{t.cohortCta}</Link>
-              <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>{t.cohortCtaHint}</span>
+              <span style={{ color: "#A7F3D0", fontSize: font.size.sm }}>{t.cohortCtaHint}</span>
             </div>
           </Container>
         </section>
-
-        <PulseDivider intensity="dim" />
-
-        {/* ═══ TIMELINE ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
-          <Container size="xl">
-            <p style={kickerStyleMuted}>{t.timelineKicker}</p>
-            <h2 style={sectionHeading}>{t.timelineH}</h2>
-            <p style={sectionSub}>{t.timelineBody}</p>
-            <ol style={{
-              listStyle: "none", padding: 0, margin: `${space[8]}px 0 0`,
-              display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: space[4],
-            }}>
-              {t.timeline.map((step, i) => (
-                <li key={step.k} style={{
-                  ...cardStyle,
-                  position: "relative",
-                }}>
-                  <span aria-hidden style={{
-                    position: "absolute", insetBlockStart: -10, insetInlineStart: space[4],
-                    background: cssVar.surface2, padding: `${space[0]}px ${space[2]}px`,
-                    fontFamily: cssVar.fontMono, fontSize: "10px",
-                    letterSpacing: "0.2em", color: cssVar.textMuted,
-                    border: `1px solid ${cssVar.border}`, borderRadius: radius.pill,
-                  }}>STEP {i + 1}</span>
-                  <div style={{
-                    fontFamily: cssVar.fontMono, fontSize: "22px", fontWeight: font.weight.black,
-                    color: bioSignal.phosphorCyan, letterSpacing: "-0.01em",
-                  }}>{step.k}</div>
-                  <h3 style={{ margin: 0, fontSize: font.size.base, fontWeight: font.weight.bold, color: cssVar.text }}>{step.t}</h3>
-                  <p style={{ margin: 0, color: cssVar.textMuted, fontSize: font.size.sm, lineHeight: font.leading.relaxed }}>{step.b}</p>
-                </li>
-              ))}
-            </ol>
-          </Container>
-        </section>
-
-        <PulseDivider intensity="dim" />
-
-        {/* ═══ COMPLIANCE RAIL ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
-          <Container size="xl">
-            <p style={kickerStyleMuted}>{t.railKicker}</p>
-            <h2 style={sectionHeading}>{t.railH}</h2>
-            <div style={{
-              marginBlockStart: space[8], display: "flex", flexWrap: "wrap", gap: space[2],
-            }}>
-              {t.railChips.map((c) => (
-                <span key={c} className="bi-roi-ent-chip">{c}</span>
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        <PulseDivider intensity="dim" />
 
         {/* ═══ FAQ / OBJECTIONS ═══ */}
-        <section style={{ paddingBlock: space[12] }}>
+        <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
             <p style={kickerStyleMuted}>{t.faqKicker}</p>
             <h2 style={sectionHeading}>{t.faqH}</h2>
@@ -952,7 +955,7 @@ export default async function WhyPage() {
                     cursor: "pointer", fontWeight: font.weight.bold, fontSize: font.size.base,
                     color: cssVar.text, listStyle: "none", display: "flex", gap: space[3], alignItems: "flex-start",
                   }}>
-                    <span aria-hidden style={{ color: bioSignal.phosphorCyan, fontFamily: cssVar.fontMono, fontSize: font.size.sm }}>Q{String(i + 1).padStart(2, "0")}</span>
+                    <span aria-hidden style={{ color: bioSignal.phosphorCyanInk, fontFamily: cssVar.fontMono, fontSize: font.size.sm }}>Q{String(i + 1).padStart(2, "0")}</span>
                     <span>{f.q}</span>
                   </summary>
                   <p style={{
