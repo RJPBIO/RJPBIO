@@ -24,7 +24,7 @@ export const metadata = {
   alternates: { canonical: "/" },
   openGraph: {
     title: "BIO-IGNICIÓN — Neural Performance",
-    description: "Siente el motor. Un pulso háptico, tres segundos de binaural, una onda que respira contigo.",
+    description: "Se siente. Se mide. Se firma. El primer instrumento neural B2B con recibos — HRV medible, pulso háptico, NOM-035 firmable. 3 minutos pre y post turno.",
     images: [{ url: "/screenshots/ignicion-wide.svg", width: 1280, height: 720 }],
   },
 };
@@ -32,15 +32,15 @@ export const metadata = {
 const COPY = {
   es: {
     hero: {
-      kicker: "NUEVO · MOTOR SENSORIAL",
-      title1: "Siente el motor.",
-      title2: "No lo expliques, tócalo.",
-      sub: "Un pulso háptico, tres segundos de binaural y una onda que respira contigo. Toca el botón — funciona en tu navegador, sin instalar nada.",
+      kicker: "INSTRUMENTO NEURAL · B2B",
+      title1: "Se siente. Se mide.",
+      title2: "Se firma.",
+      sub: "El primer instrumento neural B2B con recibos. HRV medible, pulso háptico, export NOM-035 firmable. 3 minutos pre y post turno — no otra app de meditación.",
       buttonIdle: "Activar pulso",
       buttonPulsing: "Sintiendo…",
       buttonAria: "Activar pulso sensorial de 3 segundos",
       hint: "3 segundos · audio + vibración",
-      afterLine: "Ese es el motor. Ahora imagina una sesión completa.",
+      afterLine: "Sentiste el pulso. Eso apenas es uno de tres.",
       secondaryCta: "Ver demo en vivo · 30 min",
       secondaryHref: "/demo",
       chips: ["SOC 2", "HIPAA-ready", "GDPR", "NOM-035", "Zero telemetry"],
@@ -296,15 +296,15 @@ const COPY = {
   },
   en: {
     hero: {
-      kicker: "NEW · SENSORY ENGINE",
-      title1: "Feel the engine.",
-      title2: "Don't explain it. Touch it.",
-      sub: "One haptic pulse, three seconds of binaural and a wave that breathes with you. Tap the button — runs in your browser, nothing to install.",
+      kicker: "NEURAL INSTRUMENT · B2B",
+      title1: "Felt. Measured.",
+      title2: "Signed.",
+      sub: "The first B2B neural instrument with receipts. Measurable HRV, haptic pulse, signable NOM-035 export. 3 minutes pre- and post-shift — not another meditation app.",
       buttonIdle: "Activate pulse",
       buttonPulsing: "Feeling…",
       buttonAria: "Activate 3-second sensory pulse",
       hint: "3 seconds · audio + haptics",
-      afterLine: "That's the engine. Now imagine a full session.",
+      afterLine: "You felt the pulse. That's only one of three.",
       secondaryCta: "See a live demo · 30 min",
       secondaryHref: "/demo",
       chips: ["SOC 2", "HIPAA-ready", "GDPR", "NOM-035", "Zero telemetry"],
