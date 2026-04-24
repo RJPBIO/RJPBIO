@@ -192,12 +192,30 @@ export const P = [
 
   /* ═══ #13 PROTOCOLO OMEGA ═══ */
   {id:13,n:"Protocolo OMEGA",ct:"Protocolo",d:120,sb:"Realineación neuronal completa",tg:"\u03A9",cl:"#8B5CF6",int:"reset",dif:3,
-  ph:[{l:"Vacío Inicial",r:"0–18s",s:0,e:18,k:"Apaga todo. Vacío interior. Silencio absoluto.",i:"Inhala 4 segundos. Exhala 6 segundos. Sostén vacío 2 segundos. Di internamente: 'Apago todo.' Repite el ciclo. El vacío entre exhalación e inhalación es donde tu sistema se resetea. No llenes el silencio.",sc:"Apnea post-exhalatoria inhibe amígdala y reduce actividad del circuito de alarma central",ic:"breath",br:{in:4,h1:0,ex:6,h2:2}},
-  {l:"Pulso del Núcleo",r:"18–33s",s:18,e:33,k:"Dos manos. Pecho y ombligo. Dos pulsos conectados.",i:"Sin romper el ritmo respiratorio, coloca mano derecha en pecho, izquierda en ombligo. Siente ambos puntos simultáneamente. Percibe la distancia entre ellos. Nota tu latido — cada latido es tu sistema funcionando. Solo siente, no analices.",sc:"Atención bi-focal genera coherencia entre corazón y sistema nervioso entérico (cerebro intestinal)",ic:"body",br:{in:4,h1:0,ex:6,h2:2}},
-  {l:"Recalibración Bilateral",r:"33–55s",s:33,e:55,k:"Ojos en cruz. Sonido imaginario. Recalibra.",i:"Mantén la respiración. Mueve solo los ojos: derecha 3s, izquierda 3s, arriba 3s, abajo 3s. Ahora imagina un sonido suave moviéndose de oreja a oreja. La combinación recalibra redes bilaterales. Respira suave todo el tiempo.",sc:"Estimulación bilateral visual+auditiva activa procesamiento similar al sueño REM. Reset profundo",ic:"focus",br:null},
-  {l:"Expansión Silenciosa",r:"55–78s",s:55,e:78,k:"Tu cuerpo se expande 1 cm. Límites difusos.",i:"Sin moverte, siente que tu cuerpo se expande 1 centímetro en todas direcciones. Tus límites físicos se difuminan suavemente. No fuerces — solo permite. Respira suave. Tu percepción del espacio cambia. El mundo se siente más amplio.",sc:"Expansión propioceptiva activa red de percepción espacial y desactiva hipervigilancia",ic:"mind",br:null},
-  {l:"Micro-pulso Resonante",r:"78–100s",s:78,e:100,k:"Dedos contra pulgares. 8 pulsos. Sincronización.",i:"Con manos abiertas, pulsa dedos contra pulgares: 8 pulsos en 8 segundos al 10% de fuerza. Descansa 2 segundos. Repite una vez. Este ritmo micro-fino sincroniza tu sistema somatosensorial completo. Respira sin alterar el pulso.",sc:"Sincronización somatosensorial rítmica genera coherencia neural entre todas las cortezas cerebrales",ic:"body",br:null},
-  {l:"Ascenso Omega",r:"100–120s",s:100,e:120,k:"Sobre tu cabeza. Silencio. Claridad absoluta.",i:"Cierra los ojos. Tu conciencia sube 5-7 centímetros sobre tu cabeza. El ruido queda debajo. Aquí arriba: solo silencio y claridad. Mantén 20 segundos. Respira suave. Abre los ojos lentamente trayendo esta calma. Tú decides qué entra a tu mente ahora.",sc:"Estado de observador puro. Máxima activación de corteza prefrontal medial. Meta-conciencia",ic:"mind",br:null}]},
+  ph:[{l:"Vacío Inicial",r:"0–18s",s:0,e:18,k:"Apaga todo. Vacío interior. Silencio absoluto.",i:"Inhala 4 segundos. Exhala 6 segundos. Sostén vacío 2 segundos. Di internamente: 'Apago todo.' Repite el ciclo. El vacío entre exhalación e inhalación es donde tu sistema se resetea. No llenes el silencio.",iExec:[
+    {from:0,to:9,text:"Inhala 4s. Exhala 6s. Sostén vacío 2s. Di dentro: \"Apago todo.\""},
+    {from:9,to:18,text:"El vacío entre respiraciones resetea el sistema. No lo llenes."}
+  ],sc:"Apnea post-exhalatoria inhibe amígdala y reduce actividad del circuito de alarma central",ic:"breath",br:{in:4,h1:0,ex:6,h2:2}},
+  {l:"Pulso del Núcleo",r:"18–33s",s:18,e:33,k:"Dos manos. Pecho y ombligo. Dos pulsos conectados.",i:"Sin romper el ritmo respiratorio, coloca mano derecha en pecho, izquierda en ombligo. Siente ambos puntos simultáneamente. Percibe la distancia entre ellos. Nota tu latido — cada latido es tu sistema funcionando. Solo siente, no analices.",iExec:[
+    {from:0,to:8,text:"Mano derecha en pecho, izquierda en ombligo. Siente ambos puntos."},
+    {from:8,to:15,text:"Percibe el latido entre ellos. Solo siente."}
+  ],sc:"Atención bi-focal genera coherencia entre corazón y sistema nervioso entérico (cerebro intestinal)",ic:"body",br:{in:4,h1:0,ex:6,h2:2}},
+  {l:"Recalibración Bilateral",r:"33–55s",s:33,e:55,k:"Ojos en cruz. Sonido imaginario. Recalibra.",i:"Mantén la respiración. Mueve solo los ojos: derecha 3s, izquierda 3s, arriba 3s, abajo 3s. Ahora imagina un sonido suave moviéndose de oreja a oreja. La combinación recalibra redes bilaterales. Respira suave todo el tiempo.",iExec:[
+    {from:0,to:12,text:"Mueve solo los ojos: derecha 3s, izquierda 3s, arriba 3s, abajo 3s."},
+    {from:12,to:22,text:"Imagina un sonido suave moviéndose de oreja a oreja. Respira suave."}
+  ],sc:"Estimulación bilateral visual+auditiva activa procesamiento similar al sueño REM. Reset profundo",ic:"focus",br:null},
+  {l:"Expansión Silenciosa",r:"55–78s",s:55,e:78,k:"Tu cuerpo se expande 1 cm. Límites difusos.",i:"Sin moverte, siente que tu cuerpo se expande 1 centímetro en todas direcciones. Tus límites físicos se difuminan suavemente. No fuerces — solo permite. Respira suave. Tu percepción del espacio cambia. El mundo se siente más amplio.",iExec:[
+    {from:0,to:12,text:"Tu cuerpo se expande 1cm en todas direcciones. No te muevas."},
+    {from:12,to:23,text:"Los límites se difuminan. No fuerces — solo permite."}
+  ],sc:"Expansión propioceptiva activa red de percepción espacial y desactiva hipervigilancia",ic:"mind",br:null},
+  {l:"Micro-pulso Resonante",r:"78–100s",s:78,e:100,k:"Dedos contra pulgares. 8 pulsos. Sincronización.",i:"Con manos abiertas, pulsa dedos contra pulgares: 8 pulsos en 8 segundos al 10% de fuerza. Descansa 2 segundos. Repite una vez. Este ritmo micro-fino sincroniza tu sistema somatosensorial completo. Respira sin alterar el pulso.",iExec:[
+    {from:0,to:11,text:"Manos abiertas. Dedos contra pulgares: 8 pulsos en 8s al 10%."},
+    {from:11,to:22,text:"Descansa 2s. Repite. El pulso sincroniza el sistema."}
+  ],sc:"Sincronización somatosensorial rítmica genera coherencia neural entre todas las cortezas cerebrales",ic:"body",br:null},
+  {l:"Ascenso Omega",r:"100–120s",s:100,e:120,k:"Sobre tu cabeza. Silencio. Claridad absoluta.",i:"Cierra los ojos. Tu conciencia sube 5-7 centímetros sobre tu cabeza. El ruido queda debajo. Aquí arriba: solo silencio y claridad. Mantén 20 segundos. Respira suave. Abre los ojos lentamente trayendo esta calma. Tú decides qué entra a tu mente ahora.",iExec:[
+    {from:0,to:10,text:"Cierra los ojos. Tu conciencia sube 5-7cm. El ruido queda debajo."},
+    {from:10,to:20,text:"Solo silencio y claridad. Abre los ojos: tú decides qué entra a tu mente."}
+  ],sc:"Estado de observador puro. Máxima activación de corteza prefrontal medial. Meta-conciencia",ic:"mind",br:null}]},
 
   /* ═══ #14 PROTOCOLO OMNIA ═══ */
   {id:14,n:"Protocolo OMNIA",ct:"Protocolo",d:120,sb:"Activación Humana Total",tg:"\u221E",cl:"#F59E0B",int:"energia",dif:3,
