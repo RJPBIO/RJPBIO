@@ -14,6 +14,33 @@
   --focus-ring: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 0 0 5px rgba(34, 211, 238, 0.2), 0 0 18px rgba(34, 211, 238, 0.15);
   --focus-ring-inverse: 0 0 0 3px rgba(16, 185, 129, 0.5), 0 0 0 5px rgba(34, 211, 238, 0.22), 0 0 20px rgba(34, 211, 238, 0.18);
 
+  /* ═══ Motion signature ══════════════════════════════════════════
+     One var(--bi-ease-breath) curve applied across the whole site — the "breath" of
+     BIO-IGNICIÓN. It's a deliberate exhale: gentle start, assertive
+     middle, slow settle. Reveals and hovers settle into their final
+     state the way a full exhale finishes: without urgency, without
+     bounce. Any generic `ease` / `ease-out` should be swapped for
+     var(--bi-ease-breath).
+
+       --bi-ease-breath     default reveal / settle (exhale-like)
+       --bi-ease-inhale     pulls toward (for entering / scaling in)
+       --bi-ease-linger     slow hold (for things that should feel heavy)
+       --bi-ease-instant    for feedback taps (near-snap)
+
+     Durations are named so components don't sprinkle ms values: short
+     feedback (120), standard hover (220), reveal (420), cinematic
+     (700). Pairing a named var(--bi-ease-breath) with a named duration yields recurring,
+     recognizable motion. */
+  --bi-ease-breath:  cubic-bezier(0.22, 1, 0.36, 1);
+  --bi-ease-inhale:  cubic-bezier(0.6, 0, 0.32, 1);
+  --bi-ease-linger:  cubic-bezier(0.4, 0.04, 0.3, 1);
+  --bi-ease-instant: cubic-bezier(0.2, 0.5, 0.2, 1);
+
+  --bi-dur-tap:    120ms;
+  --bi-dur-hover:  220ms;
+  --bi-dur-reveal: 420ms;
+  --bi-dur-cine:   700ms;
+
   /* ═══ Theme tokens — light defaults; dark overrides below ═══ */
   --bi-bg: #F1F4F9;
   --bi-surface: #FFFFFF;
@@ -123,7 +150,7 @@ body {
   outline: none;
   box-shadow: var(--focus-ring);
   border-radius: 6px;
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.15s var(--bi-ease-breath);
 }
 html.theme-dim :focus-visible { box-shadow: var(--focus-ring-inverse); }
 
@@ -134,7 +161,7 @@ html.theme-dim :focus-visible { box-shadow: var(--focus-ring-inverse); }
 
 /* Auth card buttons inside Perfil — unified hover/focus behavior */
 .bi-auth-btn {
-  transition: transform 160ms cubic-bezier(0.16,1,0.3,1), box-shadow 160ms ease, filter 160ms ease;
+  transition: transform 160ms cubic-bezier(0.16,1,0.3,1), box-shadow 160ms var(--bi-ease-breath), filter 160ms var(--bi-ease-breath);
 }
 @media (hover: hover) {
   .bi-auth-btn:hover {
@@ -332,7 +359,7 @@ input, textarea, select {
     0 0 0 1px color-mix(in srgb, #22D3EE 40%, transparent),
     0 10px 40px -12px color-mix(in srgb, #22D3EE 55%, transparent),
     inset 0 1px 0 color-mix(in srgb, #FFFFFF 35%, transparent);
-  transition: transform .12s ease, box-shadow .25s ease, filter .2s ease !important;
+  transition: transform .12s var(--bi-ease-breath), box-shadow .25s var(--bi-ease-breath), filter .2s var(--bi-ease-breath) !important;
 }
 .bi-ignite::after {
   content: "";
@@ -342,7 +369,7 @@ input, textarea, select {
   pointer-events: none;
   background: radial-gradient(60% 120% at 50% 50%, color-mix(in srgb, #22D3EE 35%, transparent), transparent 70%);
   opacity: 0;
-  transition: opacity .25s ease;
+  transition: opacity .25s var(--bi-ease-breath);
 }
 .bi-ignite:hover:not(:disabled) {
   filter: brightness(1.06);
@@ -364,7 +391,7 @@ input, textarea, select {
 
 /* ═══ OAuth brand buttons — per official guidelines. Fixed palette across
       themes because the logos are trademarked in specific colors. ═══ */
-.bi-oauth { height: 48px; font-weight: 600 !important; letter-spacing: 0.01em; transition: box-shadow .15s ease, background .15s ease !important; }
+.bi-oauth { height: 48px; font-weight: 600 !important; letter-spacing: 0.01em; transition: box-shadow .15s var(--bi-ease-breath), background .15s var(--bi-ease-breath) !important; }
 .bi-oauth-google { background: #FFFFFF !important; color: #1F1F1F !important; border: 1px solid #DADCE0 !important; }
 .bi-oauth-google:hover:not(:disabled) { background: #F8F9FA !important; box-shadow: 0 1px 3px rgba(60,64,67,.15), 0 4px 8px rgba(60,64,67,.08) !important; filter: none !important; }
 .bi-oauth-microsoft { background: #FFFFFF !important; color: #1F1F1F !important; border: 1px solid #8C8C8C !important; }
@@ -394,7 +421,7 @@ input, textarea, select {
   border: 1px solid var(--bi-border) !important;
   font-weight: 600 !important;
   letter-spacing: 0.01em !important;
-  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
+  transition: border-color .18s var(--bi-ease-breath), background .18s var(--bi-ease-breath), box-shadow .18s var(--bi-ease-breath) !important;
 }
 .bi-refined:hover:not(:disabled) {
   background: color-mix(in srgb, #22D3EE 5%, var(--bi-surface)) !important;
@@ -406,7 +433,7 @@ input, textarea, select {
 /* Disclosure toggle — quiet by default, phosphor accent when open so the
    state is legible and the brand note is felt, not announced. */
 .bi-disclosure-btn {
-  transition: color .15s ease;
+  transition: color .15s var(--bi-ease-breath);
 }
 .bi-disclosure-btn:hover { color: var(--bi-text) !important; }
 .bi-disclosure-btn[aria-expanded="true"] { color: var(--bi-text) !important; }
@@ -423,7 +450,7 @@ input, textarea, select {
   font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1;
-  transition: transform .22s cubic-bezier(0.16,1,0.3,1), color .18s ease, border-color .18s ease;
+  transition: transform .22s cubic-bezier(0.16,1,0.3,1), color .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath);
 }
 .bi-disclosure-btn[aria-expanded="true"] .bi-disclosure-sigil {
   border-color: color-mix(in srgb, #22D3EE 55%, var(--bi-border)) !important;
@@ -587,7 +614,7 @@ input, textarea, select {
   text-decoration: none;
   color: var(--bi-text);
   position: relative;
-  transition: transform .2s ease;
+  transition: transform .2s var(--bi-ease-breath);
 }
 .bi-shell-brand:hover { transform: translateY(-0.5px); }
 .bi-shell-brand-glyph {
@@ -602,7 +629,7 @@ input, textarea, select {
     radial-gradient(circle at 50% 50%,
       color-mix(in srgb, #22D3EE 16%, transparent) 0%,
       transparent 72%);
-  transition: background .25s ease, transform .25s ease, box-shadow .3s ease;
+  transition: background .25s var(--bi-ease-breath), transform .25s var(--bi-ease-breath), box-shadow .3s var(--bi-ease-breath);
 }
 /* Halo ring — faint phosphor ring that sharpens on hover */
 .bi-shell-brand-glyph::before {
@@ -612,7 +639,7 @@ input, textarea, select {
   border-radius: 13px;
   border: 1px solid color-mix(in srgb, #22D3EE 18%, transparent);
   pointer-events: none;
-  transition: border-color .25s ease, inset .25s ease;
+  transition: border-color .25s var(--bi-ease-breath), inset .25s var(--bi-ease-breath);
 }
 .bi-shell-brand:hover .bi-shell-brand-glyph {
   background:
@@ -697,7 +724,7 @@ input, textarea, select {
   font-weight: 600;
   letter-spacing: 0.005em;
   padding-block: 8px;
-  transition: color .18s ease;
+  transition: color .18s var(--bi-ease-breath);
   white-space: nowrap;
 }
 .bi-shell-navlink-dot {
@@ -707,7 +734,7 @@ input, textarea, select {
   background: #22D3EE;
   opacity: 0;
   transform: scale(0.4);
-  transition: opacity .2s ease, transform .25s cubic-bezier(0.16,1,0.3,1);
+  transition: opacity .2s var(--bi-ease-breath), transform .25s cubic-bezier(0.16,1,0.3,1);
   box-shadow: 0 0 8px color-mix(in srgb, #22D3EE 65%, transparent);
 }
 .bi-shell-navlink::after {
@@ -729,7 +756,7 @@ input, textarea, select {
 .bi-shell-navlink[data-active="true"] .bi-shell-navlink-dot { opacity: 1; transform: scale(1); }
 .bi-shell-navlink-caret {
   opacity: 0.6;
-  transition: transform .25s cubic-bezier(0.16,1,0.3,1), opacity .2s ease;
+  transition: transform .25s cubic-bezier(0.16,1,0.3,1), opacity .2s var(--bi-ease-breath);
 }
 .bi-shell-navlink:hover .bi-shell-navlink-caret { opacity: 0.95; }
 .bi-shell-navlink-caret[data-open="true"] { transform: rotate(180deg); opacity: 1; color: #22D3EE; }
@@ -757,7 +784,7 @@ input, textarea, select {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity .18s ease, transform .22s cubic-bezier(0.16,1,0.3,1), visibility 0s linear .22s;
+  transition: opacity .18s var(--bi-ease-breath), transform .22s cubic-bezier(0.16,1,0.3,1), visibility 0s linear .22s;
   z-index: 70;
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
@@ -768,7 +795,7 @@ input, textarea, select {
   visibility: visible;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
-  transition: opacity .22s ease, transform .28s cubic-bezier(0.16,1,0.3,1), visibility 0s linear 0s;
+  transition: opacity .22s var(--bi-ease-breath), transform .28s cubic-bezier(0.16,1,0.3,1), visibility 0s linear 0s;
 }
 .bi-shell-flyout-aura {
   position: absolute;
@@ -806,7 +833,7 @@ input, textarea, select {
   border-radius: 10px;
   text-decoration: none;
   color: var(--bi-text);
-  transition: background .15s ease, transform .15s ease;
+  transition: background .15s var(--bi-ease-breath), transform .15s var(--bi-ease-breath);
 }
 .bi-shell-flyout-item:hover {
   background: color-mix(in srgb, #22D3EE 10%, transparent);
@@ -853,7 +880,7 @@ input, textarea, select {
 .bi-shell-flyout-item-arrow {
   color: var(--bi-text-muted);
   opacity: 0.6;
-  transition: transform .25s cubic-bezier(0.16,1,0.3,1), opacity .2s ease;
+  transition: transform .25s cubic-bezier(0.16,1,0.3,1), opacity .2s var(--bi-ease-breath);
 }
 @media (prefers-reduced-motion: reduce) {
   .bi-shell-flyout,
@@ -895,7 +922,7 @@ input, textarea, select {
   font-weight: 500;
   cursor: pointer;
   text-align: start;
-  transition: border-color .2s ease, background .2s ease, color .2s ease, box-shadow .25s ease;
+  transition: border-color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath), box-shadow .25s var(--bi-ease-breath);
 }
 /* Command palette open — trigger mirrors the state with a phosphor ring,
    cyan label, and a soft pulse so the user never wonders if ⌘K registered. */
@@ -962,14 +989,14 @@ input, textarea, select {
   font-weight: 700;
   letter-spacing: 0.12em;
   cursor: pointer;
-  transition: border-color .2s ease, color .2s ease, background .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath);
 }
 .bi-shell-locale:hover {
   border-color: color-mix(in srgb, #22D3EE 45%, var(--bi-border));
   color: var(--bi-text);
 }
 .bi-shell-locale-value { line-height: 1; }
-.bi-shell-locale-caret { opacity: 0.7; transition: transform .2s ease; }
+.bi-shell-locale-caret { opacity: 0.7; transition: transform .2s var(--bi-ease-breath); }
 .bi-shell-locale:hover .bi-shell-locale-caret { transform: translateY(1px); }
 .bi-shell-locale-select {
   position: absolute;
@@ -1007,7 +1034,7 @@ input, textarea, select {
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color .2s ease, color .2s ease, background .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath);
 }
 .bi-shell-theme:hover {
   border-color: color-mix(in srgb, #22D3EE 45%, var(--bi-border));
@@ -1039,7 +1066,7 @@ input, textarea, select {
     0 6px 18px -8px color-mix(in srgb, #22D3EE 55%, transparent),
     inset 0 1px 0 color-mix(in srgb, #FFFFFF 30%, transparent);
   overflow: hidden;
-  transition: transform .12s ease, box-shadow .25s ease, filter .2s ease;
+  transition: transform .12s var(--bi-ease-breath), box-shadow .25s var(--bi-ease-breath), filter .2s var(--bi-ease-breath);
 }
 .bi-nav-cta::before {
   content: "";
@@ -1052,7 +1079,7 @@ input, textarea, select {
     color-mix(in srgb, #FFFFFF 55%, transparent) 50%,
     transparent 100%);
   transform: skewX(-18deg);
-  transition: inset-inline-start .7s ease;
+  transition: inset-inline-start .7s var(--bi-ease-breath);
   pointer-events: none;
 }
 .bi-nav-cta:hover {
@@ -1070,7 +1097,7 @@ input, textarea, select {
   z-index: 1;
   transform: translateX(-2px);
   opacity: 0.9;
-  transition: transform .25s cubic-bezier(0.16,1,0.3,1), opacity .2s ease;
+  transition: transform .25s cubic-bezier(0.16,1,0.3,1), opacity .2s var(--bi-ease-breath);
 }
 .bi-nav-cta:hover .bi-nav-cta-arrow { transform: translateX(2px); opacity: 1; }
 
@@ -1089,7 +1116,7 @@ input, textarea, select {
   font-size: 13.5px;
   letter-spacing: 0.01em;
   cursor: pointer;
-  transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 120ms ease;
+  transition: border-color 180ms var(--bi-ease-breath), background 180ms var(--bi-ease-breath), color 180ms var(--bi-ease-breath), transform 120ms var(--bi-ease-breath);
 }
 .bi-nav-cta-ghost:hover {
   border-color: #22D3EE;
@@ -1148,7 +1175,7 @@ input, textarea, select {
   border: 1.5px solid var(--bi-border-strong);
   background: var(--bi-bg);
   color: transparent;
-  transition: border-color .18s ease, background .18s ease, box-shadow .2s ease, color .18s ease;
+  transition: border-color .18s var(--bi-ease-breath), background .18s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath), color .18s var(--bi-ease-breath);
   flex-shrink: 0;
   margin-block-start: 2px;
 }
@@ -1188,7 +1215,7 @@ input, textarea, select {
   padding-inline-end: 36px !important;
   color: var(--bi-text);
   cursor: pointer;
-  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  transition: border-color .15s var(--bi-ease-breath), box-shadow .15s var(--bi-ease-breath), background-color .15s var(--bi-ease-breath);
 }
 .bi-select:hover { border-color: color-mix(in srgb, #22D3EE 40%, var(--bi-border)) !important; }
 .bi-select:focus, .bi-select:focus-visible {
@@ -1226,7 +1253,7 @@ input, textarea, select {
 }
 .bi-mobile-navlink {
   position: relative;
-  transition: background .15s ease, color .15s ease;
+  transition: background .15s var(--bi-ease-breath), color .15s var(--bi-ease-breath);
 }
 .bi-mobile-navlink[data-active="true"] {
   background: color-mix(in srgb, #22D3EE 12%, transparent) !important;
@@ -1273,7 +1300,7 @@ input, textarea, select {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: color .15s ease;
+  transition: color .15s var(--bi-ease-breath);
 }
 .bi-footer-link:hover { color: var(--bi-text); }
 
@@ -1301,7 +1328,7 @@ input, textarea, select {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background .15s ease, color .15s ease;
+  transition: background .15s var(--bi-ease-breath), color .15s var(--bi-ease-breath);
 }
 .bi-pricing-toggle-btn[aria-selected="true"] {
   background: color-mix(in srgb, #22D3EE 18%, transparent);
@@ -1320,7 +1347,7 @@ input, textarea, select {
   border: 1px solid var(--bi-border);
   background: var(--bi-surface);
   padding: 28px;
-  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-pricing-card:hover {
   border-color: color-mix(in srgb, #22D3EE 45%, var(--bi-border));
@@ -1558,7 +1585,7 @@ input, textarea, select {
   align-items: baseline;
   padding: 8px 4px;
   border-radius: 10px;
-  transition: background .15s ease;
+  transition: background .15s var(--bi-ease-breath);
 }
 .bi-roi-breakdown > summary::-webkit-details-marker { display: none; }
 .bi-roi-breakdown > summary:hover {
@@ -1586,7 +1613,7 @@ input, textarea, select {
   font-size: 18px;
   font-weight: 700;
   color: #22D3EE;
-  transition: transform .2s ease;
+  transition: transform .2s var(--bi-ease-breath);
   line-height: 1;
 }
 .bi-roi-breakdown[open] > summary .bi-roi-breakdown-chev {
@@ -1686,7 +1713,7 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath);
   overflow: hidden;
 }
 .bi-category-card::before {
@@ -1697,7 +1724,7 @@ input, textarea, select {
   block-size: 2px;
   background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, #22D3EE 50%, transparent) 50%, transparent 100%);
   opacity: 0;
-  transition: opacity .22s ease;
+  transition: opacity .22s var(--bi-ease-breath);
 }
 .bi-category-card:hover {
   transform: translateY(-2px);
@@ -1733,6 +1760,100 @@ input, textarea, select {
 }
 .bi-category-card[data-kind="us"]::before { opacity: 1; }
 
+/* ═══ Cinematic pause — full-bleed breath between dense sections.
+       One glyph, one editorial sentence, massive whitespace. The
+       Stripe/Linear trick that turns a landing page into a narrative.
+       Placed between /home pricing peek and the final CTA so the
+       reader gets a beat of agency before action. */
+.bi-cine-pause {
+  padding-block: clamp(140px, 22vh, 240px);
+  padding-inline: 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.bi-cine-pause::before {
+  /* Soft phosphor halo behind the glyph — subtle, not a spotlight. */
+  content: "";
+  position: absolute;
+  inset: 50% 50% auto auto;
+  transform: translate(50%, -50%);
+  inline-size: clamp(360px, 48vw, 640px);
+  block-size: clamp(360px, 48vw, 640px);
+  background: radial-gradient(closest-side, color-mix(in srgb, #22D3EE 10%, transparent), transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+.bi-cine-pause-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-block-end: clamp(24px, 4vh, 40px);
+  color: #22D3EE;
+  opacity: 0.88;
+  animation: biCinePulse 5.6s var(--bi-ease-breath) infinite;
+  filter: drop-shadow(0 0 24px color-mix(in srgb, #22D3EE 45%, transparent));
+}
+.bi-cine-pause-line {
+  margin: 0 auto;
+  max-inline-size: 22ch;
+  font-family: var(--font-editorial), "Instrument Serif", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(30px, 5.2vw, 60px);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--bi-text);
+}
+@keyframes biCinePulse {
+  0%, 100% { opacity: 0.82; transform: scale(1);    filter: drop-shadow(0 0 18px color-mix(in srgb, #22D3EE 35%, transparent)); }
+  50%      { opacity: 1;    transform: scale(1.06); filter: drop-shadow(0 0 36px color-mix(in srgb, #22D3EE 60%, transparent)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-cine-pause-glyph { animation: none; filter: drop-shadow(0 0 18px color-mix(in srgb, #22D3EE 35%, transparent)); }
+}
+
+/* ═══ AuroraMesh — hero backdrop of four drifting color fields.
+       Each blob orbits its own anchor on a prime-ish duration so the
+       motion never syncs into a visible loop. Blur lives in an SVG
+       filter, not CSS, so rendering cost is fixed regardless of
+       viewport size. */
+.bi-aurora-mesh { will-change: transform; }
+.bi-aurora-blob {
+  transform-origin: center;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+.bi-aurora-blob--a { animation: biAuroraDriftA 32s infinite; }
+.bi-aurora-blob--b { animation: biAuroraDriftB 41s infinite; }
+.bi-aurora-blob--c { animation: biAuroraDriftC 47s infinite; }
+.bi-aurora-blob--d { animation: biAuroraDriftD 53s infinite; }
+@keyframes biAuroraDriftA {
+  0%   { transform: translate(0, 0)        scale(1);    }
+  50%  { transform: translate(80px, 60px)  scale(1.12); }
+  100% { transform: translate(40px, -30px) scale(0.94); }
+}
+@keyframes biAuroraDriftB {
+  0%   { transform: translate(0, 0)         scale(1);    }
+  50%  { transform: translate(-90px, -60px) scale(1.08); }
+  100% { transform: translate(-30px, 50px)  scale(0.96); }
+}
+@keyframes biAuroraDriftC {
+  0%   { transform: translate(0, 0)         scale(1);    }
+  50%  { transform: translate(50px, -70px)  scale(1.15); }
+  100% { transform: translate(-60px, 20px)  scale(0.92); }
+}
+@keyframes biAuroraDriftD {
+  0%   { transform: translate(0, 0)        scale(1);    }
+  50%  { transform: translate(-70px, 80px) scale(1.1);  }
+  100% { transform: translate(30px, 40px)  scale(0.95); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-aurora-blob { animation: none; }
+}
+
 /* ═══ Hero Design Partner chip — scarcity signal directly under
        hero CTAs. Copy sourced from lib/pricing.js DESIGN_PARTNER so
        the slots/discount numbers stay in a single source of truth. */
@@ -1751,7 +1872,7 @@ input, textarea, select {
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), background-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-hero-partner-chip:hover,
 .bi-hero-partner-chip:focus-visible {
@@ -1777,7 +1898,7 @@ input, textarea, select {
   color: #155E75;
   font-weight: 900;
   margin-inline-start: 2px;
-  transition: transform .2s ease;
+  transition: transform .2s var(--bi-ease-breath);
 }
 .bi-hero-partner-chip:hover .arrow { transform: translateX(2px); }
 @keyframes biPartnerPulse {
@@ -1810,7 +1931,7 @@ input, textarea, select {
   gap: 12px;
   position: relative;
   overflow: hidden;
-  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-evidence-card::before {
   content: "";
@@ -1820,7 +1941,7 @@ input, textarea, select {
   block-size: 2px;
   background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, #22D3EE 55%, transparent) 50%, transparent 100%);
   opacity: 0;
-  transition: opacity .22s ease;
+  transition: opacity .22s var(--bi-ease-breath);
 }
 .bi-evidence-card:hover,
 .bi-evidence-card:focus-within {
@@ -1921,7 +2042,7 @@ input, textarea, select {
   border-radius: 14px;
   border: 1px solid var(--bi-border);
   background: var(--bi-surface);
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-market-band:hover {
   transform: translateX(2px);
@@ -2058,7 +2179,7 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-persona-card:hover {
   border-color: color-mix(in srgb, #22D3EE 40%, var(--bi-border));
@@ -2262,7 +2383,7 @@ input, textarea, select {
   border-radius: 999px;
   border: 1px solid var(--bi-border);
   background: var(--bi-bg);
-  transition: color .2s ease, border-color .2s ease;
+  transition: color .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath);
 }
 .bi-int-item:hover {
   color: var(--bi-text);
@@ -2383,7 +2504,7 @@ input, textarea, select {
   gap: 8px;
   text-decoration: none;
   color: var(--bi-text);
-  transition: background .2s ease, color .2s ease;
+  transition: background .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath);
   min-block-size: 108px;
 }
 .bi-cred-card:hover,
@@ -2413,7 +2534,7 @@ input, textarea, select {
   font-family: var(--font-mono);
   font-size: 18px;
   color: color-mix(in srgb, #22D3EE 70%, var(--bi-text-muted));
-  transition: transform .25s ease, color .25s ease;
+  transition: transform .25s var(--bi-ease-breath), color .25s var(--bi-ease-breath);
 }
 .bi-cred-card:hover .bi-cred-arrow,
 .bi-cred-card:focus-visible .bi-cred-arrow {
@@ -2441,7 +2562,7 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  transition: border-color .2s ease, transform .2s ease, background .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath);
 }
 .bi-pricing-peek-tier:hover {
   transform: translateY(-2px);
@@ -2511,7 +2632,7 @@ a.bi-pricing-peek-cta {
   font-weight: 800;
   text-decoration: none !important;
   box-shadow: 0 10px 30px -10px color-mix(in srgb, #22D3EE 60%, transparent);
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: transform .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath);
 }
 .bi-pricing-peek-cta:hover {
   transform: translateY(-1px);
@@ -2543,7 +2664,7 @@ a.bi-pricing-peek-cta {
   letter-spacing: 0.14em;
   text-decoration: none;
   cursor: pointer;
-  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 a.bi-partner-trigger { text-decoration: none; }
 .bi-partner-trigger:hover,
@@ -2686,7 +2807,7 @@ a.bi-partner-trigger { text-decoration: none; }
   text-transform: uppercase;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-video-cta:hover { border-color: #22D3EE; transform: translateY(-1px); }
 .bi-video-cta .play {
@@ -2902,7 +3023,7 @@ a.bi-partner-trigger { text-decoration: none; }
   font: inherit;
   cursor: pointer;
   letter-spacing: inherit; text-transform: inherit;
-  transition: color .18s ease, border-color .18s ease;
+  transition: color .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath);
 }
 .bi-verify-helpers a:hover,
 .bi-verify-helpers button:hover { color: #22D3EE; border-color: #22D3EE; }
@@ -2940,7 +3061,7 @@ a.bi-partner-trigger { text-decoration: none; }
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 700;
-  transition: color .18s ease, border-color .18s ease, background .18s ease;
+  transition: color .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath), background .18s var(--bi-ease-breath);
 }
 .bi-verify-edit-btn:hover,
 .bi-verify-edit-btn:focus-visible {
@@ -2968,7 +3089,7 @@ a.bi-partner-trigger { text-decoration: none; }
   font-family: inherit;
   line-height: 1.3;
   outline: none;
-  transition: border-color .18s ease, box-shadow .18s ease;
+  transition: border-color .18s var(--bi-ease-breath), box-shadow .18s var(--bi-ease-breath);
 }
 .bi-verify-edit-input:focus-visible {
   border-color: color-mix(in srgb, #22D3EE 70%, var(--bi-border));
@@ -2993,7 +3114,7 @@ a.bi-partner-trigger { text-decoration: none; }
   text-transform: uppercase;
   font-weight: 700;
   cursor: pointer;
-  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+  transition: transform .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath), background .18s var(--bi-ease-breath);
 }
 .bi-verify-edit-save {
   border: 1px solid #22D3EE;
@@ -3146,7 +3267,7 @@ a.bi-partner-trigger { text-decoration: none; }
   text-transform: uppercase;
   font-weight: 700;
   text-decoration: none;
-  transition: border-color .18s ease, transform .18s ease;
+  transition: border-color .18s var(--bi-ease-breath), transform .18s var(--bi-ease-breath);
 }
 .bi-verify-providers a:hover {
   border-color: color-mix(in srgb, #22D3EE 60%, var(--bi-border));
@@ -3323,7 +3444,7 @@ a.bi-partner-trigger { text-decoration: none; }
   background: color-mix(in srgb, #fff 2%, transparent);
   cursor: pointer;
   user-select: none;
-  transition: border-color .18s ease, background-color .18s ease;
+  transition: border-color .18s var(--bi-ease-breath), background-color .18s var(--bi-ease-breath);
 }
 .bi-remember-row:hover {
   border-color: color-mix(in srgb, #22D3EE 40%, var(--bi-border));
@@ -3340,7 +3461,7 @@ a.bi-partner-trigger { text-decoration: none; }
   cursor: pointer;
   position: relative;
   flex: none;
-  transition: border-color .15s ease, background-color .15s ease;
+  transition: border-color .15s var(--bi-ease-breath), background-color .15s var(--bi-ease-breath);
 }
 .bi-remember-row input[type="checkbox"]:checked {
   border-color: #22D3EE;
@@ -3383,7 +3504,7 @@ a.bi-partner-trigger { text-decoration: none; }
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
-  transition: color .18s ease, background-color .18s ease;
+  transition: color .18s var(--bi-ease-breath), background-color .18s var(--bi-ease-breath);
 }
 .bi-mfa-backup-toggle button:hover {
   color: #22D3EE;
@@ -3483,7 +3604,7 @@ a.bi-partner-trigger { text-decoration: none; }
    icon when the <details> is open. */
 .bi-rank-ladder > summary { list-style: none; }
 .bi-rank-ladder > summary::-webkit-details-marker { display: none; }
-.bi-rank-ladder > summary svg { transition: transform .2s ease; }
+.bi-rank-ladder > summary svg { transition: transform .2s var(--bi-ease-breath); }
 .bi-rank-ladder[open] > summary svg { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) {
   .bi-rank-ladder > summary svg { transition: none; }
@@ -3794,7 +3915,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 .bi-prose li::marker { color: var(--bi-accent); }
 
 /* Interactive card wrapper — used on hub/listing pages */
-.bi-card-link { display: block; color: inherit; text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.bi-card-link { display: block; color: inherit; text-decoration: none; transition: transform 0.2s var(--bi-ease-breath), box-shadow 0.2s var(--bi-ease-breath), border-color 0.2s var(--bi-ease-breath); }
 .bi-card-link:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -20px var(--bi-accent); border-color: var(--bi-accent) !important; }
 .bi-card-link:focus-visible { outline: none; box-shadow: var(--bi-focus-ring); transform: translateY(-1px); }
 @media (prefers-reduced-motion: reduce) {
@@ -3838,11 +3959,11 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 }
 
 /* Footer / generic subtle link hover inside marketing shell */
-.bi-shell-footer-link { transition: color 0.15s ease; }
+.bi-shell-footer-link { transition: color 0.15s var(--bi-ease-breath); }
 .bi-shell-footer-link:hover { color: var(--bi-text); text-decoration: underline; text-underline-offset: 2px; }
 
 /* Profile row-style links (Ciencia & Resultados) */
-.bi-row-link { transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease; }
+.bi-row-link { transition: background 0.15s var(--bi-ease-breath), border-color 0.15s var(--bi-ease-breath), transform 0.15s var(--bi-ease-breath); }
 .bi-row-link:hover { border-color: var(--bi-accent) !important; transform: translateX(2px); }
 .bi-row-link:focus-visible { outline: none; box-shadow: var(--bi-focus-ring); }
 @media (prefers-reduced-motion: reduce) {
@@ -3850,7 +3971,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 }
 
 /* Auth form links — subtle underline on hover, accent-tinted */
-.bi-auth-link { transition: color 0.15s ease, text-decoration-color 0.15s ease; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; text-decoration-thickness: 1px; }
+.bi-auth-link { transition: color 0.15s var(--bi-ease-breath), text-decoration-color 0.15s var(--bi-ease-breath); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; text-decoration-thickness: 1px; }
 .bi-auth-link:hover { text-decoration-color: currentColor; color: var(--bi-accent); }
 .bi-auth-link:focus-visible { outline: none; box-shadow: var(--bi-focus-ring); border-radius: 4px; }
 
@@ -4026,7 +4147,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   border-radius: 16px;
   background: linear-gradient(155deg, rgba(34, 211, 238, 0.04), rgba(11, 14, 19, 0.6));
   border: 1px solid rgba(34, 211, 238, 0.12);
-  transition: transform 200ms ease, border-color 200ms ease;
+  transition: transform 200ms var(--bi-ease-breath), border-color 200ms var(--bi-ease-breath);
 }
 @media (hover: hover) {
   .bi-pwa-benefit:hover {
@@ -4075,7 +4196,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--color-text, #E5E7EB);
   text-decoration: none;
-  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms ease, box-shadow 160ms ease;
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms var(--bi-ease-breath), box-shadow 160ms var(--bi-ease-breath);
 }
 @media (hover: hover) {
   .bi-pwa-badge:hover {
@@ -4156,7 +4277,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   letter-spacing: -0.01em;
   text-decoration: none;
   box-shadow: 0 12px 30px -8px rgba(34, 211, 238, 0.5);
-  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms ease;
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms var(--bi-ease-breath);
 }
 @media (hover: hover) {
   .bi-pwa-cta-primary:hover {
@@ -4176,7 +4297,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition: border-color 160ms var(--bi-ease-breath), background 160ms var(--bi-ease-breath);
 }
 @media (hover: hover) {
   .bi-pwa-cta-secondary:hover {
@@ -4278,7 +4399,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
     0 24px 52px -22px rgba(15, 23, 42, 0.22),
     0 8px 22px -14px color-mix(in srgb, #22D3EE 22%, transparent);
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 500ms ease;
+    box-shadow 500ms var(--bi-ease-breath);
 }
 .bi-kit-fig-featured svg.bi-kit-svg {
   transform: perspective(1200px) rotateY(-4deg) rotateX(2deg);
@@ -4331,7 +4452,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: border-color 240ms ease, transform 240ms ease;
+  transition: border-color 240ms var(--bi-ease-breath), transform 240ms var(--bi-ease-breath);
 }
 .bi-kit-var:hover {
   border-color: color-mix(in srgb, #22D3EE 36%, var(--bi-border));
@@ -4414,7 +4535,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: border-color 240ms ease, transform 240ms ease;
+  transition: border-color 240ms var(--bi-ease-breath), transform 240ms var(--bi-ease-breath);
 }
 .bi-kit-fleet-list li:hover {
   border-color: color-mix(in srgb, #22D3EE 40%, var(--bi-border));
@@ -4501,14 +4622,14 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   letter-spacing: 0.01em;
   text-decoration: none;
   box-shadow: 0 12px 30px -14px color-mix(in srgb, #22D3EE 70%, transparent);
-  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease, filter 200ms ease;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms var(--bi-ease-breath), filter 200ms var(--bi-ease-breath);
 }
 .bi-kit-cta-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 18px 40px -16px color-mix(in srgb, #22D3EE 85%, transparent);
   filter: brightness(1.06);
 }
-.bi-kit-cta-primary .arrow { transition: transform 200ms ease; }
+.bi-kit-cta-primary .arrow { transition: transform 200ms var(--bi-ease-breath); }
 .bi-kit-cta-primary:hover .arrow { transform: translateX(3px); }
 .bi-kit-cta-secondary {
   display: inline-flex;
@@ -4521,7 +4642,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   font-size: 15px;
   text-decoration: none;
   background: color-mix(in srgb, var(--bi-surface) 80%, transparent);
-  transition: border-color 200ms ease, transform 200ms ease;
+  transition: border-color 200ms var(--bi-ease-breath), transform 200ms var(--bi-ease-breath);
 }
 .bi-kit-cta-secondary:hover {
   border-color: #22D3EE;
@@ -4564,7 +4685,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: border-color 240ms ease;
+  transition: border-color 240ms var(--bi-ease-breath);
 }
 .bi-kit-flow-step:hover { border-color: color-mix(in srgb, #22D3EE 36%, var(--bi-border)); }
 .bi-kit-flow-step .n {
@@ -4679,7 +4800,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   .bi-announce [style*="biAnnouncePulse"] { animation: none !important; }
 }
 .bi-status-pulse {
-  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+  transition: border-color 200ms var(--bi-ease-breath), background 200ms var(--bi-ease-breath), transform 200ms var(--bi-ease-breath);
 }
 .bi-status-pulse:hover {
   transform: translateY(-1px);
@@ -4707,7 +4828,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   box-shadow: 0 0 10px rgba(34,211,238,0.55);
   z-index: 9998;
   pointer-events: none;
-  transition: opacity 200ms ease;
+  transition: opacity 200ms var(--bi-ease-breath);
   will-change: transform;
 }
 .bi-back-to-top {
@@ -4731,7 +4852,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   opacity: 0;
   transform: translateY(8px) scale(0.95);
   pointer-events: none;
-  transition: opacity 200ms ease, transform 200ms ease, background 200ms ease, border-color 200ms ease, color 200ms ease;
+  transition: opacity 200ms var(--bi-ease-breath), transform 200ms var(--bi-ease-breath), background 200ms var(--bi-ease-breath), border-color 200ms var(--bi-ease-breath), color 200ms var(--bi-ease-breath);
 }
 .bi-back-to-top[data-visible="true"] {
   opacity: 1;
@@ -4761,12 +4882,12 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   .bi-shell-brand-glyph,
   .bi-shell-wordmark {
     transition:
-      background 240ms ease,
-      padding 240ms ease,
-      font-size 240ms ease,
-      letter-spacing 240ms ease,
-      transform 240ms ease,
-      box-shadow 240ms ease;
+      background 240ms var(--bi-ease-breath),
+      padding 240ms var(--bi-ease-breath),
+      font-size 240ms var(--bi-ease-breath),
+      letter-spacing 240ms var(--bi-ease-breath),
+      transform 240ms var(--bi-ease-breath),
+      box-shadow 240ms var(--bi-ease-breath);
   }
   :root[data-scrolled="true"] .bi-shell-header {
     background: color-mix(in srgb, var(--bi-bg) 94%, transparent);
@@ -4802,7 +4923,7 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
   box-shadow: 0 14px 38px -18px rgba(34,211,238,0.55), 0 4px 12px rgba(0,0,0,0.25);
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity 220ms var(--bi-ease-breath), transform 220ms var(--bi-ease-breath);
   pointer-events: none;
 }
 .bi-mobile-sticky-cta[data-visible="true"] {
@@ -5077,7 +5198,7 @@ html:not(.theme-dim) .bi-ambient-lattice { opacity: 0.08; }
     transparent 60%
   );
   opacity: 0;
-  transition: opacity .3s ease;
+  transition: opacity .3s var(--bi-ease-breath);
   z-index: 0;
 }
 .bi-spot:hover::before,
@@ -5089,7 +5210,7 @@ html:not(.theme-dim) .bi-ambient-lattice { opacity: 0.08; }
 
 /* Bento card hover lift + phosphor border */
 .bi-bento-card {
-  transition: border-color .3s ease, transform .3s ease, box-shadow .3s ease;
+  transition: border-color .3s var(--bi-ease-breath), transform .3s var(--bi-ease-breath), box-shadow .3s var(--bi-ease-breath);
 }
 .bi-bento-card:hover {
   border-color: color-mix(in srgb, #22D3EE 45%, var(--bi-border)) !important;
@@ -5098,11 +5219,11 @@ html:not(.theme-dim) .bi-ambient-lattice { opacity: 0.08; }
 }
 
 /* Persona card hover uplift */
-.bi-persona-card { transition: border-color .25s ease, transform .25s ease, box-shadow .25s ease; }
+.bi-persona-card { transition: border-color .25s var(--bi-ease-breath), transform .25s var(--bi-ease-breath), box-shadow .25s var(--bi-ease-breath); }
 
 /* Integration strip items — phosphor highlight on hover */
 .bi-int-item {
-  transition: border-color .2s ease, color .2s ease, background .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-int-item:hover {
   border-color: color-mix(in srgb, #22D3EE 60%, var(--bi-border));
@@ -5123,7 +5244,7 @@ html:not(.theme-dim) .bi-ambient-lattice { opacity: 0.08; }
   inset: 0;
   background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%);
   transform: translateX(-100%);
-  transition: transform .75s ease;
+  transition: transform .75s var(--bi-ease-breath);
   pointer-events: none;
   z-index: -1;
 }
@@ -5150,7 +5271,7 @@ html:not(.theme-dim) .bi-ambient-lattice { opacity: 0.08; }
   border-radius: 14px;
   background: var(--bi-surface);
   overflow: hidden;
-  transition: border-color .25s ease, background .25s ease;
+  transition: border-color .25s var(--bi-ease-breath), background .25s var(--bi-ease-breath);
 }
 .bi-faq-item[open] {
   border-color: color-mix(in srgb, #22D3EE 35%, var(--bi-border));
@@ -5186,7 +5307,7 @@ html:not(.theme-dim) .bi-ambient-lattice { opacity: 0.08; }
   place-items: center;
   font-size: 16px;
   line-height: 1;
-  transition: transform .25s ease, background .25s ease;
+  transition: transform .25s var(--bi-ease-breath), background .25s var(--bi-ease-breath);
   flex: none;
 }
 .bi-faq-item[open] > summary .chev {
@@ -5224,7 +5345,7 @@ a.bi-trial-cta {
   text-transform: uppercase;
   letter-spacing: 0.14em;
   text-decoration: none !important;
-  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trial-cta:hover,
 .bi-trial-cta:focus-visible {
@@ -5295,7 +5416,7 @@ a.bi-trial-cta {
   opacity: 0;
   transform: translateY(-6px);
   pointer-events: none;
-  transition: opacity .25s ease, transform .25s ease;
+  transition: opacity .25s var(--bi-ease-breath), transform .25s var(--bi-ease-breath);
 }
 .bi-pricing-nav.is-visible {
   opacity: 1;
@@ -5331,7 +5452,7 @@ a.bi-trial-cta {
   text-transform: uppercase;
   color: var(--bi-text-muted);
   text-decoration: none;
-  transition: color .2s ease, background .2s ease;
+  transition: color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath);
   white-space: nowrap;
 }
 .bi-pricing-nav-item:hover { color: var(--bi-text); }
@@ -5374,7 +5495,7 @@ a.bi-trial-cta {
   );
   pointer-events: none;
   z-index: 0;
-  transition: background .12s ease;
+  transition: background .12s var(--bi-ease-breath);
 }
 .bi-roi-slider-wrap input[type="range"] {
   inline-size: 100%;
@@ -5399,7 +5520,7 @@ a.bi-trial-cta {
   border-radius: 1px;
   transform: translateX(-1px);
   inset-inline-start: var(--bi-tick-pos);
-  transition: background .2s ease, block-size .2s ease;
+  transition: background .2s var(--bi-ease-breath), block-size .2s var(--bi-ease-breath);
 }
 .bi-roi-tick[data-active="true"] {
   background: #22D3EE;
@@ -5458,7 +5579,7 @@ a.bi-trial-cta {
 }
 
 a.bi-data-card {
-  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+  transition: border-color .18s var(--bi-ease-breath), transform .18s var(--bi-ease-breath), box-shadow .18s var(--bi-ease-breath);
 }
 a.bi-data-card:hover {
   border-color: color-mix(in srgb, #22D3EE 55%, var(--bi-border)) !important;
@@ -5528,7 +5649,7 @@ html.theme-dim .bi-pricing-card .bi-refined {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 600;
-  transition: color .2s ease, background .2s ease;
+  transition: color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath);
   user-select: none;
 }
 .bi-pricing-legal-summary::-webkit-details-marker { display: none; }
@@ -5550,7 +5671,7 @@ html.theme-dim .bi-pricing-card .bi-refined {
   color: var(--bi-text-muted);
 }
 .bi-pricing-legal-hint .chev {
-  transition: transform .2s ease;
+  transition: transform .2s var(--bi-ease-breath);
   display: inline-block;
 }
 .bi-pricing-legal[open] .bi-pricing-legal-hint .chev { transform: rotate(180deg); }
@@ -5618,7 +5739,7 @@ html.theme-dim .bi-pricing-card .bi-refined {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  transition: border-color .25s ease, background .25s ease, transform .25s ease;
+  transition: border-color .25s var(--bi-ease-breath), background .25s var(--bi-ease-breath), transform .25s var(--bi-ease-breath);
 }
 .bi-trust-badge:hover {
   transform: translateY(-1px);
@@ -5737,7 +5858,7 @@ a.bi-demo-alt-link {
   text-decoration: none !important;
   border-block-end: 1px solid color-mix(in srgb, #22D3EE 50%, transparent);
   padding-block-end: 1px;
-  transition: color .2s ease, border-color .2s ease;
+  transition: color .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath);
 }
 .bi-demo-alt-link:hover,
 .bi-demo-alt-link:focus-visible {
@@ -5897,7 +6018,7 @@ a.bi-demo-alt-link {
   text-decoration: none !important;
   border-block-end: 1px solid color-mix(in srgb, #22D3EE 50%, transparent);
   padding-block-end: 1px;
-  transition: border-color .2s ease, color .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath);
 }
 .bi-demo-hero-bullets a:hover,
 .bi-demo-hero-bullets a:focus-visible {
@@ -5952,7 +6073,7 @@ a.bi-demo-hero-chip-more {
   color: var(--bi-text-muted);
   text-decoration: none !important;
   padding: 6px 4px;
-  transition: color .2s ease;
+  transition: color .2s var(--bi-ease-breath);
 }
 .bi-demo-hero-chip-more:hover,
 .bi-demo-hero-chip-more:focus-visible {
@@ -6226,7 +6347,7 @@ a.bi-demo-closing-primary {
     0 0 0 1px color-mix(in srgb, #22D3EE 40%, transparent),
     0 18px 40px -14px color-mix(in srgb, #22D3EE 75%, transparent),
     0 0 48px -12px color-mix(in srgb, #FDE68A 45%, transparent);
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: transform .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath);
   position: relative;
   overflow: clip;
   isolation: isolate;
@@ -6242,7 +6363,7 @@ a.bi-demo-closing-primary {
     transparent 100%);
   opacity: 0;
   transform: translateX(-120%);
-  transition: opacity .2s ease, transform .6s cubic-bezier(.2, .8, .2, 1);
+  transition: opacity .2s var(--bi-ease-breath), transform .6s cubic-bezier(.2, .8, .2, 1);
   pointer-events: none;
 }
 .bi-demo-closing-primary:hover::before {
@@ -6258,7 +6379,7 @@ a.bi-demo-closing-primary {
 }
 .bi-demo-closing-primary-arrow {
   margin-inline-start: 12px;
-  transition: transform .2s ease;
+  transition: transform .2s var(--bi-ease-breath);
 }
 .bi-demo-closing-primary:hover { transform: translateY(-1px); }
 .bi-demo-closing-primary:hover .bi-demo-closing-primary-arrow { transform: translateY(-2px); }
@@ -6280,9 +6401,9 @@ a.bi-demo-closing-ghost {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none !important;
-  transition: border-color .18s ease, color .18s ease, background-color .18s ease, transform .18s ease;
+  transition: border-color .18s var(--bi-ease-breath), color .18s var(--bi-ease-breath), background-color .18s var(--bi-ease-breath), transform .18s var(--bi-ease-breath);
 }
-.bi-demo-closing-ghost svg { color: color-mix(in srgb, var(--bi-text) 75%, var(--bi-text-muted)); transition: color .18s ease; }
+.bi-demo-closing-ghost svg { color: color-mix(in srgb, var(--bi-text) 75%, var(--bi-text-muted)); transition: color .18s var(--bi-ease-breath); }
 .bi-demo-closing-ghost:hover,
 .bi-demo-closing-ghost:focus-visible {
   color: #22D3EE !important;
@@ -6452,7 +6573,7 @@ a.bi-demo-closing-ghost {
   background: color-mix(in srgb, var(--bi-surface) 70%, transparent);
   overflow: clip;
   isolation: isolate;
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-evid-method-card::before {
   content: "";
@@ -6585,7 +6706,7 @@ a.bi-evid-toc-link {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none !important;
-  transition: color .18s ease;
+  transition: color .18s var(--bi-ease-breath);
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -6618,7 +6739,7 @@ a.bi-evid-toc-link {
   scroll-margin-block-start: 84px;
   overflow: clip;
   isolation: isolate;
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-evid-card::before {
   content: "";
@@ -6680,7 +6801,7 @@ a.bi-evid-card-permalink {
   font-family: var(--font-mono);
   letter-spacing: 0.04em;
   text-decoration: none !important;
-  transition: color .18s ease;
+  transition: color .18s var(--bi-ease-breath);
 }
 .bi-evid-card-permalink:hover,
 .bi-evid-card-permalink:focus-visible {
@@ -6749,7 +6870,7 @@ a.bi-evid-card-permalink {
   border-inline-start: 2px solid color-mix(in srgb, var(--evid-accent) 35%, var(--bi-border));
   background: color-mix(in srgb, var(--bi-surface) 40%, transparent);
   border-radius: 0 10px 10px 0;
-  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+  transition: background-color .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath), transform .18s var(--bi-ease-breath);
 }
 .bi-evid-study:hover {
   background: color-mix(in srgb, var(--bi-surface) 70%, transparent);
@@ -6830,7 +6951,7 @@ a.bi-evid-study-doi {
   text-decoration: none !important;
   padding-block-end: 1px;
   border-block-end: 1px solid color-mix(in srgb, var(--evid-accent) 35%, transparent);
-  transition: color .18s ease, border-color .18s ease;
+  transition: color .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath);
 }
 .bi-evid-study-doi:hover,
 .bi-evid-study-doi:focus-visible {
@@ -6931,7 +7052,7 @@ a.bi-trust-meta-mail {
   text-decoration: none !important;
   border-block-end: 1px solid color-mix(in srgb, #22D3EE 50%, transparent);
   padding-block-end: 1px;
-  transition: color .2s ease, border-color .2s ease;
+  transition: color .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath);
   letter-spacing: 0.08em;
   text-transform: none;
   font-weight: 600;
@@ -7202,7 +7323,7 @@ a.bi-trust-package-item {
   background: color-mix(in srgb, var(--bi-surface) 60%, transparent);
   text-decoration: none !important;
   color: var(--bi-text);
-  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
   overflow: clip;
 }
 .bi-trust-package-item::before {
@@ -7215,7 +7336,7 @@ a.bi-trust-package-item {
   background: linear-gradient(90deg, #22D3EE 0%, #A78BFA 100%);
   border-start-start-radius: inherit;
   opacity: 0.6;
-  transition: inline-size .2s ease, opacity .2s ease;
+  transition: inline-size .2s var(--bi-ease-breath), opacity .2s var(--bi-ease-breath);
 }
 .bi-trust-package-item:hover,
 .bi-trust-package-item:focus-visible {
@@ -7274,7 +7395,7 @@ a.bi-trust-package-item {
   font-family: var(--font-mono);
   font-size: 16px;
   color: color-mix(in srgb, #22D3EE 70%, var(--bi-text-muted));
-  transition: transform .2s ease, color .2s ease;
+  transition: transform .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath);
 }
 .bi-trust-package-item:hover .bi-trust-package-arrow,
 .bi-trust-package-item:focus-visible .bi-trust-package-arrow {
@@ -7305,7 +7426,7 @@ a.bi-trust-package-cta {
   text-transform: uppercase;
   font-weight: 800;
   text-decoration: none !important;
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: transform .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath);
   box-shadow: 0 0 0 0 color-mix(in srgb, #22D3EE 0%, transparent);
 }
 .bi-trust-package-cta:hover,
@@ -7436,7 +7557,7 @@ a.bi-trust-incidents-link {
   text-decoration: none !important;
   border-block-end: 1px solid color-mix(in srgb, #22D3EE 50%, transparent);
   padding-block-end: 1px;
-  transition: color .2s ease, border-color .2s ease;
+  transition: color .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath);
 }
 .bi-trust-incidents-link:hover,
 .bi-trust-incidents-link:focus-visible {
@@ -7468,7 +7589,7 @@ a.bi-trust-doc {
   background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
   text-decoration: none !important;
   color: var(--bi-text);
-  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trust-doc:hover,
 .bi-trust-doc:focus-visible {
@@ -7498,7 +7619,7 @@ a.bi-trust-doc {
   font-family: var(--font-mono);
   font-size: 16px;
   color: color-mix(in srgb, #22D3EE 70%, var(--bi-text-muted));
-  transition: transform .2s ease, color .2s ease;
+  transition: transform .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath);
 }
 .bi-trust-doc:hover .bi-trust-doc-arrow,
 .bi-trust-doc:focus-visible .bi-trust-doc-arrow {
@@ -7534,7 +7655,7 @@ a.bi-trust-hero-cta {
   font-weight: 700;
   letter-spacing: 0.01em;
   text-decoration: none !important;
-  transition: transform .2s ease, background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+  transition: transform .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath);
   white-space: nowrap;
 }
 .bi-trust-hero-cta--primary,
@@ -7565,7 +7686,7 @@ a.bi-trust-hero-cta--ghost {
 .bi-trust-hero-cta-arrow {
   font-family: var(--font-mono);
   font-weight: 700;
-  transition: transform .2s ease;
+  transition: transform .2s var(--bi-ease-breath);
 }
 .bi-trust-hero-cta--primary:hover .bi-trust-hero-cta-arrow,
 .bi-trust-hero-cta--primary:focus-visible .bi-trust-hero-cta-arrow {
@@ -7654,7 +7775,7 @@ a.bi-trust-nav-chip {
   color: var(--bi-text-muted);
   text-decoration: none !important;
   border: 1px solid transparent;
-  transition: color .2s ease, background .2s ease, border-color .2s ease;
+  transition: color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath);
   white-space: nowrap;
 }
 .bi-trust-nav-chip:hover,
@@ -7702,7 +7823,7 @@ a.bi-trust-nav-chip.is-active {
     color-mix(in srgb, var(--bi-surface) 55%, transparent),
     color-mix(in srgb, var(--bi-surface) 30%, transparent)
   );
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trust-principle::before {
   content: "";
@@ -7720,7 +7841,7 @@ a.bi-trust-nav-chip.is-active {
   transform: translateY(-2px);
   box-shadow: 0 18px 46px -28px color-mix(in srgb, #22D3EE 55%, transparent);
 }
-.bi-trust-principle:hover::before { inline-size: 72%; opacity: 1; transition: inline-size .28s ease, opacity .2s ease; }
+.bi-trust-principle:hover::before { inline-size: 72%; opacity: 1; transition: inline-size .28s var(--bi-ease-breath), opacity .2s var(--bi-ease-breath); }
 .bi-trust-principle-n {
   font-family: var(--font-mono);
   font-size: 34px;
@@ -7821,7 +7942,7 @@ a.bi-trust-disclosure-cta {
   color: var(--bi-text);
   border: 1px solid color-mix(in srgb, #A78BFA 45%, var(--bi-border));
   background: color-mix(in srgb, #A78BFA 8%, transparent);
-  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  transition: background .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trust-disclosure-cta:hover,
 .bi-trust-disclosure-cta:focus-visible {
@@ -7979,7 +8100,7 @@ a.bi-trust-approval-cta {
   text-decoration: none !important;
   border: 1px solid color-mix(in srgb, #10B981 45%, var(--bi-border));
   background: color-mix(in srgb, #10B981 8%, transparent);
-  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  transition: background .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trust-approval-cta:hover,
 .bi-trust-approval-cta:focus-visible {
@@ -8034,7 +8155,7 @@ a.bi-trust-approval-cta {
   opacity: 0;
   transform: translateY(8px) scale(0.9);
   pointer-events: none;
-  transition: opacity .24s ease, transform .24s ease, border-color .2s ease, background .2s ease;
+  transition: opacity .24s var(--bi-ease-breath), transform .24s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath);
   z-index: 15;
   box-shadow: 0 8px 24px -12px color-mix(in srgb, #000 60%, transparent);
 }
@@ -8054,7 +8175,7 @@ a.bi-trust-approval-cta {
   .bi-trust-top { inset-block-end: 18px; inset-inline-end: 18px; inline-size: 40px; block-size: 40px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bi-trust-top { transition: opacity .2s ease; transform: none !important; }
+  .bi-trust-top { transition: opacity .2s var(--bi-ease-breath); transform: none !important; }
 }
 
 /* ═══ TRUST · clipboard toast ═══ */
@@ -8077,7 +8198,7 @@ a.bi-trust-approval-cta {
   text-transform: uppercase;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .24s ease, transform .24s ease;
+  transition: opacity .24s var(--bi-ease-breath), transform .24s var(--bi-ease-breath);
   z-index: 18;
   box-shadow: 0 10px 28px -12px color-mix(in srgb, #10B981 40%, transparent);
 }
@@ -8093,7 +8214,7 @@ a.bi-trust-approval-cta {
   font-weight: 800;
 }
 @media (prefers-reduced-motion: reduce) {
-  .bi-trust-toast { transition: opacity .2s ease; }
+  .bi-trust-toast { transition: opacity .2s var(--bi-ease-breath); }
 }
 
 /* ═══ TRUST · copy-to-clipboard button ═══ */
@@ -8114,7 +8235,7 @@ a.bi-trust-approval-cta {
   cursor: pointer;
   text-align: start;
   word-break: break-word;
-  transition: background .16s ease, border-color .16s ease;
+  transition: background .16s var(--bi-ease-breath), border-color .16s var(--bi-ease-breath);
 }
 .bi-trust-copy:hover,
 .bi-trust-copy:focus-visible {
@@ -8129,7 +8250,7 @@ a.bi-trust-approval-cta {
   color: color-mix(in srgb, #22D3EE 80%, var(--bi-text-muted));
   flex-shrink: 0;
   opacity: 0.7;
-  transition: opacity .16s ease, color .16s ease;
+  transition: opacity .16s var(--bi-ease-breath), color .16s var(--bi-ease-breath);
 }
 .bi-trust-copy:hover .bi-trust-copy-icon,
 .bi-trust-copy:focus-visible .bi-trust-copy-icon {
@@ -8143,7 +8264,7 @@ a.bi-trust-approval-cta {
 
 /* ═══ TRUST · table row hover + subtle zebra ═══ */
 .bi-trust-table tbody tr {
-  transition: background .16s ease;
+  transition: background .16s var(--bi-ease-breath);
 }
 .bi-trust-table tbody tr:hover {
   background: color-mix(in srgb, #22D3EE 5%, transparent);
@@ -8168,7 +8289,7 @@ section[aria-labelledby^="trust-"] h2[id^="trust-"]::before {
   font-weight: 700;
   color: color-mix(in srgb, #22D3EE 75%, var(--bi-text-muted));
   opacity: 0;
-  transition: opacity .18s ease;
+  transition: opacity .18s var(--bi-ease-breath);
   pointer-events: none;
 }
 section[aria-labelledby^="trust-"]:hover h2[id^="trust-"]::before,
@@ -8282,7 +8403,7 @@ section[aria-labelledby^="trust-"]:focus-within h2[id^="trust-"]::before {
 
 /* Controls — rainbow accent stripe per card */
 .bi-trust-controls-grid .bi-how-step {
-  transition: background .25s ease, transform .25s ease;
+  transition: background .25s var(--bi-ease-breath), transform .25s var(--bi-ease-breath);
 }
 .bi-trust-controls-grid .bi-how-step::after {
   content: "";
@@ -8292,7 +8413,7 @@ section[aria-labelledby^="trust-"]:focus-within h2[id^="trust-"]::before {
   inline-size: 3px;
   background: var(--accent, #22D3EE);
   opacity: 0;
-  transition: opacity .25s ease;
+  transition: opacity .25s var(--bi-ease-breath);
   pointer-events: none;
 }
 .bi-trust-controls-grid .bi-how-step:nth-child(4n+1) { --accent: #22D3EE; }
@@ -8351,7 +8472,7 @@ section[aria-labelledby^="trust-"]:focus-within h2[id^="trust-"]::before {
   letter-spacing: 0.14em;
   line-height: 1.2;
   margin-block-start: 1px;
-  transition: background .25s ease, color .25s ease, border-color .25s ease;
+  transition: background .25s var(--bi-ease-breath), color .25s var(--bi-ease-breath), border-color .25s var(--bi-ease-breath);
 }
 .bi-faq-q {
   flex: 1 1 auto;
@@ -8408,7 +8529,7 @@ a.bi-team-tab {
   font-size: 13.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  transition: background .18s ease, border-color .18s ease, color .18s ease;
+  transition: background .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath), color .18s var(--bi-ease-breath);
 }
 .bi-team-tab:hover,
 .bi-team-tab:focus-visible {
@@ -8424,7 +8545,7 @@ a.bi-team-tab {
 }
 .bi-team-row {
   border-block-start: 1px solid var(--bi-border);
-  transition: background .15s ease;
+  transition: background .15s var(--bi-ease-breath);
 }
 .bi-team-row:hover {
   background: color-mix(in srgb, #22D3EE 3%, transparent);
@@ -8486,7 +8607,7 @@ a.bi-team-context-link {
   text-transform: uppercase;
   letter-spacing: 0.18em;
   font-weight: 700;
-  transition: color .18s ease;
+  transition: color .18s var(--bi-ease-breath);
 }
 .bi-team-context-link:hover,
 .bi-team-context-link:focus-visible {
@@ -8525,7 +8646,7 @@ a.bi-team-range-btn {
   letter-spacing: 0.1em;
   color: var(--bi-text-muted);
   text-decoration: none;
-  transition: background .18s ease, color .18s ease;
+  transition: background .18s var(--bi-ease-breath), color .18s var(--bi-ease-breath);
 }
 .bi-team-range-btn:hover,
 .bi-team-range-btn:focus-visible {
@@ -8557,7 +8678,7 @@ a.bi-team-action {
   font-size: 12.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+  transition: background .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath), color .18s var(--bi-ease-breath), transform .18s var(--bi-ease-breath);
 }
 .bi-team-action:hover,
 .bi-team-action:focus-visible {
@@ -8681,7 +8802,7 @@ a.bi-trust-crumb {
   padding: 6px 10px 6px 6px;
   margin-inline-start: -8px;
   border-radius: 999px;
-  transition: color .2s ease, background .2s ease, transform .2s ease;
+  transition: color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trust-crumb:hover,
 .bi-trust-crumb:focus-visible {
@@ -8692,7 +8813,7 @@ a.bi-trust-crumb {
 }
 .bi-trust-crumb > span[aria-hidden] {
   color: #22D3EE;
-  transition: transform .2s ease;
+  transition: transform .2s var(--bi-ease-breath);
 }
 .bi-trust-crumb:hover > span[aria-hidden] { transform: translateX(-2px); }
 
@@ -8718,7 +8839,7 @@ a.bi-trust-crumb {
   align-items: center;
   justify-content: center;
   overflow: clip;
-  transition: border-color .25s ease, transform .25s ease, background .25s ease;
+  transition: border-color .25s var(--bi-ease-breath), transform .25s var(--bi-ease-breath), background .25s var(--bi-ease-breath);
 }
 .bi-trust-highlight::before {
   content: "";
@@ -8776,7 +8897,7 @@ a.bi-trust-crumb {
   border: 1px solid var(--bi-border);
   border-radius: 14px;
   background: color-mix(in srgb, var(--bi-surface) 45%, transparent);
-  transition: border-color .25s ease, background .25s ease;
+  transition: border-color .25s var(--bi-ease-breath), background .25s var(--bi-ease-breath);
 }
 .bi-trust-audit-item:hover {
   border-color: color-mix(in srgb, var(--bi-border) 50%, #22D3EE);
@@ -8872,7 +8993,7 @@ a.bi-trust-sub-dpa {
   letter-spacing: 0.02em;
   border-block-end: 1px solid transparent;
   padding-block-end: 1px;
-  transition: color .2s ease, border-color .2s ease;
+  transition: color .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath);
 }
 .bi-trust-sub-dpa:hover,
 .bi-trust-sub-dpa:focus-visible {
@@ -9025,7 +9146,7 @@ a.bi-trust-anchor {
   color: var(--bi-text-muted);
   opacity: 0;
   text-decoration: none !important;
-  transition: opacity .2s ease, color .2s ease;
+  transition: opacity .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath);
   vertical-align: baseline;
 }
 .bi-trust-principle:hover .bi-trust-anchor,
@@ -9095,7 +9216,7 @@ tr:focus-within .bi-trust-anchor {
   border-radius: 999px;
   border: 1px solid var(--bi-border);
   background: color-mix(in srgb, var(--bi-surface) 40%, transparent);
-  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), background .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trust-breakdown-chip:hover {
   transform: translateY(-1px);
@@ -9247,7 +9368,7 @@ a.bi-trust-ai-callout-cta {
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, #EC4899 45%, var(--bi-border));
   background: color-mix(in srgb, #EC4899 8%, transparent);
-  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  transition: background .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-trust-ai-callout-cta:hover,
 .bi-trust-ai-callout-cta:focus-visible {
@@ -9378,7 +9499,7 @@ a.bi-trust-ai-callout-cta {
     color-mix(in srgb, var(--bi-surface) 55%, transparent),
     color-mix(in srgb, var(--bi-surface) 30%, transparent)
   );
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-nom-guide::before {
   content: "";
@@ -9501,7 +9622,7 @@ a.bi-trust-ai-callout-cta {
   border: 1px solid var(--bi-border);
   border-radius: 16px;
   background: color-mix(in srgb, var(--bi-surface) 45%, transparent);
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-nom-diff-card::before {
   content: "";
@@ -9708,7 +9829,7 @@ a.bi-trust-ai-callout-cta {
     color-mix(in srgb, var(--bi-surface) 60%, transparent),
     color-mix(in srgb, var(--bi-surface) 35%, transparent)
   );
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s var(--bi-ease-breath), transform .2s var(--bi-ease-breath);
 }
 .bi-nom-pricing-card::before {
   content: "";
@@ -9861,7 +9982,7 @@ a.bi-trust-ai-callout-cta {
   flex-direction: column;
   gap: 8px;
   overflow: hidden;
-  transition: border-color .22s ease, transform .22s ease, box-shadow .22s ease;
+  transition: border-color .22s var(--bi-ease-breath), transform .22s var(--bi-ease-breath), box-shadow .22s var(--bi-ease-breath);
 }
 .bi-nom-risk-card:hover {
   border-color: color-mix(in srgb, #FDA4AF 55%, var(--bi-border));
@@ -9945,7 +10066,7 @@ a.bi-trust-ai-callout-cta {
   background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
   border: 1px solid var(--bi-border);
   align-items: start;
-  transition: border-color .22s ease, transform .22s ease, box-shadow .22s ease;
+  transition: border-color .22s var(--bi-ease-breath), transform .22s var(--bi-ease-breath), box-shadow .22s var(--bi-ease-breath);
 }
 .bi-nom-cadence-item:hover {
   border-color: color-mix(in srgb, #22D3EE 45%, var(--bi-border));
@@ -9971,7 +10092,7 @@ a.bi-trust-ai-callout-cta {
   background: radial-gradient(closest-side, color-mix(in srgb, #22D3EE 26%, transparent), transparent 70%);
   border: 1px solid color-mix(in srgb, #22D3EE 38%, var(--bi-border));
   color: #22D3EE;
-  transition: background .22s ease, border-color .22s ease;
+  transition: background .22s var(--bi-ease-breath), border-color .22s var(--bi-ease-breath);
 }
 .bi-nom-cadence-icon svg {
   display: block;
@@ -10148,7 +10269,7 @@ a.bi-trust-ai-callout-cta {
   text-decoration: none;
   overflow: clip;
   isolation: isolate;
-  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  transition: transform .22s var(--bi-ease-breath), border-color .22s var(--bi-ease-breath), box-shadow .22s var(--bi-ease-breath);
 }
 .bi-prose a.bi-learn-card:hover,
 .bi-prose a.bi-learn-card:focus-visible { text-decoration: none; }
@@ -10172,7 +10293,7 @@ a.bi-trust-ai-callout-cta {
     color-mix(in srgb, var(--learn-accent) 9%, transparent) 0%,
     transparent 55%);
   opacity: 0;
-  transition: opacity .22s ease;
+  transition: opacity .22s var(--bi-ease-breath);
 }
 .bi-learn-card:hover,
 .bi-learn-card:focus-visible {
@@ -10290,7 +10411,7 @@ a.bi-trust-ai-callout-cta {
   color: var(--learn-accent);
 }
 .bi-learn-card:hover .bi-learn-card-cta svg { transform: translateX(2px); }
-.bi-learn-card-cta svg { transition: transform .2s ease; }
+.bi-learn-card-cta svg { transition: transform .2s var(--bi-ease-breath); }
 
 /* ─── Subpage: trail/back-link kicker ─── */
 .bi-learn-trail {
@@ -10311,7 +10432,7 @@ a.bi-learn-trail-link,
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--bi-border) 70%, transparent);
   background: color-mix(in srgb, var(--bi-surface) 50%, transparent);
-  transition: color .18s ease, border-color .18s ease, background-color .18s ease;
+  transition: color .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath), background-color .18s var(--bi-ease-breath);
 }
 .bi-learn-trail-link:hover,
 .bi-learn-trail-link:focus-visible {
@@ -10322,7 +10443,7 @@ a.bi-learn-trail-link,
 }
 .bi-learn-trail-arrow {
   flex-shrink: 0;
-  transition: transform .18s ease;
+  transition: transform .18s var(--bi-ease-breath);
 }
 .bi-learn-trail-link:hover .bi-learn-trail-arrow,
 .bi-learn-trail-link:focus-visible .bi-learn-trail-arrow {
@@ -10520,7 +10641,7 @@ a.bi-learn-trail-link,
   background: color-mix(in srgb, var(--bi-surface) 50%, transparent);
   color: inherit;
   text-decoration: none;
-  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  transition: transform .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath), box-shadow .2s var(--bi-ease-breath);
 }
 .bi-prose a.bi-learn-related-link:hover,
 .bi-prose a.bi-learn-related-link:focus-visible { text-decoration: none; }
@@ -10553,7 +10674,7 @@ a.bi-learn-trail-link,
   border-radius: 50%;
   border: 1px solid color-mix(in srgb, var(--bi-border) 80%, transparent);
   color: var(--bi-text-muted);
-  transition: transform .2s ease, color .2s ease, border-color .2s ease, background-color .2s ease;
+  transition: transform .2s var(--bi-ease-breath), color .2s var(--bi-ease-breath), border-color .2s var(--bi-ease-breath), background-color .2s var(--bi-ease-breath);
 }
 .bi-learn-related-link:hover .bi-learn-related-arrow,
 .bi-learn-related-link:focus-visible .bi-learn-related-arrow {
@@ -10623,7 +10744,7 @@ a.bi-learn-trail-link,
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  transition: border-color .18s ease, color .18s ease, background .18s ease;
+  transition: border-color .18s var(--bi-ease-breath), color .18s var(--bi-ease-breath), background .18s var(--bi-ease-breath);
 }
 .bi-docs-toc-chip:hover,
 .bi-docs-toc-chip:focus-visible,
@@ -10666,7 +10787,7 @@ a.bi-learn-trail-link,
   counter-increment: docs-section;
   scroll-margin-top: 140px;
   position: relative;
-  transition: border-color .22s ease, transform .22s ease;
+  transition: border-color .22s var(--bi-ease-breath), transform .22s var(--bi-ease-breath);
 }
 .bi-docs-ref-card:hover {
   border-color: color-mix(in srgb, #22D3EE 35%, var(--bi-border));
@@ -10915,7 +11036,7 @@ a.bi-learn-trail-link,
   text-decoration: none;
   border-bottom: 1px dashed color-mix(in srgb, var(--bi-text-muted) 50%, transparent);
   padding-block-end: 1px;
-  transition: color .18s ease, border-color .18s ease;
+  transition: color .18s var(--bi-ease-breath), border-color .18s var(--bi-ease-breath);
 }
 .bi-demo-closing-sig-link:hover,
 .bi-demo-closing-sig-link:focus-visible {
@@ -11016,7 +11137,7 @@ a.bi-learn-trail-link,
   padding: 16px 20px 16px 28px;
   border-block-end: 1px solid var(--bi-border);
   background: var(--bi-bg);
-  transition: background .18s ease;
+  transition: background .18s var(--bi-ease-breath);
 }
 .bi-status-component:last-child { border-block-end: none; }
 .bi-status-component:hover { background: color-mix(in srgb, var(--bi-surface) 70%, transparent); }
@@ -11118,7 +11239,7 @@ a.bi-learn-trail-link,
   background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
   position: relative;
   overflow: hidden;
-  transition: border-color .22s ease;
+  transition: border-color .22s var(--bi-ease-breath);
 }
 .bi-status-sla-card::before {
   content: "";
@@ -11359,7 +11480,7 @@ a.bi-learn-trail-link,
   border-radius: 50%;
   background: color-mix(in srgb, var(--bi-text-muted) 60%, transparent);
   box-shadow: 0 0 0 3px var(--bi-bg);
-  transition: all 180ms ease;
+  transition: all 180ms var(--bi-ease-breath);
 }
 .bi-changelog-release[data-tag="release"] .bi-changelog-release-dot {
   background: #22D3EE;
@@ -11385,7 +11506,7 @@ a.bi-learn-trail-link,
   border-radius: 16px;
   background: color-mix(in srgb, var(--bi-surface) 55%, transparent);
   position: relative;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition: border-color 160ms var(--bi-ease-breath), background 160ms var(--bi-ease-breath);
 }
 .bi-changelog-release:hover .bi-changelog-release-body {
   border-color: color-mix(in srgb, var(--bi-border) 90%, transparent);
@@ -11546,7 +11667,7 @@ a.bi-learn-trail-link,
   font-size: 12px;
   letter-spacing: 0.02em;
   text-decoration: none;
-  transition: all 160ms ease;
+  transition: all 160ms var(--bi-ease-breath);
   white-space: nowrap;
 }
 .bi-legal-toc-chip .num {
@@ -11562,7 +11683,7 @@ a.bi-learn-trail-link,
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0;
-  transition: all 160ms ease;
+  transition: all 160ms var(--bi-ease-breath);
 }
 .bi-legal-toc-chip:hover,
 .bi-legal-toc-chip:focus-visible {
@@ -11583,7 +11704,7 @@ a.bi-learn-trail-link,
   margin-block: clamp(36px, 5vw, 56px);
   scroll-margin-block-start: clamp(24px, 4vw, 48px);
   padding-inline-start: clamp(0px, 0.4vw, 6px);
-  transition: padding-inline-start 260ms ease;
+  transition: padding-inline-start 260ms var(--bi-ease-breath);
 }
 .bi-legal-section::before {
   content: "";
@@ -11599,7 +11720,7 @@ a.bi-learn-trail-link,
   opacity: 0;
   transform: scaleY(0.85);
   transform-origin: top;
-  transition: opacity 260ms ease, transform 260ms ease;
+  transition: opacity 260ms var(--bi-ease-breath), transform 260ms var(--bi-ease-breath);
   pointer-events: none;
 }
 .bi-legal-section:target::before,
@@ -11630,7 +11751,7 @@ a.bi-learn-trail-link,
   letter-spacing: 0;
   text-decoration: none;
   opacity: 0;
-  transition: opacity 160ms ease, transform 160ms ease;
+  transition: opacity 160ms var(--bi-ease-breath), transform 160ms var(--bi-ease-breath);
   transform: translateX(4px);
 }
 .bi-legal-section:hover .bi-legal-anchor,
@@ -11792,7 +11913,7 @@ a.bi-learn-trail-link,
 }
 .bi-legal-table tbody tr {
   position: relative;
-  transition: background 160ms ease;
+  transition: background 160ms var(--bi-ease-breath);
 }
 .bi-legal-table tbody tr:hover td {
   background: color-mix(in srgb, #22D3EE 5%, var(--bi-surface));
@@ -11854,7 +11975,7 @@ a.bi-learn-trail-link,
   font-weight: 600;
   font-size: 15px;
   letter-spacing: -0.005em;
-  transition: all 160ms ease;
+  transition: all 160ms var(--bi-ease-breath);
   position: relative;
   overflow: hidden;
 }
@@ -11866,7 +11987,7 @@ a.bi-learn-trail-link,
     color-mix(in srgb, #22D3EE 0%, transparent) 0%,
     color-mix(in srgb, #22D3EE 9%, transparent) 100%);
   opacity: 0;
-  transition: opacity 220ms ease;
+  transition: opacity 220ms var(--bi-ease-breath);
   pointer-events: none;
 }
 .bi-prose a.bi-legal-related-card::after {
@@ -11875,7 +11996,7 @@ a.bi-learn-trail-link,
   font-family: var(--font-mono);
   font-weight: 400;
   font-size: 16px;
-  transition: transform 220ms ease, color 220ms ease;
+  transition: transform 220ms var(--bi-ease-breath), color 220ms var(--bi-ease-breath);
   flex-shrink: 0;
 }
 .bi-prose a.bi-legal-related-card:hover,
@@ -12146,7 +12267,7 @@ a.bi-learn-trail-link,
   gap: 2px;
   justify-items: center;
   font-family: inherit;
-  transition: background 180ms ease, color 180ms ease;
+  transition: background 180ms var(--bi-ease-breath), color 180ms var(--bi-ease-breath);
 }
 .bi-roi-scenario-btn:hover { color: var(--bi-text); }
 .bi-roi-scenario-btn:focus-visible {
@@ -12181,7 +12302,7 @@ a.bi-learn-trail-link,
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 160ms ease;
+  transition: all 160ms var(--bi-ease-breath);
 }
 .bi-roi-reset:hover {
   color: #22D3EE;
@@ -12428,7 +12549,7 @@ a.bi-learn-trail-link,
   display: flex;
   align-items: center;
   gap: 14px;
-  transition: background 160ms ease;
+  transition: background 160ms var(--bi-ease-breath);
 }
 .bi-roi-disclaimer > summary::-webkit-details-marker { display: none; }
 .bi-roi-disclaimer > summary:hover {
@@ -12440,7 +12561,7 @@ a.bi-learn-trail-link,
   font-family: var(--font-mono);
   font-size: 18px;
   color: var(--bi-text-dim);
-  transition: transform 240ms ease;
+  transition: transform 240ms var(--bi-ease-breath);
 }
 .bi-roi-disclaimer[open] > summary::after { transform: rotate(45deg); }
 .bi-roi-disclaimer-kicker {
@@ -12585,7 +12706,7 @@ a.bi-learn-trail-link,
     color-mix(in srgb, var(--bi-surface) 96%, transparent);
   border: 1px solid color-mix(in srgb, #22D3EE 22%, var(--bi-border));
   overflow: hidden;
-  transition: transform 160ms ease, border-color 160ms ease;
+  transition: transform 160ms var(--bi-ease-breath), border-color 160ms var(--bi-ease-breath);
 }
 .bi-roi-benchmark-cell:hover {
   transform: translateY(-1px);
@@ -12772,7 +12893,7 @@ a.bi-learn-trail-link,
   color: var(--bi-text);
   font-weight: 600;
   letter-spacing: -0.002em;
-  transition: border-color 160ms ease, transform 160ms ease;
+  transition: border-color 160ms var(--bi-ease-breath), transform 160ms var(--bi-ease-breath);
 }
 .bi-roi-ent-chip:hover {
   border-color: color-mix(in srgb, #22D3EE 38%, var(--bi-border));

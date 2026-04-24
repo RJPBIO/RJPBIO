@@ -16,6 +16,7 @@ import SpotlightGrid from "@/components/brand/SpotlightGrid";
 import CountUp from "@/components/brand/CountUp";
 import PWAShowcase from "@/components/brand/PWAShowcase";
 import ProductEvidence from "@/components/brand/ProductEvidence";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 
 export const metadata = {
   title: { absolute: "BIO-IGNICIÓN — Neural Performance" },
@@ -227,6 +228,8 @@ const COPY = {
     priceSub: "Por usuario activo. 20 % off anual. Volume discount hasta −20 %. MXN · USD · EUR. Cero setup oculto.",
     priceCta: "Ver precios completos",
     priceNote: "Starter trial 14 d · Growth piloto 30 d · Enterprise 60 d con DPA",
+
+    cinePauseLine: "Ya viste cómo late. Ahora tócalo.",
 
     finalKicker: "SIGUIENTE",
     finalH1: "30 minutos.",
@@ -488,6 +491,8 @@ const COPY = {
     priceSub: "Per active user. 20% off annual. Volume discount up to −20%. MXN · USD · EUR. Zero hidden setup.",
     priceCta: "See full pricing",
     priceNote: "Starter trial 14 d · Growth pilot 30 d · Enterprise 60 d with DPA",
+
+    cinePauseLine: "You've seen the pulse. Now touch it.",
 
     finalKicker: "NEXT",
     finalH1: "30 minutes.",
@@ -907,7 +912,21 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <PulseDivider intensity="dim" />
+      {/* ═══ Cinematic pause ════════════════════════════════════
+          Full-bleed breath between dense pricing and the final CTA.
+          Single glyph + one editorial sentence in serif italic,
+          surrounded by generous whitespace. Stripe/Linear use this
+          pattern to break scroll density and give the reader a beat
+          of agency before action. Copy echoes the hero verbatim
+          ("tócalo" / "touch it") to close the narrative loop. */}
+      <section aria-labelledby="cinematic-pause" className="bi-cine-pause">
+        <div className="bi-cine-pause-glyph">
+          <BioGlyph size={92} />
+        </div>
+        <h2 id="cinematic-pause" className="bi-cine-pause-line">
+          {T.cinePauseLine}
+        </h2>
+      </section>
 
       <section style={{
         paddingBlock: "clamp(80px, 12vw, 140px)",

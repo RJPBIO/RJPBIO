@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { bioSignal, cssVar, font, space } from "@/components/ui/tokens";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import AuroraMesh from "@/components/brand/AuroraMesh";
 
 export default function SensoryHero({ T }) {
   const [state, setState] = useState("idle");
@@ -73,6 +74,12 @@ export default function SensoryHero({ T }) {
       `,
       color: cssVar.text,
     }}>
+      {/* Layer 0.5 — AuroraMesh: four drifting color fields behind
+          the lattice. Reads as atmospheric weather, not animation.
+          Sits under the lattice so the two layer visually without
+          fighting: mesh carries hue + mood, lattice carries structure. */}
+      <AuroraMesh intensity="subtle" style={{ zIndex: 0 }} />
+
       {/* Layer 1 — drifting neural lattice. Same asset as AuthHero. */}
       <div
         aria-hidden
@@ -80,7 +87,7 @@ export default function SensoryHero({ T }) {
         style={{
           position: "absolute",
           inset: "-8%",
-          zIndex: 0,
+          zIndex: 1,
           opacity: 0.55,
           pointerEvents: "none",
           filter: "saturate(115%) blur(0.2px)",
@@ -93,7 +100,7 @@ export default function SensoryHero({ T }) {
       <div
         aria-hidden
         style={{
-          position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+          position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none",
           background: `radial-gradient(ellipse 70% 80% at 50% 50%, transparent 0%, transparent 35%, color-mix(in srgb, #000 50%, transparent) 100%)`,
         }}
       />
@@ -102,7 +109,7 @@ export default function SensoryHero({ T }) {
       <div
         aria-hidden
         style={{
-          position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+          position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
           backgroundImage: `repeating-linear-gradient(0deg, transparent 0, transparent 2px, color-mix(in srgb, #000 8%, transparent) 2px, color-mix(in srgb, #000 8%, transparent) 3px)`,
           mixBlendMode: "overlay",
           opacity: 0.5,
@@ -111,11 +118,11 @@ export default function SensoryHero({ T }) {
 
       {/* Layer 4 — phosphor glow centered on the pulse button. */}
       <div aria-hidden style={{
-        position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+        position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
         backgroundImage: `radial-gradient(45% 55% at 50% 58%, ${bioSignal.phosphorCyan}22, transparent 70%)`,
       }} />
 
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 860, marginInline: "auto" }}>
+      <div style={{ position: "relative", zIndex: 4, maxWidth: 860, marginInline: "auto" }}>
         <div style={{
           fontFamily: cssVar.fontMono, fontSize: font.size.xs,
           color: cssVar.textMuted,
