@@ -28,6 +28,7 @@ export default function sitemap() {
     "/vs",
     "/vs/headspace",
     "/vs/calm",
+    "/vs/modern-health",
     "/for",
     "/for-healthcare",
     "/for-manufacturing",
