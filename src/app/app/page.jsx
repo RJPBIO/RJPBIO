@@ -1125,12 +1125,18 @@ export default function BioIgnicion(){
       {/* Ripple rings — se expanden en idle (invitación a tocar) y durante sesión activa (confirmación de pulso) */}
       {(ts==="idle"||isActive)&&!reducedMotion&&[0,1].map(i=><motion.span key={i} aria-hidden="true" initial={{scale:.88,opacity:.5}} animate={{scale:1.45,opacity:0}} transition={{duration:isActive?2.2:3.2,delay:i*(isActive?1.1:1.6),ease:"easeOut",repeat:Infinity}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1px solid ${ac}`,pointerEvents:"none"}}/>)}
       {/* ── Núcleo neural 3D — reemplaza el orb sólido previo.
-          Una cámara glass translúcida con la lattice del trademark
-          rotando en 3D (parallax multidimensional) y motes pulsando
-          con fases independientes (sinapsis). El color se tiñe al
-          protocolo en ejecución, con readiness override: recover→
-          amber warm, optimal→emerald, primed/default→accent. */}
-      {(()=>{const rInt=readiness?.interpretation;const coreColor=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":ac;return(
+          Cámara glass translúcida con la lattice del trademark en
+          3D real. Personalidad por protocol.int (calma/enfoque/
+          reset/energia): cadencia de firing, rotación, chaos y
+          densidad distintos. Durante ejecución coreografía:
+            · ignition wave al arrancar (cascada radial desde seed)
+            · phase ring wave al cambiar de fase (onda ecuatorial)
+            · micro-pulso por segundo (tick de countdown)
+            · breath coupling: cada mote respira con el usuario
+            · últimos 20 %: firing rate +30 % (anticipación)
+            · resonance collapse al terminar
+          Readiness override: recover→amber, optimal→emerald. */}
+      {(()=>{const rInt=readiness?.interpretation;const coreColor=rInt==="recover"?"#f59e0b":rInt==="optimal"?"#22c55e":ac;const prog=totalDur>0?1-(sec/totalDur):0;return(
         <NeuralCore3D
           size={isActive?240:260}
           color={coreColor}
@@ -1138,6 +1144,10 @@ export default function BioIgnicion(){
           breathScale={bS}
           isBreathing={isBr}
           reducedMotion={reducedMotion}
+          intent={pr?.int||"enfoque"}
+          phaseIndex={pi}
+          progress={prog}
+          secondTick={sec}
         />
       );})()}
       {/* Ignition flash — destello one-shot de luz que emerge del centro cuando la sesión arranca.
