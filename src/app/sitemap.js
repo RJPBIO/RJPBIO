@@ -27,6 +27,7 @@ export default function sitemap() {
     "/team-preview",
     "/vs",
     "/vs/headspace",
+    "/vs/calm",
     "/for",
     "/for-healthcare",
     "/for-manufacturing",
