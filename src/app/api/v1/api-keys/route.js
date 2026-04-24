@@ -16,6 +16,9 @@ const VALID_SCOPES = [
   "read:members",  "write:members",
   "read:analytics",
   "read:audit",
+  // SCIM 2.0 — IT configura auto-provisioning del IdP (Azure AD /
+  // Okta / Google Workspace). server/scim.js valida scopes.includes("scim").
+  "scim",
 ];
 
 export async function POST(req) {
