@@ -1732,6 +1732,98 @@ input, textarea, select {
     var(--bi-surface) 70%);
 }
 .bi-category-card[data-kind="us"]::before { opacity: 1; }
+
+/* ═══ Market anchor ladder — replaces the category-map + vs-table
+       combo on /pricing. Vertical stack of price bands; our own band
+       highlighted mid-ladder so buyers see the positioning at once. */
+.bi-market-ladder {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  max-inline-size: 820px;
+  margin-inline: auto;
+}
+.bi-market-band {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) 1fr;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--bi-border);
+  background: var(--bi-surface);
+  transition: border-color .2s ease, transform .2s ease;
+}
+.bi-market-band:hover {
+  transform: translateX(2px);
+  border-color: color-mix(in srgb, #22D3EE 25%, var(--bi-border));
+}
+.bi-market-band-price {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--bi-text);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.bi-market-band-body { display: grid; gap: 2px; min-inline-size: 0; }
+.bi-market-band-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bi-text);
+  letter-spacing: -0.01em;
+}
+.bi-market-band-ex {
+  font-size: 12.5px;
+  color: var(--bi-text-muted);
+  line-height: 1.4;
+}
+.bi-market-band[data-kind="us"] {
+  border-color: color-mix(in srgb, #22D3EE 55%, var(--bi-border));
+  background: linear-gradient(90deg,
+    color-mix(in srgb, #22D3EE 8%, var(--bi-surface)) 0%,
+    var(--bi-surface) 60%);
+  padding-block: 18px;
+}
+.bi-market-band[data-kind="us"] .bi-market-band-price {
+  color: #155E75;
+}
+.bi-market-band[data-kind="us"] .bi-market-band-label {
+  color: var(--bi-text);
+}
+.bi-market-band[data-kind="clin"] .bi-market-band-price,
+.bi-market-band[data-kind="lib"]  .bi-market-band-price {
+  color: var(--bi-text-dim);
+}
+.bi-market-footnote {
+  margin: 18px auto 0;
+  max-inline-size: 820px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--bi-text-muted);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.bi-market-link {
+  color: var(--bi-link, var(--bi-accent));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+@media (max-width: 520px) {
+  .bi-market-band {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-market-band { transition: none; }
+  .bi-market-band:hover { transform: none; }
+}
 .bi-category-card[data-kind="us"] .cat-label { color: #22D3EE; }
 .bi-category-card[data-kind="us"]:hover {
   border-color: color-mix(in srgb, #22D3EE 75%, var(--bi-border));

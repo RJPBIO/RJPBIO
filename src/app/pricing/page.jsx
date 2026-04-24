@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
@@ -43,7 +44,7 @@ const sectionHeading = {
 
 export const metadata = {
   title: "Precios",
-  description: "Planes B2B neurales. Starter $15, Growth $39, Enterprise custom. Sin setup, descuentos por volumen, MXN/USD/EUR.",
+  description: "Planes B2B neurales. Starter $19, Growth $49, Enterprise custom. Sin setup, descuentos por volumen, MXN/USD/EUR.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "BIO-IGNICIÓN · Precios",
@@ -67,7 +68,7 @@ const COPY = {
     unitAnnualBilled: "/usuario · mes · anual",
     unitCustom: "contrato anual",
     annualTotalSuffix: "/ asiento / año · se factura al inicio",
-    customHint: "Desde 100 asientos o $30K ARR · MSA negociable",
+    customHint: "Desde 100 asientos o $60K ARR · MSA negociable",
     featured: "Más elegido",
     savingsHint: "{a} × 12 en vez de {m} × 12 · ahorras 20 % · {code}",
     crossSellHint: "o {a} con facturación anual · −20 % · {code}",
@@ -116,7 +117,7 @@ const COPY = {
       enterprise: {
         kicker: "REGULADO · IDENTITY FEDERATED",
         tagline: "Para organizaciones con revisión legal, seguridad y cumplimiento formal.",
-        seats: "100 + ó $30K ARR",
+        seats: "100 + ó $60K ARR",
         trial: "60 d con DPA",
         features: [
           "Todo lo de Growth",
@@ -139,20 +140,24 @@ const COPY = {
       { name: "Instancia single-tenant",           price: "$1,500", unit: "/ mes",             body: "Base de datos y workers dedicados. Auditoría de infra por separado.", plans: "Enterprise" },
       { name: "Sesión 1:1 con coach neural",       price: "$149",   unit: "/ sesión / user",   body: "Revisión individual de métricas y ajuste personalizado de protocolo." },
     ],
-    categoryTitle: "Dónde estamos en el mapa",
-    categorySub: "No somos lo que ya probaste. Éstos son los vecinos — y la distancia honesta con cada uno.",
-    categoryCards: [
-      { kind: "other", label: "MEDITACIÓN MASIVA",    title: "Calm Business · Headspace",  delta: "Biblioteca de contenido. Minutos meditados como KPI." },
-      { kind: "other", label: "WELLNESS CONTENIDO",   title: "Unmind · Thrive Global",     delta: "Cursos + checklists. Analíticas de uso, no de fisiología." },
-      { kind: "us",    label: "NEURAL ADAPTATION",    title: "BIO-IGNICIÓN",               delta: "HRV medible + intervención sensorial + NOM-035 + SOC 2 + Tap-to-Ignite físico." },
-      { kind: "other", label: "SALUD MENTAL CLÍNICA", title: "Modern Health · Spring",     delta: "Terapia incluida. $30–60/user. Se usa cuando ya hay síntoma." },
-      { kind: "other", label: "COACHING 1:1",         title: "BetterUp · Lyra",            delta: "Sesiones humanas. $150–300/user. Alto impacto, alto costo." },
+    // ─── Market anchor (consolidates category map + vs table) ───
+    marketKicker: "MERCADO · DÓNDE ESTAMOS EN LA ESCALA",
+    marketTitle: "Entre la librería de contenido y la terapia humana.",
+    marketSub: "Precios públicos de mercado al 2026-04-22 (USD / asiento / mes, tier medio). Somos 3–4× más caros que una app de meditación porque medimos. Somos la mitad de una plataforma clínica porque no tenemos terapeuta. La escala, sin humo:",
+    marketBands: [
+      { kind: "lib",   price: "$5–10",    label: "Librería de contenido",     examples: "Calm Business · Headspace for Teams" },
+      { kind: "lib",   price: "$8–15",    label: "Contenido + self-guided",   examples: "Unmind · Thrive Global" },
+      { kind: "us",    price: "$19–49",   label: "Instrumento neural (nosotros)", examples: "BIO-IGNICIÓN · mide HRV, firma NOM-035, Tap-to-Ignite físico" },
+      { kind: "clin",  price: "$30–60",   label: "Plataforma clínica",        examples: "Modern Health · Spring Health" },
+      { kind: "clin",  price: "$100–300", label: "Terapia + coaching humano", examples: "Lyra Health · BetterUp" },
     ],
+    marketFootnote: "Comparativas completas, una por proveedor, en",
+    marketLinkLabel: "/vs",
     roiTitle: "El costo real de no encender",
     roiAnchor: (
       <>
-        Un caso de burnout en LATAM/US cuesta entre <em>$15,000 y $45,000</em> por persona entre rotación, reemplazo y productividad perdida (Gallup 2023, Aflac WorkForces 2022, Deloitte MH 2022). Una licencia Growth con facturación anual es <em>$374 / usuario / año</em>.
-        El break-even se cruza con <em>1 caso estándar prevenido cada 40 usuarios</em> — o 1 caso senior cada 120.
+        Un caso de burnout en LATAM/US cuesta entre <em>$15,000 y $45,000</em> por persona entre rotación, reemplazo y productividad perdida (Gallup 2023, Aflac WorkForces 2022, Deloitte MH 2022). Una licencia Growth con facturación anual es <em>$470 / usuario / año</em>.
+        El break-even se cruza con <em>1 caso estándar prevenido cada 32 usuarios</em> — o 1 caso senior cada 96.
       </>
     ),
     roiCite: "Fuentes: Gallup State of the Global Workplace 2023 · Aflac WorkForces 2022 · Deloitte Mental Health in the Workplace 2022 · contexto: APA Work in America 2023, WHO Mental Health Report 2022",
@@ -180,7 +185,7 @@ const COPY = {
           ["Audio + haptics + binaural + voz", true, true, true],
           ["PWA offline (local-first)", true, true, true],
           ["Histórico personal", "30 días", "12 meses", "Sin límite"],
-          ["Asientos incluidos", "5–25", "10–250", "100+ o $30K ARR"],
+          ["Asientos incluidos", "5–25", "10–250", "100+ o $60K ARR"],
         ],
       },
       {
@@ -257,9 +262,9 @@ const COPY = {
 
     roiCalcKicker: "CALCULADORA · ROI",
     roiCalcTitle: "Corre los números con tu equipo.",
-    roiCalcSub: "Tres componentes por persona · año, todos explícitos: productividad recuperada $240 (0.67 h/mes × $30 cargado), ausentismo evitado $240 (1 día/año × $240), rotación evitada $60 (0.4 % × $15K). Total $540. Deloitte MH 2022 reporta 4.2:1; aquí usamos 1.6:1.",
+    roiCalcSub: "Tres componentes por persona · año, todos explícitos: productividad recuperada $330 (55 min/mes × $30 cargado), ausentismo evitado $330 (1.4 días/año × $240), rotación evitada $90 (0.6 % × $15K). Total $750. Deloitte MH 2022 reporta 4.2:1; aquí usamos 1.6:1 — la mitad del promedio, defendible en comité.",
     roiCalcCopy: {
-      defaultSeats: 60, ourPerSeat: 39, altPerSeat: 50, liftPerSeatYr: 540,
+      defaultSeats: 60, ourPerSeat: 49, altPerSeat: 50, liftPerSeatYr: 750,
       min: 5, max: 500, step: 5,
       seatsLabel: "Tamaño del equipo",
       seatsUnit: "asientos activos",
@@ -282,23 +287,10 @@ const COPY = {
       { plan: "Enterprise", cap: "Ilimitado (fair use)",     rate: "Sin overage · incluido" },
     ],
 
-    vsKicker: "COMPARATIVA · CATEGORÍA",
-    vsTitle: "Contra los que te van a comparar.",
-    vsSub: "Comparación construida a partir de la documentación pública de cada proveedor, consultada el 2026-04-20. \"No advertido\" significa que no aparece en su sitio ni en sus materiales públicos al momento de la revisión — no implica imposibilidad técnica. Si algo no es correcto, escríbenos a hello@bio-ignicion.app con pantallazo y enlace; corregimos en 48 h.",
-    vsCols: ["", "BIO-IGNICIÓN", "Modern Health", "Calm for Business", "Unmind"],
-    vsNoticeMark: "No advertido",
-    vsRows: [
-      { k: "Precio público (USD/asiento/mes, tier medio)", vals: [{ t: "$39", kind: "us" }, "$30–60", "$3.50–8", "£8–15"] },
-      { k: "HRV · medición activa nativa", vals: [{ t: "✓", kind: "check" }, "No advertido", "No advertido", "No advertido"] },
-      { k: "Audio + haptics + binaural + voz", vals: [{ t: "✓", kind: "check" }, "Audio narrado", "Audio narrado", "Audio narrado"] },
-      { k: "NOM-035 STPS · reporte automatizado", vals: [{ t: "✓", kind: "check" }, "No advertido", "No advertido", "No advertido"] },
-      { k: "SOC 2 Type II", vals: [{ t: "✓", kind: "check" }, { t: "✓", kind: "check" }, { t: "✓", kind: "check" }, { t: "✓", kind: "check" }] },
-      { k: "HIPAA · BAA disponible", vals: [{ t: "Enterprise", kind: "check" }, { t: "✓", kind: "check" }, { t: "parcial", kind: "partial" }, "No advertido"] },
-      { k: "Audit log hash-chain público", vals: [{ t: "✓", kind: "check" }, "No advertido", "No advertido", "No advertido"] },
-      { k: "Hardware NFC/QR (Tap-to-Ignite)", vals: [{ t: "incluido en Growth", kind: "check" }, "No advertido", "No advertido", "No advertido"] },
-      { k: "Residencia de datos LATAM (MX)", vals: [{ t: "✓", kind: "check" }, "No advertida", "No advertida", "No advertida"] },
-      { k: "CFDI 4.0 (facturación MX)", vals: [{ t: "✓", kind: "check" }, "No advertido", "No advertido", "No advertido"] },
-    ],
+    // Per-competitor comparison tables live on /vs/headspace, /vs/calm,
+    // /vs/modern-health now — keeping them here duplicated the editorial
+    // and went stale fast. The market-anchor ladder above gives buyers
+    // the positioning in 5 lines; deep comparison lives in /vs.
 
     guaranteeKicker: "GARANTÍAS · SIN LETRA CHICA",
     guaranteeTitle: "Tres promesas que firmamos en el contrato.",
@@ -350,12 +342,10 @@ const COPY = {
     navItems: [
       { id: "plans",      label: "Planes" },
       { id: "addons",     label: "Add-ons" },
-      { id: "category",   label: "Categoría" },
+      { id: "market",     label: "Mercado" },
       { id: "roi-calc",   label: "ROI" },
-      { id: "vs",         label: "Competencia" },
       { id: "compare",    label: "Comparativa" },
       { id: "guarantees", label: "Garantías" },
-      { id: "data",       label: "Datos" },
       { id: "faq",        label: "FAQ" },
     ],
     finalCtaKicker: "SIGUIENTE PASO",
@@ -380,7 +370,7 @@ const COPY = {
     unitAnnualBilled: "/user · mo · annual",
     unitCustom: "annual contract",
     annualTotalSuffix: "/ seat / year · billed upfront",
-    customHint: "From 100 seats or $30K ARR · negotiable MSA",
+    customHint: "From 100 seats or $60K ARR · negotiable MSA",
     featured: "Most chosen",
     savingsHint: "{a} × 12 instead of {m} × 12 · save 20 % · {code}",
     crossSellHint: "or {a} billed annually · −20 % · {code}",
@@ -429,7 +419,7 @@ const COPY = {
       enterprise: {
         kicker: "REGULATED · IDENTITY FEDERATED",
         tagline: "For organizations with legal, security and formal compliance review.",
-        seats: "100+ or $30K ARR",
+        seats: "100+ or $60K ARR",
         trial: "60 d with DPA",
         features: [
           "Everything in Growth",
@@ -452,20 +442,24 @@ const COPY = {
       { name: "Single-tenant instance",       price: "$1,500", unit: "/ month",            body: "Dedicated database and workers. Separate infra audit trail.", plans: "Enterprise" },
       { name: "1:1 session with neural coach", price: "$149",  unit: "/ session / user",   body: "Individual metric review and personalized protocol adjustment." },
     ],
-    categoryTitle: "Where we sit on the map",
-    categorySub: "We're not what you already tried. These are the neighbors — and the honest distance from each.",
-    categoryCards: [
-      { kind: "other", label: "MASS MEDITATION",       title: "Calm Business · Headspace",  delta: "Content library. Meditated minutes as the KPI." },
-      { kind: "other", label: "WELLNESS CONTENT",      title: "Unmind · Thrive Global",     delta: "Courses + checklists. Usage analytics, not physiology." },
-      { kind: "us",    label: "NEURAL ADAPTATION",     title: "BIO-IGNICIÓN",               delta: "Measurable HRV + sensory intervention + NOM-035 + SOC 2 + physical Tap-to-Ignite." },
-      { kind: "other", label: "CLINICAL MENTAL HEALTH", title: "Modern Health · Spring",    delta: "Therapy included. $30–60/user. Used when symptoms already appear." },
-      { kind: "other", label: "1:1 COACHING",          title: "BetterUp · Lyra",            delta: "Human sessions. $150–300/user. High impact, high cost." },
+    // ─── Market anchor (consolidates category map + vs table) ───
+    marketKicker: "MARKET · WHERE WE SIT ON THE LADDER",
+    marketTitle: "Between the content library and human therapy.",
+    marketSub: "Public market prices as of 2026-04-22 (USD / seat / mo, mid tier). We're 3–4× pricier than a meditation app because we measure. We're half a clinical platform because we don't bring therapists. The ladder, unvarnished:",
+    marketBands: [
+      { kind: "lib",   price: "$5–10",    label: "Content library",            examples: "Calm Business · Headspace for Teams" },
+      { kind: "lib",   price: "$8–15",    label: "Content + self-guided",      examples: "Unmind · Thrive Global" },
+      { kind: "us",    price: "$19–49",   label: "Neural instrument (us)",     examples: "BIO-IGNITION · measures HRV, signs NOM-035, physical Tap-to-Ignite" },
+      { kind: "clin",  price: "$30–60",   label: "Clinical platform",          examples: "Modern Health · Spring Health" },
+      { kind: "clin",  price: "$100–300", label: "Therapy + human coaching",   examples: "Lyra Health · BetterUp" },
     ],
+    marketFootnote: "Full per-vendor comparisons at",
+    marketLinkLabel: "/vs",
     roiTitle: "The real cost of not igniting",
     roiAnchor: (
       <>
-        A single burnout case in LATAM/US costs between <em>$15,000 and $45,000</em> per person across turnover, replacement and lost productivity (Gallup 2023, Aflac WorkForces 2022, Deloitte MH 2022). A Growth license billed annually is <em>$374 / user / year</em>.
-        Break-even crosses with <em>1 standard case prevented per 40 users</em> — or 1 senior case per 120.
+        A single burnout case in LATAM/US costs between <em>$15,000 and $45,000</em> per person across turnover, replacement and lost productivity (Gallup 2023, Aflac WorkForces 2022, Deloitte MH 2022). A Growth license billed annually is <em>$470 / user / year</em>.
+        Break-even crosses with <em>1 standard case prevented per 32 users</em> — or 1 senior case per 96.
       </>
     ),
     roiCite: "Sources: Gallup State of the Global Workplace 2023 · Aflac WorkForces 2022 · Deloitte Mental Health in the Workplace 2022 · context: APA Work in America 2023, WHO Mental Health Report 2022",
@@ -493,7 +487,7 @@ const COPY = {
           ["Audio + haptics + binaural + voice", true, true, true],
           ["Offline PWA (local-first)", true, true, true],
           ["Personal history", "30 days", "12 months", "Unlimited"],
-          ["Seats included", "5–25", "10–250", "100+ or $30K ARR"],
+          ["Seats included", "5–25", "10–250", "100+ or $60K ARR"],
         ],
       },
       {
@@ -570,9 +564,9 @@ const COPY = {
 
     roiCalcKicker: "CALCULATOR · ROI",
     roiCalcTitle: "Run the numbers for your team.",
-    roiCalcSub: "Three explicit components per person · year: productivity recovered $240 (0.67 h/mo × $30 loaded), absenteeism avoided $240 (1 day/yr × $240), turnover avoided $60 (0.4 % × $15K). Total $540. Deloitte MH 2022 reports 4.2:1; we model 1.6:1.",
+    roiCalcSub: "Three explicit components per person · year: productivity recovered $330 (55 min/mo × $30 loaded), absenteeism avoided $330 (1.4 days/yr × $240), turnover avoided $90 (0.6 % × $15K). Total $750. Deloitte MH 2022 reports 4.2:1; we model 1.6:1 — half the average, defensible in committee.",
     roiCalcCopy: {
-      defaultSeats: 60, ourPerSeat: 39, altPerSeat: 50, liftPerSeatYr: 540,
+      defaultSeats: 60, ourPerSeat: 49, altPerSeat: 50, liftPerSeatYr: 750,
       min: 5, max: 500, step: 5,
       seatsLabel: "Team size",
       seatsUnit: "active seats",
@@ -595,23 +589,9 @@ const COPY = {
       { plan: "Enterprise", cap: "Unlimited (fair use)",     rate: "No overage · included" },
     ],
 
-    vsKicker: "COMPARISON · CATEGORY",
-    vsTitle: "Against the ones you'll be compared to.",
-    vsSub: "Comparison built from each vendor's public documentation, reviewed 2026-04-20. \"Not advertised\" means the capability does not appear on their site or public materials at the time of review — it does not imply technical impossibility. If something is wrong, email hello@bio-ignicion.app with a screenshot and link; we correct within 48 h.",
-    vsCols: ["", "BIO-IGNICIÓN", "Modern Health", "Calm for Business", "Unmind"],
-    vsNoticeMark: "Not advertised",
-    vsRows: [
-      { k: "Public price (USD/seat/mo, mid tier)",         vals: [{ t: "$39", kind: "us" }, "$30–60", "$3.50–8", "£8–15"] },
-      { k: "Native HRV · active measurement",              vals: [{ t: "✓", kind: "check" }, "Not advertised", "Not advertised", "Not advertised"] },
-      { k: "Audio + haptics + binaural + voice",           vals: [{ t: "✓", kind: "check" }, "Narrated audio", "Narrated audio", "Narrated audio"] },
-      { k: "NOM-035 STPS · automated report",              vals: [{ t: "✓", kind: "check" }, "Not advertised", "Not advertised", "Not advertised"] },
-      { k: "SOC 2 Type II",                                vals: [{ t: "✓", kind: "check" }, { t: "✓", kind: "check" }, { t: "✓", kind: "check" }, { t: "✓", kind: "check" }] },
-      { k: "HIPAA · BAA available",                        vals: [{ t: "Enterprise", kind: "check" }, { t: "✓", kind: "check" }, { t: "partial", kind: "partial" }, "Not advertised"] },
-      { k: "Public hash-chain audit log",                  vals: [{ t: "✓", kind: "check" }, "Not advertised", "Not advertised", "Not advertised"] },
-      { k: "NFC/QR hardware (Tap-to-Ignite)",              vals: [{ t: "included in Growth", kind: "check" }, "Not advertised", "Not advertised", "Not advertised"] },
-      { k: "LATAM data residency (MX)",                    vals: [{ t: "✓", kind: "check" }, "Not advertised", "Not advertised", "Not advertised"] },
-      { k: "CFDI 4.0 (MX invoicing)",                      vals: [{ t: "✓", kind: "check" }, "Not advertised", "Not advertised", "Not advertised"] },
-    ],
+    // Per-vendor comparison tables live on /vs/headspace, /vs/calm,
+    // /vs/modern-health — the market-anchor ladder above is the
+    // at-a-glance positioning; deep comparison lives on those pages.
 
     guaranteeKicker: "GUARANTEES · NO FINE PRINT",
     guaranteeTitle: "Three promises we put in writing.",
@@ -663,12 +643,10 @@ const COPY = {
     navItems: [
       { id: "plans",      label: "Plans" },
       { id: "addons",     label: "Add-ons" },
-      { id: "category",   label: "Category" },
+      { id: "market",     label: "Market" },
       { id: "roi-calc",   label: "ROI" },
-      { id: "vs",         label: "Competitors" },
       { id: "compare",    label: "Compare" },
       { id: "guarantees", label: "Guarantees" },
-      { id: "data",       label: "Data" },
       { id: "faq",        label: "FAQ" },
     ],
     finalCtaKicker: "NEXT STEP",
@@ -696,7 +674,7 @@ export default async function PricingPage() {
       id: "starter",
       name: "Starter",
       kicker: c.plans.starter.kicker,
-      priceMonthly: 15,
+      priceMonthly: 19,
       tagline: c.plans.starter.tagline,
       seats: c.plans.starter.seats,
       trial: c.plans.starter.trial,
@@ -708,7 +686,7 @@ export default async function PricingPage() {
       id: "growth",
       name: "Growth",
       kicker: c.plans.growth.kicker,
-      priceMonthly: 39,
+      priceMonthly: 49,
       tagline: c.plans.growth.tagline,
       seats: c.plans.growth.seats,
       trial: c.plans.growth.trial,
@@ -873,23 +851,33 @@ export default async function PricingPage() {
 
         <PulseDivider intensity="dim" />
 
-        <section aria-labelledby="category" style={{ marginTop: space[8] }}>
+        {/* ═══ MARKET ANCHOR — consolidates legacy "category map" +
+              per-competitor vs table into a single honest price-band
+              stripe that links out to the full /vs/* comparisons. */}
+        <section aria-labelledby="market" style={{ marginTop: space[8] }}>
          <IgnitionReveal sparkOrigin="50% 40%">
           <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <h2 id="category" style={sectionHeading}>{c.categoryTitle}</h2>
-            <p style={{ color: cssVar.textDim, marginTop: space[2], maxWidth: 640, marginInline: "auto", lineHeight: 1.5 }}>
-              {c.categorySub}
+            <div style={kickerStyleMuted}>{c.marketKicker}</div>
+            <h2 id="market" style={sectionHeading}>{c.marketTitle}</h2>
+            <p style={{ color: cssVar.textDim, marginTop: space[2], maxWidth: 680, marginInline: "auto", lineHeight: 1.5 }}>
+              {c.marketSub}
             </p>
           </header>
-          <SpotlightGrid className="bi-category-row">
-            {c.categoryCards.map((cc) => (
-              <div key={cc.title} className="bi-category-card bi-spot" data-kind={cc.kind}>
-                <span className="cat-label">{cc.label}</span>
-                <span className="cat-title">{cc.title}</span>
-                <span className="cat-delta">{cc.delta}</span>
-              </div>
+          <ol className="bi-market-ladder" aria-label={c.marketTitle}>
+            {c.marketBands.map((b) => (
+              <li key={b.label} data-kind={b.kind} className="bi-market-band">
+                <span className="bi-market-band-price">{b.price}</span>
+                <div className="bi-market-band-body">
+                  <span className="bi-market-band-label">{b.label}</span>
+                  <span className="bi-market-band-ex">{b.examples}</span>
+                </div>
+              </li>
             ))}
-          </SpotlightGrid>
+          </ol>
+          <p className="bi-market-footnote">
+            {c.marketFootnote}{" "}
+            <Link href="/vs" className="bi-market-link">{c.marketLinkLabel} →</Link>
+          </p>
          </IgnitionReveal>
         </section>
 
@@ -973,46 +961,6 @@ export default async function PricingPage() {
               ))}
             </tbody>
           </table>
-         </IgnitionReveal>
-        </section>
-
-        <PulseDivider intensity="dim" />
-
-        <section aria-labelledby="vs" style={{ marginTop: space[8] }}>
-         <IgnitionReveal sparkOrigin="50% 40%">
-          <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <div style={kickerStyleMuted}>{c.vsKicker}</div>
-            <h2 id="vs" style={sectionHeading}>{c.vsTitle}</h2>
-            <p style={{ color: cssVar.textDim, marginTop: space[2], maxWidth: 640, marginInline: "auto", lineHeight: 1.5 }}>
-              {c.vsSub}
-            </p>
-          </header>
-          <div style={{ overflowX: "auto" }}>
-            <table className="bi-compare-vs" aria-label={c.vsTitle}>
-              <thead>
-                <tr>
-                  {c.vsCols.map((col, i) => (
-                    <th key={col || i} className={i === 1 ? "us" : undefined}>{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {c.vsRows.map((r) => (
-                  <tr key={r.k}>
-                    <th scope="row">{r.k}</th>
-                    {r.vals.map((v, i) => {
-                      const isObj = v && typeof v === "object";
-                      const text = isObj ? v.t : v;
-                      const kind = isObj ? v.kind : null;
-                      const cls = i === 0 ? "us " : "";
-                      const kindCls = kind === "check" ? "check" : kind === "partial" ? "partial" : (text === "—" ? "dash" : "");
-                      return <td key={i} className={`${cls}${kindCls}`.trim() || undefined}>{text}</td>;
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
          </IgnitionReveal>
         </section>
 
