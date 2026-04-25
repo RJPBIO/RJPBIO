@@ -67,6 +67,46 @@ export function computeProtocolEffectiveness(sessions, { minN = DEFAULT_MIN_N } 
 }
 
 /**
+ * Coherencia HRV media por protocolo cuando hay datos de biofeedback en
+ * vivo (BLE strap). Más objetiva que mood pre/post — mide directamente
+ * la respuesta autonómica del usuario al protocolo.
+ *
+ * Las sesiones esperan tener `coherenceLive: { score: 0-100, ... }`.
+ *
+ * @param {Array} sessions
+ * @returns {Object} mapa protocolId → { meanScore, n, sd } o {insufficient}
+ */
+export function coherenceByProtocol(sessions, { minN = 3 } = {}) {
+  const safe = Array.isArray(sessions) ? sessions : [];
+  const byProto = {};
+  for (const s of safe) {
+    const score = s?.coherenceLive?.score;
+    if (typeof score !== "number") continue;
+    const pid = s?.p || s?.proto || s?.protocolId;
+    if (!pid) continue;
+    (byProto[pid] = byProto[pid] || []).push(score);
+  }
+  const result = {};
+  for (const [pid, scores] of Object.entries(byProto)) {
+    if (scores.length < minN) {
+      result[pid] = { insufficient: true, n: scores.length, minN };
+      continue;
+    }
+    const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const variance = scores.length > 1
+      ? scores.reduce((a, b) => a + (b - mean) ** 2, 0) / (scores.length - 1)
+      : 0;
+    result[pid] = {
+      insufficient: false,
+      n: scores.length,
+      meanScore: +mean.toFixed(1),
+      sd: +Math.sqrt(variance).toFixed(2),
+    };
+  }
+  return result;
+}
+
+/**
  * Mapa protocolo → resultado de efectividad. Agrupa por `proto` o
  * `protocolId`. Protocolos sin suficientes sesiones retornan insufficient.
  */

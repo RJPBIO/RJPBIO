@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   computeProtocolEffectiveness,
   effectivenessByProtocol,
+  coherenceByProtocol,
 } from "./effectiveness";
 
 describe("computeProtocolEffectiveness", () => {
@@ -107,5 +108,52 @@ describe("effectivenessByProtocol", () => {
     ];
     const r = effectivenessByProtocol(sessions, { minN: 5 });
     expect(r.calm.insufficient).toBe(true);
+  });
+});
+
+describe("coherenceByProtocol", () => {
+  it("agrega coherenceLive.score por protocolo", () => {
+    const sessions = [
+      { p: "calma", coherenceLive: { score: 75 } },
+      { p: "calma", coherenceLive: { score: 80 } },
+      { p: "calma", coherenceLive: { score: 70 } },
+      { p: "energia", coherenceLive: { score: 50 } },
+      { p: "energia", coherenceLive: { score: 55 } },
+      { p: "energia", coherenceLive: { score: 45 } },
+    ];
+    const r = coherenceByProtocol(sessions, { minN: 3 });
+    expect(r.calma.meanScore).toBe(75);
+    expect(r.calma.n).toBe(3);
+    expect(r.energia.meanScore).toBe(50);
+  });
+
+  it("ignora sesiones sin coherenceLive", () => {
+    const sessions = [
+      { p: "calma" },
+      { p: "calma", coherenceLive: { score: 70 } },
+      { p: "calma", coherenceLive: { score: 80 } },
+      { p: "calma", coherenceLive: { score: 75 } },
+    ];
+    const r = coherenceByProtocol(sessions);
+    expect(r.calma.n).toBe(3);
+  });
+
+  it("insufficient cuando n<minN", () => {
+    const r = coherenceByProtocol(
+      [{ p: "calma", coherenceLive: { score: 70 } }],
+      { minN: 3 }
+    );
+    expect(r.calma.insufficient).toBe(true);
+  });
+
+  it("ignora sesiones sin protocolo", () => {
+    const sessions = [
+      { coherenceLive: { score: 70 } },
+      { p: "calma", coherenceLive: { score: 70 } },
+      { p: "calma", coherenceLive: { score: 80 } },
+      { p: "calma", coherenceLive: { score: 75 } },
+    ];
+    const r = coherenceByProtocol(sessions);
+    expect(Object.keys(r)).toEqual(["calma"]);
   });
 });

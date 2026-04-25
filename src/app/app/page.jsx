@@ -510,6 +510,7 @@ export default function BioIgnicion(){
     ac={ac}
     sealing={orbDoneFlash}
     scienceDeep={pr&&SCIENCE_DEEP?SCIENCE_DEEP[pr.id]||"":""}
+    onBiofeedback={(coh)=>{if(coh)setSessionData(d=>({...d,coherenceLive:coh}));}}
     onPause={pa}
     onResume={resume}
     onReset={rs}

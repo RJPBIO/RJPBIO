@@ -583,6 +583,7 @@ export default function SessionRunner({
   sealing = false,
   reducedMotion = false,
   onSparkHit = null,
+  onBiofeedback = null,
 }) {
   const safePh = ph || PH_FALLBACK;
   const safePr = pr || { ph: [], n: "", int: "enfoque", d: 120 };
@@ -848,6 +849,7 @@ export default function SessionRunner({
                   elapsedSec={Math.max(0, sec - (safePh.s || 0))}
                   active={running}
                   isDark={true}
+                  onComplete={onBiofeedback}
                 />
               )}
               {/* Breath label (if active) */}

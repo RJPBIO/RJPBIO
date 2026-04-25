@@ -1271,6 +1271,15 @@ export function calcSessionCompletion(st, sessionCtx) {
 
   const burnout = calcBurnoutIndex(ml, hist);
   const bioSignal = calcBioSignal(st);
+  // coherenceLive (opcional): score de coherencia HRV calculada en
+  // streaming durante la sesión vía strap BLE. Solo se persiste si el
+  // user conectó el strap; si no, undefined (no contamina la métrica).
+  const coh = sessionData?.coherenceLive;
+  const coherenceLive =
+    coh && typeof coh.score === "number"
+      ? { score: coh.score, amplitude: coh.amplitude, phaseLock: coh.phaseLock, n: coh.n }
+      : undefined;
+
   const newHist = [...hist, {
     p: protocol.n, ts: Date.now(), vc: eVC, c: nC, r: nR,
     dur: Math.round(protocol.d * durMult), ctx: nfcCtx?.type || "manual",
@@ -1280,6 +1289,7 @@ export function calcSessionCompletion(st, sessionCtx) {
     circadian: circadian?.period || "day", bioSignal: bioSignal.score,
     partial: !!isPartial, hiddenSec: Math.round(sessionData?.hiddenSec || 0),
     completeness: Math.round((completeness) * 100) / 100,
+    ...(coherenceLive ? { coherenceLive } : {}),
   }].slice(-200);
 
   return {
