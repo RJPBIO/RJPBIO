@@ -42,6 +42,17 @@ import { motion } from "framer-motion";
    ═══════════════════════════════════════════════════════════════ */
 
 // ─── Geometry ─────────────────────────────────────────────────────
+// Atractores fijos para clustering orgánico de la lattice. Coordenadas
+// elegidas para sentir "regiones cerebrales" sin alinearse con ejes
+// cardinales (anti-mecánico). Re-normalización a esfera unitaria
+// preserva la integridad del wireframe — solo cambia la densidad local.
+const LATTICE_ATTRACTORS = [
+  { x: 0.62, y: 0.55, z: 0.42 },
+  { x: -0.58, y: -0.18, z: 0.55 },
+  { x: 0.18, y: -0.62, z: -0.48 },
+  { x: -0.42, y: 0.48, z: -0.55 },
+];
+
 function fibSphere(n) {
   const pts = [];
   const phi = Math.PI * (3 - Math.sqrt(5));
@@ -49,7 +60,30 @@ function fibSphere(n) {
     const y = 1 - (i / (n - 1)) * 2;
     const r = Math.sqrt(1 - y * y);
     const theta = phi * i;
-    pts.push({ x: Math.cos(theta) * r, y, z: Math.sin(theta) * r });
+    let p = { x: Math.cos(theta) * r, y, z: Math.sin(theta) * r };
+
+    // Pull suave hacia el atractor más cercano. Clustering orgánico
+    // sin romper la cobertura de la esfera. Pull-strength escala con
+    // 1/distance^2, así regiones lejanas se mueven poco y cercanas
+    // se densifican notoriamente. Cap pull a 0.22 para evitar overlap
+    // entre nodos en el cluster core.
+    let bestD = Infinity;
+    let best = null;
+    for (const a of LATTICE_ATTRACTORS) {
+      const dx = p.x - a.x, dy = p.y - a.y, dz = p.z - a.z;
+      const d = dx * dx + dy * dy + dz * dz;
+      if (d < bestD) { bestD = d; best = a; }
+    }
+    if (best) {
+      const pull = Math.min(0.22, 0.16 / Math.max(0.4, bestD));
+      p.x += (best.x - p.x) * pull;
+      p.y += (best.y - p.y) * pull;
+      p.z += (best.z - p.z) * pull;
+      // Re-normalizar a esfera unitaria (los atractores no están en r=1)
+      const len = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+      if (len > 0) { p.x /= len; p.y /= len; p.z /= len; }
+    }
+    pts.push(p);
   }
   return pts;
 }
@@ -298,9 +332,31 @@ export default function NeuralCore3D({
   const onSparkHitRef = useRef(onSparkHit);
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { progressRef.current = progress; }, [progress]);
-  useEffect(() => { bpRef.current = bp; }, [bp]);
-  useEffect(() => { isBreathingRef.current = isBreathing; }, [isBreathing]);
   useEffect(() => { onSparkHitRef.current = onSparkHit; }, [onSparkHit]);
+  useEffect(() => { isBreathingRef.current = isBreathing; }, [isBreathing]);
+
+  // Phase-change pulse — cada vez que bp transiciona, empujamos un
+  // pulso global ("nodes: all") al pulsesRef para que toda la lattice
+  // brille brevemente. Marca rítmica que el usuario percibe como
+  // "el orb sintió la fase". Sin esto, los cambios de fase pasaban
+  // sin punctuación visual — solo el label cambiaba arriba.
+  // Solo durante isBreathing real para no spamear pulsos en idle.
+  const prevBpRef = useRef(bp);
+  useEffect(() => {
+    const prev = prevBpRef.current;
+    prevBpRef.current = bp;
+    bpRef.current = bp;
+    if (!isBreathing || !bp || bp === prev) return;
+    // Intensity por fase: IN/HOLD reciben pulso fuerte (energía sube),
+    // OUT/EMPTY pulso suave (energía baja). Duración consistente.
+    const intensity = bp === "IN" ? 0.85 : bp === "HOLD" ? 0.7 : bp === "OUT" ? 0.45 : 0.32;
+    pulsesRef.current.push({
+      startMs: performance.now(),
+      duration: 620,
+      nodes: "all",
+      intensity,
+    });
+  }, [bp, isBreathing]);
 
   // Coherence penalty tracking + ember anchor timestamp
   useEffect(() => {
@@ -744,6 +800,50 @@ export default function NeuralCore3D({
         }}
       />
 
+      {/* ─── 1.5. Aurora central breath-coupled ──────────────────
+          El centro del orb estaba muerto durante running (la mask de
+          la lattice deja transparente el 0-26% para legibilidad del
+          dígito, pero eso dejaba un vacío negro). Ahora una aurora
+          tenue (radial gradient, blur 12px) vive detrás del dígito
+          y respira: INHALA expande+brilla, EXHALA contrae+atenúa,
+          VACÍO casi se apaga. Sin reducedMotion. Bajo el threshold
+          de opacity para no competir con el "109" en peso visual. */}
+      {!reducedMotion && (
+        <motion.div
+          aria-hidden
+          animate={
+            isBreathing && bp
+              ? {
+                  scale: bp === "IN" ? 1.28 : bp === "HOLD" ? 1.28 : bp === "OUT" ? 0.82 : 0.7,
+                  opacity: bp === "IN" ? 0.42 : bp === "HOLD" ? 0.48 : bp === "OUT" ? 0.18 : 0.1,
+                }
+              : state === "idle"
+                ? { scale: [1, 1.05, 1], opacity: [0.18, 0.28, 0.18] }
+                : ember
+                  ? { scale: 0.85, opacity: 0.12 * emberOp }
+                  : paused
+                    ? { scale: 0.92, opacity: 0.16 }
+                    : { scale: 1, opacity: 0.22 }
+          }
+          transition={
+            isBreathing && bp
+              ? bp === "HOLD" || bp === "EMPTY"
+                ? { duration: 0.45, ease: [0.25, 1, 0.4, 1] }
+                : { type: "spring", stiffness: 26, damping: 22, mass: 1.2 }
+              : { duration: state === "idle" ? 4.5 : 1.2, repeat: state === "idle" ? Infinity : 0, ease: "easeInOut" }
+          }
+          style={{
+            position: "absolute",
+            inset: "30%",
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${color}55 0%, ${color}28 40%, ${color}10 70%, transparent 100%)`,
+            filter: "blur(12px)",
+            pointerEvents: "none",
+            mixBlendMode: "screen",
+          }}
+        />
+      )}
+
       {/* ─── 2. Coherence halo exterior ─────────────────────────
           Crece suave con coherence. Feedback positivo: respiras bien,
           el halo se enciende. Se difumina con blur para que nunca
@@ -921,8 +1021,8 @@ export default function NeuralCore3D({
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          maskImage: "radial-gradient(circle, transparent 0%, transparent 26%, rgba(0,0,0,0.5) 36%, black 52%, black 100%)",
-          WebkitMaskImage: "radial-gradient(circle, transparent 0%, transparent 26%, rgba(0,0,0,0.5) 36%, black 52%, black 100%)",
+          maskImage: "radial-gradient(circle, transparent 0%, transparent 20%, rgba(0,0,0,0.55) 30%, black 46%, black 100%)",
+          WebkitMaskImage: "radial-gradient(circle, transparent 0%, transparent 20%, rgba(0,0,0,0.55) 30%, black 46%, black 100%)",
           opacity: (paused ? 0.55 : 1) * (ember ? emberOp : 1),
           transition: "opacity .4s ease",
         }}
