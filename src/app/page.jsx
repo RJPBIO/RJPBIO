@@ -1,22 +1,29 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font, bioSignal, radius } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import { EVIDENCE } from "@/lib/evidence";
 import { PRICE_PEEK, PARTNER_COPY, DESIGN_PARTNER } from "@/lib/pricing";
+// Above-the-fold (eager — necesarios para LCP):
 import SensoryHero from "@/components/brand/SensoryHero";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
-import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
-import DashboardMockup from "@/components/brand/DashboardMockup";
-import VideoPreview from "@/components/brand/VideoPreview";
-import PartnerApplyModal from "@/components/ui/PartnerApplyModal";
-import SpotlightGrid from "@/components/brand/SpotlightGrid";
 import CountUp from "@/components/brand/CountUp";
-import PWAShowcase from "@/components/brand/PWAShowcase";
-import ProductEvidence from "@/components/brand/ProductEvidence";
 import { BioGlyph } from "@/components/BioIgnicionMark";
+
+// Below-the-fold (lazy — chunks separados, no bloquean initial paint).
+// next/dynamic con ssr:true preserva HTML render (SEO intacto) pero el
+// JS de hidratación va a chunks aparte → main bundle más pequeño →
+// menos main-thread work al cargar la landing.
+const BioglyphLattice = dynamic(() => import("@/components/brand/BioglyphLattice"));
+const DashboardMockup = dynamic(() => import("@/components/brand/DashboardMockup"));
+const VideoPreview = dynamic(() => import("@/components/brand/VideoPreview"));
+const PartnerApplyModal = dynamic(() => import("@/components/ui/PartnerApplyModal"));
+const SpotlightGrid = dynamic(() => import("@/components/brand/SpotlightGrid"));
+const PWAShowcase = dynamic(() => import("@/components/brand/PWAShowcase"));
+const ProductEvidence = dynamic(() => import("@/components/brand/ProductEvidence"));
 
 export const metadata = {
   title: { absolute: "BIO-IGNICIÓN — Neural Performance" },
