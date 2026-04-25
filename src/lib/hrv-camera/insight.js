@@ -15,8 +15,13 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { zScore } from "../hrv";
+import { isReliableHrvEntry as _isReliableHrvEntry, buildReliableHrvBaseline } from "../hrvLog";
 
 const MIN_BASELINE = 5;
+
+// Re-export para compat retro de imports actuales (insight.js era la
+// fuente de verdad antes de centralizar en lib/hrvLog.js).
+export const isReliableHrvEntry = _isReliableHrvEntry;
 
 /**
  * @param {object} input
@@ -65,29 +70,7 @@ export function computeHrvInsight({ currentLnRmssd, baseline14d }) {
 }
 
 /**
- * Determina si una entrada HRV es confiable para alimentar el baseline.
- * Re-export desde useReadiness para reuso fuera del hook.
- * Reglas: BLE (sin source o sin sqi) confiable; cámara solo si SQI ≥ 60.
- */
-export function isReliableHrvEntry(h) {
-  if (!h || typeof h.lnRmssd !== "number") return false;
-  if (h.source === "camera") {
-    const sqi = typeof h.sqi === "number" ? h.sqi : null;
-    if (sqi === null) return false;
-    return sqi >= 60;
-  }
-  return true;
-}
-
-/**
  * Construye baseline14d (array de lnRmssd) desde un hrvLog crudo.
- * Filtra confiabilidad y rango temporal.
+ * Delegado a la fuente única en lib/hrvLog.js.
  */
-export function buildHrvBaseline(hrvLog, days = 14) {
-  if (!Array.isArray(hrvLog)) return [];
-  const cutoff = Date.now() - days * 86400000;
-  return hrvLog
-    .filter((h) => h && h.ts >= cutoff && isReliableHrvEntry({ ...h, lnRmssd: h.lnRmssd ?? h.lnrmssd }))
-    .map((h) => h.lnRmssd ?? h.lnrmssd)
-    .filter((v) => Number.isFinite(v));
-}
+export const buildHrvBaseline = buildReliableHrvBaseline;

@@ -9,6 +9,11 @@
 import { P } from "./protocols";
 import { calcReadiness } from "./readiness";
 import { isInDeepWorkWindow } from "./chronotype";
+import {
+  getReliableHrvEntries,
+  getReliableRhrEntries,
+  getCurrentReliableHrv,
+} from "./hrvLog";
 
 /**
  * @typedef {Object} PrescriberInput
@@ -56,13 +61,16 @@ export function prescribe({ st, now = new Date() }) {
 
 function calcReadinessFromState(st) {
   try {
+    // Filtrado por confiabilidad (SQI gating). Antes pasaba st.hrvLog
+    // crudo → entradas cámara basura contaminaban el baseline neural
+    // y las recomendaciones quedaban envenenadas.
     return calcReadiness({
-      hrvHistory: st.hrvLog || [],
-      rhrHistory: st.rhrLog || [],
+      hrvHistory: getReliableHrvEntries(st.hrvLog).map((h) => ({ ts: h.ts, lnRmssd: h.lnRmssd })),
+      rhrHistory: getReliableRhrEntries(st.rhrLog).map((h) => ({ ts: h.ts, rhr: h.rhr })),
       sleepHours: st.lastSleepHours || null,
       moodLog: st.moodLog || [],
       sessions: st.history || [],
-      currentHRV: (st.hrvLog || []).slice(-1)[0] || null,
+      currentHRV: getCurrentReliableHrv(st.hrvLog),
     });
   } catch {
     return null;

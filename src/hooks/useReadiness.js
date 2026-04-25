@@ -11,34 +11,31 @@
 
 import { useMemo } from "react";
 import { calcReadiness } from "../lib/readiness";
-import { isReliableHrvEntry } from "../lib/hrv-camera/insight";
+import {
+  getReliableHrvEntries,
+  getReliableRhrEntries,
+  getCurrentReliableHrv,
+} from "../lib/hrvLog";
 
 /**
  * Construye la entrada a `calcReadiness` desde una snapshot del store.
  * Pura y exportada para reuso (inicialización pre-render y tests).
+ *
+ * Filtra hrvLog y rhrLog por confiabilidad (SQI ≥ 60 para cámara).
+ * Sin este filtro el motor neural recibiría data sucia → recomendaciones
+ * envenenadas. La función única de filtrado vive en lib/hrvLog.js.
  */
 export function buildReadinessInput(st) {
-  const hrvLog = Array.isArray(st?.hrvLog) ? st.hrvLog : [];
-  const rhrLog = Array.isArray(st?.rhrLog) ? st.rhrLog : [];
-  const reliable = hrvLog
-    .map((h) => ({ ...h, lnRmssd: h.lnRmssd ?? h.lnrmssd ?? null }))
-    .filter(isReliableHrvEntry);
-  const hrvHistory = reliable.map((h) => ({ ts: h.ts, lnRmssd: h.lnRmssd }));
-  const rhrHistory = rhrLog.map((h) => ({ ts: h.ts, rhr: h.rhr }));
-  // currentHRV debe ser la última lectura CONFIABLE — no la más reciente
-  // si esa es basura.
-  const last = reliable.length ? reliable[reliable.length - 1] : null;
-  const currentHRV = last
-    ? { lnRmssd: last.lnRmssd, rhr: last.rhr ?? null }
-    : null;
+  const reliableHrv = getReliableHrvEntries(st?.hrvLog);
+  const reliableRhr = getReliableRhrEntries(st?.rhrLog);
   return {
-    hrvHistory,
-    rhrHistory,
+    hrvHistory: reliableHrv.map((h) => ({ ts: h.ts, lnRmssd: h.lnRmssd })),
+    rhrHistory: reliableRhr.map((h) => ({ ts: h.ts, rhr: h.rhr })),
     sleepHours: st?.lastSleepHours ?? null,
     sleepTarget: st?.sleepTargetHours ?? 7.5,
     moodLog: st?.moodLog || [],
     sessions: st?.history || [],
-    currentHRV,
+    currentHRV: getCurrentReliableHrv(st?.hrvLog),
   };
 }
 

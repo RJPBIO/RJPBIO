@@ -5,12 +5,11 @@
    sin halos en live-data, sin corner brackets, sin ▸ glyphs.
    ═══════════════════════════════════════════════════════════════ */
 
-import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { resolveTheme, withAlpha, font, brand, bioSignal } from "../lib/theme";
 import { useReducedMotion } from "../lib/a11y";
-import { calcReadiness } from "../lib/readiness";
+import { useReadiness } from "../hooks/useReadiness";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
@@ -18,17 +17,12 @@ export default function ReadinessScore({ st, isDark, onOpenHRV }) {
   const reduced = useReducedMotion();
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
-  const r = useMemo(() => calcReadiness({
-    hrvHistory: st.hrvLog || [],
-    rhrHistory: st.rhrLog || [],
-    sleepHours: st.lastSleepHours || null,
-    sleepTarget: st.sleepTargetHours || 7.5,
-    moodLog: st.moodLog || [],
-    sessions: st.history || [],
-    currentHRV: (st.hrvLog || []).slice(-1)[0] || null,
-  }), [st.hrvLog, st.rhrLog, st.lastSleepHours, st.sleepTargetHours, st.moodLog, st.history]);
+  // Pasa por el filtro de confiabilidad (SQI gating). Antes leía
+  // st.hrvLog crudo → divergía del motor neural cuando entraban
+  // mediciones cámara con SQI bajo. Ahora ambas paths son consistentes.
+  const r = useReadiness(st);
 
-  if (r.insufficient) {
+  if (!r || r.insufficient) {
     return (
       <section
         aria-label="Readiness score no disponible"

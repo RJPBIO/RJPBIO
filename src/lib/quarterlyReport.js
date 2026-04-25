@@ -7,7 +7,12 @@
 
    Diseñado para que un profesional (terapeuta, médico, coach) pueda
    leer el progreso en 30 segundos y decidir si intervenir.
+
+   IMPORTANTE: filtra por confiabilidad antes de tendencias. Una medición
+   cámara con SQI bajo NO debe aparecer en un reporte clínico.
    ═══════════════════════════════════════════════════════════════ */
+
+import { isReliableHrvEntry } from "./hrvLog";
 
 const DAY = 86400000;
 
@@ -94,7 +99,15 @@ export function buildQuarterlyReport(st, { now = Date.now(), days = 90 } = {}) {
   const avgMood = mean(moodSeries);
   const moodTrend = trendOf(moodSeries);
 
-  const hrvInRange = hrvLog.filter((h) => inRange(h?.ts, start, end) && typeof h?.rmssd === "number");
+  // Solo entradas confiables — no contaminamos un reporte trimestral
+  // (que un terapeuta/médico potencialmente lee) con mediciones cámara
+  // de SQI bajo. BLE/legacy siempre entran; cámara solo si SQI ≥ 60.
+  const hrvInRange = hrvLog.filter(
+    (h) =>
+      inRange(h?.ts, start, end) &&
+      typeof h?.rmssd === "number" &&
+      isReliableHrvEntry({ ...h, lnRmssd: h.lnRmssd ?? h.lnrmssd ?? Math.log(h.rmssd) })
+  );
   const rmssdSeries = hrvInRange.map((h) => h.rmssd);
   const avgRmssd = mean(rmssdSeries);
   const rmssdTrend = trendOf(rmssdSeries);

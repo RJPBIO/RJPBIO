@@ -204,8 +204,20 @@ export const useStore = create((set, get) => ({
   logHRV: (entry) => {
     const st = get();
     const hrvLog = [...(st.hrvLog || []), entry].slice(-365);
+    // rhrLog también propaga source/sqi para que isReliableRhrEntry
+    // pueda filtrar por calidad — sin esto, una medición cámara con
+    // SQI bajo contaminaría el baseline RHR aunque la rechazáramos
+    // del baseline lnRmssd.
     const rhrLog = entry.rhr != null
-      ? [...(st.rhrLog || []), { ts: entry.ts, rhr: entry.rhr }].slice(-365)
+      ? [
+          ...(st.rhrLog || []),
+          {
+            ts: entry.ts,
+            rhr: entry.rhr,
+            ...(entry.source != null ? { source: entry.source } : {}),
+            ...(entry.sqi != null ? { sqi: entry.sqi } : {}),
+          },
+        ].slice(-365)
       : st.rhrLog;
     set({ hrvLog, rhrLog });
     scheduleSave({ ...st, hrvLog, rhrLog });
