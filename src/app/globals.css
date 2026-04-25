@@ -194,8 +194,22 @@ button:disabled {
   opacity: 0.5;
 }
 
+/* iOS Safari hace zoom auto cuando un input enfocado tiene font-size < 16px.
+   Forzar mínimo 16px elimina ese zoom indeseado sin afectar diseño en
+   desktop. `max(16px, 1em)` permite que inputs grandes hereden aún más. */
 input, textarea, select {
   font-family: inherit;
+  font-size: max(16px, 1em);
+}
+
+/* Buttons / interactivos: elimina el delay legacy de 300ms en touch
+   (irrelevante en browsers modernos pero idempotente) y suprime el
+   callout de copy/paste al long-press en iOS sobre chrome de UI.
+   Se aplica a buttons + role=button. NO a <a> tags porque anchor links
+   de contenido SÍ deben permitir "Copy link" / "Open in new tab" del OS. */
+button, [role="button"], [role="tab"], [role="menuitem"] {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
 
 /* ═══ Skip-link visible on focus ═══ */
