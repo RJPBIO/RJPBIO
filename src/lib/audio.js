@@ -717,6 +717,110 @@ export function playSpark(freq, volume) {
   } catch (e) {}
 }
 
+// ─── Breath phase tick ──────────────────────────────────
+// Cue auditivo sutil sincronizado con las transiciones de fase
+// respiratoria del orb. Volúmenes muy bajos (0.018–0.04) para vivir
+// DEBAJO del umbral de la voz y del chord — se percibe como
+// "respiración del espacio" más que como nota.
+//
+// Diseño por fase:
+//   INHALA  → sweep ascendente (196 → 392 Hz), filtro abre, ~720ms.
+//             Triangle wave (suave, expansivo). El cuerpo lee "subir".
+//   SOSTÉN  → tono breve sostenido (294 Hz), filtro casi cerrado, 280ms.
+//             Apenas audible — refuerza el "freeze" del orb.
+//   EXHALA  → sweep descendente (392 → 147 Hz), filtro cierra, ~860ms.
+//             Sine puro, attack más lento. El cuerpo lee "soltar".
+//   VACÍO   → ping muy soft (523 Hz, breve, sine), 180ms. Anclaje
+//             central sin presencia — quietud con un pulso mínimo.
+//
+// Throttle: una llamada cada 600ms mínimo. bp normalmente cambia cada
+// 2-8s, pero defensivo ante doble-fire.
+let _lastBreathTickTs = 0;
+export function playBreathTick(label, intent = "enfoque") {
+  const now = Date.now();
+  if (now - _lastBreathTickTs < 600) return;
+  _lastBreathTickTs = now;
+  try {
+    const bus = ensureReverbBus();
+    if (!bus) return;
+    const { c, wet, dry } = bus;
+    if (c.state === "suspended") c.resume();
+    const t0 = c.currentTime;
+
+    const norm = String(label || "").toUpperCase();
+    let cfg;
+    if (norm.startsWith("INHAL")) {
+      cfg = { f0: 196, f1: 392, dur: 0.72, attack: 0.06, type: "triangle", filtStart: 1200, filtEnd: 4800, peak: 0.038 };
+    } else if (norm.startsWith("MANT") || norm.startsWith("SOST")) {
+      cfg = { f0: 294, f1: 294, dur: 0.28, attack: 0.04, type: "sine", filtStart: 2200, filtEnd: 1400, peak: 0.022 };
+    } else if (norm.startsWith("EXHAL")) {
+      cfg = { f0: 392, f1: 147, dur: 0.86, attack: 0.10, type: "sine", filtStart: 3400, filtEnd: 800, peak: 0.034 };
+    } else if (norm.startsWith("VAC") || norm.startsWith("EMPT")) {
+      cfg = { f0: 523, f1: 523, dur: 0.18, attack: 0.005, type: "sine", filtStart: 4200, filtEnd: 2400, peak: 0.018 };
+    } else {
+      return;
+    }
+
+    // Intent flavor: energia sube +2 semitonos, calma baja -2,
+    // enfoque/reset neutral. Mantiene cohesión con el chord pad.
+    const semitone = Math.pow(2, 1 / 12);
+    const shift = intent === "energia" ? Math.pow(semitone, 2) : intent === "calma" ? Math.pow(semitone, -2) : 1;
+    const f0 = cfg.f0 * shift;
+    const f1 = cfg.f1 * shift;
+
+    const v = duckedVolume(cfg.peak);
+
+    // Envelope
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(v, t0 + cfg.attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + cfg.dur);
+
+    // Lowpass envelope — IN abre, OUT cierra
+    const filt = c.createBiquadFilter();
+    filt.type = "lowpass";
+    filt.Q.value = 0.7;
+    filt.frequency.setValueAtTime(cfg.filtStart, t0);
+    filt.frequency.exponentialRampToValueAtTime(Math.max(200, cfg.filtEnd), t0 + cfg.dur * 0.85);
+
+    // Dos osciladores con detune ±4 cents — riqueza sin batimientos
+    const oscs = [];
+    for (const detune of [-4, 4]) {
+      const o = c.createOscillator();
+      o.type = cfg.type;
+      o.frequency.setValueAtTime(f0, t0);
+      if (f1 !== f0) {
+        o.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t0 + cfg.dur * 0.95);
+      }
+      o.detune.value = detune;
+      o.connect(filt);
+      o.start(t0);
+      o.stop(t0 + cfg.dur + 0.05);
+      oscs.push(o);
+    }
+    filt.connect(g);
+    g.connect(dry);
+    g.connect(wet);
+
+    // Disposal idéntico a createLayeredTone
+    _activeSourceCount += oscs.length;
+    let disposed = false;
+    const dispose = () => {
+      if (disposed) return;
+      disposed = true;
+      try {
+        for (const o of oscs) { try { o.disconnect(); } catch {} }
+        try { filt.disconnect(); } catch {}
+        try { g.disconnect(); } catch {}
+      } finally {
+        _activeSourceCount = Math.max(0, _activeSourceCount - oscs.length);
+      }
+    };
+    oscs[oscs.length - 1].onended = dispose;
+    setTimeout(dispose, (cfg.dur + 0.3) * 1000);
+  } catch (e) {}
+}
+
 // ─── Noise buffers (pre-generados) ────────────────────────
 // Reemplazamos createScriptProcessor (deprecado, inestable en iOS/Android)
 // por un AudioBuffer estático reproducido en loop. Más portable, sin

@@ -32,7 +32,7 @@ import { useCommandKey } from "@/hooks/useCommandKey";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
 import {
-  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark,
+  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
@@ -366,6 +366,12 @@ export default function BioIgnicion(){
         // contemplativo, no narrador.
         speak(f.label.toLowerCase(),circadian,voiceOn);
         hapticBreath(f.label);
+        // Cue auditivo bajo umbral de voz, sincronizado con el pulso
+        // del orb. El cuerpo recibe 3 señales coherentes en cada
+        // transición: visual (pulso de lattice + anillo), háptica
+        // (vibración por fase) y sonora (sweep tonal). Solo si el
+        // usuario tiene sonido activo.
+        if(st.soundOn!==false)playBreathTick(f.label,pr?.int);
         lastLabel=f.label;
       }
       t++;
