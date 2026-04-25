@@ -1,8 +1,11 @@
+import { headers } from "next/headers";
 import { PublicShell } from "@/components/ui/PublicShell";
 import { Container } from "@/components/ui/Container";
 import { cssVar, space, font } from "@/components/ui/tokens";
 
-export default function StatusLoading() {
+export default async function StatusLoading() {
+  const h = await headers();
+  const nonce = h.get("x-nonce") || undefined;
   return (
     <PublicShell activePath="/status">
       <Container size="md" className="bi-prose">
@@ -44,7 +47,7 @@ export default function StatusLoading() {
             </li>
           ))}
         </ul>
-        <style>{`@keyframes bi-pulse{0%,100%{opacity:.5}50%{opacity:1}}@media (prefers-reduced-motion:reduce){*{animation:none!important}}`}</style>
+        <style nonce={nonce}>{`@keyframes bi-pulse{0%,100%{opacity:.5}50%{opacity:1}}@media (prefers-reduced-motion:reduce){*{animation:none!important}}`}</style>
       </Container>
     </PublicShell>
   );

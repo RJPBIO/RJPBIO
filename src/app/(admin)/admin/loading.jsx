@@ -1,4 +1,8 @@
-export default function AdminLoading() {
+import { headers } from "next/headers";
+
+export default async function AdminLoading() {
+  const h = await headers();
+  const nonce = h.get("x-nonce") || undefined;
   return (
     <div aria-live="polite" aria-busy="true" style={{ color: "#A7F3D0", fontFamily: "system-ui" }}>
       <div
@@ -25,7 +29,7 @@ export default function AdminLoading() {
         ))}
       </div>
       <span className="bi-sr-only">Cargando datos administrativos…</span>
-      <style>{`@keyframes bi-pulse{0%,100%{opacity:.5}50%{opacity:1}}@media (prefers-reduced-motion:reduce){*{animation:none!important}}`}</style>
+      <style nonce={nonce}>{`@keyframes bi-pulse{0%,100%{opacity:.5}50%{opacity:1}}@media (prefers-reduced-motion:reduce){*{animation:none!important}}`}</style>
     </div>
   );
 }

@@ -1,4 +1,11 @@
-export default function Loading() {
+import { headers } from "next/headers";
+
+export default async function Loading() {
+  // Pasar el nonce CSP del middleware al <style> inline. Sin esto, CSP
+  // bloquea el bloque y aparece como error de "inline style violation"
+  // en consola — degrada el Performance score y se ve mal en demos B2B.
+  const h = await headers();
+  const nonce = h.get("x-nonce") || undefined;
   return (
     <main style={{ minHeight: "100dvh", display: "grid", placeItems: "center", background: "#0B0E14", color: "#64748B", fontFamily: "system-ui", padding: 24 }}>
       <div aria-live="polite" aria-busy="true" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
@@ -12,7 +19,7 @@ export default function Loading() {
           }}
         />
         <span style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: "#94A3B8", fontWeight: 700 }}>Cargando</span>
-        <style>{`
+        <style nonce={nonce}>{`
           @keyframes bi-orb-spin { to { transform: rotate(360deg); } }
           @media (prefers-reduced-motion: reduce) {
             [aria-busy="true"] span[aria-hidden] { animation: none !important; }

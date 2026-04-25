@@ -61,9 +61,18 @@ async function adapter() {
   return PrismaAdapter(orm);
 }
 
+// Resolver el adapter una vez al boot. Si la DB no está disponible (env
+// faltante o conexión fallida), session strategy cae a JWT — evita el
+// 500 que NextAuth lanza al pedir /api/auth/session con strategy="database"
+// sin adapter. JWT no requiere DB, vive en cookie firmada.
+const dbAdapter = await adapter().catch(() => undefined);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: await adapter().catch(() => undefined),
-  session: { strategy: "database", maxAge: 8 * 60 * 60 },
+  adapter: dbAdapter,
+  session: {
+    strategy: dbAdapter ? "database" : "jwt",
+    maxAge: 8 * 60 * 60,
+  },
   pages: { signIn: "/signin", error: "/signin" },
   trustHost: process.env.AUTH_TRUST_HOST === "1" || process.env.NODE_ENV !== "production",
   providers: [
@@ -102,19 +111,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return `${baseUrl}/app`;
     },
     async signIn({ user, account }) {
-      const orm = await db();
-      await orm.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});
+      // Best-effort: si la DB no está disponible, permitimos signin igual
+      // (especialmente en JWT mode). El audit log fallido no debe bloquear
+      // el login, solo perdería esa traza.
+      try {
+        const orm = await db();
+        await orm.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});
+      } catch {
+        // sin DB → no hay lastLoginAt update; signin sigue válido
+      }
       await auditLog({ action: "auth.signin", actorId: user.id, payload: { provider: account?.provider } })
         .catch(() => {});
       return true;
     },
-    async session({ session, user }) {
-      const orm = await db();
-      const memberships = await orm.membership.findMany({ where: { userId: user.id } });
-      session.user.id = user.id;
-      session.user.locale = user.locale || "es";
-      session.user.timezone = user.timezone || "America/Mexico_City";
-      session.memberships = memberships;
+    async session({ session, user, token }) {
+      // En strategy="jwt" no hay `user`; toda la info viene del token.
+      // En strategy="database" sí hay `user` y la DB está disponible.
+      const u = user || (token ? { id: token.sub, locale: token.locale, timezone: token.timezone } : null);
+      if (!u || !session?.user) return session;
+      session.user.id = u.id;
+      session.user.locale = u.locale || "es";
+      session.user.timezone = u.timezone || "America/Mexico_City";
+      // Memberships sólo si tenemos DB conectada — un fallo aquí NO
+      // debe romper el endpoint completo (hace que retorne 500 a todo
+      // visitor del sitio, no sólo a los autenticados).
+      if (dbAdapter) {
+        try {
+          const orm = await db();
+          session.memberships = await orm.membership.findMany({ where: { userId: u.id } });
+        } catch {
+          session.memberships = [];
+        }
+      } else {
+        session.memberships = [];
+      }
       return session;
     },
   },
