@@ -47,17 +47,34 @@ export function wireAudioUnlock() {
   window.addEventListener("pointerdown", onGesture, opts);
   window.addEventListener("touchstart", onGesture, opts);
   window.addEventListener("keydown", onGesture, opts);
+
+  // Cuando la pestaña se oculta, paramos voz para que no quede
+  // hablando en background (mala UX si el user abre otra app).
+  // Cuando vuelve, no auto-resumeamos — speak() se llamará si hace falta.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      try { window.speechSynthesis?.cancel(); } catch {}
+    }
+  });
+}
+
+// Ducking: si la voz está hablando, los sonidos suenan al 35% del volumen
+// normal → claridad. Sin esto, los chords se mezclan con la voz y todo
+// se vuelve ruido. Diseño estándar en apps de mindfulness premium.
+function duckedVolume(base) {
+  return _isSpeaking ? base * 0.35 : base;
 }
 
 export function playChord(f, d, v) {
   try {
     const c = gAC(); if (!c) return;
     if (c.state === "suspended") c.resume();
+    const targetVol = duckedVolume(v || 0.04);
     f.forEach((fr) => {
       const o = c.createOscillator(); const g = c.createGain();
       o.connect(g); g.connect(c.destination); o.type = "sine"; o.frequency.value = fr;
       g.gain.setValueAtTime(0, c.currentTime);
-      g.gain.linearRampToValueAtTime((v || 0.04) / f.length, c.currentTime + 0.08);
+      g.gain.linearRampToValueAtTime(targetVol / f.length, c.currentTime + 0.08);
       g.gain.linearRampToValueAtTime(0, c.currentTime + d);
       o.start(c.currentTime); o.stop(c.currentTime + d);
     });
@@ -71,23 +88,33 @@ export function playChord(f, d, v) {
 // "chispazo" en el fondo, no como música. Frecuencia mapeada a
 // la altura del mote destino para que la red neuronal "suene"
 // como una red.
+// Throttle: si NeuralCore3D dispara 50 firings en 500ms, crear 50
+// oscillators causa glitches y clipping. Limitamos a uno cada 80ms
+// (max ~12 sparks/segundo) — sigue dando sensación de "red activa"
+// sin saturar el grafo de audio.
+let _lastSparkTs = 0;
 export function playSpark(freq, volume) {
+  const now = Date.now();
+  if (now - _lastSparkTs < 80) return;
+  _lastSparkTs = now;
   try {
     const c = gAC(); if (!c) return;
     if (c.state === "suspended") c.resume();
-    const f = Math.max(200, Math.min(1400, freq || 640));
-    const v = Math.max(0.01, Math.min(0.12, volume || 0.055));
+    // Rango de frecuencia ligeramente más estrecho (260-1100Hz) — fuera
+    // de eso suena demasiado grave o piercing.
+    const f = Math.max(260, Math.min(1100, freq || 640));
+    const v = duckedVolume(Math.max(0.01, Math.min(0.12, volume || 0.055)));
     const o = c.createOscillator();
     const g = c.createGain();
     o.connect(g); g.connect(c.destination);
     o.type = "sine";
     o.frequency.value = f;
-    const now = c.currentTime;
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(v, now + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
-    o.start(now);
-    o.stop(now + 0.08);
+    const acNow = c.currentTime;
+    g.gain.setValueAtTime(0, acNow);
+    g.gain.linearRampToValueAtTime(v, acNow + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, acNow + 0.055);
+    o.start(acNow);
+    o.stop(acNow + 0.08);
   } catch (e) {}
 }
 
@@ -402,13 +429,61 @@ const VOICE_PREFS = {
   he: ["he-IL"],
 };
 
+// Voces premium conocidas por OS — empíricamente son las más naturales.
+// Si una está disponible, la priorizamos sobre la búsqueda por lang tag.
+// Apple voces nuevas (Premium / Enhanced) son las mejores; Google "Wavenet"
+// son aceptables; nombres genéricos tipo "Microsoft David" suenan robóticos.
+const PREMIUM_VOICE_NAMES = {
+  es: [
+    // iOS / macOS — voces Premium o Enhanced
+    "Paulina (Enhanced)", "Paulina (Premium)", "Paulina",
+    "Mónica (Enhanced)", "Mónica (Premium)", "Mónica",
+    "Marisol", "Esperanza",
+    // Android Google TTS network voices con calidad alta
+    "Spanish (Mexico)", "Spanish (Spain)",
+    // Microsoft Edge / Windows voces Neural
+    "Microsoft Dalia Online (Natural) - Spanish (Mexico)",
+    "Microsoft Helena Desktop - Spanish (Spain)",
+  ],
+  en: [
+    "Samantha (Enhanced)", "Samantha (Premium)", "Samantha",
+    "Karen", "Daniel", "Moira", "Tessa", "Allison",
+    "Microsoft Aria Online (Natural)", "Google US English",
+  ],
+  pt: ["Luciana (Enhanced)", "Luciana", "Joana"],
+  fr: ["Amélie (Enhanced)", "Amélie", "Thomas"],
+  de: ["Anna (Enhanced)", "Anna", "Markus"],
+  it: ["Alice (Enhanced)", "Alice", "Luca"],
+};
+
 function pickVoice(locale = "es") {
   if (!_voices.length) return null;
   const prefix = (locale || "es").slice(0, 2).toLowerCase();
+
+  // 1) Try premium named voices first — empíricamente la mejor calidad.
+  const premiumNames = PREMIUM_VOICE_NAMES[prefix] || [];
+  for (const name of premiumNames) {
+    const hit = _voices.find((v) =>
+      v.name === name || (v.name && v.name.includes(name))
+    );
+    if (hit) return hit;
+  }
+
+  // 2) Fallback al método anterior por lang tag con preferencia local.
   const tags = VOICE_PREFS[prefix] || [];
   const byLang = (tag) => _voices.filter((v) => v.lang === tag);
   const byPrefix = (p) => _voices.filter((v) => v.lang?.toLowerCase().startsWith(p));
-  const prefer = (list) => list.find((v) => v.localService) || list[0];
+  // Filtra voces conocidas como robóticas si tenemos alternativa.
+  const isRobotic = (v) =>
+    /^Microsoft (David|Mark|Zira|Hazel) (Desktop|Mobile)/.test(v.name || "") ||
+    v.name === "Google" ||
+    v.name === "fred";
+  const prefer = (list) => {
+    const local = list.filter((v) => v.localService && !isRobotic(v));
+    if (local.length) return local[0];
+    const nonRobotic = list.filter((v) => !isRobotic(v));
+    return nonRobotic[0] || list[0];
+  };
   for (const tag of tags) {
     const hit = prefer(byLang(tag));
     if (hit) return hit;
@@ -436,38 +511,95 @@ function resolveLocale(locale) {
   return "es";
 }
 
+// Dedup: rápidos repeats (p.ej. INHALA INHALA por race entre breath-tick
+// y phase-change) producen voz superpuesta. Saltamos repeats <800ms.
+let _lastSpeechText = "";
+let _lastSpeechTs = 0;
+const SPEECH_DEDUP_MS = 800;
+
+// Estado "speaking" expuesto para ducking de sonidos (sounds más bajos
+// mientras la voz habla → claridad).
+let _isSpeaking = false;
+export function isSpeaking() { return _isSpeaking; }
+
+// iOS Safari conocido bug: speechSynthesis se "duerme" tras ~10-15s sin
+// uso. Si llamas speak() después, no suena. Mantenemos vivo con un ping
+// silencioso periódico cuando la pestaña está visible.
+let _keepaliveTimer = null;
+function startVoiceKeepalive() {
+  if (_keepaliveTimer || typeof window === "undefined" || !window.speechSynthesis) return;
+  _keepaliveTimer = setInterval(() => {
+    try {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) return;
+      // Ping: utterance vacía silenciosa cada 8s mantiene la API viva.
+      const u = new SpeechSynthesisUtterance("");
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    } catch {}
+  }, 8000);
+}
+
+function buildUtterance(text, circadian, loc) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = voiceLangTag(loc);
+  // Defaults naturales (1.0 pitch, 1.0 volume). Rate ligeramente <1 (0.95)
+  // para presencia clara sin sonar lento. Circadian puede ajustar pero
+  // mantenemos el rango estrecho para no entrar en "robotic territory".
+  const rateOverride = circadian?.voiceRate;
+  u.rate = Math.max(0.85, Math.min(1.15, typeof rateOverride === "number" ? rateOverride : 0.95));
+  u.pitch = Math.max(0.9, Math.min(1.1, circadian?.voicePitch || 1.0));
+  u.volume = 1.0;
+  const v = pickVoice(loc);
+  if (v) u.voice = v;
+  // Trackear estado para ducking
+  u.onstart = () => { _isSpeaking = true; };
+  u.onend = () => { _isSpeaking = false; };
+  u.onerror = () => { _isSpeaking = false; };
+  return u;
+}
+
 export function speak(text, circadian, voiceOn = true, locale) {
-  if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
+  if (!voiceOn || !text || typeof window === "undefined" || !window.speechSynthesis) return;
+  // Dedup: mismo texto < 800ms = skip. Evita "INHALA INHALA" overlap.
+  const now = Date.now();
+  if (text === _lastSpeechText && now - _lastSpeechTs < SPEECH_DEDUP_MS) return;
+  _lastSpeechText = text;
+  _lastSpeechTs = now;
   try {
-    // Si aún no tenemos voces cacheadas, intentamos cargarlas ahora.
     if (!_voices.length) loadVoices();
+    startVoiceKeepalive();
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     const loc = resolveLocale(locale);
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = voiceLangTag(loc); u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
-    const v = pickVoice(loc);
-    if (v) u.voice = v;
-    window.speechSynthesis.speak(u);
+    window.speechSynthesis.speak(buildUtterance(text, circadian, loc));
   } catch (e) {}
 }
 
 export function speakNow(text, circadian, voiceOn = true, locale) {
-  if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
+  if (!voiceOn || !text || typeof window === "undefined" || !window.speechSynthesis) return;
+  // speakNow interrumpe — actualiza el dedup state también.
+  _lastSpeechText = text;
+  _lastSpeechTs = Date.now();
   try {
     if (!_voices.length) loadVoices();
+    startVoiceKeepalive();
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     window.speechSynthesis.cancel();
+    _isSpeaking = false; // cancel resetea
     const loc = resolveLocale(locale);
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = voiceLangTag(loc); u.rate = circadian?.voiceRate || 0.92; u.pitch = circadian?.voicePitch || 1.0; u.volume = 0.85;
-    const v = pickVoice(loc);
-    if (v) u.voice = v;
-    window.speechSynthesis.speak(u);
+    window.speechSynthesis.speak(buildUtterance(text, circadian, loc));
   } catch (e) {}
 }
 
 export function stopVoice() {
-  try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  try {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      _isSpeaking = false;
+      _lastSpeechText = "";
+      _lastSpeechTs = 0;
+    }
+  } catch (e) {}
 }
 
 // ─── Persistence (DEPRECATED: use Zustand store) ─────────
