@@ -1,10 +1,13 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { bioSignal } from "@/lib/theme";
 import Icon from "@/components/Icon";
 import AmbientLattice from "@/components/AmbientLattice";
 import NeuralCore3D from "@/components/brand/NeuralCore3D";
+
+const SessionBiofeedback = dynamic(() => import("@/components/SessionBiofeedback"), { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    SESSION RUNNER — fullscreen cinematic overlay
@@ -838,6 +841,15 @@ export default function SessionRunner({
           {/* ═══ INSTRUCTION + WAVEFORM + SCIENCE (running only) ═══ */}
           {!countingDown && (
             <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 10, marginTop: 8, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
+              {/* Live biofeedback (opcional) — solo durante respiración con ciclo declarado */}
+              {isBr && safePh.br && !sealing && (
+                <SessionBiofeedback
+                  breathCycle={safePh.br}
+                  elapsedSec={Math.max(0, sec - (safePh.s || 0))}
+                  active={running}
+                  isDark={true}
+                />
+              )}
               {/* Breath label (if active) */}
               <AnimatePresence mode="wait">
                 {isBr && bL && (
