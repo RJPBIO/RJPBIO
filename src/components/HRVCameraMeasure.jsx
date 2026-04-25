@@ -22,20 +22,49 @@ const SETTLING_TIMEOUT_MS = 30000; // si en 30s no detectamos dedo, abortar
 const FINGER_LOST_GRACE_MS = 1500; // tolerancia antes de pausar el timer
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
+// iOS Safari no permite controlar el flash con la cámara abierta (hardware
+// exclusivo). Tampoco soporta Web Bluetooth. Detectamos iOS para ofrecer
+// dos rutas alternativas: pantalla-como-luz (frontal) o luz externa (trasera).
+function detectIOS() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  // iPad en iPadOS 13+ se reporta como Mac; el check de maxTouchPoints
+  // discrimina iPads reales.
+  if (/iP(ad|hone|od)/.test(ua)) return true;
+  if (ua.includes("Macintosh") && navigator.maxTouchPoints > 1) return true;
+  return false;
+}
+
 export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, onUseBLE }) {
   const reduced = useReducedMotion();
-  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const titleId = useId();
   const ref = useFocusTrap(show, onClose);
 
   const [phase, setPhase] = useState("intro"); // intro | requesting | settling | measuring | done | error
+  // mode: "torch" (Android: trasera + LED) | "screen-light" (iOS: frontal + pantalla blanca) | "ambient" (trasera, sol/lámpara)
+  const [mode, setMode] = useState(null);
   const [elapsedSec, setElapsedSec] = useState(0);
-  const [live, setLive] = useState(null); // { hrv, sqi, waveform, fingerOk, fingerRatio }
+  const [live, setLive] = useState(null);
   const [error, setError] = useState(null);
   const [torchOn, setTorchOn] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [finalResult, setFinalResult] = useState(null);
   const [settlingCountdown, setSettlingCountdown] = useState(null);
+
+  const isIOS = typeof window !== "undefined" ? detectIOS() : false;
+
+  // Cuando el modo es "screen-light", el modal se convierte en una fuente
+  // de luz: fondo blanco puro, paleta clara forzada. Se aplica solo durante
+  // settling+measuring (no en intro/done/error, donde la paleta normal es OK).
+  const screenLightActive = mode === "screen-light" && (phase === "settling" || phase === "measuring");
+  const { bg: bgN, card: cdN, border: bdN, t1: t1N, t2: t2N, t3: t3N } = resolveTheme(isDark);
+  const lightPalette = resolveTheme(false);
+  const bg = screenLightActive ? "#ffffff" : bgN;
+  const cd = screenLightActive ? lightPalette.card : cdN;
+  const bd = screenLightActive ? lightPalette.border : bdN;
+  const t1 = screenLightActive ? lightPalette.t1 : t1N;
+  const t2 = screenLightActive ? lightPalette.t2 : t2N;
+  const t3 = screenLightActive ? lightPalette.t3 : t3N;
 
   const captureRef = useRef(null);
   const analyzerRef = useRef(null);
@@ -60,9 +89,10 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     setPhase(p);
   }
 
-  async function handleStart() {
+  async function handleStart(startMode = "torch") {
     if (startingRef.current) return; // race guard
     startingRef.current = true;
+    setMode(startMode);
     setError(null);
     setElapsedSec(0);
     setLive(null);
@@ -132,7 +162,8 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     });
     analyzerRef.current = analyzer;
 
-    const cap = createCameraCapture({ facingMode: "environment" });
+    const facingMode = startMode === "screen-light" ? "user" : "environment";
+    const cap = createCameraCapture({ facingMode });
     captureRef.current = cap;
     try {
       await cap.start({
@@ -142,12 +173,26 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         },
         onError: () => {},
       });
-      const ok = await cap.setTorch(true);
-      setTorchOn(ok);
-      setTorchAvailable(cap.isTorchSupported());
+      // Solo intentamos encender torch en modo "torch" (Android con LED
+      // controlable). En screen-light/ambient el torch es inaccesible o
+      // irrelevante.
+      if (startMode === "torch") {
+        const ok = await cap.setTorch(true);
+        setTorchOn(ok);
+        setTorchAvailable(cap.isTorchSupported());
+      } else {
+        setTorchOn(false);
+        setTorchAvailable(false);
+      }
       settlingStartTsRef.current = Date.now();
       setPhaseSafe("settling");
-      announce("Apoya el dedo sobre la cámara trasera y el flash.");
+      announce(
+        startMode === "screen-light"
+          ? "Apoya el dedo sobre la cámara frontal. Sube el brillo al máximo."
+          : startMode === "ambient"
+          ? "Apoya el dedo sobre la cámara trasera bajo luz fuerte."
+          : "Apoya el dedo sobre la cámara trasera y el flash."
+      );
     } catch (err) {
       setError(err?.message || "No se pudo iniciar la cámara.");
       setPhaseSafe("error");
@@ -301,7 +346,9 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             }}
           >
             <p style={{ color: t1, fontSize: 15, lineHeight: 1.55, margin: 0, marginBlockEnd: 12 }}>
-              Apoya la yema del dedo índice sobre la cámara trasera y el flash LED. Mantén presión firme pero sin aplastar; cubre lente + flash por completo.
+              {isIOS
+                ? "En iPhone el flash no se puede activar con la cámara abierta. Tienes dos rutas válidas — elige la que prefieras."
+                : "Apoya la yema del dedo índice sobre la cámara trasera y el flash LED. Mantén presión firme pero sin aplastar; cubre lente + flash por completo."}
             </p>
             <p style={{ color: t2, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               Siéntate cómodo y quieto durante {Math.round(FULL_DURATION_SEC)} s. La cámara detecta las micro-pulsaciones rojas de tu sangre sistólica sin hardware extra.
@@ -328,30 +375,57 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={!cameraAvailable || phase === "requesting"}
-            aria-label="Iniciar medición HRV con cámara"
-            style={{
-              inlineSize: "100%",
-              minBlockSize: 48,
-              paddingBlock: 14,
-              background: cameraAvailable ? brand.primary : bd,
-              color: "#fff",
-              border: "none",
-              borderRadius: 14,
-              fontSize: 15,
-              fontWeight: 700,
-              letterSpacing: -0.1,
-              cursor: cameraAvailable && phase !== "requesting" ? "pointer" : "not-allowed",
-              opacity: cameraAvailable && phase !== "requesting" ? 1 : 0.55,
-            }}
-          >
-            {phase === "requesting" ? "Solicitando…" : "Permitir cámara y empezar"}
-          </button>
+          {isIOS ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <ModeButton
+                primary
+                recommended
+                disabled={!cameraAvailable || phase === "requesting"}
+                onClick={() => handleStart("screen-light")}
+                title="Pantalla como luz"
+                subtitle="Dedo sobre cámara frontal. Sube el brillo al máximo antes de empezar."
+                t1={t1}
+                t2={t2}
+                t3={t3}
+                bd={bd}
+              />
+              <ModeButton
+                disabled={!cameraAvailable || phase === "requesting"}
+                onClick={() => handleStart("ambient")}
+                title="Luz del sol o lámpara"
+                subtitle="Dedo sobre cámara trasera, bajo luz fuerte (sol directo o linterna externa)."
+                t1={t1}
+                t2={t2}
+                t3={t3}
+                bd={bd}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleStart("torch")}
+              disabled={!cameraAvailable || phase === "requesting"}
+              aria-label="Iniciar medición HRV con cámara"
+              style={{
+                inlineSize: "100%",
+                minBlockSize: 48,
+                paddingBlock: 14,
+                background: cameraAvailable ? brand.primary : bd,
+                color: "#fff",
+                border: "none",
+                borderRadius: 14,
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: -0.1,
+                cursor: cameraAvailable && phase !== "requesting" ? "pointer" : "not-allowed",
+                opacity: cameraAvailable && phase !== "requesting" ? 1 : 0.55,
+              }}
+            >
+              {phase === "requesting" ? "Solicitando…" : "Permitir cámara y empezar"}
+            </button>
+          )}
 
-          {onUseBLE && (
+          {onUseBLE && !isIOS && (
             <button
               type="button"
               onClick={() => { onClose?.(); onUseBLE(); }}
@@ -444,11 +518,19 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
           >
             {live?.fingerOk
               ? (settlingCountdown && settlingCountdown > 0 ? `Listos en ${settlingCountdown}…` : "Detectado. Iniciando…")
+              : mode === "screen-light"
+              ? "Apoya el dedo sobre la cámara frontal"
+              : mode === "ambient"
+              ? "Apoya el dedo sobre la cámara trasera"
               : "Apoya el dedo sobre la lente y el flash"}
           </p>
           <p style={{ color: t3, fontSize: 13, lineHeight: 1.5, margin: 0, marginBlockEnd: 32 }}>
             {live?.fingerOk
               ? "Mantén el dedo firme. Respira natural, sin guiarte."
+              : mode === "screen-light"
+              ? "Sube el brillo al máximo. La pantalla ilumina el dedo; la cámara frontal captura el reflejo."
+              : mode === "ambient"
+              ? "Necesitas luz fuerte (sol directo o lámpara potente sobre el dedo)."
               : "Cubre lente + flash con la yema, presión firme pero relajada."}
           </p>
           <button
@@ -775,6 +857,51 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         </div>
       )}
     </motion.div>
+  );
+}
+
+function ModeButton({ primary, recommended, disabled, onClick, title, subtitle, t1, t2, t3, bd }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        inlineSize: "100%",
+        padding: "14px 16px",
+        background: primary ? withAlpha(brand.primary, 8) : "transparent",
+        color: t1,
+        border: `1.5px solid ${primary ? withAlpha(brand.primary, 45) : bd}`,
+        borderRadius: 14,
+        textAlign: "start",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: -0.1 }}>{title}</span>
+        {recommended && (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              color: brand.primary,
+              background: withAlpha(brand.primary, 12),
+              padding: "2px 6px",
+              borderRadius: 4,
+            }}
+          >
+            Recomendado
+          </span>
+        )}
+      </div>
+      <div style={{ fontSize: 12, lineHeight: 1.5, color: t2 }}>{subtitle}</div>
+    </button>
   );
 }
 
