@@ -160,9 +160,18 @@ export async function clearAll() {
 }
 
 // ─── Outbox (offline queue para sync) ───────────────────
+// Event bus: dispatch "bio-outbox-changed" después de cada add para
+// que sync.js dispare drain debounced sin crear circular dep
+// (storage no importa sync).
 export async function outboxAdd(entry) {
   if (!hasIDB()) return null;
-  return idbSet(STORE_OUTBOX, undefined, { ...entry, ts: Date.now() });
+  const stored = await idbSet(STORE_OUTBOX, undefined, { ...entry, ts: Date.now() });
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("bio-outbox-changed", { detail: { kind: entry?.kind } }));
+    }
+  } catch {}
+  return stored;
 }
 
 export async function outboxAll() {
