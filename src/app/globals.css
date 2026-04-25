@@ -127,6 +127,10 @@ html, body {
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Smooth in-page scroll para anchors (#sections en docs/landing) */
+  scroll-behavior: smooth;
+  /* Mejora rendering de SVG y Canvas en displays HiDPI */
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -134,6 +138,51 @@ body {
   padding-block-end: env(safe-area-inset-bottom);
   padding-inline-start: env(safe-area-inset-left);
   padding-inline-end: env(safe-area-inset-right);
+}
+
+/* ═══ UNIVERSAL MOTION-SAFE FALLBACK ═══════════════════════════════
+   WCAG 2.3.3. Aunque casi todos los componentes ya tienen su gate de
+   reduced-motion en JS (useReducedMotion), esto es un safety net global:
+   cualquier animación CSS que se haya escapado del audit se desactiva
+   automáticamente. Cero overhead cuando el user no solicitó reduce.
+   También elimina scroll smooth que en reduced-motion puede causar
+   nausea (smooth scroll = movimiento involuntario).                   */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html, body {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ═══ SCROLL HYGIENE ═══════════════════════════════════════════════
+   Scrollbar discreta consistente cross-browser. Default fat scrollbar
+   en Windows arruina el feel premium; igualamos con thin + accent.    */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--bi-text-muted, #94A3B8) 35%, transparent) transparent;
+}
+*::-webkit-scrollbar { inline-size: 8px; block-size: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--bi-text-muted, #94A3B8) 35%, transparent);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--bi-text-muted, #94A3B8) 55%, transparent);
+}
+
+/* ═══ CONTENT VISIBILITY HINTS ═════════════════════════════════════
+   Browser hint: contenido off-screen se puede saltar de layout/paint
+   hasta que esté cerca del viewport. Mejora scroll perf en páginas
+   largas (reportes, dashboards, evidence cards) sin cambio visual.
+   contain-intrinsic-size reserva espacio aproximado para evitar CLS. */
+.bi-cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
 }
 
 /* ═══ RTL aware base — components should use logical props too ═══ */
