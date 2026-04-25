@@ -117,12 +117,21 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
+        {/* iOS PWA install behavior — la app se siente nativa al instalarse */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="BIO-IGNICIÓN" />
+        <meta name="format-detection" content="telephone=no" />
+        {/* Android / Chromium */}
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#0B0E14" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+        {/* Windows tiles */}
         <meta name="msapplication-TileColor" content="#059669" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
-        <meta name="color-scheme" content="light" />
+        <meta name="color-scheme" content="light dark" />
+        {/* Apple touch icon — también para splash en home screen install */}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {JSON_LD.map((ld, i) => (
           <script

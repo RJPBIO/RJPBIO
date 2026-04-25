@@ -1,8 +1,8 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   SWUpdateNotifier — escucha el hook de actualización del SW y
-   emite un toast persistente con acción "Recargar". Se monta en
-   GlobalChrome, sin UI propia.
+   SWUpdateNotifier — emite toast cuando hay nueva versión disponible.
+   Toast persistente con acción "Actualizar" — el user reload cuando
+   quiera, sin sorpresas mid-session.
    ═══════════════════════════════════════════════════════════════ */
 
 import { useEffect, useRef } from "react";
@@ -14,13 +14,12 @@ export default function SWUpdateNotifier() {
   const emittedRef = useRef(false);
 
   useEffect(() => {
-    if (updateAvailable && !emittedRef.current) {
-      emittedRef.current = true;
-      toast.info("Nueva versión disponible", {
-        duration: 0, // persistente hasta que el usuario actúe
-        action: { label: "Recargar", onClick: accept },
-      });
-    }
+    if (!updateAvailable || emittedRef.current) return;
+    emittedRef.current = true;
+    toast.info("Nueva versión disponible — mejoras y fixes recientes", {
+      duration: 0, // persistente hasta que el usuario actúe
+      action: { label: "Actualizar", onClick: accept },
+    });
   }, [updateAvailable, accept]);
 
   return null;

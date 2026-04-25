@@ -19,6 +19,7 @@ import { createCameraCapture, createStreamingAnalyzer } from "../lib/hrv-camera/
 import { computeHrvInsight, buildHrvBaseline } from "../lib/hrv-camera/insight";
 import { useStore } from "../store/useStore";
 import { track } from "../lib/telemetry";
+import { useHaptic } from "../hooks/useHaptic";
 
 const FULL_DURATION_SEC = 60;
 const SETTLING_TIMEOUT_MS = 30000; // si en 30s no detectamos dedo, abortar
@@ -40,6 +41,7 @@ function detectIOS() {
 
 export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, onUseBLE }) {
   const reduced = useReducedMotion();
+  const haptic = useHaptic();
   const titleId = useId();
   const ref = useFocusTrap(show, onClose);
 
@@ -205,9 +207,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             u.fingerOk
           ) {
             const ageMs = Date.now() - u.lastPeakTs;
-            if (ageMs < 1500 && typeof navigator !== "undefined" && navigator.vibrate) {
-              try { navigator.vibrate(15); } catch {}
-            }
+            if (ageMs < 1500) haptic("beat");
             lastVibratedPeakTsRef.current = u.lastPeakTs;
           }
 

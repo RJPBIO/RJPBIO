@@ -243,8 +243,8 @@ function PrimaryButton({ onClick, label }) {
       onClick={onClick}
       style={{
         border: 0,
-        minBlockSize: 40,
-        paddingBlock: 10,
+        minBlockSize: 44,
+        paddingBlock: 12,
         paddingInline: 18,
         borderRadius: 999,
         fontWeight: 800,
@@ -270,8 +270,8 @@ function GhostButton({ onClick, label }) {
       type="button"
       onClick={onClick}
       style={{
-        minBlockSize: 40,
-        paddingBlock: 10,
+        minBlockSize: 44,
+        paddingBlock: 12,
         paddingInline: 16,
         borderRadius: 999,
         fontWeight: 700,
