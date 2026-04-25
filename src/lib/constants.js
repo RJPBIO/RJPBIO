@@ -145,6 +145,12 @@ export const DS = {
   totalTime: 0,
   soundOn: true,
   hapticOn: true,
+  // v13 — voice + audio + session granularity (persistente, antes en useState volátil)
+  voiceOn: true,                    // TTS en sesión
+  voiceRate: 0.83,                  // 0.7 lento · 0.83 normal · 1.0 rápido
+  masterVolume: 1,                  // multiplier sobre el master gain (0.4–1.0)
+  wakeLockEnabled: true,            // mantener pantalla activa durante sesión (default ON: completion ↑ → más datos)
+  reducedMotionOverride: "auto",    // "auto" sigue prefers-reduced-motion · "always" · "never"
   themeMode: "auto",
   moodLog: [],
   firstDone: false,

@@ -36,11 +36,148 @@ export default function SettingsSheet({
   const titleId = useId();
   const { t } = useT();
 
-  const toggles = [
-    { l: t("settings.sound"),   k: "soundOn",  d: t("settings.soundDesc"),   ic: "volume-on" },
-    { l: t("settings.vibrate"), k: "hapticOn", d: t("settings.vibrateDesc"), ic: "vibrate" },
-    { l: t("settings.voice"),   k: "_voice",   d: t("settings.voiceDesc"),   ic: "mind" },
-  ];
+  // ─── Helper subcomponents (locales, mismo styling system) ───
+  const SectionLabel = ({ children, icon }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBlockStart: space[3], paddingBlockEnd: 6, fontSize: 10, fontWeight: 800, letterSpacing: 1.4, textTransform: "uppercase", color: t3 }}>
+      {icon && <Icon name={icon} size={11} color={t3} />}
+      {children}
+    </div>
+  );
+
+  const ToggleRow = ({ label, desc, icon, checked, onToggle }) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingBlock: space[3],
+        borderBlockEnd: `1px solid ${bd}`,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+        {icon && <Icon name={icon} size={15} color={t3} />}
+        <div>
+          <div style={ty.title(t1)}>{label}</div>
+          {desc && <div style={{ ...ty.caption(t3), marginBlockStart: 1 }}>{desc}</div>}
+        </div>
+      </div>
+      <button
+        role="switch"
+        aria-checked={checked}
+        aria-label={`${label}: ${checked ? t("settings.on") : t("settings.off")}`}
+        onClick={onToggle}
+        style={{
+          inlineSize: 42,
+          blockSize: 24,
+          borderRadius: 12,
+          background: checked ? ac : bd,
+          border: "none",
+          cursor: "pointer",
+          position: "relative",
+          transition: reduced ? "none" : "background .3s",
+          padding: 0,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            display: "block",
+            inlineSize: 20,
+            blockSize: 20,
+            borderRadius: 10,
+            background: "#fff",
+            position: "absolute",
+            insetBlockStart: 2,
+            insetInlineStart: checked ? 20 : 2,
+            transition: reduced ? "none" : "inset-inline-start .3s",
+            boxShadow: "0 1px 3px rgba(0,0,0,.15)",
+          }}
+        />
+      </button>
+    </div>
+  );
+
+  const SegmentedRow = ({ label, icon, value, options, onChange, ariaLabel }) => (
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel || label}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingBlock: space[3],
+        borderBlockEnd: `1px solid ${bd}`,
+        gap: 8,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: space[2], minInlineSize: 0 }}>
+        {icon && <Icon name={icon} size={15} color={t3} />}
+        <div style={ty.title(t1)}>{label}</div>
+      </div>
+      <div style={{ display: "flex", gap: space[1], flexShrink: 0 }}>
+        {options.map((m) => {
+          const active = value === m.id;
+          return (
+            <button
+              key={m.id}
+              role="radio"
+              aria-checked={active}
+              aria-label={`${label}: ${m.label}`}
+              onClick={() => onChange(m.id)}
+              style={{
+                paddingBlock: space[1],
+                paddingInline: space[3],
+                borderRadius: radius.sm - 1,
+                border: `1px solid ${active ? ac : bd}`,
+                background: active ? withAlpha(ac, 6) : cd,
+                color: active ? ac : t3,
+                ...ty.caption(active ? ac : t3),
+                cursor: "pointer",
+              }}
+            >
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const SliderRow = ({ label, icon, value, min = 0, max = 1, step = 0.05, formatValue, onChange }) => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        paddingBlock: space[3],
+        borderBlockEnd: `1px solid ${bd}`,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+          {icon && <Icon name={icon} size={15} color={t3} />}
+          <div style={ty.title(t1)}>{label}</div>
+        </div>
+        <span style={{ ...numStyle(ac, 700), fontSize: 12 }}>
+          {formatValue ? formatValue(value) : `${Math.round(value * 100)}%`}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        aria-label={label}
+        style={{
+          inlineSize: "100%",
+          accentColor: ac,
+          cursor: "pointer",
+        }}
+      />
+    </div>
+  );
 
   return (
     <AnimatePresence>
@@ -92,118 +229,100 @@ export default function SettingsSheet({
                 margin: `0 auto ${space[5]}px`,
               }}
             />
-            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[4] }}>
+            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[2] }}>
               {t("settings.title")}
             </h3>
 
-            {toggles.map((s) => {
-              const checked = s.k === "_voice" ? voiceOn : !!st[s.k];
-              const toggle = () => {
-                if (s.k === "_voice") setVoiceOn(!voiceOn);
-                else setSt({ ...st, [s.k]: !st[s.k] });
-              };
-              return (
-                <div
-                  key={s.k}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingBlock: space[3],
-                    borderBlockEnd: `1px solid ${bd}`,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-                    <Icon name={s.ic} size={15} color={t3} />
-                    <div>
-                      <div style={ty.title(t1)}>{s.l}</div>
-                      <div style={{ ...ty.caption(t3), marginBlockStart: 1 }}>{s.d}</div>
-                    </div>
-                  </div>
-                  <button
-                    role="switch"
-                    aria-checked={checked}
-                    aria-label={`${s.l}: ${checked ? t("settings.on") : t("settings.off")}`}
-                    onClick={toggle}
-                    style={{
-                      inlineSize: 42,
-                      blockSize: 24,
-                      borderRadius: 12,
-                      background: checked ? ac : bd,
-                      border: "none",
-                      cursor: "pointer",
-                      position: "relative",
-                      transition: reduced ? "none" : "background .3s",
-                      padding: 0,
-                    }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        display: "block",
-                        inlineSize: 20,
-                        blockSize: 20,
-                        borderRadius: 10,
-                        background: "#fff",
-                        position: "absolute",
-                        insetBlockStart: 2,
-                        insetInlineStart: checked ? 20 : 2,
-                        transition: reduced ? "none" : "inset-inline-start .3s",
-                        boxShadow: "0 1px 3px rgba(0,0,0,.15)",
-                      }}
-                    />
-                  </button>
-                </div>
-              );
-            })}
+            {/* ═══ AUDIO ═══ */}
+            <SectionLabel icon="volume-on">Audio</SectionLabel>
+            <ToggleRow
+              label={t("settings.sound")}
+              desc={t("settings.soundDesc")}
+              icon="volume-on"
+              checked={!!st.soundOn}
+              onToggle={() => setSt({ ...st, soundOn: !st.soundOn })}
+            />
+            <SliderRow
+              label="Volumen"
+              icon="volume-on"
+              value={typeof st.masterVolume === "number" ? st.masterVolume : 1}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(v) => setSt({ ...st, masterVolume: v })}
+            />
 
-            <div
-              role="radiogroup"
-              aria-label={t("settings.themeLabel")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingBlock: space[3],
-                borderBlockEnd: `1px solid ${bd}`,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-                <Icon name="palette" size={15} color={t3} />
-                <div style={ty.title(t1)}>{t("settings.theme")}</div>
-              </div>
-              <div style={{ display: "flex", gap: space[1] }}>
-                {[
-                  { id: "auto",  label: t("settings.themeAuto") },
-                  { id: "light", label: t("settings.themeLight") },
-                  { id: "dark",  label: t("settings.themeDark") },
-                ].map((m) => {
-                  const active = (st.themeMode || "auto") === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      role="radio"
-                      aria-checked={active}
-                      aria-label={`${t("settings.theme")}: ${m.label}`}
-                      onClick={() => setSt({ ...st, themeMode: m.id })}
-                      style={{
-                        paddingBlock: space[1],
-                        paddingInline: space[3],
-                        borderRadius: radius.sm - 1,
-                        border: `1px solid ${active ? ac : bd}`,
-                        background: active ? withAlpha(ac, 6) : cd,
-                        color: active ? ac : t3,
-                        ...ty.caption(active ? ac : t3),
-                        cursor: "pointer",
-                      }}
-                    >
-                      {m.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* ═══ VOZ ═══ */}
+            <SectionLabel icon="mind">Voz</SectionLabel>
+            <ToggleRow
+              label={t("settings.voice")}
+              desc={t("settings.voiceDesc")}
+              icon="mind"
+              checked={voiceOn}
+              onToggle={() => setVoiceOn(!voiceOn)}
+            />
+            <SegmentedRow
+              label="Velocidad"
+              icon="mind"
+              value={(() => {
+                const r = typeof st.voiceRate === "number" ? st.voiceRate : 0.83;
+                return r <= 0.78 ? "slow" : r >= 0.95 ? "fast" : "normal";
+              })()}
+              options={[
+                { id: "slow", label: "Lenta" },
+                { id: "normal", label: "Normal" },
+                { id: "fast", label: "Rápida" },
+              ]}
+              onChange={(id) => setSt({ ...st, voiceRate: id === "slow" ? 0.74 : id === "fast" ? 1.05 : 0.83 })}
+              ariaLabel="Velocidad de la voz"
+            />
 
+            {/* ═══ VIBRACIÓN ═══ */}
+            <SectionLabel icon="vibrate">Vibración</SectionLabel>
+            <ToggleRow
+              label={t("settings.vibrate")}
+              desc={t("settings.vibrateDesc")}
+              icon="vibrate"
+              checked={!!st.hapticOn}
+              onToggle={() => setSt({ ...st, hapticOn: !st.hapticOn })}
+            />
+
+            {/* ═══ SESIÓN ═══ */}
+            <SectionLabel icon="bolt">Sesión</SectionLabel>
+            <ToggleRow
+              label="Mantener pantalla activa"
+              desc="Evita que la pantalla se apague durante la sesión"
+              icon="bolt"
+              checked={st.wakeLockEnabled !== false}
+              onToggle={() => setSt({ ...st, wakeLockEnabled: !(st.wakeLockEnabled !== false) })}
+            />
+
+            {/* ═══ DISPLAY ═══ */}
+            <SectionLabel icon="palette">Display</SectionLabel>
+            <SegmentedRow
+              label={t("settings.theme")}
+              icon="palette"
+              value={st.themeMode || "auto"}
+              options={[
+                { id: "auto", label: t("settings.themeAuto") },
+                { id: "light", label: t("settings.themeLight") },
+                { id: "dark", label: t("settings.themeDark") },
+              ]}
+              onChange={(id) => setSt({ ...st, themeMode: id })}
+              ariaLabel={t("settings.themeLabel")}
+            />
+            <SegmentedRow
+              label="Animación"
+              icon="palette"
+              value={st.reducedMotionOverride || "auto"}
+              options={[
+                { id: "auto", label: "Auto" },
+                { id: "never", label: "Total" },
+                { id: "always", label: "Reducida" },
+              ]}
+              onChange={(id) => setSt({ ...st, reducedMotionOverride: id })}
+              ariaLabel="Preferencia de animación: auto, total, o reducida"
+            />
             <div
               style={{
                 display: "flex",
@@ -220,12 +339,15 @@ export default function SettingsSheet({
               <LocaleSelect variant="radiogroup" />
             </div>
 
+            {/* ═══ AMBIENTES ═══ */}
+            <SectionLabel icon="breath">Ambientes</SectionLabel>
             <fieldset
               style={{
                 border: "none",
                 padding: 0,
                 margin: 0,
-                paddingBlock: space[3],
+                paddingBlockStart: space[2],
+                paddingBlockEnd: space[3],
                 borderBlockEnd: `1px solid ${bd}`,
               }}
             >
@@ -326,7 +448,9 @@ export default function SettingsSheet({
               </div>
             </fieldset>
 
-            <div style={{ display: "flex", gap: space[1.5] || 6, marginBlockStart: space[4] }}>
+            {/* ═══ DATOS — portabilidad GDPR ═══ */}
+            <SectionLabel icon="export">Tus datos</SectionLabel>
+            <div style={{ display: "flex", gap: space[1.5] || 6, marginBlockStart: space[2] }}>
               <motion.button
                 whileTap={reduced ? {} : { scale: 0.96 }}
                 onClick={() => exportData(st)}

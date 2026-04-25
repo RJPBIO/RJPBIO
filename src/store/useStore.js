@@ -12,7 +12,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 12;
+const STORE_VERSION = 13;
 
 function migrate(data) {
   if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
@@ -42,6 +42,13 @@ function migrate(data) {
     // v12: programs — trayectorias curadas multi-día.
     if (typeof merged.activeProgram === "undefined") merged.activeProgram = null;
     if (!Array.isArray(merged.programHistory)) merged.programHistory = [];
+    // v13: voice + audio granularity persistente (antes useState volátil) +
+    //      wake lock toggle + reducedMotion override
+    if (typeof merged.voiceOn !== "boolean") merged.voiceOn = true;
+    if (typeof merged.voiceRate !== "number") merged.voiceRate = 0.83;
+    if (typeof merged.masterVolume !== "number") merged.masterVolume = 1;
+    if (typeof merged.wakeLockEnabled !== "boolean") merged.wakeLockEnabled = true;
+    if (typeof merged.reducedMotionOverride !== "string") merged.reducedMotionOverride = "auto";
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
