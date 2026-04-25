@@ -6,6 +6,7 @@ import { bioSignal } from "@/lib/theme";
 import Icon from "@/components/Icon";
 import AmbientLattice from "@/components/AmbientLattice";
 import NeuralCore3D from "@/components/brand/NeuralCore3D";
+import { useHaptic } from "@/hooks/useHaptic";
 
 const SessionBiofeedback = dynamic(() => import("@/components/SessionBiofeedback"), { ssr: false });
 
@@ -362,10 +363,11 @@ function IgnitionSpark({ show, accent, reducedMotion }) {
 /* ─── Signature button (pause/resume) ── */
 function SigButton({ onClick, children, variant = "glass", ariaLabel, accent }) {
   const isPrimary = variant === "primary";
+  const haptic = useHaptic();
   return (
     <motion.button
       whileTap={{ scale: 0.95 }}
-      onClick={onClick}
+      onClick={(e) => { haptic("tap"); onClick?.(e); }}
       aria-label={ariaLabel}
       className="bi-runner-btn"
       style={{
@@ -397,10 +399,11 @@ function SigButton({ onClick, children, variant = "glass", ariaLabel, accent }) 
 }
 
 function ResetButton({ onClick, accent }) {
+  const haptic = useHaptic();
   return (
     <motion.button
       whileTap={{ scale: 0.9 }}
-      onClick={onClick}
+      onClick={(e) => { haptic("warn"); onClick?.(e); }}
       aria-label="Reiniciar sesión"
       className="bi-runner-btn"
       style={{
@@ -429,16 +432,18 @@ function AntiCheatPrompt({ idx, accent, breathLabel, reducedMotion, onResolve })
   const [holdProgress, setHoldProgress] = useState(0);
   const holdStartRef = useRef(null);
   const holdRafRef = useRef(null);
+  const haptic = useHaptic();
 
   const startHold = useCallback(() => {
     holdStartRef.current = Date.now();
+    haptic("tap");
     const tick = () => {
       const t = Date.now() - (holdStartRef.current || Date.now());
       setHoldProgress(Math.min(1, t / 2000));
       if (t < 2000 && holdStartRef.current) holdRafRef.current = requestAnimationFrame(tick);
     };
     holdRafRef.current = requestAnimationFrame(tick);
-  }, []);
+  }, [haptic]);
 
   const endHold = useCallback(() => {
     if (!holdStartRef.current) return;
@@ -446,14 +451,22 @@ function AntiCheatPrompt({ idx, accent, breathLabel, reducedMotion, onResolve })
     holdStartRef.current = null;
     if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
     setHoldProgress(0);
-    if (dur >= 2000) onResolve({ type: "hold", success: true, dur });
-    else onResolve({ type: "hold", success: false, dur });
-  }, [onResolve]);
+    if (dur >= 2000) {
+      haptic("ok");
+      onResolve({ type: "hold", success: true, dur });
+    } else {
+      onResolve({ type: "hold", success: false, dur });
+    }
+  }, [onResolve, haptic]);
 
   useEffect(() => () => { if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current); }, []);
 
+  // base con minBlockSize 48 explícito (antes 13×2 + line-height ≈ 46,
+  // borderline para WCAG 2.5.5). bi-runner-btn aplica focus-ring del
+  // accent en globals.css.
   const base = {
     width: "100%",
+    minBlockSize: 48,
     padding: "13px 16px",
     borderRadius: 14,
     cursor: "pointer",
@@ -469,6 +482,7 @@ function AntiCheatPrompt({ idx, accent, breathLabel, reducedMotion, onResolve })
     gap: 10,
     position: "relative",
     overflow: "hidden",
+    "--bi-focus-accent": accent,
   };
 
   if (idx === 0) {
@@ -482,6 +496,7 @@ function AntiCheatPrompt({ idx, accent, breathLabel, reducedMotion, onResolve })
       >
         <button
           type="button"
+          className="bi-runner-btn"
           aria-label="Mantén presionado 2 segundos para verificar presencia"
           onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); startHold(); }}
           onPointerUp={endHold}
@@ -517,8 +532,12 @@ function AntiCheatPrompt({ idx, accent, breathLabel, reducedMotion, onResolve })
       >
         <button
           type="button"
+          className="bi-runner-btn"
           aria-label="Toca al exhalar para sincronizar"
-          onClick={() => onResolve({ type: "tapExhale", success: isExhale, phase: breathLabel })}
+          onClick={() => {
+            haptic(isExhale ? "ok" : "tap");
+            onResolve({ type: "tapExhale", success: isExhale, phase: breathLabel });
+          }}
           style={{ ...base, borderStyle: "dashed", borderColor: withAlpha(accent, isExhale ? 55 : 28) }}
         >
           <span
@@ -547,8 +566,9 @@ function AntiCheatPrompt({ idx, accent, breathLabel, reducedMotion, onResolve })
     >
       <button
         type="button"
+        className="bi-runner-btn"
         aria-label="Confirma tu presencia"
-        onClick={() => onResolve({ type: "presence", success: true })}
+        onClick={() => { haptic("ok"); onResolve({ type: "presence", success: true }); }}
         style={base}
       >
         <span style={{ width: 8, height: 8, borderRadius: "50%", background: accent, opacity: 0.7 }} />
