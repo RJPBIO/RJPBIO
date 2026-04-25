@@ -150,44 +150,182 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
   );
 }
 
-/* ─── Breath waveform (instrumentation layer) ── */
-// Cuando isBr=true: amplitud se acopla a bS (respiración real).
-// Cuando isBr=false: amplitud basal con pulso sincronizado al ritmo del orb (3.2s),
-// así la instrumentación "respira" aunque la fase no lo requiera.
-function BreathWaveform({ accent, isBr, bS, reducedMotion }) {
-  const amp = isBr ? 6 + (bS - 0.9) * 18 : 4.5;
+/* ─── Phase timeline (instrumentation telemétrica) ───────
+   Reemplaza al BreathWaveform decorativo. Muestra dónde está el
+   usuario DENTRO de la fase actual con:
+     · Track horizontal con progress fill spring-animado
+     · Playhead glowing con pulso sutil (alive)
+     · Tick marks en cada breakpoint del iExec (entre subfases)
+     · Endpoints (inicio/fin de fase) como nodos pequeños
+     · Labels mono blueprint: "T+12s ... /30s"
+   Identidad: blueprint/telemetría, no decoración. Cada elemento
+   gana su lugar. */
+const TIMELINE_MONO = "var(--font-mono), 'JetBrains Mono', monospace";
+
+function PhaseTimeline({ accent, safePh, safePr, sec, totalDur, reducedMotion }) {
+  // Math: convertir sec restante → posición actual dentro de la fase.
+  // iExec usa coords RELATIVAS (0-based dentro de la fase) en BASE seconds.
+  // safePh.s/e son ABSOLUTE protocol-base seconds.
+  // durMult escala todo a tiempo real (60s/120s/180s).
+  const durMult = safePr && safePr.d > 0 ? totalDur / safePr.d : 1;
+  const elapsedTotal = Math.max(0, totalDur - sec);
+  const phaseStartActual = (safePh.s || 0) * durMult;
+  const phaseElapsedActual = Math.max(0, elapsedTotal - phaseStartActual);
+  const phaseDurationBase = Math.max(1, (safePh.e || 0) - (safePh.s || 0));
+  const phaseDurationActual = phaseDurationBase * durMult;
+  const progress = Math.min(1, Math.max(0, phaseElapsedActual / Math.max(0.01, phaseDurationActual)));
+
+  const elapsedSec = Math.round(phaseElapsedActual);
+  const totalSec = Math.round(phaseDurationActual);
+
+  // Breakpoints del iExec (divisiones intermedias entre subfases)
+  const iExec = Array.isArray(safePh.iExec) ? safePh.iExec : null;
+  const breakpoints = iExec && iExec.length > 1
+    ? iExec.slice(0, -1).map((s) => s.to)
+    : [];
+
   return (
-    <svg width="100%" height="24" viewBox="0 0 320 24" style={{ opacity: 0.55, pointerEvents: "none", overflow: "visible" }}>
-      <motion.path
-        d={`M0,12 ${Array.from({ length: 16 }, (_, i) => {
-          const x = (i + 1) * 20;
-          const y = 12 + (i % 2 === 0 ? -amp : amp);
-          return `Q${x - 10},${y} ${x},12`;
-        }).join(" ")}`}
-        fill="none"
-        stroke={accent}
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        style={{ transformOrigin: "center", transformBox: "fill-box" }}
-        animate={
-          reducedMotion
-            ? {}
-            : isBr
-            ? { x: [-20, 0] }
-            : { x: [-20, 0], scaleY: [1, 1.7, 1] }
-        }
-        transition={
-          reducedMotion
-            ? {}
-            : isBr
-            ? { duration: 1.8, repeat: Infinity, ease: "linear" }
-            : {
-                x: { duration: 1.8, repeat: Infinity, ease: "linear" },
-                scaleY: { duration: 3.2, repeat: Infinity, ease: "easeInOut" },
-              }
-        }
-      />
-    </svg>
+    <div style={{ paddingBlock: 2 }} aria-label={`Fase: ${elapsedSec} de ${totalSec} segundos`} role="progressbar" aria-valuenow={elapsedSec} aria-valuemin={0} aria-valuemax={totalSec}>
+      {/* Stat row: T+elapsed left, total right (mono blueprint) */}
+      <div
+        aria-hidden="true"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 7,
+          fontFamily: TIMELINE_MONO,
+          fontSize: 10,
+          letterSpacing: 0.5,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        <span style={{ color: accent, fontWeight: 700, display: "inline-flex", alignItems: "baseline", gap: 1 }}>
+          <span style={{ opacity: 0.7 }}>T+</span>
+          <span style={{ fontSize: 11 }}>{elapsedSec}</span>
+          <span style={{ opacity: 0.7 }}>s</span>
+        </span>
+        <span style={{ color: withAlpha(accent, 50), fontWeight: 600 }}>
+          / {totalSec}s
+        </span>
+      </div>
+
+      {/* Track + playhead + breakpoints + endpoints */}
+      <div style={{ position: "relative", height: 12 }}>
+        {/* Background track */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            height: 2,
+            background: withAlpha(accent, 12),
+            borderRadius: 1,
+          }}
+        />
+
+        {/* Progress fill — spring para fluidez orgánica */}
+        <motion.div
+          aria-hidden="true"
+          animate={{ width: `${progress * 100}%` }}
+          transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 120, damping: 22, mass: 0.8 }}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            height: 2,
+            background: `linear-gradient(90deg, ${withAlpha(accent, 35)}, ${accent})`,
+            borderRadius: 1,
+            boxShadow: `0 0 8px ${withAlpha(accent, 55)}`,
+          }}
+        />
+
+        {/* iExec breakpoint markers — tick verticales en divisiones */}
+        {breakpoints.map((bp, i) => {
+          const pct = (bp / phaseDurationBase) * 100;
+          if (pct <= 1 || pct >= 99) return null;
+          const passed = bp <= phaseElapsedActual / durMult;
+          return (
+            <div
+              key={`bp-${i}`}
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                left: `${pct}%`,
+                top: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 1,
+                height: 9,
+                background: withAlpha(accent, passed ? 60 : 30),
+                transition: "background .35s ease",
+              }}
+            />
+          );
+        })}
+
+        {/* Endpoints — nodos pequeños en inicio/fin */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: 0,
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            background: withAlpha(accent, 55),
+            boxShadow: `0 0 4px ${withAlpha(accent, 40)}`,
+          }}
+        />
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            right: 0,
+            top: "50%",
+            transform: "translate(50%, -50%)",
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            background: progress >= 0.99 ? accent : withAlpha(accent, 28),
+            boxShadow: progress >= 0.99 ? `0 0 8px ${withAlpha(accent, 70)}` : "none",
+            transition: "background .4s ease, box-shadow .4s ease",
+          }}
+        />
+
+        {/* Playhead — outer wraps position, inner wraps pulse.
+            Separar permite que la posición use spring sin conflicto
+            con el pulso continuo (alive). */}
+        <motion.div
+          aria-hidden="true"
+          animate={{ left: `${progress * 100}%` }}
+          transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 120, damping: 22, mass: 0.8 }}
+          style={{
+            position: "absolute",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 2,
+          }}
+        >
+          <motion.div
+            animate={reducedMotion ? {} : { scale: [1, 1.18, 1], opacity: [0.92, 1, 0.92] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              width: 9,
+              height: 9,
+              borderRadius: "50%",
+              background: accent,
+              boxShadow: `0 0 14px ${withAlpha(accent, 95)}, 0 0 4px #fff`,
+            }}
+          />
+        </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -1116,10 +1254,20 @@ export default function SessionRunner({
                 </motion.div>
               )}
 
-              {/* Waveform — instrumentation layer */}
-              {running && !paused && (
-                <div style={{ height: 24, marginTop: 2 }}>
-                  <BreathWaveform accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} />
+              {/* Phase timeline — instrumentation telemétrica.
+                  Reemplaza el waveform decorativo. Comunica dónde
+                  está el usuario dentro de la fase actual con
+                  precision blueprint. */}
+              {running && !paused && safePh.e > safePh.s && (
+                <div style={{ marginTop: 4 }}>
+                  <PhaseTimeline
+                    accent={accent}
+                    safePh={safePh}
+                    safePr={safePr}
+                    sec={sec}
+                    totalDur={totalDur}
+                    reducedMotion={reducedMotion}
+                  />
                 </div>
               )}
 
