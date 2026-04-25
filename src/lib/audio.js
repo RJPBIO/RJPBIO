@@ -65,18 +65,139 @@ function duckedVolume(base) {
   return _isSpeaking ? base * 0.35 : base;
 }
 
+// ─── Reverb Bus ───────────────────────────────────────────
+// Convolution reverb compartido por todos los sonidos. Sin esto los
+// sine waves puros suenan "secos en una caja" — feel de synth barato.
+// Con reverb: sensación espacial, presencia, calidad de instrumento.
+//
+// La impulse response (IR) la sintetizamos en runtime con noise
+// exponencialmente decaído — cero asset payload, ~10ms de cómputo
+// al primer uso. Calidad menor que un IR sampleado de iglesia/hall
+// real, pero suficiente para "sonar diseñado" vs synth crudo.
+
+let _reverbConvolver = null;
+let _reverbWetGain = null;
+let _reverbDryGain = null;
+
+function buildImpulseResponse(c, durationSec = 1.8, decay = 2.4) {
+  const sr = c.sampleRate;
+  const length = Math.floor(sr * durationSec);
+  const ir = c.createBuffer(2, length, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = ir.getChannelData(ch);
+    // Decorrelación stereo sutil: el seed del random difiere entre canales
+    // → el reverb se siente "amplio" en lugar de mono.
+    for (let i = 0; i < length; i++) {
+      const t = i / length;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+    }
+  }
+  return ir;
+}
+
+function ensureReverbBus() {
+  const c = gAC(); if (!c) return null;
+  if (_reverbConvolver && _reverbWetGain && _reverbDryGain) {
+    return { c, wet: _reverbWetGain, dry: _reverbDryGain };
+  }
+  try {
+    const conv = c.createConvolver();
+    conv.buffer = buildImpulseResponse(c);
+    const wet = c.createGain(); wet.gain.value = 0.32; // ~32% reverb send → presencia clara, no "iglesia"
+    const dry = c.createGain(); dry.gain.value = 1.0;
+    wet.connect(conv);
+    conv.connect(c.destination);
+    dry.connect(c.destination);
+    _reverbConvolver = conv;
+    _reverbWetGain = wet;
+    _reverbDryGain = dry;
+    return { c, wet, dry };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Layered tone: 2 oscillators detuneados + filter envelope + reverb send.
+ * Esto es lo que separa "synth digital crudo" de "sonido diseñado".
+ *
+ * - 2 osciladores a ±5 cents → riqueza armónica (efecto chorus sutil)
+ * - Lowpass biquad cierra de filterStart → filterEnd durante la nota
+ *   → simula timbre orgánico (en vez de buzz constante)
+ * - Envelope ADR: ataque rápido, decay exponencial → percusivo
+ * - Send a wet (reverb) + dry → espacialidad
+ *
+ * @param {object} opts
+ * @param {number} opts.freq        Hz fundamental
+ * @param {number} opts.durSec      duración total
+ * @param {number} opts.peakVol     volumen pico del envelope
+ * @param {number} [opts.attack=0.01]
+ * @param {string} [opts.type="sine"]
+ * @param {number} [opts.filterStart=8000]  Hz inicial del lowpass
+ * @param {number} [opts.filterEnd=1400]    Hz final
+ * @param {number} [opts.detuneCents=5]     ± cents para layering
+ */
+function createLayeredTone({
+  freq,
+  durSec,
+  peakVol,
+  attack = 0.01,
+  type = "sine",
+  filterStart = 8000,
+  filterEnd = 1400,
+  detuneCents = 5,
+}) {
+  const bus = ensureReverbBus();
+  if (!bus) return;
+  const { c, wet, dry } = bus;
+  if (c.state === "suspended") c.resume();
+  const now = c.currentTime;
+
+  // Envelope de la nota
+  const voiceGain = c.createGain();
+  voiceGain.gain.setValueAtTime(0, now);
+  voiceGain.gain.linearRampToValueAtTime(peakVol, now + attack);
+  voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + durSec);
+
+  // Filter envelope: abre brillante y cierra al timbre cálido
+  const filter = c.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.Q.value = 1;
+  filter.frequency.setValueAtTime(filterStart, now);
+  filter.frequency.exponentialRampToValueAtTime(
+    Math.max(200, filterEnd),
+    now + durSec * 0.75
+  );
+
+  // Stack de 2 osciladores detuneados → riqueza
+  for (const detune of [-detuneCents, detuneCents]) {
+    const o = c.createOscillator();
+    o.type = type;
+    o.frequency.value = freq;
+    o.detune.value = detune;
+    o.connect(filter);
+    o.start(now);
+    o.stop(now + durSec + 0.1);
+  }
+
+  filter.connect(voiceGain);
+  voiceGain.connect(dry);
+  voiceGain.connect(wet); // mismo signal a wet → reverb mix
+}
+
 export function playChord(f, d, v) {
   try {
-    const c = gAC(); if (!c) return;
-    if (c.state === "suspended") c.resume();
     const targetVol = duckedVolume(v || 0.04);
     f.forEach((fr) => {
-      const o = c.createOscillator(); const g = c.createGain();
-      o.connect(g); g.connect(c.destination); o.type = "sine"; o.frequency.value = fr;
-      g.gain.setValueAtTime(0, c.currentTime);
-      g.gain.linearRampToValueAtTime(targetVol / f.length, c.currentTime + 0.08);
-      g.gain.linearRampToValueAtTime(0, c.currentTime + d);
-      o.start(c.currentTime); o.stop(c.currentTime + d);
+      createLayeredTone({
+        freq: fr,
+        durSec: d,
+        peakVol: targetVol / f.length,
+        attack: 0.08,
+        // Notas más altas: filtro más abierto para preservar brillo
+        filterStart: fr > 800 ? 10000 : 8000,
+        filterEnd: fr > 800 ? 2200 : 1400,
+      });
     });
   } catch (e) {}
 }
@@ -98,23 +219,21 @@ export function playSpark(freq, volume) {
   if (now - _lastSparkTs < 80) return;
   _lastSparkTs = now;
   try {
-    const c = gAC(); if (!c) return;
-    if (c.state === "suspended") c.resume();
     // Rango de frecuencia ligeramente más estrecho (260-1100Hz) — fuera
     // de eso suena demasiado grave o piercing.
     const f = Math.max(260, Math.min(1100, freq || 640));
     const v = duckedVolume(Math.max(0.01, Math.min(0.12, volume || 0.055)));
-    const o = c.createOscillator();
-    const g = c.createGain();
-    o.connect(g); g.connect(c.destination);
-    o.type = "sine";
-    o.frequency.value = f;
-    const acNow = c.currentTime;
-    g.gain.setValueAtTime(0, acNow);
-    g.gain.linearRampToValueAtTime(v, acNow + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, acNow + 0.055);
-    o.start(acNow);
-    o.stop(acNow + 0.08);
+    // Spark con reverb + detune mínimo (3 cents). Filter cierra rápido
+    // para mantener el carácter percusivo "blip" pero con tail espacial.
+    createLayeredTone({
+      freq: f,
+      durSec: 0.18, // tail del reverb extiende la percepción
+      peakVol: v,
+      attack: 0.004,
+      filterStart: 12000,
+      filterEnd: 4000,
+      detuneCents: 3,
+    });
   } catch (e) {}
 }
 
@@ -218,37 +337,88 @@ export function stopSoundscape() {
 }
 
 // ─── Binaural Engine ──────────────────────────────────────
+// Antes: 2 sine puros con auto-pan. Suena "clínico" y digital.
+// Ahora: 2 sine + LFO sutil (warmth) + lowpass dedicado (suaviza
+// armónicos altos) + envelope de fade-in más natural. El binaural
+// se siente como "presencia" en lugar de tono de prueba.
 let _binauralL = null, _binauralR = null, _binauralGain = null, _binauralPan = 0;
+let _binauralFilter = null, _binauralLfoL = null, _binauralLfoR = null;
+
 export function startBinaural(type) {
   try {
     const c = gAC(); if (!c) return;
     stopBinaural();
-    _binauralGain = c.createGain(); _binauralGain.gain.value = 0; _binauralGain.connect(c.destination);
-    const panL = c.createStereoPanner(); const panR = c.createStereoPanner();
-    _binauralL = c.createOscillator(); _binauralR = c.createOscillator();
-    _binauralL.type = "sine"; _binauralR.type = "sine";
-    if (type === "enfoque") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 214; }
-    else if (type === "energia") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 218; }
-    else if (type === "calma") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 210; }
-    else if (type === "reset") { _binauralL.frequency.value = 200; _binauralR.frequency.value = 206; }
-    else { _binauralL.frequency.value = 200; _binauralR.frequency.value = 210; }
-    // rAF captura el gain propio de ESTA invocación: si startBinaural se vuelve
-    // a llamar antes de que stopBinaural nule _binauralGain (2.5s de fade), el
-    // rAF viejo debe terminar para no escribir en panL/panR muertos ni pelearse
-    // con el nuevo. También evitamos trabajo si el tab está hidden (rAF ya se
-    // pausa pero el check es barato y documenta la intención).
+    _binauralGain = c.createGain();
+    _binauralGain.gain.value = 0;
+
+    // Lowpass dedicado (~3.5kHz) suaviza armónicos altos del sine puro
+    // que suenan "duros" después de minutos. Q bajo para curva orgánica.
+    _binauralFilter = c.createBiquadFilter();
+    _binauralFilter.type = "lowpass";
+    _binauralFilter.frequency.value = 3500;
+    _binauralFilter.Q.value = 0.7;
+    _binauralFilter.connect(_binauralGain);
+    _binauralGain.connect(c.destination);
+
+    const panL = c.createStereoPanner();
+    const panR = c.createStereoPanner();
+    _binauralL = c.createOscillator();
+    _binauralR = c.createOscillator();
+    _binauralL.type = "sine";
+    _binauralR.type = "sine";
+
+    let baseFreq, beatFreq;
+    if (type === "enfoque") { baseFreq = 200; beatFreq = 14; } // beta low
+    else if (type === "energia") { baseFreq = 200; beatFreq = 18; } // beta mid
+    else if (type === "calma") { baseFreq = 200; beatFreq = 10; } // alpha
+    else if (type === "reset") { baseFreq = 200; beatFreq = 6; } // theta
+    else { baseFreq = 200; beatFreq = 10; }
+
+    _binauralL.frequency.value = baseFreq;
+    _binauralR.frequency.value = baseFreq + beatFreq;
+
+    // LFO sutil de ±0.3Hz a 0.08Hz por canal → "respiración" orgánica
+    // que evita el carácter sterile del sine fijo. Imperceptible como
+    // modulación, pero el cerebro la registra como "ambient" no test tone.
+    _binauralLfoL = c.createOscillator();
+    const lfoLGain = c.createGain();
+    _binauralLfoL.frequency.value = 0.08;
+    lfoLGain.gain.value = 0.3;
+    _binauralLfoL.connect(lfoLGain);
+    lfoLGain.connect(_binauralL.frequency);
+    _binauralLfoL.start();
+
+    _binauralLfoR = c.createOscillator();
+    const lfoRGain = c.createGain();
+    _binauralLfoR.frequency.value = 0.07; // ligeramente distinto = no sincrónico
+    lfoRGain.gain.value = 0.3;
+    _binauralLfoR.connect(lfoRGain);
+    lfoRGain.connect(_binauralR.frequency);
+    _binauralLfoR.start();
+
     const myGain = _binauralGain;
     function rotatePan() {
       if (_binauralGain !== myGain) return;
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") { requestAnimationFrame(rotatePan); return; }
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        requestAnimationFrame(rotatePan);
+        return;
+      }
       panL.pan.value = Math.sin(_binauralPan) * 0.8;
       panR.pan.value = Math.cos(_binauralPan) * 0.8;
       _binauralPan += 0.015;
       requestAnimationFrame(rotatePan);
     }
-    _binauralL.connect(panL); _binauralR.connect(panR); panL.connect(_binauralGain); panR.connect(_binauralGain);
-    _binauralL.start(); _binauralR.start(); rotatePan();
-    _binauralGain.gain.linearRampToValueAtTime(0.025, c.currentTime + 4);
+
+    _binauralL.connect(panL);
+    _binauralR.connect(panR);
+    panL.connect(_binauralFilter);
+    panR.connect(_binauralFilter);
+    _binauralL.start();
+    _binauralR.start();
+    rotatePan();
+
+    // Fade-in más largo (5s) — entrada suave, no abrupta.
+    _binauralGain.gain.linearRampToValueAtTime(0.028, c.currentTime + 5);
   } catch (e) {}
 }
 
@@ -256,7 +426,20 @@ export function stopBinaural() {
   try {
     if (_binauralGain) { const c = gAC(); if (c) _binauralGain.gain.linearRampToValueAtTime(0, c.currentTime + 2); }
     setTimeout(() => {
-      try { if (_binauralL) { _binauralL.stop(); _binauralL.disconnect(); } if (_binauralR) { _binauralR.stop(); _binauralR.disconnect(); } if (_binauralGain) _binauralGain.disconnect(); _binauralL = null; _binauralR = null; _binauralGain = null; } catch (e) {}
+      try {
+        if (_binauralL) { _binauralL.stop(); _binauralL.disconnect(); }
+        if (_binauralR) { _binauralR.stop(); _binauralR.disconnect(); }
+        if (_binauralLfoL) { _binauralLfoL.stop(); _binauralLfoL.disconnect(); }
+        if (_binauralLfoR) { _binauralLfoR.stop(); _binauralLfoR.disconnect(); }
+        if (_binauralFilter) _binauralFilter.disconnect();
+        if (_binauralGain) _binauralGain.disconnect();
+        _binauralL = null;
+        _binauralR = null;
+        _binauralLfoL = null;
+        _binauralLfoR = null;
+        _binauralFilter = null;
+        _binauralGain = null;
+      } catch (e) {}
     }, 2500);
   } catch (e) {}
 }
