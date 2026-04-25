@@ -48,27 +48,26 @@ function Scanline({ reducedMotion }) {
   );
 }
 
-/* ─── Countdown ceremony: forming ring + numeral + spark on 0 ──
-   Timing: el padre dispara setCountdown cada 1000ms exactos. Las
-   transiciones aquí DEBEN caber dentro de esa ventana o los números
-   se cortan. Sin mode="wait" — exit del actual + enter del siguiente
-   corren en paralelo, ambos en la misma cuadrícula → overlap fluido.
-
-   Centrado vía CSS Grid (placeItems: center), NO position:absolute
-   con translate. Antes el motion.div tenía:
-     style.translateX/Y: "-50%" + animate.scale: 1
-   Framer-motion recompone transform en cada frame. La combinación
-   de translate% en style + scale en animate generaba un primer frame
-   donde el translate% NO se aplicaba — el "3" aparecía descentrado
-   en el cuadrante inferior-derecho durante ~16-30ms antes de snap
-   al centro. SUPER BUG visible al inicio de cada countdown.
-   Con grid: el motion.div no tiene transform propio, framer-motion
-   solo anima scale y opacity. Centrado garantizado en cada frame. */
+/* ─── Countdown ceremony: forming ring + numeral ──
+   FILOSOFÍA DE FLUIDEZ:
+   · Spring physics > tween cubic-bezier — el número respira, no
+     pulsa. Stiffness moderada + damping crítico (no overshoot).
+   · UN solo elemento de movimiento por instante — antes había halo
+     restart + anticipation ring + número compitiendo, todos
+     sincronizados al tick. Resultado: locked-step mecánico.
+     Ahora: halo continuo desincronizado (cycle 2.4s, no key restart),
+     ring de progreso suave, número como protagonista único.
+   · Drop-shadow stack reducido a 2 layers — repaint cost menor en
+     mobile durante scale animado.
+   · Centrado por CSS Grid (placeItems: center) — sin conflict de
+     transform con framer-motion. */
 function CountdownCeremony({ n, accent, reducedMotion }) {
   const ringCirc = 2 * Math.PI * 140;
   return (
     <div style={{ position: "relative", width: 300, height: 300 }}>
-      {/* Forming ring: fills as countdown progresses (3→0) */}
+      {/* Forming ring: rellena conforme el countdown avanza (3→0).
+          Spring para que la transición entre ticks se sienta
+          orgánica, no escalonada como tween. */}
       <svg width="300" height="300" viewBox="0 0 300 300" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
         <circle cx="150" cy="150" r="140" fill="none" stroke={withAlpha(accent, 15)} strokeWidth="1.5" />
         <motion.circle
@@ -82,57 +81,49 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
           strokeDasharray={ringCirc}
           initial={{ strokeDashoffset: ringCirc }}
           animate={{ strokeDashoffset: ringCirc * (n / 3) }}
-          transition={{ duration: reducedMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
+          transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 90, damping: 22, mass: 1 }}
           style={{ filter: `drop-shadow(0 0 8px ${withAlpha(accent, 70)})` }}
         />
       </svg>
-      {/* Pulse halo continuo — keyed a n para que el peak coincida con
-          la entrada de cada número. */}
+      {/* Halo CONTINUO — cycle 2.4s, NO se reinicia con cada tick.
+          Antes pulsaba sincronizado al número, lectura locked-step
+          mecánica. Ahora respira a su propio ritmo, ligeramente
+          desincronizado (cycle 2.4s vs ticks 1s) → orgánico. */}
       <motion.div
-        key={`halo-${n}`}
         aria-hidden="true"
-        initial={reducedMotion ? { opacity: 0.35 } : { scale: 0.92, opacity: 0.15 }}
-        animate={reducedMotion ? { opacity: 0.35 } : { scale: 1.08, opacity: 0.55 }}
-        transition={{ duration: reducedMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
+        animate={reducedMotion ? { opacity: 0.35 } : { scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         style={{ position: "absolute", inset: 40, borderRadius: "50%", background: `radial-gradient(circle, ${withAlpha(accent, 40)}, transparent 70%)`, filter: "blur(20px)" }}
       />
-      {/* Anticipation ring — destello one-shot en cada tick. */}
-      {!reducedMotion && (
-        <motion.span
-          key={`ant-${n}`}
-          aria-hidden="true"
-          initial={{ scale: 0.55, opacity: 0.85 }}
-          animate={{ scale: 1.5, opacity: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            position: "absolute",
-            inset: 70,
-            borderRadius: "50%",
-            border: `2px solid ${accent}`,
-            boxShadow: `0 0 24px ${withAlpha(accent, 60)}`,
-            pointerEvents: "none",
-          }}
-        />
-      )}
-      {/* Centering grid — todos los motion.div del número quedan
-          en la misma celda (gridArea 1/1) → overlap perfecto durante
-          la transición sin necesidad de transform: translate(-50%). */}
+      {/* Centering grid: motion.divs del número comparten gridArea
+          1/1 → overlap perfecto durante transición. */}
       <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", zIndex: 2, pointerEvents: "none" }}>
         <AnimatePresence>
           <motion.div
             key={n}
-            initial={reducedMotion ? { opacity: 0 } : { scale: 0.7, opacity: 0 }}
+            initial={reducedMotion ? { opacity: 0 } : { scale: 0.84, opacity: 0 }}
             animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
-            exit={reducedMotion ? { opacity: 0 } : { scale: 1.45, opacity: 0 }}
-            transition={{ duration: reducedMotion ? 0 : 0.26, ease: [0.16, 1, 0.3, 1] }}
+            exit={reducedMotion ? { opacity: 0 } : { scale: 1.18, opacity: 0 }}
+            transition={
+              reducedMotion
+                ? { duration: 0 }
+                : {
+                    // Spring crítico: rápido pero sin overshoot.
+                    // Mass 0.9 = aceleración inicial fuerte. Damping 26
+                    // = no rebota. Stiffness 220 = settle ~340ms.
+                    // Resultado: el número emerge con peso pero sin bounce.
+                    scale: { type: "spring", stiffness: 220, damping: 26, mass: 0.9 },
+                    opacity: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
+                  }
+            }
             style={{
               gridArea: "1 / 1",
               willChange: "transform, opacity",
             }}
           >
-            {/* Tipografía cinematográfica: gradient white→accent +
-                triple drop-shadow (antes 4 capas → cara en mobile GPU,
-                ahora 3: punch interior, halo medio, lift sombra). */}
+            {/* Tipografía: gradient white→accent + 2 drop-shadows
+                (interior nítido + lift sombra). El 3er halo grande
+                lo absorbe el background halo continuo. */}
             <span
               style={{
                 fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
@@ -146,7 +137,7 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
                 backgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 color: "transparent",
-                filter: `drop-shadow(0 0 14px ${withAlpha(accent, 95)}) drop-shadow(0 0 42px ${withAlpha(accent, 50)}) drop-shadow(0 4px 0 rgba(0,0,0,0.35))`,
+                filter: `drop-shadow(0 0 22px ${withAlpha(accent, 80)}) drop-shadow(0 4px 0 rgba(0,0,0,0.35))`,
                 display: "inline-block",
               }}
             >
