@@ -93,6 +93,12 @@ const EvidenceStrip = dynamic(() => import("@/components/EvidenceStrip"), { ssr:
 export default function BioIgnicion(){
   const store = useStore();
   const[mt,setMt]=useState(false);const[tab,setTab]=useState("ignicion");const[st,setSt_]=useState(DS);
+  // Keep-mounted: una vez visitado, el tab queda montado y solo se
+  // toggle visibilidad por CSS. Primer visit paga el costo de mount;
+  // visits siguientes son instantáneos (CSS display). Twitter/IG/Linear
+  // usan este patrón. Sin esto: cada switch re-monta DashboardView (565
+  // líneas + dynamic charts) o ProfileView (1043 líneas) → laggy.
+  const[visitedTabs,setVisitedTabs]=useState({ignicion:true});
   const[pr,setPr]=useState(P[12]);const[sc,setSc]=useState("Protocolo");const[sl,setSl]=useState(false);
   const[ts,setTs]=useState("idle");const[sec,setSec]=useState(120);const[pi,setPi]=useState(0);
   const[bL,setBL]=useState("");const[bS,setBS]=useState(1);const[bCnt,setBCnt]=useState(0);
@@ -428,7 +434,16 @@ export default function BioIgnicion(){
     setShowScience(false);
   }
   function timerTap(){unlockVoice();H("tap");if(ts==="idle"){go();}else if(ts==="running")pa();else if(ts==="paused")resume();}
-  function switchTab(id){if(id===tab)return;setTab(id);H("tap");uiSound.nav(st.soundOn);announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");}
+  function switchTab(id){
+    if(id===tab)return;
+    // Marcar como visitado antes de cambiar — el componente se monta
+    // recién cuando lo necesitamos, no al cargar la página.
+    setVisitedTabs(v=>v[id]?v:{...v,[id]:true});
+    setTab(id);
+    H("tap");
+    uiSound.nav(st.soundOn);
+    announce(`Pestaña ${id==="ignicion"?"Ignición":id==="dashboard"?"Dashboard":"Perfil"} activa`,"polite");
+  }
   const swipeRef=useRef(null);
   const onSwipeStart=useCallback(e=>{if(ts==="running"||ts==="paused"||postStep!=="none"||countdown>0||sl||showCmd||showIntent||showProtoDetail||showHist||showCalibration||onboard)return;if(e.pointerType==="mouse")return;swipeRef.current={x:e.clientX,y:e.clientY,t:Date.now()};},[ts,postStep,countdown,sl,showCmd,showIntent,showProtoDetail,showHist,showCalibration,onboard]);
   const onSwipeEnd=useCallback(e=>{const s=swipeRef.current;swipeRef.current=null;if(!s)return;const dx=e.clientX-s.x;const dy=e.clientY-s.y;const dt=Date.now()-s.t;if(dt>700)return;if(Math.abs(dx)<64)return;if(Math.abs(dx)<Math.abs(dy)*1.4)return;const ids=["ignicion","dashboard","perfil"];const cur=ids.indexOf(tab);const next=dx<0?cur+1:cur-1;if(next>=0&&next<ids.length)switchTab(ids[next]);},[tab]);
@@ -1553,11 +1568,22 @@ export default function BioIgnicion(){
   </>}
   </div>)}
 
-  {/* ═══ TAB: DASHBOARD ═══ */}
-  {tab==="dashboard"&&<DashboardView st={st} isDark={isDark} ac={ac} switchTab={switchTab} sp={sp} onShowHist={()=>setShowHist(true)} bp={bp} />}
+  {/* ═══ TAB: DASHBOARD (keep-mounted post-first-visit) ═══
+      Wrappeado en div con display toggle. Mount inicial cuando user
+      visita primera vez (visitedTabs.dashboard=true), después solo
+      cambia visibility — instant tab switch sin re-mount cost. */}
+  {visitedTabs.dashboard && (
+    <div style={{display: tab==="dashboard" ? "block" : "none"}}>
+      <DashboardView st={st} isDark={isDark} ac={ac} switchTab={switchTab} sp={sp} onShowHist={()=>setShowHist(true)} bp={bp} />
+    </div>
+  )}
 
-  {/* ═══ TAB: PERFIL ═══ */}
-  {tab==="perfil"&&<ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} onShowChronotype={()=>setShowChronoTest(true)} onShowResonance={()=>setShowResonanceCal(true)} onShowNOM035={()=>setShowNOM035(true)} />}
+  {/* ═══ TAB: PERFIL (keep-mounted post-first-visit) ═══ */}
+  {visitedTabs.perfil && (
+    <div style={{display: tab==="perfil" ? "block" : "none"}}>
+      <ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} onShowChronotype={()=>setShowChronoTest(true)} onShowResonance={()=>setShowResonanceCal(true)} onShowNOM035={()=>setShowNOM035(true)} />
+    </div>
+  )}
   </motion.div>
   </AnimatePresence>
   </div>
