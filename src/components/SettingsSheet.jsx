@@ -243,6 +243,16 @@ export default function SettingsSheet({
             style={{
               inlineSize: "100%",
               maxInlineSize: 430,
+              // Cap altura al 88% del viewport para que NUNCA se salga
+              // por arriba y bloquee el contenido. Las secciones nuevas
+              // (audio + voz + vibración + sesión + recordatorios +
+              // display + ambientes + datos + cuenta) suman más content
+              // del que cabe en una pantalla móvil — sin scroll, el
+              // sheet se trababa y parecía fullscreen.
+              maxBlockSize: "88dvh",
+              overflowY: "auto",
+              overscrollBehavior: "contain",
+              WebkitOverflowScrolling: "touch",
               background: cd,
               borderStartStartRadius: radius["2xl"],
               borderStartEndRadius: radius["2xl"],

@@ -1163,30 +1163,31 @@ export function hapticPhase(type) {
 
 // Patrones gradient — micro-pulsos con duraciones variables que el
 // cuerpo lee como "intensidad creciente/decreciente" aunque vibrate API
-// solo soporta on/off binario. Es la forma más cercana a CHHaptics
-// gradients que se puede lograr en web puro.
+// solo soporta on/off binario.
 //
-// INHALA: rampa ascendente — pulsos crecen, gaps se acortan.
-//   Lectura corporal: "respiración subiendo", paralelo al breathScale
-//   del orb (1.0 → 1.25).
-// EXHALA: rampa descendente — pulsos decaen, gaps crecen.
-//   Lectura corporal: "soltando", paralelo al breathScale (1.25 → 1.0).
-// MANTÉN: dos golpes firmes con silencio largo entre — el silencio
-//   sostiene la sensación de freeze.
-// SOSTÉN/VACÍO: pulsos mínimos con gaps largos — barely-there cue.
+// CRÍTICO: piso de 12ms en cada pulso. El motor háptico de cualquier
+// teléfono (iOS si soporta vibrate, Android, etc.) NO percibe pulsos
+// menores. Antes había pulsos de 4-6ms → invisibles físicamente.
+// Con hapticIntensity=light (0.6x), un pulso 12ms se vuelve 7ms
+// (borderline pero perceptible).
+//
+// INHALA: rampa ascendente — pulsos crecen.
+// EXHALA: rampa descendente — pulsos decaen.
+// MANTÉN: dos golpes firmes con silencio largo entre.
+// SOSTÉN/VACÍO: pulsos mínimos perceptibles + gaps largos.
 export function hapticBreath(label) {
   if (label === "INHALA") {
-    // 6 pulsos crecientes, ~210ms total
-    vibrate([4, 35, 6, 30, 10, 25, 14, 20, 18, 15, 22]);
+    // 6 pulsos crecientes 12→32ms, ~250ms total
+    vibrate([12, 35, 16, 30, 20, 25, 24, 20, 28, 15, 32]);
   } else if (label === "EXHALA") {
-    // 6 pulsos decrecientes, mismo total ~210ms (espejo)
-    vibrate([22, 15, 18, 20, 14, 25, 10, 30, 6, 35, 4]);
+    // 6 pulsos decrecientes 32→12ms (espejo)
+    vibrate([32, 15, 28, 20, 24, 25, 20, 30, 16, 35, 12]);
   } else if (label === "MANTÉN") {
     // Dos golpes firmes con silencio sostenido — freeze cue
-    vibrate([16, 80, 16]);
+    vibrate([20, 80, 20]);
   } else {
-    // SOSTÉN/VACÍO — barely-there
-    vibrate([4, 60, 6, 60, 4]);
+    // SOSTÉN/VACÍO — barely-there pero perceptible
+    vibrate([14, 100, 14]);
   }
 }
 
@@ -1204,14 +1205,15 @@ export function hapticPreShift() {
 }
 
 // Countdown gradient — escalada de tensión 3→2→1.
+// Piso 14ms para garantizar perceptibilidad en motor háptico.
 //   Step 3: tap suave + eco (anticipation suave)
 //   Step 2: 3 pulsos crecientes (tensión sube)
 //   Step 1: anticipation crescendo + golpe + follow-through
 //          (cinematográfico: el cuerpo se prepara para GO)
 export function hapticCountdown(step) {
-  if (step === 3) vibrate([6, 25, 10]);
-  else if (step === 2) vibrate([8, 20, 14, 15, 20]);
-  else if (step === 1) vibrate([10, 25, 16, 20, 24, 60, 30, 25, 38]);
+  if (step === 3) vibrate([14, 30, 18]);
+  else if (step === 2) vibrate([16, 20, 22, 15, 28]);
+  else if (step === 1) vibrate([18, 25, 24, 20, 30, 60, 36, 25, 44]);
 }
 
 // Tick auditivo del countdown — nota de cristal breve, sine pura,
