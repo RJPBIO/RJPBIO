@@ -161,7 +161,7 @@ export default function ProtocolSelector({
                   onClick={onClose}
                   aria-label="Cerrar selector de protocolos"
                   style={{
-                    inlineSize: 40, blockSize: 40, borderRadius: radius.full,
+                    inlineSize: 44, blockSize: 44, borderRadius: radius.full,
                     border: `1px solid ${bd}`, background: cd,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     cursor: "pointer",
@@ -187,9 +187,10 @@ export default function ProtocolSelector({
                     aria-checked={isActive}
                     aria-label={`Intención: ${i.label}`}
                     whileTap={reduced ? {} : { scale: 0.93 }}
-                    onClick={() => setSc(isActive ? "Protocolo" : i.id)}
+                    onClick={() => { H?.("tap"); setSc(isActive ? "Protocolo" : i.id); }}
                     style={{
                       display: "flex", alignItems: "center", gap: 6,
+                      minBlockSize: 36,
                       paddingInline: space[4], paddingBlock: space[2],
                       borderRadius: radius.xl,
                       border: isActive
@@ -235,9 +236,10 @@ export default function ProtocolSelector({
                   key={c}
                   role="tab"
                   aria-selected={sc === c}
-                  onClick={() => setSc(c)}
+                  onClick={() => { H?.("tap"); setSc(c); }}
                   style={{
                     flex: 1,
+                    minBlockSize: 36,
                     paddingBlock: space[2],
                     paddingInline: 0,
                     borderRadius: radius.sm,
@@ -288,7 +290,7 @@ export default function ProtocolSelector({
                     <motion.button
                       data-proto-item
                       whileTap={reduced ? {} : { scale: 0.98 }}
-                      onClick={() => sp(p)}
+                      onClick={() => { H?.("tap"); sp(p); }}
                       aria-label={`${p.n}. ${ariaDescription}`}
                       aria-current={isCurrent ? "true" : undefined}
                       style={{

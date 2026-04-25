@@ -921,7 +921,7 @@ export default function ProfileView({
                 aria-label="Test de cronotipo MEQ-SA"
                 style={{
                   display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
-                  paddingBlock: 10, paddingInline: 12,
+                  minBlockSize: 44, paddingBlock: 10, paddingInline: 12,
                   background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
@@ -942,7 +942,7 @@ export default function ProfileView({
                 aria-label="Calibrar frecuencia resonante con sensor de HR"
                 style={{
                   display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
-                  paddingBlock: 10, paddingInline: 12,
+                  minBlockSize: 44, paddingBlock: 10, paddingInline: 12,
                   background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
@@ -963,7 +963,7 @@ export default function ProfileView({
                 aria-label="Evaluación NOM-035"
                 style={{
                   display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
-                  paddingBlock: 10, paddingInline: 12,
+                  minBlockSize: 44, paddingBlock: 10, paddingInline: 12,
                   background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}

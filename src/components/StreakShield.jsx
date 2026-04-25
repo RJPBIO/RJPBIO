@@ -262,7 +262,6 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
               justifyContent: "center",
               gap: 8,
               fontFamily: "inherit",
-              outline: "none",
               transition: "background 0.18s ease",
             }}
           >
@@ -292,7 +291,6 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
                 justifyContent: "center",
                 gap: 8,
                 fontFamily: "inherit",
-                outline: "none",
                 color: t1,
               }}
             >
