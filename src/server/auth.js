@@ -61,6 +61,52 @@ async function adapter() {
   return PrismaAdapter(orm);
 }
 
+/* Personal-org provisioning — idempotente.
+   Cada usuario tiene UN org personal auto-creado, sirve como tenant
+   default para sus sesiones individuales. Si después se une a un
+   org B2B (vía Invitation), ese org es adicional, no reemplaza el
+   personal. Esto preserva la schema multi-tenant sin quemar el
+   modelo para usuarios B2C.
+
+   Nombre/slug determinístico: "personal-{userId}". Si ya existe
+   (idempotente), no-op. Llamado desde callbacks.signIn para cubrir
+   tanto signups nuevos como users que existían antes de v0005. */
+async function ensurePersonalOrg(userId, email) {
+  if (!userId) return null;
+  try {
+    const orm = await db();
+    const existing = await orm.org.findUnique({ where: { slug: `personal-${userId}` } });
+    if (existing) return existing;
+    // Crear org personal + membership OWNER en transacción.
+    const created = await orm.$transaction(async (tx) => {
+      const org = await tx.org.create({
+        data: {
+          name: email ? `Personal · ${email.split("@")[0]}` : "Personal",
+          slug: `personal-${userId}`,
+          plan: "FREE",
+          personal: true,
+          seats: 1,
+          seatsUsed: 1,
+        },
+      });
+      await tx.membership.create({
+        data: { userId, orgId: org.id, role: "OWNER" },
+      });
+      return org;
+    });
+    await auditLog({ orgId: created.id, actorId: userId, action: "org.personal.created" })
+      .catch(() => {});
+    return created;
+  } catch (e) {
+    // Race condition: dos signin concurrentes intentan crear → uno gana.
+    // Re-fetch para devolver el ganador.
+    try {
+      const orm = await db();
+      return await orm.org.findUnique({ where: { slug: `personal-${userId}` } });
+    } catch { return null; }
+  }
+}
+
 // Resolver el adapter una vez al boot — usado para magic links + signin
 // flow (necesita persistir VerificationToken). Pero la STRATEGY de session
 // es JWT siempre — esto desacopla las requests de /api/auth/session de la
@@ -122,6 +168,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       } catch {
         // sin DB → no hay lastLoginAt update; signin sigue válido
       }
+      // Personal-org provisioning — idempotente, cubre signups nuevos y
+      // legacy users sin org. Failure no bloquea signin.
+      ensurePersonalOrg(user.id, user.email).catch(() => {});
       await auditLog({ action: "auth.signin", actorId: user.id, payload: { provider: account?.provider } })
         .catch(() => {});
       return true;

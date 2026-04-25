@@ -31,6 +31,7 @@ model Org {
   dunningState   String?       // null | "past_due" | "canceled" | "failed"
   graceUntil     DateTime?     // after sub cancel/payment_failed, keep data until
   trialEndsAt    DateTime?
+  personal       Boolean       @default(false)  // auto-creado al signup, no invitable
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   memberships    Membership[]
@@ -65,12 +66,13 @@ model User {
   mfaLockedUntil DateTime?                   // 429 until this passes
   passkeyCredentials Json?   // [{ id, publicKey, counter, transports }]
   lastLoginAt  DateTime?
+  lastSyncedAt DateTime?     // último sync de neuralState desde el PWA
   deletedAt    DateTime?     // GDPR Art. 17 soft-delete
   createdAt    DateTime      @default(now())
   memberships  Membership[]
   sessions     Session[]
   accounts     Account[]
-  neuralState  Json?         // cifrado server-side si decide sync
+  neuralState  Json?         // mirror del Zustand store del PWA — sync vía /api/sync/outbox
   supportTickets SupportTicket[]
   impersonatedBy Impersonation[] @relation("ImpersonationTarget")
   impersonationsAsActor Impersonation[] @relation("ImpersonationActor")

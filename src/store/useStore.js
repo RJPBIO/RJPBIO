@@ -8,6 +8,10 @@ import { create } from "zustand";
 import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
 import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
+// Nota: outboxAdd ahora dispatcha "bio-outbox-changed" event al
+// completar el IndexedDB write; sync.js (vía wireBackgroundSync)
+// escucha ese event y dispara drain debounced. Sin circular dep
+// entre storage y sync — bus pattern.
 import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
