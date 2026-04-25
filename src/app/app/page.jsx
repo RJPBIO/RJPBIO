@@ -664,27 +664,30 @@ export default function BioIgnicion(){
   {/* Background aura — dims during running session (cinematic focus) */}
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s ease"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
 
-  {/* iOS haptic visual fallback — flash sutil top-edge cuando el
+  {/* iOS haptic visual fallback — flash visible top-edge cuando el
       device no soporta navigator.vibrate. El usuario lee la cadencia
-      háptica via "haptic light". Render condicional con AnimatePresence
-      para que cada evento spawn un nuevo flash sin acumularse en DOM. */}
+      háptica via "haptic light".
+      Diseño: bar 3px con doble glow (8px nítido + 24px difuso) +
+      gradient horizontal accent. Al peak (0.9 opacity) inequívoco
+      en móvil. AnimatePresence + key={Date.now()} para que cada
+      evento spawn flash nuevo. */}
   <AnimatePresence>
     {hapticFlashKey&&(
       <motion.div
         key={hapticFlashKey}
         aria-hidden="true"
-        initial={{opacity:0,scaleX:0.4}}
-        animate={{opacity:[0,0.7,0],scaleX:[0.4,1,1]}}
+        initial={{opacity:0,scaleX:0.3}}
+        animate={{opacity:[0,0.9,0],scaleX:[0.3,1,1]}}
         exit={{opacity:0}}
-        transition={{duration:reducedMotion?0:0.4,ease:[.16,1,.3,1]}}
+        transition={{duration:reducedMotion?0:0.45,ease:[.16,1,.3,1]}}
         style={{
           position:"fixed",
           top:"env(safe-area-inset-top, 0)",
           left:0,
           right:0,
-          height:2,
-          background:`linear-gradient(90deg, transparent, ${ac}, transparent)`,
-          boxShadow:`0 0 8px ${ac}, 0 0 16px ${withAlpha(ac,40)}`,
+          height:3,
+          background:`linear-gradient(90deg, transparent, ${ac} 30%, ${ac} 70%, transparent)`,
+          boxShadow:`0 0 8px ${ac}, 0 0 24px ${withAlpha(ac,55)}, 0 2px 12px ${withAlpha(ac,35)}`,
           pointerEvents:"none",
           zIndex:9999,
           transformOrigin:"center",
