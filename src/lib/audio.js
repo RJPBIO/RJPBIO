@@ -813,29 +813,46 @@ const VOICE_PREFS = {
 
 // Voces premium conocidas por OS — empíricamente son las más naturales.
 // Si una está disponible, la priorizamos sobre la búsqueda por lang tag.
-// Apple voces nuevas (Premium / Enhanced) son las mejores; Google "Wavenet"
-// son aceptables; nombres genéricos tipo "Microsoft David" suenan robóticos.
+// Lista priorizada por SUAVIDAD/CALIDEZ — no solo por calidad técnica.
+// Una voz "Premium" puede ser técnicamente nítida pero sonar firme/seca.
+// Para coaching de meditación queremos voces breathy, contemplativas,
+// con timbre cálido. Orden empírico de softness probado en cada OS.
+//
+// Apple Premium > Apple Enhanced > Apple legacy > Google Wavenet >
+//   Microsoft Neural Online > Microsoft Desktop legacy (último recurso).
+//
+// Para SPANISH específicamente: Mónica suena más serena que Paulina,
+// que es ligeramente más declamatoria. Marisol (macOS) es la más cálida.
 const PREMIUM_VOICE_NAMES = {
   es: [
-    // iOS / macOS — voces Premium o Enhanced
-    "Paulina (Enhanced)", "Paulina (Premium)", "Paulina",
-    "Mónica (Enhanced)", "Mónica (Premium)", "Mónica",
-    "Marisol", "Esperanza",
-    // Android Google TTS network voices con calidad alta
-    "Spanish (Mexico)", "Spanish (Spain)",
-    // Microsoft Edge / Windows voces Neural
+    // iOS / macOS — orden por calidez/suavidad
+    "Mónica (Premium)", "Mónica (Enhanced)", "Mónica",
+    "Marisol",                                            // macOS — la más cálida
+    "Paulina (Premium)", "Paulina (Enhanced)", "Paulina",
+    "Esperanza",
+    // Microsoft Edge Neural Online — voces "naturales"
     "Microsoft Dalia Online (Natural) - Spanish (Mexico)",
-    "Microsoft Helena Desktop - Spanish (Spain)",
+    "Microsoft Elvira Online (Natural) - Spanish (Spain)",
+    "Microsoft Helena Online (Natural) - Spanish (Spain)",
+    // Google Android Wavenet — fluidas, no robóticas
+    "Spanish (Mexico)", "Spanish (Spain)", "Spanish (Latin America)",
   ],
   en: [
-    "Samantha (Enhanced)", "Samantha (Premium)", "Samantha",
-    "Karen", "Daniel", "Moira", "Tessa", "Allison",
-    "Microsoft Aria Online (Natural)", "Google US English",
+    // Voces por CALIDEZ — no por populrity
+    "Allison (Premium)", "Allison",                        // soft US, contemplativa
+    "Ava (Premium)", "Ava (Enhanced)", "Ava",              // soft US, breathy
+    "Samantha (Premium)", "Samantha (Enhanced)", "Samantha",
+    "Moira",                                                // Irish, muy cálida
+    "Karen",                                                // Australian, warm
+    "Tessa",                                                // South African, contemplative
+    "Microsoft Aria Online (Natural)",
+    "Microsoft Jenny Online (Natural)",
+    "Google UK English Female",
   ],
-  pt: ["Luciana (Enhanced)", "Luciana", "Joana"],
-  fr: ["Amélie (Enhanced)", "Amélie", "Thomas"],
-  de: ["Anna (Enhanced)", "Anna", "Markus"],
-  it: ["Alice (Enhanced)", "Alice", "Luca"],
+  pt: ["Luciana (Premium)", "Luciana (Enhanced)", "Luciana", "Joana"],
+  fr: ["Amélie (Premium)", "Amélie (Enhanced)", "Amélie", "Aurélie"],
+  de: ["Anna (Premium)", "Anna (Enhanced)", "Anna", "Petra"],
+  it: ["Alice (Premium)", "Alice (Enhanced)", "Alice", "Federica"],
 };
 
 function pickVoice(locale = "es") {
@@ -922,16 +939,40 @@ function startVoiceKeepalive() {
   }, 8000);
 }
 
+// Insertamos micro-pausas naturales — el TTS browser por default lee
+// frases sin respiración, sonando declamativo. Una coma adicional al
+// inicio + período al final relaja la prosodia. Aplica solo a
+// frases >12 chars (palabras sueltas como "INHALA" no necesitan break).
+function softenProsody(text) {
+  if (!text || typeof text !== "string") return text;
+  const t = text.trim();
+  if (t.length < 12) return t; // labels cortos: leave alone
+  // Quitar punto final si lo trae, agregar coma inicial + período suave.
+  const clean = t.replace(/[.!?]+$/, "");
+  return `${clean}.`;
+}
+
 function buildUtterance(text, circadian, loc) {
-  const u = new SpeechSynthesisUtterance(text);
+  const softText = softenProsody(text);
+  const u = new SpeechSynthesisUtterance(softText);
   u.lang = voiceLangTag(loc);
-  // Defaults naturales (1.0 pitch, 1.0 volume). Rate ligeramente <1 (0.95)
-  // para presencia clara sin sonar lento. Circadian puede ajustar pero
-  // mantenemos el rango estrecho para no entrar en "robotic territory".
+
+  // DEFAULTS SUAVES — coaching contemplativo, no presentación corporativa.
+  //
+  // rate 0.88 (antes 0.95): menos "hablado", más "respirado". Calm/Headspace
+  //   usan ~0.85-0.92 dependiendo del coach.
+  // pitch 0.95 (antes 1.0): timbre ligeramente más cálido/grave. NO bajar de
+  //   0.85 — entra en territorio masculino-falso o robótico.
+  // volume 0.78 (antes 1.0): voz íntima, no proyectada. La voz tiene que
+  //   sentirse cerca al oído, no como anuncio. El user puede subir el
+  //   volumen del device si quiere más presencia.
+  //
+  // Clamps amplios (0.78-1.10 rate, 0.85-1.08 pitch) permiten a circadian
+  // ajustar más al modo nocturno (rate más lento) sin romper coherencia.
   const rateOverride = circadian?.voiceRate;
-  u.rate = Math.max(0.85, Math.min(1.15, typeof rateOverride === "number" ? rateOverride : 0.95));
-  u.pitch = Math.max(0.9, Math.min(1.1, circadian?.voicePitch || 1.0));
-  u.volume = 1.0;
+  u.rate = Math.max(0.78, Math.min(1.10, typeof rateOverride === "number" ? rateOverride : 0.88));
+  u.pitch = Math.max(0.85, Math.min(1.08, circadian?.voicePitch || 0.95));
+  u.volume = 0.78;
   const v = pickVoice(loc);
   if (v) u.voice = v;
   // Trackear estado para ducking
