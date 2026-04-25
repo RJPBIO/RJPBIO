@@ -145,6 +145,10 @@ export default function BioIgnicion(){
   const rootMaxWidth=bp==="desktop"?layout.maxWidthDesktop:bp==="tablet"?layout.maxWidthTablet:layout.maxWidth;
   const rootPadInline=bp==="desktop"?layout.contentPaddingDesktop:bp==="tablet"?layout.contentPaddingTablet:0;
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);const actLockRef=useRef(false);
+  // setTimeouts del countdown ceremony — TTS adelantado 90ms al visual.
+  // Necesitamos rastrearlos para limpiar en reset.
+  const cdVisualTOsRef=useRef([]);
+  const countdownRef=useRef(0);
   // Wall-clock anchors: startMs = Date.now() al entrar "running"; startSec = valor de sec en ese instante.
   // Cada tick recomputa sec a partir de la diferencia real — inmune a jitter de setInterval y tab throttling.
   const startMsRef=useRef(null);const startSecRef=useRef(null);
@@ -382,45 +386,65 @@ export default function BioIgnicion(){
   },[ts,pi,pr]);
 
   function startCountdown(){
+    // CEREMONIAL TIMING (top-tier sync):
+    // El TTS del browser tiene ~90ms de latencia entre speak() y audio
+    // real saliendo del speaker. Antes el código disparaba speak() y
+    // setCountdown() en el mismo tick → el visual aparecía inmediato pero
+    // la voz llegaba 90ms después. El cuerpo lo lee como "voz mal
+    // sincronizada", incluso si no lo articula.
+    //
+    // Fix: speak fires AHEAD del visual por SPEAK_LEAD_MS, así la voz
+    // y el visual aterrizan al mismo tiempo en los sentidos del usuario.
+    // Haptic ya tiene latencia ~zero, lo agrupamos con el visual.
+    const SPEAK_LEAD_MS=90;
+    cdVisualTOsRef.current.forEach(clearTimeout);
+    cdVisualTOsRef.current=[];
+
+    // Tick 1 (n=3): inmediato — sin lead posible (es el primer evento).
+    // El usuario tolera el desfase del primer "Tres" porque no hay nada
+    // antes con qué comparar; los siguientes son los que delatan el lag.
+    countdownRef.current=3;
     setCountdown(3);
     if(st.hapticOn!==false)hapticCountdown(3);
     try{speakNow("Tres",circadian,voiceOn);}catch(e){}
-    cdR.current=setInterval(()=>{
-      setCountdown(p=>{
-        try{
-          // BUGFIX: antes el speak leía `p===2?"Dos":"Uno"` con p siendo
-          // el valor ANTES de decrementar. Cuando p=3 decía "Uno" en
-          // vez de "Dos" → orden caos "3, 1, 2". Ahora hablamos del
-          // valor DESPUÉS del decremento.
-          const next=p-1;
-          if(next<=0){
-            clearInterval(cdR.current);
-            setTs("running");
-            H("go");
-            // Frame de inicio: "Comenzamos" + acción de la primera fase
-            // → eyes-closed user sabe (a) que arrancó y (b) qué hacer.
-            const firstKicker=pr?.ph?.[0]?.k;
-            const intro=firstKicker?`Comenzamos. ${firstKicker}.`:"Comenzamos.";
-            speakNow(intro,circadian,voiceOn);
-            return 0;
-          }
-          speakNow(next===2?"Dos":"Uno",circadian,voiceOn);
-          if(st.hapticOn!==false)hapticCountdown(next);
-          return next;
-        }catch(e){
-          clearInterval(cdR.current);
-          setTs("running");
-          return 0;
-        }
-      });
-    },1000);
+
+    // Tick 2 (n=2): voz a t=910ms, visual+haptic a t=1000ms.
+    cdVisualTOsRef.current.push(setTimeout(()=>{try{speakNow("Dos",circadian,voiceOn);}catch(e){}},1000-SPEAK_LEAD_MS));
+    cdVisualTOsRef.current.push(setTimeout(()=>{
+      countdownRef.current=2;
+      setCountdown(2);
+      if(st.hapticOn!==false)hapticCountdown(2);
+    },1000));
+
+    // Tick 3 (n=1): voz a t=1910ms, visual+haptic a t=2000ms.
+    cdVisualTOsRef.current.push(setTimeout(()=>{try{speakNow("Uno",circadian,voiceOn);}catch(e){}},2000-SPEAK_LEAD_MS));
+    cdVisualTOsRef.current.push(setTimeout(()=>{
+      countdownRef.current=1;
+      setCountdown(1);
+      if(st.hapticOn!==false)hapticCountdown(1);
+    },2000));
+
+    // GO (n=0): a t=3000ms — transición a running, ignition flash + intro.
+    // La voz "Comenzamos" se dispara DESPUÉS del setTs porque el
+    // ignitionFlash es el evento principal; la voz lo subraya, no lo
+    // anticipa. H("go") ya incluye su propia firma audio+haptic.
+    cdVisualTOsRef.current.push(setTimeout(()=>{
+      countdownRef.current=0;
+      setCountdown(0);
+      setTs("running");
+      H("go");
+      const firstKicker=pr?.ph?.[0]?.k;
+      const intro=firstKicker?`Comenzamos. ${firstKicker}.`:"Comenzamos.";
+      try{speakNow(intro,circadian,voiceOn);}catch(e){}
+      cdVisualTOsRef.current=[];
+    },3000));
   }
   function go(){if(actLockRef.current||ts!=="idle"||countdown>0)return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);unlockVoice();requestWakeLock();try{const fs=document.documentElement.requestFullscreen?.();if(fs&&typeof fs.catch==="function")fs.catch(()=>{});}catch(e){}setPostStep("none");setPi(0);setSec(Math.round(pr.d*durMult));setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
   const pauseTRef=useRef(null);
-  useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);},[]);
+  useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];},[]);
   function pa(){if(actLockRef.current||ts!=="running")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
   function resume(){if(actLockRef.current||ts!=="paused")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}
-  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
+  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];countdownRef.current=0;setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){
     // Inline reset against the NEW protocol so we don't batch a setSec that
     // races with rs()'s stale-closure setSec(pr.d). Keeps sheet-to-idle
@@ -432,6 +456,9 @@ export default function BioIgnicion(){
     if(bR.current)clearInterval(bR.current);
     if(tR.current)clearInterval(tR.current);
     if(cdR.current)clearInterval(cdR.current);
+    cdVisualTOsRef.current.forEach(clearTimeout);
+    cdVisualTOsRef.current=[];
+    countdownRef.current=0;
     setTs("idle");setPi(0);setBL("");setBS(1);setBCnt(0);
     setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");
     setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();

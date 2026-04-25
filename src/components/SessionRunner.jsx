@@ -82,13 +82,40 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
           style={{ filter: `drop-shadow(0 0 8px ${withAlpha(accent, 70)})` }}
         />
       </svg>
-      {/* Pulse behind numeral */}
+      {/* Pulse halo continuo — keyed a n para que el peak coincida con
+          la entrada de cada número. Antes pulsaba a 1s repeat libre,
+          desfasado del countdown. Ahora reinicia con cada tick: el
+          fade IN del halo coincide con el fade IN del número. Lectura
+          ceremonial sincronizada. */}
       <motion.div
+        key={`halo-${n}`}
         aria-hidden="true"
-        animate={reducedMotion ? { opacity: 0.35 } : { scale: [1, 1.08, 1], opacity: [0.3, 0.55, 0.3] }}
-        transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+        initial={reducedMotion ? { opacity: 0.35 } : { scale: 0.92, opacity: 0.15 }}
+        animate={reducedMotion ? { opacity: 0.35 } : { scale: 1.08, opacity: 0.55 }}
+        transition={{ duration: reducedMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
         style={{ position: "absolute", inset: 40, borderRadius: "50%", background: `radial-gradient(circle, ${withAlpha(accent, 40)}, transparent 70%)`, filter: "blur(20px)" }}
       />
+      {/* Anticipation ring — destello one-shot en cada tick.
+          Anillo delgado que sale del número, escala y se desvanece.
+          Marca el "peso" ceremonial que faltaba: cada número tiene su
+          propio evento de revelación, no aparecen "de la nada". */}
+      {!reducedMotion && (
+        <motion.span
+          key={`ant-${n}`}
+          aria-hidden="true"
+          initial={{ scale: 0.55, opacity: 0.85 }}
+          animate={{ scale: 1.5, opacity: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            position: "absolute",
+            inset: 70,
+            borderRadius: "50%",
+            border: `2px solid ${accent}`,
+            boxShadow: `0 0 24px ${withAlpha(accent, 60)}`,
+            pointerEvents: "none",
+          }}
+        />
+      )}
       <AnimatePresence>
         <motion.div
           key={n}
