@@ -145,9 +145,12 @@ export default function SessionBiofeedback({ breathCycle, elapsedSec, active, is
     setPhase("idle");
   }
 
-  // Renderiza nada si está activo el protocolo y no hay BLE (no estorbar).
-  // Solo mostramos el connect-prompt cuando active=false (pre-sesión).
-  if (!bleAvailable && phase === "idle" && !active) return null;
+  // Sin Web Bluetooth (iOS Safari, etc.) y aún en idle → no hay nada útil
+  // que mostrar. Antes solo se ocultaba en pre-sesión (active=false), pero
+  // durante la ejecución también dejaba un contenedor vacío con borde y
+  // padding flotando arriba de la fase. Si BLE no existe y nunca entramos
+  // a connecting/live/error, no renderizamos nada.
+  if (!bleAvailable && phase === "idle") return null;
 
   return (
     <motion.div
