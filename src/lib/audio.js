@@ -957,22 +957,20 @@ function buildUtterance(text, circadian, loc) {
   const u = new SpeechSynthesisUtterance(softText);
   u.lang = voiceLangTag(loc);
 
-  // DEFAULTS SUAVES — coaching contemplativo, no presentación corporativa.
+  // WHISPER-LEVEL — browser TTS tiene techo perceptual; el único modo de
+  // que NO suene robotic es minimizar exposición y volumen. Voz íntima,
+  // casi susurro. El user activa device volume si quiere más presencia.
   //
-  // rate 0.88 (antes 0.95): menos "hablado", más "respirado". Calm/Headspace
-  //   usan ~0.85-0.92 dependiendo del coach.
-  // pitch 0.95 (antes 1.0): timbre ligeramente más cálido/grave. NO bajar de
-  //   0.85 — entra en territorio masculino-falso o robótico.
-  // volume 0.78 (antes 1.0): voz íntima, no proyectada. La voz tiene que
-  //   sentirse cerca al oído, no como anuncio. El user puede subir el
-  //   volumen del device si quiere más presencia.
-  //
-  // Clamps amplios (0.78-1.10 rate, 0.85-1.08 pitch) permiten a circadian
-  // ajustar más al modo nocturno (rate más lento) sin romper coherencia.
+  // rate 0.83: lentitud contemplativa (igual a Calm "noche"). Menor de
+  //   0.78 entra en territorio "ralentizado robótico", no.
+  // pitch 0.93: ligeramente más grave = timbre cálido. Piso firme 0.85.
+  // volume 0.62: WHISPER. Antes 0.78 era íntima; 0.62 es susurro real.
+  //   El TTS suena menos "anuncio" cuando es bajo — los artefactos de
+  //   prosodia se diluyen en el silencio relativo.
   const rateOverride = circadian?.voiceRate;
-  u.rate = Math.max(0.78, Math.min(1.10, typeof rateOverride === "number" ? rateOverride : 0.88));
-  u.pitch = Math.max(0.85, Math.min(1.08, circadian?.voicePitch || 0.95));
-  u.volume = 0.78;
+  u.rate = Math.max(0.78, Math.min(1.05, typeof rateOverride === "number" ? rateOverride : 0.83));
+  u.pitch = Math.max(0.85, Math.min(1.05, circadian?.voicePitch || 0.93));
+  u.volume = 0.62;
   const v = pickVoice(loc);
   if (v) u.voice = v;
   // Trackear estado para ducking
