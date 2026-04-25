@@ -11,22 +11,7 @@
 
 import { useMemo } from "react";
 import { calcReadiness } from "../lib/readiness";
-
-const MIN_SQI_FOR_BASELINE = 60; // banda "good" o mejor
-
-/**
- * Decide si una entrada HRV es suficientemente confiable para alimentar
- * el motor neural. BLE (sin SQI) siempre sí. Cámara solo si SQI ≥ 60.
- */
-function isReliableEntry(h) {
-  if (!h || typeof h.lnRmssd !== "number") return false;
-  if (h.source === "camera") {
-    const sqi = typeof h.sqi === "number" ? h.sqi : null;
-    if (sqi === null) return false; // cámara sin SQI = sospechosa
-    return sqi >= MIN_SQI_FOR_BASELINE;
-  }
-  return true;
-}
+import { isReliableHrvEntry } from "../lib/hrv-camera/insight";
 
 /**
  * Construye la entrada a `calcReadiness` desde una snapshot del store.
@@ -37,7 +22,7 @@ export function buildReadinessInput(st) {
   const rhrLog = Array.isArray(st?.rhrLog) ? st.rhrLog : [];
   const reliable = hrvLog
     .map((h) => ({ ...h, lnRmssd: h.lnRmssd ?? h.lnrmssd ?? null }))
-    .filter(isReliableEntry);
+    .filter(isReliableHrvEntry);
   const hrvHistory = reliable.map((h) => ({ ts: h.ts, lnRmssd: h.lnRmssd }));
   const rhrHistory = rhrLog.map((h) => ({ ts: h.ts, rhr: h.rhr }));
   // currentHRV debe ser la última lectura CONFIABLE — no la más reciente

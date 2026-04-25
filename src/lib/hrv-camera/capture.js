@@ -380,10 +380,21 @@ export function createStreamingAnalyzer(opts = {}) {
       durationSec: elapsedSec,
       expectedHrBpm: hrv?.meanHr ?? 70,
     });
+    // Timestamp del pico más reciente — habilita haptic feedback por
+    // beat en el componente UI (no comparable con un set anterior aquí
+    // mismo: el componente compara updates consecutivos).
+    let lastPeakTs = null;
+    if (peaksInt.length > 0) {
+      const lastIdxInTrimmed = peaksInt[peaksInt.length - 1];
+      const idxInBuffer = lastIdxInTrimmed + warmupSamples;
+      if (tsBuffer[idxInBuffer] != null) lastPeakTs = tsBuffer[idxInBuffer];
+    }
+
     return {
       ...baseUpdate,
       ready: true,
       peaksInWindow: peaksInt.length,
+      lastPeakTs,
       hrv,
       sqi,
       adaptiveBandpass: estimatedHrHz != null,

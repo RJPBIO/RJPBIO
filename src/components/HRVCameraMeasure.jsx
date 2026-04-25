@@ -10,12 +10,14 @@
    chrome decorativo que le distraiga.
    ═══════════════════════════════════════════════════════════════ */
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { resolveTheme, withAlpha, font, brand, bioSignal } from "../lib/theme";
 import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
 import { createCameraCapture, createStreamingAnalyzer } from "../lib/hrv-camera/capture";
+import { computeHrvInsight, buildHrvBaseline } from "../lib/hrv-camera/insight";
+import { useStore } from "../store/useStore";
 
 const FULL_DURATION_SEC = 60;
 const SETTLING_TIMEOUT_MS = 30000; // si en 30s no detectamos dedo, abortar
@@ -79,6 +81,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   const lastUpdateTsRef = useRef(0);
   const fingerLostSinceRef = useRef(0);
   const wakeLockRef = useRef(null);
+  const lastVibratedPeakTsRef = useRef(0);
   const [paused, setPaused] = useState(false);
   const [brightnessHint, setBrightnessHint] = useState(false);
 
@@ -189,6 +192,24 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             setPhaseSafe("error");
           }
         } else if (phaseRef.current === "measuring") {
+          // Haptic feedback por latido — vibra brevemente cuando el
+          // analyzer detecta un nuevo pico. Solo si no está pausado y
+          // el pico es reciente (<1.5s) para evitar vibrar por picos
+          // viejos que aún están en la ventana. Respeta reduced-motion.
+          if (
+            u.lastPeakTs &&
+            u.lastPeakTs !== lastVibratedPeakTsRef.current &&
+            !reduced &&
+            !paused &&
+            u.fingerOk
+          ) {
+            const ageMs = Date.now() - u.lastPeakTs;
+            if (ageMs < 1500 && typeof navigator !== "undefined" && navigator.vibrate) {
+              try { navigator.vibrate(15); } catch {}
+            }
+            lastVibratedPeakTsRef.current = u.lastPeakTs;
+          }
+
           // Pausa el reloj cuando el dedo se cae. Damos un grace de 1.5s
           // para tolerar micro-ajustes; pasado eso, el progreso se congela
           // hasta que vuelva a estar OK. Datos sin dedo NO cuentan tiempo.
@@ -396,6 +417,14 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
 
       {phase === "intro" && (
         <section aria-label="Preparación" style={{ maxInlineSize: 500, marginInline: "auto" }}>
+          <div style={{ marginBlockEnd: 16 }}>
+            <PhoneIllustration
+              mode={isIOS ? "screen-light" : "torch"}
+              t1={t1}
+              t3={t3}
+              accent={brand.primary}
+            />
+          </div>
           <div
             style={{
               background: cd,
@@ -779,7 +808,16 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         </section>
       )}
 
-      {phase === "done" && finalResult?.hrv && (
+      {phase === "done" && finalResult?.hrv && (() => {
+        // Compute trend & interpretation vs personal baseline (excludes
+        // current measurement — entry hasn't been saved yet).
+        const hrvLog = useStore.getState().hrvLog || [];
+        const baseline14d = buildHrvBaseline(hrvLog, 14);
+        const insight = computeHrvInsight({
+          currentLnRmssd: finalResult.hrv.lnRmssd,
+          baseline14d,
+        });
+        return (
         <section aria-label="Resultado HRV" style={{ maxInlineSize: 500, marginInline: "auto" }}>
           <div
             style={{
@@ -806,7 +844,33 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             >
               {finalResult.hrv.rmssd}
             </div>
-            <div style={{ color: t3, fontSize: 12, marginBlockEnd: 20 }}>RMSSD (ms)</div>
+            <div style={{ color: t3, fontSize: 12, marginBlockEnd: insight ? 12 : 20 }}>RMSSD (ms)</div>
+
+            {/* Trend chip vs baseline 14d. Solo aparece con ≥5 entradas confiables previas. */}
+            {insight && (
+              <div
+                aria-label={`Variación ${insight.deltaPctRmssd}% vs base 14 días`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  background: withAlpha(comparisonColor(insight.comparison), 12),
+                  border: `1px solid ${withAlpha(comparisonColor(insight.comparison), 30)}`,
+                  marginBlockEnd: 20,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: t1,
+                  letterSpacing: 0.2,
+                }}
+              >
+                <span aria-hidden="true">{insight.deltaPctRmssd >= 0 ? "↑" : "↓"}</span>
+                <span>
+                  {insight.deltaPctRmssd >= 0 ? "+" : ""}{insight.deltaPctRmssd}% vs tu base 14d
+                </span>
+              </div>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <Metric label="SDNN" value={`${finalResult.hrv.sdnn} ms`} color={t1} />
@@ -814,6 +878,23 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               <Metric label="HR media" value={`${Math.round(finalResult.hrv.meanHr)} bpm`} color={t1} />
               <Metric label="ln(RMSSD)" value={finalResult.hrv.lnRmssd} color={t1} />
             </div>
+
+            {/* Interpretación humana — conecta el número con qué hacer hoy. */}
+            {insight && (
+              <p
+                style={{
+                  color: t2,
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  marginBlockStart: 16,
+                  marginBlockEnd: 0,
+                  textAlign: "start",
+                  paddingInline: 4,
+                }}
+              >
+                {insight.label}
+              </p>
+            )}
 
             {finalResult.sqi && (
               <div style={{ marginBlockStart: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
@@ -901,7 +982,8 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             );
           })()}
         </section>
-      )}
+        );
+      })()}
 
       {phase === "error" && error && (
         <div role="alert" style={{ maxInlineSize: 500, marginInline: "auto" }}>
@@ -939,6 +1021,130 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         </div>
       )}
     </motion.div>
+  );
+}
+
+/**
+ * Ilustración SVG estilizada del setup. Variantes:
+ *   - "torch":         trasera + flash LED (Android default)
+ *   - "screen-light":  frontal + pantalla emite luz (iOS recomendado)
+ *
+ * Diseño: ~120×160 px, monoline + un acento de color, sin texto.
+ * El "dedo" se representa como un óvalo overlapping sobre la zona de la cámara.
+ */
+function PhoneIllustration({ mode = "torch", t1, t3, accent }) {
+  const stroke = t1;
+  const muted = t3;
+  const glow = accent || "#ef4444";
+
+  if (mode === "screen-light") {
+    return (
+      <svg
+        viewBox="0 0 120 160"
+        width="100"
+        height="134"
+        aria-hidden="true"
+        style={{ display: "block", marginInline: "auto" }}
+      >
+        {/* glow rays from screen radiating up to finger */}
+        <g opacity="0.45">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <line
+              key={i}
+              x1={60}
+              y1={50}
+              x2={60 + (i - 2) * 14}
+              y2={20}
+              stroke={glow}
+              strokeWidth="1.2"
+              strokeLinecap="round"
+            />
+          ))}
+        </g>
+        {/* phone body */}
+        <rect x="14" y="6" width="92" height="148" rx="14" ry="14" fill="none" stroke={stroke} strokeWidth="2" />
+        {/* notch / dynamic island */}
+        <rect x="48" y="10" width="24" height="6" rx="3" fill={stroke} opacity="0.85" />
+        {/* front camera dot */}
+        <circle cx="60" cy="13" r="1.6" fill={muted} />
+        {/* screen surface — soft white */}
+        <rect x="20" y="22" width="80" height="120" rx="8" fill={glow} opacity="0.07" />
+        {/* finger overlay (oval) covering top center / camera area */}
+        <ellipse cx="60" cy="16" rx="22" ry="14" fill={muted} opacity="0.55" />
+        {/* fingertip ridge — subtle highlight */}
+        <ellipse cx="60" cy="11" rx="13" ry="3" fill={stroke} opacity="0.18" />
+      </svg>
+    );
+  }
+
+  if (mode === "ambient") {
+    return (
+      <svg
+        viewBox="0 0 140 160"
+        width="116"
+        height="134"
+        aria-hidden="true"
+        style={{ display: "block", marginInline: "auto" }}
+      >
+        {/* sun/lamp on the right */}
+        <g opacity="0.7">
+          <circle cx="120" cy="34" r="9" fill={glow} opacity="0.25" />
+          <circle cx="120" cy="34" r="5" fill={glow} />
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => {
+            const r = (deg * Math.PI) / 180;
+            const x1 = 120 + Math.cos(r) * 9;
+            const y1 = 34 + Math.sin(r) * 9;
+            const x2 = 120 + Math.cos(r) * 14;
+            const y2 = 34 + Math.sin(r) * 14;
+            return (
+              <line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke={glow}
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+            );
+          })}
+        </g>
+        {/* phone body (rear view) */}
+        <rect x="20" y="6" width="76" height="148" rx="12" ry="12" fill="none" stroke={stroke} strokeWidth="2" />
+        {/* rear camera lens */}
+        <circle cx="44" cy="28" r="8" fill="none" stroke={stroke} strokeWidth="1.6" />
+        <circle cx="44" cy="28" r="4" fill={stroke} opacity="0.4" />
+        {/* finger overlay */}
+        <ellipse cx="44" cy="32" rx="18" ry="12" fill={muted} opacity="0.55" />
+        <ellipse cx="44" cy="26" rx="10" ry="2.5" fill={stroke} opacity="0.18" />
+      </svg>
+    );
+  }
+
+  // torch (Android default — back camera + LED flash)
+  return (
+    <svg
+      viewBox="0 0 120 160"
+      width="100"
+      height="134"
+      aria-hidden="true"
+      style={{ display: "block", marginInline: "auto" }}
+    >
+      {/* flash glow */}
+      <circle cx="62" cy="42" r="14" fill={glow} opacity="0.18" />
+      {/* phone body (rear view) */}
+      <rect x="14" y="6" width="92" height="148" rx="14" ry="14" fill="none" stroke={stroke} strokeWidth="2" />
+      {/* rear camera lens (left) */}
+      <circle cx="44" cy="28" r="8" fill="none" stroke={stroke} strokeWidth="1.6" />
+      <circle cx="44" cy="28" r="4" fill={stroke} opacity="0.4" />
+      {/* flash LED (right) */}
+      <circle cx="62" cy="42" r="3.5" fill={glow} />
+      <circle cx="62" cy="42" r="3.5" fill="none" stroke={stroke} strokeWidth="1.2" />
+      {/* finger overlay covering both lens + flash */}
+      <ellipse cx="53" cy="34" rx="26" ry="14" fill={muted} opacity="0.55" />
+      <ellipse cx="53" cy="28" rx="14" ry="3" fill={stroke} opacity="0.18" />
+    </svg>
   );
 }
 
@@ -1033,6 +1239,13 @@ function Metric({ label, value, color }) {
       </div>
     </div>
   );
+}
+
+function comparisonColor(comp) {
+  if (comp === "above") return bioSignal.coherence ?? "#3b82f6";
+  if (comp === "near") return brand.primary;
+  if (comp === "below") return bioSignal.ignition ?? "#f59e0b";
+  return bioSignal.plasmaPink ?? "#ef4444";
 }
 
 function sqiColor(band) {
