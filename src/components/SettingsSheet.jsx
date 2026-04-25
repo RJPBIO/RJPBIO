@@ -50,17 +50,10 @@ export default function SettingsSheet({
     return () => clearTimeout(tid);
   }, [show, locale]);
 
-  // Reminders permission helper — solicita permiso de notificaciones
-  // si el usuario activa reminders y aún no se ha concedido.
-  const requestNotifPermission = async () => {
-    if (typeof window === "undefined" || !("Notification" in window)) return false;
-    if (Notification.permission === "granted") return true;
-    if (Notification.permission === "denied") return false;
-    try {
-      const r = await Notification.requestPermission();
-      return r === "granted";
-    } catch (e) { return false; }
-  };
+  // Permisos de notificaciones se otorgan al instalar la PWA, no en
+  // toggle. El toggle solo guarda la preferencia. Si los permisos no
+  // fueron otorgados al instalar, las notificaciones no disparan, pero
+  // la preferencia queda registrada para cuando se otorguen.
 
   const handleSignOut = async () => {
     try {
@@ -458,18 +451,7 @@ export default function SettingsSheet({
               desc="Notificación a la misma hora cada día"
               icon="bell"
               checked={!!st.remindersEnabled}
-              onToggle={async () => {
-                const next = !st.remindersEnabled;
-                if (next) {
-                  const granted = await requestNotifPermission();
-                  if (!granted) {
-                    // Si el browser denegó, no actives — el toggle queda en false
-                    setSt({ ...st, remindersEnabled: false });
-                    return;
-                  }
-                }
-                setSt({ ...st, remindersEnabled: next });
-              }}
+              onToggle={() => setSt({ ...st, remindersEnabled: !st.remindersEnabled })}
             />
             {st.remindersEnabled && (
               <div

@@ -108,33 +108,41 @@ export function setMusicBedEnabled(flag) {
 }
 
 // Gating flag global de haptics — fuente única de verdad.
-// Antes: hap(t, sO, hO) checaba hO solo si el caller lo pasaba.
-// Pero hapticBreath/hapticPhase/hapticCountdown/etc. se llaman SIN
-// pasar hO desde page.jsx → vibraban siempre, ignorando settings.
-// Ahora: vibrate() consulta _hapticEnabled, page.jsx lo sincroniza
-// vía setHapticEnabled cuando st.hapticOn cambia. Toggle en settings
-// funciona sin condicionales en cada call site.
 let _hapticEnabled = true;
 export function setHapticEnabled(flag) {
   _hapticEnabled = flag !== false;
 }
 
+// Visual fallback para devices sin navigator.vibrate (iOS Safari).
+// Page.jsx registra una callback que renderiza un flash sutil — el
+// usuario iOS recibe SOMETHING sincronizado con la cadencia háptica
+// aunque no sea físico. Si vibrate API existe, este fallback NO se
+// dispara (sería redundante).
+let _hapticFallback = null;
+export function setHapticFallback(fn) {
+  _hapticFallback = typeof fn === "function" ? fn : null;
+}
+
 // Wrapper único — todos los audio.js vibrate calls deben usar esto.
-// Defensivo: navigator no existe en SSR; si no hay vibrate API, no-op.
-// iOS Safari no implementa navigator.vibrate (Web standard pero Apple
-// nunca lo expuso) → silently no-op, lo cual es correcto.
 function vibrate(pattern) {
   if (!_hapticEnabled) return;
-  if (typeof navigator === "undefined" || !navigator.vibrate) return;
-  try {
-    if (typeof pattern === "number") {
-      navigator.vibrate(Math.max(1, Math.round(pattern * _hapticIntensity)));
-    } else if (Array.isArray(pattern)) {
-      navigator.vibrate(pattern.map((d, i) => i % 2 === 0 ? Math.max(1, Math.round(d * _hapticIntensity)) : d));
-    } else {
-      navigator.vibrate(pattern);
-    }
-  } catch (e) {}
+  // Si el device tiene vibrate API, lo usamos. Si no, fallback visual.
+  if (typeof navigator !== "undefined" && navigator.vibrate) {
+    try {
+      if (typeof pattern === "number") {
+        navigator.vibrate(Math.max(1, Math.round(pattern * _hapticIntensity)));
+      } else if (Array.isArray(pattern)) {
+        navigator.vibrate(pattern.map((d, i) => i % 2 === 0 ? Math.max(1, Math.round(d * _hapticIntensity)) : d));
+      } else {
+        navigator.vibrate(pattern);
+      }
+    } catch (e) {}
+    return;
+  }
+  // Fallback: dispatch al callback registrado (visual flash en page.jsx)
+  if (_hapticFallback) {
+    try { _hapticFallback(pattern); } catch (e) {}
+  }
 }
 
 export function setMasterVolume(v) {
@@ -1153,11 +1161,33 @@ export function hapticPhase(type) {
   else vibrate(30);
 }
 
+// Patrones gradient — micro-pulsos con duraciones variables que el
+// cuerpo lee como "intensidad creciente/decreciente" aunque vibrate API
+// solo soporta on/off binario. Es la forma más cercana a CHHaptics
+// gradients que se puede lograr en web puro.
+//
+// INHALA: rampa ascendente — pulsos crecen, gaps se acortan.
+//   Lectura corporal: "respiración subiendo", paralelo al breathScale
+//   del orb (1.0 → 1.25).
+// EXHALA: rampa descendente — pulsos decaen, gaps crecen.
+//   Lectura corporal: "soltando", paralelo al breathScale (1.25 → 1.0).
+// MANTÉN: dos golpes firmes con silencio largo entre — el silencio
+//   sostiene la sensación de freeze.
+// SOSTÉN/VACÍO: pulsos mínimos con gaps largos — barely-there cue.
 export function hapticBreath(label) {
-  if (label === "INHALA") vibrate([15, 30, 15, 30, 15]);
-  else if (label === "EXHALA") vibrate([40]);
-  else if (label === "MANTÉN") vibrate(20);
-  else vibrate(10);
+  if (label === "INHALA") {
+    // 6 pulsos crecientes, ~210ms total
+    vibrate([4, 35, 6, 30, 10, 25, 14, 20, 18, 15, 22]);
+  } else if (label === "EXHALA") {
+    // 6 pulsos decrecientes, mismo total ~210ms (espejo)
+    vibrate([22, 15, 18, 20, 14, 25, 10, 30, 6, 35, 4]);
+  } else if (label === "MANTÉN") {
+    // Dos golpes firmes con silencio sostenido — freeze cue
+    vibrate([16, 80, 16]);
+  } else {
+    // SOSTÉN/VACÍO — barely-there
+    vibrate([4, 60, 6, 60, 4]);
+  }
 }
 
 // ─── Haptic Firma ─────────────────────────────────────────
@@ -1173,10 +1203,15 @@ export function hapticPreShift() {
   vibrate([6, 40, 10]);
 }
 
+// Countdown gradient — escalada de tensión 3→2→1.
+//   Step 3: tap suave + eco (anticipation suave)
+//   Step 2: 3 pulsos crecientes (tensión sube)
+//   Step 1: anticipation crescendo + golpe + follow-through
+//          (cinematográfico: el cuerpo se prepara para GO)
 export function hapticCountdown(step) {
-  if (step === 3) vibrate(10);
-  else if (step === 2) vibrate(18);
-  else if (step === 1) vibrate([22, 80, 35]);
+  if (step === 3) vibrate([6, 25, 10]);
+  else if (step === 2) vibrate([8, 20, 14, 15, 20]);
+  else if (step === 1) vibrate([10, 25, 16, 20, 24, 60, 30, 25, 38]);
 }
 
 // Tick auditivo del countdown — nota de cristal breve, sine pura,

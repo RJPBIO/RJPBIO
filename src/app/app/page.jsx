@@ -32,7 +32,7 @@ import { useCommandKey } from "@/hooks/useCommandKey";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
 import {
-  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick, playCountdownTick, setMasterVolume, setUserVoiceRate, setUserVoicePreference, setHapticIntensity, setHapticEnabled, setBinauralEnabled, setMusicBedEnabled,
+  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick, playCountdownTick, setMasterVolume, setUserVoiceRate, setUserVoicePreference, setHapticIntensity, setHapticEnabled, setHapticFallback, setBinauralEnabled, setMusicBedEnabled,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
@@ -173,6 +173,23 @@ export default function BioIgnicion(){
   useEffect(()=>{try{setHapticEnabled(st.hapticOn!==false);}catch(e){}},[st.hapticOn]);
   useEffect(()=>{try{setBinauralEnabled(st.binauralOn!==false);}catch(e){}},[st.binauralOn]);
   useEffect(()=>{try{setMusicBedEnabled(st.musicBedOn!==false);}catch(e){}},[st.musicBedOn]);
+
+  // Visual fallback para iOS Safari (sin navigator.vibrate). Cada vez
+  // que vibrate() se llama y no hay API, el wrapper dispara este
+  // callback. Renderizamos un flash sutil en el top-edge — el usuario
+  // iOS recibe SOMETHING sincronizado con la cadencia háptica aunque
+  // no sea físico. Date.now() garantiza key única (re-mount AnimatePresence).
+  const[hapticFlashKey,setHapticFlashKey]=useState(null);
+  useEffect(()=>{
+    try{
+      setHapticFallback(()=>{
+        const k=Date.now();
+        setHapticFlashKey(k);
+        setTimeout(()=>setHapticFlashKey(prev=>prev===k?null:prev),500);
+      });
+    }catch(e){}
+    return()=>{try{setHapticFallback(null);}catch(e){}};
+  },[]);
 
   // SW se registra desde layout.js (con nonce)
   useSync();
@@ -646,6 +663,35 @@ export default function BioIgnicion(){
 
   {/* Background aura — dims during running session (cinematic focus) */}
   <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s ease"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
+
+  {/* iOS haptic visual fallback — flash sutil top-edge cuando el
+      device no soporta navigator.vibrate. El usuario lee la cadencia
+      háptica via "haptic light". Render condicional con AnimatePresence
+      para que cada evento spawn un nuevo flash sin acumularse en DOM. */}
+  <AnimatePresence>
+    {hapticFlashKey&&(
+      <motion.div
+        key={hapticFlashKey}
+        aria-hidden="true"
+        initial={{opacity:0,scaleX:0.4}}
+        animate={{opacity:[0,0.7,0],scaleX:[0.4,1,1]}}
+        exit={{opacity:0}}
+        transition={{duration:reducedMotion?0:0.4,ease:[.16,1,.3,1]}}
+        style={{
+          position:"fixed",
+          top:"env(safe-area-inset-top, 0)",
+          left:0,
+          right:0,
+          height:2,
+          background:`linear-gradient(90deg, transparent, ${ac}, transparent)`,
+          boxShadow:`0 0 8px ${ac}, 0 0 16px ${withAlpha(ac,40)}`,
+          pointerEvents:"none",
+          zIndex:9999,
+          transformOrigin:"center",
+        }}
+      />
+    )}
+  </AnimatePresence>
 
   {/* Session Runner — fullscreen cinematic overlay (countdown + running + paused) */}
   {/* Handler para sincronía audio-háptica con los firings del core.
