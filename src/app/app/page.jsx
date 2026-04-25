@@ -918,15 +918,14 @@ export default function BioIgnicion(){
     </div>
   )}
 
-  {/* ═══ MAIN CONTENT ═══ */}
+  {/* ═══ MAIN CONTENT ═══
+      Sin AnimatePresence/motion.div con key={tab}: el key change
+      forzaba unmount completo de los 3 paneles en cada switch
+      (defeating keep-mounted) + mode="wait" añadía 320ms de espera.
+      Ahora switch instant tipo Twitter/Linear: los panels viven
+      siempre, solo cambia visibility. */}
   <div style={{position:"relative",zIndex:1}}>
-  <AnimatePresence mode="wait" initial={false}>
-  <motion.div
-    key={tab}
-    initial={reducedMotion?{opacity:0}:{opacity:0,y:14,scale:.985}}
-    animate={reducedMotion?{opacity:1}:{opacity:1,y:0,scale:1}}
-    exit={reducedMotion?{opacity:0}:{opacity:0,y:-8,scale:.99}}
-    transition={{duration:reducedMotion?0:.32,ease:[.16,1,.3,1]}}
+  <div
     onPointerDown={onSwipeStart}
     onPointerUp={onSwipeEnd}
     onPointerCancel={()=>{swipeRef.current=null;}}
@@ -1584,8 +1583,7 @@ export default function BioIgnicion(){
       <ProfileView st={st} setSt={setSt} isDark={isDark} ac={ac} onShowSettings={()=>setShowSettings(true)} onShowHist={()=>setShowHist(true)} onShowCalibration={()=>setShowCalibration(true)} onShowChronotype={()=>setShowChronoTest(true)} onShowResonance={()=>setShowResonanceCal(true)} onShowNOM035={()=>setShowNOM035(true)} />
     </div>
   )}
-  </motion.div>
-  </AnimatePresence>
+  </div>
   </div>
 
   {/* ═══ BOTTOM METRICS BAR — living chrome: se tiñe con la coherencia actual ═══ */}
