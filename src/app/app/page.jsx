@@ -287,9 +287,31 @@ export default function BioIgnicion(){
   useEffect(()=>{try{const elapsedSec=totalDur-sec;const idx=computePhaseIndex(elapsedSec,pr.ph,durMult);
     let speakTO=null;
     const phAtIdx=pr?.ph?.[idx];
-    if(idx!==pi&&phAtIdx){setPi(idx);if(st.hapticOn!==false)hapticPhase(phAtIdx.ic);if(st.soundOn!==false)try{playChord([523,784],0.22,0.028);}catch(e){}/* Voz minimalista: solo el kicker corto (verbo de la fase). Antes decía "Fase X de Y. Title" + 2.5s después la instrucción larga — exposición masiva al carácter robótico de TTS. Phase number + título visibles en UI; voz se reserva para el verbo de acción. */speakNow(phAtIdx.k||"",circadian,voiceOn);}
+    if(idx!==pi&&phAtIdx){
+      setPi(idx);
+      if(st.hapticOn!==false)hapticPhase(phAtIdx.ic);
+      if(st.soundOn!==false)try{playChord([523,784],0.22,0.028);}catch(e){}
+      // Frame de cambio de fase: número + acción. Eyes-closed user
+      // sabe en qué fase está y qué hacer. "Fase dos. Activa." es claro;
+      // solo "Activa." mid-session es desorientador. La instrucción
+      // detallada (phAtIdx.i) sigue visible en pantalla — la voz
+      // se queda en lo que el user no puede ver.
+      const phaseNum=idx+1;
+      const totalPh=pr?.ph?.length||0;
+      const kicker=phAtIdx.k||"";
+      const intro=totalPh>1?`Fase ${phaseNum}. ${kicker}.`:`${kicker}.`;
+      speakNow(intro,circadian,voiceOn);
+    }
     const ttN=timeToNextPhase(elapsedSec,pr.ph,durMult,pi);
-    if(ttN===2&&ts==="running"){speak("Prepárate",circadian,voiceOn);if(st.hapticOn!==false)hapticPreShift();}
+    if(ttN===2&&ts==="running"){
+      // Pre-shift con contexto: anuncia QUÉ viene, no "Prepárate" vago.
+      // Eyes-closed user puede mentalmente prepararse para la transición
+      // si sabe el siguiente verbo de acción.
+      const nextKicker=pr?.ph?.[pi+1]?.k;
+      const cue=nextKicker?`Próximo: ${nextKicker}. Prepárate.`:"Prepárate.";
+      speak(cue,circadian,voiceOn);
+      if(st.hapticOn!==false)hapticPreShift();
+    }
     return()=>{if(speakTO)clearTimeout(speakTO);};}catch(e){}
   },[sec,pr,durMult]);
   useEffect(()=>{if(ts==="done"&&sec===0)comp();},[ts,sec]);
@@ -325,21 +347,18 @@ export default function BioIgnicion(){
     }
     let t=0;
     let lastLabel="";
-    let cycleCount=0;
     function tk(){
       const f=computeBreathFrame(t,ph.br);
       if(!f){t++;return;}
       setBL(f.label);setBS(f.scale);setBCnt(f.countdown);
       if(f.label!==lastLabel){
-        // Voz solo en INHALA (inicio del ciclo) y SOLO en los primeros
-        // 2 ciclos de la fase. Después, silencio total — el visual
-        // (label grande + breath orb pulsing) cubre la guía.
-        // Antes hablaba inhala/exhala/mantén cada tick → 30+ utterances
-        // por minuto → robotic exposure brutal.
-        if(f.label==="INHALA"){
-          cycleCount++;
-          if(cycleCount<=2)speak("inhala",circadian,voiceOn);
-        }
+        // GUÍA EYES-CLOSED: el usuario en sesión a menudo cierra los
+        // ojos. El orb visual + label grande no le sirven; necesita
+        // la voz como guía rítmica. Hablamos CADA cambio de sub-fase
+        // (inhala/mantén/exhala/pausa) para que pueda seguir sin abrir
+        // los ojos. Volumen 0.62 + rate 0.83 mantienen el carácter
+        // contemplativo, no narrador.
+        speak(f.label.toLowerCase(),circadian,voiceOn);
         hapticBreath(f.label);
         lastLabel=f.label;
       }
@@ -350,7 +369,40 @@ export default function BioIgnicion(){
     return()=>{if(bR.current)clearInterval(bR.current);};
   },[ts,pi,pr]);
 
-  function startCountdown(){setCountdown(3);if(st.hapticOn!==false)hapticCountdown(3);try{speakNow("Tres",circadian,voiceOn);}catch(e){}cdR.current=setInterval(()=>{setCountdown(p=>{try{if(p<=1){clearInterval(cdR.current);setTs("running");H("go");speakNow((pr?.ph?.[0]?.k)||"Comienza",circadian,voiceOn);return 0;}speakNow(p===2?"Dos":"Uno",circadian,voiceOn);if(st.hapticOn!==false)hapticCountdown(p-1);return p-1;}catch(e){clearInterval(cdR.current);setTs("running");return 0;}});},1000);}
+  function startCountdown(){
+    setCountdown(3);
+    if(st.hapticOn!==false)hapticCountdown(3);
+    try{speakNow("Tres",circadian,voiceOn);}catch(e){}
+    cdR.current=setInterval(()=>{
+      setCountdown(p=>{
+        try{
+          // BUGFIX: antes el speak leía `p===2?"Dos":"Uno"` con p siendo
+          // el valor ANTES de decrementar. Cuando p=3 decía "Uno" en
+          // vez de "Dos" → orden caos "3, 1, 2". Ahora hablamos del
+          // valor DESPUÉS del decremento.
+          const next=p-1;
+          if(next<=0){
+            clearInterval(cdR.current);
+            setTs("running");
+            H("go");
+            // Frame de inicio: "Comenzamos" + acción de la primera fase
+            // → eyes-closed user sabe (a) que arrancó y (b) qué hacer.
+            const firstKicker=pr?.ph?.[0]?.k;
+            const intro=firstKicker?`Comenzamos. ${firstKicker}.`:"Comenzamos.";
+            speakNow(intro,circadian,voiceOn);
+            return 0;
+          }
+          speakNow(next===2?"Dos":"Uno",circadian,voiceOn);
+          if(st.hapticOn!==false)hapticCountdown(next);
+          return next;
+        }catch(e){
+          clearInterval(cdR.current);
+          setTs("running");
+          return 0;
+        }
+      });
+    },1000);
+  }
   function go(){if(actLockRef.current||ts!=="idle"||countdown>0)return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);unlockVoice();requestWakeLock();try{const fs=document.documentElement.requestFullscreen?.();if(fs&&typeof fs.catch==="function")fs.catch(()=>{});}catch(e){}setPostStep("none");setPi(0);setSec(Math.round(pr.d*durMult));setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
   const pauseTRef=useRef(null);
   useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);},[]);
