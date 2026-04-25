@@ -3,6 +3,7 @@ import {
   computeProtocolEffectiveness,
   effectivenessByProtocol,
   coherenceByProtocol,
+  aggregateTeamCoherence,
 } from "./effectiveness";
 
 describe("computeProtocolEffectiveness", () => {
@@ -155,5 +156,73 @@ describe("coherenceByProtocol", () => {
     ];
     const r = coherenceByProtocol(sessions);
     expect(Object.keys(r)).toEqual(["calma"]);
+  });
+});
+
+describe("aggregateTeamCoherence", () => {
+  it("returns insufficient when fewer than minK unique users", () => {
+    const sessions = [
+      { userId: "a", coherenceLive: { score: 70 } },
+      { userId: "a", coherenceLive: { score: 75 } },
+      { userId: "b", coherenceLive: { score: 80 } },
+    ];
+    const r = aggregateTeamCoherence(sessions, { minK: 5 });
+    expect(r.insufficient).toBe(true);
+    expect(r.n).toBe(2);
+  });
+
+  it("counts users not sessions for k-anon (privacy critical)", () => {
+    // ONE user with 10 sessions should NOT pass minK=5
+    const sessions = Array.from({ length: 10 }, (_, i) => ({
+      userId: "alice",
+      coherenceLive: { score: 75 + i },
+    }));
+    const r = aggregateTeamCoherence(sessions, { minK: 5 });
+    expect(r.insufficient).toBe(true);
+  });
+
+  it("aggregates with mean + sd when sufficient users", () => {
+    const sessions = [
+      { userId: "a", coherenceLive: { score: 70 } },
+      { userId: "b", coherenceLive: { score: 80 } },
+      { userId: "c", coherenceLive: { score: 75 } },
+      { userId: "d", coherenceLive: { score: 85 } },
+      { userId: "e", coherenceLive: { score: 90 } },
+    ];
+    const r = aggregateTeamCoherence(sessions, { minK: 5 });
+    expect(r.insufficient).toBe(false);
+    expect(r.uniqueUsers).toBe(5);
+    expect(r.meanScore).toBe(80);
+    expect(r.sd).toBeGreaterThan(0);
+  });
+
+  it("topProtocol respects k-anon per protocol", () => {
+    const sessions = [
+      // 5 users on calma → passes
+      { userId: "a", p: "calma", coherenceLive: { score: 80 } },
+      { userId: "b", p: "calma", coherenceLive: { score: 85 } },
+      { userId: "c", p: "calma", coherenceLive: { score: 75 } },
+      { userId: "d", p: "calma", coherenceLive: { score: 82 } },
+      { userId: "e", p: "calma", coherenceLive: { score: 78 } },
+      // only 2 users on energia → does NOT pass per-protocol k-anon
+      { userId: "a", p: "energia", coherenceLive: { score: 95 } },
+      { userId: "b", p: "energia", coherenceLive: { score: 90 } },
+    ];
+    const r = aggregateTeamCoherence(sessions, { minK: 5 });
+    expect(r.topProtocol?.name).toBe("calma");
+  });
+
+  it("ignores sessions without coherenceLive.score", () => {
+    const sessions = [
+      { userId: "a" },
+      { userId: "b", coherenceLive: { score: 70 } },
+      { userId: "c", coherenceLive: { score: 75 } },
+      { userId: "d", coherenceLive: { score: 80 } },
+      { userId: "e", coherenceLive: { score: 85 } },
+      { userId: "f", coherenceLive: { score: 90 } },
+    ];
+    const r = aggregateTeamCoherence(sessions, { minK: 5 });
+    expect(r.insufficient).toBe(false);
+    expect(r.uniqueUsers).toBe(5); // a got filtered
   });
 });

@@ -10,7 +10,7 @@ import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { aggregateTeam, NOM035_CATEGORIES } from "../lib/nom035";
 import { aggregateHrvDeltas } from "../lib/hrvDelta";
-import { computeProtocolEffectiveness } from "../lib/effectiveness";
+import { computeProtocolEffectiveness, aggregateTeamCoherence } from "../lib/effectiveness";
 import { computeRecoveredHours, computeRoiValue } from "../lib/roi";
 import { aggregateInstrument } from "../lib/instruments";
 
@@ -62,6 +62,14 @@ export default function OrgDashboard({
 
   const effectiveness = useMemo(
     () => computeProtocolEffectiveness(sessions, { minN: MIN_K }),
+    [sessions]
+  );
+
+  // Coherencia HRV agregada del equipo (k-anon ≥ MIN_K usuarios únicos).
+  // Solo aparece cuando hay suficientes employees usando strap BLE durante
+  // protocolos. Indicador objetivo de respuesta autonómica del equipo.
+  const teamCoh = useMemo(
+    () => aggregateTeamCoherence(sessions, { minK: MIN_K }),
     [sessions]
   );
 
@@ -158,10 +166,61 @@ export default function OrgDashboard({
         />
         <NOMCard agg={agg} isDark={isDark} />
         <EngagementCard eng={engagement} isDark={isDark} />
+        <CoherenceCard agg={teamCoh} isDark={isDark} />
       </div>
 
       <ComplianceCard isDark={isDark} />
     </section>
+  );
+}
+
+function CoherenceCard({ agg, isDark }) {
+  const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  if (agg.insufficient) {
+    return (
+      <article style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}>
+        <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 10 }}>
+          Coherencia HRV (equipo)
+        </h3>
+        <p style={{ color: t2, fontSize: 12, lineHeight: 1.6, marginBlockStart: 10 }}>
+          Insuficientes empleados con strap BLE ({agg.n}/{agg.minK}). Para preservar anonimato se requieren al menos {agg.minK} usuarios únicos midiendo coherencia en sesión.
+        </p>
+      </article>
+    );
+  }
+  const colorByScore = agg.meanScore >= 70 ? semantic.success : agg.meanScore >= 40 ? brand.primary : semantic.warning;
+  return (
+    <article
+      role="region"
+      aria-label="Coherencia HRV agregada del equipo"
+      style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 18 }}
+    >
+      <h3 style={{ ...kickerStyle(t3), marginBlockEnd: 14 }}>
+        Coherencia HRV (equipo)
+      </h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBlockEnd: 10 }}>
+        <div>
+          <div style={metricValueStyle(colorByScore)}>{agg.meanScore}</div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: t3, letterSpacing: -0.05 }}>
+            score promedio (σ={agg.sd})
+          </div>
+        </div>
+        <div style={{ textAlign: "end" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: t1 }}>
+            {agg.uniqueUsers}
+          </div>
+          <div style={{ fontSize: 10, color: t3 }}>empleados</div>
+        </div>
+      </div>
+      {agg.topProtocol && (
+        <p style={{ color: t2, fontSize: 11, margin: 0, marginBlockStart: 8, lineHeight: 1.5 }}>
+          Mejor coherencia: <strong style={{ color: t1, fontWeight: 700 }}>"{agg.topProtocol.name}"</strong> · {agg.topProtocol.meanScore} ({agg.topProtocol.n} sesiones)
+        </p>
+      )}
+      <p style={{ color: t3, fontSize: 10, margin: 0, marginBlockStart: 6, fontStyle: "italic", lineHeight: 1.5 }}>
+        Phase-lock breath ↔ HRV. Ref: Lehrer & Gevirtz 2014.
+      </p>
+    </article>
   );
 }
 

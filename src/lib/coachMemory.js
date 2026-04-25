@@ -115,6 +115,48 @@ export function buildCoachContext(st, { now = Date.now() } = {}) {
   const sessionsLast7 = history.filter((h) => typeof h.ts === "number" && now - h.ts <= 7 * DAY).length;
   const sessionsLast30 = history.filter((h) => typeof h.ts === "number" && now - h.ts <= 30 * DAY).length;
 
+  // Coherencia HRV en vivo: medida objetiva (mejor que mood pre/post)
+  // de la respuesta autonómica al protocolo. Solo disponible cuando el
+  // user usa strap BLE durante la sesión. Se silencia si no hay datos.
+  const cohSessions = history.filter((s) => typeof s?.coherenceLive?.score === "number");
+  const cohByProto = new Map();
+  for (const s of cohSessions) {
+    if (!s?.p) continue;
+    const arr = cohByProto.get(s.p) || [];
+    arr.push(s.coherenceLive.score);
+    cohByProto.set(s.p, arr);
+  }
+  const coherenceProfile = [...cohByProto.entries()]
+    .map(([name, scores]) => ({
+      name,
+      n: scores.length,
+      meanScore: +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1),
+    }))
+    .filter((p) => p.n >= 3)
+    .sort((a, b) => b.meanScore - a.meanScore)
+    .slice(0, 3);
+
+  const cohRecent = cohSessions
+    .filter((s) => now - s.ts <= 7 * DAY)
+    .map((s) => s.coherenceLive.score);
+  const cohPrior = cohSessions
+    .filter((s) => {
+      const age = now - s.ts;
+      return age > 7 * DAY && age <= 21 * DAY;
+    })
+    .map((s) => s.coherenceLive.score);
+  const cohRecentMean = mean(cohRecent);
+  const cohPriorMean = mean(cohPrior);
+  const coherenceTrajectory = {
+    recent: cohRecentMean,
+    prior: cohPriorMean,
+    delta:
+      cohRecentMean !== null && cohPriorMean !== null
+        ? +(cohRecentMean - cohPriorMean).toFixed(2)
+        : null,
+    n: cohSessions.length,
+  };
+
   function latestOf(id) {
     const entries = instruments.filter((e) => e?.instrumentId === id && typeof e.ts === "number");
     if (!entries.length) return null;
@@ -154,6 +196,8 @@ export function buildCoachContext(st, { now = Date.now() } = {}) {
     instrumentBriefs,
     chronotype: safe.chronotype || null,
     resonanceFreq: typeof safe.resonanceFreq === "number" ? safe.resonanceFreq : null,
+    coherenceProfile,
+    coherenceTrajectory,
     openQuestions,
   };
 }
@@ -178,6 +222,15 @@ export function summarizeContext(ctx) {
     const d = ctx.moodTrajectory.delta;
     if (d > 0.3) parts.push("tu ánimo viene subiendo");
     else if (d < -0.3) parts.push("tu ánimo viene bajando");
+  }
+  // Coherencia HRV — solo si tenemos data del strap (más objetivo que mood)
+  if (ctx.coherenceProfile && ctx.coherenceProfile[0]) {
+    const top = ctx.coherenceProfile[0];
+    parts.push(`coherencia ${top.meanScore} en "${top.name}" (n=${top.n})`);
+  } else if (ctx.coherenceTrajectory && ctx.coherenceTrajectory.delta !== null) {
+    const d = ctx.coherenceTrajectory.delta;
+    if (d > 5) parts.push("tu coherencia HRV viene subiendo");
+    else if (d < -5) parts.push("tu coherencia HRV viene bajando");
   }
   if (!parts.length) return "Estamos construyendo tu baseline. Sigamos observando.";
   return parts.join(" · ");

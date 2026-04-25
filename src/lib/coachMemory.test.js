@@ -82,4 +82,62 @@ describe("buildCoachContext", () => {
     const summary = summarizeContext(ctx);
     expect(summary).toContain("Coherencia");
   });
+
+  it("coherenceProfile agrega coherenceLive por protocolo (n>=3)", () => {
+    const now = Date.now();
+    const ctx = buildCoachContext(base({
+      history: [
+        { ts: now - 1 * DAY, p: "Resonancia", coherenceLive: { score: 75 } },
+        { ts: now - 2 * DAY, p: "Resonancia", coherenceLive: { score: 80 } },
+        { ts: now - 3 * DAY, p: "Resonancia", coherenceLive: { score: 70 } },
+        { ts: now - 4 * DAY, p: "Activación", coherenceLive: { score: 50 } },
+        { ts: now - 5 * DAY, p: "Activación", coherenceLive: { score: 55 } },
+        { ts: now - 6 * DAY, p: "Activación", coherenceLive: { score: 45 } },
+      ],
+    }), { now });
+    expect(ctx.coherenceProfile).toHaveLength(2);
+    expect(ctx.coherenceProfile[0].name).toBe("Resonancia");
+    expect(ctx.coherenceProfile[0].meanScore).toBe(75);
+    expect(ctx.coherenceProfile[1].name).toBe("Activación");
+  });
+
+  it("coherenceProfile excluye protocolos con n<3", () => {
+    const now = Date.now();
+    const ctx = buildCoachContext(base({
+      history: [
+        { ts: now - 1 * DAY, p: "X", coherenceLive: { score: 75 } },
+        { ts: now - 2 * DAY, p: "X", coherenceLive: { score: 80 } },
+      ],
+    }), { now });
+    expect(ctx.coherenceProfile).toEqual([]);
+  });
+
+  it("coherenceTrajectory compara últimos 7d vs prior 7-21d", () => {
+    const now = Date.now();
+    const ctx = buildCoachContext(base({
+      history: [
+        { ts: now - 1 * DAY, p: "A", coherenceLive: { score: 75 } },
+        { ts: now - 3 * DAY, p: "A", coherenceLive: { score: 85 } },
+        { ts: now - 10 * DAY, p: "A", coherenceLive: { score: 55 } },
+        { ts: now - 14 * DAY, p: "A", coherenceLive: { score: 65 } },
+      ],
+    }), { now });
+    expect(ctx.coherenceTrajectory.recent).toBe(80);
+    expect(ctx.coherenceTrajectory.prior).toBe(60);
+    expect(ctx.coherenceTrajectory.delta).toBe(20);
+  });
+
+  it("summarizeContext incluye top coherence cuando hay datos", () => {
+    const now = Date.now();
+    const ctx = buildCoachContext(base({
+      history: [
+        { ts: now - 1 * DAY, p: "Resonancia", coherenceLive: { score: 78 } },
+        { ts: now - 2 * DAY, p: "Resonancia", coherenceLive: { score: 80 } },
+        { ts: now - 3 * DAY, p: "Resonancia", coherenceLive: { score: 76 } },
+      ],
+    }), { now });
+    const s = summarizeContext(ctx);
+    expect(s).toContain("coherencia");
+    expect(s).toContain("Resonancia");
+  });
 });

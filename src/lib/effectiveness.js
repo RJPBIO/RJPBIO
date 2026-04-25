@@ -107,6 +107,62 @@ export function coherenceByProtocol(sessions, { minN = 3 } = {}) {
 }
 
 /**
+ * Agregación team-level de coherenceLive con k-anonimato.
+ *
+ * Filtra sesiones con coherenceLive.score, exige ≥ minK USUARIOS
+ * únicos antes de devolver datos (no n de sesiones — n de personas).
+ * Sin esta exigencia, una sola persona haciendo 5 sesiones contaría
+ * como 5 puntos de "equipo" → privacy leak.
+ *
+ * @param {Array} sessions  esperadas con `userId` y `coherenceLive`
+ * @param {object} [opts]
+ * @param {number} [opts.minK=5]  k-anonymity threshold
+ */
+export function aggregateTeamCoherence(sessions, { minK = 5 } = {}) {
+  const safe = Array.isArray(sessions) ? sessions : [];
+  const valid = safe.filter(
+    (s) => typeof s?.coherenceLive?.score === "number"
+  );
+  const uniqueUsers = new Set(valid.map((s) => s.userId || "anon")).size;
+  if (uniqueUsers < minK) {
+    return { insufficient: true, n: uniqueUsers, minK };
+  }
+  const scores = valid.map((s) => s.coherenceLive.score);
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const variance = scores.length > 1
+    ? scores.reduce((a, b) => a + (b - mean) ** 2, 0) / (scores.length - 1)
+    : 0;
+  const sd = Math.sqrt(variance);
+
+  // Top protocolo por mean coherence (aplica k-anon también)
+  const byProto = {};
+  for (const s of valid) {
+    const pid = s?.p || s?.proto || s?.protocolId;
+    if (!pid) continue;
+    (byProto[pid] = byProto[pid] || { scores: [], users: new Set() });
+    byProto[pid].scores.push(s.coherenceLive.score);
+    byProto[pid].users.add(s.userId || "anon");
+  }
+  let topProtocol = null;
+  for (const [pid, data] of Object.entries(byProto)) {
+    if (data.users.size < minK) continue; // k-anon por protocolo
+    const m = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
+    if (!topProtocol || m > topProtocol.meanScore) {
+      topProtocol = { name: pid, meanScore: +m.toFixed(1), n: data.scores.length };
+    }
+  }
+
+  return {
+    insufficient: false,
+    uniqueUsers,
+    sessionCount: valid.length,
+    meanScore: +mean.toFixed(1),
+    sd: +sd.toFixed(2),
+    topProtocol,
+  };
+}
+
+/**
  * Mapa protocolo → resultado de efectividad. Agrupa por `proto` o
  * `protocolId`. Protocolos sin suficientes sesiones retornan insufficient.
  */
