@@ -58,11 +58,12 @@ export function wireAudioUnlock() {
   });
 }
 
-// Ducking: si la voz está hablando, los sonidos suenan al 35% del volumen
-// normal → claridad. Sin esto, los chords se mezclan con la voz y todo
-// se vuelve ruido. Diseño estándar en apps de mindfulness premium.
+// Static ducking deprecado — el master bus tiene un duckGain que se
+// automatiza con envelope (attack 80ms / release 400ms) cuando arranca/
+// termina cada utterance. Más natural que la reducción estática.
+// Este helper queda como pass-through para compat con call sites.
 function duckedVolume(base) {
-  return _isSpeaking ? base * 0.35 : base;
+  return base;
 }
 
 // ─── Master Bus (Mastering Chain) ─────────────────────────
@@ -85,6 +86,9 @@ let _masterIn = null;
 let _masterCompressor = null;
 let _masterLimiter = null;
 let _masterSaturation = null;
+let _masterDuckGain = null;        // sidechain ducking dinámico
+let _masterLevelGain = null;       // auto-leveling (loudness compensation)
+let _masterAnalyser = null;        // RMS metering para auto-level
 
 function makeSoftSaturationCurve(amount = 1.5) {
   const samples = 4096;
@@ -104,6 +108,20 @@ function ensureMasterBus() {
     _masterIn = c.createGain();
     _masterIn.gain.value = 1.0;
 
+    // SIDECHAIN DUCKING dinámico — antes era static (gain reduction al
+    // crear el sound). Ahora es un gain en la cadena master que se
+    // automatiza con envelope cuando la voz arranca/termina. Resultado:
+    // sounds "respiran" con la voz como en mezclas radiophonic broadcast.
+    // Attack 80ms (rápido al empezar voz), Release 400ms (suave al terminar).
+    _masterDuckGain = c.createGain();
+    _masterDuckGain.gain.value = 1.0;
+
+    // AUTO-LEVELING — compensa loudness target -18 dBFS RMS (≈-21 LUFS).
+    // Ajustado por _masterAnalyser via tick lento. Clamped [-6dB, +3dB]
+    // del nominal — nunca aplica más boost del razonable.
+    _masterLevelGain = c.createGain();
+    _masterLevelGain.gain.value = 1.0;
+
     _masterSaturation = c.createWaveShaper();
     _masterSaturation.curve = makeSoftSaturationCurve(1.2);
     _masterSaturation.oversample = "2x";
@@ -122,15 +140,143 @@ function ensureMasterBus() {
     _masterLimiter.attack.setValueAtTime(0.001, c.currentTime);
     _masterLimiter.release.setValueAtTime(0.05, c.currentTime);
 
-    _masterIn.connect(_masterSaturation);
+    // Cadena: master IN → duck → level → saturation → compressor → limiter → destination
+    _masterIn.connect(_masterDuckGain);
+    _masterDuckGain.connect(_masterLevelGain);
+    _masterLevelGain.connect(_masterSaturation);
     _masterSaturation.connect(_masterCompressor);
     _masterCompressor.connect(_masterLimiter);
     _masterLimiter.connect(c.destination);
+
+    // Analyser tap después del limiter — mide el final output que el user oye
+    _masterAnalyser = c.createAnalyser();
+    _masterAnalyser.fftSize = 2048;
+    _masterAnalyser.smoothingTimeConstant = 0.85;
+    _masterLimiter.connect(_masterAnalyser);
+    // Analyser es un sink — no conecta a destination, solo lee.
+
+    // Iniciar el loop de auto-leveling cuando se monta el master bus.
+    startAutoLeveler();
 
     return { c, in: _masterIn };
   } catch (e) {
     return null;
   }
+}
+
+// ─── Sidechain Ducking (broadcast sidechain feel) ─────────
+// Reemplaza el static ducking. Attack 80ms = rápido para no enmascarar
+// la primera sílaba de la voz. Release 400ms = suave para que los
+// sonidos no "saltan" de vuelta cuando la voz termina.
+const DUCK_ATTACK = 0.08;
+const DUCK_RELEASE = 0.40;
+const DUCK_AMOUNT = 0.32; // sounds bajan al 32% durante voz (más agresivo, mejor claridad)
+
+function applyDuck(active) {
+  if (!_masterDuckGain) return;
+  const c = gAC(); if (!c) return;
+  try {
+    const target = active ? DUCK_AMOUNT : 1.0;
+    const time = active ? DUCK_ATTACK : DUCK_RELEASE;
+    _masterDuckGain.gain.cancelScheduledValues(c.currentTime);
+    _masterDuckGain.gain.setValueAtTime(_masterDuckGain.gain.value, c.currentTime);
+    _masterDuckGain.gain.linearRampToValueAtTime(target, c.currentTime + time);
+  } catch {}
+}
+
+// ─── Auto-Leveler (loudness compensation) ─────────────────
+// Mide RMS del output post-limiter cada 250ms. Promedia sobre 5s
+// (rolling window). Si la media RMS cae fuera del rango target
+// [-25 dBFS, -15 dBFS] (≈ -28 a -18 LUFS aproximado), ajusta el
+// _masterLevelGain por ±0.5dB con paso suave (1s ramp).
+//
+// Clamp duro: nunca sale del rango [-6 dB, +3 dB] del nominal.
+// Esto evita que un protocolo silencioso reciba boost agresivo y
+// suene comprimido cuando la siguiente parte tiene transientes.
+//
+// Es DIFFERENT del compressor — el compressor reacciona instantáneo
+// a cada peak. El leveler reacciona a la energía PROMEDIO sostenida,
+// como un audio engineer ajustando el master fader según la sección.
+
+const TARGET_RMS_DB_MIN = -25;
+const TARGET_RMS_DB_MAX = -15;
+const LEVEL_GAIN_MIN_DB = -6;
+const LEVEL_GAIN_MAX_DB = 3;
+const LEVEL_TICK_MS = 250;
+const LEVEL_WINDOW_SAMPLES = 20; // 5s de rolling window a 250ms tick
+
+let _levelTimer = null;
+let _rmsHistory = [];
+let _meterDataBuf = null;
+
+function dbToGain(db) { return Math.pow(10, db / 20); }
+function gainToDb(g) { return g > 0 ? 20 * Math.log10(g) : -Infinity; }
+
+function startAutoLeveler() {
+  if (_levelTimer) return;
+  if (!_masterAnalyser) return;
+  if (!_meterDataBuf) _meterDataBuf = new Float32Array(_masterAnalyser.fftSize);
+
+  _levelTimer = setInterval(() => {
+    try {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      _masterAnalyser.getFloatTimeDomainData(_meterDataBuf);
+      // RMS del buffer
+      let sumSquare = 0;
+      for (let i = 0; i < _meterDataBuf.length; i++) {
+        sumSquare += _meterDataBuf[i] * _meterDataBuf[i];
+      }
+      const rms = Math.sqrt(sumSquare / _meterDataBuf.length);
+      if (rms < 1e-6) return; // silencio absoluto, no medir
+
+      _rmsHistory.push(rms);
+      if (_rmsHistory.length > LEVEL_WINDOW_SAMPLES) _rmsHistory.shift();
+      if (_rmsHistory.length < LEVEL_WINDOW_SAMPLES) return; // espera ventana llena
+
+      // Average RMS over rolling window
+      const avgRms = _rmsHistory.reduce((a, b) => a + b, 0) / _rmsHistory.length;
+      const avgDb = gainToDb(avgRms);
+
+      const c = gAC(); if (!c || !_masterLevelGain) return;
+      const currentGainDb = gainToDb(_masterLevelGain.gain.value);
+
+      // Decide si necesita ajuste
+      let newGainDb = currentGainDb;
+      if (avgDb < TARGET_RMS_DB_MIN && currentGainDb < LEVEL_GAIN_MAX_DB) {
+        newGainDb = Math.min(LEVEL_GAIN_MAX_DB, currentGainDb + 0.5);
+      } else if (avgDb > TARGET_RMS_DB_MAX && currentGainDb > LEVEL_GAIN_MIN_DB) {
+        newGainDb = Math.max(LEVEL_GAIN_MIN_DB, currentGainDb - 0.5);
+      }
+
+      if (Math.abs(newGainDb - currentGainDb) >= 0.4) {
+        const newGain = dbToGain(newGainDb);
+        _masterLevelGain.gain.cancelScheduledValues(c.currentTime);
+        _masterLevelGain.gain.setValueAtTime(_masterLevelGain.gain.value, c.currentTime);
+        // Ramp 1s — suave, no audible
+        _masterLevelGain.gain.linearRampToValueAtTime(newGain, c.currentTime + 1.0);
+      }
+    } catch {}
+  }, LEVEL_TICK_MS);
+}
+
+// Expone el meter actual para diagnóstico/UI futura
+export function getMasterLevel() {
+  if (!_masterAnalyser || !_meterDataBuf) return null;
+  try {
+    _masterAnalyser.getFloatTimeDomainData(_meterDataBuf);
+    let sumSquare = 0;
+    for (let i = 0; i < _meterDataBuf.length; i++) {
+      sumSquare += _meterDataBuf[i] * _meterDataBuf[i];
+    }
+    const rms = Math.sqrt(sumSquare / _meterDataBuf.length);
+    const dbfs = rms > 0 ? 20 * Math.log10(rms) : -Infinity;
+    return {
+      rmsDb: +dbfs.toFixed(1),
+      // Aproximación LUFS rough — broadcast asume ~-3dB shift K-weighted
+      lufsApprox: +(dbfs - 3).toFixed(1),
+      currentLevelGainDb: +gainToDb(_masterLevelGain?.gain.value || 1).toFixed(1),
+    };
+  } catch { return null; }
 }
 
 // ─── Reverb Bus ───────────────────────────────────────────
@@ -286,6 +432,105 @@ function stopAmbientBed() {
     _pinkNoiseFilter = null;
     _pinkNoiseGain = null;
   }, 2200);
+}
+
+// ─── Musical Pad Bed ──────────────────────────────────────
+// Pad armónico muy suave debajo del binaural. Da continuidad emocional
+// que el pink noise no provee — el oído percibe melodía/armonía como
+// "intención" en lugar de solo "presencia". Apps premium (Calm, Endel)
+// tienen pads compuestos por musicians; aquí lo sintetizamos pero
+// elegimos cuerdas armónicas justas (consonancias) para que suene
+// natural, no atonal.
+//
+// Voicing por intent — cada uno transmite una emocionalidad distinta:
+//   calma  → E minor (E2 G2 B2) — solemne, contenido
+//   enfoque→ D major (D2 F#2 A2) — claro, focalizado
+//   energia→ G major (G2 B2 D3) — abierto, ascendente
+//   reset  → C major (C2 G2 E3) — neutral, restaurativo
+//
+// Volumen 0.010 — debajo del umbral de "música presente"; el oído lo
+// integra como ambiente, no como track. LFO sutil 0.05Hz por nota
+// → respiración orgánica imperceptible pero acumulativa.
+
+let _bedOscillators = [];
+let _bedLfos = [];
+let _bedFilter = null;
+let _bedGain = null;
+
+const INTENT_CHORDS = {
+  calma:   [82.41, 98.00, 123.47],   // E2 G2 B2 (E minor)
+  enfoque: [73.42, 92.50, 110.00],   // D2 F#2 A2 (D major)
+  energia: [98.00, 123.47, 146.83],  // G2 B2 D3 (G major)
+  reset:   [65.41, 98.00, 164.81],   // C2 G2 E3 (C major)
+};
+
+function startMusicBed(intent) {
+  const masterBus = ensureMasterBus(); if (!masterBus) return;
+  if (_bedGain) return; // ya activo
+  const c = masterBus.c;
+  const chord = INTENT_CHORDS[intent] || INTENT_CHORDS.calma;
+
+  _bedGain = c.createGain();
+  _bedGain.gain.value = 0;
+
+  // Lowpass dedicado a 800Hz — solo el cuerpo armónico bajo. Los altos
+  // del sine pad sonarían ásperos en sostenido; el lowpass hace que
+  // suene "warm/woody" como un string pad lejano.
+  _bedFilter = c.createBiquadFilter();
+  _bedFilter.type = "lowpass";
+  _bedFilter.frequency.value = 800;
+  _bedFilter.Q.value = 0.7;
+  _bedFilter.connect(_bedGain);
+  _bedGain.connect(masterBus.in);
+
+  for (let i = 0; i < chord.length; i++) {
+    const f = chord[i];
+    // 2 osciladores detuneados ±7 cents → pad ancho, no afinación cruda
+    for (const detune of [-7, 7]) {
+      const o = c.createOscillator();
+      o.type = "sine";
+      o.frequency.value = f;
+      o.detune.value = detune;
+      o.connect(_bedFilter);
+      o.start();
+      _bedOscillators.push(o);
+
+      // LFO sutil de detune adicional ~0.05Hz amplitud 2 cents
+      // → respiración orgánica desincronizada por nota.
+      const lfo = c.createOscillator();
+      const lfoGain = c.createGain();
+      lfo.frequency.value = 0.04 + i * 0.012; // distinto por nota
+      lfoGain.gain.value = 2;
+      lfo.connect(lfoGain);
+      lfoGain.connect(o.detune);
+      lfo.start();
+      _bedLfos.push(lfo);
+    }
+  }
+
+  // Fade-in 12s — entrada IMPERCEPTIBLE; el user no nota cuándo entra
+  // el pad, solo siente "más profundidad" en la mezcla. Volume 0.010
+  // está debajo del umbral de "está sonando música" — apenas perfil
+  // armónico que el oído integra como espacio.
+  _bedGain.gain.linearRampToValueAtTime(0.010, c.currentTime + 12);
+}
+
+function stopMusicBed() {
+  if (!_bedGain) return;
+  const c = gAC();
+  if (c) _bedGain.gain.linearRampToValueAtTime(0, c.currentTime + 4);
+  setTimeout(() => {
+    try {
+      for (const o of _bedOscillators) { o.stop(); o.disconnect(); }
+      for (const l of _bedLfos) { l.stop(); l.disconnect(); }
+      _bedFilter?.disconnect();
+      _bedGain?.disconnect();
+    } catch {}
+    _bedOscillators = [];
+    _bedLfos = [];
+    _bedFilter = null;
+    _bedGain = null;
+  }, 4500);
 }
 
 /**
@@ -556,6 +801,10 @@ export function startBinaural(type) {
 
     // Ambient bed pink noise auto-start con binaural (presence layer).
     startAmbientBed();
+    // Musical pad por intent — capa armónica que da continuidad emocional
+    // debajo del binaural. Volumen 0.010, fade-in 12s, imperceptible
+    // como "música presente" pero perceptible como "espacio con intención".
+    startMusicBed(type);
 
     const panL = c.createStereoPanner();
     const panR = c.createStereoPanner();
@@ -624,6 +873,7 @@ export function stopBinaural() {
     if (_binauralGain) { const c = gAC(); if (c) _binauralGain.gain.linearRampToValueAtTime(0, c.currentTime + 2); }
     // Ambient bed se detiene en sincronía con binaural.
     stopAmbientBed();
+    stopMusicBed();
     setTimeout(() => {
       try {
         if (_binauralL) { _binauralL.stop(); _binauralL.disconnect(); }
@@ -973,10 +1223,11 @@ function buildUtterance(text, circadian, loc) {
   u.volume = 0.62;
   const v = pickVoice(loc);
   if (v) u.voice = v;
-  // Trackear estado para ducking
-  u.onstart = () => { _isSpeaking = true; };
-  u.onend = () => { _isSpeaking = false; };
-  u.onerror = () => { _isSpeaking = false; };
+  // Trackear estado para sidechain ducking dinámico — antes solo flag
+  // _isSpeaking; ahora dispara envelope smooth en el master duckGain.
+  u.onstart = () => { _isSpeaking = true; applyDuck(true); };
+  u.onend = () => { _isSpeaking = false; applyDuck(false); };
+  u.onerror = () => { _isSpeaking = false; applyDuck(false); };
   return u;
 }
 
