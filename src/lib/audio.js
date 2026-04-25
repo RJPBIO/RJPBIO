@@ -66,6 +66,30 @@ function duckedVolume(base) {
   return base;
 }
 
+// ─── User audio preferences (persistentes) ─────────────────
+// Settings UI escribe aquí; el resto del audio engine lee desde
+// estos values runtime. Cambiar masterVolume aplica un ramp suave
+// (50ms) sobre el master input gain — sin clicks audibles.
+let _userVoiceRate = null; // null → circadian/default 0.83
+export function setUserVoiceRate(rate) {
+  _userVoiceRate = typeof rate === "number" && rate >= 0.5 && rate <= 1.5 ? rate : null;
+}
+export function getUserVoiceRate() { return _userVoiceRate; }
+
+export function setMasterVolume(v) {
+  const c = gAC();
+  if (!c) return;
+  ensureMasterBus();
+  if (!_masterIn) return;
+  const target = Math.max(0, Math.min(1, typeof v === "number" ? v : 1));
+  const now = c.currentTime;
+  try {
+    _masterIn.gain.cancelScheduledValues(now);
+    _masterIn.gain.setValueAtTime(_masterIn.gain.value, now);
+    _masterIn.gain.linearRampToValueAtTime(target, now + 0.05);
+  } catch (e) {}
+}
+
 // ─── Master Bus (Mastering Chain) ─────────────────────────
 // Cadena fija al final de TODA salida de audio:
 //   master input → soft saturation → compressor → limiter → destination
@@ -1395,8 +1419,10 @@ function buildUtterance(text, circadian, loc) {
   // volume 0.62: WHISPER. Antes 0.78 era íntima; 0.62 es susurro real.
   //   El TTS suena menos "anuncio" cuando es bajo — los artefactos de
   //   prosodia se diluyen en el silencio relativo.
-  const rateOverride = circadian?.voiceRate;
-  u.rate = Math.max(0.78, Math.min(1.05, typeof rateOverride === "number" ? rateOverride : 0.83));
+  // Precedencia: user override > circadian > default 0.83.
+  // El user control vive en settings (st.voiceRate, persistente).
+  const rateOverride = _userVoiceRate ?? circadian?.voiceRate;
+  u.rate = Math.max(0.6, Math.min(1.4, typeof rateOverride === "number" ? rateOverride : 0.83));
   u.pitch = Math.max(0.85, Math.min(1.05, circadian?.voicePitch || 0.93));
   u.volume = 0.62;
   const v = pickVoice(loc);

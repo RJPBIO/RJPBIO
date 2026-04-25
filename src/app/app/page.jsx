@@ -32,7 +32,7 @@ import { useCommandKey } from "@/hooks/useCommandKey";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
 import {
-  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick, playCountdownTick,
+  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick, playCountdownTick, setMasterVolume, setUserVoiceRate,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
@@ -124,7 +124,6 @@ export default function BioIgnicion(){
   const[durMult,setDurMult]=useState(1);
   const[entryDone,setEntryDone]=useState(false);
   const[nfcCtx,setNfcCtx]=useState(null);
-  const[voiceOn,setVoiceOn]=useState(true);
   const[sessionData,setSessionData]=useState({pauses:0,scienceViews:0,phaseTimings:[]});
   const[showCalibration,setShowCalibration]=useState(false);
   const[showProtoDetail,setShowProtoDetail]=useState(false);
@@ -139,7 +138,10 @@ export default function BioIgnicion(){
   const[nom35Hint,setNom35Hint]=useState(null);
   const[nom35Dominios,setNom35Dominios]=useState(null);
   const[showCmd,setShowCmd]=useState(false);
-  const reducedMotion=useReducedMotion();
+  // Reduced motion: sistema + override del usuario (st.reducedMotionOverride).
+  // "auto" sigue prefers-reduced-motion del OS · "always" fuerza · "never" desactiva.
+  const systemReducedMotion=useReducedMotion();
+  const reducedMotion=st.reducedMotionOverride==="always"?true:st.reducedMotionOverride==="never"?false:systemReducedMotion;
   const bp=useBreakpoint();
   const haptic=useHaptic();
   const rootMaxWidth=bp==="desktop"?layout.maxWidthDesktop:bp==="tablet"?layout.maxWidthTablet:layout.maxWidth;
@@ -154,6 +156,18 @@ export default function BioIgnicion(){
   const startMsRef=useRef(null);const startSecRef=useRef(null);
 
   const setSt=useCallback(v=>{const nv=typeof v==="function"?v(st):v;setSt_(nv);store.update(nv);},[st]);
+  // voiceOn persistente (v13): vive en st.voiceOn, no en useState volátil.
+  // Mantenemos los names voiceOn/setVoiceOn para no tocar call-sites.
+  const voiceOn=st.voiceOn!==false;
+  const setVoiceOn=useCallback(v=>{
+    setSt(s=>({...s,voiceOn:typeof v==="function"?v(s.voiceOn!==false):!!v}));
+  },[setSt]);
+
+  // Sincroniza preferencias persistentes (st) con el audio engine runtime.
+  // Master volume aplica ramp 50ms sobre el master bus gain — sin clicks.
+  // Voice rate se almacena module-side; cada speak() lee el valor actual.
+  useEffect(()=>{try{setMasterVolume(typeof st.masterVolume==="number"?st.masterVolume:1);}catch(e){}},[st.masterVolume]);
+  useEffect(()=>{try{setUserVoiceRate(typeof st.voiceRate==="number"?st.voiceRate:null);}catch(e){}},[st.voiceRate]);
 
   // SW se registra desde layout.js (con nonce)
   useSync();
@@ -445,11 +459,11 @@ export default function BioIgnicion(){
       cdVisualTOsRef.current=[];
     },3000));
   }
-  function go(){if(actLockRef.current||ts!=="idle"||countdown>0)return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);unlockVoice();requestWakeLock();try{const fs=document.documentElement.requestFullscreen?.();if(fs&&typeof fs.catch==="function")fs.catch(()=>{});}catch(e){}setPostStep("none");setPi(0);setSec(Math.round(pr.d*durMult));setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
+  function go(){if(actLockRef.current||ts!=="idle"||countdown>0)return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);unlockVoice();if(st.wakeLockEnabled!==false)requestWakeLock();try{const fs=document.documentElement.requestFullscreen?.();if(fs&&typeof fs.catch==="function")fs.catch(()=>{});}catch(e){}setPostStep("none");setPi(0);setSec(Math.round(pr.d*durMult));setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
   const pauseTRef=useRef(null);
   useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];},[]);
   function pa(){if(actLockRef.current||ts!=="running")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
-  function resume(){if(actLockRef.current||ts!=="paused")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}
+  function resume(){if(actLockRef.current||ts!=="paused")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);if(st.wakeLockEnabled!==false)requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}
   function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];countdownRef.current=0;setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
   function sp(p){
     // Inline reset against the NEW protocol so we don't batch a setSec that
