@@ -32,7 +32,7 @@ import { useCommandKey } from "@/hooks/useCommandKey";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
 import {
-  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick, playCountdownTick, setMasterVolume, setUserVoiceRate, setUserVoicePreference, setHapticIntensity, setBinauralEnabled, setMusicBedEnabled,
+  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick, playCountdownTick, setMasterVolume, setUserVoiceRate, setUserVoicePreference, setHapticIntensity, setHapticEnabled, setBinauralEnabled, setMusicBedEnabled,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
@@ -170,6 +170,7 @@ export default function BioIgnicion(){
   useEffect(()=>{try{setUserVoiceRate(typeof st.voiceRate==="number"?st.voiceRate:null);}catch(e){}},[st.voiceRate]);
   useEffect(()=>{try{setUserVoicePreference(st.voicePreference||null);}catch(e){}},[st.voicePreference]);
   useEffect(()=>{try{setHapticIntensity(st.hapticIntensity||"medium");}catch(e){}},[st.hapticIntensity]);
+  useEffect(()=>{try{setHapticEnabled(st.hapticOn!==false);}catch(e){}},[st.hapticOn]);
   useEffect(()=>{try{setBinauralEnabled(st.binauralOn!==false);}catch(e){}},[st.binauralOn]);
   useEffect(()=>{try{setMusicBedEnabled(st.musicBedOn!==false);}catch(e){}},[st.musicBedOn]);
 
