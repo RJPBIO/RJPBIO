@@ -50,21 +50,24 @@ function Scanline({ reducedMotion }) {
 
 /* ─── Countdown ceremony: forming ring + numeral + spark on 0 ──
    Timing: el padre dispara setCountdown cada 1000ms exactos. Las
-   transiciones aquí DEBEN caber holgadas dentro de esa ventana o
-   los números se ven cortados. Antes:
-     · mode="wait" + spring (stiffness 160, damping 14) → 600-800ms
-       por transición. Cada número visible ~200-400ms efectivos.
-     · ring duration 0.9s → siempre 100ms detrás del tick siguiente.
-   Ahora:
-     · sin mode="wait" — el exit y el enter del siguiente corren en
-       paralelo (ambos centrados en el mismo punto, no compiten).
-     · ease cubic-bezier rápido (260ms enter / 220ms exit) → cada
-       número es estable ~700ms en pantalla → respiración del ojo.
-     · ring duration 0.55s → siempre completa antes del siguiente tick. */
+   transiciones aquí DEBEN caber dentro de esa ventana o los números
+   se cortan. Sin mode="wait" — exit del actual + enter del siguiente
+   corren en paralelo, ambos en la misma cuadrícula → overlap fluido.
+
+   Centrado vía CSS Grid (placeItems: center), NO position:absolute
+   con translate. Antes el motion.div tenía:
+     style.translateX/Y: "-50%" + animate.scale: 1
+   Framer-motion recompone transform en cada frame. La combinación
+   de translate% en style + scale en animate generaba un primer frame
+   donde el translate% NO se aplicaba — el "3" aparecía descentrado
+   en el cuadrante inferior-derecho durante ~16-30ms antes de snap
+   al centro. SUPER BUG visible al inicio de cada countdown.
+   Con grid: el motion.div no tiene transform propio, framer-motion
+   solo anima scale y opacity. Centrado garantizado en cada frame. */
 function CountdownCeremony({ n, accent, reducedMotion }) {
   const ringCirc = 2 * Math.PI * 140;
   return (
-    <div style={{ position: "relative", width: 300, height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "relative", width: 300, height: 300 }}>
       {/* Forming ring: fills as countdown progresses (3→0) */}
       <svg width="300" height="300" viewBox="0 0 300 300" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
         <circle cx="150" cy="150" r="140" fill="none" stroke={withAlpha(accent, 15)} strokeWidth="1.5" />
@@ -84,10 +87,7 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
         />
       </svg>
       {/* Pulse halo continuo — keyed a n para que el peak coincida con
-          la entrada de cada número. Antes pulsaba a 1s repeat libre,
-          desfasado del countdown. Ahora reinicia con cada tick: el
-          fade IN del halo coincide con el fade IN del número. Lectura
-          ceremonial sincronizada. */}
+          la entrada de cada número. */}
       <motion.div
         key={`halo-${n}`}
         aria-hidden="true"
@@ -96,10 +96,7 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
         transition={{ duration: reducedMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
         style={{ position: "absolute", inset: 40, borderRadius: "50%", background: `radial-gradient(circle, ${withAlpha(accent, 40)}, transparent 70%)`, filter: "blur(20px)" }}
       />
-      {/* Anticipation ring — destello one-shot en cada tick.
-          Anillo delgado que sale del número, escala y se desvanece.
-          Marca el "peso" ceremonial que faltaba: cada número tiene su
-          propio evento de revelación, no aparecen "de la nada". */}
+      {/* Anticipation ring — destello one-shot en cada tick. */}
       {!reducedMotion && (
         <motion.span
           key={`ant-${n}`}
@@ -117,55 +114,47 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
           }}
         />
       )}
-      <AnimatePresence>
-        <motion.div
-          key={n}
-          initial={reducedMotion ? { opacity: 0 } : { scale: 0.7, opacity: 0 }}
-          animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
-          exit={reducedMotion ? { opacity: 0 } : { scale: 1.45, opacity: 0 }}
-          transition={{ duration: reducedMotion ? 0 : 0.26, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            translateX: "-50%",
-            translateY: "-50%",
-            zIndex: 2,
-            willChange: "transform, opacity",
-          }}
-        >
-          {/* Tipografía cinematográfica:
-              · Layer 1: dígito blanco con gradient sutil (white top → 78% accent bottom)
-                via background-clip text. Crea profundidad cromática sin
-                perder legibilidad. Reemplaza el color sólido #fff plano.
-              · Layer 2: text-shadow multi-capa (40px accent inner, 90px accent
-                outer, 4px black 3D drop) para densidad luminosa.
-              · Tabular-nums para que 3/2/1 ocupen el mismo width — sin
-                jumping horizontal entre transiciones. */}
-          <span
+      {/* Centering grid — todos los motion.div del número quedan
+          en la misma celda (gridArea 1/1) → overlap perfecto durante
+          la transición sin necesidad de transform: translate(-50%). */}
+      <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", zIndex: 2, pointerEvents: "none" }}>
+        <AnimatePresence>
+          <motion.div
+            key={n}
+            initial={reducedMotion ? { opacity: 0 } : { scale: 0.7, opacity: 0 }}
+            animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+            exit={reducedMotion ? { opacity: 0 } : { scale: 1.45, opacity: 0 }}
+            transition={{ duration: reducedMotion ? 0 : 0.26, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
-              fontSize: 180,
-              fontWeight: 800,
-              lineHeight: 1,
-              letterSpacing: "-6px",
-              fontVariantNumeric: "tabular-nums",
-              backgroundImage: `linear-gradient(180deg, #ffffff 0%, #ffffff 55%, ${withAlpha(accent, 78)} 100%)`,
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              color: "transparent",
-              // drop-shadow funciona con fills transparent (text-shadow no).
-              // Triple stack: punch interior nítido, halo medio amplio,
-              // halo exterior vasto + lift sombra negra para 3D depth.
-              filter: `drop-shadow(0 0 14px ${withAlpha(accent, 95)}) drop-shadow(0 0 38px ${withAlpha(accent, 60)}) drop-shadow(0 0 80px ${withAlpha(accent, 35)}) drop-shadow(0 4px 0 rgba(0,0,0,0.35))`,
-              display: "inline-block",
+              gridArea: "1 / 1",
+              willChange: "transform, opacity",
             }}
           >
-            {n}
-          </span>
-        </motion.div>
-      </AnimatePresence>
+            {/* Tipografía cinematográfica: gradient white→accent +
+                triple drop-shadow (antes 4 capas → cara en mobile GPU,
+                ahora 3: punch interior, halo medio, lift sombra). */}
+            <span
+              style={{
+                fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+                fontSize: 180,
+                fontWeight: 800,
+                lineHeight: 1,
+                letterSpacing: "-6px",
+                fontVariantNumeric: "tabular-nums",
+                backgroundImage: `linear-gradient(180deg, #ffffff 0%, #ffffff 55%, ${withAlpha(accent, 78)} 100%)`,
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                color: "transparent",
+                filter: `drop-shadow(0 0 14px ${withAlpha(accent, 95)}) drop-shadow(0 0 42px ${withAlpha(accent, 50)}) drop-shadow(0 4px 0 rgba(0,0,0,0.35))`,
+                display: "inline-block",
+              }}
+            >
+              {n}
+            </span>
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
