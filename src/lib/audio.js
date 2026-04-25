@@ -65,49 +65,139 @@ function duckedVolume(base) {
   return _isSpeaking ? base * 0.35 : base;
 }
 
-// ─── Reverb Bus ───────────────────────────────────────────
-// Convolution reverb compartido por todos los sonidos. Sin esto los
-// sine waves puros suenan "secos en una caja" — feel de synth barato.
-// Con reverb: sensación espacial, presencia, calidad de instrumento.
+// ─── Master Bus (Mastering Chain) ─────────────────────────
+// Cadena fija al final de TODA salida de audio:
+//   master input → soft saturation → compressor → limiter → destination
 //
-// La impulse response (IR) la sintetizamos en runtime con noise
-// exponencialmente decaído — cero asset payload, ~10ms de cómputo
-// al primer uso. Calidad menor que un IR sampleado de iglesia/hall
-// real, pero suficiente para "sonar diseñado" vs synth crudo.
+// Soft saturation: tanh-shaped waveshaper. Añade armónicos pares sutiles
+// (calor analógico) y suaviza picos antes del compresor. Sin saturación
+// los sine waves suenan estériles aunque el resto esté bien.
+//
+// Compresor: ratio 3:1 con attack rápido (5ms) y release medio (120ms).
+// Settings broadcast estándar — "pega" la mezcla, hace que sounds + voz
+// + binaural se sientan coherentes en un mismo espacio.
+//
+// Limiter: compresor con ratio 20:1, hard knee, attack 1ms. Previene
+// clipping al destination — crítico cuando varios elementos suenan a
+// la vez (chord + binaural + spark) y la suma rebasa 0dBFS.
+
+let _masterIn = null;
+let _masterCompressor = null;
+let _masterLimiter = null;
+let _masterSaturation = null;
+
+function makeSoftSaturationCurve(amount = 1.5) {
+  const samples = 4096;
+  const curve = new Float32Array(samples);
+  const norm = Math.tanh(amount);
+  for (let i = 0; i < samples; i++) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = Math.tanh(x * amount) / norm;
+  }
+  return curve;
+}
+
+function ensureMasterBus() {
+  const c = gAC(); if (!c) return null;
+  if (_masterIn && _masterLimiter) return { c, in: _masterIn };
+  try {
+    _masterIn = c.createGain();
+    _masterIn.gain.value = 1.0;
+
+    _masterSaturation = c.createWaveShaper();
+    _masterSaturation.curve = makeSoftSaturationCurve(1.2);
+    _masterSaturation.oversample = "2x";
+
+    _masterCompressor = c.createDynamicsCompressor();
+    _masterCompressor.threshold.setValueAtTime(-18, c.currentTime);
+    _masterCompressor.knee.setValueAtTime(12, c.currentTime);
+    _masterCompressor.ratio.setValueAtTime(3, c.currentTime);
+    _masterCompressor.attack.setValueAtTime(0.005, c.currentTime);
+    _masterCompressor.release.setValueAtTime(0.12, c.currentTime);
+
+    _masterLimiter = c.createDynamicsCompressor();
+    _masterLimiter.threshold.setValueAtTime(-2, c.currentTime);
+    _masterLimiter.knee.setValueAtTime(0, c.currentTime);
+    _masterLimiter.ratio.setValueAtTime(20, c.currentTime);
+    _masterLimiter.attack.setValueAtTime(0.001, c.currentTime);
+    _masterLimiter.release.setValueAtTime(0.05, c.currentTime);
+
+    _masterIn.connect(_masterSaturation);
+    _masterSaturation.connect(_masterCompressor);
+    _masterCompressor.connect(_masterLimiter);
+    _masterLimiter.connect(c.destination);
+
+    return { c, in: _masterIn };
+  } catch (e) {
+    return null;
+  }
+}
+
+// ─── Reverb Bus ───────────────────────────────────────────
+// Convolution reverb con IR estructurado al estilo Schroeder:
+//   - Pre-delay (~25ms) — separa la señal directa del reverb
+//   - Early reflections — 8-12 impulsos sparse en los primeros 60ms
+//   - Late tail — densidad alta con decay exponencial
+//
+// Esto se acerca a un IR sampleado real. Pure exp-decay noise (versión
+// anterior) suena "genérico digital"; con early reflections + pre-delay
+// el oído percibe un espacio físico definido.
 
 let _reverbConvolver = null;
 let _reverbWetGain = null;
 let _reverbDryGain = null;
 
-function buildImpulseResponse(c, durationSec = 1.8, decay = 2.4) {
+function buildImpulseResponse(c, opts = {}) {
+  const {
+    duration = 1.8,
+    decay = 2.4,
+    predelay = 0.025,    // 25ms — espacio entre directa y reverb
+    earlyDensity = 10,   // # impulsos sparse en early reflections
+    earlyWindow = 0.06,  // ventana de early (60ms tras predelay)
+  } = opts;
   const sr = c.sampleRate;
-  const length = Math.floor(sr * durationSec);
+  const length = Math.floor(sr * duration);
   const ir = c.createBuffer(2, length, sr);
+  const predelaySamples = Math.floor(sr * predelay);
+  const earlyEnd = predelaySamples + Math.floor(sr * earlyWindow);
+
   for (let ch = 0; ch < 2; ch++) {
     const data = ir.getChannelData(ch);
-    // Decorrelación stereo sutil: el seed del random difiere entre canales
-    // → el reverb se siente "amplio" en lugar de mono.
-    for (let i = 0; i < length; i++) {
-      const t = i / length;
-      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+    // Pre-delay: silencio (zeros)
+    // Early reflections: impulsos sparse decrecientes
+    for (let k = 0; k < earlyDensity; k++) {
+      const offset = predelaySamples + Math.floor(Math.random() * (earlyEnd - predelaySamples));
+      const amplitude = (1 - k / earlyDensity) * 0.55 * (Math.random() < 0.5 ? -1 : 1);
+      // Decorrelación stereo: ±10% timing jitter por canal → reverb amplio
+      const jitter = ch === 0 ? 0 : Math.floor(sr * 0.001 * (Math.random() - 0.5));
+      const idx = offset + jitter;
+      if (idx >= 0 && idx < length) data[idx] = amplitude;
+    }
+    // Late tail: densidad alta con exp decay desde earlyEnd
+    for (let i = earlyEnd; i < length; i++) {
+      const t = (i - earlyEnd) / (length - earlyEnd);
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay) * 0.42;
     }
   }
   return ir;
 }
 
 function ensureReverbBus() {
-  const c = gAC(); if (!c) return null;
+  const masterBus = ensureMasterBus(); if (!masterBus) return null;
   if (_reverbConvolver && _reverbWetGain && _reverbDryGain) {
-    return { c, wet: _reverbWetGain, dry: _reverbDryGain };
+    return { c: masterBus.c, wet: _reverbWetGain, dry: _reverbDryGain };
   }
   try {
+    const c = masterBus.c;
     const conv = c.createConvolver();
     conv.buffer = buildImpulseResponse(c);
-    const wet = c.createGain(); wet.gain.value = 0.32; // ~32% reverb send → presencia clara, no "iglesia"
+    const wet = c.createGain(); wet.gain.value = 0.32;
     const dry = c.createGain(); dry.gain.value = 1.0;
+    // Reverb routing: wet → conv → master IN (no destination directo)
+    // Esto hace que TODO el audio pase por el mastering chain.
     wet.connect(conv);
-    conv.connect(c.destination);
-    dry.connect(c.destination);
+    conv.connect(masterBus.in);
+    dry.connect(masterBus.in);
     _reverbConvolver = conv;
     _reverbWetGain = wet;
     _reverbDryGain = dry;
@@ -115,6 +205,87 @@ function ensureReverbBus() {
   } catch (e) {
     return null;
   }
+}
+
+// ─── Pink Noise Ambient Bed ───────────────────────────────
+// Voss-McCartney pink noise approximation + lowpass para "soft pink".
+// Función: rellenar el silencio absoluto con presencia tonal sutil. Sin
+// esto, entre un sound y otro hay vacío audible que delata la naturaleza
+// "synth en habitación vacía" de la app. Con ambient bed: presencia
+// continua que el oído percibe como "la app respira" en lugar de
+// "está dormida hasta que algo suena".
+//
+// Auto-start con startBinaural y auto-stop con stopBinaural — vinculados
+// porque la sesión activa es donde la presencia importa.
+
+let _pinkNoiseBuffer = null;
+let _pinkNoiseSource = null;
+let _pinkNoiseGain = null;
+let _pinkNoiseFilter = null;
+
+function buildPinkNoiseBuffer(c, durSec = 5) {
+  const length = Math.floor(c.sampleRate * durSec);
+  const buf = c.createBuffer(2, length, c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < length; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+      b6 = white * 0.115926;
+    }
+  }
+  return buf;
+}
+
+function startAmbientBed() {
+  const masterBus = ensureMasterBus(); if (!masterBus) return;
+  const c = masterBus.c;
+  if (_pinkNoiseSource) return; // ya activo
+  if (!_pinkNoiseBuffer) _pinkNoiseBuffer = buildPinkNoiseBuffer(c);
+
+  _pinkNoiseSource = c.createBufferSource();
+  _pinkNoiseSource.buffer = _pinkNoiseBuffer;
+  _pinkNoiseSource.loop = true;
+
+  _pinkNoiseFilter = c.createBiquadFilter();
+  _pinkNoiseFilter.type = "lowpass";
+  _pinkNoiseFilter.frequency.value = 4000;
+  _pinkNoiseFilter.Q.value = 0.5;
+
+  _pinkNoiseGain = c.createGain();
+  _pinkNoiseGain.gain.value = 0;
+
+  _pinkNoiseSource.connect(_pinkNoiseFilter);
+  _pinkNoiseFilter.connect(_pinkNoiseGain);
+  _pinkNoiseGain.connect(masterBus.in);
+
+  _pinkNoiseSource.start();
+  // Fade-in lento (7s) para que el user no perciba "se prendió noise"
+  _pinkNoiseGain.gain.linearRampToValueAtTime(0.014, c.currentTime + 7);
+}
+
+function stopAmbientBed() {
+  if (!_pinkNoiseGain || !_pinkNoiseSource) return;
+  const c = gAC();
+  if (c) _pinkNoiseGain.gain.linearRampToValueAtTime(0, c.currentTime + 2);
+  setTimeout(() => {
+    try {
+      _pinkNoiseSource?.stop();
+      _pinkNoiseSource?.disconnect();
+      _pinkNoiseFilter?.disconnect();
+      _pinkNoiseGain?.disconnect();
+    } catch {}
+    _pinkNoiseSource = null;
+    _pinkNoiseFilter = null;
+    _pinkNoiseGain = null;
+  }, 2200);
 }
 
 /**
@@ -146,6 +317,7 @@ function createLayeredTone({
   filterStart = 8000,
   filterEnd = 1400,
   detuneCents = 5,
+  spatial = false,
 }) {
   const bus = ensureReverbBus();
   if (!bus) return;
@@ -181,8 +353,28 @@ function createLayeredTone({
   }
 
   filter.connect(voiceGain);
-  voiceGain.connect(dry);
-  voiceGain.connect(wet); // mismo signal a wet → reverb mix
+
+  // Spatial routing: PannerNode HRTF posiciona en XYZ del campo virtual.
+  // Random subtle offsets → cada spark "viene de un punto" del cerebro 3D
+  // virtual. El oído distingue posición por timing y cues binaurales →
+  // sensación de "red neuronal alive" cross-channel en lugar de mono.
+  if (spatial) {
+    const panner = c.createPanner();
+    panner.panningModel = "HRTF";
+    panner.distanceModel = "inverse";
+    panner.refDistance = 1;
+    panner.maxDistance = 50;
+    panner.rolloffFactor = 1;
+    panner.positionX.value = (Math.random() - 0.5) * 1.6; // -0.8 a 0.8
+    panner.positionY.value = (Math.random() - 0.5) * 1.0;
+    panner.positionZ.value = -1 + Math.random() * 0.5;    // -1 a -0.5 (frente)
+    voiceGain.connect(panner);
+    panner.connect(dry);
+    panner.connect(wet);
+  } else {
+    voiceGain.connect(dry);
+    voiceGain.connect(wet);
+  }
 }
 
 export function playChord(f, d, v) {
@@ -219,20 +411,20 @@ export function playSpark(freq, volume) {
   if (now - _lastSparkTs < 80) return;
   _lastSparkTs = now;
   try {
-    // Rango de frecuencia ligeramente más estrecho (260-1100Hz) — fuera
-    // de eso suena demasiado grave o piercing.
     const f = Math.max(260, Math.min(1100, freq || 640));
     const v = duckedVolume(Math.max(0.01, Math.min(0.12, volume || 0.055)));
-    // Spark con reverb + detune mínimo (3 cents). Filter cierra rápido
-    // para mantener el carácter percusivo "blip" pero con tail espacial.
+    // Spark con reverb + detune mínimo (3 cents) + posicionamiento HRTF
+    // espacial (el spark "viene de un punto" en el campo 3D virtual).
+    // Cada spark en una posición XYZ randomizada → red neuronal "alive".
     createLayeredTone({
       freq: f,
-      durSec: 0.18, // tail del reverb extiende la percepción
+      durSec: 0.18,
       peakVol: v,
       attack: 0.004,
       filterStart: 12000,
       filterEnd: 4000,
       detuneCents: 3,
+      spatial: true,
     });
   } catch (e) {}
 }
@@ -346,7 +538,8 @@ let _binauralFilter = null, _binauralLfoL = null, _binauralLfoR = null;
 
 export function startBinaural(type) {
   try {
-    const c = gAC(); if (!c) return;
+    const masterBus = ensureMasterBus(); if (!masterBus) return;
+    const c = masterBus.c;
     stopBinaural();
     _binauralGain = c.createGain();
     _binauralGain.gain.value = 0;
@@ -358,7 +551,11 @@ export function startBinaural(type) {
     _binauralFilter.frequency.value = 3500;
     _binauralFilter.Q.value = 0.7;
     _binauralFilter.connect(_binauralGain);
-    _binauralGain.connect(c.destination);
+    // Binaural ahora pasa por master bus → mastering chain compartida.
+    _binauralGain.connect(masterBus.in);
+
+    // Ambient bed pink noise auto-start con binaural (presence layer).
+    startAmbientBed();
 
     const panL = c.createStereoPanner();
     const panR = c.createStereoPanner();
@@ -425,6 +622,8 @@ export function startBinaural(type) {
 export function stopBinaural() {
   try {
     if (_binauralGain) { const c = gAC(); if (c) _binauralGain.gain.linearRampToValueAtTime(0, c.currentTime + 2); }
+    // Ambient bed se detiene en sincronía con binaural.
+    stopAmbientBed();
     setTimeout(() => {
       try {
         if (_binauralL) { _binauralL.stop(); _binauralL.disconnect(); }
