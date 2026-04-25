@@ -406,15 +406,20 @@ export default function NeuralCore3D({
         (p) => now - p.startMs < p.duration
       );
 
-      // Targets para easing por fase respiratoria + ember
+      // Targets para easing por fase respiratoria + ember.
+      // Amplitudes amplificadas (antes ±10-22%, ahora ±28-50%) para que
+      // el orb visiblemente respire — no como sutileza imperceptible.
+      // El usuario debe leer la fase respiratoria del orb aunque cierre
+      // a medias los ojos. Mismo principio que la flor de Apple Breathe:
+      // cue inequívoco, no decoración.
       let rotTarget = 1;
       let brightTarget = 1;
       let auraTarget = 1;
       if (curBp && curIsBreathing) {
-        if (curBp === "IN") { rotTarget = 1; brightTarget = 1.1; auraTarget = 1.05; }
-        else if (curBp === "HOLD") { rotTarget = 0.15; brightTarget = 1.05; auraTarget = 1; }
-        else if (curBp === "OUT") { rotTarget = 1; brightTarget = 0.92; auraTarget = 0.88; }
-        else if (curBp === "EMPTY") { rotTarget = 0.25; brightTarget = 0.78; auraTarget = 0.7; }
+        if (curBp === "IN") { rotTarget = 1; brightTarget = 1.32; auraTarget = 1.22; }
+        else if (curBp === "HOLD") { rotTarget = 0.15; brightTarget = 1.18; auraTarget = 1.08; }
+        else if (curBp === "OUT") { rotTarget = 1; brightTarget = 0.72; auraTarget = 0.62; }
+        else if (curBp === "EMPTY") { rotTarget = 0.25; brightTarget = 0.5; auraTarget = 0.38; }
       }
       const ease = 1 - Math.pow(0.35, dt * 5);
       rotMultRef.current += (rotTarget - rotMultRef.current) * ease;
@@ -604,7 +609,10 @@ export default function NeuralCore3D({
 
   const R = size * 0.36;
   const center = size / 2;
-  const breathK = isBreathing ? (breathScale - 1) * 0.45 : 0;
+  // 0.7 (antes 0.45): los motes individuales respiran más visiblemente
+  // con cada ciclo. La identidad visual ahora es "lattice viva", no
+  // "puntitos decorativos".
+  const breathK = isBreathing ? (breathScale - 1) * 0.7 : 0;
 
   const projected = nodes.map((n, i) => {
     const r = rotateXY(n, cosY, sinY, cosX, sinX);
@@ -753,6 +761,39 @@ export default function NeuralCore3D({
             opacity: (ember ? emberOp : 1) * (0.5 + haloIntensity * 0.5),
             pointerEvents: "none",
             transition: "opacity .5s ease, filter .5s ease",
+          }}
+        />
+      )}
+
+      {/* ─── 2.5. Breath ring — cue inequívoco de fase respiratoria ──
+          El equivalente brand-DNA de la "flor" de Apple Breathe: un
+          anillo delgado teñido del color del protocolo que escala +
+          modula opacidad explícitamente con la fase. INHALA expande,
+          SOSTÉN se queda + glow congelado, EXHALA contrae, VACÍO
+          quietud apagada. Spring transition para que la lectura sea
+          orgánica, no robotizada. mixBlendMode: screen para sumar
+          luz sin oscurecer las capas previas.
+          Solo durante isBreathing real (running + fase con ciclo). */}
+      {!reducedMotion && isBreathing && bp && (
+        <motion.div
+          aria-hidden
+          animate={{
+            scale: bp === "IN" ? 1.16 : bp === "HOLD" ? 1.16 : bp === "OUT" ? 0.9 : 0.9,
+            opacity: bp === "IN" ? 0.78 : bp === "HOLD" ? 0.62 : bp === "OUT" ? 0.32 : 0.16,
+          }}
+          transition={
+            bp === "HOLD" || bp === "EMPTY"
+              ? { duration: 0.4, ease: [0.25, 1, 0.4, 1] }
+              : { type: "spring", stiffness: 28, damping: 22, mass: 1.1 }
+          }
+          style={{
+            position: "absolute",
+            inset: -4,
+            borderRadius: "50%",
+            border: `1.5px solid ${color}`,
+            boxShadow: `0 0 20px ${color}66, inset 0 0 14px ${color}44`,
+            pointerEvents: "none",
+            mixBlendMode: "screen",
           }}
         />
       )}
