@@ -54,9 +54,11 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   const isIOS = typeof window !== "undefined" ? detectIOS() : false;
 
   // Cuando el modo es "screen-light", el modal se convierte en una fuente
-  // de luz: fondo blanco puro, paleta clara forzada. Se aplica solo durante
-  // settling+measuring (no en intro/done/error, donde la paleta normal es OK).
-  const screenLightActive = mode === "screen-light" && (phase === "settling" || phase === "measuring");
+  // de luz: fondo blanco puro, paleta clara forzada. Se aplica desde
+  // "requesting" en adelante (incluye settling y measuring) — evita el
+  // flash visual de transición. En done/error volvemos a la paleta normal.
+  const screenLightActive =
+    mode === "screen-light" && (phase === "requesting" || phase === "settling" || phase === "measuring");
   const { bg: bgN, card: cdN, border: bdN, t1: t1N, t2: t2N, t3: t3N } = resolveTheme(isDark);
   const lightPalette = resolveTheme(false);
   const bg = screenLightActive ? "#ffffff" : bgN;
@@ -76,10 +78,48 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   const measureElapsedMsRef = useRef(0); // acumulador con pausa por finger-loss
   const lastUpdateTsRef = useRef(0);
   const fingerLostSinceRef = useRef(0);
+  const wakeLockRef = useRef(null);
   const [paused, setPaused] = useState(false);
+  const [brightnessHint, setBrightnessHint] = useState(false);
+
+  // Wake Lock: evita que iOS/Android apaguen la pantalla durante la
+  // medición. Crítico en modo screen-light (la pantalla ES la luz);
+  // también útil en todos los modos para no perder el stream de cámara
+  // si el user no toca durante 30-60s. iOS Safari 16.4+ lo soporta.
+  async function acquireWakeLock() {
+    try {
+      if ("wakeLock" in navigator) {
+        wakeLockRef.current = await navigator.wakeLock.request("screen");
+      }
+    } catch {
+      // ignorado — mejor esfuerzo
+    }
+  }
+  async function releaseWakeLock() {
+    try {
+      await wakeLockRef.current?.release?.();
+    } catch {
+      // ignorado
+    }
+    wakeLockRef.current = null;
+  }
+
+  useEffect(() => {
+    // Re-adquirir wake lock cuando la pestaña vuelve a visible mid-medición.
+    function onVis() {
+      if (document.visibilityState === "visible" &&
+          (phaseRef.current === "settling" || phaseRef.current === "measuring") &&
+          !wakeLockRef.current) {
+        acquireWakeLock();
+      }
+    }
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
 
   useEffect(() => () => {
     try { captureRef.current?.stop?.(); } catch {}
+    releaseWakeLock();
   }, []);
 
   const cameraAvailable = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
@@ -123,13 +163,29 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             fingerOkStreakRef.current = 0;
             setSettlingCountdown(null);
           }
+          // Hint específico screen-light: si tras 6s+ no hay finger-ok y
+          // la pantalla aparenta no estar al máximo (proxy: red channel
+          // no logra dominancia), surface "¿Brillo al máximo?".
+          if (
+            startMode === "screen-light" &&
+            !u.fingerOk &&
+            settlingStartTsRef.current &&
+            nowTs - settlingStartTsRef.current > 6000
+          ) {
+            if (!brightnessHint) setBrightnessHint(true);
+          }
           // Timeout duro: 30s sin lograr dedo apoyado → abortar.
           if (settlingStartTsRef.current && nowTs - settlingStartTsRef.current > SETTLING_TIMEOUT_MS) {
-            setError(
-              "No detectamos el dedo después de 30 segundos. Verifica que cubras lente + flash y reintenta."
-            );
+            const hint =
+              startMode === "screen-light"
+                ? "No detectamos el dedo. Sube el brillo al máximo y apoya la yema sobre la lente frontal."
+                : startMode === "ambient"
+                ? "No detectamos el dedo. Necesitas luz más fuerte (sol directo o lámpara cerca)."
+                : "No detectamos el dedo. Verifica que cubras lente + flash y reintenta.";
+            setError(hint);
             try { captureRef.current?.setTorch?.(false); } catch {}
             try { captureRef.current?.stop?.(); } catch {}
+            releaseWakeLock();
             setPhaseSafe("error");
           }
         } else if (phaseRef.current === "measuring") {
@@ -185,6 +241,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         setTorchAvailable(false);
       }
       settlingStartTsRef.current = Date.now();
+      acquireWakeLock();
       setPhaseSafe("settling");
       announce(
         startMode === "screen-light"
@@ -232,6 +289,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     setPhaseSafe("done");
     try { cap?.setTorch?.(false); } catch {}
     try { cap?.stop?.(); } catch {}
+    releaseWakeLock();
     const hrv = result.hrv;
     if (hrv) announce(`Medición completa. RMSSD ${hrv.rmssd} ms.`);
   }
@@ -245,10 +303,12 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     }
     try { captureRef.current?.setTorch?.(false); } catch {}
     try { captureRef.current?.stop?.(); } catch {}
+    releaseWakeLock();
     setPhaseSafe("intro");
     setElapsedSec(0);
     setLive(null);
     setSettlingCountdown(null);
+    setBrightnessHint(false);
     fingerOkStreakRef.current = 0;
   }
 
@@ -524,15 +584,37 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               ? "Apoya el dedo sobre la cámara trasera"
               : "Apoya el dedo sobre la lente y el flash"}
           </p>
-          <p style={{ color: t3, fontSize: 13, lineHeight: 1.5, margin: 0, marginBlockEnd: 32 }}>
+          <p style={{ color: t2, fontSize: 13, lineHeight: 1.5, margin: 0, marginBlockEnd: 16 }}>
             {live?.fingerOk
               ? "Mantén el dedo firme. Respira natural, sin guiarte."
               : mode === "screen-light"
-              ? "Sube el brillo al máximo. La pantalla ilumina el dedo; la cámara frontal captura el reflejo."
+              ? "Apoya la yema sobre la cámara frontal (parte superior del teléfono). La pantalla ilumina; la cámara captura el reflejo."
               : mode === "ambient"
               ? "Necesitas luz fuerte (sol directo o lámpara potente sobre el dedo)."
               : "Cubre lente + flash con la yema, presión firme pero relajada."}
           </p>
+
+          {/* Hint específico cuando llevamos rato sin detectar en screen-light */}
+          {brightnessHint && !live?.fingerOk && mode === "screen-light" && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                display: "inline-block",
+                padding: "8px 14px",
+                borderRadius: 999,
+                background: withAlpha(bioSignal.ignition, 12),
+                border: `1px solid ${withAlpha(bioSignal.ignition, 35)}`,
+                marginBlockEnd: 24,
+                fontSize: 12,
+                fontWeight: 600,
+                color: t1,
+              }}
+            >
+              ¿Brillo al máximo? La pantalla debe emitir la luz hacia el dedo.
+            </div>
+          )}
+          {!brightnessHint && <div style={{ marginBlockEnd: 24 }} />}
           <button
             onClick={handleStop}
             aria-label="Cancelar medición"
