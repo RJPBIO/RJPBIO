@@ -1398,6 +1398,11 @@ export default function BioIgnicion(){
         // brasa. Se mantiene intent y color del último protocolo para
         // continuidad visual; el propio componente gestiona el fade.
         const coreState=emberActive&&ts==="idle"?"ember":ts;
+        // Momentum: sesiones acumuladas / 30 (cap 1). El orb del veterano
+        // muestra lattice pre-revelada, edges más nítidos, motes más
+        // sólidos y firing rate ligeramente más rápido. Saturación a
+        // sesión #30 — el sistema "lo reconoce".
+        const coreMomentum=Math.min(1,(st.totalSessions||0)/30);
         return(
         <NeuralCore3D
           size={isActive?240:260}
@@ -1411,6 +1416,7 @@ export default function BioIgnicion(){
           progress={prog}
           secondTick={sec}
           breathPhase={bL}
+          momentum={coreMomentum}
         />
       );})()}
       {/* Ignition flash — destello one-shot de luz que emerge del centro cuando la sesión arranca.

@@ -135,6 +135,55 @@ function toHex2(a) {
   return v.toString(16).padStart(2, "0");
 }
 
+// HSL hue shift — usa el color del protocolo y deriva un accent
+// shifteado N° en hue. El cuerpo lee 2-tonos sutiles como "profundidad"
+// no como "dos colores diferentes". Cap en saturation/lightness para
+// que el accent siga sintiéndose familia del primario.
+function hexToHsl(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!m) return null;
+  const r = parseInt(m[1], 16) / 255;
+  const g = parseInt(m[2], 16) / 255;
+  const b = parseInt(m[3], 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0; const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h *= 60;
+  }
+  return { h, s, l };
+}
+function hslToHex(h, s, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  const to = (v) => Math.max(0, Math.min(255, Math.round((v + m) * 255)))
+    .toString(16).padStart(2, "0");
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+function deriveAccent(hex, hueShiftDeg = 22) {
+  const hsl = hexToHsl(hex);
+  if (!hsl) return hex;
+  // Shift +N° hue, +5% saturation (más vivo), -3% lightness (mantiene contraste)
+  const h = (hsl.h + hueShiftDeg + 360) % 360;
+  const s = Math.min(1, hsl.s + 0.05);
+  const l = Math.max(0, hsl.l - 0.03);
+  return hslToHex(h, s, l);
+}
+
 // ─── Intent personalities ─────────────────────────────────────────
 const INTENT = {
   calma: {
@@ -267,9 +316,21 @@ export default function NeuralCore3D({
   // Si es null o no se pasa, no hay audio/haptic. El parent decide
   // cuándo está activo (p.ej., sólo durante ts==="running").
   onSparkHit = null,
+  // Momentum 0–1 (típicamente totalSessions / 30). Densifica la
+  // lattice, intensifica firing rate, sube ligeramente el tamaño de
+  // motes — el orb del usuario veterano se siente "denser" sin que
+  // el de un novato se sienta "incompleto". Cap de modificadores en
+  // ±25% para no romper la identidad visual.
+  momentum = 0,
 }) {
   const cfg = INTENT[intent] || DEFAULT_INTENT;
   const bp = resolveBreathPhase(breathPhase);
+  const mom = Math.max(0, Math.min(1, momentum));
+
+  // Accent derivado por hue-shift +22° del color del protocolo.
+  // Aplicado a aurora central + halo (mid-ring) + selected motes para
+  // sumar profundidad sin perder identidad de protocolo.
+  const accentColor = useMemo(() => deriveAccent(color, 22), [color]);
 
   // Perf tier estable para el ciclo de vida del componente. Si el
   // usuario cambia de dispositivo (poco probable) tendría que recargar.
@@ -334,6 +395,9 @@ export default function NeuralCore3D({
   useEffect(() => { progressRef.current = progress; }, [progress]);
   useEffect(() => { onSparkHitRef.current = onSparkHit; }, [onSparkHit]);
   useEffect(() => { isBreathingRef.current = isBreathing; }, [isBreathing]);
+
+  const momRef = useRef(mom);
+  useEffect(() => { momRef.current = mom; }, [mom]);
 
   // Phase-change pulse — cada vez que bp transiciona, empujamos un
   // pulso global ("nodes: all") al pulsesRef para que toda la lattice
@@ -497,13 +561,16 @@ export default function NeuralCore3D({
       rotYRef.current = (rotYRef.current + dt * 360 * ySpeed) % 360;
       rotXPhaseRef.current += dt * (2 * Math.PI / 36);
 
-      // Spawn organic firings (respeta el cap concurrente del perf tier)
+      // Spawn organic firings (respeta el cap concurrente del perf tier).
+      // Momentum: usuarios veteranos ven firing rate hasta 18% más rápido
+      // (baseMs *= 1 - mom*0.18). El orb "se siente" más activo.
       if (curState === "running" || curState === "idle" || curState === "ember") {
         const emberFactor = curState === "ember" ? 15 : 1;
         const intensityBoost = (curState === "running" && curProgress > 0.8)
           ? 1 - (curProgress - 0.8) * 1.5
           : 1;
-        const baseMs = cfg.fireBase * (curState === "idle" ? 1.6 : intensityBoost) * emberFactor;
+        const momFireBoost = 1 - momRef.current * 0.18;
+        const baseMs = cfg.fireBase * (curState === "idle" ? 1.6 : intensityBoost) * emberFactor * momFireBoost;
         const jit = cfg.fireJit * emberFactor;
         const chaosFire = curState === "running" && cfg.chaos > 0 && Math.random() < cfg.chaos * 0.02;
         const canSpawn = firingsRef.current.length < perf.maxFirings;
@@ -640,9 +707,14 @@ export default function NeuralCore3D({
   else if (state === "idle") coherence = 0.5;
   else coherence = runningCoh;
 
-  // Crystallization: ramp lineal de motes visibles durante running/done/ember
+  // Crystallization: ramp lineal de motes visibles durante running/done/ember.
+  // Momentum: la baseline de motes visibles sube con la experiencia. Usuario
+  // de sesión #30+ arranca con la lattice ~50% pre-revelada (en vez de
+  // empezar con perf.baseVisible). El orb "los reconoce".
+  const momBaselineBoost = Math.round((N_NODES - perf.baseVisible) * mom * 0.5);
+  const effectiveBase = perf.baseVisible + momBaselineBoost;
   const emergeFraction = (state === "running" || state === "done" || state === "ember")
-    ? perf.baseVisible + progress * (N_NODES - perf.baseVisible)
+    ? effectiveBase + progress * (N_NODES - effectiveBase)
     : N_NODES;
   const emergeAlpha = (i) => {
     const pos = nodeEmergeIndex[i];
@@ -836,7 +908,7 @@ export default function NeuralCore3D({
             position: "absolute",
             inset: "30%",
             borderRadius: "50%",
-            background: `radial-gradient(circle, ${color}55 0%, ${color}28 40%, ${color}10 70%, transparent 100%)`,
+            background: `radial-gradient(circle, ${color}55 0%, ${accentColor}28 40%, ${color}10 70%, transparent 100%)`,
             filter: "blur(12px)",
             pointerEvents: "none",
             mixBlendMode: "screen",
@@ -1027,7 +1099,10 @@ export default function NeuralCore3D({
           transition: "opacity .4s ease",
         }}
       >
-        {/* Edges — depth-faded, respetan emerge alpha */}
+        {/* Edges — depth-faded, respetan emerge alpha.
+            Momentum: edges hasta +25% más visibles con experiencia.
+            Color: alterna entre primary/accent por paridad de índice
+            para crear el 2-tono sutil sin perder cohesión. */}
         <g>
           {edges.map((e, ei) => {
             const a = projected[e.a];
@@ -1037,12 +1112,15 @@ export default function NeuralCore3D({
             const eaMin = Math.min(eaA, eaB);
             if (eaMin <= 0) return null;
             const avgDepth = (a.depth + b.depth) / 2;
-            const op = (0.08 + avgDepth * 0.22) * cfg.edgeOp * eaMin * brightMultRef.current;
+            const momEdgeBoost = 1 + mom * 0.25;
+            const op = (0.08 + avgDepth * 0.22) * cfg.edgeOp * eaMin * brightMultRef.current * momEdgeBoost;
+            // Cada 3er edge usa accent — densidad aprox 33% de variación cromática
+            const edgeColor = ei % 3 === 0 ? accentColor : color;
             return (
               <line
                 key={ei}
                 x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-                stroke={color}
+                stroke={edgeColor}
                 strokeWidth={0.7}
                 strokeDasharray="2 3"
                 opacity={op}
@@ -1102,7 +1180,10 @@ export default function NeuralCore3D({
             const totalBoost = Math.max(hitBoost, pulseBoost);
 
             const breath = 1 + breathK;
-            const r = cfg.moteBase * p.scale * breath * (1 + totalBoost * 0.8);
+            // Momentum: motes hasta +10% radio con experiencia. La
+            // lattice del veterano se siente más "sólida".
+            const momRadiusBoost = 1 + mom * 0.10;
+            const r = cfg.moteBase * p.scale * breath * (1 + totalBoost * 0.8) * momRadiusBoost;
             const alpha = Math.min(1,
               p.alpha * breath * brightMultRef.current * ea + totalBoost * 0.6
             );
@@ -1115,9 +1196,16 @@ export default function NeuralCore3D({
             const goldStrength = GOLDEN_NODES.includes(p.i)
               ? Math.max(0, Math.min(1, (coherence - 0.65) / 0.25))
               : 0;
-            const moteColor = goldStrength > 0
-              ? mixHex(color, "#FBBF24", goldStrength * 0.6)
+            // Color base: motes "back-half" (depth < 0.5) blendean
+            // hacia accent. Crea profundidad cromática 2-tono que el
+            // ojo lee como volumen, no como dos colores compitiendo.
+            const depthBlend = Math.max(0, (0.5 - p.depth) * 0.55);
+            const baseMoteColor = depthBlend > 0
+              ? mixHex(color, accentColor, depthBlend)
               : color;
+            const moteColor = goldStrength > 0
+              ? mixHex(baseMoteColor, "#FBBF24", goldStrength * 0.6)
+              : baseMoteColor;
             const coreFill = totalBoost > 0.35 ? "#ffffff" : moteColor;
             const glowColor = goldStrength > 0.3 ? "#FBBF24" : color;
             // drop-shadow es moderadamente caro en mobile GPU; en low
