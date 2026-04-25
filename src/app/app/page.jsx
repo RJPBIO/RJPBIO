@@ -32,7 +32,7 @@ import { useCommandKey } from "@/hooks/useCommandKey";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSessionAudio } from "@/hooks/useSessionAudio";
 import {
-  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick,
+  hap, hapticPhase, hapticBreath, hapticSignature, hapticPreShift, hapticCountdown, playIgnition, playChord, playSpark, playBreathTick, playCountdownTick,
   startBinaural, stopBinaural,
   setupMotionDetection, requestWakeLock, releaseWakeLock,
   unlockVoice, speak, speakNow, stopVoice, loadVoices,
@@ -406,33 +406,39 @@ export default function BioIgnicion(){
     countdownRef.current=3;
     setCountdown(3);
     if(st.hapticOn!==false)hapticCountdown(3);
+    if(st.soundOn!==false)playCountdownTick(3);
     try{speakNow("Tres",circadian,voiceOn);}catch(e){}
 
-    // Tick 2 (n=2): voz a t=910ms, visual+haptic a t=1000ms.
+    // Tick 2 (n=2): voz a t=910ms, visual+haptic+tick a t=1000ms.
     cdVisualTOsRef.current.push(setTimeout(()=>{try{speakNow("Dos",circadian,voiceOn);}catch(e){}},1000-SPEAK_LEAD_MS));
     cdVisualTOsRef.current.push(setTimeout(()=>{
       countdownRef.current=2;
       setCountdown(2);
       if(st.hapticOn!==false)hapticCountdown(2);
+      if(st.soundOn!==false)playCountdownTick(2);
     },1000));
 
-    // Tick 3 (n=1): voz a t=1910ms, visual+haptic a t=2000ms.
+    // Tick 3 (n=1): voz a t=1910ms, visual+haptic+tick a t=2000ms.
     cdVisualTOsRef.current.push(setTimeout(()=>{try{speakNow("Uno",circadian,voiceOn);}catch(e){}},2000-SPEAK_LEAD_MS));
     cdVisualTOsRef.current.push(setTimeout(()=>{
       countdownRef.current=1;
       setCountdown(1);
       if(st.hapticOn!==false)hapticCountdown(1);
+      if(st.soundOn!==false)playCountdownTick(1);
     },2000));
 
     // GO (n=0): a t=3000ms — transición a running, ignition flash + intro.
     // La voz "Comenzamos" se dispara DESPUÉS del setTs porque el
     // ignitionFlash es el evento principal; la voz lo subraya, no lo
     // anticipa. H("go") ya incluye su propia firma audio+haptic.
+    // El tick GO (880Hz) se dispara junto al setTs para coincidir con
+    // el ignition flash del orb — coronación del arco tonal.
     cdVisualTOsRef.current.push(setTimeout(()=>{
       countdownRef.current=0;
       setCountdown(0);
       setTs("running");
       H("go");
+      if(st.soundOn!==false)playCountdownTick(0);
       const firstKicker=pr?.ph?.[0]?.k;
       const intro=firstKicker?`Comenzamos. ${firstKicker}.`:"Comenzamos.";
       try{speakNow(intro,circadian,voiceOn);}catch(e){}
