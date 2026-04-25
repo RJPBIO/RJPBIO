@@ -5,11 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { bioSignal, cssVar, font, space } from "@/components/ui/tokens";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import AuroraMesh from "@/components/brand/AuroraMesh";
+import { useHaptic } from "@/hooks/useHaptic";
 
 export default function SensoryHero({ T }) {
   const [state, setState] = useState("idle");
   const ctxRef = useRef(null);
   const timersRef = useRef([]);
+  const haptic = useHaptic();
 
   useEffect(() => () => {
     timersRef.current.forEach(clearTimeout);
@@ -20,11 +22,9 @@ export default function SensoryHero({ T }) {
     if (state === "pulsing") return;
     setState("pulsing");
 
-    try {
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        navigator.vibrate([80, 40, 140, 40, 80]);
-      }
-    } catch {}
+    // Patrón sensorial firma del producto: 5 pulsos asimétricos.
+    // Pasa por el hook → respeta hapticOn del store + fail-safe iOS.
+    haptic([80, 40, 140, 40, 80]);
 
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;

@@ -29,10 +29,31 @@ import { resolveTheme, withAlpha, ty, font, space, radius } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion } from "../lib/a11y";
 
-const NeuralRadar = dynamic(() => import("./NeuralRadar"), { ssr: false });
-const NeuralCoach = dynamic(() => import("./NeuralCoach"), { ssr: false });
-const WeeklyReport = dynamic(() => import("./WeeklyReport"), { ssr: false });
-const CorrelationMatrix = dynamic(() => import("./CorrelationMatrix"), { ssr: false });
+import { Skeleton } from "./ui/Skeleton";
+
+// Skeletons para charts pesados — antes mostraban blank durante el load
+// async (ssr:false). Ahora un placeholder de altura conocida evita layout
+// shift y comunica "cargando" sin romper la jerarquía visual.
+const ChartSkeleton = ({ height = 160 }) => (
+  <div style={{ padding: 16 }}><Skeleton height={height} /></div>
+);
+
+const NeuralRadar = dynamic(() => import("./NeuralRadar"), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={220} />,
+});
+const NeuralCoach = dynamic(() => import("./NeuralCoach"), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={140} />,
+});
+const WeeklyReport = dynamic(() => import("./WeeklyReport"), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={120} />,
+});
+const CorrelationMatrix = dynamic(() => import("./CorrelationMatrix"), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={180} />,
+});
 const TemporalCharts = dynamic(() => import("./TemporalCharts").then(mod => ({
   default: ({ type, ...props }) => {
     if (type === "mood") return <mod.MoodTrendChart {...props} />;
@@ -42,7 +63,10 @@ const TemporalCharts = dynamic(() => import("./TemporalCharts").then(mod => ({
     if (type === "sparkline") return <mod.CoherenceSparkline {...props} />;
     return null;
   }
-})), { ssr: false });
+})), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={140} />,
+});
 
 function colorForScore(score, goodThreshold = 70, mediumThreshold = 45) {
   if (score >= goodThreshold) return semantic.success;

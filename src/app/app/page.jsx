@@ -50,6 +50,7 @@ import { useDeepLink } from "@/hooks/useDeepLink";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { useThemeDark } from "@/hooks/useThemeDark";
 import { useTapEntry } from "@/hooks/useTapEntry";
+import { useHaptic } from "@/hooks/useHaptic";
 import { uiSound } from "@/lib/uiSound";
 import { buildCommands } from "@/lib/commandPalette";
 import { computePhaseIndex, timeToNextPhase } from "@/lib/phaseEngine";
@@ -134,6 +135,7 @@ export default function BioIgnicion(){
   const[showCmd,setShowCmd]=useState(false);
   const reducedMotion=useReducedMotion();
   const bp=useBreakpoint();
+  const haptic=useHaptic();
   const rootMaxWidth=bp==="desktop"?layout.maxWidthDesktop:bp==="tablet"?layout.maxWidthTablet:layout.maxWidth;
   const rootPadInline=bp==="desktop"?layout.contentPaddingDesktop:bp==="tablet"?layout.contentPaddingTablet:0;
   const iR=useRef(null);const bR=useRef(null);const tR=useRef(null);const cdR=useRef(null);const actLockRef=useRef(false);
@@ -463,14 +465,12 @@ export default function BioIgnicion(){
   const handleSparkHit=useCallback(({pitch})=>{
     if(ts!=="running"&&ts!=="done")return;
     if(st.soundOn!==false){try{playSpark(pitch,0.055);}catch(e){}}
-    if(st.hapticOn!==false&&typeof navigator!=="undefined"&&navigator.vibrate){
-      const now=Date.now();
-      if(now-sparkHapticRef.current>100){
-        sparkHapticRef.current=now;
-        try{navigator.vibrate(10);}catch(e){}
-      }
+    const now=Date.now();
+    if(now-sparkHapticRef.current>100){
+      sparkHapticRef.current=now;
+      haptic("tap");
     }
-  },[ts,st.soundOn,st.hapticOn]);
+  },[ts,st.soundOn,haptic]);
 
   // ─── Loading screen — identidad BIO-IGNICIÓN ─────────────
   // Siempre en paleta oscura (deepField), sin importar el modo del sistema.
