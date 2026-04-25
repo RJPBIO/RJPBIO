@@ -7,12 +7,12 @@
    - Reduced-motion aware. Semantic tokens, no hardcoded hex.
    ═══════════════════════════════════════════════════════════════ */
 
-import { useId } from "react";
+import { useId, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import LocaleSelect from "./ui/LocaleSelect";
 import { SOUNDSCAPES } from "../lib/constants";
-import { exportData } from "../lib/audio";
+import { exportData, listAvailableVoices, loadVoices } from "../lib/audio";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
@@ -34,7 +34,46 @@ export default function SettingsSheet({
   const dialogRef = useFocusTrap(show, onClose);
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const titleId = useId();
-  const { t } = useT();
+  const { t, locale } = useT();
+
+  // Voice list para voice picker. Se carga async (Web Speech API);
+  // refresh tras 200ms cubre el primer voiceschanged event.
+  const [voiceList, setVoiceList] = useState([]);
+  useEffect(() => {
+    if (!show) return;
+    try { loadVoices(); } catch (e) {}
+    const refresh = () => {
+      try { setVoiceList(listAvailableVoices(locale || "es")); } catch (e) {}
+    };
+    refresh();
+    const tid = setTimeout(refresh, 200);
+    return () => clearTimeout(tid);
+  }, [show, locale]);
+
+  // Reminders permission helper — solicita permiso de notificaciones
+  // si el usuario activa reminders y aún no se ha concedido.
+  const requestNotifPermission = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return false;
+    if (Notification.permission === "granted") return true;
+    if (Notification.permission === "denied") return false;
+    try {
+      const r = await Notification.requestPermission();
+      return r === "granted";
+    } catch (e) { return false; }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      // next-auth v5 client signOut
+      const m = await import("next-auth/react");
+      if (m && typeof m.signOut === "function") {
+        await m.signOut({ callbackUrl: "/" });
+      }
+    } catch (e) {
+      // Fallback: navegar a /signout (server-side)
+      try { window.location.href = "/signout"; } catch {}
+    }
+  };
 
   // ─── Helper subcomponents (locales, mismo styling system) ───
   const SectionLabel = ({ children, icon }) => (
@@ -251,6 +290,20 @@ export default function SettingsSheet({
               step={0.05}
               onChange={(v) => setSt({ ...st, masterVolume: v })}
             />
+            <ToggleRow
+              label="Pad armónico"
+              desc="Capa musical sutil bajo la sesión"
+              icon="breath"
+              checked={st.musicBedOn !== false}
+              onToggle={() => setSt({ ...st, musicBedOn: !(st.musicBedOn !== false) })}
+            />
+            <ToggleRow
+              label="Beats binaurales"
+              desc="Tonos diferenciales por intent (calma/enfoque/energía)"
+              icon="mind"
+              checked={st.binauralOn !== false}
+              onToggle={() => setSt({ ...st, binauralOn: !(st.binauralOn !== false) })}
+            />
 
             {/* ═══ VOZ ═══ */}
             <SectionLabel icon="mind">Voz</SectionLabel>
@@ -276,6 +329,54 @@ export default function SettingsSheet({
               onChange={(id) => setSt({ ...st, voiceRate: id === "slow" ? 0.74 : id === "fast" ? 1.05 : 0.83 })}
               ariaLabel="Velocidad de la voz"
             />
+            {/* Voice picker — solo si hay >1 voz disponible */}
+            {voiceList.length > 1 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingBlock: space[3],
+                  borderBlockEnd: `1px solid ${bd}`,
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: space[2], minInlineSize: 0 }}>
+                  <Icon name="mind" size={15} color={t3} />
+                  <div style={{ minInlineSize: 0 }}>
+                    <div style={ty.title(t1)}>Voz</div>
+                    <div style={{ ...ty.caption(t3), marginBlockStart: 1 }}>
+                      {voiceList.find((v) => v.name === st.voicePreference)?.isPremium ? "Premium" : "Auto-pick"}
+                    </div>
+                  </div>
+                </div>
+                <select
+                  aria-label="Seleccionar voz"
+                  value={st.voicePreference || ""}
+                  onChange={(e) => setSt({ ...st, voicePreference: e.target.value || null })}
+                  style={{
+                    flexShrink: 0,
+                    maxInlineSize: 180,
+                    paddingBlock: space[1],
+                    paddingInline: space[2],
+                    borderRadius: radius.sm,
+                    border: `1px solid ${bd}`,
+                    background: cd,
+                    color: t1,
+                    fontSize: 12,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">Auto (premium)</option>
+                  {voiceList.map((v) => (
+                    <option key={v.name} value={v.name}>
+                      {v.name}{v.isPremium ? " ★" : ""}{v.isLocal ? " ◇" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* ═══ VIBRACIÓN ═══ */}
             <SectionLabel icon="vibrate">Vibración</SectionLabel>
@@ -285,6 +386,18 @@ export default function SettingsSheet({
               icon="vibrate"
               checked={!!st.hapticOn}
               onToggle={() => setSt({ ...st, hapticOn: !st.hapticOn })}
+            />
+            <SegmentedRow
+              label="Intensidad"
+              icon="vibrate"
+              value={st.hapticIntensity || "medium"}
+              options={[
+                { id: "light", label: "Suave" },
+                { id: "medium", label: "Media" },
+                { id: "strong", label: "Fuerte" },
+              ]}
+              onChange={(id) => setSt({ ...st, hapticIntensity: id })}
+              ariaLabel="Intensidad de vibración"
             />
 
             {/* ═══ SESIÓN ═══ */}
@@ -296,6 +409,65 @@ export default function SettingsSheet({
               checked={st.wakeLockEnabled !== false}
               onToggle={() => setSt({ ...st, wakeLockEnabled: !(st.wakeLockEnabled !== false) })}
             />
+
+            {/* ═══ RECORDATORIOS ═══ */}
+            <SectionLabel icon="bell">Recordatorios</SectionLabel>
+            <ToggleRow
+              label="Recordatorio diario"
+              desc="Notificación a la misma hora cada día"
+              icon="bell"
+              checked={!!st.remindersEnabled}
+              onToggle={async () => {
+                const next = !st.remindersEnabled;
+                if (next) {
+                  const granted = await requestNotifPermission();
+                  if (!granted) {
+                    // Si el browser denegó, no actives — el toggle queda en false
+                    setSt({ ...st, remindersEnabled: false });
+                    return;
+                  }
+                }
+                setSt({ ...st, remindersEnabled: next });
+              }}
+            />
+            {st.remindersEnabled && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingBlock: space[3],
+                  borderBlockEnd: `1px solid ${bd}`,
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
+                  <Icon name="bell" size={15} color={t3} />
+                  <div style={ty.title(t1)}>Hora</div>
+                </div>
+                <input
+                  type="time"
+                  aria-label="Hora del recordatorio"
+                  value={`${String(st.reminderHour ?? 9).padStart(2, "0")}:${String(st.reminderMinute ?? 0).padStart(2, "0")}`}
+                  onChange={(e) => {
+                    const [h, m] = e.target.value.split(":").map(Number);
+                    setSt({ ...st, reminderHour: h, reminderMinute: m });
+                  }}
+                  style={{
+                    paddingBlock: space[1],
+                    paddingInline: space[2],
+                    borderRadius: radius.sm,
+                    border: `1px solid ${bd}`,
+                    background: cd,
+                    color: t1,
+                    fontSize: 13,
+                    fontFamily: MONO,
+                    cursor: "pointer",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                />
+              </div>
+            )}
 
             {/* ═══ DISPLAY ═══ */}
             <SectionLabel icon="palette">Display</SectionLabel>
@@ -504,6 +676,36 @@ export default function SettingsSheet({
                 {t("settings.exportNom")}
               </motion.button>
             </div>
+
+            {/* ═══ CUENTA ═══ */}
+            <SectionLabel icon="user">Cuenta</SectionLabel>
+            <motion.button
+              whileTap={reduced ? {} : { scale: 0.97 }}
+              onClick={handleSignOut}
+              aria-label="Cerrar sesión"
+              style={{
+                inlineSize: "100%",
+                minBlockSize: 44,
+                paddingBlock: 12,
+                paddingInline: 16,
+                marginBlockStart: space[2],
+                borderRadius: radius.md,
+                border: `1px solid ${bd}`,
+                background: "transparent",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: space[2],
+                color: t2,
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: -0.05,
+              }}
+            >
+              <Icon name="logout" size={14} color={t2} aria-hidden="true" />
+              Cerrar sesión
+            </motion.button>
           </motion.div>
         </motion.div>
       )}

@@ -13,6 +13,7 @@ import {
   Volume2, VolumeX, Vibrate, Palette, FileText, RotateCw,
   Play, Pause, Square, ChevronRight, Info, X, Cpu, Gauge,
   Compass, Lightbulb, Fingerprint, CircleDot, Loader2, Leaf,
+  Bell, LogOut,
 } from "lucide-react";
 import { BIO_ICONS } from "./BioIcons";
 
@@ -88,6 +89,8 @@ const ICON_MAP = {
   "trending-up": TrendingUp,
   "trending-down": TrendingDown,
   "alert-triangle": AlertTriangle,
+  bell: Bell,
+  logout: LogOut,
 };
 
 export default function Icon({
