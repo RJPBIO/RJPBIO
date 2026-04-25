@@ -1161,11 +1161,6 @@ export default function BioIgnicion(){
       );
     })()}
 
-    {/* ReadinessScore + EvidenceStrip + ProgramBrowser ya NO viven aquí.
-        Se movieron al bloque expandible "Más" abajo — son contenido
-        secundario (trust badges, catálogos multi-día, calibración
-        one-shot) que ocupaba ~50% del scroll diario sin valor recurrente. */}
-
     {/* Bioneural quick actions — evidence-based rescue protocols */}
     {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
@@ -1209,10 +1204,69 @@ export default function BioIgnicion(){
         El usuario diario ya no scrollea por encima de estos. Si quiere
         explorar/calibrar/elegir programa, expand "Más". */}
     {ts==="idle"&&<>
-    <button onClick={()=>{setShowMore(!showMore);H("tap");}} aria-expanded={showMore} aria-label={showMore?"Menos opciones":"Más opciones"} style={{width:"100%",minBlockSize:44,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"12px 0",marginBottom:showMore?10:14,background:"none",border:"none",cursor:"pointer"}}>
-      <div style={{flex:1,height:1,background:bd}}/>
-      <span style={{fontSize:10,fontWeight:700,color:t3,display:"flex",alignItems:"center",gap:4,flexShrink:0}}>{showMore?"Menos":"Más"} <span style={{transform:showMore?"rotate(180deg)":"rotate(0)",display:"inline-block",transition:"transform .2s"}}>▾</span></span>
-      <div style={{flex:1,height:1,background:bd}}/>
+    {/* Botón "Más" — diseño que invita sin gritar.
+        Pill compacto centrado, accent border sutil, dot indicator
+        izquierdo (señaliza contenido vivo) y chevron rotativo derecho.
+        Below: hint de lo que vive adentro — programas + calibración +
+        respaldo. Sin esto, el usuario no sabe que existe contenido
+        rico al expandir. */}
+    <button
+      onClick={()=>{setShowMore(!showMore);H("tap");}}
+      aria-expanded={showMore}
+      aria-label={showMore?"Menos opciones":"Más opciones — programas, calibración HRV, respaldo clínico"}
+      style={{
+        width:"100%",
+        minBlockSize:44,
+        display:"flex",
+        flexDirection:"column",
+        alignItems:"center",
+        gap:4,
+        paddingBlock:showMore?10:14,
+        marginBottom:showMore?10:14,
+        background:"none",
+        border:"none",
+        cursor:"pointer",
+      }}
+    >
+      <span style={{
+        display:"inline-flex",
+        alignItems:"center",
+        gap:8,
+        paddingBlock:7,
+        paddingInline:18,
+        borderRadius:99,
+        background:withAlpha(ac,4),
+        border:`1px solid ${withAlpha(ac,18)}`,
+        transition:"all .2s ease",
+      }}>
+        <span aria-hidden="true" style={{
+          inlineSize:5,
+          blockSize:5,
+          borderRadius:"50%",
+          background:ac,
+          boxShadow:`0 0 6px ${withAlpha(ac,70)}`,
+        }}/>
+        <span style={{
+          fontSize:11,
+          fontWeight:800,
+          color:t1,
+          letterSpacing:1.5,
+          textTransform:"uppercase",
+        }}>{showMore?"Menos":"Más"}</span>
+        <span aria-hidden="true" style={{
+          fontSize:10,
+          color:ac,
+          transform:showMore?"rotate(180deg)":"rotate(0)",
+          display:"inline-block",
+          transition:"transform .25s ease",
+        }}>▾</span>
+      </span>
+      {!showMore&&<span aria-hidden="true" style={{
+        fontSize:10,
+        color:t3,
+        letterSpacing:0.4,
+        marginBlockStart:2,
+      }}>Programas · Calibración · Respaldo</span>}
     </button>
     <AnimatePresence>
     {showMore&&<motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
