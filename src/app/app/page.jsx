@@ -1161,37 +1161,10 @@ export default function BioIgnicion(){
       );
     })()}
 
-    {/* Readiness Score — bioneural composite */}
-    {ts==="idle"&&<ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRVCam(true)}/>}
-
-    {/* Evidence Strip — respaldo clínico visible (transparente, no friccionante).
-        Transmite rigor: X estudios peer-reviewed, Y instrumentos validados,
-        cumplimiento NOM-035 / GDPR / LFPDPPP. Tap expande el detalle. */}
-    {ts==="idle"&&<EvidenceStrip isDark={isDark} onOpenEvidence={()=>{
-      try{if(typeof window!=="undefined")window.open("/evidencia","_blank","noopener,noreferrer");}catch{}
-    }}/>}
-
-    {/* Program Browser — 5 trayectorias curadas. Se muestra SOLO si no hay programa activo
-        (si ya hay uno, el ActiveProgramCard en la zona superior cubre el call-to-action).
-        Sugerencia personalizada se calcula inline: burnout alto/crítico → Burnout Recovery;
-        readiness "recover" + 5+ sesiones → Recovery Week; 3+ sesiones sin historial → Neural Baseline. */}
-    {ts==="idle"&&!st.activeProgram&&(()=>{
-      const burnout=calcBurnoutIndex(st.moodLog||[],st.history||[]);
-      const suggestion=resolveProgramSuggestion(st,{burnout,readiness});
-      return(
-        <ProgramBrowser
-          isDark={isDark}
-          programHistory={st.programHistory||[]}
-          suggestion={suggestion}
-          onStart={(programId)=>{
-            store.startProgram(programId);
-            setSt_(useStore.getState());
-            const p=getProgramById(programId);
-            if(p)announce(`Programa ${p.n} iniciado. Día 1: ${p.sessions?.[0]?.note||p.sb}`,"polite");
-          }}
-        />
-      );
-    })()}
+    {/* ReadinessScore + EvidenceStrip + ProgramBrowser ya NO viven aquí.
+        Se movieron al bloque expandible "Más" abajo — son contenido
+        secundario (trust badges, catálogos multi-día, calibración
+        one-shot) que ocupaba ~50% del scroll diario sin valor recurrente. */}
 
     {/* Bioneural quick actions — evidence-based rescue protocols */}
     {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
@@ -1225,8 +1198,17 @@ export default function BioIgnicion(){
     </motion.button>}
 
 
-    {/* Expandable secondary section */}
-    {ts==="idle"&&(prediction||(st.progDay||0)<7)&&<>
+    {/* Expandable secondary section
+        Contiene contenido secundario que ocupaba above-the-fold sin
+        valor diario recurrente:
+          · ReadinessScore (calibración HRV one-shot)
+          · EvidenceStrip (trust badge estático)
+          · ProgramBrowser (catálogo 5 programas multi-día)
+          · Prediction (impacto esperado de próxima sesión)
+          · Programa 7 Días
+        El usuario diario ya no scrollea por encima de estos. Si quiere
+        explorar/calibrar/elegir programa, expand "Más". */}
+    {ts==="idle"&&<>
     <button onClick={()=>{setShowMore(!showMore);H("tap");}} aria-expanded={showMore} aria-label={showMore?"Menos opciones":"Más opciones"} style={{width:"100%",minBlockSize:44,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"12px 0",marginBottom:showMore?10:14,background:"none",border:"none",cursor:"pointer"}}>
       <div style={{flex:1,height:1,background:bd}}/>
       <span style={{fontSize:10,fontWeight:700,color:t3,display:"flex",alignItems:"center",gap:4,flexShrink:0}}>{showMore?"Menos":"Más"} <span style={{transform:showMore?"rotate(180deg)":"rotate(0)",display:"inline-block",transition:"transform .2s"}}>▾</span></span>
@@ -1234,6 +1216,34 @@ export default function BioIgnicion(){
     </button>
     <AnimatePresence>
     {showMore&&<motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+      {/* Readiness Score — bioneural composite + HRV calibration entry */}
+      <ReadinessScore st={st} isDark={isDark} onOpenHRV={()=>setShowHRVCam(true)}/>
+
+      {/* Evidence Strip — respaldo clínico (X estudios + Y instrumentos validados) */}
+      <EvidenceStrip isDark={isDark} onOpenEvidence={()=>{
+        try{if(typeof window!=="undefined")window.open("/evidencia","_blank","noopener,noreferrer");}catch{}
+      }}/>
+
+      {/* Program Browser — 5 trayectorias multi-día. Solo si no hay programa activo
+          (cuando hay activo, el ActiveProgramCard arriba cubre el CTA). */}
+      {!st.activeProgram&&(()=>{
+        const burnout=calcBurnoutIndex(st.moodLog||[],st.history||[]);
+        const suggestion=resolveProgramSuggestion(st,{burnout,readiness});
+        return(
+          <ProgramBrowser
+            isDark={isDark}
+            programHistory={st.programHistory||[]}
+            suggestion={suggestion}
+            onStart={(programId)=>{
+              store.startProgram(programId);
+              setSt_(useStore.getState());
+              const p=getProgramById(programId);
+              if(p)announce(`Programa ${p.n} iniciado. Día 1: ${p.sessions?.[0]?.note||p.sb}`,"polite");
+            }}
+          />
+        );
+      })()}
+
       {/* Prediction */}
       {prediction&&(()=>{const pos=prediction.predictedDelta>0;const tone=pos?brand.primary:brand.secondary;const hasCI=typeof prediction.lower==="number"&&typeof prediction.upper==="number";const fmt=(v)=>(v>=0?"+":"")+v.toFixed(1);const drift=!!prediction.drift;return(
         <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",marginBottom:10,background:pos?withAlpha(brand.primary,isDark?8:4):surface,borderRadius:14,border:`1px solid ${drift?withAlpha(brand.secondary,30):pos?withAlpha(brand.primary,20):bd}`}}>
