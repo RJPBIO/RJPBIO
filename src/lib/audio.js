@@ -107,9 +107,24 @@ export function setMusicBedEnabled(flag) {
   }
 }
 
+// Gating flag global de haptics — fuente única de verdad.
+// Antes: hap(t, sO, hO) checaba hO solo si el caller lo pasaba.
+// Pero hapticBreath/hapticPhase/hapticCountdown/etc. se llaman SIN
+// pasar hO desde page.jsx → vibraban siempre, ignorando settings.
+// Ahora: vibrate() consulta _hapticEnabled, page.jsx lo sincroniza
+// vía setHapticEnabled cuando st.hapticOn cambia. Toggle en settings
+// funciona sin condicionales en cada call site.
+let _hapticEnabled = true;
+export function setHapticEnabled(flag) {
+  _hapticEnabled = flag !== false;
+}
+
 // Wrapper único — todos los audio.js vibrate calls deben usar esto.
 // Defensivo: navigator no existe en SSR; si no hay vibrate API, no-op.
+// iOS Safari no implementa navigator.vibrate (Web standard pero Apple
+// nunca lo expuso) → silently no-op, lo cual es correcto.
 function vibrate(pattern) {
+  if (!_hapticEnabled) return;
   if (typeof navigator === "undefined" || !navigator.vibrate) return;
   try {
     if (typeof pattern === "number") {

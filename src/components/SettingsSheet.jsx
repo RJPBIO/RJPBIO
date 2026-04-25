@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import LocaleSelect from "./ui/LocaleSelect";
 import { SOUNDSCAPES } from "../lib/constants";
-import { exportData, listAvailableVoices, loadVoices } from "../lib/audio";
+import { exportData, listAvailableVoices, loadVoices, hapticSignature } from "../lib/audio";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
@@ -380,25 +380,66 @@ export default function SettingsSheet({
 
             {/* ═══ VIBRACIÓN ═══ */}
             <SectionLabel icon="vibrate">Vibración</SectionLabel>
-            <ToggleRow
-              label={t("settings.vibrate")}
-              desc={t("settings.vibrateDesc")}
-              icon="vibrate"
-              checked={!!st.hapticOn}
-              onToggle={() => setSt({ ...st, hapticOn: !st.hapticOn })}
-            />
-            <SegmentedRow
-              label="Intensidad"
-              icon="vibrate"
-              value={st.hapticIntensity || "medium"}
-              options={[
-                { id: "light", label: "Suave" },
-                { id: "medium", label: "Media" },
-                { id: "strong", label: "Fuerte" },
-              ]}
-              onChange={(id) => setSt({ ...st, hapticIntensity: id })}
-              ariaLabel="Intensidad de vibración"
-            />
+            {(() => {
+              // Detect API support — iOS Safari no implementa vibrate.
+              const hasVibrate = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+              return (
+                <>
+                  <ToggleRow
+                    label={t("settings.vibrate")}
+                    desc={hasVibrate ? t("settings.vibrateDesc") : "Tu navegador no soporta vibración (iOS Safari)"}
+                    icon="vibrate"
+                    checked={!!st.hapticOn}
+                    onToggle={() => setSt({ ...st, hapticOn: !st.hapticOn })}
+                  />
+                  <SegmentedRow
+                    label="Intensidad"
+                    icon="vibrate"
+                    value={st.hapticIntensity || "medium"}
+                    options={[
+                      { id: "light", label: "Suave" },
+                      { id: "medium", label: "Media" },
+                      { id: "strong", label: "Fuerte" },
+                    ]}
+                    onChange={(id) => {
+                      setSt({ ...st, hapticIntensity: id });
+                      // Feedback inmediato: pattern phaseShift al nivel nuevo.
+                      // El usuario siente la diferencia entre Suave/Media/Fuerte
+                      // sin tener que iniciar una sesión.
+                      setTimeout(() => { try { hapticSignature("phaseShift"); } catch (e) {} }, 50);
+                    }}
+                    ariaLabel="Intensidad de vibración"
+                  />
+                  {/* Probar — botón discreto, dispara pattern signature.
+                      Si el dispositivo no vibra, el usuario sabe que es
+                      limitación del browser/OS, no del app. */}
+                  {hasVibrate && st.hapticOn && (
+                    <button
+                      type="button"
+                      onClick={() => { try { hapticSignature("ignition"); } catch (e) {} }}
+                      style={{
+                        inlineSize: "100%",
+                        marginBlockStart: 6,
+                        paddingBlock: 8,
+                        paddingInline: 12,
+                        borderRadius: radius.sm,
+                        border: `1px dashed ${withAlpha(ac, 30)}`,
+                        background: "transparent",
+                        color: ac,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: 1.2,
+                        textTransform: "uppercase",
+                        cursor: "pointer",
+                      }}
+                      aria-label="Probar vibración"
+                    >
+                      Probar vibración
+                    </button>
+                  )}
+                </>
+              );
+            })()}
 
             {/* ═══ SESIÓN ═══ */}
             <SectionLabel icon="bolt">Sesión</SectionLabel>
