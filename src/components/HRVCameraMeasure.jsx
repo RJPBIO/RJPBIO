@@ -18,6 +18,7 @@ import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
 import { createCameraCapture, createStreamingAnalyzer } from "../lib/hrv-camera/capture";
 import { computeHrvInsight, buildHrvBaseline } from "../lib/hrv-camera/insight";
 import { useStore } from "../store/useStore";
+import { track } from "../lib/telemetry";
 
 const FULL_DURATION_SEC = 60;
 const SETTLING_TIMEOUT_MS = 30000; // si en 30s no detectamos dedo, abortar
@@ -291,6 +292,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     setSettlingCountdown(null);
     setPaused(false);
     setPhaseSafe("measuring");
+    track("hrv.measure.started", { source: "camera", mode });
     announce("Medición iniciada. Mantente quieto durante 60 segundos.");
   }
 
@@ -337,6 +339,13 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     const hrv = finalResult?.hrv;
     const sqi = finalResult?.sqi;
     if (!hrv) return;
+    track("hrv.measure.saved", {
+      source: "camera",
+      mode,
+      sqi: sqi?.score,
+      sqiBand: sqi?.band,
+      durationSec: Math.round(finalResult?.elapsedSec || 0),
+    });
     onComplete?.({
       ts: Date.now(),
       rmssd: hrv.rmssd,
@@ -538,6 +547,32 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             >
               ¿Tienes sensor Bluetooth? Medir con strap BLE
             </button>
+          )}
+
+          {/* Modo validación: cámara + BLE simultáneo. Solo se muestra
+              si ambos APIs están disponibles (Android Chrome/Edge desktop). */}
+          {!isIOS && cameraAvailable && typeof navigator !== "undefined" && navigator.bluetooth && (
+            <a
+              href="/lab/hrv-validation"
+              style={{
+                display: "block",
+                inlineSize: "100%",
+                minBlockSize: 40,
+                paddingBlock: 10,
+                marginBlockStart: 12,
+                background: "transparent",
+                color: t3,
+                border: "none",
+                fontSize: 12,
+                cursor: "pointer",
+                textAlign: "center",
+                textDecoration: "underline",
+                opacity: 0.85,
+              }}
+              aria-label="Modo validación: comparar cámara contra strap BLE"
+            >
+              ¿Quieres validar precisión? Cámara + strap BLE simultáneo
+            </a>
           )}
 
           <details style={{ marginBlockStart: 20 }}>

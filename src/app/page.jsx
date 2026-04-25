@@ -149,7 +149,7 @@ const COPY = {
       },
       {
         t: "El motor escucha tu fisiología.",
-        d: "Conectamos HRV (Apple Health / Fitbit / Garmin / Oura), respiración guiada a frecuencia de resonancia y patrón de sueño. El motor adaptativo — abierto en /evidencia — elige el protocolo correcto: calma, enfoque, energía o reset. Cada recomendación cita el estudio detrás.",
+        d: "Medimos HRV directamente: strap BLE (Polar, Wahoo, Garmin HRM) o cámara del teléfono (PPG con algoritmo propio). Webhook de ingestión para Whoop / Oura / Fitbit (UI de conexión en roadmap). El motor adaptativo — abierto en /evidencia — elige el protocolo correcto: calma, enfoque, energía o reset. Cada recomendación cita el estudio detrás.",
         cite: "Lehrer & Gevirtz, 2014 · Frontiers in Psychology",
         citeHref: "https://doi.org/10.3389/fpsyg.2014.00756",
       },
@@ -206,7 +206,7 @@ const COPY = {
     intKicker: "ECOSISTEMA",
     intH: "Habla con las herramientas que ya usas.",
     integrations: [
-      "Slack", "Google Calendar", "Google SSO", "Microsoft SSO", "Okta", "Apple Health", "Fitbit", "Garmin", "Oura", "Webhooks HMAC", "REST API", "SCIM 2.0",
+      "Slack", "Google Calendar", "Google SSO", "Microsoft SSO", "Okta", "BLE strap (Polar/Wahoo/Garmin HRM)", "Cámara PPG (algoritmo propio)", "Whoop · webhook", "Oura · webhook", "Fitbit · webhook", "Webhooks HMAC", "REST API", "SCIM 2.0",
     ],
 
     trustKicker: "CUMPLIMIENTO",
@@ -413,7 +413,7 @@ const COPY = {
       },
       {
         t: "The engine listens to your physiology.",
-        d: "We connect HRV (Apple Health / Fitbit / Garmin / Oura), resonance-frequency guided breathing and sleep pattern. The adaptive engine — open at /evidencia — picks the right protocol: calm, focus, energy or reset. Every recommendation cites the study behind it.",
+        d: "Direct HRV: BLE strap (Polar, Wahoo, Garmin HRM) or phone camera (in-house PPG algorithm). Webhook ingestion for Whoop / Oura / Fitbit (connection UI on roadmap). The adaptive engine — open at /evidencia — picks the right protocol: calm, focus, energy or reset. Every recommendation cites the study behind it.",
         cite: "Lehrer & Gevirtz, 2014 · Frontiers in Psychology",
         citeHref: "https://doi.org/10.3389/fpsyg.2014.00756",
       },
@@ -470,7 +470,7 @@ const COPY = {
     intKicker: "ECOSYSTEM",
     intH: "Speaks to the tools you already use.",
     integrations: [
-      "Slack", "Google Calendar", "Google SSO", "Microsoft SSO", "Okta", "Apple Health", "Fitbit", "Garmin", "Oura", "HMAC Webhooks", "REST API", "SCIM 2.0",
+      "Slack", "Google Calendar", "Google SSO", "Microsoft SSO", "Okta", "BLE strap (Polar/Wahoo/Garmin HRM)", "Camera PPG (in-house algorithm)", "Whoop · webhook", "Oura · webhook", "Fitbit · webhook", "HMAC Webhooks", "REST API", "SCIM 2.0",
     ],
 
     trustKicker: "COMPLIANCE",

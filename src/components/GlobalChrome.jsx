@@ -12,6 +12,7 @@ const OfflineChip = dynamic(() => import("./OfflineChip"), { ssr: false });
 const SWUpdateNotifier = dynamic(() => import("./SWUpdateNotifier"), { ssr: false });
 const ShortcutsHelp = dynamic(() => import("./ShortcutsHelp"), { ssr: false });
 const PrefetchCritical = dynamic(() => import("./PrefetchCritical"), { ssr: false });
+const TelemetryBoot = dynamic(() => import("./TelemetryBoot"), { ssr: false });
 
 export default function GlobalChrome() {
   return (
@@ -24,6 +25,7 @@ export default function GlobalChrome() {
       <OfflineChip />
       <SWUpdateNotifier />
       <PrefetchCritical />
+      <TelemetryBoot />
     </>
   );
 }
