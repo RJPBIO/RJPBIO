@@ -351,7 +351,11 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
       sqi: sqi?.score,
       sqiBand: sqi?.band,
     });
-    onClose?.();
+    // Confirmación breve antes de cerrar — cierra el loop emocional y
+    // confirma que el dato entró al historial. Auto-close 1500ms.
+    setPhaseSafe("saved");
+    announce("Medición guardada en tu historial.");
+    setTimeout(() => onClose?.(), 1500);
   }
 
   if (!show) return null;
@@ -380,7 +384,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         inlineSize: "100%",
       }}
     >
-      {phase !== "measuring" && (
+      {phase !== "measuring" && phase !== "saved" && (
         <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 24, maxInlineSize: 500, marginInline: "auto" }}>
           <h2
             id={titleId}
@@ -671,8 +675,31 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             marginInline: "auto",
             marginBlockStart: 40,
             textAlign: "center",
+            position: "relative",
           }}
         >
+          {/* Beat-synced halo: cada nuevo pico reacumula key → re-anima
+              un pulso sutil del color brand. Le da "vida" a los 50 s
+              después que el bpm se estabiliza. Respeta reduced-motion. */}
+          {!reduced && live?.lastPeakTs && !paused && live?.fingerOk && (
+            <motion.div
+              key={live.lastPeakTs}
+              aria-hidden="true"
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: [0.85, 1.05, 1.15], opacity: [0, 0.18, 0] }}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+              style={{
+                position: "absolute",
+                inset: "-30px -30px auto -30px",
+                blockSize: 220,
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${withAlpha(brand.primary, 100)} 0%, transparent 65%)`,
+                pointerEvents: "none",
+                zIndex: 0,
+              }}
+            />
+          )}
+
           <motion.div
             animate={reduced || !liveHr ? {} : { scale: [1, 1.035, 1] }}
             transition={reduced || !liveHr ? {} : { duration: 60 / (liveHr || 60), repeat: Infinity, ease: "easeInOut" }}
@@ -684,6 +711,8 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               lineHeight: 1,
               letterSpacing: -3,
               marginBlockEnd: 8,
+              position: "relative",
+              zIndex: 1,
             }}
           >
             {liveHr || "--"}
@@ -924,9 +953,24 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             )}
           </div>
 
-          <p style={{ color: t3, fontSize: 11, lineHeight: 1.6, textAlign: "center", marginBlockEnd: 16 }}>
-            Cámara PPG · 30 fps · fs=30 Hz · Butterworth 0.7–4 Hz · Task Force 1996
-          </p>
+          <details style={{ marginBlockEnd: 16, textAlign: "center" }}>
+            <summary
+              style={{
+                color: t3,
+                fontSize: 11,
+                cursor: "pointer",
+                listStyle: "none",
+                display: "inline-block",
+                userSelect: "none",
+                opacity: 0.75,
+              }}
+            >
+              Detalles técnicos
+            </summary>
+            <p style={{ color: t3, fontSize: 11, lineHeight: 1.6, marginBlockStart: 8, marginBlockEnd: 0 }}>
+              Cámara PPG · 30 fps · Butterworth 0.7–4 Hz · filtfilt zero-phase · parabolic peak interpolation · Hampel ectopic filter · Task Force 1996
+            </p>
+          </details>
 
           {/* Si la calidad fue pobre, "Repetir" pasa a primario y "Guardar" a
               secundario — empuja al user al camino correcto sin bloquearle
@@ -984,6 +1028,69 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         </section>
         );
       })()}
+
+      {phase === "saved" && finalResult?.hrv && (
+        <section
+          aria-label="Medición guardada"
+          role="status"
+          aria-live="polite"
+          style={{
+            maxInlineSize: 420,
+            marginInline: "auto",
+            marginBlockStart: 60,
+            textAlign: "center",
+          }}
+        >
+          <motion.div
+            initial={reduced ? { opacity: 1 } : { scale: 0.5, opacity: 0 }}
+            animate={reduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              inlineSize: 88,
+              blockSize: 88,
+              borderRadius: "50%",
+              marginInline: "auto",
+              marginBlockEnd: 24,
+              background: withAlpha(brand.primary, 14),
+              border: `2px solid ${brand.primary}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: brand.primary,
+              boxShadow: `0 0 32px ${withAlpha(brand.primary, 30)}`,
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+              <motion.path
+                d="M5 12.5 L10 17.5 L19 7.5"
+                fill="none"
+                stroke={brand.primary}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={reduced ? { duration: 0 } : { duration: 0.45, delay: 0.15, ease: "easeOut" }}
+              />
+            </svg>
+          </motion.div>
+          <h3
+            style={{
+              color: t1,
+              fontSize: 19,
+              fontWeight: font.weight.black,
+              letterSpacing: -0.3,
+              margin: 0,
+              marginBlockEnd: 8,
+            }}
+          >
+            Guardado en tu historial
+          </h3>
+          <p style={{ color: t2, fontSize: 14, lineHeight: 1.5, margin: 0 }}>
+            RMSSD {finalResult.hrv.rmssd} ms · {Math.round(finalResult.hrv.meanHr)} bpm
+          </p>
+        </section>
+      )}
 
       {phase === "error" && error && (
         <div role="alert" style={{ maxInlineSize: 500, marginInline: "auto" }}>
