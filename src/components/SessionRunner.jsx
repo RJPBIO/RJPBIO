@@ -6,6 +6,7 @@ import { bioSignal } from "@/lib/theme";
 import Icon from "@/components/Icon";
 import AmbientLattice from "@/components/AmbientLattice";
 import NeuralCore3D from "@/components/brand/NeuralCore3D";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 import { useHaptic } from "@/hooks/useHaptic";
 
 const SessionBiofeedback = dynamic(() => import("@/components/SessionBiofeedback"), { ssr: false });
@@ -216,7 +217,7 @@ function BreathWaveform({ accent, isBr, bS, reducedMotion }) {
    3D y firings neuronales coreografiados al protocolo. Los rings de
    emanación externos también se retiran (NeuralCore3D los absorbe
    vía su aura cónica + nebula interior, evitando duplicación). */
-function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused, ts, intent, pi, progress, bL, onSparkHit }) {
+function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused, ts, intent, pi, progress, bL, onSparkHit, momentum = 0 }) {
   const r = 122;
   const circ = 2 * Math.PI * r;
   return (
@@ -234,6 +235,7 @@ function Orb({ sec, pct, accent, isBr, bS, reducedMotion, paused, ts, intent, pi
         secondTick={sec}
         breathPhase={bL || ""}
         onSparkHit={onSparkHit}
+        momentum={momentum}
       />
       <svg width="280" height="280" viewBox="0 0 280 280" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)", pointerEvents: "none" }}>
         <circle cx="140" cy="140" r={r} fill="none" stroke={withAlpha(accent, 18)} strokeWidth="2.5" />
@@ -657,6 +659,7 @@ export default function SessionRunner({
   bCnt = 0,
   isBr = false,
   ac,
+  totalSessions = 0,
   scienceDeep = "",
   onPause,
   onResume,
@@ -861,8 +864,14 @@ export default function SessionRunner({
             {liveMsg}
           </div>
 
-          {/* ═══ TOP — minimal chrome during active; full during countdown ═══ */}
-          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
+          {/* ═══ TOP — brand stamp + phase chrome ═══
+              Countdown: solo wordmark grande (anticipación, sin distraer).
+              Running/paused: brand stamp completo (BioGlyph + wordmark +
+              intent + session#) ARRIBA, FASE pill abajo. Esto cubre el
+              momento-share (screenshot) que antes salía sin trademark
+              visible — quien viera el screenshot no podía identificar
+              la app ni su nombre. El #N es el gatillo FOMO. */}
+          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
             {countingDown ? (
               <div aria-hidden="true" style={{ display: "inline-flex", alignItems: "baseline", gap: 3, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", lineHeight: 1, opacity: 0.9 }}>
                 <span style={{ fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>BIO</span>
@@ -870,31 +879,78 @@ export default function SessionRunner({
                 <span style={{ fontWeight: 800, color: "#fff" }}>IGNICIÓN</span>
               </div>
             ) : (
-              phaseCount > 0 && (
-                <motion.div
-                  key={`pill-${pi}`}
-                  initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: reducedMotion ? 0 : 0.3 }}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "7px 16px",
-                    borderRadius: 99,
-                    background: withAlpha(accent, 10),
-                    border: `1px solid ${withAlpha(accent, 28)}`,
-                    backdropFilter: "blur(8px)",
-                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.05)`,
-                  }}
-                >
-                  <Icon name={safePh.ic || "focus"} size={12} color={accent} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: accent, letterSpacing: 1 }}>
-                    FASE {pi + 1} / {phaseCount}
-                    {safePh.l ? ` · ${safePh.l.toUpperCase()}` : ""}
-                  </span>
-                </motion.div>
-              )
+              <>
+                {/* Brand stamp: glyph + wordmark + intent + session# */}
+                {(() => {
+                  const intent = safePr.int || "enfoque";
+                  const intentLabel = intent === "calma" ? "Calma" : intent === "enfoque" ? "Enfoque" : intent === "energia" ? "Energía" : intent === "reset" ? "Reset" : (safePr.n || "Protocolo");
+                  const sessionN = totalSessions + (running ? 1 : 0);
+                  return (
+                    <motion.div
+                      role="banner"
+                      aria-label="BIO-IGNICIÓN"
+                      initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: reducedMotion ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        paddingBlock: 6,
+                        paddingInline: 12,
+                        borderRadius: 99,
+                        background: withAlpha(accent, 6),
+                        border: `1px solid ${withAlpha(accent, 14)}`,
+                        backdropFilter: "blur(6px)",
+                      }}
+                    >
+                      <BioGlyph size={16} color={accent} spark={bioSignal.ignition} animated={isBr && !reducedMotion} />
+                      <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "baseline", gap: 3, fontSize: 10, letterSpacing: 2.6, textTransform: "uppercase", lineHeight: 1 }}>
+                        <span style={{ fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>BIO</span>
+                        <span style={{ color: accent, fontWeight: 700, transform: "translateY(-0.08em)", filter: `drop-shadow(0 0 3px ${withAlpha(accent, 60)})` }}>—</span>
+                        <span style={{ fontWeight: 800, color: "#fff" }}>IGNICIÓN</span>
+                      </span>
+                      <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.55)", letterSpacing: 0.4, textTransform: "uppercase" }}>
+                        <span style={{ color: withAlpha(accent, 55) }}>·</span>
+                        {intentLabel}
+                        {sessionN > 0 && (
+                          <>
+                            <span style={{ color: withAlpha(accent, 55) }}>·</span>
+                            <span style={{ fontFamily: "var(--font-mono), 'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", letterSpacing: -0.05, color: accent, fontWeight: 700 }}>#{sessionN}</span>
+                          </>
+                        )}
+                      </span>
+                    </motion.div>
+                  );
+                })()}
+
+                {/* Phase pill (existente) */}
+                {phaseCount > 0 && (
+                  <motion.div
+                    key={`pill-${pi}`}
+                    initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: reducedMotion ? 0 : 0.3 }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "7px 16px",
+                      borderRadius: 99,
+                      background: withAlpha(accent, 10),
+                      border: `1px solid ${withAlpha(accent, 28)}`,
+                      backdropFilter: "blur(8px)",
+                      boxShadow: `inset 0 1px 0 rgba(255,255,255,0.05)`,
+                    }}
+                  >
+                    <Icon name={safePh.ic || "focus"} size={12} color={accent} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: accent, letterSpacing: 1 }}>
+                      FASE {pi + 1} / {phaseCount}
+                      {safePh.l ? ` · ${safePh.l.toUpperCase()}` : ""}
+                    </span>
+                  </motion.div>
+                )}
+              </>
             )}
           </div>
 
@@ -913,7 +969,7 @@ export default function SessionRunner({
                 animate={sealing && !reducedMotion ? { scale: [1, 1.04, 0.98] } : { scale: 1 }}
                 transition={{ duration: sealing ? 0.55 : 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} ts={ts} intent={safePr.int} pi={pi} progress={pct} bL={bL} onSparkHit={onSparkHit} />
+                <Orb sec={sec} pct={pct} accent={accent} isBr={isBr} bS={bS} reducedMotion={reducedMotion} paused={paused} ts={ts} intent={safePr.int} pi={pi} progress={pct} bL={bL} onSparkHit={onSparkHit} momentum={Math.min(1, totalSessions / 30)} />
                 <IgnitionSpark show={running && !ignitionPlayed} accent={accent} reducedMotion={reducedMotion} />
                 <PhaseBurst burstKey={phaseBurst} accent={accent} reducedMotion={reducedMotion} />
                 {/* <Sealing> removido — el NeuralCore3D ahora entrega el

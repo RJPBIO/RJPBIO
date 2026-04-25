@@ -651,6 +651,7 @@ export default function BioIgnicion(){
     bCnt={bCnt}
     isBr={isBr}
     ac={ac}
+    totalSessions={st.totalSessions||0}
     sealing={orbDoneFlash}
     scienceDeep={pr&&SCIENCE_DEEP?SCIENCE_DEEP[pr.id]||"":""}
     onBiofeedback={(coh)=>{if(coh)setSessionData(d=>({...d,coherenceLive:coh}));}}
@@ -1399,57 +1400,12 @@ export default function BioIgnicion(){
     })()}
 
 
-    {/* ═══ BRAND STAMP — el sello de identidad del momento-share ═══
-        Visible durante running / paused / done — el frame photogénico
-        donde alguien podría capturar y compartir su sesión. Sin esto,
-        el screenshot no comunica nombre del producto → FOMO perdido.
-        Idle ya tiene el kicker INTERIOR del orb ("Toca para BIO—IGNICIÓN"),
-        así que aquí solo aparecemos durante estados activos.
-        Fila única: glifo (pulsa con breath) · BIO — IGNICIÓN · intent · session#.
-        Tipografía monumental brand-DNA: BIO ligero · em-dash signal · IGNICIÓN pesado. */}
-    {(isActive||postStep!=="none")&&(()=>{
-      const intentLabel=pr?.int==="calma"?"Calma":pr?.int==="enfoque"?"Enfoque":pr?.int==="energia"?"Energía":pr?.int==="reset"?"Reset":pr?.n||"Protocolo";
-      const sessionN=(st.totalSessions||0)+(isActive?1:0);
-      return(
-        <motion.div
-          role="banner"
-          aria-label="BIO-IGNICIÓN — sello de identidad"
-          initial={reducedMotion?{opacity:0}:{opacity:0,y:-6}}
-          animate={{opacity:1,y:0}}
-          transition={{duration:reducedMotion?0:.5,ease:[.16,1,.3,1]}}
-          style={{
-            display:"flex",
-            alignItems:"center",
-            justifyContent:"center",
-            gap:10,
-            marginBlockEnd:18,
-            paddingBlock:8,
-            paddingInline:14,
-            borderRadius:99,
-            background:withAlpha(ac,4),
-            border:`1px solid ${withAlpha(ac,12)}`,
-            backdropFilter:"blur(6px)",
-            maxInlineSize:"fit-content",
-            marginInline:"auto",
-          }}
-        >
-          <BioGlyph size={18} color={ac} spark={bioSignal.ignition} animated={isBr&&!reducedMotion}/>
-          <span aria-hidden="true" style={{display:"inline-flex",alignItems:"baseline",gap:3,fontFamily:font.family,fontSize:11,letterSpacing:3,textTransform:"uppercase",lineHeight:1}}>
-            <span style={{fontWeight:font.weight.normal,color:t3}}>BIO</span>
-            <span style={{color:ac,fontWeight:font.weight.bold,transform:"translateY(-0.08em)",filter:`drop-shadow(0 0 3px ${withAlpha(ac,60)})`}}>—</span>
-            <span style={{fontWeight:font.weight.black,color:t1}}>IGNICIÓN</span>
-          </span>
-          <span aria-hidden="true" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:10,fontWeight:600,color:t3,letterSpacing:0.4,textTransform:"uppercase"}}>
-            <span style={{color:withAlpha(ac,55)}}>·</span>
-            {intentLabel}
-            {sessionN>0&&(<>
-              <span style={{color:withAlpha(ac,55)}}>·</span>
-              <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontVariantNumeric:"tabular-nums",letterSpacing:-0.05,color:ac,fontWeight:700}}>#{sessionN}</span>
-            </>)}
-          </span>
-        </motion.div>
-      );
-    })()}
+    {/* Brand stamp removido de aquí — vivía dentro del wrapper
+        `postStep==="none"`, así que solo podía renderizar durante
+        running, pero durante running SessionRunner cubre la pantalla
+        en fullscreen. Era código muerto. El stamp ahora vive DENTRO
+        del SessionRunner (header durante running/paused). Post-session
+        ya tiene su propio BioIgnicionMark en PostSessionFlow. */}
 
     {/* ═══ CORE DE IGNICIÓN — orb 3D sensorial (misma receta que el orb del landing)
         Esfera dark-navy con highlight cyan arriba, drop-shadow pronunciado, beam vertical,
