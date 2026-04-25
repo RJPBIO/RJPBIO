@@ -1108,12 +1108,31 @@ export function hapticPreShift() {
 
 // Countdown escalado 3→2→1 con intensidad creciente. Lee el
 // tiempo como tensión que aumenta hasta la ignición.
+//
+// step=1 es el último tick antes de GO — patrón multi-pulso
+// "anticipation thump" (tap rápido → silencio breve →
+// follow-through más fuerte). Cinematográficamente lee como
+// "el cuerpo se prepara". Antes era un solo tap aislado.
 export function hapticCountdown(step) {
   if (typeof navigator === "undefined" || !navigator.vibrate) return;
   try {
-    if (step === 3) navigator.vibrate(8);
-    else if (step === 2) navigator.vibrate(16);
-    else if (step === 1) navigator.vibrate(28);
+    if (step === 3) navigator.vibrate(10);
+    else if (step === 2) navigator.vibrate(18);
+    else if (step === 1) navigator.vibrate([22, 80, 35]);
+  } catch (e) {}
+}
+
+// Tick auditivo del countdown — nota de cristal breve, sine pura,
+// volumen bajo para vivir DEBAJO de la voz "Tres/Dos/Uno". Frecuencia
+// asciende cada tick (440→528→660→880 Hz para 3/2/1/GO) creando un
+// arco tonal. Sumada al voice, el cuerpo lee la cadencia rítmica
+// del countdown incluso si el TTS varía en latencia.
+export function playCountdownTick(step) {
+  try {
+    const freq = step === 3 ? 440 : step === 2 ? 528 : step === 1 ? 660 : 880;
+    // Usa el bus master + reverb (cohesión con resto de audio). Volumen 0.022
+    // — debajo del voice (~0.06) y debajo del breath tick (0.038).
+    playChord([freq], 0.42, 0.022);
   } catch (e) {}
 }
 

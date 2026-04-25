@@ -129,19 +129,40 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
             left: "50%",
             translateX: "-50%",
             translateY: "-50%",
-            fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
-            fontSize: 180,
-            fontWeight: 800,
-            color: "#fff",
-            lineHeight: 1,
-            letterSpacing: "-6px",
-            textShadow: `0 0 40px ${withAlpha(accent, 95)}, 0 0 90px ${withAlpha(accent, 50)}, 0 4px 0 rgba(0,0,0,0.3)`,
-            fontVariantNumeric: "tabular-nums",
             zIndex: 2,
             willChange: "transform, opacity",
           }}
         >
-          {n}
+          {/* Tipografía cinematográfica:
+              · Layer 1: dígito blanco con gradient sutil (white top → 78% accent bottom)
+                via background-clip text. Crea profundidad cromática sin
+                perder legibilidad. Reemplaza el color sólido #fff plano.
+              · Layer 2: text-shadow multi-capa (40px accent inner, 90px accent
+                outer, 4px black 3D drop) para densidad luminosa.
+              · Tabular-nums para que 3/2/1 ocupen el mismo width — sin
+                jumping horizontal entre transiciones. */}
+          <span
+            style={{
+              fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+              fontSize: 180,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: "-6px",
+              fontVariantNumeric: "tabular-nums",
+              backgroundImage: `linear-gradient(180deg, #ffffff 0%, #ffffff 55%, ${withAlpha(accent, 78)} 100%)`,
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              color: "transparent",
+              // drop-shadow funciona con fills transparent (text-shadow no).
+              // Triple stack: punch interior nítido, halo medio amplio,
+              // halo exterior vasto + lift sombra negra para 3D depth.
+              filter: `drop-shadow(0 0 14px ${withAlpha(accent, 95)}) drop-shadow(0 0 38px ${withAlpha(accent, 60)}) drop-shadow(0 0 80px ${withAlpha(accent, 35)}) drop-shadow(0 4px 0 rgba(0,0,0,0.35))`,
+              display: "inline-block",
+            }}
+          >
+            {n}
+          </span>
         </motion.div>
       </AnimatePresence>
     </div>
