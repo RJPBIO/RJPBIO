@@ -219,7 +219,19 @@ function startAutoLeveler() {
 
   _levelTimer = setInterval(() => {
     try {
+      // Skip cuando pestaña no visible (ahorra CPU)
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      // Skip cuando NADA está sonando — sin sources activos no tiene
+      // sentido medir, y métricas de "silencio digital" pueden hacer
+      // que el leveler decida boost agresivo cuando algo arranque.
+      const binauralOn = !!_binauralGain;
+      const ambientOn = !!_pinkNoiseGain;
+      const musicOn = !!_bedGain;
+      if (!binauralOn && !ambientOn && !musicOn && _activeSourceCount === 0) {
+        // Reset rolling history para que próxima sesión empiece limpia
+        if (_rmsHistory.length) _rmsHistory.length = 0;
+        return;
+      }
       _masterAnalyser.getFloatTimeDomainData(_meterDataBuf);
       // RMS del buffer
       let sumSquare = 0;
@@ -553,6 +565,10 @@ function stopMusicBed() {
  * @param {number} [opts.filterEnd=1400]    Hz final
  * @param {number} [opts.detuneCents=5]     ± cents para layering
  */
+// Counter de sources activos — usado por auto-leveler para pausar
+// metering cuando no hay nada sonando (CPU saving + evita drift falso).
+let _activeSourceCount = 0;
+
 function createLayeredTone({
   freq,
   durSec,
@@ -587,6 +603,7 @@ function createLayeredTone({
   );
 
   // Stack de 2 osciladores detuneados → riqueza
+  const oscs = [];
   for (const detune of [-detuneCents, detuneCents]) {
     const o = c.createOscillator();
     o.type = type;
@@ -595,24 +612,26 @@ function createLayeredTone({
     o.connect(filter);
     o.start(now);
     o.stop(now + durSec + 0.1);
+    oscs.push(o);
   }
 
   filter.connect(voiceGain);
 
+  let panner = null;
   // Spatial routing: PannerNode HRTF posiciona en XYZ del campo virtual.
-  // Random subtle offsets → cada spark "viene de un punto" del cerebro 3D
-  // virtual. El oído distingue posición por timing y cues binaurales →
-  // sensación de "red neuronal alive" cross-channel en lugar de mono.
+  // HRTF es CARO (cada panner hace HRIR convolution). Disponer al
+  // terminar es crítico: sin disposal, 12 sparks/sec × 60s = 720 panners
+  // vivos en memoria → leak garantizado y CPU drift.
   if (spatial) {
-    const panner = c.createPanner();
+    panner = c.createPanner();
     panner.panningModel = "HRTF";
     panner.distanceModel = "inverse";
     panner.refDistance = 1;
     panner.maxDistance = 50;
     panner.rolloffFactor = 1;
-    panner.positionX.value = (Math.random() - 0.5) * 1.6; // -0.8 a 0.8
+    panner.positionX.value = (Math.random() - 0.5) * 1.6;
     panner.positionY.value = (Math.random() - 0.5) * 1.0;
-    panner.positionZ.value = -1 + Math.random() * 0.5;    // -1 a -0.5 (frente)
+    panner.positionZ.value = -1 + Math.random() * 0.5;
     voiceGain.connect(panner);
     panner.connect(dry);
     panner.connect(wet);
@@ -620,6 +639,30 @@ function createLayeredTone({
     voiceGain.connect(dry);
     voiceGain.connect(wet);
   }
+
+  // DISPOSAL: cuando el último oscilador termina, desconectamos toda
+  // la cadena (oscs + filter + voiceGain + panner). Sin esto los nodos
+  // permanecen referenciados por el grafo de Web Audio y no se GC.
+  // Resultado del leak: app trabada después de 30-60s de sesión activa.
+  _activeSourceCount += oscs.length;
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    try {
+      for (const o of oscs) { try { o.disconnect(); } catch {} }
+      try { filter.disconnect(); } catch {}
+      try { voiceGain.disconnect(); } catch {}
+      if (panner) { try { panner.disconnect(); } catch {} }
+    } finally {
+      _activeSourceCount = Math.max(0, _activeSourceCount - oscs.length);
+    }
+  };
+  // onended del último oscilador (todos terminan al mismo tiempo)
+  oscs[oscs.length - 1].onended = dispose;
+  // Safety: timeout backup por si onended no dispara (raro, pero ocurre
+  // cuando AudioContext se cierra antes que el sonido termine).
+  setTimeout(dispose, (durSec + 0.3) * 1000);
 }
 
 export function playChord(f, d, v) {
@@ -1173,14 +1216,26 @@ export function isSpeaking() { return _isSpeaking; }
 
 // iOS Safari conocido bug: speechSynthesis se "duerme" tras ~10-15s sin
 // uso. Si llamas speak() después, no suena. Mantenemos vivo con un ping
-// silencioso periódico cuando la pestaña está visible.
+// silencioso periódico — pero SOLO durante la "ventana viva" después
+// del último speak() real (90s). Antes corría siempre → carga inútil
+// constante incluso cuando user no está en sesión.
 let _keepaliveTimer = null;
+const KEEPALIVE_WINDOW_MS = 90000; // 90s después del último speak real
 function startVoiceKeepalive() {
   if (_keepaliveTimer || typeof window === "undefined" || !window.speechSynthesis) return;
   _keepaliveTimer = setInterval(() => {
     try {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       if (window.speechSynthesis.speaking || window.speechSynthesis.pending) return;
+      // Si pasaron > KEEPALIVE_WINDOW_MS desde el último speak real,
+      // detener el keepalive — la app está idle, no hay razón de
+      // mantener viva la API. Si user vuelve a hablar, speak() llama
+      // startVoiceKeepalive de nuevo.
+      if (Date.now() - _lastSpeechTs > KEEPALIVE_WINDOW_MS) {
+        clearInterval(_keepaliveTimer);
+        _keepaliveTimer = null;
+        return;
+      }
       // Ping: utterance vacía silenciosa cada 8s mantiene la API viva.
       const u = new SpeechSynthesisUtterance("");
       u.volume = 0;
