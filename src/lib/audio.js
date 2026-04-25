@@ -76,6 +76,52 @@ export function setUserVoiceRate(rate) {
 }
 export function getUserVoiceRate() { return _userVoiceRate; }
 
+let _userVoicePreference = null; // null → pickVoice() auto-selects premium
+export function setUserVoicePreference(name) {
+  _userVoicePreference = typeof name === "string" && name.length > 0 ? name : null;
+}
+export function getUserVoicePreference() { return _userVoicePreference; }
+
+// Haptic intensity multiplier. Wrapper sobre navigator.vibrate aplica
+// scale solo a las DURACIONES (índices pares en pattern arrays);
+// las pausas (índices impares) NO se escalan — preservan el ritmo.
+let _hapticIntensity = 1;
+export function setHapticIntensity(level) {
+  _hapticIntensity = level === "light" ? 0.6 : level === "strong" ? 1.4 : 1.0;
+}
+
+// Gating flags para granular audio control desde settings.
+// startBinaural y startMusicBed verifican estos flags antes de arrancar.
+let _binauralEnabled = true;
+let _musicBedEnabled = true;
+export function setBinauralEnabled(flag) {
+  _binauralEnabled = flag !== false;
+  if (!_binauralEnabled) {
+    try { stopBinaural(); } catch (e) {}
+  }
+}
+export function setMusicBedEnabled(flag) {
+  _musicBedEnabled = flag !== false;
+  if (!_musicBedEnabled) {
+    try { stopMusicBed(); } catch (e) {}
+  }
+}
+
+// Wrapper único — todos los audio.js vibrate calls deben usar esto.
+// Defensivo: navigator no existe en SSR; si no hay vibrate API, no-op.
+function vibrate(pattern) {
+  if (typeof navigator === "undefined" || !navigator.vibrate) return;
+  try {
+    if (typeof pattern === "number") {
+      navigator.vibrate(Math.max(1, Math.round(pattern * _hapticIntensity)));
+    } else if (Array.isArray(pattern)) {
+      navigator.vibrate(pattern.map((d, i) => i % 2 === 0 ? Math.max(1, Math.round(d * _hapticIntensity)) : d));
+    } else {
+      navigator.vibrate(pattern);
+    }
+  } catch (e) {}
+}
+
 export function setMasterVolume(v) {
   const c = gAC();
   if (!c) return;
@@ -954,6 +1000,7 @@ let _binauralFilter = null, _binauralLfoL = null, _binauralLfoR = null;
 
 export function startBinaural(type) {
   try {
+    if (!_binauralEnabled) return;
     const masterBus = ensureMasterBus(); if (!masterBus) return;
     const c = masterBus.c;
     stopBinaural();
@@ -972,10 +1019,8 @@ export function startBinaural(type) {
 
     // Ambient bed pink noise auto-start con binaural (presence layer).
     startAmbientBed();
-    // Musical pad por intent — capa armónica que da continuidad emocional
-    // debajo del binaural. Volumen 0.010, fade-in 12s, imperceptible
-    // como "música presente" pero perceptible como "espacio con intención".
-    startMusicBed(type);
+    // Musical pad por intent — gated por _musicBedEnabled (settings).
+    if (_musicBedEnabled) startMusicBed(type);
 
     const panL = c.createStereoPanner();
     const panR = c.createStereoPanner();
@@ -1065,85 +1110,58 @@ export function stopBinaural() {
 }
 
 // ─── Haptic Engine ────────────────────────────────────────
+// TODOS los patrones pasan por vibrate() wrapper para respetar
+// _hapticIntensity (settings.hapticIntensity).
 export function hap(t, sO, hO) {
-  try {
-    if (hO !== false && typeof navigator !== "undefined" && navigator.vibrate) {
-      if (t === "go") navigator.vibrate([20, 40, 20]);
-      else if (t === "ph") navigator.vibrate(12);
-      else if (t === "ok") navigator.vibrate([40, 60, 40, 60, 80]);
-      else if (t === "tick") navigator.vibrate(5);
-      else if (t === "tap") navigator.vibrate(8);
-    }
-    if (sO !== false) {
+  if (hO !== false) {
+    if (t === "go") vibrate([20, 40, 20]);
+    else if (t === "ph") vibrate(12);
+    else if (t === "ok") vibrate([40, 60, 40, 60, 80]);
+    else if (t === "tick") vibrate(5);
+    else if (t === "tap") vibrate(8);
+  }
+  if (sO !== false) {
+    try {
       if (t === "go") playChord([432, 648], 0.5, 0.05);
       else if (t === "ph") playChord([528, 660, 792], 0.5, 0.04);
       else if (t === "ok") { playChord([432, 528, 648, 792], 1.5, 0.06); setTimeout(() => playChord([528, 648, 792], 1.2, 0.025), 300); }
       else if (t === "tap") playChord([440], 0.08, 0.02);
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
 }
 
 export function hapticPhase(type) {
-  if (typeof navigator === "undefined" || !navigator.vibrate) return;
-  try {
-    if (type === "breath") navigator.vibrate([30, 60, 30]);
-    else if (type === "body") navigator.vibrate([50, 30, 50, 30, 50]);
-    else if (type === "mind") navigator.vibrate([20, 100, 20]);
-    else if (type === "focus") navigator.vibrate([80, 20, 80]);
-    else navigator.vibrate(30);
-  } catch (e) {}
+  if (type === "breath") vibrate([30, 60, 30]);
+  else if (type === "body") vibrate([50, 30, 50, 30, 50]);
+  else if (type === "mind") vibrate([20, 100, 20]);
+  else if (type === "focus") vibrate([80, 20, 80]);
+  else vibrate(30);
 }
 
 export function hapticBreath(label) {
-  if (typeof navigator === "undefined" || !navigator.vibrate) return;
-  try {
-    if (label === "INHALA") navigator.vibrate([15, 30, 15, 30, 15]);
-    else if (label === "EXHALA") navigator.vibrate([40]);
-    else if (label === "MANTÉN") navigator.vibrate(20);
-    else navigator.vibrate(10);
-  } catch (e) {}
+  if (label === "INHALA") vibrate([15, 30, 15, 30, 15]);
+  else if (label === "EXHALA") vibrate([40]);
+  else if (label === "MANTÉN") vibrate(20);
+  else vibrate(10);
 }
 
 // ─── Haptic Firma ─────────────────────────────────────────
-// Patrones hápticos firmados que el usuario aprende a reconocer
-// sin mirar. Cada uno tiene una "silueta rítmica" única:
-//   ignition: crescendo + golpe + cola (explosión controlada)
-//   checkpoint: doble tap largo (verificación deliberada)
-//   phaseShift: rampa corta (algo cambió)
-//   award: Morse-like corto-corto-largo (reconocimiento)
 export function hapticSignature(kind) {
-  if (typeof navigator === "undefined" || !navigator.vibrate) return;
-  try {
-    if (kind === "ignition") navigator.vibrate([18, 30, 26, 20, 40, 40, 100]);
-    else if (kind === "checkpoint") navigator.vibrate([50, 50, 50]);
-    else if (kind === "phaseShift") navigator.vibrate([12, 18, 24]);
-    else if (kind === "award") navigator.vibrate([30, 40, 30, 40, 90]);
-    else navigator.vibrate(15);
-  } catch (e) {}
+  if (kind === "ignition") vibrate([18, 30, 26, 20, 40, 40, 100]);
+  else if (kind === "checkpoint") vibrate([50, 50, 50]);
+  else if (kind === "phaseShift") vibrate([12, 18, 24]);
+  else if (kind === "award") vibrate([30, 40, 30, 40, 90]);
+  else vibrate(15);
 }
 
-// ─── Pre-phase alert ──────────────────────────────────────
-// Pulso corto ~2s antes del cambio de fase. El usuario lo siente
-// como "algo viene" sin interrumpir la atención actual.
 export function hapticPreShift() {
-  if (typeof navigator === "undefined" || !navigator.vibrate) return;
-  try { navigator.vibrate([6, 40, 10]); } catch (e) {}
+  vibrate([6, 40, 10]);
 }
 
-// Countdown escalado 3→2→1 con intensidad creciente. Lee el
-// tiempo como tensión que aumenta hasta la ignición.
-//
-// step=1 es el último tick antes de GO — patrón multi-pulso
-// "anticipation thump" (tap rápido → silencio breve →
-// follow-through más fuerte). Cinematográficamente lee como
-// "el cuerpo se prepara". Antes era un solo tap aislado.
 export function hapticCountdown(step) {
-  if (typeof navigator === "undefined" || !navigator.vibrate) return;
-  try {
-    if (step === 3) navigator.vibrate(10);
-    else if (step === 2) navigator.vibrate(18);
-    else if (step === 1) navigator.vibrate([22, 80, 35]);
-  } catch (e) {}
+  if (step === 3) vibrate(10);
+  else if (step === 2) vibrate(18);
+  else if (step === 1) vibrate([22, 80, 35]);
 }
 
 // Tick auditivo del countdown — nota de cristal breve, sine pura,
@@ -1209,6 +1227,34 @@ export function releaseWakeLock() {
 let _voices = [];
 let _voiceUnlocked = false;
 let _voiceListenerWired = false;
+
+// Lista de voces disponibles para un locale, ordenadas premium-first.
+// Cada item: { name, lang, isPremium, isLocal }. Para el voice picker UI.
+export function listAvailableVoices(locale = "es") {
+  if (!_voices.length) return [];
+  const prefix = (locale || "es").slice(0, 2).toLowerCase();
+  const premiumNames = PREMIUM_VOICE_NAMES[prefix] || [];
+  const localeFilter = (v) => v.lang?.toLowerCase().startsWith(prefix);
+  const matchesPremium = (v) => premiumNames.some((n) => v.name === n || (v.name && v.name.includes(n)));
+  const isRobotic = (v) =>
+    /^Microsoft (David|Mark|Zira|Hazel) (Desktop|Mobile)/.test(v.name || "") ||
+    v.name === "Google" ||
+    v.name === "fred";
+  const filtered = _voices.filter((v) => localeFilter(v) && !isRobotic(v));
+  const decorated = filtered.map((v) => ({
+    name: v.name,
+    lang: v.lang,
+    isPremium: matchesPremium(v),
+    isLocal: !!v.localService,
+  }));
+  // Premium primero, luego local, luego resto (alfabético).
+  decorated.sort((a, b) => {
+    if (a.isPremium !== b.isPremium) return a.isPremium ? -1 : 1;
+    if (a.isLocal !== b.isLocal) return a.isLocal ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  return decorated;
+}
 
 // Las voces del sistema cargan async en Chrome/Android/iOS; si llamamos
 // speak() antes de que lleguen, el motor cae al default (robótico). Nos
@@ -1298,6 +1344,13 @@ const PREMIUM_VOICE_NAMES = {
 function pickVoice(locale = "es") {
   if (!_voices.length) return null;
   const prefix = (locale || "es").slice(0, 2).toLowerCase();
+
+  // 0) User preference (settings) tiene precedencia absoluta.
+  if (_userVoicePreference) {
+    const userHit = _voices.find((v) => v.name === _userVoicePreference);
+    if (userHit) return userHit;
+    // Si la voz preferida ya no está disponible, fallback a auto-pick.
+  }
 
   // 1) Try premium named voices first — empíricamente la mejor calidad.
   const premiumNames = PREMIUM_VOICE_NAMES[prefix] || [];

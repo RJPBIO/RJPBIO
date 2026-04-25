@@ -151,6 +151,11 @@ export const DS = {
   masterVolume: 1,                  // multiplier sobre el master gain (0.4–1.0)
   wakeLockEnabled: true,            // mantener pantalla activa durante sesión (default ON: completion ↑ → más datos)
   reducedMotionOverride: "auto",    // "auto" sigue prefers-reduced-motion · "always" · "never"
+  // v14 — granular audio/haptic + voice picker
+  musicBedOn: true,                 // pad armónico sutil durante sesión (default ON)
+  binauralOn: true,                 // beats binaurales durante sesión (default ON)
+  hapticIntensity: "medium",        // "light" 0.6x · "medium" 1.0x · "strong" 1.4x
+  voicePreference: null,            // nombre exacto de voz (null = auto-pick premium)
   themeMode: "auto",
   moodLog: [],
   firstDone: false,
