@@ -47,7 +47,19 @@ function Scanline({ reducedMotion }) {
   );
 }
 
-/* ─── Countdown ceremony: forming ring + numeral + spark on 0 ── */
+/* ─── Countdown ceremony: forming ring + numeral + spark on 0 ──
+   Timing: el padre dispara setCountdown cada 1000ms exactos. Las
+   transiciones aquí DEBEN caber holgadas dentro de esa ventana o
+   los números se ven cortados. Antes:
+     · mode="wait" + spring (stiffness 160, damping 14) → 600-800ms
+       por transición. Cada número visible ~200-400ms efectivos.
+     · ring duration 0.9s → siempre 100ms detrás del tick siguiente.
+   Ahora:
+     · sin mode="wait" — el exit y el enter del siguiente corren en
+       paralelo (ambos centrados en el mismo punto, no compiten).
+     · ease cubic-bezier rápido (260ms enter / 220ms exit) → cada
+       número es estable ~700ms en pantalla → respiración del ojo.
+     · ring duration 0.55s → siempre completa antes del siguiente tick. */
 function CountdownCeremony({ n, accent, reducedMotion }) {
   const ringCirc = 2 * Math.PI * 140;
   return (
@@ -66,7 +78,7 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
           strokeDasharray={ringCirc}
           initial={{ strokeDashoffset: ringCirc }}
           animate={{ strokeDashoffset: ringCirc * (n / 3) }}
-          transition={{ duration: reducedMotion ? 0 : 0.9, ease: "easeOut" }}
+          transition={{ duration: reducedMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
           style={{ filter: `drop-shadow(0 0 8px ${withAlpha(accent, 70)})` }}
         />
       </svg>
@@ -77,14 +89,19 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
         transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
         style={{ position: "absolute", inset: 40, borderRadius: "50%", background: `radial-gradient(circle, ${withAlpha(accent, 40)}, transparent 70%)`, filter: "blur(20px)" }}
       />
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div
           key={n}
-          initial={{ scale: 0.55, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 1.7, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 160, damping: 14 }}
+          initial={reducedMotion ? { opacity: 0 } : { scale: 0.7, opacity: 0 }}
+          animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+          exit={reducedMotion ? { opacity: 0 } : { scale: 1.45, opacity: 0 }}
+          transition={{ duration: reducedMotion ? 0 : 0.26, ease: [0.16, 1, 0.3, 1] }}
           style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            translateX: "-50%",
+            translateY: "-50%",
             fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
             fontSize: 180,
             fontWeight: 800,
@@ -93,8 +110,8 @@ function CountdownCeremony({ n, accent, reducedMotion }) {
             letterSpacing: "-6px",
             textShadow: `0 0 40px ${withAlpha(accent, 95)}, 0 0 90px ${withAlpha(accent, 50)}, 0 4px 0 rgba(0,0,0,0.3)`,
             fontVariantNumeric: "tabular-nums",
-            position: "relative",
             zIndex: 2,
+            willChange: "transform, opacity",
           }}
         >
           {n}
