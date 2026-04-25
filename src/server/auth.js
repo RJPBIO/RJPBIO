@@ -61,18 +61,20 @@ async function adapter() {
   return PrismaAdapter(orm);
 }
 
-// Resolver el adapter una vez al boot. Si la DB no está disponible (env
-// faltante o conexión fallida), session strategy cae a JWT — evita el
-// 500 que NextAuth lanza al pedir /api/auth/session con strategy="database"
-// sin adapter. JWT no requiere DB, vive en cookie firmada.
+// Resolver el adapter una vez al boot — usado para magic links + signin
+// flow (necesita persistir VerificationToken). Pero la STRATEGY de session
+// es JWT siempre — esto desacopla las requests de /api/auth/session de la
+// DB. Antes: strategy="database" → si Prisma falla (migration ausente,
+// URL mala, schema desincronizado), TODO request a /api/auth/session
+// devuelve 500. Con JWT, sesiones viven en cookie firmada con AUTH_SECRET.
+//
+// Tradeoff aceptado: "logout from all devices" requiere lógica custom
+// (signout-all route ya existe). Vale el costo a cambio de robustez.
 const dbAdapter = await adapter().catch(() => undefined);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: dbAdapter,
-  session: {
-    strategy: dbAdapter ? "database" : "jwt",
-    maxAge: 8 * 60 * 60,
-  },
+  session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/signin", error: "/signin" },
   trustHost: process.env.AUTH_TRUST_HOST === "1" || process.env.NODE_ENV !== "production",
   providers: [
@@ -123,6 +125,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       await auditLog({ action: "auth.signin", actorId: user.id, payload: { provider: account?.provider } })
         .catch(() => {});
       return true;
+    },
+    async jwt({ token, user }) {
+      // Al signin, persistir id/locale/timezone en el token JWT para que
+      // session() los pueda leer sin DB.
+      if (user) {
+        token.sub = user.id;
+        token.locale = user.locale;
+        token.timezone = user.timezone;
+      }
+      return token;
     },
     async session({ session, user, token }) {
       // En strategy="jwt" no hay `user`; toda la info viene del token.
