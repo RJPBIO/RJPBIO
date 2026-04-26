@@ -18,6 +18,8 @@ import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
 // Sprint 19 — incidents desde DB
 import { listStatusIncidents } from "@/server/incidents";
+// Sprint 20 — subscribe form
+import SubscribeForm from "./SubscribeForm";
 
 export const metadata = {
   title: "Status",
@@ -428,7 +430,7 @@ export default async function StatusPage() {
           ) : (
             <ol className="bi-status-incident-list">
               {INCIDENTS.map((inc) => (
-                <li key={inc.id} className="bi-status-incident" data-severity={inc.severity}>
+                <li id={`i-${inc.id}`} key={inc.id} className="bi-status-incident" data-severity={inc.severity}>
                   <div className="bi-status-incident-head">
                     <strong>{inc.title}</strong>
                     <time dateTime={inc.startedAt}>
@@ -440,6 +442,27 @@ export default async function StatusPage() {
               ))}
             </ol>
           )}
+        </section>
+
+        <PulseDivider intensity="dim" />
+
+        {/* ═══ Sprint 20 — Subscribe to incident notifications ═══ */}
+        <section aria-labelledby="status-subscribe" style={{ marginBlock: space[7] }}>
+          <div style={kickerStyle}>NOTIFICACIONES · PUSH POR EMAIL</div>
+          <h2 id="status-subscribe" style={sectionHeading}>
+            Recibe avisos en cuanto haya un incident.
+          </h2>
+          <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, margin: `${space[2]}px 0 ${space[4]}px`, maxWidth: 540 }}>
+            Verificación por email · unsubscribe one-click en cada notificación · cancela cuando quieras.
+          </p>
+          <div style={{ maxWidth: 480 }}>
+            <SubscribeForm />
+          </div>
+          <p style={{ color: cssVar.textDim, fontSize: font.size.xs, margin: `${space[3]}px 0 0` }}>
+            ¿Prefieres webhook? POST a <code style={{ fontFamily: cssVar.fontMono }}>/api/v1/status/subscribe</code> con
+            <code style={{ fontFamily: cssVar.fontMono }}> {"{webhookUrl}"}</code>. RSS también disponible en
+            <a href="/status/feed.xml" style={{ color: cssVar.accent, marginInlineStart: 4 }}>/status/feed.xml</a>.
+          </p>
         </section>
       </Container>
 

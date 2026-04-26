@@ -11,6 +11,7 @@
 import "server-only";
 import { db } from "./db";
 import { auditLog } from "./audit";
+import { notifySubscribers } from "./incident-subscribers";
 import { canTransitionStatus } from "@/lib/incidents";
 
 /**
@@ -45,6 +46,8 @@ export async function createIncident({ title, body, severity, components, creato
       target: incident.id,
       payload: { title, severity, components: components || [] },
     }).catch(() => {});
+    // Sprint 20 — notifica subscribers (best-effort, no bloquea).
+    notifySubscribers(incident, "created").catch(() => {});
     return { ok: true, incident };
   } catch {
     return { ok: false, error: "create_failed" };
@@ -84,6 +87,15 @@ export async function addIncidentUpdate({ incidentId, status, body, authorEmail 
       target: incidentId,
       payload: { status, bodySnippet: body.slice(0, 200) },
     }).catch(() => {});
+
+    // Sprint 20 — notifica subscribers tras update (best-effort).
+    // Re-fetch para tener el incident con status actualizado.
+    try {
+      const updatedIncident = await orm.incident.findUnique({ where: { id: incidentId } });
+      if (updatedIncident) {
+        notifySubscribers(updatedIncident, isResolving ? "resolved" : "updated").catch(() => {});
+      }
+    } catch { /* best-effort */ }
 
     return { ok: true, update };
   } catch {

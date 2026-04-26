@@ -210,3 +210,92 @@ export async function sendDsarResolved({
     TextBody: renderEmailText({ contentText: text, locale }),
   });
 }
+
+/**
+ * Sprint 20 — verifica email subscription al status page.
+ * Branding: defaults BIO-IGN (status page es plataforma-wide, no per-org).
+ */
+export async function sendIncidentVerification({ to, verifyUrl, locale = DEFAULT_LOCALE } = {}) {
+  if (!to || !verifyUrl) return { skipped: true };
+  const Subject = locale === "en"
+    ? "Confirm your status page subscription"
+    : "Confirma tu suscripción al status page";
+  const heading = locale === "en"
+    ? "Confirm your subscription"
+    : "Confirma tu suscripción";
+  const body = locale === "en"
+    ? "Click the button below to confirm. We won't email you incident notifications until you confirm."
+    : "Click el botón para confirmar. No enviaremos notificaciones de incidents hasta que confirmes.";
+  const cta = locale === "en" ? "Confirm subscription" : "Confirmar suscripción";
+  const ctaHtml = renderCtaButton({ url: verifyUrl, label: cta });
+  const fine = locale === "en"
+    ? "If you didn't request this, ignore this email."
+    : "Si no solicitaste esto, ignora este correo.";
+  const inner = `<h2>${escapeHtml(heading)}</h2><p>${escapeHtml(body)}</p>${ctaHtml}<p style="color:#64748B;font-size:13px">${escapeHtml(fine)}</p>`;
+  const text = `${heading}\n\n${body}\n\n${verifyUrl}\n\n${fine}\n`;
+  return postmark({
+    From: DEFAULT_FROM, To: to, MessageStream: "outbound",
+    Subject,
+    HtmlBody: renderEmailHTML({ content: inner, locale }),
+    TextBody: renderEmailText({ contentText: text, locale }),
+  });
+}
+
+/**
+ * Sprint 20 — notifica subscribers verificados de un incident
+ * (created/updated/resolved). Incluye unsubscribe one-click footer.
+ */
+export async function sendIncidentNotification({
+  to, subject, incident, kind = "updated", unsubscribeUrl,
+  locale = DEFAULT_LOCALE,
+} = {}) {
+  if (!to || !incident) return { skipped: true };
+  const isResolved = incident.status === "resolved";
+  const heading = isResolved
+    ? (locale === "en" ? "Incident resolved" : "Incidente resuelto")
+    : (kind === "created"
+      ? (locale === "en" ? "New incident" : "Nuevo incidente")
+      : (locale === "en" ? "Incident update" : "Actualización del incidente"));
+
+  const sevLabel = (incident.severity || "").toUpperCase();
+  const statusBadge = `<span style="display:inline-block;padding:2px 8px;background:${
+    isResolved ? "#10B981" : sevLabel === "CRITICAL" ? "#EF4444" : sevLabel === "MAJOR" ? "#F59E0B" : "#6B7280"
+  };color:#fff;border-radius:4px;font-size:12px;font-weight:600">${escapeHtml(sevLabel)}</span>`;
+
+  const startedAt = incident.startedAt
+    ? `<p style="color:#64748B;font-size:13px">${locale === "en" ? "Started" : "Iniciado"}: ${escapeHtml(new Date(incident.startedAt).toISOString())}</p>`
+    : "";
+  const components = (incident.components || []).length
+    ? `<p style="color:#64748B;font-size:13px">${locale === "en" ? "Components" : "Componentes"}: ${incident.components.map((c) => `<code>${escapeHtml(c)}</code>`).join(", ")}</p>`
+    : "";
+
+  const bodyHtml = incident.body
+    ? `<p style="color:#0F172A">${escapeHtml(incident.body)}</p>`
+    : "";
+
+  const statusUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://bio-ignicion.app"}/status#i-${incident.id}`;
+  const ctaHtml = renderCtaButton({
+    url: statusUrl,
+    label: locale === "en" ? "View on status page" : "Ver en el status page",
+  });
+
+  const unsubFooter = unsubscribeUrl
+    ? `<p style="color:#94A3B8;font-size:12px;margin-top:24px;border-top:1px solid #E2E8F0;padding-top:12px">${
+        locale === "en"
+          ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#94A3B8">Unsubscribe</a> from status notifications.`
+          : `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#94A3B8">Cancelar suscripción</a> a notificaciones de status.`
+      }</p>`
+    : "";
+
+  const inner = `<h2>${escapeHtml(heading)}</h2>
+<p>${statusBadge} <strong>${escapeHtml(incident.title || "")}</strong></p>
+${bodyHtml}${startedAt}${components}${ctaHtml}${unsubFooter}`;
+
+  const text = `${heading}\n\n[${sevLabel}] ${incident.title}\n${incident.body || ""}\n\n${statusUrl}\n${unsubscribeUrl ? `\nUnsubscribe: ${unsubscribeUrl}\n` : ""}`;
+  return postmark({
+    From: DEFAULT_FROM, To: to, MessageStream: "outbound",
+    Subject: subject || `[${sevLabel}] ${incident.title}`,
+    HtmlBody: renderEmailHTML({ content: inner, locale }),
+    TextBody: renderEmailText({ contentText: text, locale }),
+  });
+}
