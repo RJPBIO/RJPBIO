@@ -398,6 +398,21 @@ model IncidentUpdate {
   @@index([incidentId])
 }
 
+// Sprint 20 — Status page subscribers (email + webhook).
+model IncidentSubscriber {
+  id               String    @id @default(cuid())
+  email            String?   @unique
+  webhookUrl       String?
+  components       String[]  @default([])
+  verified         Boolean   @default(false)
+  verifyToken      String?
+  unsubscribeToken String    @unique
+  lastNotifiedAt   DateTime?
+  createdAt        DateTime  @default(now())
+  @@index([verified])
+  @@index([verifyToken])
+}
+
 // Sprint 13 — DSAR (GDPR Art. 15 / 17 / 20)
 enum DsarKind {
   ACCESS
