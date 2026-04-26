@@ -33,9 +33,10 @@ const GROUPS = [
     { href: "/admin/stations", label: "Estaciones" },
   ]},
   { label: "Cumplimiento", items: [
+    { href: "/admin/compliance", label: "SOC 2 / ISO 27001" },
+    { href: "/admin/compliance/dsar", label: "DSAR" },
     { href: "/admin/nom35", label: "NOM-035" },
     { href: "/admin/nom35/documento", label: "Documento oficial" },
-    { href: "/admin/compliance/dsar", label: "DSAR" },
   ]},
   { label: "Cuenta", items: [
     { href: "/admin/billing", label: "Facturación" },
