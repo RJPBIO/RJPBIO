@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   validateRetentionDays, computeCutoff, summarizeVerification,
   formatExportFilename, rowsToCsv, rowsToJsonl, rowToCsvLine,
+  formatLastVerified, defaultExportRange,
   AUDIT_RETENTION_MIN_DAYS, AUDIT_RETENTION_MAX_DAYS, AUDIT_RETENTION_DEFAULT,
   AUDIT_CSV_HEADERS,
 } from "./audit-retention";
@@ -205,15 +206,53 @@ describe("rowsToJsonl", () => {
     expect(jsonl).toBe('{"id":"1"}\n{"id":"2"}\n');
   });
 
-  it("rows vacío → string vacío (sin trailing \\n inútil)", () => {
-    // Match implementation: "".join + trailing \n if rows existed... vacío → solo "\n"
-    // Actually: [].join("\n") = "", + "\n" = "\n". Acceptable but UX prefer "".
-    const r = rowsToJsonl([]);
-    // Tolerant: solo verificar que no hay rows representadas
-    expect(r.includes("{")).toBe(false);
+  it("rows vacío → string vacío (sin '\\n' espurio)", () => {
+    expect(rowsToJsonl([])).toBe("");
   });
 
   it("non-array → string vacío", () => {
     expect(rowsToJsonl(null)).toBe("");
+    expect(rowsToJsonl(undefined)).toBe("");
+  });
+});
+
+describe("formatLastVerified", () => {
+  it("at null → 'Nunca verificada'", () => {
+    expect(formatLastVerified(null)).toEqual({ text: "Nunca verificada", tone: "neutral" });
+    expect(formatLastVerified(undefined)).toEqual({ text: "Nunca verificada", tone: "neutral" });
+  });
+
+  it("verified → tone success + ISO en texto", () => {
+    const at = new Date("2026-04-25T12:00:00Z");
+    const r = formatLastVerified(at, "verified");
+    expect(r.tone).toBe("success");
+    expect(r.text).toContain("2026-04-25T12:00:00.000Z");
+    expect(r.text).not.toContain("ROTA");
+  });
+
+  it("tampered → tone error + 'CADENA ROTA'", () => {
+    const r = formatLastVerified(new Date("2026-04-25T12:00:00Z"), "tampered");
+    expect(r.tone).toBe("error");
+    expect(r.text).toContain("CADENA ROTA");
+  });
+
+  it("acepta string ISO", () => {
+    const r = formatLastVerified("2026-04-25T12:00:00Z", "verified");
+    expect(r.tone).toBe("success");
+  });
+
+  it("fecha inválida → neutral", () => {
+    expect(formatLastVerified("not-a-date").tone).toBe("neutral");
+    expect(formatLastVerified("not-a-date").text).toBe("Fecha inválida");
+  });
+});
+
+describe("defaultExportRange", () => {
+  it("90 días atrás desde ahora", () => {
+    const now = new Date("2026-04-25T12:00:00Z");
+    const { from, to } = defaultExportRange(now);
+    expect(to.toISOString()).toBe("2026-04-25T12:00:00.000Z");
+    expect(from.toISOString()).toBe("2026-01-25T12:00:00.000Z");
+    expect(to.getTime() - from.getTime()).toBe(90 * 86400_000);
   });
 });

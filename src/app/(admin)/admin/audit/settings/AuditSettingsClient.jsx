@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Field } from "@/components/ui/Field";
@@ -10,6 +10,8 @@ import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   AUDIT_RETENTION_MIN_DAYS,
   AUDIT_RETENTION_MAX_DAYS,
+  formatLastVerified,
+  defaultExportRange,
 } from "@/lib/audit-retention";
 
 async function getCsrf() {
@@ -27,12 +29,64 @@ const ERR = {
   too_large: `Máximo ${AUDIT_RETENTION_MAX_DAYS} días (${Math.round(AUDIT_RETENTION_MAX_DAYS / 365)} años)`,
 };
 
-export default function AuditSettingsClient({ orgId, orgName, canEdit, initialDays, totalLogs }) {
+// Convierte Date → "YYYY-MM-DD" para input type="date".
+function toDateInput(d) {
+  if (!d) return "";
+  const dd = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(dd.getTime())) return "";
+  const y = dd.getUTCFullYear();
+  const m = String(dd.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(dd.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export default function AuditSettingsClient({
+  orgId, orgName, canEdit, initialDays, totalLogs,
+  lastVerifiedAt, lastVerifiedStatus,
+}) {
   const [days, setDays] = useState(initialDays);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [verifyResult, setVerifyResult] = useState(null);
   const [verifying, setVerifying] = useState(false);
+  const [persistedLastVerified, setPersistedLastVerified] = useState({
+    at: lastVerifiedAt, status: lastVerifiedStatus,
+  });
+
+  // Date range: default últimos 90 días. Inputs HTML5 date.
+  const defaultRange = useMemo(() => defaultExportRange(), []);
+  const [from, setFrom] = useState(toDateInput(defaultRange.from));
+  const [to, setTo] = useState(toDateInput(defaultRange.to));
+  const [previewCount, setPreviewCount] = useState(null);
+  const [previewing, setPreviewing] = useState(false);
+
+  // Auto-fetch count cada vez que cambian las fechas (debounced light).
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCount() {
+      setPreviewing(true);
+      try {
+        const params = new URLSearchParams();
+        if (from) params.set("from", new Date(from + "T00:00:00Z").toISOString());
+        if (to) params.set("to", new Date(to + "T23:59:59Z").toISOString());
+        const r = await fetch(`/api/v1/orgs/${orgId}/audit/count?${params.toString()}`, {
+          cache: "no-store",
+        });
+        if (!r.ok) return;
+        const j = await r.json();
+        if (!cancelled) setPreviewCount(j.count ?? 0);
+      } catch { /* no-op */ } finally {
+        if (!cancelled) setPreviewing(false);
+      }
+    }
+    const t = setTimeout(loadCount, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [orgId, from, to]);
+
+  const lastVerifiedDisplay = formatLastVerified(
+    persistedLastVerified.at,
+    persistedLastVerified.status,
+  );
 
   async function onSave(e) {
     e.preventDefault();
@@ -81,6 +135,11 @@ export default function AuditSettingsClient({ orgId, orgName, canEdit, initialDa
       }
       const j = await r.json();
       setVerifyResult(j);
+      // Sprint 10 polish — actualizar last-verified en UI sin reload.
+      setPersistedLastVerified({
+        at: j.verifiedAt || new Date().toISOString(),
+        status: j.status === "verified" ? "verified" : "tampered",
+      });
       if (j.status === "verified") toast.success(j.message);
       else toast.error(j.message);
     } catch (e) {
@@ -91,7 +150,11 @@ export default function AuditSettingsClient({ orgId, orgName, canEdit, initialDa
   }
 
   function exportFormat(fmt) {
-    const url = `/api/v1/orgs/${orgId}/audit/export?format=${fmt}`;
+    const params = new URLSearchParams();
+    params.set("format", fmt);
+    if (from) params.set("from", new Date(from + "T00:00:00Z").toISOString());
+    if (to) params.set("to", new Date(to + "T23:59:59Z").toISOString());
+    const url = `/api/v1/orgs/${orgId}/audit/export?${params.toString()}`;
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
@@ -152,15 +215,34 @@ export default function AuditSettingsClient({ orgId, orgName, canEdit, initialDa
       <section style={{ ...cardStyle, marginBlockStart: space[4] }}>
         <header style={cardHeaderStyle}>
           <h2 style={cardTitleStyle}>Verificación de cadena</h2>
+          <Badge
+            variant={lastVerifiedDisplay.tone === "success" ? "success"
+              : lastVerifiedDisplay.tone === "error" ? "warn"
+              : "soft"}
+            size="sm"
+          >
+            {persistedLastVerified.at ? "Verificada" : "Sin verificar"}
+          </Badge>
         </header>
         <p style={cardDescStyle}>
           Recomputa el hash chain SHA-256 + HMAC seal. Si algún log fue
           modificado o eliminado del medio, la cadena rompe en ese punto.
           Operación read-only; segura de correr en producción.
         </p>
-        <Button onClick={onVerify} loading={verifying} loadingLabel="Verificando…" variant="secondary">
-          Verificar ahora
-        </Button>
+        <div style={{ display: "flex", alignItems: "center", gap: space[3], flexWrap: "wrap" }}>
+          <Button onClick={onVerify} loading={verifying} loadingLabel="Verificando…" variant="secondary">
+            Verificar ahora
+          </Button>
+          <span style={{
+            color: lastVerifiedDisplay.tone === "error" ? "var(--bi-danger)"
+              : lastVerifiedDisplay.tone === "success" ? cssVar.text
+              : cssVar.textDim,
+            fontSize: font.size.sm,
+            fontFamily: cssVar.fontMono,
+          }}>
+            {lastVerifiedDisplay.text}
+          </span>
+        </div>
         {verifyResult && (
           <Alert kind={verifyResult.status === "verified" ? "success" : "error"}>
             <strong>{verifyResult.message}</strong>
@@ -179,16 +261,66 @@ export default function AuditSettingsClient({ orgId, orgName, canEdit, initialDa
           <h2 style={cardTitleStyle}>Export para auditoría externa</h2>
         </header>
         <p style={cardDescStyle}>
-          Descarga todos los logs del org (cap 50,000 rows) para evidencia
-          SOC2/ISO27001 o solicitudes de auditores externos. CSV: machine-friendly.
-          JSONL: una línea JSON por log, preserva tipos y nested payload.
+          Descarga logs del org en el rango seleccionado (cap 50,000 rows)
+          para evidencia SOC2/ISO27001 o solicitudes de auditores externos.
+          Default: últimos 90 días. CSV machine-friendly. JSONL preserva tipos.
         </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: space[3] }}>
+          <Field label="Desde">
+            <Input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              max={to || undefined}
+            />
+          </Field>
+          <Field label="Hasta">
+            <Input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              min={from || undefined}
+            />
+          </Field>
+        </div>
+        <div style={{
+          padding: `${space[2]}px ${space[3]}px`,
+          background: cssVar.surface2,
+          border: `1px solid ${cssVar.border}`,
+          borderRadius: radius.sm,
+          color: cssVar.textMuted,
+          fontSize: font.size.sm,
+          fontFamily: cssVar.fontMono,
+        }}>
+          {previewing ? "Calculando…" : (
+            previewCount === null ? "—" :
+            previewCount === 0 ? "No hay logs en este rango" :
+            previewCount > 50_000
+              ? `${previewCount.toLocaleString()} logs en rango (export limitado a primeros 50,000)`
+              : `${previewCount.toLocaleString()} logs en rango listos para exportar`
+          )}
+        </div>
         <div style={{ display: "flex", gap: space[2], flexWrap: "wrap" }}>
-          <Button onClick={() => exportFormat("csv")} variant="secondary">
+          <Button
+            onClick={() => exportFormat("csv")}
+            variant="secondary"
+            disabled={previewCount === 0}
+          >
             Descargar CSV
           </Button>
-          <Button onClick={() => exportFormat("jsonl")} variant="secondary">
+          <Button
+            onClick={() => exportFormat("jsonl")}
+            variant="secondary"
+            disabled={previewCount === 0}
+          >
             Descargar JSONL
+          </Button>
+          <Button
+            onClick={() => { setFrom(""); setTo(""); }}
+            variant="ghost"
+            size="sm"
+          >
+            Quitar fechas (todo el historial)
           </Button>
         </div>
       </section>

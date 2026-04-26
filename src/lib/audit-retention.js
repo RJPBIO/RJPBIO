@@ -115,6 +115,32 @@ export function rowsToCsv(rows) {
 }
 
 export function rowsToJsonl(rows) {
-  if (!Array.isArray(rows)) return "";
+  if (!Array.isArray(rows) || rows.length === 0) return "";
   return rows.map((r) => JSON.stringify(r)).join("\n") + "\n";
+}
+
+/**
+ * UI-friendly: formatea last-verified state.
+ * @param {Date|string|null} at
+ * @param {"verified"|"tampered"|null} status
+ */
+export function formatLastVerified(at, status) {
+  if (!at) return { text: "Nunca verificada", tone: "neutral" };
+  const d = typeof at === "string" ? new Date(at) : at;
+  const iso = d instanceof Date && !Number.isNaN(d.getTime()) ? d.toISOString() : null;
+  if (!iso) return { text: "Fecha inválida", tone: "neutral" };
+  if (status === "tampered") {
+    return { text: `Última verificación: ${iso} · CADENA ROTA`, tone: "error" };
+  }
+  return { text: `Última verificación: ${iso}`, tone: status === "verified" ? "success" : "neutral" };
+}
+
+/**
+ * Default range para export: últimos 90 días desde now.
+ * Aceptable para auditorías trimestrales sin que el dataset explote.
+ */
+export function defaultExportRange(now = new Date()) {
+  const to = new Date(now);
+  const from = new Date(now.getTime() - 90 * 86400_000);
+  return { from, to };
 }
