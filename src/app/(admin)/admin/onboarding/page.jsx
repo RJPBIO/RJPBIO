@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 
 export default async function Onboarding() {
   const org = await resolveOrg();
-  const client = db();
+  // BUG FIX: db() async — sin await la onboarding checklist siempre
+  // mostraba memberCount=0 + todos los pasos como pendientes.
+  const client = await db();
   const [memberCount, hasWebhook, hasApiKey, integrations] = await Promise.all([
     client.membership.count({ where: { orgId: org.id } }),
     client.webhook.count({ where: { orgId: org.id } }).then((n) => n > 0),
