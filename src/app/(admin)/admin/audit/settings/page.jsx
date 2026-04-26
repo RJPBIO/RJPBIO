@@ -30,7 +30,10 @@ export default async function AuditSettingsPage() {
   const orm = await db();
   const org = await orm.org.findUnique({
     where: { id: ownerOrAdmin.orgId },
-    select: { id: true, name: true, auditRetentionDays: true },
+    select: {
+      id: true, name: true, auditRetentionDays: true,
+      auditLastVerifiedAt: true, auditLastVerifiedStatus: true,
+    },
   });
   if (!org) return null;
 
@@ -44,6 +47,8 @@ export default async function AuditSettingsPage() {
       canEdit={ownerOrAdmin.role === "OWNER"}
       initialDays={org.auditRetentionDays ?? AUDIT_RETENTION_DEFAULT}
       totalLogs={totalLogs}
+      lastVerifiedAt={org.auditLastVerifiedAt ? org.auditLastVerifiedAt.toISOString() : null}
+      lastVerifiedStatus={org.auditLastVerifiedStatus || null}
     />
   );
 }

@@ -38,7 +38,11 @@ model Org {
   ipAllowlist          String[]      @default([])     // CIDR IPv4 (e.g. "10.0.0.0/8")
   ipAllowlistEnabled   Boolean       @default(false)
   // Sprint 10 — audit log retention policy (días). 30..2555.
-  auditRetentionDays   Int           @default(365)
+  auditRetentionDays      Int           @default(365)
+  // Sprint 10 polish — last-verified persistence para SOC2 evidence pack.
+  auditLastVerifiedAt     DateTime?
+  auditLastVerifiedStatus String?       // "verified" | "tampered" | null
+  auditLastPrunedAt       DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   memberships    Membership[]

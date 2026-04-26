@@ -5,6 +5,7 @@
    Auth: OWNER o ADMIN. */
 
 import { auth } from "../../../../../../../server/auth";
+import { db } from "../../../../../../../server/db";
 import { requireCsrf } from "../../../../../../../server/csrf";
 import { auditLog, verifyChain } from "../../../../../../../server/audit";
 import { summarizeVerification } from "../../../../../../../lib/audit-retention";
@@ -27,6 +28,20 @@ export async function POST(request, { params }) {
   const result = await verifyChain(orgId);
   const summary = summarizeVerification(result);
 
+  // Sprint 10 polish — persistir last-verified en Org para evidence pack.
+  // SOC2 auditor: "¿cuándo verificaron última vez?" → SELECT auditLastVerifiedAt.
+  const verifiedAt = new Date();
+  try {
+    const orm = await db();
+    await orm.org.update({
+      where: { id: orgId },
+      data: {
+        auditLastVerifiedAt: verifiedAt,
+        auditLastVerifiedStatus: summary.status === "verified" ? "verified" : "tampered",
+      },
+    });
+  } catch { /* no-op — best-effort persistence */ }
+
   await auditLog({
     orgId,
     actorId: session.user.id,
@@ -39,5 +54,9 @@ export async function POST(request, { params }) {
     },
   }).catch(() => {});
 
-  return Response.json({ ...summary, raw: result });
+  return Response.json({
+    ...summary,
+    verifiedAt: verifiedAt.toISOString(),
+    raw: result,
+  });
 }
