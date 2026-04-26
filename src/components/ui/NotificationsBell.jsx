@@ -31,35 +31,55 @@ export default function NotificationsBell() {
 
   const sync = useCallback(async () => {
     try {
-      const since = Number(localStorage.getItem("bio-notifications-since") || 0);
-      const url = since
-        ? `/api/notifications/recent?since=${since}`
-        : "/api/notifications/recent";
-      const r = await fetch(url, { credentials: "same-origin" });
+      // Sprint 25 — server fetches per-user Notification rows con readAt
+      // como source of truth. localStorage solo cache para offline UX.
+      const r = await fetch("/api/notifications/recent", { credentials: "same-origin" });
       if (!r.ok) return;
       const { items: serverItems = [] } = await r.json();
-      if (!serverItems.length) return;
+      // Server-only items reemplazan localStorage cache (incluye read state).
+      // Items locales con id="n_..." (CustomEvent push) los preservamos.
       setItems((prev) => {
-        const seen = new Set(prev.map((x) => x.id));
-        const additions = serverItems
-          .filter((s) => !seen.has(`srv_${s.id}`))
-          .map((s) => ({
-            id: `srv_${s.id}`,
-            title: s.title,
-            body: s.body || "",
-            href: s.href || null,
-            level: s.level || "info",
-            at: s.at,
-            read: false,
-          }));
-        if (!additions.length) return prev;
-        const next = [...additions, ...prev].slice(0, MAX);
+        const localOnly = prev.filter((x) => !x.id.startsWith("srv_"));
+        const serverMapped = serverItems.map((s) => ({
+          id: `srv_${s.id}`,
+          serverId: s.id, // para mark-read API call
+          title: s.title,
+          body: s.body || "",
+          href: s.href || null,
+          level: s.level || "info",
+          at: s.at,
+          read: !!s.readAt,
+        }));
+        const next = [...serverMapped, ...localOnly].slice(0, MAX);
         save(next);
-        const latest = Math.max(...additions.map((a) => a.at));
-        try { localStorage.setItem("bio-notifications-since", String(latest + 1)); } catch { /* empty */ }
         return next;
       });
     } catch { /* empty */ }
+  }, []);
+
+  async function getCsrf() {
+    try {
+      const r = await fetch("/api/auth/csrf", { cache: "no-store" });
+      const j = await r.json();
+      return j?.csrfToken || "";
+    } catch { return ""; }
+  }
+
+  const markAllRead = useCallback(async () => {
+    setItems((prev) => {
+      if (!prev.some((x) => !x.read)) return prev;
+      const next = prev.map((x) => ({ ...x, read: true }));
+      save(next);
+      return next;
+    });
+    // Server-side mark-all-read (best-effort).
+    try {
+      const csrf = await getCsrf();
+      await fetch("/api/v1/me/notifications/read-all", {
+        method: "POST",
+        headers: { "x-csrf-token": csrf },
+      });
+    } catch { /* offline ok — local cache mantiene estado */ }
   }, []);
 
   useEffect(() => {
@@ -94,13 +114,9 @@ export default function NotificationsBell() {
 
   useEffect(() => {
     if (!open) return;
-    // Marca leídas al abrir (no al hover: evita flicker).
-    setItems((prev) => {
-      if (!prev.some((x) => !x.read)) return prev;
-      const next = prev.map((x) => ({ ...x, read: true }));
-      save(next);
-      return next;
-    });
+    // Sprint 25 — marca leídas al abrir (server + local) para persist
+    // entre devices. No es agresivo (no hover).
+    markAllRead();
     function onDocClick(ev) {
       if (anchor.current && !anchor.current.contains(ev.target)) setOpen(false);
     }
@@ -132,11 +148,20 @@ export default function NotificationsBell() {
       </button>
       {open && (
         <div role="menu" style={panel}>
-          <div style={{ padding: "10px 12px", borderBottom: "1px solid #1E293B", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ padding: "10px 12px", borderBottom: "1px solid #1E293B", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.1, color: "#6EE7B7" }}>Notificaciones</span>
-            {items.length > 0 && (
-              <button type="button" onClick={() => { setItems([]); save([]); }} style={clearBtn}>Limpiar</button>
-            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              {items.some((x) => !x.read) && (
+                <button type="button" onClick={markAllRead} style={clearBtn} title="Marca todas como leídas (servidor)">
+                  Marcar leídas
+                </button>
+              )}
+              {items.length > 0 && (
+                <button type="button" onClick={() => { setItems([]); save([]); }} style={clearBtn} title="Limpia el cache local — el servidor mantiene historial">
+                  Limpiar
+                </button>
+              )}
+            </div>
           </div>
           {items.length === 0 ? (
             <p style={{ padding: 16, color: "#94A3B8", fontSize: 13, margin: 0, textAlign: "center" }}>Sin notificaciones.</p>
