@@ -8,6 +8,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { Alert } from "@/components/ui/Alert";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+import {
+  summarizeKey,
+  formatLastUsed,
+  describeQuota,
+  validateExpiryDays,
+  API_KEY_EXPIRY_MIN_DAYS,
+  API_KEY_EXPIRY_MAX_DAYS,
+} from "@/lib/api-quotas";
 
 const ALL_SCOPES = [
   { id: "read:sessions",  label: "Leer sesiones" },
@@ -16,7 +24,15 @@ const ALL_SCOPES = [
   { id: "write:members",  label: "Escribir miembros" },
   { id: "read:analytics", label: "Leer analíticas (k-anon)" },
   { id: "read:audit",     label: "Leer audit log" },
+  { id: "scim",           label: "SCIM (provisioning Okta/Azure AD)" },
 ];
+
+const STATUS_VARIANT = {
+  active: "success",
+  expired: "warn",
+  revoked: "danger",
+  unknown: "soft",
+};
 
 function csrfHeader() {
   const c = document.cookie.split("; ").find((r) => r.startsWith("bio-csrf="));
@@ -62,13 +78,16 @@ function Reveal({ token, onClose }) {
   );
 }
 
-export default function ApiKeysClient({ initial }) {
+export default function ApiKeysClient({ initial, plan = "FREE" }) {
   const [keys, setKeys] = useState(initial);
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState(new Set(["read:sessions"]));
+  const [expiresAtDays, setExpiresAtDays] = useState(""); // "" = sin expiry
+  const [expiryError, setExpiryError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [rowBusy, setRowBusy] = useState(null); // "${id}:${action}"
   const [revealed, setRevealed] = useState(null);
+  const quota = describeQuota(plan);
 
   function toggleScope(s) {
     setScopes((curr) => {
@@ -80,19 +99,37 @@ export default function ApiKeysClient({ initial }) {
 
   async function create(e) {
     e.preventDefault();
+    setExpiryError(null);
     if (!name.trim() || scopes.size === 0) return;
+    const expiryV = validateExpiryDays(expiresAtDays === "" ? null : Number(expiresAtDays));
+    if (!expiryV.ok) {
+      setExpiryError(expiryV.error);
+      toast.error("Días de expiración inválidos");
+      return;
+    }
     setBusy(true);
     try {
       const r = await fetch("/api/v1/api-keys", {
         method: "POST",
         headers: { "content-type": "application/json", "x-csrf-token": csrfHeader() },
-        body: JSON.stringify({ name, scopes: [...scopes] }),
+        body: JSON.stringify({
+          name,
+          scopes: [...scopes],
+          expiresAtDays: expiryV.value,
+        }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Error");
-      setKeys((s) => [{ id: j.id, name, prefix: j.prefix, scopes: j.scopes, createdAt: new Date().toISOString(), lastUsedAt: null, revokedAt: null }, ...s]);
+      setKeys((s) => [{
+        id: j.id, name, prefix: j.prefix, scopes: j.scopes,
+        createdAt: new Date().toISOString(),
+        lastUsedAt: null, lastUsedIp: null,
+        expiresAt: j.expiresAt || null,
+        revokedAt: null,
+      }, ...s]);
       setRevealed(j.token);
       setName("");
+      setExpiresAtDays("");
       toast.success("API key creada");
     } catch (err) { toast.error(err.message); }
     finally { setBusy(false); }
@@ -145,8 +182,32 @@ export default function ApiKeysClient({ initial }) {
       ),
     },
     { key: "createdAt", label: "Creada", width: 120, render: (k) => new Date(k.createdAt).toLocaleDateString() },
-    { key: "lastUsedAt", label: "Último uso", width: 160, render: (k) => k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : <span style={{ color: cssVar.textMuted }}>nunca</span> },
-    { key: "state", label: "Estado", width: 110, render: (k) => k.revokedAt ? <Badge variant="danger" size="sm">Revocada</Badge> : <Badge variant="success" size="sm">Activa</Badge> },
+    {
+      key: "lastUsed", label: "Último uso", width: 200,
+      render: (k) => {
+        const f = formatLastUsed(k.lastUsedAt, k.lastUsedIp);
+        if (f.tone === "neutral") return <span style={{ color: cssVar.textMuted }}>{f.text}</span>;
+        return <span style={{ color: cssVar.text, fontSize: font.size.xs }}>{f.text}</span>;
+      },
+    },
+    {
+      key: "state", label: "Estado", width: 140,
+      render: (k) => {
+        const s = summarizeKey(k);
+        return (
+          <span title={s.detail}>
+            <Badge variant={STATUS_VARIANT[s.status] || "soft"} size="sm">
+              {s.label}
+            </Badge>
+            {s.daysUntilExpiry !== undefined && s.daysUntilExpiry <= 7 && (
+              <span style={{ marginInlineStart: space[1], fontSize: font.size.xs, color: "var(--bi-danger)" }}>
+                {s.daysUntilExpiry}d
+              </span>
+            )}
+          </span>
+        );
+      },
+    },
     {
       key: "__actions", label: "", align: "right", width: 170,
       render: (k) => {
@@ -166,6 +227,10 @@ export default function ApiKeysClient({ initial }) {
 
   return (
     <>
+      <Alert kind="info" style={{ marginBottom: space[4] }}>
+        <strong>Quota plan {plan}:</strong> {quota.text}. Las quotas son por org (suma de todas las keys); upgrade a planes superiores para más throughput.
+      </Alert>
+
       <form
         onSubmit={create}
         style={{
@@ -174,10 +239,31 @@ export default function ApiKeysClient({ initial }) {
           background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.md,
         }}
       >
-        <label>
-          <span style={labelStyle}>Nombre</span>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Zapier prod" required maxLength={80} />
-        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: space[3] }}>
+          <label>
+            <span style={labelStyle}>Nombre</span>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Zapier prod" required maxLength={80} />
+          </label>
+          <label>
+            <span style={labelStyle}>Expira en (días, opcional)</span>
+            <Input
+              type="number"
+              min={API_KEY_EXPIRY_MIN_DAYS}
+              max={API_KEY_EXPIRY_MAX_DAYS}
+              step={1}
+              value={expiresAtDays}
+              onChange={(e) => { setExpiresAtDays(e.target.value); setExpiryError(null); }}
+              placeholder="Sin expiry"
+            />
+            {expiryError && (
+              <span style={{ fontSize: font.size.xs, color: "var(--bi-danger)" }}>
+                {expiryError === "too_small" ? `Mínimo ${API_KEY_EXPIRY_MIN_DAYS} día` :
+                 expiryError === "too_large" ? `Máximo ${API_KEY_EXPIRY_MAX_DAYS} días` :
+                 expiryError === "not_integer" ? "Debe ser entero" : expiryError}
+              </span>
+            )}
+          </label>
+        </div>
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
           <legend style={{ ...labelStyle, padding: 0, marginBottom: space[2] }}>Permisos (scopes)</legend>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: space[2] }}>

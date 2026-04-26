@@ -19,14 +19,23 @@ export default async function ApiKeys() {
   const keys = await orm.apiKey.findMany({
     where: { orgId: org.id },
     orderBy: { createdAt: "desc" },
-    select: { id: true, name: true, prefix: true, scopes: true, createdAt: true, lastUsedAt: true, revokedAt: true },
+    select: {
+      id: true, name: true, prefix: true, scopes: true,
+      createdAt: true, lastUsedAt: true, revokedAt: true,
+      // Sprint 15
+      expiresAt: true, lastUsedIp: true,
+    },
   });
   const serialized = keys.map((k) => ({
     ...k,
     createdAt: k.createdAt.toISOString(),
     lastUsedAt: k.lastUsedAt ? k.lastUsedAt.toISOString() : null,
     revokedAt: k.revokedAt ? k.revokedAt.toISOString() : null,
+    expiresAt: k.expiresAt ? k.expiresAt.toISOString() : null,
   }));
+  // Plan del org para mostrar quotas en UI.
+  const orgFull = await orm.org.findUnique({ where: { id: org.id }, select: { plan: true } });
+  const plan = orgFull?.plan || "FREE";
   return (
     <article style={{
       maxWidth: 960,
@@ -50,7 +59,7 @@ export default async function ApiKeys() {
       }}>
         Autentica integraciones server-to-server con Bearer tokens. Cada clave tiene scopes y un prefijo trazable.
       </p>
-      <ApiKeysClient initial={serialized} />
+      <ApiKeysClient initial={serialized} plan={plan} />
     </article>
   );
 }

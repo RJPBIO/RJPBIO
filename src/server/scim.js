@@ -1,8 +1,8 @@
-/* Helpers SCIM 2.0 */
+/* Helpers SCIM 2.0. Sprint 15 — auth delega en verifyApiKeyDetailed
+   (centraliza Bearer parse + timing-safe hash + expiry check + lastUsedIp). */
 import "server-only";
 import { NextResponse } from "next/server";
-import { createHash, timingSafeEqual } from "node:crypto";
-import { db } from "./db";
+import { verifyApiKeyDetailed } from "./apikey";
 
 export function scimError(status, detail) {
   return NextResponse.json({
@@ -11,24 +11,15 @@ export function scimError(status, detail) {
   }, { status });
 }
 
-function hashToken(t) {
-  return createHash("sha256").update(t).digest("hex");
-}
-
 export async function requireScimAuth(req) {
   const h = req.headers.get("authorization");
   if (!h?.startsWith("Bearer ")) return { error: scimError(401, "Bearer required") };
-  const token = h.slice(7);
-  const prefix = token.slice(0, 8);
-  const orm = await db();
-  const key = await orm.apiKey.findFirst({ where: { prefix, revokedAt: null } });
-  if (!key) return { error: scimError(401, "invalid token") };
-  const expected = Buffer.from(key.hash, "hex");
-  const got = Buffer.from(hashToken(token), "hex");
-  if (expected.length !== got.length || !timingSafeEqual(expected, got)) return { error: scimError(401, "invalid token") };
-  if (!key.scopes.includes("scim")) return { error: scimError(403, "scope required: scim") };
-  await orm.apiKey.update({ where: { id: key.id }, data: { lastUsedAt: new Date() } }).catch(() => {});
-  return { orgId: key.orgId, keyId: key.id };
+  const result = await verifyApiKeyDetailed(req);
+  if (!result) return { error: scimError(401, "invalid or expired token") };
+  if (!result.scopes.includes("scim")) {
+    return { error: scimError(403, "scope required: scim") };
+  }
+  return { orgId: result.orgId, keyId: result.keyId, plan: result.plan };
 }
 
 export function toScimUser(u) {

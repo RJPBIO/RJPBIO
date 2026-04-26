@@ -430,10 +430,14 @@ model ApiKey {
   prefix     String
   scopes     String[]
   lastUsedAt DateTime?
+  // Sprint 15 — lifecycle.
+  lastUsedIp String?
+  expiresAt  DateTime?
   createdAt  DateTime  @default(now())
   revokedAt  DateTime?
   org        Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   @@index([orgId])
+  @@index([expiresAt])
 }
 
 // ─── Integrations (Slack, Teams, etc.) ──────────────────
