@@ -355,6 +355,49 @@ enum Region {
   LATAM
 }
 
+// Sprint 19 — Incident management (public status page + RSS).
+enum IncidentStatus {
+  investigating
+  identified
+  monitoring
+  resolved
+}
+
+enum IncidentSeverity {
+  minor
+  major
+  critical
+}
+
+model Incident {
+  id          String           @id @default(cuid())
+  title       String
+  body        String?
+  status      IncidentStatus   @default(investigating)
+  severity    IncidentSeverity
+  components  String[]         @default([])
+  creatorId   String?
+  startedAt   DateTime         @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  updates     IncidentUpdate[]
+  @@index([status, severity])
+  @@index([resolvedAt])
+  @@index([startedAt])
+}
+
+model IncidentUpdate {
+  id          String           @id @default(cuid())
+  incidentId  String
+  status      IncidentStatus
+  body        String
+  authorId    String?
+  createdAt   DateTime         @default(now())
+  incident    Incident         @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  @@index([incidentId])
+}
+
 // Sprint 13 — DSAR (GDPR Art. 15 / 17 / 20)
 enum DsarKind {
   ACCESS
