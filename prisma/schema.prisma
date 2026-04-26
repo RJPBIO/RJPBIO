@@ -32,6 +32,11 @@ model Org {
   graceUntil     DateTime?     // after sub cancel/payment_failed, keep data until
   trialEndsAt    DateTime?
   personal       Boolean       @default(false)  // auto-creado al signup, no invitable
+  // Security policies (Sprint 7) — enforcement en middleware + auth callbacks.
+  requireMfa           Boolean       @default(false)
+  sessionMaxAgeMinutes Int?           // null = usar default global de NextAuth (8h)
+  ipAllowlist          String[]      @default([])     // CIDR IPv4 (e.g. "10.0.0.0/8")
+  ipAllowlistEnabled   Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   memberships    Membership[]

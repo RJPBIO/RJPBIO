@@ -175,13 +175,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         .catch(() => {});
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       // Al signin, persistir id/locale/timezone en el token JWT para que
       // session() los pueda leer sin DB.
       if (user) {
         token.sub = user.id;
         token.locale = user.locale;
         token.timezone = user.timezone;
+      }
+      // Embed org security policies en el token para que el middleware
+      // (edge) los pueda leer vía getToken sin tocar DB.
+      // Refresh: al signin (user presente) o cuando el cliente fuerza
+      // un update via session().update(). Stale-OK por hasta 8h (TTL JWT)
+      // — cambios de policy se aplican al siguiente refresh natural.
+      if (user || trigger === "update") {
+        try {
+          const orm = await db();
+          const userId = token.sub || user?.id;
+          if (userId) {
+            const memberships = await orm.membership.findMany({
+              where: { userId },
+              select: { orgId: true, org: {
+                select: {
+                  requireMfa: true,
+                  sessionMaxAgeMinutes: true,
+                  ipAllowlist: true,
+                  ipAllowlistEnabled: true,
+                },
+              }},
+            });
+            token.securityPolicies = memberships.map((m) => ({
+              orgId: m.orgId,
+              requireMfa: !!m.org?.requireMfa,
+              sessionMaxAgeMinutes: m.org?.sessionMaxAgeMinutes ?? null,
+              ipAllowlist: m.org?.ipAllowlist || [],
+              ipAllowlistEnabled: !!m.org?.ipAllowlistEnabled,
+            }));
+          }
+        } catch {
+          // DB sin disponibilidad — no bloquear signin, dejar policies vacío.
+          token.securityPolicies = token.securityPolicies || [];
+        }
       }
       return token;
     },
@@ -206,6 +240,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       } else {
         session.memberships = [];
       }
+      // Expose security policies (embebidas en el JWT) para que el cliente
+      // pueda mostrar banners (e.g. "este org requiere MFA"). Backend
+      // sigue siendo source-of-truth — no confiar en este campo para gating.
+      session.securityPolicies = Array.isArray(token?.securityPolicies)
+        ? token.securityPolicies
+        : [];
       return session;
     },
   },
