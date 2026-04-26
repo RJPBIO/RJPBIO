@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 import { issueToken, verifyToken, CSRF } from "@/server/csrf";
+import { effectivePolicy, ipPassesAllChecks } from "@/lib/org-security";
 
 /* ═══════════════════════════════════════════════════════════════
    BIO-IGNICIÓN — Edge Middleware
@@ -137,6 +139,39 @@ export async function middleware(request) {
     if (!hasSession && !bearerAllowed) {
       if (path.startsWith("/api/")) return new NextResponse("Unauthorized", { status: 401 });
       return NextResponse.redirect(new URL(`/signin?next=${encodeURIComponent(path)}`, request.url));
+    }
+
+    // Enforce IP allowlist — si el JWT trae securityPolicies con allowlists
+    // activas, la IP del request debe pasar TODAS (most-restrictive-wins).
+    // Bearer/API keys: skip — los handlers validan API keys con su propio
+    // contexto y no traen JWT con policies. Si quieres allowlist sobre
+    // API keys, se hace en el handler con auth() del actor.
+    if (hasSession && process.env.AUTH_SECRET) {
+      try {
+        const token = await getToken({
+          req: request,
+          secret: process.env.AUTH_SECRET,
+          // NextAuth v5 usa "authjs.session-token" / "__Secure-authjs.session-token";
+          // getToken auto-detecta secure prefix.
+        });
+        const policies = Array.isArray(token?.securityPolicies) ? token.securityPolicies : [];
+        if (policies.length) {
+          const eff = effectivePolicy(policies);
+          if (eff.ipChecks.length && !ipPassesAllChecks(ip, eff.ipChecks)) {
+            if (path.startsWith("/api/")) {
+              return Response.json({ error: "ip_not_allowed", ip }, { status: 403 });
+            }
+            return new NextResponse(
+              "Tu dirección IP no está autorizada para acceder a este organización.\n" +
+              "Contacta al OWNER para añadir tu IP al allowlist.",
+              { status: 403, headers: { "content-type": "text/plain; charset=utf-8" } }
+            );
+          }
+        }
+      } catch {
+        // Token decode falla → tratamos como sin policies (fail-open en
+        // este path; la auth real se valida en el handler vía auth()).
+      }
     }
   }
 

@@ -16,7 +16,9 @@ const GROUPS = [
     { href: "/admin/onboarding", label: "Onboarding" },
   ]},
   { label: "Seguridad", items: [
+    { href: "/admin/security/policies", label: "Políticas" },
     { href: "/admin/security", label: "Reset de MFA" },
+    { href: "/admin/sso", label: "SSO" },
     { href: "/admin/audit", label: "Auditoría" },
     { href: "/admin/api-keys", label: "API Keys" },
     { href: "/admin/integrations", label: "Integraciones" },
