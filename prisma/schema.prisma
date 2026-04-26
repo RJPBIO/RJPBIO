@@ -37,6 +37,8 @@ model Org {
   sessionMaxAgeMinutes Int?           // null = usar default global de NextAuth (8h)
   ipAllowlist          String[]      @default([])     // CIDR IPv4 (e.g. "10.0.0.0/8")
   ipAllowlistEnabled   Boolean       @default(false)
+  // Sprint 10 — audit log retention policy (días). 30..2555.
+  auditRetentionDays   Int           @default(365)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   memberships    Membership[]

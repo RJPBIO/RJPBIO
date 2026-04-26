@@ -59,3 +59,57 @@ export async function verifyChain(orgId) {
   }
   return { ok: true, entries: rows.length };
 }
+
+/**
+ * Sprint 10 — Sweeper de retención. Borra logs cuyo ts < cutoff.
+ * Borrar logs antiguos dentro de la política es legítimo. La cadena
+ * hash sigue verificable para los logs restantes (chain advances
+ * naturally desde el primer log no borrado).
+ *
+ * @param {string} orgId
+ * @param {number} retentionDays — debe estar pre-validado (30..2555)
+ * @returns {Promise<number>} count borrado
+ */
+export async function pruneByRetention(orgId, retentionDays) {
+  if (!orgId || !Number.isInteger(retentionDays)) return 0;
+  try {
+    const cutoff = new Date(Date.now() - retentionDays * 86400_000);
+    const orm = await db();
+    const r = await orm.auditLog.deleteMany({
+      where: { orgId, ts: { lt: cutoff } },
+    });
+    return r?.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Sprint 10 — Lee logs para export. Filtra por rango opcional.
+ * Hard-cap en 50k rows para evitar OOM en orgs grandes.
+ *
+ * @param {object} args
+ * @param {string} args.orgId
+ * @param {Date|null} [args.from]
+ * @param {Date|null} [args.to]
+ * @param {number} [args.limit=50000]
+ */
+export async function readAuditLogsForExport({ orgId, from, to, limit = 50_000 }) {
+  if (!orgId) return [];
+  try {
+    const orm = await db();
+    const where = { orgId };
+    if (from || to) {
+      where.ts = {};
+      if (from) where.ts.gte = from;
+      if (to) where.ts.lte = to;
+    }
+    return await orm.auditLog.findMany({
+      where,
+      orderBy: { ts: "asc" },
+      take: Math.min(Math.max(1, limit), 50_000),
+    });
+  } catch {
+    return [];
+  }
+}
