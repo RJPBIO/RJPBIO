@@ -4,13 +4,10 @@ import crypto from "node:crypto";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { sendInvite } from "@/server/email";
-
-const EXP_DAYS = 7;
-const MAX_BATCH = 200;
-
-function isValidEmail(e) {
-  return typeof e === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
+import {
+  isValidRole, filterInviteCandidates, defaultExpiry,
+  MAX_INVITE_BATCH,
+} from "@/lib/invitation";
 
 export async function POST(request) {
   const session = await auth();
@@ -24,35 +21,41 @@ export async function POST(request) {
   if (!member || !["OWNER", "ADMIN"].includes(member.role)) {
     return new Response("forbidden", { status: 403 });
   }
-  if (!["OWNER", "ADMIN", "MANAGER", "MEMBER", "VIEWER"].includes(role)) {
-    return new Response("invalid role", { status: 400 });
-  }
-  if (emails.length > MAX_BATCH) return new Response("too many", { status: 413 });
-
-  const uniq = Array.from(new Set(emails.map((e) => String(e || "").trim().toLowerCase()).filter(isValidEmail)));
-  if (!uniq.length) return Response.json({ invited: 0, skipped: emails.length });
+  if (!isValidRole(role)) return new Response("invalid role", { status: 400 });
+  if (emails.length > MAX_INVITE_BATCH) return new Response("too many", { status: 413 });
 
   const orm = await db();
-  const existing = await orm.invitation.findMany({
-    where: { orgId, email: { in: uniq }, acceptedAt: null },
-  });
-  const pending = new Set(existing.map((i) => i.email));
-  const memberRows = await orm.membership.findMany({ where: { orgId } });
+  // Recolectar pending invites + emails de members existentes
+  // antes de filtrar candidatos. Ambos sets se usan para skip.
+  const lowerEmails = emails.map((e) => String(e || "").trim().toLowerCase()).filter(Boolean);
+  const [pendingInvites, memberRows, org] = await Promise.all([
+    orm.invitation.findMany({
+      where: { orgId, email: { in: lowerEmails }, acceptedAt: null },
+    }),
+    orm.membership.findMany({ where: { orgId } }),
+    orm.org.findUnique({ where: { id: orgId } }),
+  ]);
   const memberUserIds = memberRows.map((m) => m.userId);
   const existingUsers = memberUserIds.length
     ? await orm.user.findMany({ where: { id: { in: memberUserIds } } })
     : [];
-  const alreadyMembers = new Set(existingUsers.map((u) => (u.email || "").toLowerCase()));
 
-  const org = await orm.org.findUnique({ where: { id: orgId } });
+  const { eligible, skipped } = filterInviteCandidates(emails, {
+    pendingEmails: pendingInvites.map((i) => i.email),
+    memberEmails: existingUsers.map((u) => u.email || ""),
+  });
+
+  if (!eligible.length) {
+    return Response.json({ invited: 0, skipped, rejected: 0 });
+  }
+
   const orgName = org?.name || "tu equipo";
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const inviterName = session.user.name || session.user.email;
+  const expiresAt = defaultExpiry();
 
-  const expiresAt = new Date(Date.now() + EXP_DAYS * 86400000);
   let invited = 0;
-  for (const email of uniq) {
-    if (pending.has(email) || alreadyMembers.has(email)) continue;
+  for (const email of eligible) {
     try {
       const token = crypto.randomBytes(32).toString("base64url");
       await orm.invitation.create({ data: { orgId, email, role, token, expiresAt } });
@@ -71,7 +74,7 @@ export async function POST(request) {
   }
   return Response.json({
     invited,
-    skipped: uniq.length - invited,
-    rejected: emails.length - uniq.length,
+    skipped,
+    failed: eligible.length - invited,
   });
 }

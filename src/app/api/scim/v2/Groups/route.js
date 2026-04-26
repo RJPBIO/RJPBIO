@@ -20,7 +20,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const startIndex = Math.max(1, Number(searchParams.get("startIndex") || 1));
   const count = Math.min(100, Number(searchParams.get("count") || 25));
-  const client = db();
+  const client = await db();
   const teams = await client.team.findMany({ where: { orgId: auth.orgId }, skip: startIndex - 1, take: count });
   const total = await client.team.count({ where: { orgId: auth.orgId } });
   const Resources = await Promise.all(teams.map(async (t) => {
@@ -37,7 +37,7 @@ export async function POST(request) {
   const auth = await requireScimAuth(request);
   if (auth instanceof Response) return auth;
   const body = await request.json();
-  const client = db();
+  const client = await db();
   const team = await client.team.create({
     data: { id: randomUUID(), orgId: auth.orgId, name: body.displayName || "Unnamed" },
   });

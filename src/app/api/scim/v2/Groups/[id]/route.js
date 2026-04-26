@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
   const auth = await requireScimAuth(request);
   if (auth instanceof Response) return auth;
   const { id } = await params;
-  const client = db();
+  const client = await db();
   const team = await client.team.findUnique({ where: { id } });
   if (!team || team.orgId !== auth.orgId) return new Response("not found", { status: 404 });
   const members = await client.membership.findMany({ where: { orgId: auth.orgId, teamId: id } });
@@ -24,7 +24,7 @@ export async function PATCH(request, { params }) {
   if (auth instanceof Response) return auth;
   const { id } = await params;
   const body = await request.json();
-  const client = db();
+  const client = await db();
   for (const op of body.Operations || []) {
     if (op.op?.toLowerCase() === "add" && op.path === "members") {
       for (const m of op.value || []) {
@@ -45,7 +45,7 @@ export async function DELETE(request, { params }) {
   const auth = await requireScimAuth(request);
   if (auth instanceof Response) return auth;
   const { id } = await params;
-  const client = db();
+  const client = await db();
   await client.team.delete({ where: { id } }).catch(() => {});
   return new Response(null, { status: 204 });
 }

@@ -6,7 +6,7 @@ export async function GET() {
   const checks = { db: "skip", time: new Date().toISOString() };
   let status = 200;
   try {
-    const client = db();
+    const client = await db();
     if (client?.$queryRaw) {
       await client.$queryRaw`SELECT 1`;
       checks.db = "ok";
