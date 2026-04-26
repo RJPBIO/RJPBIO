@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/components/ui/Toast";
 import { DataTable } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
@@ -8,6 +8,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { Alert } from "@/components/ui/Alert";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+// Sprint 29 — delivery search v2 (operadores Stripe-style + chips)
+import {
+  parseDeliveryQuery, matchesDeliveryQuery, statusTone, summarizeDeliveries,
+  DELIVERY_SEARCH_HINT_ES,
+} from "@/lib/webhook-delivery-search";
 
 const ALL_EVENTS = [
   "session.completed", "session.started",
@@ -60,6 +65,8 @@ function DeliveriesDialog({ hookId, onClose }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(null);
+  // Sprint 29 — search v2 con operadores
+  const [q, setQ] = useState("");
 
   async function load() {
     setLoading(true);
@@ -87,20 +94,35 @@ function DeliveriesDialog({ hookId, onClose }) {
     finally { setRetrying(null); }
   }
 
+  // Sprint 29 — parsed query + filtered rows + summary chips
+  const parsed = useMemo(() => parseDeliveryQuery(q), [q]);
+  const filtered = useMemo(
+    () => rows.filter((d) => matchesDeliveryQuery(d, parsed)),
+    [rows, parsed]
+  );
+  const summary = useMemo(() => summarizeDeliveries(rows), [rows]);
+
+  const TONE_VARIANT = {
+    success: "success", warn: "warn", danger: "danger", soft: "soft", neutral: "neutral",
+  };
+
   const columns = [
     { key: "event", label: "Evento", render: (d) => <code style={{ fontFamily: cssVar.fontMono, color: cssVar.accent, fontSize: font.size.sm }}>{d.event}</code> },
     {
-      key: "status", label: "Status", width: 90,
+      key: "status", label: "Status", width: 100,
       render: (d) => {
-        if (!d.status) return <Badge variant="soft" size="sm">—</Badge>;
-        const ok = d.status >= 200 && d.status < 300;
-        return <Badge variant={ok ? "success" : "danger"} size="sm">{d.status}</Badge>;
+        const tone = statusTone(d);
+        return (
+          <Badge variant={TONE_VARIANT[tone] || "soft"} size="sm">
+            {d.status ?? (d.error ? "ERR" : "—")}
+          </Badge>
+        );
       },
     },
     { key: "attempts", label: "Intentos", width: 80, render: (d) => <span style={{ fontFamily: cssVar.fontMono }}>{d.attempts}</span> },
     { key: "createdAt", label: "Creado", render: (d) => new Date(d.createdAt).toLocaleString() },
     { key: "deliveredAt", label: "Entregado", render: (d) => d.deliveredAt ? new Date(d.deliveredAt).toLocaleString() : "—" },
-    { key: "error", label: "Error", render: (d) => d.error ? <span title={d.error} style={{ color: cssVar.danger, maxWidth: 220, display: "inline-block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.error.slice(0, 60)}</span> : "" },
+    { key: "error", label: "Error", render: (d) => d.error ? <span title={d.error} style={{ color: "var(--bi-danger)", maxWidth: 220, display: "inline-block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.error.slice(0, 60)}</span> : "" },
     {
       key: "__actions", label: "", align: "right", width: 120,
       render: (d) => !d.deliveredAt && (
@@ -130,18 +152,77 @@ function DeliveriesDialog({ hookId, onClose }) {
         </>
       }
     >
+      {/* Sprint 29 — toolbar con search + chips quick-filter */}
+      <div style={{ display: "flex", gap: space[2], flexWrap: "wrap", marginBottom: space[3], alignItems: "center" }}>
+        <Input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={DELIVERY_SEARCH_HINT_ES}
+          style={{ flex: "1 1 280px", minWidth: 240 }}
+        />
+        <button
+          type="button"
+          onClick={() => setQ("has:failed")}
+          style={chipBtn(q === "has:failed", "danger")}
+        >
+          Solo fallos · {summary.failed}
+        </button>
+        <button
+          type="button"
+          onClick={() => setQ("has:delivered")}
+          style={chipBtn(q === "has:delivered", "success")}
+        >
+          Entregados · {summary.delivered}
+        </button>
+        {summary.pending > 0 && (
+          <button
+            type="button"
+            onClick={() => setQ("attempts:>1 has:failed")}
+            style={chipBtn(q === "attempts:>1 has:failed", "warn")}
+          >
+            Reintentando · {summary.pending}
+          </button>
+        )}
+        {q && (
+          <Button variant="ghost" size="sm" onClick={() => setQ("")}>Limpiar</Button>
+        )}
+      </div>
+      <p style={{ margin: 0, marginBottom: space[2], fontSize: font.size.xs, color: cssVar.textMuted }}>
+        Mostrando {filtered.length} de {rows.length} entregas
+        {parsed.text || Object.keys(parsed.operators).length > 0 ? " (filtradas)" : ""}
+      </p>
       <DataTable
         columns={columns}
-        rows={rows}
+        rows={filtered}
         loading={loading}
         skeletonRows={4}
         getKey={(d) => d.id}
         dense
-        emptyTitle="Sin entregas aún"
-        emptyDescription='Prueba con "Test ping" para generar una.'
+        emptyTitle={q ? "Sin coincidencias" : "Sin entregas aún"}
+        emptyDescription={q ? "Ajusta los filtros o limpia la búsqueda." : 'Prueba con "Test ping" para generar una.'}
       />
     </Dialog>
   );
+}
+
+function chipBtn(active, accent) {
+  const colors = {
+    success: { active: "#10B981", border: "#10B98155" },
+    warn:    { active: "#F59E0B", border: "#F59E0B55" },
+    danger:  { active: "#EF4444", border: "#EF444455" },
+  };
+  const c = colors[accent] || colors.warn;
+  return {
+    padding: `4px 10px`,
+    borderRadius: 999,
+    fontSize: 12,
+    border: `1px solid ${active ? c.active : c.border}`,
+    background: active ? c.active : "transparent",
+    color: active ? "#fff" : "var(--bi-text)",
+    cursor: "pointer",
+    fontWeight: 600,
+  };
 }
 
 function isValidHttpsUrl(u) {
