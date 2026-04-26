@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+import { AUDIT_CATEGORIES, isInCategory, countByCategory } from "@/lib/audit-categories";
 
 const PAGE = 50;
 
@@ -36,18 +37,21 @@ function fmtDate(d) {
 export default function AuditClient({ rows, chain }) {
   const [q, setQ] = useState("");
   const [action, setAction] = useState("");
+  const [category, setCategory] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState(null);
 
   const actions = useMemo(() => Array.from(new Set(rows.map((r) => r.action))).sort(), [rows]);
+  const categoryCounts = useMemo(() => countByCategory(rows), [rows]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const fromTs = fromDate ? new Date(fromDate + "T00:00:00").getTime() : null;
     const toTs   = toDate   ? new Date(toDate   + "T23:59:59.999").getTime() : null;
     return rows.filter((r) => {
+      if (category && !isInCategory(r.action, category)) return false;
       if (action && r.action !== action) return false;
       const ts = new Date(r.ts).getTime();
       if (fromTs !== null && ts < fromTs) return false;
@@ -56,10 +60,10 @@ export default function AuditClient({ rows, chain }) {
       const hay = `${r.actorEmail || ""} ${r.actorId || ""} ${r.action} ${r.target || ""} ${r.ip || ""}`.toLowerCase();
       return hay.includes(needle);
     });
-  }, [rows, q, action, fromDate, toDate]);
+  }, [rows, q, action, category, fromDate, toDate]);
 
-  const hasFilters = Boolean(q || action || fromDate || toDate);
-  const clearFilters = () => { setQ(""); setAction(""); setFromDate(""); setToDate(""); setPage(0); };
+  const hasFilters = Boolean(q || action || category || fromDate || toDate);
+  const clearFilters = () => { setQ(""); setAction(""); setCategory(""); setFromDate(""); setToDate(""); setPage(0); };
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const slice = filtered.slice(page * PAGE, page * PAGE + PAGE);
@@ -92,6 +96,54 @@ export default function AuditClient({ rows, chain }) {
           <Button onClick={() => download(`audit-${fmtDate(new Date())}.json`, JSON.stringify(filtered, null, 2), "application/json")} variant="secondary" size="sm" disabled={filtered.length === 0}>Exportar JSON</Button>
         </div>
       </header>
+
+      {/* Quickfilter chips por categoría — un click filtra todos los
+          eventos de auth/billing/sso/etc. Visualmente prominente arriba
+          del toolbar de búsqueda. Compliance officers + auditors STPS
+          pueden navegar el log por workflow sin teclear regex. */}
+      <div
+        role="toolbar"
+        aria-label="Filtros rápidos por categoría"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: space[2],
+          marginBlockEnd: space[3],
+          paddingBlock: space[2],
+          borderBlockStart: `1px dashed ${cssVar.border}`,
+          borderBlockEnd: `1px dashed ${cssVar.border}`,
+        }}
+      >
+        <CategoryChip
+          id=""
+          label="Todas"
+          count={rows.length}
+          active={category === ""}
+          onClick={() => { setCategory(""); setPage(0); }}
+        />
+        {AUDIT_CATEGORIES.map((cat) => (
+          <CategoryChip
+            key={cat.id}
+            id={cat.id}
+            label={cat.label}
+            count={categoryCounts[cat.id] || 0}
+            active={category === cat.id}
+            onClick={() => { setCategory(category === cat.id ? "" : cat.id); setPage(0); }}
+            title={cat.description}
+          />
+        ))}
+        {(categoryCounts.other || 0) > 0 && (
+          <CategoryChip
+            id="other"
+            label="Otros"
+            count={categoryCounts.other || 0}
+            active={false}
+            onClick={() => { setCategory(""); setPage(0); }}
+            title="Eventos sin categoría conocida"
+            disabled
+          />
+        )}
+      </div>
 
       <TableToolbar>
         <div style={{ flex: "1 1 240px", minWidth: 200 }}>
@@ -171,6 +223,53 @@ export default function AuditClient({ rows, chain }) {
         )}
       </Dialog>
     </>
+  );
+}
+
+/* Chip pill — pressed state para feedback visual del filtro activo.
+   Disabled para "Otros" (informational, no clickable). */
+function CategoryChip({ label, count, active, onClick, title, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      title={title}
+      aria-pressed={active}
+      disabled={disabled}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        paddingBlock: 6,
+        paddingInline: 12,
+        borderRadius: 99,
+        background: active ? cssVar.accent : cssVar.surface,
+        color: active ? cssVar.accentInk : disabled ? cssVar.textDim : cssVar.text,
+        border: `1px solid ${active ? cssVar.accent : cssVar.border}`,
+        fontSize: font.size.xs,
+        fontWeight: active ? font.weight.bold : font.weight.semibold,
+        letterSpacing: 0.3,
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+        textTransform: "uppercase",
+        transition: "all .15s ease",
+      }}
+    >
+      {label}
+      <span
+        aria-hidden="true"
+        style={{
+          fontFamily: cssVar.fontMono,
+          fontWeight: font.weight.bold,
+          fontVariantNumeric: "tabular-nums",
+          letterSpacing: 0,
+          fontSize: 10,
+          opacity: 0.85,
+        }}
+      >
+        {count}
+      </span>
+    </button>
   );
 }
 
