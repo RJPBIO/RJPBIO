@@ -54,17 +54,31 @@ export default async function Nom35AdminPage() {
             Agregado anónimo (últimos 12 meses). Muestras menores a 5 se suprimen por privacidad.
           </p>
         </div>
-        <Link
-          href="/admin/nom35/documento"
-          style={{
-            padding: `${space[2]}px ${space[4]}px`, borderRadius: radius.md,
-            background: cssVar.accent, color: cssVar.accentInk,
-            textDecoration: "none", fontWeight: font.weight.bold,
-            fontSize: font.size.sm,
-          }}
-        >
-          Generar documento oficial →
-        </Link>
+        <div style={{ display: "flex", gap: space[2], flexWrap: "wrap" }}>
+          <Link
+            href="/api/v1/nom35/aggregate/export"
+            style={{
+              padding: `${space[2]}px ${space[4]}px`, borderRadius: radius.md,
+              background: cssVar.surface, color: cssVar.text,
+              border: `1px solid ${cssVar.border}`,
+              textDecoration: "none", fontWeight: font.weight.semibold,
+              fontSize: font.size.sm,
+            }}
+          >
+            Descargar CSV
+          </Link>
+          <Link
+            href="/admin/nom35/documento"
+            style={{
+              padding: `${space[2]}px ${space[4]}px`, borderRadius: radius.md,
+              background: cssVar.accent, color: cssVar.accentInk,
+              textDecoration: "none", fontWeight: font.weight.bold,
+              fontSize: font.size.sm,
+            }}
+          >
+            Generar documento oficial →
+          </Link>
+        </div>
       </header>
 
       <section style={grid}>
