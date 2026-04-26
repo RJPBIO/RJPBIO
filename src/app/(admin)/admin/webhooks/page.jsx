@@ -12,15 +12,29 @@ export default async function Webhooks() {
   if (!session?.user) return null;
   const org = await resolveOrg();
   if (!org) return null;
-  const hooks = await db().webhook.findMany({
+
+  // BUG FIX — db() es async; antes db().webhook era undefined → page rompía
+  // silenciosamente. Mismo patrón que se ha visto en otras pages a lo largo
+  // de los sprints (api-keys Sprint 5, etc).
+  const orm = await db();
+  const hooks = await orm.webhook.findMany({
     where: { orgId: org.id },
     orderBy: { createdAt: "desc" },
-    select: { id: true, url: true, events: true, active: true, secret: true, createdAt: true },
+    select: {
+      id: true, url: true, events: true, active: true,
+      secret: true, createdAt: true,
+      // Sprint 17 — campos de rotation
+      prevSecret: true, prevSecretExpiresAt: true, secretRotatedAt: true,
+    },
   });
   const initial = hooks.map((h) => ({
     id: h.id, url: h.url, events: h.events, active: h.active,
     secretTail: (h.secret || "").slice(-4),
     createdAt: h.createdAt.toISOString(),
+    // Boolean flag — no exponemos prevSecret en el client (sólo si existe).
+    hasPrevSecret: !!h.prevSecret,
+    prevSecretExpiresAt: h.prevSecretExpiresAt ? h.prevSecretExpiresAt.toISOString() : null,
+    secretRotatedAt: h.secretRotatedAt ? h.secretRotatedAt.toISOString() : null,
   }));
   return (
     <article style={{
@@ -44,6 +58,7 @@ export default async function Webhooks() {
         fontSize: font.size.sm,
       }}>
         Recibe eventos firmados (HMAC-SHA256, Standard Webhooks). Hasta 8 reintentos con backoff exponencial.
+        Rotación de secrets con overlap (zero-downtime).
       </p>
       <WebhooksClient initial={initial} />
     </article>

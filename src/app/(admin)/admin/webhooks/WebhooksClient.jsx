@@ -207,17 +207,33 @@ export default function WebhooksClient({ initial }) {
   }
 
   async function rotate(h) {
-    if (!confirm(`Rotar secret de ${h.url}? La firma vieja deja de validar.`)) return;
+    // Sprint 17 — rotation con overlap. Default 7d; admin puede override.
+    const overlapStr = prompt(
+      `Rotar secret de ${h.url}\n\n` +
+      `Días de overlap (1-30, default 7): durante ese tiempo se firma con\n` +
+      `AMBOS secrets para que actualices integraciones sin downtime.`,
+      "7"
+    );
+    if (overlapStr === null) return; // cancelado
+    const overlapDays = parseInt(overlapStr, 10) || 7;
     setRowBusy(`${h.id}:rotate`);
     try {
       const r = await fetch(`/api/v1/webhooks/${h.id}?action=rotate`, {
         method: "POST",
-        headers: { "x-csrf-token": csrfHeader() },
+        headers: { "x-csrf-token": csrfHeader(), "content-type": "application/json" },
+        body: JSON.stringify({ overlapDays }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Error");
       setRevealed(j.secret);
-      setHooks((s) => s.map((x) => x.id === h.id ? { ...x, secretTail: j.secret.slice(-4) } : x));
+      setHooks((s) => s.map((x) => x.id === h.id ? {
+        ...x,
+        secretTail: j.secret.slice(-4),
+        hasPrevSecret: true,
+        prevSecretExpiresAt: j.prevSecretExpiresAt,
+        secretRotatedAt: new Date().toISOString(),
+      } : x));
+      toast.success(j.message || "Secret rotado");
     } catch (err) { toast.error(err.message); }
     finally { setRowBusy(null); }
   }
@@ -335,6 +351,14 @@ export default function WebhooksClient({ initial }) {
                 <div style={{ marginTop: space[2], display: "flex", flexWrap: "wrap", gap: space[1] }}>
                   {(h.events || []).map((e) => <Badge key={e} variant="soft" size="sm">{e}</Badge>)}
                   <Badge variant="neutral" size="sm">secret …{h.secretTail}</Badge>
+                  {h.hasPrevSecret && h.prevSecretExpiresAt && (() => {
+                    const days = Math.max(0, Math.ceil((new Date(h.prevSecretExpiresAt).getTime() - Date.now()) / 86400_000));
+                    return days > 0 ? (
+                      <Badge variant="warn" size="sm" title={`Secret anterior expira el ${new Date(h.prevSecretExpiresAt).toLocaleString()}`}>
+                        Rotando · {days}d
+                      </Badge>
+                    ) : null;
+                  })()}
                 </div>
                 <div style={{ marginTop: space[3], display: "flex", gap: space[1], flexWrap: "wrap" }}>
                   <Button size="sm" variant="ghost" onClick={() => toggle(h)}   loading={busyKey === "toggle"} disabled={otherBusy("toggle")}>{h.active ? "Pausar" : "Reactivar"}</Button>

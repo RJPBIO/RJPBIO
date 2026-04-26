@@ -2,6 +2,7 @@
    Webhooks — HMAC-SHA256 signing, retries con backoff exponencial.
    Compatible con Standard Webhooks (standardwebhooks.com).
    Signing logic extraída a lib/webhook-signing para testing.
+   Sprint 17: secret rotation con overlap (multi-sig en header).
    ═══════════════════════════════════════════════════════════════ */
 
 import "server-only";
@@ -9,11 +10,37 @@ import { randomBytes } from "node:crypto";
 import { db } from "./db";
 import { logger } from "@/lib/logger";
 import { notifyOrgAdmins } from "./notifications";
+import { auditLog } from "./audit";
 import { sign } from "@/lib/webhook-signing";
+import {
+  isOverlapActive,
+  computeOverlapExpiry,
+  buildSignatureHeader,
+} from "@/lib/webhook-rotation";
 
 // Re-export para mantener API pública existente — algunos call sites
 // importan verifyIncomingSignature desde @/server/webhooks histórico.
 export { verifyIncomingSignature } from "@/lib/webhook-signing";
+
+/**
+ * Sprint 17 — sign con prev+current si overlap activo.
+ * Returns string para el header webhook-signature (Standard Webhooks v1
+ * acepta múltiples firmas space-separated).
+ */
+function signForWebhook(webhook, body, ts, id, now = new Date()) {
+  const signatures = [sign(webhook.secret, body, ts, id)];
+  if (isOverlapActive(webhook, now)) {
+    signatures.push(sign(webhook.prevSecret, body, ts, id));
+  }
+  return buildSignatureHeader(signatures);
+}
+
+/**
+ * Genera un nuevo secret webhook (32 bytes random base64).
+ */
+export function generateWebhookSecret() {
+  return randomBytes(32).toString("base64");
+}
 
 export async function dispatchWebhooks(orgId, event, payload) {
   const orm = await db();
@@ -23,13 +50,79 @@ export async function dispatchWebhooks(orgId, event, payload) {
     const id = `msg_${randomBytes(12).toString("base64url")}`;
     const body = JSON.stringify({ id, type: event, timestamp: new Date().toISOString(), data: payload });
     const ts = Math.floor(Date.now() / 1000);
-    const sig = sign(h.secret, body, ts, id);
+    const sig = signForWebhook(h, body, ts, id);
     const delivery = await orm.webhookDelivery.create({
       data: { webhookId: h.id, event, payload, attempts: 0, nextRetry: new Date() },
     });
     sendWithRetry({ id, url: h.url, body, ts, sig, deliveryId: delivery.id }).catch((e) =>
       logger.error("webhook.dispatch", { id, e: String(e) })
     );
+  }
+}
+
+/**
+ * Sprint 17 — rota el secret de un webhook. Setea overlap para que
+ * dispatchWebhooks firme con AMBOS por `overlapDays` (default 7d).
+ * Retorna el nuevo secret (mostrado UNA vez al admin).
+ *
+ * @param {object} args
+ * @param {string} args.webhookId
+ * @param {string} args.actorUserId
+ * @param {string} args.orgId
+ * @param {number} [args.overlapDays] default 7
+ */
+export async function rotateWebhookSecret({ webhookId, actorUserId, orgId, overlapDays = 7 }) {
+  if (!webhookId || !orgId) return { ok: false, error: "bad_input" };
+  try {
+    const orm = await db();
+    const webhook = await orm.webhook.findUnique({ where: { id: webhookId } });
+    if (!webhook) return { ok: false, error: "not_found" };
+    if (webhook.orgId !== orgId) return { ok: false, error: "wrong_org" };
+
+    const newSecret = generateWebhookSecret();
+    const expiry = computeOverlapExpiry(overlapDays);
+    const now = new Date();
+
+    await orm.webhook.update({
+      where: { id: webhookId },
+      data: {
+        prevSecret: webhook.secret,
+        prevSecretExpiresAt: expiry,
+        secret: newSecret,
+        secretRotatedAt: now,
+      },
+    });
+
+    await auditLog({
+      orgId,
+      actorId: actorUserId,
+      action: "webhook.secret.rotated",
+      target: webhookId,
+      payload: { overlapDays, prevSecretExpiresAt: expiry.toISOString() },
+    }).catch(() => {});
+
+    return { ok: true, newSecret, expiresAt: expiry };
+  } catch {
+    return { ok: false, error: "rotate_failed" };
+  }
+}
+
+/**
+ * Cleanup sweep — borra prevSecret tras overlap expirar. Cron-callable.
+ */
+export async function cleanupExpiredOverlaps() {
+  try {
+    const orm = await db();
+    const r = await orm.webhook.updateMany({
+      where: {
+        prevSecretExpiresAt: { lt: new Date() },
+        prevSecret: { not: null },
+      },
+      data: { prevSecret: null, prevSecretExpiresAt: null },
+    });
+    return r?.count ?? 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -97,7 +190,8 @@ export async function retryDelivery(deliveryId) {
   const id = `msg_${randomBytes(12).toString("base64url")}`;
   const body = JSON.stringify({ id, type: d.event, timestamp: new Date().toISOString(), data: d.payload, retry: true });
   const ts = Math.floor(Date.now() / 1000);
-  const sig = sign(d.webhook.secret, body, ts, id);
+  // Sprint 17 — usa multi-sig si overlap activo (consistencia con dispatch).
+  const sig = signForWebhook(d.webhook, body, ts, id);
   await orm.webhookDelivery.update({ where: { id: d.id }, data: { nextRetry: new Date(), error: null } });
   sendWithRetry({ id, url: d.webhook.url, body, ts, sig, deliveryId: d.id }).catch(() => {});
   return true;

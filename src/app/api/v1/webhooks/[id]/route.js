@@ -1,8 +1,9 @@
 /* API v1 — Webhook individual
-   PATCH  /api/v1/webhooks/[id]          toggle active / update events
-   DELETE /api/v1/webhooks/[id]          elimina
-   POST   /api/v1/webhooks/[id]?action=rotate   rota secret
-   POST   /api/v1/webhooks/[id]?action=test     envía evento "ping" */
+   PATCH  /api/v1/webhooks/[id]                       toggle active / update events
+   DELETE /api/v1/webhooks/[id]                       elimina
+   POST   /api/v1/webhooks/[id]?action=rotate         Sprint 17: rota CON overlap (zero-downtime)
+                                                      body: { overlapDays?: number }
+   POST   /api/v1/webhooks/[id]?action=test           envía evento "ping" */
 
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
@@ -10,8 +11,8 @@ import { requireMembership } from "@/server/rbac";
 import { requireCsrf } from "@/server/csrf";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
-import { dispatchWebhooks } from "@/server/webhooks";
-import { randomBytes } from "node:crypto";
+import { dispatchWebhooks, rotateWebhookSecret } from "@/server/webhooks";
+import { validateOverlapDays } from "@/lib/webhook-rotation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,10 +72,28 @@ export async function POST(req, { params }) {
     const { orm, h } = await loadAndAuthorize(id);
 
     if (action === "rotate") {
-      const secret = randomBytes(32).toString("base64");
-      await orm.webhook.update({ where: { id: h.id }, data: { secret } });
-      await auditLog({ orgId: h.orgId, action: "webhook.rotate", target: h.id });
-      return NextResponse.json({ secret, warning: "Actualiza la verificación HMAC en tu receptor." });
+      // Sprint 17 — rotation con overlap (zero-downtime). Body opcional:
+      // { overlapDays: 1..30 } — default 7 días.
+      const body = await req.json().catch(() => ({}));
+      const v = validateOverlapDays(body?.overlapDays ?? null);
+      if (!v.ok) return NextResponse.json({ error: "overlapDays inválido", reason: v.error }, { status: 400 });
+      const session = await auth();
+      const r = await rotateWebhookSecret({
+        webhookId: h.id,
+        orgId: h.orgId,
+        actorUserId: session?.user?.id,
+        overlapDays: v.value,
+      });
+      if (!r.ok) {
+        const status = r.error === "not_found" ? 404 : r.error === "wrong_org" ? 404 : 500;
+        return NextResponse.json({ error: r.error }, { status });
+      }
+      return NextResponse.json({
+        secret: r.newSecret,
+        overlapDays: v.value,
+        prevSecretExpiresAt: r.expiresAt.toISOString(),
+        message: `Secret nuevo activo. El anterior sigue válido por ${v.value} día${v.value !== 1 ? "s" : ""} para que actualices tus integraciones sin downtime.`,
+      });
     }
     if (action === "test") {
       // Usa el pipeline real — crea una WebhookDelivery visible en el log.
