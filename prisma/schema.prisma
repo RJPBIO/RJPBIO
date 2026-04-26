@@ -297,9 +297,10 @@ model StationTap {
 // ─── Billing ─────────────────────────────────────────────
 enum Plan {
   FREE
-  STARTER
-  GROWTH
-  ENTERPRISE
+  PRO         // B2C personal — $9.99/mes, 1 seat
+  STARTER     // B2B mid-market — $X/seat/mes
+  GROWTH      // B2B premium — más features
+  ENTERPRISE  // B2B enterprise — SAML, custom DPA, MSA
 }
 
 enum Region {

@@ -198,7 +198,32 @@ export default function SignUpClient({ locale = "es" }) {
         body: JSON.stringify(payload),
       });
       if (!r.ok) throw new Error((await r.text()) || `HTTP ${r.status}`);
-      location.href = "/verify?email=" + encodeURIComponent(form.email);
+
+      // Disparar magic link inmediatamente con callbackUrl al billing
+      // del plan elegido. Sin esto el user llegaba a /verify y tenía
+      // que clickear "Reenviar" para recibir el primer link — UX rota.
+      // Post-signin → /admin/billing?intent=upgrade&plan=X → checkout
+      // con trial. ENTERPRISE: callback a /admin para sales-led path.
+      try {
+        const csrfRes = await fetch("/api/auth/csrf", { cache: "no-store" });
+        const { csrfToken } = await csrfRes.json();
+        const callbackUrl = form.plan === "ENTERPRISE"
+          ? "/admin"
+          : `/admin/billing?intent=upgrade&plan=${form.plan}`;
+        await fetch("/api/auth/signin/email", {
+          method: "POST",
+          body: new URLSearchParams({
+            email: form.email,
+            csrfToken,
+            callbackUrl,
+          }),
+        });
+      } catch {
+        // Magic link send falló — el user puede usar "Reenviar" en /verify.
+        // No bloqueamos; onboarding ya creó el Org y User.
+      }
+
+      location.href = `/verify?email=${encodeURIComponent(form.email)}&plan=${encodeURIComponent(form.plan)}`;
     } catch (e) {
       setErr(e?.message || T.errGeneric);
     } finally { setBusy(false); }

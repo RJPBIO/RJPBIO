@@ -22,16 +22,31 @@ const PLAN_FEATURES = {
   ENTERPRISE: ["Data residency", "Custom MSA", "DPO dedicado", "99.95% SLA"],
 };
 
-export default async function BillingPage() {
+export default async function BillingPage({ searchParams }) {
   const session = await auth();
-  const orgId = session?.memberships?.find((m) => ["OWNER", "ADMIN"].includes(m.role))?.orgId;
+  // OWNER/ADMIN del primer org NO-personal del user. Personal-org no
+  // viene aquí (su billing se gestiona en /account). Si todos los orgs
+  // del user son personal, no debería estar viendo /admin de B2B.
+  const memberships = session?.memberships || [];
+  const b2bMembership = memberships.find(
+    (m) => ["OWNER", "ADMIN"].includes(m.role) && m.org && !m.org.personal
+  ) || memberships.find((m) => ["OWNER", "ADMIN"].includes(m.role));
+  const orgId = b2bMembership?.orgId;
   if (!orgId) return null;
   const orm = await db();
   const org = await orm.org.findUnique({ where: { id: orgId } });
   if (!org) return null;
 
-  const memberships = await orm.membership.findMany({ where: { orgId } });
-  const seatsUsed = memberships.length;
+  // Onboarding intent — el user vino de /signup?plan=X y queremos
+  // que confirme el checkout. Banner prominente + tier highlighted.
+  const sp = (await searchParams) || {};
+  const intent = sp.intent === "upgrade" ? sp.plan : null;
+  const validIntent = ["STARTER", "GROWTH", "ENTERPRISE"].includes(intent) ? intent : null;
+  const upgradedSucces = sp.upgraded;
+  const cancelled = sp.cancelled === "1";
+
+  const orgMemberships = await orm.membership.findMany({ where: { orgId } });
+  const seatsUsed = orgMemberships.length;
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
   const sessionsThisMonth = await orm.auditLog.count({
     where: { orgId, action: "session.complete", ts: { gte: monthStart } },
@@ -46,6 +61,54 @@ export default async function BillingPage() {
 
   return (
     <>
+      {validIntent && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            marginBlockEnd: space[5],
+            padding: `${space[4]}px ${space[5]}px`,
+            borderRadius: radius.md,
+            border: `1.5px solid ${cssVar.accent}`,
+            background: cssVar.accentSoft,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: space[3],
+          }}
+        >
+          <div style={{ minInlineSize: 0 }}>
+            <div style={{ fontSize: font.size.xs, fontWeight: font.weight.bold, color: cssVar.accent, letterSpacing: font.tracking.caps, textTransform: "uppercase" }}>
+              ÚLTIMO PASO · CONFIRMA
+            </div>
+            <p style={{ margin: `${space[1]}px 0 0`, color: cssVar.text, fontSize: font.size.md, fontWeight: font.weight.semibold }}>
+              {validIntent === "ENTERPRISE"
+                ? "Hablemos — tu plan Enterprise se configura con un MSA dedicado."
+                : `Activa tu plan ${validIntent} — 14 días gratis, cancela cuando quieras.`}
+            </p>
+          </div>
+          {validIntent !== "ENTERPRISE" && (
+            <form action="/api/billing/checkout" method="post">
+              <input type="hidden" name="orgId" value={org.id} />
+              <input type="hidden" name="plan" value={validIntent} />
+              <SubmitButton variant="primary" loadingLabel="Redirigiendo a Stripe…">
+                Activar {validIntent} · gratis 14 días
+              </SubmitButton>
+            </form>
+          )}
+        </div>
+      )}
+      {upgradedSucces && (
+        <div role="status" style={{ marginBlockEnd: space[4], padding: space[3], borderRadius: radius.md, background: "color-mix(in srgb, var(--bi-success) 8%, transparent)", border: `1px solid var(--bi-success)`, color: "var(--bi-success)", fontSize: font.size.sm, fontWeight: font.weight.semibold }}>
+          ✓ Plan {upgradedSucces} activado. Trial corre 14 días.
+        </div>
+      )}
+      {cancelled && (
+        <div role="status" style={{ marginBlockEnd: space[4], padding: space[3], borderRadius: radius.md, background: cssVar.surface2, border: `1px solid ${cssVar.border}`, color: cssVar.textMuted, fontSize: font.size.sm }}>
+          Checkout cancelado. Puedes reintentar cuando quieras.
+        </div>
+      )}
       <header style={{
         display: "flex",
         alignItems: "flex-start",
@@ -121,6 +184,7 @@ export default async function BillingPage() {
             price={PLAN_LIMITS[p].price}
             features={PLAN_FEATURES[p]}
             current={plan === p}
+            highlighted={validIntent === p}
             orgId={org.id}
           />
         ))}
@@ -252,16 +316,23 @@ function UsageCard({ title, used, total, hint, danger }) {
   );
 }
 
-function Tier({ name, price, features, current, plan, orgId }) {
+function Tier({ name, price, features, current, highlighted, plan, orgId }) {
+  // Highlighted: viene del query intent=upgrade. Border accent + scroll
+  // mark para que el user de signup vea su plan destacado.
+  const accentBorder = current || highlighted;
   return (
-    <div style={{
-      padding: space[5],
-      borderRadius: radius.md,
-      border: `2px solid ${current ? cssVar.accent : cssVar.border}`,
-      background: current ? cssVar.accentSoft : cssVar.surface,
-      display: "flex",
-      flexDirection: "column",
-    }}>
+    <div
+      id={highlighted ? `tier-${plan}` : undefined}
+      style={{
+        padding: space[5],
+        borderRadius: radius.md,
+        border: `2px solid ${accentBorder ? cssVar.accent : cssVar.border}`,
+        background: accentBorder ? cssVar.accentSoft : cssVar.surface,
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: highlighted ? `0 0 0 4px color-mix(in srgb, var(--bi-accent) 15%, transparent)` : undefined,
+      }}
+    >
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -278,6 +349,7 @@ function Tier({ name, price, features, current, plan, orgId }) {
           {name}
         </h3>
         {current && <Badge variant="success" size="sm">Actual</Badge>}
+        {!current && highlighted && <Badge variant="accent" size="sm">Elegido</Badge>}
       </div>
       <p style={{
         color: cssVar.textMuted,

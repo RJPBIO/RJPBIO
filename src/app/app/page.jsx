@@ -41,6 +41,7 @@ import {
 import { resolveTheme, withAlpha, ty, font, space, radius, z, layout, timer as timerSize, bioSignal, brand } from "@/lib/theme";
 import { dark as darkPalette } from "@/lib/tokens";
 import BioIgnicionMark, { BioGlyph } from "@/components/BioIgnicionMark";
+import BillingBanner from "@/components/BillingBanner";
 import NeuralCore3D from "@/components/brand/NeuralCore3D";
 import IgnitionBurst from "@/components/IgnitionBurst";
 import { useStore } from "@/store/useStore";
@@ -1042,6 +1043,10 @@ export default function BioIgnicion(){
 
   {/* ═══ TAB: IGNICIÓN ═══ */}
   {tab==="ignicion"&&postStep==="none"&&!compFlash&&(<div style={{padding:"14px 20px 180px"}}>
+    {/* Trial / dunning banner — solo si hay state que comunicar
+        (trial activo, expirando, expirado pidiendo reactivar, dunning).
+        Self-hides cuando plan ≥ PRO confirmado y FREE sin trial. */}
+    {ts==="idle"&&<BillingBanner accent={ac}/>}
     {/* Brand kicker — wordmark micro-strip en momento-cero (solo idle) */}
     {ts==="idle"&&(
       <div aria-hidden="true" style={{display:"flex",justifyContent:"center",marginBlockEnd:space[3]}}>
