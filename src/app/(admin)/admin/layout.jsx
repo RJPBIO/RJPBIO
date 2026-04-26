@@ -3,6 +3,7 @@ import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import NotificationsBell from "@/components/ui/NotificationsBell";
 import AdminNavLink from "@/components/ui/AdminNavLink";
+import { getPrimaryBranding } from "@/lib/branding";
 
 export const metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
@@ -70,16 +71,41 @@ export default async function AdminLayout({ children }) {
     // load cuando la DB esté disponible.
   }
 
+  // Sprint 11 — branding white-label. Si el primer org no-personal tiene
+  // logoUrl o customDomain custom, lo usamos en el header del nav.
+  // mergeBrandingDefaults retorna defaults si está vacío → no hay
+  // sorpresas.
+  const branding = getPrimaryBranding(session.memberships || []);
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100dvh", background: "#0B0E14", color: "#ECFDF5" }}>
       <aside style={{ borderRight: "1px solid #064E3B", padding: 20, background: "#052E16" }}>
-        <div style={{ fontWeight: 800, letterSpacing: 2, marginBottom: 24 }}>BIO-IGN · ADMIN</div>
+        {branding?.logoUrl ? (
+          <div style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}>
+            <img
+              src={branding.logoUrl}
+              alt={branding.orgName || "logo"}
+              style={{ maxHeight: 32, maxWidth: 180, objectFit: "contain" }}
+            />
+          </div>
+        ) : (
+          <div style={{ fontWeight: 800, letterSpacing: 2, marginBottom: 24 }}>
+            {branding?.orgName ? branding.orgName.toUpperCase() : "BIO-IGN · ADMIN"}
+          </div>
+        )}
         <nav aria-label="Secciones de administración">
           {GROUPS.map((g) => (
             <div key={g.label} style={{ marginBottom: 16 }}>
               <div style={groupLabel}>{g.label}</div>
               {g.items.map((n) => (
-                <AdminNavLink key={n.href} href={n.href} style={navStyle} activeStyle={navActiveStyle}>
+                <AdminNavLink
+                  key={n.href}
+                  href={n.href}
+                  style={navStyle}
+                  activeStyle={branding?.accentColor
+                    ? { ...navActiveStyle, background: `${branding.accentColor}30`, color: "#ECFDF5" }
+                    : navActiveStyle}
+                >
                   {n.label}
                 </AdminNavLink>
               ))}
