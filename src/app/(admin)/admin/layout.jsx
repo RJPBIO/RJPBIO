@@ -22,6 +22,7 @@ const GROUPS = [
     { href: "/admin/security", label: "Reset de MFA" },
     { href: "/admin/sso", label: "SSO" },
     { href: "/admin/audit", label: "Auditoría" },
+    { href: "/admin/audit/settings", label: "Audit settings" },
     { href: "/admin/api-keys", label: "API Keys" },
     { href: "/admin/integrations", label: "Integraciones" },
   ]},
