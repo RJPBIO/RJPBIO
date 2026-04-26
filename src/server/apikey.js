@@ -3,11 +3,17 @@
    - mintApiKey acepta { expiresAt } opcional
    - verifyApiKey rechaza si revoked o expired
    - persiste lastUsedAt + lastUsedIp (forensics) en cada validación exitosa
-   - exporta verifyApiKeyDetailed para reusar en SCIM (devuelve plan + key full) */
+   - exporta verifyApiKeyDetailed para reusar en SCIM (devuelve plan + key full)
+
+   Sprint 16:
+   - verifyApiKeyAndRateLimit combina auth + token-bucket per-key
+   - retorna info del rate-limit para que el caller setee headers RFC 9239
+*/
 
 import "server-only";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { db } from "./db";
+import { checkAndConsume } from "./rate-limit-key";
 
 function hashToken(t) { return createHash("sha256").update(t).digest("hex"); }
 
@@ -92,4 +98,39 @@ export async function verifyApiKeyDetailed(req, scope) {
     plan: key.org?.plan || "FREE",
     expiresAt: key.expiresAt,
   };
+}
+
+/**
+ * Sprint 16 — auth + rate limit combinados.
+ * Retorna:
+ *   { ok: false, status: 401|403, error }                  → no autorizada
+ *   { ok: false, status: 429, rateLimit }                  → quota exceeded
+ *   { ok: true, key, rateLimit }                           → válida; usar rateLimit para headers
+ *
+ * Caller patrón:
+ *   const r = await verifyApiKeyAndRateLimit(req, "scim");
+ *   if (!r.ok) return Response.json({error: r.error}, { status: r.status, ...rateLimitHeadersInit(r.rateLimit) });
+ *   ... handler logic ...
+ *   return Response.json(data, rateLimitHeadersInit(r.rateLimit));
+ */
+export async function verifyApiKeyAndRateLimit(req, scope) {
+  const result = await verifyApiKeyDetailed(req, scope);
+  if (!result) {
+    return { ok: false, status: 401, error: "invalid_or_expired_token" };
+  }
+  if (scope && !result.scopes.includes(scope)) {
+    return { ok: false, status: 403, error: "scope_required", required: scope };
+  }
+  // Token bucket per-key. ScopeId = key.id (no org) — cada key tiene su
+  // propio bucket. Esto permite que un org distribuya carga entre múltiples
+  // keys sin que una key acapare la quota de toda la org.
+  const rl = await checkAndConsume({
+    scope: "key",
+    id: result.keyId,
+    plan: result.plan,
+  });
+  if (!rl.ok) {
+    return { ok: false, status: 429, error: "rate_limit_exceeded", rateLimit: rl, key: result };
+  }
+  return { ok: true, key: result, rateLimit: rl };
 }
