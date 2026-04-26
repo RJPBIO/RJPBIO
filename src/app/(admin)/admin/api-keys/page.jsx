@@ -12,7 +12,11 @@ export default async function ApiKeys() {
   if (!session?.user) return null;
   const org = await resolveOrg();
   if (!org) return null;
-  const keys = await db().apiKey.findMany({
+  // BUG FIX (Sprint 5): db() es async — antes db().apiKey accedía a
+  // .apiKey en la Promise, que es undefined. Lista de keys siempre vacía.
+  // Mismo patrón que el bug de invitations en Sprint 3.
+  const orm = await db();
+  const keys = await orm.apiKey.findMany({
     where: { orgId: org.id },
     orderBy: { createdAt: "desc" },
     select: { id: true, name: true, prefix: true, scopes: true, createdAt: true, lastUsedAt: true, revokedAt: true },
