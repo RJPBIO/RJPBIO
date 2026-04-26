@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Field } from "@/components/ui/Field";
@@ -9,6 +9,8 @@ import { toast } from "@/components/ui/Toast";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   validatePolicy,
+  isIpAllowed,
+  parseIpv4,
   SESSION_MAX_AGE_MIN_MINUTES,
   SESSION_MAX_AGE_MAX_MINUTES,
   IP_ALLOWLIST_MAX,
@@ -52,6 +54,16 @@ export default function PoliciesClient({ orgId, orgName, plan, initial }) {
   );
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState([]);
+  const [currentIp, setCurrentIp] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/v1/me/ip", { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((j) => { if (mounted && j) setCurrentIp(j.ip || null); })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
   // Validation client-side: feedback inmediato sin round-trip.
   const validation = useMemo(() => {
@@ -68,13 +80,34 @@ export default function PoliciesClient({ orgId, orgName, plan, initial }) {
     });
   }, [requireMfa, ipAllowlistEnabled, ipAllowlistText, sessionMaxAgeMinutes]);
 
+  // ¿La IP actual está cubierta por el allowlist propuesto? Avisa antes
+  // de que el backend rechace con 409 (would_lockout_self).
+  const ipLockoutRisk = useMemo(() => {
+    if (!ipAllowlistEnabled || !currentIp) return false;
+    if (parseIpv4(currentIp) === null) return false; // IPv6 → pass
+    if (!validation.ok) return false;
+    const list = validation.policy.ipAllowlist || [];
+    if (list.length === 0) return false;
+    return !isIpAllowed(currentIp, list);
+  }, [ipAllowlistEnabled, currentIp, validation]);
+
+  function addCurrentIp() {
+    if (!currentIp) return;
+    const ip = `${currentIp}/32`;
+    const lines = ipAllowlistText.split(/\n/).map((s) => s.trim()).filter(Boolean);
+    if (!lines.includes(ip) && !lines.includes(currentIp)) {
+      lines.push(ip);
+      setIpAllowlistText(lines.join("\n"));
+    }
+  }
+
   // El plan ENTERPRISE habilita todas las policies; GROWTH habilita MFA;
   // STARTER/FREE solo lectura. Esto es informativo — backend gating real
   // sería un follow-up con isB2BPlan() de billing.js.
   const planAllowsAdvanced = plan === "ENTERPRISE" || plan === "GROWTH";
 
-  async function onSave(e) {
-    e.preventDefault();
+  async function onSave(e, { confirmLockout = false } = {}) {
+    if (e?.preventDefault) e.preventDefault();
     setErrors([]);
     if (!validation.ok) {
       setErrors(validation.errors);
@@ -84,11 +117,26 @@ export default function PoliciesClient({ orgId, orgName, plan, initial }) {
     setBusy(true);
     try {
       const csrf = await getCsrf();
+      const payload = { ...validation.policy };
+      if (confirmLockout) payload.confirmLockout = true;
       const r = await fetch(`/api/v1/orgs/${orgId}/security`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
-        body: JSON.stringify(validation.policy),
+        body: JSON.stringify(payload),
       });
+      if (r.status === 409) {
+        const j = await r.json().catch(() => ({}));
+        if (j?.error === "would_lockout_self") {
+          const yes = confirm(
+            `Esta política bloqueará tu IP actual (${j.currentIp || "desconocida"}). ` +
+            "Quedarías sin acceso a /admin desde aquí.\n\n" +
+            "¿Continuar de todos modos? (Click 'Cancelar' y usa 'Añadir mi IP' antes de guardar.)"
+          );
+          if (!yes) { setBusy(false); return; }
+          await onSave(null, { confirmLockout: true });
+          return;
+        }
+      }
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         if (Array.isArray(j?.details)) {
@@ -151,8 +199,34 @@ export default function PoliciesClient({ orgId, orgName, plan, initial }) {
           <p style={cardDescStyle}>
             Restringe acceso a /admin y /api/v1 desde IPs específicas.
             Una entrada por línea (acepta CIDR IPv4 — ej: <code>10.0.0.0/8</code>, <code>192.168.1.0/24</code>).
-            IPv6 aún no soportado. Máximo {IP_ALLOWLIST_MAX} entradas.
+            IPv6 hace pass-through (no enforcement) hasta que añadamos soporte. Máximo {IP_ALLOWLIST_MAX} entradas.
           </p>
+          {currentIp && (
+            <div style={{ display: "flex", alignItems: "center", gap: space[2], flexWrap: "wrap", fontSize: font.size.sm, color: cssVar.textMuted }}>
+              <span>Tu IP actual:</span>
+              <code style={{ padding: `2px 8px`, background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.sm, fontFamily: cssVar.fontMono, color: cssVar.text }}>
+                {currentIp}
+              </code>
+              {ipAllowlistEnabled && parseIpv4(currentIp) !== null && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={addCurrentIp}
+                  disabled={!planAllowsAdvanced}
+                >
+                  Añadir mi IP
+                </Button>
+              )}
+            </div>
+          )}
+          {ipLockoutRisk && (
+            <Alert kind="error">
+              <strong>Tu IP actual ({currentIp}) NO está en este allowlist.</strong> Si guardas
+              esta política, perderás acceso a /admin desde aquí. Usa "Añadir mi IP" o
+              confirma el bloqueo al guardar.
+            </Alert>
+          )}
           <Field label={`Allowlist (${ipCount}/${IP_ALLOWLIST_MAX})`} hint="Una entrada por línea." error={fieldError(errors, "ipAllowlist")}>
             <textarea
               value={ipAllowlistText}

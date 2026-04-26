@@ -155,3 +155,22 @@ export function ipPassesAllChecks(ip, ipChecks) {
   }
   return true;
 }
+
+/**
+ * ¿La policy nueva dejaría al saver fuera (self-lockout)?
+ * - Si allowlist no está enabled o está vacío → no lockout posible.
+ * - Si la IP del saver es IPv6 (no parseable como v4) → no lockout
+ *   (middleware hace pass-through para IPv6 hasta que añadamos soporte).
+ * - Si la IP no está cubierta por el nuevo allowlist → lockout.
+ *
+ * @param {object} args
+ * @param {string} args.currentIp        IP del request actual del saver
+ * @param {string[]} args.newIpAllowlist Lista CIDR validada (post-validatePolicy)
+ * @param {boolean} args.newIpAllowlistEnabled
+ */
+export function wouldSaverLockout({ currentIp, newIpAllowlist, newIpAllowlistEnabled }) {
+  if (!newIpAllowlistEnabled) return false;
+  if (!Array.isArray(newIpAllowlist) || newIpAllowlist.length === 0) return false;
+  if (parseIpv4(currentIp) === null) return false;
+  return !isIpAllowed(currentIp, newIpAllowlist);
+}

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
+import { db } from "@/server/db";
 import NotificationsBell from "@/components/ui/NotificationsBell";
 import AdminNavLink from "@/components/ui/AdminNavLink";
 
@@ -42,6 +43,31 @@ export default async function AdminLayout({ children }) {
   if (!session?.user) redirect("/signin?next=/admin");
   const adminOrgs = (session.memberships || []).filter((m) => ["OWNER", "ADMIN"].includes(m.role));
   if (!adminOrgs.length) redirect("/app");
+
+  // Sprint 7 polish — enforce requireMfa: si ALGÚN org del usuario lo
+  // requiere y el usuario NO tiene MFA configurado, redirige a setup.
+  // Excepción: la propia página de MFA setup, para no loop.
+  // Best-effort: si la DB falla, dejamos pasar (no bloquear admin por race).
+  try {
+    const policies = Array.isArray(session.securityPolicies) ? session.securityPolicies : [];
+    const orgRequiresMfa = policies.some((p) => p?.requireMfa);
+    if (orgRequiresMfa) {
+      const orm = await db();
+      const user = await orm.user.findUnique({
+        where: { id: session.user.id },
+        select: { mfaEnabled: true },
+      });
+      if (!user?.mfaEnabled) {
+        redirect("/settings/security/mfa?reason=org-required");
+      }
+    }
+  } catch (e) {
+    // Si es un Next redirect, re-throw (no es error, es navegación).
+    if (e?.digest?.startsWith?.("NEXT_REDIRECT")) throw e;
+    // DB error: continuar sin enforce. La policy se aplica al próximo
+    // load cuando la DB esté disponible.
+  }
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100dvh", background: "#0B0E14", color: "#ECFDF5" }}>
       <aside style={{ borderRight: "1px solid #064E3B", padding: 20, background: "#052E16" }}>

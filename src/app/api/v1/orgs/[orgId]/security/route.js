@@ -8,7 +8,7 @@ import { auth } from "../../../../../../server/auth";
 import { db } from "../../../../../../server/db";
 import { auditLog } from "../../../../../../server/audit";
 import { requireCsrf } from "../../../../../../server/csrf";
-import { validatePolicy } from "../../../../../../lib/org-security";
+import { validatePolicy, wouldSaverLockout } from "../../../../../../lib/org-security";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +65,38 @@ export async function PUT(request, { params }) {
   const validation = validatePolicy(body);
   if (!validation.ok) {
     return Response.json({ error: "invalid_policy", details: validation.errors }, { status: 422 });
+  }
+
+  // Self-lockout protection — si el OWNER guarda allowlist que excluye su
+  // propia IP, sin un override explícito, rechazamos para evitar perder
+  // acceso al admin. UI puede reintentar con confirmLockout=true.
+  // Si el body NO trae ipAllowlistEnabled o ipAllowlist, comparamos contra
+  // el estado actual de DB (un toggle parcial que no toca la lista).
+  if (body.confirmLockout !== true) {
+    const xff = request.headers.get("x-forwarded-for") || "";
+    const currentIp = xff.split(",")[0]?.trim() || "";
+    let nextEnabled = validation.policy.ipAllowlistEnabled;
+    let nextList = validation.policy.ipAllowlist;
+    if (nextEnabled === undefined || nextList === undefined) {
+      const orm = await db();
+      const existing = await orm.org.findUnique({
+        where: { id: orgId },
+        select: { ipAllowlist: true, ipAllowlistEnabled: true },
+      });
+      if (nextEnabled === undefined) nextEnabled = !!existing?.ipAllowlistEnabled;
+      if (nextList === undefined) nextList = existing?.ipAllowlist || [];
+    }
+    if (wouldSaverLockout({
+      currentIp,
+      newIpAllowlist: nextList,
+      newIpAllowlistEnabled: nextEnabled,
+    })) {
+      return Response.json({
+        error: "would_lockout_self",
+        currentIp,
+        message: "Esta política bloquearía tu IP actual. Añade tu IP al allowlist o reintenta con confirmLockout=true.",
+      }, { status: 409 });
+    }
   }
 
   const orm = await db();
