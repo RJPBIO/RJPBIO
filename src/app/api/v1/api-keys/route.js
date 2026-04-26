@@ -7,6 +7,7 @@ import { requireMembership } from "@/server/rbac";
 import { requireCsrf } from "@/server/csrf";
 import { mintApiKey } from "@/server/apikey";
 import { auditLog } from "@/server/audit";
+import { validateExpiryDays, computeExpiresAt } from "@/lib/api-quotas";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,9 +39,22 @@ export async function POST(req) {
     const scopes = Array.isArray(body.scopes) ? body.scopes.filter((s) => VALID_SCOPES.includes(s)) : ["read:sessions"];
     if (!scopes.length) return NextResponse.json({ error: "al menos un scope" }, { status: 400 });
 
-    const { id, token, prefix } = await mintApiKey(orgId, name, scopes);
-    await auditLog({ orgId, action: "apikey.create", target: id, payload: { name, scopes } });
-    return NextResponse.json({ id, token, prefix, scopes }, { status: 201 });
+    // Sprint 15 — expiresAtDays opcional (null = sin expiry).
+    const expiryV = validateExpiryDays(body.expiresAtDays ?? null);
+    if (!expiryV.ok) return NextResponse.json({ error: "expiresAtDays inválido", reason: expiryV.error }, { status: 400 });
+    const expiresAt = computeExpiresAt(expiryV.value);
+
+    const { id, token, prefix } = await mintApiKey(orgId, name, scopes, { expiresAt });
+    await auditLog({
+      orgId,
+      action: "apikey.create",
+      target: id,
+      payload: { name, scopes, expiresAt: expiresAt ? expiresAt.toISOString() : null },
+    });
+    return NextResponse.json({
+      id, token, prefix, scopes,
+      expiresAt: expiresAt ? expiresAt.toISOString() : null,
+    }, { status: 201 });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: e.status || 500 });
   }
