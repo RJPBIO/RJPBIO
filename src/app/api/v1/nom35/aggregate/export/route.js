@@ -19,22 +19,12 @@ import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { aggregateScores } from "@/lib/nom35/scoring";
-import { DOMINIOS, CATEGORIAS } from "@/lib/nom35/items";
+import { buildNom35CsvExport } from "@/lib/nom35-csv";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const ALLOWED_ROLES = new Set(["OWNER", "ADMIN", "MANAGER"]);
-
-function csvEscape(v) {
-  const s = String(v ?? "");
-  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
-
-function rowsToCsv(rows) {
-  return rows.map((r) => r.map(csvEscape).join(",")).join("\r\n");
-}
 
 export async function GET(request) {
   const session = await auth();
@@ -65,57 +55,15 @@ export async function GET(request) {
   ]);
 
   const agg = aggregateScores(responses, { minN: 5 });
-  const generatedAt = new Date().toISOString();
-  const orgName = org?.name || "Organización";
-
-  // CSV con metadata header + secciones múltiples (estilo informe).
-  // BOM ﻿ al inicio para que Excel detecte UTF-8 correctamente.
-  const lines = [["BIO-IGNICIÓN — NOM-035 STPS-2018 · Informe Agregado"]];
-  lines.push([]);
-  lines.push(["Organización", orgName]);
-  lines.push(["Generado", generatedAt]);
-  lines.push(["Periodo", "Últimos 365 días"]);
-  lines.push(["Total miembros", totalSeats]);
-  lines.push(["Total respuestas", responses.length]);
-  lines.push(["Cobertura %", totalSeats ? Math.round((responses.length / totalSeats) * 100) : 0]);
-  lines.push([]);
-
-  if (agg.suppressed) {
-    lines.push(["Datos suprimidos por privacidad"]);
-    lines.push(["Razón", agg.reason || "Muestra menor a k=5 — el agregado podría reidentificar individuos"]);
-    lines.push([]);
-  } else {
-    lines.push(["RESUMEN GLOBAL"]);
-    lines.push(["Puntaje promedio", agg.avgTotal]);
-    lines.push(["Nivel promedio", agg.nivelPromedio]);
-    lines.push([]);
-    lines.push(["DISTRIBUCIÓN DE NIVELES"]);
-    lines.push(["Nivel", "Conteo", "Porcentaje"]);
-    const total = responses.length;
-    for (const nivel of ["nulo", "bajo", "medio", "alto", "muy_alto"]) {
-      const n = agg.nivelCounts?.[nivel] || 0;
-      const pct = total ? Math.round((n / total) * 100) : 0;
-      lines.push([nivel, n, `${pct}%`]);
-    }
-    lines.push([]);
-
-    if (agg.porDominioAltoRiesgo?.length) {
-      lines.push(["DOMINIOS POR RIESGO PROMEDIO (alto a bajo)"]);
-      lines.push(["Dominio ID", "Dominio (etiqueta)", "Categoría", "Promedio"]);
-      for (const row of agg.porDominioAltoRiesgo) {
-        const info = Object.values(DOMINIOS).find((d) => d.id === row.dominio);
-        const cat = info && Object.values(CATEGORIAS).find((c) => c.id === info.categoria);
-        lines.push([row.dominio, info?.label || "", cat?.label || "", row.avg]);
-      }
-      lines.push([]);
-    }
-  }
-
-  lines.push(["Privacidad", `k-anonymity k≥5 aplicada. Buckets con menos de 5 respuestas se suprimen automáticamente.`]);
-  lines.push(["Generado por", session.user.email || session.user.id]);
-
-  const csv = "﻿" + rowsToCsv(lines);
-  const filename = `nom35-aggregate-${orgName.replace(/\s+/g, "_")}-${generatedAt.slice(0, 10)}.csv`;
+  const { csv, filename } = buildNom35CsvExport({
+    orgName: org?.name,
+    generatedAt: new Date(),
+    totalSeats,
+    totalResponses: responses.length,
+    agg,
+    generatedBy: session.user.email || session.user.id,
+    periodDays: 365,
+  });
 
   await auditLog({
     orgId: mem.orgId,
