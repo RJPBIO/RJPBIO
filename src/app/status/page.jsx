@@ -16,6 +16,8 @@ import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
+// Sprint 19 — incidents desde DB
+import { listStatusIncidents } from "@/server/incidents";
 
 export const metadata = {
   title: "Status",
@@ -50,7 +52,8 @@ async function probe(url, { timeoutMs = 2500, parseJson = false } = {}) {
   }
 }
 
-const INCIDENTS = [];
+// Sprint 19 — INCIDENTS leídos en runtime de DB (ver listStatusIncidents).
+// Antes era array vacío hardcoded. Si DB falla → fallback a [] silencioso.
 
 const kickerStyle = {
   fontFamily: cssVar.fontMono,
@@ -207,12 +210,24 @@ export default async function StatusPage() {
   const en = L === "en";
   const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const [web, ready, health, feed] = await Promise.all([
+  const [web, ready, health, feed, incidentsRaw] = await Promise.all([
     probe(`${base}/favicon.ico`),
     probe(`${base}/api/ready`, { parseJson: true }),
     probe(`${base}/api/health`, { parseJson: true }),
     probe(`${base}/status/feed.xml`),
+    listStatusIncidents({ recentDays: 30 }).catch(() => []),
   ]);
+  const INCIDENTS = (incidentsRaw || []).map((i) => ({
+    id: i.id,
+    title: i.title,
+    summary: i.body || "",
+    severity: i.severity,
+    status: i.status,
+    startedAt: i.startedAt instanceof Date ? i.startedAt.toISOString() : i.startedAt,
+    resolvedAt: i.resolvedAt
+      ? (i.resolvedAt instanceof Date ? i.resolvedAt.toISOString() : i.resolvedAt)
+      : null,
+  }));
 
   const dbCheck = ready.body?.checks?.db || null;
   const dbOk = dbCheck === "ok" || dbCheck === "memory";

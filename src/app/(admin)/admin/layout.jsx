@@ -40,6 +40,9 @@ const GROUPS = [
   { label: "Cuenta", items: [
     { href: "/admin/billing", label: "Facturación" },
   ]},
+  { label: "Plataforma", items: [
+    { href: "/admin/incidents", label: "Incidents (status page)" },
+  ]},
 ];
 
 export default async function AdminLayout({ children }) {
