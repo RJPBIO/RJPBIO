@@ -400,11 +400,16 @@ model Webhook {
   orgId      String
   url        String
   secret     String
+  // Sprint 17 — secret rotation overlap (zero-downtime).
+  prevSecret           String?
+  prevSecretExpiresAt  DateTime?
+  secretRotatedAt      DateTime?
   events     String[] // ["session.completed", "member.added", …]
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   deliveries WebhookDelivery[]
   org        Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  @@index([prevSecretExpiresAt])
 }
 
 model WebhookDelivery {
