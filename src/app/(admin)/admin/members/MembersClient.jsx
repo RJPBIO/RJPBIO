@@ -47,14 +47,24 @@ function download(filename, content, mime = "text/csv;charset=utf-8") {
 
 const ROLE_VARIANT = { OWNER: "warn", ADMIN: "danger", MANAGER: "accent", MEMBER: "success", VIEWER: "soft" };
 
-export default function MembersClient({ initialRows, orgId }) {
+async function getCsrfToken() {
+  try {
+    const r = await fetch("/api/auth/csrf", { cache: "no-store" });
+    const j = await r.json();
+    return j?.csrfToken || "";
+  } catch { return ""; }
+}
+
+export default function MembersClient({ initialRows, pendingInvites = [], orgId }) {
   const [rows] = useState(initialRows);
+  const [pending, setPending] = useState(pendingInvites);
   const [q, setQ] = useState("");
   const [roleF, setRoleF] = useState("ALL");
   const [statusF, setStatusF] = useState("ALL");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState(() => new Set());
   const [busy, setBusy] = useState(false);
+  const [busyToken, setBusyToken] = useState(null);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const filtered = useMemo(() => {
@@ -86,6 +96,50 @@ export default function MembersClient({ initialRows, orgId }) {
     setSelected(next);
   };
 
+  async function revokeInvite(token) {
+    if (!confirm("¿Revocar esta invitación? El link dejará de funcionar.")) return;
+    setBusyToken(token);
+    try {
+      const csrf = await getCsrfToken();
+      const r = await fetch(`/api/v1/invitations/${token}`, {
+        method: "DELETE",
+        headers: { "x-csrf-token": csrf },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j?.error || `HTTP ${r.status}`);
+      }
+      setPending((p) => p.filter((inv) => inv.token !== token));
+      toast.success("Invitación revocada");
+    } catch (err) {
+      toast.error(err?.message || "No se pudo revocar");
+    } finally { setBusyToken(null); }
+  }
+
+  async function resendInvite(token) {
+    setBusyToken(token);
+    try {
+      const csrf = await getCsrfToken();
+      const r = await fetch(`/api/v1/invitations/${token}/resend`, {
+        method: "POST",
+        headers: { "x-csrf-token": csrf },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 429) throw new Error("Demasiados reenvíos — espera unas horas");
+        throw new Error(j?.error || `HTTP ${r.status}`);
+      }
+      const j = await r.json();
+      // Actualizar expiresAt local con el nuevo del server
+      setPending((p) => p.map((inv) =>
+        inv.token === token ? { ...inv, expiresAt: j.expiresAt } : inv
+      ));
+      toast.success("Invitación reenviada");
+    } catch (err) {
+      toast.error(err?.message || "No se pudo reenviar");
+    } finally { setBusyToken(null); }
+  }
+
   async function bulkInvite(e) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
@@ -101,9 +155,15 @@ export default function MembersClient({ initialRows, orgId }) {
       });
       if (!res.ok) throw new Error(await res.text());
       const j = await res.json();
-      toast.success(`${j.invited} invitación(es) enviadas${j.skipped ? ` · ${j.skipped} omitidas` : ""}`);
+      const skippedTotal = j.skipped && typeof j.skipped === "object"
+        ? Object.values(j.skipped).reduce((a, n) => a + (Number(n) || 0), 0)
+        : Number(j.skipped) || 0;
+      const skipMsg = skippedTotal ? ` · ${skippedTotal} omitidas` : "";
+      toast.success(`${j.invited} invitación(es) enviadas${skipMsg}`);
       e.currentTarget.reset();
       setInviteOpen(false);
+      // Reload para refresh server-fetched pending invitations.
+      // Alternativa: client-side refetch — pero evita drift con server.
       setTimeout(() => location.reload(), 600);
     } catch (err) {
       toast.error(err.message || "No se pudo invitar");
@@ -209,6 +269,91 @@ export default function MembersClient({ initialRows, orgId }) {
             </Button>
           </div>
         </form>
+      )}
+
+      {/* Invitaciones pendientes — sección visible cuando hay pendientes,
+          se oculta al estar vacío. Cada fila tiene Resend + Revoke. */}
+      {pending.length > 0 && (
+        <section
+          aria-labelledby="pending-heading"
+          style={{
+            marginBlockEnd: space[4],
+            padding: space[4],
+            borderRadius: radius.md,
+            border: `1px dashed ${cssVar.border}`,
+            background: cssVar.surface2,
+          }}
+        >
+          <h2
+            id="pending-heading"
+            style={{
+              margin: 0,
+              fontSize: font.size.xs,
+              fontWeight: font.weight.bold,
+              color: cssVar.textDim,
+              textTransform: "uppercase",
+              letterSpacing: font.tracking.caps,
+              marginBlockEnd: space[3],
+            }}
+          >
+            Invitaciones pendientes ({pending.length})
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
+            {pending.map((inv) => {
+              const expiresAt = new Date(inv.expiresAt);
+              const daysLeft = Math.max(0, Math.ceil((expiresAt - Date.now()) / 86400000));
+              const isExpired = daysLeft === 0;
+              const isBusy = busyToken === inv.token;
+              return (
+                <li
+                  key={inv.token}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: space[3],
+                    padding: `${space[2]}px ${space[3]}px`,
+                    borderRadius: radius.sm,
+                    background: cssVar.surface,
+                    border: `1px solid ${cssVar.border}`,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div style={{ flex: "1 1 240px", minInlineSize: 0 }}>
+                    <div style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, color: cssVar.text, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {inv.email}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: space[2], marginBlockStart: 2, fontSize: font.size.xs, color: cssVar.textMuted }}>
+                      <Badge variant={ROLE_VARIANT[inv.role] || "soft"} size="sm">{inv.role}</Badge>
+                      <span>
+                        {isExpired ? "Expirada" : `Expira en ${daysLeft}d`}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: space[2], flexShrink: 0 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => resendInvite(inv.token)}
+                      disabled={isBusy}
+                      loading={isBusy}
+                      loadingLabel="Reenviando…"
+                    >
+                      Reenviar
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => revokeInvite(inv.token)}
+                      disabled={isBusy}
+                    >
+                      Revocar
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       <TableToolbar>
