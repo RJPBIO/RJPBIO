@@ -43,6 +43,7 @@ export default async function OrgSessionsPage() {
       orgName={adminMembership.org?.name || "este org"}
       actorRole={adminMembership.role}
       actorUserId={session.user.id}
+      currentJti={session.jti || null}
       initialGroups={serialized}
       initialTotal={total}
     />

@@ -277,7 +277,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (dbAdapter) {
         try {
           const orm = await db();
-          session.memberships = await orm.membership.findMany({ where: { userId: u.id } });
+          // Sprint 9 polish — include org scalars para que las pages que
+          // filtran "no-personal" o necesitan org.name/plan no rompan.
+          // Bug previo: m.org era undefined → /admin/sso, /admin/security/*
+          // siempre mostraban "no disponible" silenciosamente.
+          session.memberships = await orm.membership.findMany({
+            where: { userId: u.id },
+            include: {
+              org: {
+                select: { id: true, name: true, slug: true, personal: true, plan: true },
+              },
+            },
+          });
         } catch {
           session.memberships = [];
         }
