@@ -42,6 +42,7 @@ const GROUPS = [
     { href: "/admin/billing", label: "Facturación" },
   ]},
   { label: "Plataforma", items: [
+    { href: "/admin/health", label: "Health monitoring" },
     { href: "/admin/incidents", label: "Incidents (status page)" },
     { href: "/admin/maintenance", label: "Maintenance windows" },
   ]},
