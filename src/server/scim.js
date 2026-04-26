@@ -1,25 +1,47 @@
-/* Helpers SCIM 2.0. Sprint 15 — auth delega en verifyApiKeyDetailed
-   (centraliza Bearer parse + timing-safe hash + expiry check + lastUsedIp). */
+/* Helpers SCIM 2.0.
+   Sprint 15: auth delega en verifyApiKeyDetailed (Bearer + timing-safe + expiry).
+   Sprint 16: rate limit per-key (token bucket) + headers RFC 9239 en respuestas.
+*/
 import "server-only";
 import { NextResponse } from "next/server";
-import { verifyApiKeyDetailed } from "./apikey";
+import { verifyApiKeyAndRateLimit } from "./apikey";
+import { buildRateLimitHeaders } from "@/lib/rate-limit-headers";
 
-export function scimError(status, detail) {
+export function scimError(status, detail, rateLimit) {
+  const init = { status };
+  if (rateLimit) {
+    init.headers = buildRateLimitHeaders({
+      policy: rateLimit.policy,
+      remaining: rateLimit.remaining,
+      reset: rateLimit.reset,
+      retryAfter: status === 429 ? rateLimit.retryAfter : undefined,
+    });
+  }
   return NextResponse.json({
     schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
     status: String(status), detail,
-  }, { status });
+  }, init);
 }
 
 export async function requireScimAuth(req) {
   const h = req.headers.get("authorization");
   if (!h?.startsWith("Bearer ")) return { error: scimError(401, "Bearer required") };
-  const result = await verifyApiKeyDetailed(req);
-  if (!result) return { error: scimError(401, "invalid or expired token") };
-  if (!result.scopes.includes("scim")) {
-    return { error: scimError(403, "scope required: scim") };
+  const r = await verifyApiKeyAndRateLimit(req, "scim");
+  if (!r.ok) {
+    if (r.status === 429) {
+      return { error: scimError(429, "rate limit exceeded", r.rateLimit) };
+    }
+    if (r.status === 403) {
+      return { error: scimError(403, "scope required: scim") };
+    }
+    return { error: scimError(401, "invalid or expired token") };
   }
-  return { orgId: result.orgId, keyId: result.keyId, plan: result.plan };
+  return {
+    orgId: r.key.orgId,
+    keyId: r.key.keyId,
+    plan: r.key.plan,
+    rateLimit: r.rateLimit,
+  };
 }
 
 export function toScimUser(u) {

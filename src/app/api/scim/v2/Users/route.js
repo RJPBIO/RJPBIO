@@ -6,6 +6,7 @@ import { db } from "@/server/db";
 import { requireScimAuth, scimError, toScimUser } from "@/server/scim";
 import { auditLog } from "@/server/audit";
 import { parseScimFilter, evalScimFilter } from "@/lib/scim-filter";
+import { buildRateLimitHeaders } from "@/lib/rate-limit-headers";
 
 export async function GET(req) {
   const ctx = await requireScimAuth(req); if (ctx.error) return ctx.error;
@@ -48,6 +49,11 @@ export async function GET(req) {
     itemsPerPage: page.length,
     startIndex,
     Resources: page,
+  }, { headers: buildRateLimitHeaders({
+      policy: ctx.rateLimit?.policy,
+      remaining: ctx.rateLimit?.remaining,
+      reset: ctx.rateLimit?.reset,
+    }),
   });
 }
 
