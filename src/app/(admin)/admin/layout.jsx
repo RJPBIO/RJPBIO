@@ -42,6 +42,7 @@ const GROUPS = [
   ]},
   { label: "Plataforma", items: [
     { href: "/admin/incidents", label: "Incidents (status page)" },
+    { href: "/admin/maintenance", label: "Maintenance windows" },
   ]},
 ];
 

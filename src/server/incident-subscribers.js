@@ -211,6 +211,102 @@ export async function notifySubscribers(incident, kind = "updated") {
 }
 
 /**
+ * Sprint 22 — notifica maintenance subscribers (mismo channel que incidents).
+ * Component filter aplica igual que en incidents. kind: "T24" | "T0" | "complete".
+ *
+ * @param {object} window MaintenanceWindow row
+ * @param {"T24"|"T0"|"complete"} kind
+ */
+export async function notifyMaintenanceSubscribers(window, kind = "T24") {
+  if (!window?.id) return { ok: false, error: "bad_input", count: 0 };
+  try {
+    const orm = await db();
+    const all = await orm.incidentSubscriber.findMany({ where: { verified: true } });
+    // shouldNotifyForIncident toma incident-shape; window tiene components.
+    // Reusamos con shape mínima compatible.
+    const incidentShape = {
+      components: window.components || [],
+    };
+    const eligible = all.filter((s) => shouldNotifyForIncident(s, incidentShape));
+    if (eligible.length === 0) return { ok: true, count: 0 };
+
+    let sent = 0;
+    for (const s of eligible) {
+      try {
+        const unsubUrl = buildUnsubscribeUrl(s.unsubscribeToken, baseUrl());
+        if (s.email) {
+          // Usar sendIncidentNotification con incident-like wrapper para
+          // mantener el rendering consistente. El subject distingue maintenance.
+          const incidentLike = {
+            id: window.id,
+            title: window.title,
+            body: window.body,
+            severity: "minor", // maintenance no tiene severity
+            status: kind === "complete" ? "resolved" : "investigating",
+            components: window.components || [],
+            startedAt: window.scheduledStart,
+            resolvedAt: kind === "complete" ? (window.actualEnd || window.scheduledEnd) : null,
+          };
+          const subject = kind === "T24"
+            ? `[MAINTENANCE — T-24h] ${window.title}`
+            : kind === "T0"
+              ? `[MAINTENANCE — STARTING] ${window.title}`
+              : `[MAINTENANCE — COMPLETED] ${window.title}`;
+          await sendIncidentNotification({
+            to: s.email,
+            subject,
+            incident: incidentLike,
+            kind: kind === "complete" ? "resolved" : "updated",
+            unsubscribeUrl: unsubUrl,
+          });
+          sent++;
+        } else if (s.webhookUrl) {
+          await fetch(s.webhookUrl, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "user-agent": "BIO-IGNICION-StatusSubscriber/1.0",
+            },
+            body: JSON.stringify({
+              event: `maintenance.${kind}`,
+              window: {
+                id: window.id,
+                title: window.title,
+                body: window.body,
+                status: window.status,
+                components: window.components || [],
+                scheduledStart: window.scheduledStart,
+                scheduledEnd: window.scheduledEnd,
+                actualStart: window.actualStart || null,
+                actualEnd: window.actualEnd || null,
+              },
+              unsubscribe: unsubUrl,
+            }),
+            signal: AbortSignal.timeout(8_000),
+          }).catch(() => {});
+          sent++;
+        }
+      } catch { /* best-effort */ }
+    }
+
+    await orm.incidentSubscriber.updateMany({
+      where: { id: { in: eligible.map((s) => s.id) } },
+      data: { lastNotifiedAt: new Date() },
+    }).catch(() => {});
+
+    await auditLog({
+      action: "platform.maintenance.subscribers_notified",
+      target: window.id,
+      payload: { kind, eligible: eligible.length, sent },
+    }).catch(() => {});
+
+    return { ok: true, count: sent };
+  } catch {
+    return { ok: false, error: "notify_failed", count: 0 };
+  }
+}
+
+/**
  * Lista para admin — incluye todos (verified + pending).
  */
 export async function listSubscribers({ limit = 200 } = {}) {
