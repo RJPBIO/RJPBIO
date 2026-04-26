@@ -70,6 +70,7 @@ model User {
   mfaFailCount Int           @default(0)     // resets on success; drives lockout
   mfaLockedUntil DateTime?                   // 429 until this passes
   passkeyCredentials Json?   // [{ id, publicKey, counter, transports }]
+  sessionEpoch Int           @default(0)     // Sprint 8: bump → invalidate all JWTs
   lastLoginAt  DateTime?
   lastSyncedAt DateTime?     // último sync de neuralState desde el PWA
   deletedAt    DateTime?     // GDPR Art. 17 soft-delete
@@ -84,6 +85,27 @@ model User {
   nom35Responses Nom35Response[]
   trustedDevices TrustedDevice[]
   mfaResetRequests MfaResetRequest[]
+  userSessions UserSession[]
+}
+
+// Sprint 8 — DB-backed sessions para visibilidad + remote revoke con
+// JWT-strategy. JWT callback crea row al signin; lazy validation chequea
+// revokedAt antes de servir páginas sensibles (admin layout, API wrappers).
+model UserSession {
+  id          String   @id @default(cuid())
+  userId      String
+  jti         String   @unique
+  ip          String?
+  userAgent   String?
+  label       String?
+  createdAt   DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([userId, revokedAt, expiresAt])
+  @@index([expiresAt])
 }
 
 // Trusted-device cookie — lets a user skip MFA for 30 days on a specific

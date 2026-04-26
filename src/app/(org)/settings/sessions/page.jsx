@@ -1,8 +1,15 @@
 import { auth } from "../../../../server/auth";
 import { db } from "../../../../server/db";
 import { auditLog } from "../../../../server/audit";
+import {
+  listUserSessions,
+  revokeSession,
+  revokeAllForUser,
+} from "../../../../server/sessions";
+import { activeSessions, markCurrent } from "../../../../lib/session-tracking";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { ConfirmForm } from "@/components/ui/ConfirmForm";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
@@ -10,9 +17,26 @@ export const dynamic = "force-dynamic";
 
 async function revoke(formData) {
   "use server";
+  const session = await auth();
+  if (!session?.user) return;
   const id = formData.get("id");
-  const orm = await db();
-  await orm.session.delete({ where: { id } }).catch(() => {});
+  const ok = await revokeSession({ sessionId: id, userId: session.user.id });
+  if (ok) {
+    await auditLog({
+      actorId: session.user.id,
+      action: "session.revoked",
+      payload: { sessionId: id, by: "self" },
+    }).catch(() => {});
+  }
+}
+
+async function revokeAll() {
+  "use server";
+  const session = await auth();
+  if (!session?.user) return;
+  await revokeAllForUser(session.user.id);
+  await auditLog({ action: "auth.signout.all", actorId: session.user.id }).catch(() => {});
+  redirect("/signin?signedOut=1");
 }
 
 async function deleteAccount() {
@@ -38,16 +62,29 @@ async function deleteAccount() {
     }).catch(() => {});
   }
   await orm.session.deleteMany({ where: { userId } }).catch(() => {});
+  await revokeAllForUser(userId);
   redirect("/signin?deleted=1");
+}
+
+function timeAgo(iso) {
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  const diff = Date.now() - d.getTime();
+  const m = Math.floor(diff / 60_000);
+  if (m < 1) return "ahora";
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  const days = Math.floor(h / 24);
+  return `hace ${days} d`;
 }
 
 export default async function Sessions() {
   const session = await auth();
   if (!session?.user) redirect("/signin?next=/settings/sessions");
-  const orm = await db();
-  const items = await orm.session.findMany({
-    where: { userId: session.user.id }, orderBy: { expires: "desc" },
-  });
+
+  const allRows = await listUserSessions(session.user.id);
+  const live = activeSessions(allRows);
+  const items = markCurrent(live, session.jti);
 
   return (
     <article style={{
@@ -70,7 +107,7 @@ export default async function Sessions() {
         fontSize: font.size.sm,
         marginTop: space[2],
       }}>
-        Revoca cualquier sesión que no reconozcas.
+        Revoca cualquier sesión que no reconozcas. La sesión actual está marcada.
       </p>
 
       <div style={{
@@ -80,51 +117,75 @@ export default async function Sessions() {
         borderRadius: radius.md,
         overflow: "hidden",
       }}>
-        <table style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: font.size.sm,
-        }}>
-          <thead>
-            <tr style={{ background: cssVar.surface2 }}>
-              <th style={thStyle}>ID</th>
-              <th style={thStyle}>Expira</th>
-              <th style={thStyle} />
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={3} style={{
-                  padding: space[6],
-                  textAlign: "center",
-                  color: cssVar.textMuted,
-                }}>
-                  Sin sesiones activas.
-                </td>
-              </tr>
-            )}
+        {items.length === 0 ? (
+          <div style={{
+            padding: space[6],
+            textAlign: "center",
+            color: cssVar.textMuted,
+            fontSize: font.size.sm,
+          }}>
+            Sin sesiones activas registradas.
+          </div>
+        ) : (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {items.map((s) => (
-              <tr key={s.id} style={{ borderBlockStart: `1px solid ${cssVar.border}` }}>
-                <td style={{
-                  ...tdStyle,
-                  fontFamily: cssVar.fontMono,
-                  color: cssVar.textDim,
-                }}>
-                  {s.id.slice(0, 12)}…
-                </td>
-                <td style={tdStyle}>{new Date(s.expires).toLocaleString()}</td>
-                <td style={{ ...tdStyle, textAlign: "right" }}>
+              <li
+                key={s.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: space[3],
+                  padding: `${space[4]}px ${space[5]}px`,
+                  borderBlockStart: `1px solid ${cssVar.border}`,
+                  background: s.current ? cssVar.surface2 : "transparent",
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: space[2],
+                    flexWrap: "wrap",
+                  }}>
+                    <strong style={{ color: cssVar.text, fontWeight: font.weight.semibold }}>
+                      {s.label || "Sesión"}
+                    </strong>
+                    {s.current && <Badge variant="success" size="sm">Esta sesión</Badge>}
+                  </div>
+                  <div style={{
+                    color: cssVar.textDim,
+                    fontSize: font.size.xs,
+                    marginTop: space[1],
+                  }}>
+                    Última actividad: {timeAgo(s.lastSeenAt)} · Expira: {new Date(s.expiresAt).toLocaleString()}
+                  </div>
+                </div>
+                {!s.current && (
                   <form action={revoke} style={{ display: "inline" }}>
                     <input type="hidden" name="id" value={s.id} />
                     <Button type="submit" variant="danger" size="sm">Revocar</Button>
                   </form>
-                </td>
-              </tr>
+                )}
+              </li>
             ))}
-          </tbody>
-        </table>
+          </ul>
+        )}
       </div>
+
+      {items.length > 1 && (
+        <div style={{ marginTop: space[4] }}>
+          <ConfirmForm
+            action={revokeAll}
+            message="¿Cerrar todas las demás sesiones? Quedarás únicamente con esta."
+            style={{ display: "inline" }}
+          >
+            <Button type="submit" variant="secondary">
+              Cerrar todas las demás
+            </Button>
+          </ConfirmForm>
+        </div>
+      )}
 
       <hr style={{
         margin: `${space[8]}px 0`,
@@ -161,18 +222,3 @@ export default async function Sessions() {
     </article>
   );
 }
-
-const thStyle = {
-  textAlign: "left",
-  padding: `${space[3]}px ${space[4]}px`,
-  fontSize: font.size.xs,
-  color: cssVar.textDim,
-  fontWeight: font.weight.semibold,
-  textTransform: "uppercase",
-  letterSpacing: font.tracking.wide,
-};
-
-const tdStyle = {
-  padding: `${space[3]}px ${space[4]}px`,
-  color: cssVar.text,
-};
