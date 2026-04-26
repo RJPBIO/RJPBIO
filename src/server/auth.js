@@ -13,9 +13,11 @@ import AzureAD from "next-auth/providers/azure-ad";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import Email from "next-auth/providers/email";
+import { headers } from "next/headers";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "./db";
 import { auditLog } from "./audit";
+import { createSession, getCurrentEpoch } from "./sessions";
 
 /* Magic-link delivery. When EMAIL_SERVER is configured we send via
    nodemailer; otherwise we fall back to a console log so the instance
@@ -183,6 +185,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.locale = user.locale;
         token.timezone = user.timezone;
       }
+      // Sprint 8 — al signin, crear UserSession row + embebir jti + epoch.
+      // El jti permite revoke per-device; el epoch invalida-todos al bump.
+      if (user) {
+        try {
+          const h = await headers();
+          const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+          const userAgent = h.get("user-agent") || null;
+          const jti = await createSession({ userId: user.id, ip, userAgent });
+          if (jti) token.jti = jti;
+          token.epoch = await getCurrentEpoch(user.id);
+        } catch {
+          // headers() no disponible en este contexto — sin tracking, signin igual.
+        }
+      }
       // Embed org security policies en el token para que el middleware
       // (edge) los pueda leer vía getToken sin tocar DB.
       // Refresh: al signin (user presente) o cuando el cliente fuerza
@@ -246,6 +262,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.securityPolicies = Array.isArray(token?.securityPolicies)
         ? token.securityPolicies
         : [];
+      // Sprint 8 — expose jti para que UI pueda marcar la sesión actual
+      // como "this device" en /account.
+      session.jti = token?.jti || null;
       return session;
     },
   },
