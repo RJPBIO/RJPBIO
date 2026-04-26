@@ -14,6 +14,7 @@ import "server-only";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { db } from "./db";
 import { checkAndConsume } from "./rate-limit-key";
+import { mergeRateLimitChecks } from "@/lib/rate-limit-headers";
 
 function hashToken(t) { return createHash("sha256").update(t).digest("hex"); }
 
@@ -121,16 +122,23 @@ export async function verifyApiKeyAndRateLimit(req, scope) {
   if (scope && !result.scopes.includes(scope)) {
     return { ok: false, status: 403, error: "scope_required", required: scope };
   }
-  // Token bucket per-key. ScopeId = key.id (no org) — cada key tiene su
-  // propio bucket. Esto permite que un org distribuya carga entre múltiples
-  // keys sin que una key acapare la quota de toda la org.
-  const rl = await checkAndConsume({
-    scope: "key",
-    id: result.keyId,
-    plan: result.plan,
-  });
-  if (!rl.ok) {
-    return { ok: false, status: 429, error: "rate_limit_exceeded", rateLimit: rl, key: result };
+  // Sprint 26 — dual-check: per-key bucket + per-org bucket.
+  // Anti-abuse: un org con 3 keys NO puede 3× su quota porque también
+  // hay un bucket compartido a nivel org. Most-restrictive gana.
+  const [keyRl, orgRl] = await Promise.all([
+    checkAndConsume({ scope: "key", id: result.keyId, plan: result.plan }),
+    checkAndConsume({ scope: "org", id: result.orgId, plan: result.plan }),
+  ]);
+  const merged = mergeRateLimitChecks([keyRl, orgRl]);
+  if (!merged.ok) {
+    return {
+      ok: false,
+      status: 429,
+      error: "rate_limit_exceeded",
+      rateLimit: merged,
+      blockedBy: merged.blockedBy,
+      key: result,
+    };
   }
-  return { ok: true, key: result, rateLimit: rl };
+  return { ok: true, key: result, rateLimit: merged };
 }
