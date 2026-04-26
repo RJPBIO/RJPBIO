@@ -19,27 +19,72 @@ import { db } from "./db";
 import { auditLog } from "./audit";
 import { createSession, getCurrentEpoch, isSessionValid, touchSession, revokeByJti } from "./sessions";
 import { shouldRevalidate } from "@/lib/session-tracking";
+import { renderEmailHTML, renderCtaButton, escapeHtml } from "@/lib/email-template";
 
 /* Magic-link delivery. When EMAIL_SERVER is configured we send via
    nodemailer; otherwise we fall back to a console log so the instance
-   is functional from day 0 without Postmark/SES. The console path is
-   acceptable for internal pilots — for real users, set EMAIL_SERVER.
+   is functional from day 0 without Postmark/SES. The console path es
+   aceptable para pilots internos — para real users, setea EMAIL_SERVER.
 
-   Nodemailer is dynamically imported because its module-level side
-   effects (net sockets, streams) break Next.js route analysis when
-   loaded from any server path that chain-imports this file. */
+   Sprint 18 — branding-aware. Lookup el primer org no-personal del
+   recipient → aplica logo/colors al HTML rendering. Si no hay branding
+   custom, defaults BIO-IGN.
+
+   Nodemailer dynamic-imported (side effects rompen Next.js route analysis).
+*/
+async function lookupRecipientBranding(email) {
+  if (!email) return { branding: null, orgName: null, customDomainVerified: false };
+  try {
+    const orm = await db();
+    const user = await orm.user.findUnique({
+      where: { email },
+      select: {
+        memberships: {
+          select: {
+            org: {
+              select: {
+                name: true, branding: true,
+                customDomainVerified: true, personal: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    const m = user?.memberships?.find((mm) => mm.org && !mm.org.personal);
+    if (!m) return { branding: null, orgName: null, customDomainVerified: false };
+    return {
+      branding: m.org.branding || null,
+      orgName: m.org.name,
+      customDomainVerified: !!m.org.customDomainVerified,
+    };
+  } catch {
+    return { branding: null, orgName: null, customDomainVerified: false };
+  }
+}
+
 async function sendMagicLink({ identifier, url, provider }) {
+  // Lookup branding del recipient (best-effort).
+  const { branding, orgName, customDomainVerified } = await lookupRecipientBranding(identifier);
+
   if (provider.server) {
     const { default: nodemailer } = await import("nodemailer");
     const t = nodemailer.createTransport(provider.server);
+    // Sprint 18 — render con branding si está disponible.
+    const fromAddr = customDomainVerified && branding?.customDomain && orgName
+      ? `${orgName.replace(/[^\w\s-]/g, "").trim().slice(0, 60)} <no-reply@${branding.customDomain}>`
+      : (provider.from || "no-reply@bio-ignicion.app");
+    const subject = orgName
+      ? `Sign in to ${orgName}`
+      : "Sign in to BIO-IGNICIÓN";
+    const ctaHtml = renderCtaButton({ url, label: "Sign in", branding });
+    const innerHtml = `<h2>${orgName ? `Welcome back to ${escapeHtml(orgName)}` : "Welcome back"}</h2><p>Click the button below to sign in. Link expires in 24 hours.</p>${ctaHtml}<p style="color:#64748B;font-size:13px">If you didn't request this, ignore this email.</p>`;
     const result = await t.sendMail({
       to: identifier,
-      from: provider.from,
-      subject: "Sign in to BIO-IGNICIÓN",
-      text: `Sign in to BIO-IGNICIÓN\n\n${url}\n\nLink expires in 24 hours.\n`,
-      html: `<p>Sign in to <strong>BIO-IGNICIÓN</strong></p>
-             <p><a href="${url}" style="color:#059669;font-weight:600">${url}</a></p>
-             <p style="color:#888;font-size:12px">Link expires in 24 hours.</p>`,
+      from: fromAddr,
+      subject,
+      text: `Sign in${orgName ? ` to ${orgName}` : ""}\n\n${url}\n\nLink expires in 24 hours.\n`,
+      html: renderEmailHTML({ content: innerHtml, branding, locale: "es" }),
     });
     const failed = [...(result.rejected || []), ...(result.pending || [])].filter(Boolean);
     if (failed.length) throw new Error(`Email delivery failed: ${failed.join(", ")}`);
@@ -51,10 +96,11 @@ async function sendMagicLink({ identifier, url, provider }) {
       "┌─ BIO-IGNICIÓN · MAGIC LINK (console fallback) ──────────────────",
       `│ to:     ${identifier}`,
       `│ link:   ${url}`,
+      orgName ? `│ org:    ${orgName} (branded: ${branding?.logoUrl ? "yes" : "no"})` : "",
       "│ expires in 24h · configure EMAIL_SERVER to silence this log",
       "└─────────────────────────────────────────────────────────────────",
       "",
-    ].join("\n")
+    ].filter(Boolean).join("\n")
   );
 }
 

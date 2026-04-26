@@ -17,6 +17,7 @@ import "server-only";
 import { db } from "./db";
 import { auditLog } from "./audit";
 import { revokeAllForUser } from "./sessions";
+import { sendDsarResolved } from "./email";
 import {
   isAutoResolveKind,
   computeExpiry,
@@ -171,6 +172,33 @@ export async function resolveDsarRequest({ requestId, orgId, actorUserId, actorR
       target: req.userId,
       payload: { dsarId: requestId, kind: req.kind, status, notes: notes || null },
     }).catch(() => {});
+
+    // Sprint 18 — notifica al usuario por email con branding del org.
+    try {
+      const [user, org] = await Promise.all([
+        orm.user.findUnique({
+          where: { id: req.userId },
+          select: { email: true, locale: true },
+        }),
+        orm.org.findUnique({
+          where: { id: orgId },
+          select: { name: true, branding: true, customDomainVerified: true },
+        }),
+      ]);
+      if (user?.email && (status === "APPROVED" || status === "REJECTED" || status === "COMPLETED")) {
+        await sendDsarResolved({
+          to: user.email,
+          status: status.toLowerCase(),
+          kind: req.kind,
+          artifactUrl: updated.artifactUrl || null,
+          notes: updated.resolverNotes || null,
+          orgName: org?.name || null,
+          locale: user.locale || "es",
+          branding: org?.branding || null,
+          customDomainVerified: !!org?.customDomainVerified,
+        }).catch(() => {});
+      }
+    } catch { /* best-effort */ }
 
     return { ok: true, request: updated };
   } catch {
