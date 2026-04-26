@@ -1,6 +1,10 @@
+/* GET /api/notifications/recent?since=ms — Sprint 25: lee de Notification
+   model (per-user) en vez de audit-log-prefix. Compatible con shape antiguo
+   para no romper NotificationsBell durante migración.
+   Auth: cualquier sesión válida. */
+
 import { auth } from "@/server/auth";
-import { db } from "@/server/db";
-import { NOTIFY_PREFIX } from "@/server/notifications";
+import { listForUser, countUnread } from "@/server/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -8,34 +12,28 @@ export async function GET(request) {
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
 
-  const adminOrgs = (session.memberships || [])
-    .filter((m) => ["OWNER", "ADMIN"].includes(m.role))
-    .map((m) => m.orgId);
-  if (!adminOrgs.length) return Response.json({ items: [] });
-
   const { searchParams } = new URL(request.url);
   const sinceRaw = searchParams.get("since");
-  const since = sinceRaw ? new Date(Number(sinceRaw)) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const since = sinceRaw ? new Date(Number(sinceRaw)) : null;
 
-  const orm = await db();
-  const rows = await orm.auditLog.findMany({
-    where: {
-      orgId: { in: adminOrgs },
-      action: { startsWith: NOTIFY_PREFIX },
-      ts: { gte: since },
-    },
-    orderBy: { ts: "desc" },
-    take: 20,
-  });
+  const [rows, unread] = await Promise.all([
+    listForUser(session.user.id, { limit: 50, since }),
+    countUnread(session.user.id),
+  ]);
 
   return Response.json({
     items: rows.map((r) => ({
-      id: String(r.id),
-      at: r.ts.getTime(),
-      title: r.payload?.title || "Aviso",
-      body: r.payload?.body || "",
-      level: r.payload?.level || "info",
-      href: r.payload?.href || null,
+      id: r.id,
+      at: r.createdAt instanceof Date ? r.createdAt.getTime() : new Date(r.createdAt).getTime(),
+      kind: r.kind,
+      title: r.title,
+      body: r.body || "",
+      level: r.level,
+      href: r.href || null,
+      readAt: r.readAt
+        ? (r.readAt instanceof Date ? r.readAt.getTime() : new Date(r.readAt).getTime())
+        : null,
     })),
+    unreadCount: unread,
   });
 }

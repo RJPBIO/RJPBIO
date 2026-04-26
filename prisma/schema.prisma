@@ -61,6 +61,7 @@ model Org {
   wearableEvents WearableEvent[]
   nom35Responses Nom35Response[]
   dsarRequests   DsarRequest[]   @relation("DsarOrg")
+  notifications  Notification[]  @relation("OrgNotifications")
   @@index([region])
   @@index([dunningState])
   @@index([customDomainVerified])
@@ -101,6 +102,7 @@ model User {
   userSessions UserSession[]
   dsarRequests DsarRequest[] @relation("DsarRequester")
   dsarResolutions DsarRequest[] @relation("DsarResolver")
+  notifications Notification[] @relation("UserNotifications")
 }
 
 // Sprint 8 — DB-backed sessions para visibilidad + remote revoke con
@@ -396,6 +398,32 @@ model IncidentUpdate {
   createdAt   DateTime         @default(now())
   incident    Incident         @relation(fields: [incidentId], references: [id], onDelete: Cascade)
   @@index([incidentId])
+}
+
+// Sprint 25 — Notifications per-user con read/unread.
+enum NotificationLevel {
+  info
+  warn
+  error
+  success
+}
+
+model Notification {
+  id        String            @id @default(cuid())
+  userId    String
+  orgId     String?
+  kind      String
+  level     NotificationLevel @default(info)
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime          @default(now())
+  user      User              @relation(name: "UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  org       Org?              @relation(name: "OrgNotifications", fields: [orgId], references: [id], onDelete: SetNull)
+  @@index([userId, readAt])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([orgId])
 }
 
 // Sprint 22 — Maintenance windows (planned downtime).
