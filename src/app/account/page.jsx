@@ -22,7 +22,16 @@ export default async function AccountPage() {
     }),
     orm.membership.findMany({
       where: { userId: session.user.id },
-      include: { org: { select: { id: true, name: true, slug: true, plan: true } } },
+      // Trial + dunning incluidos para que el client pinte estado de billing.
+      include: {
+        org: {
+          select: {
+            id: true, name: true, slug: true, plan: true,
+            personal: true, trialEndsAt: true, dunningState: true,
+            stripeCustomer: true,
+          },
+        },
+      },
     }),
   ]);
 

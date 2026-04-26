@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { cssVar, space, font } from "@/components/ui/tokens";
+import { PLAN_LABELS, isInTrial, trialDaysLeft, isB2BPlan } from "@/lib/billing";
 
 const COPY = {
   es: {
@@ -25,6 +26,18 @@ const COPY = {
     orgsEmpty: "No perteneces a ninguna organización todavía.",
     planLabel: "plan",
     adminCta: "Admin →",
+    billing: "Suscripción",
+    currentPlan: "Plan actual",
+    trialEnds: (n) => `${n} día${n === 1 ? "" : "s"} de prueba restante${n === 1 ? "" : "s"}`,
+    trialExpired: "Prueba expirada",
+    upgradeProTitle: "Pro · individual",
+    upgradeProBody: "Sesiones ilimitadas, todos los protocolos, voces premium, sync multi-device, NOM-035 PDF personal.",
+    upgradeProCta: "Activar Pro · 7 días gratis",
+    upgradeTeamTitle: "¿Tu empresa?",
+    upgradeTeamBody: "Starter para equipos pequeños o Enterprise con SAML, DPA, residencia de datos.",
+    upgradeTeamCta: "Ver planes empresa →",
+    managePortal: "Administrar suscripción",
+    portalErr: "No se pudo abrir el portal",
     security: "Seguridad",
     signOutAll: "Cerrar sesión en todos los dispositivos",
     signingOut: "Cerrando sesiones…",
@@ -57,6 +70,18 @@ const COPY = {
     orgsEmpty: "You don't belong to any organization yet.",
     planLabel: "plan",
     adminCta: "Admin →",
+    billing: "Subscription",
+    currentPlan: "Current plan",
+    trialEnds: (n) => `${n} day${n === 1 ? "" : "s"} left in trial`,
+    trialExpired: "Trial expired",
+    upgradeProTitle: "Pro · individual",
+    upgradeProBody: "Unlimited sessions, all protocols, premium voices, multi-device sync, personal NOM-035 PDF.",
+    upgradeProCta: "Start Pro · 7-day free trial",
+    upgradeTeamTitle: "Your company?",
+    upgradeTeamBody: "Starter for small teams or Enterprise with SAML, DPA, data residency.",
+    upgradeTeamCta: "See team plans →",
+    managePortal: "Manage subscription",
+    portalErr: "Could not open portal",
     security: "Security",
     signOutAll: "Sign out of all devices",
     signingOut: "Signing out…",
@@ -99,6 +124,50 @@ export default function AccountClient({ user, memberships, locale = "es" }) {
     } catch (e) {
       setMsg({ kind: "danger", text: e?.message || t.genericErr });
     } finally { setDeleting(false); }
+  }
+
+  async function upgradePro(orgId) {
+    setMsg(null);
+    try {
+      const tokenR = await fetch("/api/auth/csrf");
+      const { csrfToken } = await tokenR.json();
+      const r = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "x-csrf-token": csrfToken, "Content-Type": "application/x-www-form-urlencoded" },
+        body: `plan=PRO&orgId=${encodeURIComponent(orgId)}`,
+        redirect: "manual",
+      });
+      const loc = r.headers.get("location");
+      if (loc) { location.href = loc; return; }
+      throw new Error(await r.text() || t.portalErr);
+    } catch (e) {
+      setMsg({ kind: "danger", text: e?.message || t.portalErr });
+    }
+  }
+
+  async function openPortal(orgId) {
+    setMsg(null);
+    try {
+      const tokenR = await fetch("/api/auth/csrf");
+      const { csrfToken } = await tokenR.json();
+      const r = await fetch("/api/billing/portal", {
+        method: "POST",
+        headers: { "x-csrf-token": csrfToken, "Content-Type": "application/x-www-form-urlencoded" },
+        body: `orgId=${encodeURIComponent(orgId)}`,
+        redirect: "manual",
+      });
+      // El endpoint redirige (303). Algunos browsers exponen Location;
+      // si no, fallback a respuesta JSON con `url`.
+      const loc = r.headers.get("location");
+      if (loc) { location.href = loc; return; }
+      try {
+        const j = await r.json();
+        if (j?.url) { location.href = j.url; return; }
+      } catch {}
+      throw new Error(t.portalErr);
+    } catch (e) {
+      setMsg({ kind: "danger", text: e?.message || t.portalErr });
+    }
   }
 
   async function signOutAll() {
@@ -150,6 +219,96 @@ export default function AccountClient({ user, memberships, locale = "es" }) {
         <div style={{ marginTop: space[3] }}>
           <Button href="/settings/security/mfa" variant="secondary" size="sm">{t.cfgMfa}</Button>
         </div>
+      </Section>
+
+      <Section title={t.billing}>
+        {(() => {
+          // Personal-org del user (si existe) — fuente primaria del estado de billing B2C.
+          const personal = memberships.find((m) => m.org?.personal);
+          const plan = personal?.org?.plan || "FREE";
+          const trialEnds = personal?.org?.trialEndsAt;
+          const inTrial = isInTrial(trialEnds);
+          const daysLeft = inTrial ? trialDaysLeft(trialEnds) : 0;
+          const hasStripe = !!personal?.org?.stripeCustomer;
+          return (
+            <>
+              <Row
+                label={t.currentPlan}
+                value={
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: space[2] }}>
+                    <Badge variant={plan === "FREE" ? "soft" : "accent"} size="sm">
+                      {PLAN_LABELS[plan] || plan}
+                    </Badge>
+                    {inTrial && (
+                      <span style={{ fontSize: font.size.xs, color: cssVar.textMuted }}>
+                        {t.trialEnds(daysLeft)}
+                      </span>
+                    )}
+                    {trialEnds && !inTrial && plan === "FREE" && (
+                      <span style={{ fontSize: font.size.xs, color: cssVar.textMuted }}>
+                        {t.trialExpired}
+                      </span>
+                    )}
+                  </span>
+                }
+              />
+              {/* Upgrade CTA — solo si plan FREE (no en PRO+ ni B2B).
+                  fetch+manual redirect porque requireCsrf espera header,
+                  un form post nativo no podría enviar x-csrf-token. */}
+              {plan === "FREE" && personal?.org?.id && (
+                <div style={{
+                  marginTop: space[3],
+                  padding: space[4],
+                  borderRadius: 12,
+                  border: `1px solid ${cssVar.border}`,
+                  background: `color-mix(in srgb, ${cssVar.accent} 4%, transparent)`,
+                }}>
+                  <div style={{ fontWeight: font.weight.bold, color: cssVar.text, marginBottom: 4 }}>
+                    {t.upgradeProTitle}
+                  </div>
+                  <p style={{ margin: 0, fontSize: font.size.sm, color: cssVar.textMuted, lineHeight: font.leading.normal }}>
+                    {t.upgradeProBody}
+                  </p>
+                  <div style={{ marginTop: space[3] }}>
+                    <Button
+                      onClick={() => upgradePro(personal.org.id)}
+                      variant="primary"
+                      size="sm"
+                    >
+                      {t.upgradeProCta}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {/* Portal — solo si tiene Stripe customer (sub previa o actual) */}
+              {hasStripe && (
+                <div style={{ marginTop: space[3] }}>
+                  <Button
+                    onClick={() => openPortal(personal.org.id)}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {t.managePortal}
+                  </Button>
+                </div>
+              )}
+              {/* B2B teaser — siempre visible para descubrimiento */}
+              <div style={{ marginTop: space[4], paddingTop: space[3], borderTop: `1px dashed ${cssVar.border}` }}>
+                <div style={{ fontWeight: font.weight.semibold, color: cssVar.text, marginBottom: 2 }}>
+                  {t.upgradeTeamTitle}
+                </div>
+                <p style={{ margin: 0, fontSize: font.size.sm, color: cssVar.textMuted, lineHeight: font.leading.normal }}>
+                  {t.upgradeTeamBody}
+                </p>
+                <div style={{ marginTop: space[2] }}>
+                  <Link href="/pricing" style={{ color: cssVar.accent, fontSize: font.size.sm, fontWeight: font.weight.semibold, textDecoration: "none" }}>
+                    {t.upgradeTeamCta}
+                  </Link>
+                </div>
+              </div>
+            </>
+          );
+        })()}
       </Section>
 
       <Section title={t.orgs(memberships.length)}>

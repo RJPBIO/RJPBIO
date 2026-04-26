@@ -131,6 +131,17 @@ export async function pullRemote({ currentUserId = null } = {}) {
     if (!res.ok) return null;
     const data = await res.json();
 
+    // Billing summary se publica vía custom event para que componentes
+    // que NO viven en el store (BillingBanner, FeatureGate) puedan
+    // suscribirse sin pedir un fetch extra. Always dispatched, incluso
+    // si neuralState es null (usuario nuevo sin data).
+    if (typeof window !== "undefined" && data?.billing) {
+      try {
+        window.dispatchEvent(new CustomEvent("bio-billing-update", { detail: data.billing }));
+        window.__bioBilling = data.billing; // snapshot para late-mounters
+      } catch {}
+    }
+
     if (!data?.neuralState) return null;
     const remote = data.neuralState;
 

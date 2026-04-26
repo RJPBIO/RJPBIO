@@ -37,10 +37,12 @@ export async function GET() {
     });
     if (!user) return Response.json({ error: "not_found" }, { status: 404 });
 
-    // Personal org del usuario — fuente de las sesiones individuales
+    // Personal org del usuario — fuente de las sesiones individuales +
+    // estado de billing (plan, trial, dunning) para que el cliente pueda
+    // gating + trial banner sin endpoint extra.
     const personalOrg = await orm.org.findUnique({
       where: { slug: `personal-${userId}` },
-      select: { id: true },
+      select: { id: true, plan: true, trialEndsAt: true, dunningState: true, stripeCustomer: true },
     });
 
     // Últimas 90 días de sesiones del usuario en su org personal
@@ -78,6 +80,15 @@ export async function GET() {
       neuralState: user.neuralState || null,
       recentSessions,
       personalOrgId: personalOrg?.id || null,
+      // Billing summary — usado por trial banner + feature gating en cliente
+      billing: personalOrg
+        ? {
+            plan: personalOrg.plan || "FREE",
+            trialEndsAt: personalOrg.trialEndsAt?.toISOString() || null,
+            dunningState: personalOrg.dunningState || null,
+            hasStripeCustomer: !!personalOrg.stripeCustomer,
+          }
+        : { plan: "FREE", trialEndsAt: null, dunningState: null, hasStripeCustomer: false },
       lastSyncedAt: user.lastSyncedAt?.toISOString() || null,
       locale: user.locale,
       timezone: user.timezone,
