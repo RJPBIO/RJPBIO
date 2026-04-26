@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { issueToken, verifyToken, CSRF } from "@/server/csrf";
-import { effectivePolicy, ipPassesAllChecks } from "@/lib/org-security";
+import { effectivePolicy, ipPassesAllChecks, parseIpv4 } from "@/lib/org-security";
 
 /* ═══════════════════════════════════════════════════════════════
    BIO-IGNICIÓN — Edge Middleware
@@ -146,7 +146,9 @@ export async function middleware(request) {
     // Bearer/API keys: skip — los handlers validan API keys con su propio
     // contexto y no traen JWT con policies. Si quieres allowlist sobre
     // API keys, se hace en el handler con auth() del actor.
-    if (hasSession && process.env.AUTH_SECRET) {
+    // IPv6: pass-through — la allowlist es IPv4-only por ahora; bloquear
+    // a clientes v6 sería sorprendente (muchas redes corp ahora son v6-default).
+    if (hasSession && process.env.AUTH_SECRET && parseIpv4(ip) !== null) {
       try {
         const token = await getToken({
           req: request,

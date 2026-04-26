@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseIpv4, parseCidr, isIpInCidr, isIpAllowed, formatCidr,
   validateIpAllowlist, validateSessionMaxAge, validatePolicy,
-  effectivePolicy, ipPassesAllChecks,
+  effectivePolicy, ipPassesAllChecks, wouldSaverLockout,
   SESSION_MAX_AGE_MIN_MINUTES, SESSION_MAX_AGE_MAX_MINUTES, IP_ALLOWLIST_MAX,
 } from "./org-security";
 
@@ -383,6 +383,74 @@ describe("ipPassesAllChecks", () => {
     ];
     // 10.0.0.5 está en (a) pero no en (b)
     expect(ipPassesAllChecks("10.0.0.5", checks)).toBe(false);
+  });
+});
+
+describe("wouldSaverLockout", () => {
+  it("allowlist no enabled → no lockout", () => {
+    expect(wouldSaverLockout({
+      currentIp: "8.8.8.8",
+      newIpAllowlist: ["10.0.0.0/8"],
+      newIpAllowlistEnabled: false,
+    })).toBe(false);
+  });
+
+  it("allowlist enabled pero vacío → no lockout (no-op)", () => {
+    expect(wouldSaverLockout({
+      currentIp: "8.8.8.8",
+      newIpAllowlist: [],
+      newIpAllowlistEnabled: true,
+    })).toBe(false);
+  });
+
+  it("IP del saver dentro del allowlist → no lockout", () => {
+    expect(wouldSaverLockout({
+      currentIp: "10.5.6.7",
+      newIpAllowlist: ["10.0.0.0/8"],
+      newIpAllowlistEnabled: true,
+    })).toBe(false);
+  });
+
+  it("IP del saver fuera del allowlist → LOCKOUT", () => {
+    expect(wouldSaverLockout({
+      currentIp: "8.8.8.8",
+      newIpAllowlist: ["10.0.0.0/8"],
+      newIpAllowlistEnabled: true,
+    })).toBe(true);
+  });
+
+  it("saver con IPv6 → no lockout (pass-through, middleware no enforce v6)", () => {
+    expect(wouldSaverLockout({
+      currentIp: "::1",
+      newIpAllowlist: ["10.0.0.0/8"],
+      newIpAllowlistEnabled: true,
+    })).toBe(false);
+    expect(wouldSaverLockout({
+      currentIp: "2001:db8::1",
+      newIpAllowlist: ["10.0.0.0/8"],
+      newIpAllowlistEnabled: true,
+    })).toBe(false);
+  });
+
+  it("saver con IP unparseable → no lockout", () => {
+    expect(wouldSaverLockout({
+      currentIp: "anon",
+      newIpAllowlist: ["10.0.0.0/8"],
+      newIpAllowlistEnabled: true,
+    })).toBe(false);
+    expect(wouldSaverLockout({
+      currentIp: null,
+      newIpAllowlist: ["10.0.0.0/8"],
+      newIpAllowlistEnabled: true,
+    })).toBe(false);
+  });
+
+  it("non-array newIpAllowlist → no lockout", () => {
+    expect(wouldSaverLockout({
+      currentIp: "8.8.8.8",
+      newIpAllowlist: null,
+      newIpAllowlistEnabled: true,
+    })).toBe(false);
   });
 });
 
