@@ -7,6 +7,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import { AUDIT_CATEGORIES, isInCategory, countByCategory } from "@/lib/audit-categories";
+// Sprint 28 — Stripe-style search operators
+import {
+  parseSearchQuery, matchesQuery, highlightMatches, extractHighlightTerms,
+  SEARCH_HINT_ES,
+} from "@/lib/audit-search";
 
 const PAGE = 50;
 
@@ -34,6 +39,17 @@ function fmtDate(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/* Sprint 28 — XSS-safe highlight component (no innerHTML). */
+function Highlight({ text, terms }) {
+  if (!terms?.length) return text || "";
+  const parts = highlightMatches(String(text || ""), terms);
+  return parts.map((p, i) =>
+    p.match
+      ? <mark key={i} style={{ background: "rgba(245, 158, 11, 0.35)", color: "inherit", padding: 0 }}>{p.text}</mark>
+      : <span key={i}>{p.text}</span>
+  );
+}
+
 export default function AuditClient({ rows, chain }) {
   const [q, setQ] = useState("");
   const [action, setAction] = useState("");
@@ -46,8 +62,11 @@ export default function AuditClient({ rows, chain }) {
   const actions = useMemo(() => Array.from(new Set(rows.map((r) => r.action))).sort(), [rows]);
   const categoryCounts = useMemo(() => countByCategory(rows), [rows]);
 
+  // Sprint 28 — parser Stripe-style: actor:x action:y.* payload:z plain text
+  const parsedQuery = useMemo(() => parseSearchQuery(q), [q]);
+  const highlightTerms = useMemo(() => extractHighlightTerms(parsedQuery), [parsedQuery]);
+
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
     const fromTs = fromDate ? new Date(fromDate + "T00:00:00").getTime() : null;
     const toTs   = toDate   ? new Date(toDate   + "T23:59:59.999").getTime() : null;
     return rows.filter((r) => {
@@ -56,11 +75,10 @@ export default function AuditClient({ rows, chain }) {
       const ts = new Date(r.ts).getTime();
       if (fromTs !== null && ts < fromTs) return false;
       if (toTs !== null && ts > toTs) return false;
-      if (!needle) return true;
-      const hay = `${r.actorEmail || ""} ${r.actorId || ""} ${r.action} ${r.target || ""} ${r.ip || ""}`.toLowerCase();
-      return hay.includes(needle);
+      // Sprint 28 — search v2 con operadores + payload-aware
+      return matchesQuery(r, parsedQuery);
     });
-  }, [rows, q, action, category, fromDate, toDate]);
+  }, [rows, parsedQuery, action, category, fromDate, toDate]);
 
   const hasFilters = Boolean(q || action || category || fromDate || toDate);
   const clearFilters = () => { setQ(""); setAction(""); setCategory(""); setFromDate(""); setToDate(""); setPage(0); };
@@ -70,10 +88,10 @@ export default function AuditClient({ rows, chain }) {
 
   const columns = [
     { key: "ts",     label: "Fecha",   width: 180, render: (r) => new Date(r.ts).toLocaleString() },
-    { key: "actor",  label: "Actor",   render: (r) => r.actorEmail || r.actorId || "—" },
-    { key: "action", label: "Acción",  render: (r) => <code style={{ color: cssVar.accent, fontFamily: cssVar.fontMono, fontSize: font.size.sm }}>{r.action}</code> },
-    { key: "target", label: "Target",  render: (r) => r.target || "—" },
-    { key: "ip",     label: "IP",      render: (r) => r.ip || "—" },
+    { key: "actor",  label: "Actor",   render: (r) => <Highlight text={r.actorEmail || r.actorId || "—"} terms={highlightTerms} /> },
+    { key: "action", label: "Acción",  render: (r) => <code style={{ color: cssVar.accent, fontFamily: cssVar.fontMono, fontSize: font.size.sm }}><Highlight text={r.action} terms={highlightTerms} /></code> },
+    { key: "target", label: "Target",  render: (r) => <Highlight text={r.target || "—"} terms={highlightTerms} /> },
+    { key: "ip",     label: "IP",      render: (r) => <Highlight text={r.ip || "—"} terms={highlightTerms} /> },
     { key: "hash",   label: "Hash",    render: (r) => <code title={r.hash} style={{ fontFamily: cssVar.fontMono, color: cssVar.textDim, fontSize: font.size.sm }}>{r.hash?.slice(0, 10)}…</code> },
   ];
 
@@ -148,7 +166,7 @@ export default function AuditClient({ rows, chain }) {
       <TableToolbar>
         <div style={{ flex: "1 1 240px", minWidth: 200 }}>
           <Input
-            type="search" value={q} placeholder="Buscar actor, acción, target, IP…"
+            type="search" value={q} placeholder={SEARCH_HINT_ES}
             onChange={(e) => { setQ(e.target.value); setPage(0); }}
           />
         </div>
