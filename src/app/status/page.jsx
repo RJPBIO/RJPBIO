@@ -20,6 +20,9 @@ import PulseDivider from "@/components/brand/PulseDivider";
 import { listStatusIncidents } from "@/server/incidents";
 // Sprint 20 — subscribe form
 import SubscribeForm from "./SubscribeForm";
+// Sprint 22 — maintenance windows
+import { listStatusMaintenances } from "@/server/maintenance";
+import { activeMaintenances, formatDuration as formatMaintDuration, statusLabel as maintStatusLabel } from "@/lib/maintenance";
 
 export const metadata = {
   title: "Status",
@@ -212,13 +215,15 @@ export default async function StatusPage() {
   const en = L === "en";
   const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const [web, ready, health, feed, incidentsRaw] = await Promise.all([
+  const [web, ready, health, feed, incidentsRaw, maintRaw] = await Promise.all([
     probe(`${base}/favicon.ico`),
     probe(`${base}/api/ready`, { parseJson: true }),
     probe(`${base}/api/health`, { parseJson: true }),
     probe(`${base}/status/feed.xml`),
     listStatusIncidents({ recentDays: 30 }).catch(() => []),
+    listStatusMaintenances({ recentDays: 14 }).catch(() => []),
   ]);
+  const MAINTENANCES = activeMaintenances(maintRaw || []);
   const INCIDENTS = (incidentsRaw || []).map((i) => ({
     id: i.id,
     title: i.title,
@@ -445,6 +450,61 @@ export default async function StatusPage() {
         </section>
 
         <PulseDivider intensity="dim" />
+
+        {/* ═══ Sprint 22 — Maintenance windows programadas ═══ */}
+        {MAINTENANCES.length > 0 && (
+          <section aria-labelledby="status-maintenance" style={{ marginBlock: space[7] }}>
+            <div style={kickerStyle}>MANTENIMIENTO · PROGRAMADO</div>
+            <h2 id="status-maintenance" style={sectionHeading}>
+              {MAINTENANCES.length === 1 ? "Ventana próxima de mantenimiento." : "Ventanas próximas de mantenimiento."}
+            </h2>
+            <ol style={{ listStyle: "none", padding: 0, margin: `${space[4]}px 0 0`, display: "grid", gap: space[3] }}>
+              {MAINTENANCES.map((m) => (
+                <li key={m.id} style={{
+                  padding: space[4],
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 12,
+                  borderLeft: "3px solid #F59E0B",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: space[2] }}>
+                    <strong style={{ color: cssVar.text }}>{m.title}</strong>
+                    <span style={{
+                      padding: "2px 8px",
+                      background: "rgba(245,158,11,0.15)",
+                      color: "#FBBF24",
+                      borderRadius: 4,
+                      fontSize: font.size.xs,
+                      fontWeight: 600,
+                    }}>
+                      {maintStatusLabel(m.status, locale)}
+                    </span>
+                  </div>
+                  {m.body && (
+                    <p style={{ margin: `${space[2]}px 0 0`, color: cssVar.textMuted, fontSize: font.size.sm }}>
+                      {m.body}
+                    </p>
+                  )}
+                  <div style={{ marginBlockStart: space[2], color: cssVar.textDim, fontSize: font.size.xs, fontFamily: cssVar.fontMono }}>
+                    {fmtDateL(locale, new Date(m.scheduledStart), { dateStyle: "medium", timeStyle: "short" })}
+                    {" → "}
+                    {fmtDateL(locale, new Date(m.scheduledEnd), { dateStyle: "medium", timeStyle: "short" })}
+                    <span style={{ marginInlineStart: space[2], color: cssVar.textMuted }}>
+                      ({formatMaintDuration(m.scheduledStart, m.scheduledEnd, locale)})
+                    </span>
+                  </div>
+                  {Array.isArray(m.components) && m.components.length > 0 && (
+                    <div style={{ marginBlockStart: space[1], color: cssVar.textDim, fontSize: font.size.xs }}>
+                      Componentes: {m.components.join(", ")}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {MAINTENANCES.length > 0 && <PulseDivider intensity="dim" />}
 
         {/* ═══ Sprint 20 — Subscribe to incident notifications ═══ */}
         <section aria-labelledby="status-subscribe" style={{ marginBlock: space[7] }}>

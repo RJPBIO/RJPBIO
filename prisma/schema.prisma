@@ -398,6 +398,34 @@ model IncidentUpdate {
   @@index([incidentId])
 }
 
+// Sprint 22 — Maintenance windows (planned downtime).
+enum MaintenanceStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+}
+
+model MaintenanceWindow {
+  id               String            @id @default(cuid())
+  title            String
+  body             String?
+  status           MaintenanceStatus @default(scheduled)
+  components       String[]          @default([])
+  scheduledStart   DateTime
+  scheduledEnd     DateTime
+  actualStart      DateTime?
+  actualEnd        DateTime?
+  notifiedT24      Boolean           @default(false)
+  notifiedT0       Boolean           @default(false)
+  notifiedComplete Boolean           @default(false)
+  creatorId        String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  @@index([status, scheduledStart])
+  @@index([scheduledEnd])
+}
+
 // Sprint 20 — Status page subscribers (email + webhook).
 model IncidentSubscriber {
   id               String    @id @default(cuid())
