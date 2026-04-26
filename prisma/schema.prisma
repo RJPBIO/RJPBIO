@@ -55,6 +55,7 @@ model Org {
   impersonations Impersonation[]
   wearableEvents WearableEvent[]
   nom35Responses Nom35Response[]
+  dsarRequests   DsarRequest[]   @relation("DsarOrg")
   @@index([region])
   @@index([dunningState])
 }
@@ -92,6 +93,8 @@ model User {
   trustedDevices TrustedDevice[]
   mfaResetRequests MfaResetRequest[]
   userSessions UserSession[]
+  dsarRequests DsarRequest[] @relation("DsarRequester")
+  dsarResolutions DsarRequest[] @relation("DsarResolver")
 }
 
 // Sprint 8 — DB-backed sessions para visibilidad + remote revoke con
@@ -344,6 +347,45 @@ enum Region {
   EU
   APAC
   LATAM
+}
+
+// Sprint 13 — DSAR (GDPR Art. 15 / 17 / 20)
+enum DsarKind {
+  ACCESS
+  PORTABILITY
+  ERASURE
+}
+
+enum DsarStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  EXPIRED
+}
+
+model DsarRequest {
+  id            String     @id @default(cuid())
+  userId        String
+  orgId         String?
+  kind          DsarKind
+  status        DsarStatus @default(PENDING)
+  reason        String?
+  resolverId    String?
+  resolverNotes String?
+  artifactUrl   String?
+  ip            String?
+  userAgent     String?
+  requestedAt   DateTime   @default(now())
+  resolvedAt    DateTime?
+  expiresAt     DateTime
+  createdAt     DateTime   @default(now())
+  user          User       @relation(name: "DsarRequester", fields: [userId], references: [id], onDelete: Cascade)
+  org           Org?       @relation(name: "DsarOrg", fields: [orgId], references: [id], onDelete: SetNull)
+  resolver      User?      @relation(name: "DsarResolver", fields: [resolverId], references: [id], onDelete: SetNull)
+  @@index([userId])
+  @@index([orgId, status])
+  @@index([status, expiresAt])
 }
 
 // ─── Webhooks ────────────────────────────────────────────
