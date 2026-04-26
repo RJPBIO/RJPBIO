@@ -18,6 +18,7 @@ const GROUPS = [
   ]},
   { label: "Seguridad", items: [
     { href: "/admin/security/policies", label: "Políticas" },
+    { href: "/admin/security/sessions", label: "Sesiones" },
     { href: "/admin/security", label: "Reset de MFA" },
     { href: "/admin/sso", label: "SSO" },
     { href: "/admin/audit", label: "Auditoría" },
