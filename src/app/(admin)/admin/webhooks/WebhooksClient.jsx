@@ -13,12 +13,13 @@ import {
   parseDeliveryQuery, matchesDeliveryQuery, statusTone, summarizeDeliveries,
   DELIVERY_SEARCH_HINT_ES,
 } from "@/lib/webhook-delivery-search";
+// Sprint 30 — webhook event catalog (grouped + sample payloads)
+import {
+  WEBHOOK_EVENTS, groupByCategory, getEvent, groupLabel, serializeSample,
+} from "@/lib/webhook-events";
 
-const ALL_EVENTS = [
-  "session.completed", "session.started",
-  "member.added", "member.removed",
-  "station.tap", "billing.overage",
-];
+const ALL_EVENTS = WEBHOOK_EVENTS.map((e) => e.id);
+const EVENT_GROUPS = groupByCategory();
 
 function csrfHeader() {
   const c = document.cookie.split("; ").find((r) => r.startsWith("bio-csrf="));
@@ -381,19 +382,43 @@ export default function WebhooksClient({ initial }) {
         </label>
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
           <legend style={{ ...labelStyle, padding: 0, marginBottom: space[2] }}>Eventos</legend>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: space[2] }}>
-            {ALL_EVENTS.map((e) => (
-              <label key={e} style={{
-                display: "flex", alignItems: "center", gap: space[2],
-                padding: `${space[2]}px ${space[3]}px`,
-                background: events.has(e) ? cssVar.accentSoft : cssVar.surface,
-                border: `1px solid ${events.has(e) ? cssVar.accent : cssVar.border}`,
-                borderRadius: radius.sm, cursor: "pointer",
-                transition: "background .12s ease, border-color .12s ease",
-              }}>
-                <input type="checkbox" checked={events.has(e)} onChange={() => toggleEvent(e)} style={{ accentColor: "var(--bi-accent)" }} />
-                <code style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, color: cssVar.text }}>{e}</code>
-              </label>
+          <div style={{ display: "grid", gap: space[3] }}>
+            {Object.entries(EVENT_GROUPS).map(([group, list]) => (
+              <div key={group}>
+                <div style={{
+                  fontSize: font.size.xs,
+                  textTransform: "uppercase",
+                  letterSpacing: font.tracking.wide,
+                  color: cssVar.textDim,
+                  fontWeight: font.weight.semibold,
+                  marginBottom: space[1],
+                }}>
+                  {groupLabel(group)}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: space[2] }}>
+                  {list.map((ev) => (
+                    <label key={ev.id} title={ev.description} style={{
+                      display: "flex", alignItems: "flex-start", gap: space[2],
+                      padding: `${space[2]}px ${space[3]}px`,
+                      background: events.has(ev.id) ? cssVar.accentSoft : cssVar.surface,
+                      border: `1px solid ${events.has(ev.id) ? cssVar.accent : cssVar.border}`,
+                      borderRadius: radius.sm, cursor: "pointer",
+                      transition: "background .12s ease, border-color .12s ease",
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={events.has(ev.id)}
+                        onChange={() => toggleEvent(ev.id)}
+                        style={{ accentColor: "var(--bi-accent)", marginTop: 3 }}
+                      />
+                      <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+                        <code style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, color: cssVar.text }}>{ev.id}</code>
+                        <span style={{ fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: 1.3 }}>{ev.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </fieldset>
@@ -454,9 +479,115 @@ export default function WebhooksClient({ initial }) {
         </ul>
       )}
 
+      <EventsCatalog />
+
       <RevealSecret secret={revealed} onClose={() => setRevealed(null)} />
       <DeliveriesDialog hookId={deliveriesFor} onClose={() => setDeliveriesFor(null)} />
     </>
+  );
+}
+
+/* ── Sprint 30: Events catalog con sample payloads expandables ─── */
+function EventsCatalog() {
+  const [open, setOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+  return (
+    <section style={{
+      marginTop: space[5],
+      padding: space[4],
+      background: cssVar.surface,
+      border: `1px solid ${cssVar.border}`,
+      borderRadius: radius.md,
+    }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        style={{
+          all: "unset", cursor: "pointer", display: "flex", alignItems: "center",
+          justifyContent: "space-between", width: "100%", gap: space[2],
+        }}
+      >
+        <span>
+          <span style={{ fontSize: font.size.lg, fontWeight: font.weight.bold, color: cssVar.text }}>
+            Catálogo de eventos
+          </span>
+          <span style={{ marginInlineStart: space[2], fontSize: font.size.sm, color: cssVar.textMuted }}>
+            {ALL_EVENTS.length} eventos disponibles · payloads de ejemplo para tu integración
+          </span>
+        </span>
+        <span aria-hidden style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>
+          {open ? "▾" : "▸"}
+        </span>
+      </button>
+
+      {open && (
+        <div style={{ marginTop: space[3], display: "grid", gap: space[3] }}>
+          {Object.entries(EVENT_GROUPS).map(([group, list]) => (
+            <div key={group}>
+              <div style={{
+                fontSize: font.size.xs,
+                textTransform: "uppercase",
+                letterSpacing: font.tracking.wide,
+                color: cssVar.textDim,
+                fontWeight: font.weight.semibold,
+                marginBottom: space[1],
+              }}>
+                {groupLabel(group)}
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[1] }}>
+                {list.map((ev) => {
+                  const isExpanded = expandedId === ev.id;
+                  return (
+                    <li key={ev.id} style={{
+                      border: `1px solid ${cssVar.border}`,
+                      borderRadius: radius.sm,
+                      background: cssVar.bg,
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isExpanded ? null : ev.id)}
+                        aria-expanded={isExpanded}
+                        style={{
+                          all: "unset", cursor: "pointer", display: "flex",
+                          alignItems: "center", justifyContent: "space-between",
+                          gap: space[2], padding: `${space[2]}px ${space[3]}px`,
+                          width: "100%", boxSizing: "border-box",
+                        }}
+                      >
+                        <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 }}>
+                          <code style={{ fontFamily: cssVar.fontMono, fontSize: font.size.sm, color: cssVar.text }}>{ev.id}</code>
+                          <span style={{ fontSize: font.size.xs, color: cssVar.textMuted }}>{ev.description}</span>
+                        </span>
+                        <Badge variant="soft" size="sm">{ev.since}</Badge>
+                        <span aria-hidden style={{ color: cssVar.textMuted, fontSize: font.size.xs }}>
+                          {isExpanded ? "▾" : "▸"}
+                        </span>
+                      </button>
+                      {isExpanded && (
+                        <pre style={{
+                          margin: 0,
+                          padding: space[3],
+                          background: "var(--bi-surface-alt, #0a0a0a)",
+                          borderTop: `1px solid ${cssVar.border}`,
+                          color: cssVar.text,
+                          fontFamily: cssVar.fontMono,
+                          fontSize: font.size.xs,
+                          overflowX: "auto",
+                          borderRadius: `0 0 ${radius.sm}px ${radius.sm}px`,
+                        }}>
+                          {serializeSample(ev)}
+                        </pre>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
