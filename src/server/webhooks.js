@@ -1,19 +1,19 @@
 /* ═══════════════════════════════════════════════════════════════
    Webhooks — HMAC-SHA256 signing, retries con backoff exponencial.
    Compatible con Standard Webhooks (standardwebhooks.com).
+   Signing logic extraída a lib/webhook-signing para testing.
    ═══════════════════════════════════════════════════════════════ */
 
 import "server-only";
-import { createHmac, randomBytes, timingSafeEqual as _timingSafeEqual } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { db } from "./db";
 import { logger } from "@/lib/logger";
 import { notifyOrgAdmins } from "./notifications";
+import { sign } from "@/lib/webhook-signing";
 
-function sign(secret, body, timestamp, id) {
-  const h = createHmac("sha256", Buffer.from(secret, "base64"));
-  h.update(`${id}.${timestamp}.${body}`);
-  return `v1,${h.digest("base64")}`;
-}
+// Re-export para mantener API pública existente — algunos call sites
+// importan verifyIncomingSignature desde @/server/webhooks histórico.
+export { verifyIncomingSignature } from "@/lib/webhook-signing";
 
 export async function dispatchWebhooks(orgId, event, payload) {
   const orm = await db();
@@ -103,22 +103,5 @@ export async function retryDelivery(deliveryId) {
   return true;
 }
 
-export function verifyIncomingSignature({ secret, body, timestamp, id, signatureHeader }) {
-  const expected = sign(secret, body, timestamp, id);
-  const provided = signatureHeader?.split(" ") || [];
-  return provided.some((p) => timingSafeEqual(p, expected));
-}
-
-function timingSafeEqual(a, b) {
-  // node:crypto.timingSafeEqual requiere longitudes iguales: comparamos contra
-  // `expected` con longitud fija, pero `a` puede ser manipulado por el atacante.
-  // Hacemos padding al max length para que el early-return por length no filtre
-  // información sobre `expected`. Usamos la impl de OpenSSL (constant-time real).
-  const ab = Buffer.from(a, "utf8");
-  const bb = Buffer.from(b, "utf8");
-  const len = Math.max(ab.length, bb.length);
-  const pa = Buffer.alloc(len); ab.copy(pa);
-  const pb = Buffer.alloc(len); bb.copy(pb);
-  const eq = _timingSafeEqual(pa, pb);
-  return eq && ab.length === bb.length;
-}
+// verifyIncomingSignature ya re-exportado arriba desde lib/webhook-signing.
+// timingSafeEqual también allí, no requerido aquí.
