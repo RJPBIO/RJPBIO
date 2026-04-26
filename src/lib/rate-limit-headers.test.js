@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildRateLimitHeaders, applyRateLimitHeaders, rateLimitHeadersInit,
+  mergeRateLimitChecks,
 } from "./rate-limit-headers";
 
 describe("buildRateLimitHeaders", () => {
@@ -89,6 +90,60 @@ describe("applyRateLimitHeaders", () => {
 
   it("target null → null", () => {
     expect(applyRateLimitHeaders(null, { retryAfter: 5 })).toBe(null);
+  });
+});
+
+describe("mergeRateLimitChecks", () => {
+  const keyCheck = { ok: true, remaining: 50, reset: 60, policy: { limit: 60, window: 60 } };
+  const orgCheck = { ok: true, remaining: 200, reset: 30, policy: { limit: 600, window: 60 } };
+
+  it("array vacío → ok=true sin restricción", () => {
+    const r = mergeRateLimitChecks([]);
+    expect(r.ok).toBe(true);
+    expect(r.remaining).toBe(Infinity);
+  });
+
+  it("non-array → ok=true (defensiva)", () => {
+    expect(mergeRateLimitChecks(null).ok).toBe(true);
+  });
+
+  it("todos pasan → MIN remaining + MAX reset + policy más restrictiva", () => {
+    const r = mergeRateLimitChecks([keyCheck, orgCheck]);
+    expect(r.ok).toBe(true);
+    expect(r.remaining).toBe(50); // min
+    expect(r.reset).toBe(60); // max
+    expect(r.policy.limit).toBe(60); // más restrictivo
+    expect(r.blockedBy).toBe(null);
+  });
+
+  it("uno falla → blocked + retryAfter del peor", () => {
+    const failing = { ok: false, remaining: 0, retryAfter: 30, policy: { limit: 60, window: 60 } };
+    const failingWorse = { ok: false, remaining: 0, retryAfter: 90, policy: { limit: 600, window: 60 } };
+    const r = mergeRateLimitChecks([failing, failingWorse]);
+    expect(r.ok).toBe(false);
+    expect(r.retryAfter).toBe(90); // peor
+    expect(r.blockedBy).toBe("all");
+  });
+
+  it("uno falla, otro pasa → blocked partial", () => {
+    const failing = { ok: false, remaining: 0, retryAfter: 30, policy: { limit: 60, window: 60 } };
+    const r = mergeRateLimitChecks([orgCheck, failing]);
+    expect(r.ok).toBe(false);
+    expect(r.retryAfter).toBe(30);
+    expect(r.blockedBy).toBe("partial");
+  });
+
+  it("policy más restrictiva gana en headers (limit menor)", () => {
+    const free = { ok: true, remaining: 60, reset: 30, policy: { limit: 60, window: 60 } };
+    const enterprise = { ok: true, remaining: 1500, reset: 30, policy: { limit: 2000, window: 60 } };
+    expect(mergeRateLimitChecks([free, enterprise]).policy.limit).toBe(60);
+    expect(mergeRateLimitChecks([enterprise, free]).policy.limit).toBe(60);
+  });
+
+  it("solo failures sin remaining → defaults seguros", () => {
+    const r = mergeRateLimitChecks([{ ok: false }]);
+    expect(r.ok).toBe(false);
+    expect(r.retryAfter).toBe(0);
   });
 });
 

@@ -69,3 +69,60 @@ export function applyRateLimitHeaders(target, info) {
 export function rateLimitHeadersInit(info) {
   return { headers: buildRateLimitHeaders(info) };
 }
+
+/**
+ * Sprint 26 — combina múltiples rate-limit checks (key + org) y devuelve
+ * la version "most-restrictive" para headers + decisión 429.
+ *
+ * Reglas:
+ * - blocked = ANY check.ok === false
+ * - remaining = MIN de remainings de las que pasan (más restrictivo)
+ * - retryAfter = MAX de las bloqueadas (espera la más larga)
+ * - reset = MAX de las que pasaron (peor caso del refill)
+ * - policy = la del check con MENOR limit (más restrictivo)
+ *
+ * @param {Array<{ok, remaining?, retryAfter?, reset?, policy?}>} checks
+ * @returns merged rate-limit info para headers + blocked flag + blockedBy
+ */
+export function mergeRateLimitChecks(checks) {
+  if (!Array.isArray(checks) || checks.length === 0) {
+    return { ok: true, remaining: Infinity, reset: 0, policy: null, blockedBy: null };
+  }
+  const failures = checks.filter((c) => c && !c.ok);
+  if (failures.length > 0) {
+    // Bloqueado: usa el peor retryAfter (espera más larga).
+    let worst = failures[0];
+    for (const f of failures) {
+      if ((f.retryAfter ?? 0) > (worst.retryAfter ?? 0)) worst = f;
+    }
+    // policy = más restrictivo entre TODOS los checks (no solo failures).
+    let policy = null;
+    for (const c of checks) {
+      if (!c?.policy) continue;
+      if (!policy || c.policy.limit < policy.limit) policy = c.policy;
+    }
+    return {
+      ok: false,
+      remaining: worst.remaining ?? 0,
+      retryAfter: worst.retryAfter ?? 0,
+      policy,
+      blockedBy: failures.length === checks.length ? "all" : "partial",
+    };
+  }
+  // Todos pasan — toma el MIN remaining (más restrictivo).
+  let minRemaining = Infinity;
+  let maxReset = 0;
+  let policy = null;
+  for (const c of checks) {
+    if (typeof c.remaining === "number" && c.remaining < minRemaining) minRemaining = c.remaining;
+    if (typeof c.reset === "number" && c.reset > maxReset) maxReset = c.reset;
+    if (c.policy && (!policy || c.policy.limit < policy.limit)) policy = c.policy;
+  }
+  return {
+    ok: true,
+    remaining: minRemaining === Infinity ? 0 : minRemaining,
+    reset: maxReset,
+    policy,
+    blockedBy: null,
+  };
+}

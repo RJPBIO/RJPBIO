@@ -1,13 +1,16 @@
 /* API v1 — Sesiones
    GET /api/v1/sessions      lista paginada (scope: read)
    POST /api/v1/sessions     ingesta server-side (scope: write)
-   Anti-abuso: Idempotency-Key (replay guard) + rate sano 12 sesiones/día/usuario */
+   Anti-abuso: Idempotency-Key (replay guard) + rate sano 12 sesiones/día/usuario.
+   Sprint 26: rate limit dual (per-key + per-org) vía verifyApiKeyAndRateLimit
+   con headers RFC 9239 en respuestas. */
 import { NextResponse } from "next/server";
-import { verifyApiKey } from "@/server/apikey";
-import { check, limits } from "@/server/ratelimit";
+import { verifyApiKeyAndRateLimit } from "@/server/apikey";
+import { check } from "@/server/ratelimit";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { dispatchWebhooks } from "@/server/webhooks";
+import { buildRateLimitHeaders } from "@/lib/rate-limit-headers";
 
 // Idempotency store (in-memory; Upstash si hay REDIS_URL)
 const idemMem = new Map();
@@ -35,14 +38,30 @@ async function idemStore(key, body) {
 }
 
 async function authed(req, scope) {
-  const ctx = await verifyApiKey(req, scope);
-  if (!ctx) return { error: NextResponse.json({ error: "unauthorized" }, { status: 401 }) };
+  const r = await verifyApiKeyAndRateLimit(req, scope);
+  if (!r.ok) {
+    const headers = buildRateLimitHeaders({
+      policy: r.rateLimit?.policy,
+      remaining: r.rateLimit?.remaining,
+      reset: r.rateLimit?.reset,
+      retryAfter: r.status === 429 ? r.rateLimit?.retryAfter : undefined,
+    });
+    return {
+      error: NextResponse.json(
+        { error: r.error, blockedBy: r.blockedBy },
+        { status: r.status, headers }
+      ),
+    };
+  }
+  // RFC 9239 headers en respuestas exitosas — clientes SDK auto-backoff.
+  const headers = buildRateLimitHeaders({
+    policy: r.rateLimit?.policy,
+    remaining: r.rateLimit?.remaining,
+    reset: r.rateLimit?.reset,
+  });
   const orm = await db();
-  const org = await orm.org.findUnique({ where: { id: ctx.orgId } });
-  const rl = await check(`org:${ctx.orgId}`, limits(org?.plan));
-  const headers = { "RateLimit-Remaining": String(rl.remaining), "RateLimit-Reset": String(rl.reset) };
-  if (!rl.ok) return { error: NextResponse.json({ error: "rate_limited" }, { status: 429, headers }) };
-  return { ctx, org, headers };
+  const org = await orm.org.findUnique({ where: { id: r.key.orgId } });
+  return { ctx: r.key, org, headers };
 }
 
 export async function GET(req) {
