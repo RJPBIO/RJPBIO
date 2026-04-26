@@ -35,6 +35,7 @@ const GROUPS = [
   { label: "Cumplimiento", items: [
     { href: "/admin/nom35", label: "NOM-035" },
     { href: "/admin/nom35/documento", label: "Documento oficial" },
+    { href: "/admin/compliance/dsar", label: "DSAR" },
   ]},
   { label: "Cuenta", items: [
     { href: "/admin/billing", label: "Facturación" },

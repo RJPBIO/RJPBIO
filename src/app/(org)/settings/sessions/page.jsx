@@ -211,6 +211,9 @@ export default async function Sessions() {
         <Button href="/api/v1/users/me/export" variant="primary">
           Descargar mis datos
         </Button>
+        <Button href="/settings/data-requests" variant="secondary">
+          Solicitudes DSAR (GDPR)
+        </Button>
         <ConfirmForm
           action={deleteAccount}
           message="¿Borrar tu cuenta definitivamente? Iniciaremos eliminación con 30 días de gracia y cerraremos tus sesiones ahora."
