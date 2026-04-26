@@ -172,18 +172,21 @@ enum Role {
 }
 
 model Membership {
-  id        String   @id @default(cuid())
-  userId    String
-  orgId     String
-  role      Role     @default(MEMBER)
-  teamId    String?
-  scimId    String?  @unique
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  team      Team?    @relation(fields: [teamId], references: [id])
+  id            String   @id @default(cuid())
+  userId        String
+  orgId         String
+  role          Role     @default(MEMBER)
+  teamId        String?
+  scimId        String?  @unique
+  // Sprint 12 — SCIM soft-deactivation. null = active; non-null = deactivated.
+  deactivatedAt DateTime?
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org           Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  team          Team?    @relation(fields: [teamId], references: [id])
   @@unique([userId, orgId])
   @@index([orgId, role])
+  @@index([deactivatedAt])
 }
 
 model Team {

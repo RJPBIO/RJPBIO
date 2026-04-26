@@ -1,22 +1,17 @@
-import { requireScimAuth } from "../../../../../server/scim";
+/* SCIM 2.0 Groups — RFC 7644.
+   Sprint 12: fix auth check bug + uso de toScimGroup centralizado. */
+
+import { requireScimAuth, toScimGroup } from "../../../../../server/scim";
 import { db } from "../../../../../server/db";
 import { randomUUID } from "node:crypto";
 
 export const dynamic = "force-dynamic";
 
-function toScimGroup(team, members = []) {
-  return {
-    schemas: ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-    id: team.id,
-    displayName: team.name,
-    members: members.map((m) => ({ value: m.userId, display: m.userId, type: "User" })),
-    meta: { resourceType: "Group", created: team.createdAt, location: `/scim/v2/Groups/${team.id}` },
-  };
-}
-
 export async function GET(request) {
   const auth = await requireScimAuth(request);
-  if (auth instanceof Response) return auth;
+  // Sprint 12 fix — requireScimAuth retorna { error } o { orgId, keyId };
+  // antes el check era `instanceof Response` que NUNCA matcheaba → bug.
+  if (auth.error) return auth.error;
   const { searchParams } = new URL(request.url);
   const startIndex = Math.max(1, Number(searchParams.get("startIndex") || 1));
   const count = Math.min(100, Number(searchParams.get("count") || 25));
@@ -35,7 +30,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   const auth = await requireScimAuth(request);
-  if (auth instanceof Response) return auth;
+  if (auth.error) return auth.error;
   const body = await request.json();
   const client = await db();
   const team = await client.team.create({
@@ -43,7 +38,10 @@ export async function POST(request) {
   });
   if (Array.isArray(body.members)) {
     for (const m of body.members) {
-      await client.membership.update({ where: { userId_orgId: { userId: m.value, orgId: auth.orgId } }, data: { teamId: team.id } }).catch(() => {});
+      await client.membership.update({
+        where: { userId_orgId: { userId: m.value, orgId: auth.orgId } },
+        data: { teamId: team.id },
+      }).catch(() => {});
     }
   }
   return Response.json(toScimGroup(team, body.members || []), { status: 201 });

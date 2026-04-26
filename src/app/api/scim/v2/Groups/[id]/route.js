@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request, { params }) {
   const auth = await requireScimAuth(request);
-  if (auth instanceof Response) return auth;
+  if (auth.error) return auth.error;
   const { id } = await params;
   const client = await db();
   const team = await client.team.findUnique({ where: { id } });
@@ -21,7 +21,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   const auth = await requireScimAuth(request);
-  if (auth instanceof Response) return auth;
+  if (auth.error) return auth.error;
   const { id } = await params;
   const body = await request.json();
   const client = await db();
@@ -43,7 +43,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const auth = await requireScimAuth(request);
-  if (auth instanceof Response) return auth;
+  if (auth.error) return auth.error;
   const { id } = await params;
   const client = await db();
   await client.team.delete({ where: { id } }).catch(() => {});
