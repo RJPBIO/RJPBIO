@@ -11,6 +11,9 @@
 
 export const SESSION_LABEL_MAX = 80;
 export const SESSION_DEFAULT_TTL_HOURS = 8;
+// Cache window para lazy validation en jwt callback. Muy bajo = DB hammered;
+// muy alto = revoke con lag. 60s es el sweet spot enterprise.
+export const SESSION_VALIDATION_INTERVAL_MS = 60_000;
 
 /**
  * Heurística minimal de browser detection. Orden importa — Edge antes
@@ -120,4 +123,18 @@ export function activeSessions(rows, now = new Date()) {
 export function markCurrent(rows, currentJti) {
   if (!Array.isArray(rows)) return [];
   return rows.map((s) => ({ ...s, current: !!currentJti && s.jti === currentJti }));
+}
+
+/**
+ * ¿El JWT necesita revalidación contra DB? Pure check usado en jwt callback.
+ * - Si token sin jti/sub → no podemos validar, no revalidar (siginin nuevo).
+ * - Si último validate hace >SESSION_VALIDATION_INTERVAL_MS → sí.
+ *
+ * Trigger="update" externamente: caller decide forzar bypass de cache.
+ */
+export function shouldRevalidate(token, now = Date.now()) {
+  if (!token || typeof token !== "object") return false;
+  if (!token.jti || !token.sub) return false;
+  const last = typeof token.lastValidatedAt === "number" ? token.lastValidatedAt : 0;
+  return (now - last) > SESSION_VALIDATION_INTERVAL_MS;
 }

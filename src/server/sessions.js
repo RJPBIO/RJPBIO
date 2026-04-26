@@ -184,3 +184,38 @@ export async function getCurrentEpoch(userId) {
     return 0;
   }
 }
+
+/**
+ * Revoca la sesión actual (al signOut). Idempotente — best-effort.
+ */
+export async function revokeByJti(jti) {
+  if (!jti) return;
+  try {
+    const orm = await db();
+    await orm.userSession.update({
+      where: { jti },
+      data: { revokedAt: new Date() },
+    });
+  } catch { /* no-op (jti may not exist if DB hiccup at signin) */ }
+}
+
+/**
+ * Hard-delete sessions cuyo expiresAt ya pasó hace >gracePeriodHours.
+ * Llamar desde cron (Vercel Cron / external) para que la tabla no crezca.
+ * Returns count.
+ *
+ * @param {number} gracePeriodHours default 24h — mantiene sessions
+ *                                  recientemente expiradas para auditoría.
+ */
+export async function pruneExpiredSessions(gracePeriodHours = 24) {
+  try {
+    const cutoff = new Date(Date.now() - gracePeriodHours * 3600_000);
+    const orm = await db();
+    const r = await orm.userSession.deleteMany({
+      where: { expiresAt: { lt: cutoff } },
+    });
+    return r?.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
