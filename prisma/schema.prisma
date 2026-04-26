@@ -37,6 +37,11 @@ model Org {
   sessionMaxAgeMinutes Int?           // null = usar default global de NextAuth (8h)
   ipAllowlist          String[]      @default([])     // CIDR IPv4 (e.g. "10.0.0.0/8")
   ipAllowlistEnabled   Boolean       @default(false)
+  // Sprint 14 — custom domain DNS verification (TXT challenge).
+  customDomainVerified       Boolean   @default(false)
+  customDomainVerifyToken    String?
+  customDomainVerifiedAt     DateTime?
+  customDomainLastCheckedAt  DateTime?
   // Sprint 10 — audit log retention policy (días). 30..2555.
   auditRetentionDays      Int           @default(365)
   // Sprint 10 polish — last-verified persistence para SOC2 evidence pack.
@@ -58,6 +63,7 @@ model Org {
   dsarRequests   DsarRequest[]   @relation("DsarOrg")
   @@index([region])
   @@index([dunningState])
+  @@index([customDomainVerified])
 }
 
 model User {

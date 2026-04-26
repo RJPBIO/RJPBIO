@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Field } from "@/components/ui/Field";
@@ -354,6 +354,10 @@ export default function BrandingClient({ orgId, orgName, plan, canEdit, initial 
         </aside>
       </div>
 
+      {planDomain && initial.customDomain && (
+        <DomainVerifySection orgId={orgId} domain={initial.customDomain} />
+      )}
+
       <section style={{ marginBlockStart: space[5], padding: space[4], background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.md }}>
         <h2 style={{ margin: 0, fontSize: font.size.md, fontWeight: font.weight.bold, color: cssVar.text }}>
           ¿Dónde se aplica el branding?
@@ -367,6 +371,219 @@ export default function BrandingClient({ orgId, orgName, plan, canEdit, initial 
         </ul>
       </section>
     </article>
+  );
+}
+
+function DomainVerifySection({ orgId, domain }) {
+  const [state, setState] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(null);
+  const pollRef = useRef(null);
+
+  async function load() {
+    try {
+      const r = await fetch(`/api/v1/orgs/${orgId}/domain/verify`, { cache: "no-store" });
+      if (!r.ok) return;
+      const j = await r.json();
+      setState(j);
+    } catch { /* no-op */ } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, [orgId]);
+
+  // Auto-poll cada 30s mientras esté pending y el panel esté visible.
+  useEffect(() => {
+    if (state?.summary?.status !== "pending") return;
+    pollRef.current = setInterval(load, 30_000);
+    return () => clearInterval(pollRef.current);
+  }, [state?.summary?.status]);
+
+  async function startVerify() {
+    setBusy(true);
+    try {
+      const csrf = await getCsrf();
+      const r = await fetch(`/api/v1/orgs/${orgId}/domain/verify?action=start`, {
+        method: "POST",
+        headers: { "x-csrf-token": csrf },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j?.error || `HTTP ${r.status}`);
+      }
+      toast.success("Token generado — añade el TXT record en tu DNS");
+      await load();
+    } catch (e) {
+      toast.error(e?.message || "No se pudo iniciar verificación");
+    } finally { setBusy(false); }
+  }
+
+  async function checkVerify() {
+    setBusy(true);
+    try {
+      const csrf = await getCsrf();
+      const r = await fetch(`/api/v1/orgs/${orgId}/domain/verify?action=check`, {
+        method: "POST",
+        headers: { "x-csrf-token": csrf },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j?.message || j?.error || `HTTP ${r.status}`);
+      }
+      const j = await r.json();
+      if (j.verified) {
+        toast.success("¡Dominio verificado!");
+      } else {
+        toast.error(`TXT record no encontrado${j.resolveError ? ` (${j.resolveError})` : ""} — espera propagación`);
+      }
+      await load();
+    } catch (e) {
+      toast.error(e?.message || "No se pudo verificar");
+    } finally { setBusy(false); }
+  }
+
+  async function clearVerify() {
+    if (!confirm("¿Limpiar el flow de verificación? El token y status actual se perderán.")) return;
+    setBusy(true);
+    try {
+      const csrf = await getCsrf();
+      const r = await fetch(`/api/v1/orgs/${orgId}/domain/verify`, {
+        method: "DELETE",
+        headers: { "x-csrf-token": csrf },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j?.error || `HTTP ${r.status}`);
+      }
+      toast.success("Verificación limpiada");
+      await load();
+    } catch (e) {
+      toast.error(e?.message || "Error");
+    } finally { setBusy(false); }
+  }
+
+  function copy(text, label) {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(label);
+      setTimeout(() => setCopied(null), 1500);
+    }).catch(() => {});
+  }
+
+  if (loading) {
+    return (
+      <section style={{ marginBlockStart: space[5], padding: space[4], background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md }}>
+        <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, margin: 0 }}>Cargando estado de verificación…</p>
+      </section>
+    );
+  }
+
+  const summary = state?.summary || { status: "none", label: "—", tone: "neutral", detail: "" };
+  const instructions = state?.instructions;
+
+  return (
+    <section style={{ marginBlockStart: space[5], padding: space[5], background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md, display: "grid", gap: space[3] }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3] }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: font.size.lg, fontWeight: font.weight.bold, color: cssVar.text }}>
+            Verificación DNS — <code style={{ fontFamily: cssVar.fontMono }}>{domain}</code>
+          </h2>
+          <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[1] }}>
+            {summary.detail}
+          </p>
+        </div>
+        <Badge
+          variant={summary.tone === "success" ? "success" : summary.tone === "warn" ? "warn" : "soft"}
+          size="sm"
+        >
+          {summary.label}
+        </Badge>
+      </header>
+
+      {/* Acciones por status */}
+      {summary.status === "none" && (
+        <div>
+          <Button variant="primary" onClick={startVerify} disabled={busy} loading={busy} loadingLabel="Generando…">
+            Iniciar verificación
+          </Button>
+        </div>
+      )}
+
+      {summary.status === "pending" && instructions && (
+        <>
+          <Alert kind="info">
+            <strong>{instructions.summary}</strong>
+          </Alert>
+
+          <div style={{ background: cssVar.surface2, border: `1px solid ${cssVar.border}`, borderRadius: radius.sm, padding: space[3], display: "grid", gap: space[2], fontFamily: cssVar.fontMono, fontSize: font.size.sm }}>
+            <RecordRow label="Tipo" value={instructions.record.type} onCopy={copy} copied={copied === "type"} copyLabel="type" />
+            <RecordRow label="Hostname" value={instructions.record.hostname} onCopy={copy} copied={copied === "host"} copyLabel="host" />
+            <RecordRow label="Valor" value={instructions.record.value} onCopy={copy} copied={copied === "value"} copyLabel="value" />
+            <RecordRow label="TTL" value={String(instructions.record.ttl)} onCopy={copy} copied={copied === "ttl"} copyLabel="ttl" />
+          </div>
+
+          <ol style={{ margin: 0, paddingInlineStart: space[5], color: cssVar.textMuted, fontSize: font.size.sm, lineHeight: 1.7 }}>
+            {instructions.steps.map((s, i) => <li key={i}>{s}</li>)}
+          </ol>
+
+          <div style={{ display: "flex", gap: space[2], flexWrap: "wrap" }}>
+            <Button variant="primary" onClick={checkVerify} disabled={busy} loading={busy} loadingLabel="Resolviendo DNS…">
+              Verificar ahora
+            </Button>
+            <Button variant="ghost" size="sm" onClick={startVerify} disabled={busy}>
+              Regenerar token
+            </Button>
+            <Button variant="ghost" size="sm" onClick={clearVerify} disabled={busy}>
+              Cancelar verificación
+            </Button>
+          </div>
+
+          <p style={{ color: cssVar.textDim, fontSize: font.size.xs, margin: 0 }}>
+            Re-chequeamos automáticamente cada 30s. La propagación DNS suele tomar 1-5 min.
+          </p>
+        </>
+      )}
+
+      {summary.status === "verified" && (
+        <>
+          <Alert kind="success">
+            Tu dominio <code>{domain}</code> está verificado. Puedes eliminar el TXT record si quieres
+            (lo regeneraríamos en re-checks futuros). El white-label está activo a nivel app — la
+            configuración HTTP routing/SSL se hace en tu provider (Vercel/Cloudflare).
+          </Alert>
+          <div>
+            <Button variant="ghost" size="sm" onClick={clearVerify} disabled={busy}>
+              Limpiar y re-verificar
+            </Button>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function RecordRow({ label, value, onCopy, copied, copyLabel }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: space[2], flexWrap: "wrap" }}>
+      <span style={{ color: cssVar.textDim, minWidth: 80 }}>{label}:</span>
+      <code style={{ flex: 1, color: cssVar.text, wordBreak: "break-all" }}>{value}</code>
+      <button
+        type="button"
+        onClick={() => onCopy(value, copyLabel)}
+        style={{
+          padding: `2px ${space[2]}px`,
+          background: copied ? cssVar.accent : cssVar.surface,
+          color: copied ? "#fff" : cssVar.text,
+          border: `1px solid ${cssVar.border}`,
+          borderRadius: radius.sm,
+          cursor: "pointer",
+          fontSize: font.size.xs,
+        }}
+      >
+        {copied ? "Copiado" : "Copiar"}
+      </button>
+    </div>
   );
 }
 
