@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   detectBrowser, detectOS, detectDeviceClass, formatSessionLabel,
   generateJti, calculateExpiresAt, isSessionActive, activeSessions, markCurrent,
-  SESSION_LABEL_MAX, SESSION_DEFAULT_TTL_HOURS,
+  shouldRevalidate,
+  SESSION_LABEL_MAX, SESSION_DEFAULT_TTL_HOURS, SESSION_VALIDATION_INTERVAL_MS,
 } from "./session-tracking";
 
 const UA = {
@@ -173,6 +174,47 @@ describe("activeSessions", () => {
     expect(activeSessions(null)).toEqual([]);
     expect(activeSessions(undefined)).toEqual([]);
     expect(activeSessions("nope")).toEqual([]);
+  });
+});
+
+describe("shouldRevalidate", () => {
+  const now = 1714150800_000; // fixed
+  const fresh = (overrides = {}) => ({ jti: "j_x", sub: "u_x", lastValidatedAt: now - 1000, ...overrides });
+
+  it("token recién validado → false (cache hit)", () => {
+    expect(shouldRevalidate(fresh(), now)).toBe(false);
+  });
+
+  it("último validate > intervalo → true", () => {
+    const stale = fresh({ lastValidatedAt: now - SESSION_VALIDATION_INTERVAL_MS - 1 });
+    expect(shouldRevalidate(stale, now)).toBe(true);
+  });
+
+  it("sin lastValidatedAt → true (primer check)", () => {
+    expect(shouldRevalidate({ jti: "j", sub: "u" }, now)).toBe(true);
+  });
+
+  it("sin jti → false (no podemos validar)", () => {
+    expect(shouldRevalidate({ sub: "u", lastValidatedAt: now - 100_000 }, now)).toBe(false);
+  });
+
+  it("sin sub → false", () => {
+    expect(shouldRevalidate({ jti: "j", lastValidatedAt: now - 100_000 }, now)).toBe(false);
+  });
+
+  it("null/undefined token → false", () => {
+    expect(shouldRevalidate(null)).toBe(false);
+    expect(shouldRevalidate(undefined)).toBe(false);
+    expect(shouldRevalidate("string")).toBe(false);
+  });
+
+  it("lastValidatedAt non-number → tratado como 0 → true", () => {
+    expect(shouldRevalidate({ jti: "j", sub: "u", lastValidatedAt: "yesterday" }, now)).toBe(true);
+  });
+
+  it("boundary: exactamente intervalo → false (>, no >=)", () => {
+    const exact = fresh({ lastValidatedAt: now - SESSION_VALIDATION_INTERVAL_MS });
+    expect(shouldRevalidate(exact, now)).toBe(false);
   });
 });
 

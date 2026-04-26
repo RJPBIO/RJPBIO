@@ -17,7 +17,8 @@ import { headers } from "next/headers";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "./db";
 import { auditLog } from "./audit";
-import { createSession, getCurrentEpoch } from "./sessions";
+import { createSession, getCurrentEpoch, isSessionValid, touchSession, revokeByJti } from "./sessions";
+import { shouldRevalidate } from "@/lib/session-tracking";
 
 /* Magic-link delivery. When EMAIL_SERVER is configured we send via
    nodemailer; otherwise we fall back to a console log so the instance
@@ -195,8 +196,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const jti = await createSession({ userId: user.id, ip, userAgent });
           if (jti) token.jti = jti;
           token.epoch = await getCurrentEpoch(user.id);
+          token.lastValidatedAt = Date.now();
+          delete token.invalid;
         } catch {
           // headers() no disponible en este contexto — sin tracking, signin igual.
+        }
+      }
+      // Sprint 8 polish — lazy revoke validation. Re-valida contra DB cada
+      // SESSION_VALIDATION_INTERVAL_MS (60s) o al trigger="update". Si la
+      // sesión fue revocada o el epoch cambió → marca token.invalid;
+      // session() callback retorna user:null → admin layout redirige a signin.
+      else if (shouldRevalidate(token) || trigger === "update") {
+        const valid = await isSessionValid({
+          jti: token.jti,
+          userId: token.sub,
+          tokenEpoch: token.epoch ?? 0,
+        });
+        if (!valid) {
+          token.invalid = true;
+        } else {
+          token.lastValidatedAt = Date.now();
+          delete token.invalid;
+          // Touch lastSeenAt async — no bloquear el callback por esto.
+          touchSession(token.jti).catch(() => {});
         }
       }
       // Embed org security policies en el token para que el middleware
@@ -236,6 +258,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, user, token }) {
+      // Sprint 8 polish — token.invalid (revoked/epoch-mismatch) → user:null.
+      // Layouts/handlers que hacen `if (!session?.user)` redirigen a signin
+      // o devuelven 401, efectivamente cerrando la sesión revocada.
+      if (token?.invalid) {
+        return { ...session, user: null, expires: new Date().toISOString() };
+      }
       // En strategy="jwt" no hay `user`; toda la info viene del token.
       // En strategy="database" sí hay `user` y la DB está disponible.
       const u = user || (token ? { id: token.sub, locale: token.locale, timezone: token.timezone } : null);
@@ -269,8 +297,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
-    async signOut({ session }) {
-      await auditLog({ action: "auth.signout", actorId: session?.userId }).catch(() => {});
+    async signOut(message) {
+      // En JWT-strategy el evento trae `token`, en database-strategy `session`.
+      const token = message?.token;
+      const session = message?.session;
+      const actorId = token?.sub || session?.userId;
+      const jti = token?.jti;
+      // Sprint 8 — revoca la UserSession row del JWT actual (si existe)
+      // para que /settings/sessions no muestre una sesión "viva" tras
+      // signout normal. Best-effort.
+      if (jti) await revokeByJti(jti).catch(() => {});
+      await auditLog({ action: "auth.signout", actorId }).catch(() => {});
     },
   },
 });
