@@ -10,7 +10,9 @@ export async function GET(_request, { params }) {
   const session = await auth();
   const guard = await requireMembership(session, orgId, "org.export");
   if (guard) return guard;
-  const client = db();
+  // BUG FIX: db() es async, sin await todo el Promise.all retorna
+  // arrays vacíos. Org export endpoint silently broken hasta ahora.
+  const client = await db();
   const [org, members, sessions, audit] = await Promise.all([
     client.org.findUnique({ where: { id: orgId } }),
     client.membership.findMany({ where: { orgId } }),

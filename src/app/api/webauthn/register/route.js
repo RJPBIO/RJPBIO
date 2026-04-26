@@ -22,7 +22,10 @@ export async function POST(request) {
   const body = await request.json();
   const { verified, registrationInfo } = await finishRegistration(body, expectedChallenge);
   if (!verified) return new Response("verification failed", { status: 400 });
-  const client = db();
+  // BUG FIX: db() async — sin await el client.user es undefined,
+  // toda passkey registration falla silently y el user no podía
+  // registrar dispositivos como segundo factor.
+  const client = await db();
   const user = await client.user.findUnique({ where: { id: session.user.id } });
   const creds = Array.isArray(user.passkeyCredentials) ? user.passkeyCredentials : [];
   creds.push({

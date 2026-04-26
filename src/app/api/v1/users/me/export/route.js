@@ -9,7 +9,11 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return new Response("Unauthorized", { status: 401 });
   const userId = session.user.id;
-  const client = db();
+  // BUG FIX (Sprint 5 polish): db() es async — todo el Promise.all
+  // de abajo recibía .user, .membership, .neuralSession de un Promise
+  // = undefined, y el bundle salía con [user=undefined, memberships=[],
+  // sessions=[]]. GDPR Art. 20 (right to portability) violado en silencio.
+  const client = await db();
   const [user, memberships, sessions] = await Promise.all([
     client.user.findUnique({ where: { id: userId } }),
     client.membership.findMany({ where: { userId } }),
