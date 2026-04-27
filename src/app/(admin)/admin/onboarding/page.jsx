@@ -35,7 +35,7 @@ export default async function Onboarding() {
     <article style={{ color: cssVar.text, fontFamily: cssVar.fontSans }}>
       <PageHeader
         eyebrow="Setup · production-readiness"
-        italic="Encende"
+        italic="Enciende"
         title="tu organización."
         subtitle={`${summary.done}/${summary.total} completados — ${summary.percent}% del camino${criticalDone ? ". Critical-level ✓" : ""}.`}
         actions={

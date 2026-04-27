@@ -115,7 +115,7 @@ export default function ResendClient({ email: initialEmail = "", labels }) {
 
   const disabled = busy || cooldown > 0;
   const ctaLabel =
-    cooldown > 0 ? labels.cooldownLabel(cooldown)
+    cooldown > 0 ? labels.cooldownLabel.replace("{s}", String(cooldown))
     : busy       ? labels.sending
     :              labels.resend;
 
