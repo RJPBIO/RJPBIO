@@ -12,7 +12,7 @@
 
 import "server-only";
 import { db } from "./db";
-import { computeOrgNeuralHealth } from "@/lib/neural/orgHealth";
+import { computeOrgNeuralHealth, computeProtocolEffectiveness } from "@/lib/neural/orgHealth";
 
 /**
  * Recolecta UserSummary[] del org y agrega vía orgHealth.
@@ -34,7 +34,8 @@ export async function getOrgNeuralHealth(orgId) {
     if (userIds.length === 0) return computeOrgNeuralHealth([]);
 
     // Sesiones del último año por usuario — ventana razonable para
-    // calcular maturity + staleness.
+    // calcular maturity + staleness. Sprint 46: incluimos moodPre/Post
+    // y coherenciaDelta para computar effectiveness por protocolo.
     const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
     const sessions = await orm.neuralSession.findMany({
       where: {
@@ -45,6 +46,9 @@ export async function getOrgNeuralHealth(orgId) {
         userId: true,
         protocolId: true,
         completedAt: true,
+        moodPre: true,
+        moodPost: true,
+        coherenciaDelta: true,
       },
     });
 
@@ -71,7 +75,13 @@ export async function getOrgNeuralHealth(orgId) {
       }
     }
 
-    return computeOrgNeuralHealth(Array.from(byUser.values()));
+    const orgHealth = computeOrgNeuralHealth(Array.from(byUser.values()));
+    if (orgHealth.suppressed) {
+      // Si la org entera está bajo k, no exponemos protocol effectiveness.
+      return orgHealth;
+    }
+    const protocolEffectiveness = computeProtocolEffectiveness(sessions);
+    return { ...orgHealth, protocolEffectiveness };
   } catch (e) {
     return {
       totalMembers: 0,

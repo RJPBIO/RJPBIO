@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { computeOrgNeuralHealth } from "./orgHealth";
+import { computeOrgNeuralHealth, computeProtocolEffectiveness } from "./orgHealth";
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -216,5 +216,132 @@ describe("computeOrgNeuralHealth", () => {
       user("d", 5, 1), user("e", 5, 1),
     ]);
     expect(r.now).toMatch(/2026-04-26/);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   computeProtocolEffectiveness — Sprint 46
+   ═══════════════════════════════════════════════════════════════ */
+
+function session(opts) {
+  return {
+    userId: opts.userId || "u1",
+    protocolId: opts.protocolId || "Reset",
+    moodPre: opts.moodPre,
+    moodPost: opts.moodPost,
+    coherenciaDelta: opts.coherenciaDelta,
+  };
+}
+
+describe("computeProtocolEffectiveness", () => {
+  it("retorna [] sin sessions", () => {
+    expect(computeProtocolEffectiveness([])).toEqual([]);
+    expect(computeProtocolEffectiveness(null)).toEqual([]);
+  });
+
+  it("k-anonymity: protocolos con <5 users distintos quedan suppressed", () => {
+    const sessions = [
+      session({ userId: "u1", protocolId: "Rare", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u2", protocolId: "Rare", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u3", protocolId: "Rare", moodPre: 3, moodPost: 4 }),
+    ];
+    const r = computeProtocolEffectiveness(sessions);
+    expect(r[0].suppressed).toBe(true);
+    expect(r[0].reason).toMatch(/k</);
+    expect(r[0].moodDelta).toBeUndefined();
+  });
+
+  it("reportable cuando hay ≥5 users distintos + ≥3 mood samples", () => {
+    const sessions = [
+      session({ userId: "u1", protocolId: "Reset", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u2", protocolId: "Reset", moodPre: 2, moodPost: 4 }),
+      session({ userId: "u3", protocolId: "Reset", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u4", protocolId: "Reset", moodPre: 2, moodPost: 3 }),
+      session({ userId: "u5", protocolId: "Reset", moodPre: 3, moodPost: 5 }),
+    ];
+    const r = computeProtocolEffectiveness(sessions);
+    expect(r[0].suppressed).toBe(false);
+    expect(r[0].moodDelta).toBeGreaterThan(0);
+    expect(r[0].moodSampleSize).toBe(5);
+    expect(r[0].distinctUsers).toBe(5);
+  });
+
+  it("ordena por mood delta descendente", () => {
+    const sessions = [
+      // Reset: avg delta = +1.5 (5 users)
+      session({ userId: "u1", protocolId: "Reset", moodPre: 3, moodPost: 5 }),
+      session({ userId: "u2", protocolId: "Reset", moodPre: 2, moodPost: 4 }),
+      session({ userId: "u3", protocolId: "Reset", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u4", protocolId: "Reset", moodPre: 2, moodPost: 3 }),
+      session({ userId: "u5", protocolId: "Reset", moodPre: 3, moodPost: 5 }),
+      // Calma: avg delta = +0.4 (5 users)
+      session({ userId: "u1", protocolId: "Calma", moodPre: 3, moodPost: 3 }),
+      session({ userId: "u2", protocolId: "Calma", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u3", protocolId: "Calma", moodPre: 3, moodPost: 3 }),
+      session({ userId: "u4", protocolId: "Calma", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u5", protocolId: "Calma", moodPre: 4, moodPost: 4 }),
+    ];
+    const r = computeProtocolEffectiveness(sessions);
+    expect(r[0].protocol).toBe("Reset");
+    expect(r[1].protocol).toBe("Calma");
+    expect(r[0].moodDelta).toBeGreaterThan(r[1].moodDelta);
+  });
+
+  it("hitRate = % sesiones con delta positivo", () => {
+    const sessions = [
+      session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 3 }),
+      session({ userId: "u4", protocolId: "X", moodPre: 3, moodPost: 2 }),
+      session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 4 }),
+    ];
+    const r = computeProtocolEffectiveness(sessions);
+    expect(r[0].hitRate).toBeCloseTo(0.6, 2); // 3/5 con delta>0
+  });
+
+  it("incluye coherenciaDelta cuando hay ≥3 muestras", () => {
+    const sessions = [
+      session({ userId: "u1", protocolId: "X", coherenciaDelta: 5 }),
+      session({ userId: "u2", protocolId: "X", coherenciaDelta: 8 }),
+      session({ userId: "u3", protocolId: "X", coherenciaDelta: 6 }),
+      session({ userId: "u4", protocolId: "X", coherenciaDelta: 7 }),
+      session({ userId: "u5", protocolId: "X", coherenciaDelta: 9 }),
+    ];
+    const r = computeProtocolEffectiveness(sessions);
+    expect(r[0].coherenciaDelta).toBeGreaterThan(0);
+    expect(r[0].coherenciaSampleSize).toBe(5);
+  });
+
+  it("respeta topN", () => {
+    // 10 protocolos, cada uno con 5 users
+    const sessions = [];
+    for (let p = 0; p < 10; p++) {
+      for (let u = 1; u <= 5; u++) {
+        sessions.push(session({ userId: `u${u}`, protocolId: `P${p}`, moodPre: 3, moodPost: 4 }));
+      }
+    }
+    const r = computeProtocolEffectiveness(sessions, { topN: 3 });
+    expect(r.length).toBe(3);
+  });
+
+  it("kmin custom funciona", () => {
+    const sessions = [
+      session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 4 }),
+      session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 4 }),
+    ];
+    const r1 = computeProtocolEffectiveness(sessions); // kmin=5 → suppressed
+    const r2 = computeProtocolEffectiveness(sessions, { kmin: 3 }); // kmin=3 → ok
+    expect(r1[0].suppressed).toBe(true);
+    expect(r2[0].suppressed).toBe(false);
+  });
+
+  it("ignora sessions malformadas", () => {
+    const r = computeProtocolEffectiveness([
+      null,
+      { userId: "u1" }, // sin protocolId
+      session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 4 }),
+    ]);
+    expect(r.length).toBeLessThanOrEqual(1);
   });
 });

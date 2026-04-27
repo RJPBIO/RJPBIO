@@ -176,6 +176,121 @@ export function computeOrgNeuralHealth(users, options = {}) {
  */
 
 /**
+ * Effectiveness por protocolo: combina adoption (count, distinct users) con
+ * impacto observable (mood delta, coherencia delta) cuando hay datos.
+ *
+ * K-anonymity: protocolos con menos de `kmin` usuarios distintos quedan
+ * suprimidos (no se reportan métricas individuales). Esto protege a usuarios
+ * en organizaciones pequeñas o con protocolos raros.
+ *
+ * @param {Array<SessionRecord>} sessions
+ *   Cada session: {userId, protocolId, moodPre?, moodPost?, coherenciaDelta?}
+ * @param {object} [options]
+ * @param {number} [options.kmin] - usuarios distintos mínimos por protocolo (default 5)
+ * @param {number} [options.topN] - máximo de protocolos a retornar (default 8)
+ * @returns {Array<ProtocolEffectiveness>} ordenado por mood delta desc
+ */
+export function computeProtocolEffectiveness(sessions, options = {}) {
+  const kmin = options.kmin ?? KMIN;
+  const topN = options.topN ?? 8;
+  if (!Array.isArray(sessions) || sessions.length === 0) return [];
+
+  const byProto = new Map();
+  for (const s of sessions) {
+    if (!s || !s.protocolId) continue;
+    const proto = s.protocolId;
+    if (!byProto.has(proto)) {
+      byProto.set(proto, {
+        protocol: proto,
+        count: 0,
+        users: new Set(),
+        moodDeltas: [],
+        coherenciaDeltas: [],
+      });
+    }
+    const bucket = byProto.get(proto);
+    bucket.count++;
+    if (s.userId) bucket.users.add(s.userId);
+    if (typeof s.moodPre === "number" && typeof s.moodPost === "number") {
+      bucket.moodDeltas.push(s.moodPost - s.moodPre);
+    }
+    if (typeof s.coherenciaDelta === "number") {
+      bucket.coherenciaDeltas.push(s.coherenciaDelta);
+    }
+  }
+
+  const results = [];
+  for (const bucket of byProto.values()) {
+    const distinctUsers = bucket.users.size;
+    const item = {
+      protocol: bucket.protocol,
+      count: bucket.count,
+      distinctUsers,
+      suppressed: distinctUsers < kmin,
+    };
+    if (item.suppressed) {
+      item.reason = `k<${kmin} usuarios distintos`;
+      results.push(item);
+      continue;
+    }
+    if (bucket.moodDeltas.length >= 3) {
+      const sum = bucket.moodDeltas.reduce((a, b) => a + b, 0);
+      const mean = sum / bucket.moodDeltas.length;
+      // Stdev para una banda de confianza informativa.
+      const v = bucket.moodDeltas.reduce((a, d) => a + (d - mean) * (d - mean), 0) / bucket.moodDeltas.length;
+      item.moodDelta = +mean.toFixed(2);
+      item.moodDeltaStdev = +Math.sqrt(v).toFixed(2);
+      item.moodSampleSize = bucket.moodDeltas.length;
+      // Hit rate: % sesiones con delta positivo (impacto observable)
+      const hits = bucket.moodDeltas.filter((d) => d > 0).length;
+      item.hitRate = +(hits / bucket.moodDeltas.length).toFixed(3);
+    }
+    if (bucket.coherenciaDeltas.length >= 3) {
+      const mean = bucket.coherenciaDeltas.reduce((a, b) => a + b, 0) / bucket.coherenciaDeltas.length;
+      item.coherenciaDelta = +mean.toFixed(2);
+      item.coherenciaSampleSize = bucket.coherenciaDeltas.length;
+    }
+    results.push(item);
+  }
+
+  // Ordenar: primero los reportables (no-suppressed) por mood delta desc;
+  // luego los suprimidos (para transparencia de cuántos faltan).
+  results.sort((a, b) => {
+    if (a.suppressed !== b.suppressed) return a.suppressed ? 1 : -1;
+    const ma = typeof a.moodDelta === "number" ? a.moodDelta : -Infinity;
+    const mb = typeof b.moodDelta === "number" ? b.moodDelta : -Infinity;
+    if (mb !== ma) return mb - ma;
+    return b.count - a.count; // tiebreak por adoption
+  });
+
+  return results.slice(0, topN);
+}
+
+/**
+ * @typedef {object} SessionRecord
+ * @property {string} userId
+ * @property {string} protocolId
+ * @property {number} [moodPre]
+ * @property {number} [moodPost]
+ * @property {number} [coherenciaDelta]
+ */
+
+/**
+ * @typedef {object} ProtocolEffectiveness
+ * @property {string} protocol
+ * @property {number} count
+ * @property {number} distinctUsers
+ * @property {boolean} suppressed
+ * @property {string} [reason]
+ * @property {number} [moodDelta]
+ * @property {number} [moodDeltaStdev]
+ * @property {number} [moodSampleSize]
+ * @property {number} [hitRate]
+ * @property {number} [coherenciaDelta]
+ * @property {number} [coherenciaSampleSize]
+ */
+
+/**
  * @typedef {object} OrgNeuralHealth
  * @property {number} totalMembers
  * @property {number} activeMembers
