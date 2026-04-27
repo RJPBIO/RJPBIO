@@ -13,6 +13,7 @@
 import "server-only";
 import { db } from "./db";
 import { computeOrgNeuralHealth, computeProtocolEffectiveness } from "@/lib/neural/orgHealth";
+import { computeCohortPrior } from "@/lib/neural/coldStart";
 
 /**
  * Recolecta UserSummary[] del org y agrega vía orgHealth.
@@ -90,5 +91,43 @@ export async function getOrgNeuralHealth(orgId) {
       reason: "Error al recolectar datos del org",
       error: String(e).slice(0, 120),
     };
+  }
+}
+
+/**
+ * Sprint 48 — Cohort prior para new users.
+ *
+ * Aggregates moodPre/moodPost por bucket × intent. K-anonymity ≥5 usuarios
+ * distintos por celda. Útil para blending en cold-start de un usuario nuevo
+ * en el org. NO expone datos individuales — solo agregados por celda.
+ *
+ * @param {string} orgId
+ * @returns {Promise<{table, totalSessions, totalUsers, kmin}|null>}
+ */
+export async function getOrgCohortPrior(orgId) {
+  if (!orgId) return null;
+  try {
+    const orm = await db();
+    // Solo sesiones de últimos 6 meses para que el prior refleje rutinas
+    // actuales del org (post Sprint 47 también haría sentido decay temporal).
+    const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+    const sessions = await orm.neuralSession.findMany({
+      where: {
+        orgId,
+        completedAt: { gte: sixMonthsAgo },
+        moodPre: { not: null },
+        moodPost: { not: null },
+      },
+      select: {
+        userId: true,
+        protocolId: true,
+        completedAt: true,
+        moodPre: true,
+        moodPost: true,
+      },
+    });
+    return computeCohortPrior(sessions);
+  } catch {
+    return null;
   }
 }
