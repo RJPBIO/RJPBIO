@@ -488,7 +488,7 @@ function _applyResidualCalibration(raw, st, protocol) {
  * @param {Date}     [options.now] - timestamp de evaluación (default: now)
  */
 export function predictSessionImpact(st, protocol, options = {}) {
-  const { chronotype = null, now = new Date() } = options;
+  const { chronotype = null, now = new Date(), cohortPrior = null } = options;
   const cfg = NC.prediction;
   const ml = st.moodLog || [];
   const withProto = ml.filter(m => m.proto === protocol.n && m.pre > 0);
@@ -526,14 +526,19 @@ export function predictSessionImpact(st, protocol, options = {}) {
       // Sprint 41 — si tenemos chronotype, usamos prior cronobiológico
       // condicionado a hora subjetiva + intent. Sin chronotype, mantenemos
       // el fallback global de toda la vida (compat hacia atrás).
-      if (chronotype) {
+      // Sprint 51 — si hay cohortPrior, hace blend con literatura.
+      if (chronotype || cohortPrior) {
         const prior = getColdStartPrior({
           chronotype,
           intent: protocol.int,
           now,
           sessionsCount: ml.length,
+          cohortPrior,
         });
-        raw = priorPredictionShape(prior, "prior cronobiológico");
+        const basis = prior.source === "cohort" ? "prior cohort org"
+          : prior.source === "blend" ? "prior cohort + literatura"
+          : "prior cronobiológico";
+        raw = priorPredictionShape(prior, basis);
       } else {
         raw = {
           predictedDelta: cfg.fallbackPredictedDelta,
@@ -601,7 +606,17 @@ export function calcProtocolCorrelations(st) {
 //   - porDominio: sumatorios crudos NOM-035 por dominio → aplica sesgo
 //   - readiness: output de calcReadiness(...) — z-scores de HRV/RHR/sueño
 export function adaptiveProtocolEngine(st, options = {}) {
-  const { chronotype = null, banditArms = null, porDominio = null, readiness = null, currentMood = null } = options;
+  const {
+    chronotype = null,
+    banditArms = null,
+    porDominio = null,
+    readiness = null,
+    currentMood = null,
+    // Sprint 51 — opcional: cohort prior del org del usuario para
+    // enriquecer el cold-start baseline. Cuando null, el engine cae
+    // a literatura (Sprint 41 behavior).
+    cohortPrior = null,
+  } = options;
   const now = new Date();
   const h = now.getHours();
   // Reloj circadiano personalizado por chronotype (fallback al real).
@@ -767,6 +782,7 @@ export function adaptiveProtocolEngine(st, options = {}) {
         intent: p.int,
         now,
         sessionsCount: effective,
+        cohortPrior, // Sprint 51 — blend con cohort cuando está disponible
       });
       score += priorBonus(prior);
     }
