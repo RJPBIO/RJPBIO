@@ -9,6 +9,11 @@ import { scoreArm, armKey, timeBucket } from "./neural/bandit";
 import { getCircadianPersonalized } from "./neural/chronoCircadian";
 import { calibratePrediction } from "./neural/residuals";
 import { protocolBiasFromDomain, applyBiasToScore } from "./nom35/protocolBias";
+import { NEURAL_CONFIG as NC } from "./neural/config";
+
+// Re-export para que consumers puedan importar desde @/lib/neural
+export { NEURAL_CONFIG } from "./neural/config";
+export { evaluateEngineHealth } from "./neural/health";
 
 // ─── Level System ─────────────────────────────────────────
 export function gL(s) {
@@ -100,45 +105,45 @@ export function calcBioQuality(sd) {
 // iguales (MBI también los trata separadamente). No es diagnóstico:
 // es un indicador interno que el motor usa para sesgar protocolos.
 function _burnoutExhaustion(ml) {
-  if (ml.length < 5) return { value: 0, reason: "datos insuficientes" };
-  const last7 = ml.slice(-7);
-  const prev7 = ml.slice(-14, -7);
+  const cfg = NC.burnout;
+  if (ml.length < cfg.minSamplesExhaustion) return { value: 0, reason: "datos insuficientes" };
+  const w = cfg.windowDays;
+  const last7 = ml.slice(-w);
+  const prev7 = ml.slice(-w * 2, -w);
   const avgR = last7.reduce((a, m) => a + m.mood, 0) / last7.length;
   const avgP = prev7.length >= 3 ? prev7.reduce((a, m) => a + m.mood, 0) / prev7.length : avgR;
   const trend = avgR - avgP; // + = mejorando, − = empeorando
   // Escalón por nivel absoluto: mood sostenido muy bajo es la señal
   // más fuerte de exhaustion (independiente del trend).
-  const baseLow =
-    avgR < 1.5 ? 80 :
-    avgR < 2.0 ? 55 :
-    avgR < 2.5 ? 35 :
-    avgR < 3.0 ? 15 : 0;
-  // −1.0 de trend → +20 al índice; +1.0 → −20.
-  const trendPenalty = Math.max(-20, Math.min(30, -trend * 25));
+  const baseLow = (cfg.exhaustionLowMoodThresholds.find((t) => avgR < t.max) || { value: 0 }).value;
+  // Trend penalty: -1.0 → +25; +1.0 → -25 (cap entre floor y cap).
+  const trendPenalty = Math.max(
+    cfg.exhaustionTrendFloor,
+    Math.min(cfg.exhaustionTrendCap, -trend * cfg.exhaustionTrendMultiplier)
+  );
   return {
-    value: Math.max(0, Math.min(100, Math.round(baseLow + trendPenalty + 10))),
+    value: Math.max(0, Math.min(100, Math.round(baseLow + trendPenalty + cfg.exhaustionOffset))),
     trend: +trend.toFixed(2),
     avgR: +avgR.toFixed(2),
   };
 }
 
 function _burnoutDisengagement(ml) {
-  if (ml.length < 7) return { value: 0, reason: "datos insuficientes" };
-  const last7 = ml.slice(-7).map((m) => m.mood);
+  const cfg = NC.burnout;
+  if (ml.length < cfg.minSamplesDisengage) return { value: 0, reason: "datos insuficientes" };
+  const w = cfg.windowDays;
+  const last7 = ml.slice(-w).map((m) => m.mood);
   const avg = last7.reduce((a, b) => a + b, 0) / last7.length;
   const variance = last7.reduce((a, m) => a + (m - avg) * (m - avg), 0) / last7.length;
-  // Solo contamos como "flat" (desengagement) si la varianza es 0 Y la
-  // media está en la zona neutra (~3). Varianza 0 con mood muy bajo no
-  // es disengagement — es exhaustion sostenida, y la capturamos ahí.
-  const neutral = avg >= 2.5 && avg <= 3.5;
-  const flat = variance < 0.1 && neutral;
-  if (variance < 0.1) {
-    // Uniforme en mood no-neutro: se considera señal del componente
-    // de exhaustion, no de disengagement.
+  // Solo flat+neutro (avg ~3) cuenta como disengagement. Var 0 con mood
+  // muy bajo es exhaustion sostenida, capturada en el otro componente.
+  const neutral = avg >= cfg.disengageNeutralMin && avg <= cfg.disengageNeutralMax;
+  const flat = variance < cfg.disengageVarianceFlat && neutral;
+  if (variance < cfg.disengageVarianceFlat) {
     return { value: neutral ? 80 : 15, variance: +variance.toFixed(2), flat };
   }
-  if (variance < 0.4) return { value: 50, variance: +variance.toFixed(2), flat: false };
-  if (variance < 0.8) return { value: 25, variance: +variance.toFixed(2), flat: false };
+  if (variance < cfg.disengageVarianceMid) return { value: 50, variance: +variance.toFixed(2), flat: false };
+  if (variance < cfg.disengageVarianceHigh) return { value: 25, variance: +variance.toFixed(2), flat: false };
   return { value: 10, variance: +variance.toFixed(2), flat: false };
 }
 
@@ -160,32 +165,30 @@ function _burnoutReducedEfficacy(hist) {
 }
 
 export function calcBurnoutIndex(ml, hist) {
+  const cfg = NC.burnout;
   ml = ml || []; hist = hist || [];
-  if (ml.length < 5) return { index: 0, risk: "sin datos", trend: "neutral", prediction: "", avgMood: 3, components: null };
+  if (ml.length < cfg.minSamplesExhaustion) return { index: 0, risk: "sin datos", trend: "neutral", prediction: "", avgMood: 3, components: null };
   const exhaustion = _burnoutExhaustion(ml);
   const disengage = _burnoutDisengagement(ml);
   const efficacy = _burnoutReducedEfficacy(hist);
-  // Pesos iguales salvo que la señal de eficacia sea insuficiente:
-  // entonces redistribuimos su peso a las otras dos.
-  // Pesos: exhaustion domina porque es la señal más interpretable y
-  // es la que dispara la intervención más clara (bajar carga). Si no
-  // tenemos datos de eficacia, su peso se reparte hacia exhaustion.
   const hasEfficacy = efficacy.value > 0 || efficacy.qualityRecent != null;
+  const w = hasEfficacy ? cfg.weights.withEfficacy : cfg.weights.withoutEfficacy;
   const idx = Math.round(
     hasEfficacy
-      ? exhaustion.value * 0.5 + disengage.value * 0.2 + efficacy.value * 0.3
-      : exhaustion.value * 0.75 + disengage.value * 0.25
+      ? exhaustion.value * w.exhaustion + disengage.value * w.disengage + efficacy.value * w.efficacy
+      : exhaustion.value * w.exhaustion + disengage.value * w.disengage
   );
+  const t = cfg.riskThresholds;
   const risk = disengage.flat ? "moderado"
-    : idx >= 70 ? "crítico"
-    : idx >= 50 ? "alto"
-    : idx >= 30 ? "moderado"
+    : idx >= t.critical ? "crítico"
+    : idx >= t.high ? "alto"
+    : idx >= t.moderate ? "moderado"
     : "bajo";
   const pred = disengage.flat
     ? "Respuestas uniformes detectadas. Posible desengagement. Variar protocolos ayuda a reactivar."
-    : idx >= 70 ? "Carga sostenida alta. Prioriza protocolos de calma y reduce exigencia esta semana."
-    : idx >= 50 ? "Tendencia de fatiga detectada. Aumentar frecuencia de sesiones cortas."
-    : idx >= 30 ? "Estado estable con margen de mejora."
+    : idx >= t.critical ? "Carga sostenida alta. Prioriza protocolos de calma y reduce exigencia esta semana."
+    : idx >= t.high ? "Tendencia de fatiga detectada. Aumentar frecuencia de sesiones cortas."
+    : idx >= t.moderate ? "Estado estable con margen de mejora."
     : "Estado dentro de rango saludable. Mantener ritmo.";
   const trendWord =
     exhaustion.trend > 0.3 ? "mejorando" : exhaustion.trend < -0.3 ? "deteriorando" : "estable";
@@ -379,13 +382,15 @@ export function calcNeuralVariability(history) {
 // the standard error of the sample mean (σ / √n), so más sesiones ⇒
 // banda más estrecha. Si la muestra < 2, devolvemos banda amplia.
 function _ciBand(deltas) {
+  const cfg = NC.prediction;
   const n = deltas.length;
   const mean = deltas.reduce((a, b) => a + b, 0) / n;
-  if (n < 2) return { mean, lower: mean - 1.5, upper: mean + 1.5, se: null };
+  if (n < cfg.minSamplesForCI) {
+    return { mean, lower: mean - cfg.fallbackBandHalfWidth, upper: mean + cfg.fallbackBandHalfWidth, se: null };
+  }
   const variance = deltas.reduce((a, d) => a + (d - mean) * (d - mean), 0) / (n - 1);
   const se = Math.sqrt(variance / n);
-  // z=1.28 ≈ 80 % gaussian band (suficiente para UX, no clínico)
-  const margin = 1.28 * se;
+  const margin = cfg.ciZ * se;
   return { mean, lower: mean - margin, upper: mean + margin, se };
 }
 
@@ -400,18 +405,18 @@ function _applyResidualCalibration(raw, st, protocol) {
   const calibrated = calibratePrediction(residuals, raw, { armId: protocol.int });
   if (!calibrated || !calibrated.calibrated) return raw;
   // Detectar drift: bias reciente vs bias antiguo.
+  const cfgP = NC.prediction;
   const hist = residuals.history;
-  if (hist.length >= 10) {
+  if (hist.length >= cfgP.driftMinHistory) {
     const recent = hist.slice(-5).map(h => h.residual);
     const prev = hist.slice(-10, -5).map(h => h.residual);
     const mR = recent.reduce((a, b) => a + b, 0) / recent.length;
     const mP = prev.reduce((a, b) => a + b, 0) / prev.length;
-    if (Math.sign(mR) !== Math.sign(mP) && Math.abs(mR - mP) > 0.8) {
-      // Drift: ensanchamos banda y bajamos confianza.
-      const widen = Math.abs(mR - mP) * 0.5;
+    if (Math.sign(mR) !== Math.sign(mP) && Math.abs(mR - mP) > cfgP.driftThreshold) {
+      const widen = Math.abs(mR - mP) * cfgP.driftWidenMultiplier;
       calibrated.lower = +(calibrated.lower - widen).toFixed(2);
       calibrated.upper = +(calibrated.upper + widen).toFixed(2);
-      calibrated.confidence = Math.max(10, (calibrated.confidence || 0) - 15);
+      calibrated.confidence = Math.max(10, (calibrated.confidence || 0) - cfgP.driftConfidencePenalty);
       calibrated.drift = true;
     }
   }
@@ -420,17 +425,18 @@ function _applyResidualCalibration(raw, st, protocol) {
 }
 
 export function predictSessionImpact(st, protocol) {
+  const cfg = NC.prediction;
   const ml = st.moodLog || [];
   const withProto = ml.filter(m => m.proto === protocol.n && m.pre > 0);
   let raw;
-  if (withProto.length >= 2) {
+  if (withProto.length >= cfg.minSamplesForCI) {
     const deltas = withProto.map(m => m.mood - m.pre);
     const { mean, lower, upper } = _ciBand(deltas);
     raw = {
       predictedDelta: +mean.toFixed(1),
       lower: +lower.toFixed(2),
       upper: +upper.toFixed(2),
-      confidence: Math.min(95, 50 + withProto.length * 5),
+      confidence: Math.min(cfg.selfConfidenceCap, cfg.selfConfidenceBase + withProto.length * cfg.selfConfidenceBonus),
       sampleSize: withProto.length,
       basis: "historial personal",
       message: mean > 0 ? `+${mean.toFixed(1)} puntos estimados basado en ${withProto.length} sesiones anteriores` : "Protocolo sin mejora demostrada. Considera cambiar."
@@ -440,27 +446,27 @@ export function predictSessionImpact(st, protocol) {
       const p = P.find(pp => pp.n === m.proto);
       return p && p.int === protocol.int && m.pre > 0;
     });
-    if (intentSessions.length >= 2) {
+    if (intentSessions.length >= cfg.minSamplesForCI) {
       const deltas = intentSessions.map(m => m.mood - m.pre);
       const { mean, lower, upper } = _ciBand(deltas);
       raw = {
         predictedDelta: +mean.toFixed(1),
         lower: +lower.toFixed(2),
         upper: +upper.toFixed(2),
-        confidence: Math.min(70, 30 + intentSessions.length * 4),
+        confidence: Math.min(cfg.crossProtocolConfidenceCap, cfg.crossProtocolConfidenceBase + intentSessions.length * cfg.crossProtocolConfidenceBonus),
         sampleSize: intentSessions.length,
         basis: "protocolos similares",
         message: `+${mean.toFixed(1)} estimado basado en protocolos de ${protocol.int}`
       };
     } else {
       raw = {
-        predictedDelta: 0.8,
-        lower: -0.7,
-        upper: 2.3,
-        confidence: 20,
+        predictedDelta: cfg.fallbackPredictedDelta,
+        lower: +(cfg.fallbackPredictedDelta - cfg.fallbackBandHalfWidth).toFixed(2),
+        upper: +(cfg.fallbackPredictedDelta + cfg.fallbackBandHalfWidth).toFixed(2),
+        confidence: cfg.coldStartConfidence,
         sampleSize: 0,
         basis: "promedio global",
-        message: "Primera sesión con este protocolo. Impacto promedio: +0.8"
+        message: `Primera sesión con este protocolo. Impacto promedio: +${cfg.fallbackPredictedDelta}`
       };
     }
   }
@@ -587,54 +593,52 @@ export function adaptiveProtocolEngine(st, options = {}) {
     : 0;
 
   // Puntuar cada candidato multidimensionalmente
+  const sCfg = NC.scoring;
   const scored = candidates.map((p) => {
-    let score = 50;
+    let score = sCfg.baseScore;
 
-    // Sensibilidad personal al protocolo (+/- 20)
+    // Sensibilidad personal al protocolo
     const sens = sensitivity[p.n];
     if (sens) {
-      score += sens.avgDelta * 20;
-      if (sens.sessions >= 5) score += 10;
+      score += sens.avgDelta * sCfg.sensitivity.deltaMultiplier;
+      if (sens.sessions >= sCfg.sensitivity.sessionsBonusThreshold) score += sCfg.sensitivity.sessionsBonus;
     }
 
-    // Diversidad: evitar repetir últimos 3 protocolos (-15)
+    // Diversidad: evitar repetir últimos 3 protocolos
     const last3 = hist.slice(-3).map((x) => x.p);
-    if (last3.includes(p.n)) score -= 15;
+    if (last3.includes(p.n)) score += sCfg.diversityPenalty;
 
-    // Match de dificultad con nivel del usuario (+/-10)
+    // Match de dificultad con nivel del usuario
     const level = gL(st.totalSessions);
     const levelIdx = LVL.findIndex((l) => l.n === level.n);
-    if (p.dif <= levelIdx + 1) score += 5;
-    if (p.dif > levelIdx + 2) score -= 10;
+    if (p.dif <= levelIdx + 1) score += sCfg.levelMatch.withinReach;
+    if (p.dif > levelIdx + 2) score += sCfg.levelMatch.tooHigh;
 
-    // Bonus circadiano (+10)
-    if (h < 10 && (p.int === "energia" || p.int === "enfoque")) score += 10;
-    if (h >= 20 && p.int === "calma") score += 10;
-    if (h >= 13 && h < 16 && p.int === "reset") score += 8;
+    // Bonus circadiano
+    if (h < 10 && (p.int === "energia" || p.int === "enfoque")) score += sCfg.circadianBonus.morningActivation;
+    if (h >= 20 && p.int === "calma") score += sCfg.circadianBonus.eveningCalma;
+    if (h >= 13 && h < 16 && p.int === "reset") score += sCfg.circadianBonus.midDayReset;
 
-    // Bonus favoritos (+8)
-    if ((st.favs || []).includes(p.n)) score += 8;
+    // Bonus favoritos
+    if ((st.favs || []).includes(p.n)) score += sCfg.favoritesBonus;
 
     // Bandit UCB1 contextual: mira primero el brazo (intent:bucket);
     // si está vacío, cae al brazo global (intent). El prior poblacional
     // hace que siempre devuelva un score finito, sin empates triviales.
     if (banditArms) {
       const ctxArm = banditArms[armKey(p.int, bucket)] || banditArms[p.int] || null;
-      const ucb = scoreArm(ctxArm, armsTotal, 0.6);
-      if (Number.isFinite(ucb)) score += ucb * 4;
+      const ucb = scoreArm(ctxArm, armsTotal, sCfg.banditExplorationConst);
+      if (Number.isFinite(ucb)) score += ucb * sCfg.banditUcbWeight;
     }
 
-    // Readiness (HRV+RHR+sueño) alinea la activación fisiológica esperada:
-    // - primed/ready: bonus a activación; calma pierde relevancia
-    // - recover: bonus a calma; energía/enfoque penalizan
-    // Solo se aplica cuando hay score real (insufficient data → skip).
+    // Readiness (HRV+RHR+sueño) alinea la activación fisiológica esperada.
     if (readiness && typeof readiness.score === "number") {
       if (readiness.interpretation === "recover") {
-        if (p.int === "calma") score += 10;
-        else if (p.int === "energia" || p.int === "enfoque") score -= 8;
+        if (p.int === "calma") score += sCfg.readinessBonus.recoverCalma;
+        else if (p.int === "energia" || p.int === "enfoque") score += sCfg.readinessBonus.recoverActivePenalty;
       } else if (readiness.interpretation === "primed") {
-        if (p.int === "energia" || p.int === "enfoque") score += 8;
-        else if (p.int === "calma") score -= 4;
+        if (p.int === "energia" || p.int === "enfoque") score += sCfg.readinessBonus.primedActive;
+        else if (p.int === "calma") score += sCfg.readinessBonus.primedCalmaPenalty;
       }
     }
 
