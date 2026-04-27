@@ -3,6 +3,7 @@ import { auth } from "@/server/auth";
 import { aggregateScores } from "@/lib/nom35/scoring";
 import { DOMINIOS, CATEGORIAS } from "@/lib/nom35/items";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+import { PageHeader } from "@/components/admin/PageHeader";
 import Link from "next/link";
 
 export const metadata = { title: "NOM-035 · Admin" };
@@ -45,41 +46,39 @@ export default async function Nom35AdminPage() {
 
   return (
     <>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: space[3] }}>
-        <div>
-          <h1 style={{ fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, margin: 0, color: cssVar.text }}>
-            NOM-035 — Riesgo psicosocial
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            Agregado anónimo (últimos 12 meses). Muestras menores a 5 se suprimen por privacidad.
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: space[2], flexWrap: "wrap" }}>
-          <Link
-            href="/api/v1/nom35/aggregate/export"
-            style={{
-              padding: `${space[2]}px ${space[4]}px`, borderRadius: radius.md,
-              background: cssVar.surface, color: cssVar.text,
-              border: `1px solid ${cssVar.border}`,
-              textDecoration: "none", fontWeight: font.weight.semibold,
-              fontSize: font.size.sm,
-            }}
-          >
-            Descargar CSV
-          </Link>
-          <Link
-            href="/admin/nom35/documento"
-            style={{
-              padding: `${space[2]}px ${space[4]}px`, borderRadius: radius.md,
-              background: cssVar.accent, color: cssVar.accentInk,
-              textDecoration: "none", fontWeight: font.weight.bold,
-              fontSize: font.size.sm,
-            }}
-          >
-            Generar documento oficial →
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Compliance · STPS México"
+        italic="NOM-035."
+        title="Riesgo psicosocial, agregado."
+        subtitle="Agregado anónimo de los últimos 12 meses. Muestras &lt; 5 se suprimen por privacidad (k-anonimato)."
+        actions={
+          <>
+            <Link
+              href="/api/v1/nom35/aggregate/export"
+              style={{
+                padding: `${space[2]}px ${space[4]}px`, borderRadius: radius.md,
+                background: cssVar.surface, color: cssVar.text,
+                border: `1px solid ${cssVar.border}`,
+                textDecoration: "none", fontWeight: font.weight.semibold,
+                fontSize: font.size.sm,
+              }}
+            >
+              Descargar CSV
+            </Link>
+            <Link
+              href="/admin/nom35/documento"
+              style={{
+                padding: `${space[2]}px ${space[4]}px`, borderRadius: radius.md,
+                background: cssVar.accent, color: cssVar.accentInk,
+                textDecoration: "none", fontWeight: font.weight.bold,
+                fontSize: font.size.sm,
+              }}
+            >
+              Generar documento →
+            </Link>
+          </>
+        }
+      />
 
       <section style={grid}>
         <Kpi title="Respuestas" value={rows.length} sub={`de ${totalSeats} miembros (${coverage}% cobertura)`} />

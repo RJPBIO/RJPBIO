@@ -2,6 +2,7 @@ import { auth } from "@/server/auth";
 import { resolveOrg } from "@/server/tenancy";
 import { db } from "@/server/db";
 import WebhooksClient from "./WebhooksClient";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, space, font } from "@/components/ui/tokens";
 
 export const dynamic = "force-dynamic";
@@ -37,29 +38,13 @@ export default async function Webhooks() {
     secretRotatedAt: h.secretRotatedAt ? h.secretRotatedAt.toISOString() : null,
   }));
   return (
-    <article style={{
-      maxWidth: 960,
-      margin: "0 auto",
-      padding: `${space[6]}px ${space[4]}px`,
-      color: cssVar.text,
-      fontFamily: cssVar.fontSans,
-    }}>
-      <h1 style={{
-        margin: 0,
-        fontSize: font.size["2xl"],
-        fontWeight: font.weight.black,
-        letterSpacing: font.tracking.tight,
-      }}>
-        Webhooks
-      </h1>
-      <p style={{
-        color: cssVar.textMuted,
-        marginTop: space[1],
-        fontSize: font.size.sm,
-      }}>
-        Recibe eventos firmados (HMAC-SHA256, Standard Webhooks). Hasta 8 reintentos con backoff exponencial.
-        Rotación de secrets con overlap (zero-downtime).
-      </p>
+    <article style={{ color: cssVar.text, fontFamily: cssVar.fontSans }}>
+      <PageHeader
+        eyebrow="Producto · integraciones"
+        italic="Eventos"
+        title="firmados, en tiempo real."
+        subtitle="HMAC-SHA256 con Standard Webhooks. 8 reintentos con backoff exponencial. Rotación de secrets con overlap (zero-downtime)."
+      />
       <WebhooksClient initial={initial} />
     </article>
   );

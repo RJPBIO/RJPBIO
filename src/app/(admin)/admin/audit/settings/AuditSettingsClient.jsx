@@ -6,7 +6,14 @@ import { Field } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const AUDIT_NAV = [
+  { href: "/admin/audit", label: "Eventos" },
+  { href: "/admin/audit/settings", label: "Configuración" },
+];
 import {
   AUDIT_RETENTION_MIN_DAYS,
   AUDIT_RETENTION_MAX_DAYS,
@@ -159,18 +166,15 @@ export default function AuditSettingsClient({
   }
 
   return (
-    <article style={{ maxWidth: 760, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Configuración de auditoría
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            Retención · verificación de integridad · export para SOC2/ISO27001 · {orgName}
-          </p>
-        </div>
-        <Badge variant="soft" size="sm">{totalLogs.toLocaleString()} logs</Badge>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Compliance · audit retention"
+        italic="Memoria"
+        title="bajo control."
+        subtitle={`Retención · verificación de integridad · export SOC2/ISO27001 · ${orgName}`}
+        actions={<Badge variant="soft" size="sm">{totalLogs.toLocaleString()} logs</Badge>}
+      />
+      <SegmentedNav items={AUDIT_NAV} ariaLabel="Sub-navegación de auditoría" />
 
       {/* Retention */}
       <section style={cardStyle}>

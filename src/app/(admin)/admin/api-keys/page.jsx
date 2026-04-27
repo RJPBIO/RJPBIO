@@ -2,6 +2,7 @@ import { auth } from "@/server/auth";
 import { resolveOrg } from "@/server/tenancy";
 import { db } from "@/server/db";
 import ApiKeysClient from "./ApiKeysClient";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, space, font } from "@/components/ui/tokens";
 
 export const dynamic = "force-dynamic";
@@ -37,28 +38,13 @@ export default async function ApiKeys() {
   const orgFull = await orm.org.findUnique({ where: { id: org.id }, select: { plan: true } });
   const plan = orgFull?.plan || "FREE";
   return (
-    <article style={{
-      maxWidth: 960,
-      margin: "0 auto",
-      padding: `${space[6]}px ${space[4]}px`,
-      color: cssVar.text,
-      fontFamily: cssVar.fontSans,
-    }}>
-      <h1 style={{
-        margin: 0,
-        fontSize: font.size["2xl"],
-        fontWeight: font.weight.black,
-        letterSpacing: font.tracking.tight,
-      }}>
-        API keys
-      </h1>
-      <p style={{
-        color: cssVar.textMuted,
-        marginTop: space[1],
-        fontSize: font.size.sm,
-      }}>
-        Autentica integraciones server-to-server con Bearer tokens. Cada clave tiene scopes y un prefijo trazable.
-      </p>
+    <article style={{ color: cssVar.text, fontFamily: cssVar.fontSans }}>
+      <PageHeader
+        eyebrow="Seguridad · server-to-server"
+        italic="Acceso"
+        title="programático."
+        subtitle="Bearer tokens con scopes y prefijo trazable. Rate-limited por key + por org."
+      />
       <ApiKeysClient initial={serialized} plan={plan} />
     </article>
   );

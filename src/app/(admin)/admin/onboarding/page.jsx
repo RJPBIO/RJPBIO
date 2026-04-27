@@ -3,6 +3,8 @@ import { resolveOrg } from "../../../../server/tenancy";
 import { gatherOnboardingState } from "../../../../server/onboarding";
 import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { KPITile } from "@/components/admin/KPITile";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   evaluateSteps, summarizeProgress, isCriticalComplete,
@@ -30,46 +32,28 @@ export default async function Onboarding() {
   const criticalDone = isCriticalComplete(steps);
 
   return (
-    <article style={{
-      maxWidth: 880,
-      margin: "0 auto",
-      padding: `${space[6]}px ${space[4]}px`,
-      color: cssVar.text,
-      fontFamily: cssVar.fontSans,
-    }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: space[3] }}>
-        <div>
-          <h1 style={{
-            fontSize: font.size["2xl"],
-            fontWeight: font.weight.black,
-            letterSpacing: font.tracking.tight,
-            margin: 0,
-          }}>
-            Configuración inicial
-          </h1>
-          <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginTop: space[2] }}>
-            {summary.done}/{summary.total} completados ({summary.percent}%)
-            {criticalDone && (
-              <span style={{ marginInlineStart: space[2], color: "#10B981" }}>
-                · Critical-level ✓
-              </span>
-            )}
-          </p>
-        </div>
-        <Badge variant={criticalDone ? "success" : "warn"} size="sm">
-          {criticalDone ? "Production-ready" : "Pendiente"}
-        </Badge>
-      </header>
+    <article style={{ color: cssVar.text, fontFamily: cssVar.fontSans }}>
+      <PageHeader
+        eyebrow="Setup · production-readiness"
+        italic="Encende"
+        title="tu organización."
+        subtitle={`${summary.done}/${summary.total} completados — ${summary.percent}% del camino${criticalDone ? ". Critical-level ✓" : ""}.`}
+        actions={
+          <Badge variant={criticalDone ? "success" : "warn"} size="md">
+            {criticalDone ? "Production-ready" : "Pendiente"}
+          </Badge>
+        }
+      />
 
-      <div style={{ marginTop: space[3] }}>
+      <div>
         <Progress value={summary.done} max={summary.total} tone="accent" size="md" />
       </div>
 
-      {/* Per-category breakdown */}
+      {/* Per-category breakdown — editorial KPI tiles */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-        gap: space[2],
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: space[3],
         marginBlockStart: space[4],
       }}>
         {ONBOARDING_CATEGORIES.map((cat) => {
@@ -77,34 +61,14 @@ export default async function Onboarding() {
           if (!c || c.total === 0) return null;
           const pct = c.total > 0 ? Math.round((c.done / c.total) * 100) : 0;
           return (
-            <div key={cat} style={{
-              padding: space[3],
-              background: cssVar.surface,
-              border: `1px solid ${cssVar.border}`,
-              borderRadius: radius.sm,
-            }}>
-              <div style={{
-                fontSize: font.size.xs,
-                color: cssVar.textDim,
-                textTransform: "uppercase",
-                letterSpacing: font.tracking.wide,
-                fontWeight: font.weight.semibold,
-              }}>
-                {categoryLabel(cat)}
-              </div>
-              <div style={{
-                marginTop: space[1],
-                fontSize: font.size.xl,
-                fontWeight: font.weight.black,
-                color: pct === 100 ? "#10B981" : cssVar.text,
-                fontFamily: cssVar.fontMono,
-              }}>
-                {c.done}/{c.total}
-              </div>
-              <div style={{ fontSize: font.size.xs, color: cssVar.textMuted, marginTop: 2 }}>
-                {pct}%
-              </div>
-            </div>
+            <KPITile
+              key={cat}
+              label={categoryLabel(cat)}
+              value={`${c.done}/${c.total}`}
+              sub={`${pct}% completado`}
+              tone={pct === 100 ? "success" : pct >= 50 ? "signal" : "neutral"}
+              glow={pct === 100}
+            />
           );
         })}
       </div>

@@ -4,7 +4,15 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const COMPLIANCE_NAV = [
+  { href: "/admin/compliance", label: "SOC 2 · ISO 27001" },
+  { href: "/admin/compliance/dsar", label: "DSAR" },
+  { href: "/admin/audit", label: "Audit log" },
+];
 import {
   DSAR_STATUSES,
   kindLabel,
@@ -84,17 +92,14 @@ export default function DsarQueueClient({ orgId, orgName, actorRole, initialRequ
   }
 
   return (
-    <article style={{ maxWidth: 960, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            DSAR — Solicitudes de datos
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            GDPR Art. 15 / 17 / 20 · {orgName} · {actorRole}
-          </p>
-        </div>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Compliance · GDPR DSAR"
+        italic="Datos"
+        title="del usuario, en su control."
+        subtitle={`GDPR Art. 15 / 17 / 20 · ${orgName} · ${actorRole}`}
+      />
+      <SegmentedNav items={COMPLIANCE_NAV} ariaLabel="Sub-navegación de compliance" />
 
       {/* Status chip filter */}
       <div role="toolbar" aria-label="Filtros por status" style={{

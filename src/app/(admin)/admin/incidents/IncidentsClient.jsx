@@ -6,6 +6,8 @@ import { Field } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   INCIDENT_SEVERITIES,
@@ -115,20 +117,18 @@ export default function IncidentsClient({ initial }) {
   }
 
   return (
-    <article style={{ maxWidth: 960, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Incidentes
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            Status page público de BIO-IGNICIÓN. Visible en <a href="/status" style={{ color: cssVar.accent }}>/status</a> + RSS feed.xml.
-          </p>
-        </div>
-        <Button variant="primary" onClick={() => setCreating(!creating)}>
-          {creating ? "Cancelar" : "Nuevo incidente"}
-        </Button>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Plataforma · status page"
+        italic="Estado"
+        title="público."
+        subtitle={<>Visible en <a href="/status" style={{ color: cssVar.accent }}>/status</a> + RSS feed.xml.</>}
+        actions={
+          <Button variant="primary" onClick={() => setCreating(!creating)}>
+            {creating ? "Cancelar" : "Nuevo incidente"}
+          </Button>
+        }
+      />
 
       <Alert kind="warn" style={{ marginBlockEnd: space[4] }}>
         <strong>Platform admin area.</strong> Lo que crees aquí es PÚBLICO — visible
@@ -211,8 +211,12 @@ export default function IncidentsClient({ initial }) {
       )}
 
       {incidents.length === 0 ? (
-        <div style={{ padding: space[6], textAlign: "center", color: cssVar.textMuted, background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md }}>
-          Sin incidents — el status page muestra "Operativo".
+        <div className="bi-admin-empty">
+          <span className="bi-admin-empty-glyph"><BioGlyph size={36} /></span>
+          <div className="bi-admin-empty-title">Sistema operativo.</div>
+          <div className="bi-admin-empty-body">
+            Sin incidentes activos. El status page público muestra todo verde.
+          </div>
         </div>
       ) : (
         <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: space[3] }}>

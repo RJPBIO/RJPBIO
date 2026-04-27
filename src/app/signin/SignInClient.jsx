@@ -282,9 +282,12 @@ export default function SignInClient({ locale = "es" }) {
     if (!EMAIL_RE.test(email)) { setEmailTouched(true); return; }
     setSubmitting(true); setErr(""); setOk("");
     try {
+      const csrfR = await fetch("/api/auth/csrf", { cache: "no-store" });
+      const { csrfToken } = await csrfR.json();
       const r = await fetch("/api/auth/signin/email", {
         method: "POST",
-        body: new URLSearchParams({ email, callbackUrl }),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ email, csrfToken, callbackUrl }),
       });
       if (r.status === 429) {
         const retry = Number(r.headers.get("Retry-After") || 60);

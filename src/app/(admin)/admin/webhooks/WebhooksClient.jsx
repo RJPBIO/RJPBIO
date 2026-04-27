@@ -17,6 +17,7 @@ import {
 import {
   WEBHOOK_EVENTS, groupByCategory, getEvent, groupLabel, serializeSample,
 } from "@/lib/webhook-events";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 
 const ALL_EVENTS = WEBHOOK_EVENTS.map((e) => e.id);
 const EVENT_GROUPS = groupByCategory();
@@ -435,9 +436,14 @@ export default function WebhooksClient({ initial }) {
       </form>
 
       {hooks.length === 0 ? (
-        <div style={emptyStyle}>
-          <div style={{ fontSize: font.size.lg, fontWeight: font.weight.bold, color: cssVar.text }}>Sin webhooks</div>
-          <div style={{ fontSize: font.size.sm, color: cssVar.textMuted, marginTop: space[1] }}>Crea el primero con el formulario de arriba.</div>
+        <div className="bi-admin-empty">
+          <span className="bi-admin-empty-glyph">
+            <BioGlyph size={36} />
+          </span>
+          <div className="bi-admin-empty-title">Aún no fluyen eventos.</div>
+          <div className="bi-admin-empty-body">
+            Conecta tu primer endpoint y BIO-IGNICIÓN te enviará eventos firmados (HMAC-SHA256) en tiempo real.
+          </div>
         </div>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
