@@ -80,7 +80,9 @@ export async function verifyApiKeyDetailed(req, scope) {
     return null;
   }
 
-  if (scope && !key.scopes.includes(scope)) return null;
+  // No filtramos por scope aquí — verifyApiKeyAndRateLimit lo hace y
+  // distingue 401 (token inválido) vs 403 (token válido, scope insuficiente).
+  // Antes: silent null → caller devolvía 401 engañoso para scopes mal.
 
   // Persistencia best-effort de last-used (no bloquea respuesta).
   const ip = req.headers?.get?.("x-forwarded-for")?.split(",")[0]?.trim() || null;

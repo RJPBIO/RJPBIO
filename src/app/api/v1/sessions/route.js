@@ -65,19 +65,30 @@ async function authed(req, scope) {
 }
 
 export async function GET(req) {
-  const a = await authed(req, "read"); if (a.error) return a.error;
+  const a = await authed(req, "read:sessions"); if (a.error) return a.error;
   const url = new URL(req.url);
   const take = Math.min(Number(url.searchParams.get("limit") || 50), 200);
   const skip = Number(url.searchParams.get("offset") || 0);
   const orm = await db();
-  const rows = await orm.neuralSession.findMany({
-    where: { orgId: a.ctx.orgId }, orderBy: { completedAt: "desc" }, take, skip,
+  // Sprint 59 — espejo del fix Sprint 55 en /admin: las sesiones del PWA
+  // viven en la personal-org de cada miembro. Queremos que el API expose
+  // las sesiones de los MIEMBROS de la org dueña de la API key, no solo
+  // las directas (stations/kiosk). userId∈membership(orgId) cubre ambos.
+  const memberships = await orm.membership.findMany({
+    where: { orgId: a.ctx.orgId, deactivatedAt: null },
+    select: { userId: true },
+  });
+  const memberIds = memberships.map((m) => m.userId);
+  const rows = memberIds.length === 0 ? [] : await orm.neuralSession.findMany({
+    where: { userId: { in: memberIds } },
+    orderBy: { completedAt: "desc" },
+    take, skip,
   });
   return NextResponse.json({ data: rows, paging: { limit: take, offset: skip } }, { headers: a.headers });
 }
 
 export async function POST(req) {
-  const a = await authed(req, "write"); if (a.error) return a.error;
+  const a = await authed(req, "write:sessions"); if (a.error) return a.error;
   const body = await req.json();
 
   // Idempotency: mismo key en 24h devuelve el mismo resultado sin crear duplicado.
