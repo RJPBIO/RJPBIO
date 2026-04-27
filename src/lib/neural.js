@@ -18,6 +18,14 @@ export { NEURAL_CONFIG } from "./neural/config";
 export { evaluateEngineHealth } from "./neural/health";
 export { getColdStartPrior, BASELINE_BY_BUCKET } from "./neural/coldStart";
 export { detectStaleness, recalibrationGuidance, sampleAgeWeight } from "./neural/staleness";
+export {
+  detectGamingV2,
+  analyzeRTVariance,
+  analyzeTouchHoldUniformity,
+  analyzeTimeOfDayDistribution,
+  analyzeBioQDistribution,
+  analyzeDurationUniformity,
+} from "./neural/antiGaming";
 
 // ─── Level System ─────────────────────────────────────────
 /**
@@ -292,7 +300,10 @@ export function estimateCoherence(reactionTimes) {
   return { coherence, consistency, state, avgRT: Math.round(avg) };
 }
 
-// ─── Gaming Detection ─────────────────────────────────────
+// ─── Gaming Detection (v1 legacy) ─────────────────────────
+// Mantenido por backwards-compat — drop-in shape {gaming, reason}.
+// Sprint 45: para detección moderna multi-signal con score, ver
+// detectGamingV2 en src/lib/neural/antiGaming.js (re-exportado abajo).
 export function detectGamingPattern(history) {
   if (!history || history.length < 5) return { gaming: false, reason: "" };
   const last10 = history.slice(-10);
