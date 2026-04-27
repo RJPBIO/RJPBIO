@@ -19,11 +19,36 @@ export async function GET() {
     client.membership.findMany({ where: { userId } }),
     client.neuralSession.findMany({ where: { userId } }),
   ]);
+  // GDPR Art. 15 — exporta TODA la data personal del subject. Antes solo
+  // se exportaba {id,email,name,locale} → ~5% del data footprint real.
+  // Excluye solo material criptográfico que el usuario nunca podría
+  // re-importar (MFA secret, backup-code hashes, passkey credentials,
+  // session epoch interno) — esos son secretos del sistema, no data del
+  // subject. neuralState (Zustand store con moodLog, hrvLog, history,
+  // achievements, etc.) es la mayoría del data y se incluye completa.
   const bundle = {
-    subject: { id: user?.id, email: user?.email, name: user?.name, locale: user?.locale },
-    memberships, sessions,
+    subject: {
+      id: user?.id,
+      email: user?.email,
+      emailVerified: user?.emailVerified,
+      phone: user?.phone,
+      phoneVerified: user?.phoneVerified,
+      name: user?.name,
+      image: user?.image,
+      locale: user?.locale,
+      timezone: user?.timezone,
+      mfaEnabled: user?.mfaEnabled,
+      mfaVerifiedAt: user?.mfaVerifiedAt,
+      lastLoginAt: user?.lastLoginAt,
+      lastSyncedAt: user?.lastSyncedAt,
+      createdAt: user?.createdAt,
+      neuralState: user?.neuralState,
+    },
+    memberships,
+    sessions,
     exportedAt: new Date().toISOString(),
-    disclaimer: "Generated per GDPR Art. 15 / LFPDPPP Art. 22. Valid 30 days.",
+    schemaVersion: 2,
+    disclaimer: "Generated per GDPR Art. 15 / LFPDPPP Art. 22. Valid 30 days. Excluded: MFA secrets, backup code hashes, passkey credentials (system material, not subject data).",
   };
   for (const m of memberships) {
     await auditLog({ orgId: m.orgId, actorId: userId, action: "user.data.exported", target: userId });
