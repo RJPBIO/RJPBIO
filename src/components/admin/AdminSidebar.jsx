@@ -30,6 +30,7 @@ const GROUPS = [
     { href: "/admin/branding", label: "Branding", Icon: PaintIcon },
     { href: "/admin/webhooks", label: "Webhooks", Icon: WebhookIcon },
     { href: "/admin/stations", label: "Estaciones", Icon: StationIcon },
+    { href: "/admin/neural", label: "Motor adaptativo", Icon: SparkIcon },
   ]},
   { label: "Cumplimiento", items: [
     { href: "/admin/compliance", label: "SOC 2 · ISO 27001", Icon: ComplianceIcon },

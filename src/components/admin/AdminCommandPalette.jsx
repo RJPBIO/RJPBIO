@@ -27,6 +27,7 @@ const ROUTES = [
   { href: "/admin/branding",                 label: "Branding · white-label",   group: "Producto" },
   { href: "/admin/webhooks",                 label: "Webhooks",                 group: "Producto" },
   { href: "/admin/stations",                 label: "Estaciones (kiosk)",      group: "Producto" },
+  { href: "/admin/neural",                   label: "Motor adaptativo",         group: "Producto" },
   { href: "/admin/compliance",               label: "SOC 2 · ISO 27001",        group: "Compliance" },
   { href: "/admin/compliance/dsar",          label: "DSAR",                     group: "Compliance" },
   { href: "/admin/nom35",                    label: "NOM-035 (México)",         group: "Compliance" },
