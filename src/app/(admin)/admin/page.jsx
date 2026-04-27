@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { anonymize } from "@/server/analytics";
+import { computeRetornoSaludable, compareRetornoSaludable } from "@/lib/retornoSaludable";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const PERIODS = {
@@ -40,18 +41,29 @@ export default async function AdminHome({ searchParams }) {
   ]);
   const memberIds = memberships.map((m) => m.userId);
   const members = memberships.length;
-  const [sessions, prevSessions] = memberIds.length === 0
-    ? [[], 0]
+  // Sesiones del periodo actual + anterior para Retorno Saludable.
+  // El KPI "Retorno Saludable" requiere userId+completedAt para emparejar
+  // sesiones consecutivas del mismo usuario. K-anonymity (k=5) en módulo.
+  const [sessions, prevSessionsRaw] = memberIds.length === 0
+    ? [[], []]
     : await Promise.all([
         orm.neuralSession.findMany({
           where: { userId: { in: memberIds }, completedAt: { gte: since } },
+          select: { id: true, userId: true, teamId: true, completedAt: true, coherenciaDelta: true, moodPre: true, moodPost: true, durationSec: true, protocolId: true, stationId: true, slot: true },
         }),
-        orm.neuralSession.count({
+        orm.neuralSession.findMany({
           where: { userId: { in: memberIds }, completedAt: { gte: prevSince, lt: since } },
+          select: { userId: true, completedAt: true },
         }),
       ]);
+  const prevSessions = prevSessionsRaw.length;
   const agg = anonymize(sessions, { k: 5 });
   const delta = prevSessions === 0 ? null : ((sessions.length - prevSessions) / prevSessions) * 100;
+  // ─── Retorno Saludable (anti-engagement KPI) ────────────────
+  // Mide % de sesiones donde el operador NO necesitó volver al protocolo
+  // en las siguientes 6h. K-anonymity ≥5 usuarios distintos con ≥2 sesiones.
+  // Filosofía: la app desapareciendo de la vida del usuario = la app funcionó.
+  const retorno = compareRetornoSaludable(sessions, prevSessionsRaw);
 
   return (
     <>
@@ -130,6 +142,11 @@ export default async function AdminHome({ searchParams }) {
           value={members > 0 ? (sessions.length / members).toFixed(1) : "0"}
           sub="sesiones/miembro"
         />
+      </section>
+
+      {/* ─── Retorno Saludable: KPI de autonomía, no de engagement ─── */}
+      <section style={{ ...grid, marginTop: space[3] }}>
+        <RetornoCard data={retorno} />
       </section>
 
       <h2 style={{
@@ -222,6 +239,97 @@ export default async function AdminHome({ searchParams }) {
         </div>
       )}
     </>
+  );
+}
+
+function RetornoCard({ data }) {
+  // Card específico para el KPI Retorno Saludable. Estado insufficient
+  // muestra una explicación pedagógica — el admin tiene que entender
+  // POR QUÉ no hay número, no solo verlo en blanco.
+  const { current, deltaPp } = data;
+  if (current.insufficient) {
+    return (
+      <div style={{
+        padding: space[4],
+        borderRadius: radius.md,
+        background: cssVar.accentSoft,
+        border: `1px solid ${cssVar.border}`,
+        gridColumn: "1 / -1",
+      }}>
+        <div style={{
+          fontSize: font.size.xs,
+          color: cssVar.textDim,
+          textTransform: "uppercase",
+          letterSpacing: font.tracking.wide,
+          fontWeight: font.weight.semibold,
+        }}>
+          Retorno saludable
+        </div>
+        <div style={{
+          fontSize: font.size["2xl"],
+          fontWeight: font.weight.black,
+          margin: `${space[1]}px 0`,
+          color: cssVar.text,
+          fontFamily: cssVar.fontMono,
+        }}>
+          —
+        </div>
+        <div style={{ fontSize: font.size.xs, color: cssVar.textMuted, lineHeight: 1.5 }}>
+          {current.reason === "k_anonymity"
+            ? `Necesitamos ≥5 usuarios con 2+ sesiones para mostrar este KPI con privacidad. Actuales: ${current.uniqueUsers}.`
+            : "Aún sin sesiones consecutivas evaluables en este periodo."}
+        </div>
+      </div>
+    );
+  }
+  const tone = deltaPp == null ? null : deltaPp >= 0 ? "up" : "down";
+  const subColor = tone === "up" ? cssVar.accent : tone === "down" ? cssVar.warn : cssVar.textMuted;
+  const trend = deltaPp == null
+    ? `${current.evaluable} sesiones · ${current.uniqueUsers} operadores`
+    : `${deltaPp > 0 ? "+" : ""}${deltaPp.toFixed(1)} pp vs periodo anterior`;
+  return (
+    <div style={{
+      padding: space[4],
+      borderRadius: radius.md,
+      background: cssVar.accentSoft,
+      border: `1px solid ${cssVar.border}`,
+      gridColumn: "1 / -1",
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: space[3] }}>
+        <div style={{ minInlineSize: 0, flex: 1 }}>
+          <div style={{
+            fontSize: font.size.xs,
+            color: cssVar.textDim,
+            textTransform: "uppercase",
+            letterSpacing: font.tracking.wide,
+            fontWeight: font.weight.semibold,
+          }}>
+            Retorno saludable
+          </div>
+          <div style={{
+            fontSize: font.size["2xl"],
+            fontWeight: font.weight.black,
+            margin: `${space[1]}px 0`,
+            color: cssVar.text,
+            fontFamily: cssVar.fontMono,
+          }}>
+            {current.healthyReturnRate.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: font.size.xs, color: subColor }}>
+            {trend}
+          </div>
+        </div>
+        <div style={{
+          fontSize: font.size.xs,
+          color: cssVar.textMuted,
+          lineHeight: 1.5,
+          maxInlineSize: 360,
+        }}>
+          % de sesiones donde el operador <strong style={{ color: cssVar.text }}>no necesitó volver</strong> en {current.gapHours}h.
+          Más alto = más autonomía, menos dependencia. Sobre {current.evaluable} pares evaluables · k≥5.
+        </div>
+      </div>
+    </div>
   );
 }
 

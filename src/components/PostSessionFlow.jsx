@@ -29,7 +29,14 @@ export default function PostSessionFlow({
   pr, durMult, st,
   checkMood, setCheckMood, checkEnergy, setCheckEnergy, checkTag, setCheckTag,
   preMood, postVC, postMsg, moodDiff,
+  // Evidencia objetiva post-sesión: { evidenceLevel, hrv, mood, durationSec }
+  // Calculada en page.jsx con buildSessionDelta. Cuando hrv es null o
+  // significant !== true, el card cae a un estado más humilde.
+  delta = null,
   H, submitCheckin, onSetPostStep, onReset,
+  // Path de "Omitir check-in" — debe disparar el envío de la sesión a
+  // outbox aunque no haya postMood; sin esto el admin pierde sesiones.
+  onSkipCheckin,
 }) {
   const reduced = useReducedMotion();
   const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
@@ -275,7 +282,7 @@ export default function PostSessionFlow({
                 Continuar
               </motion.button>
               <button
-                onClick={() => onSetPostStep("summary")}
+                onClick={() => (onSkipCheckin ? onSkipCheckin() : onSetPostStep("summary"))}
                 aria-label="Omitir check-in e ir al resumen"
                 style={{
                   inlineSize: "100%",
@@ -447,6 +454,109 @@ export default function PostSessionFlow({
                         {lastBioQ}
                       </div>
                       <div style={{ ...ty.caption(t3), fontSize: font.size.sm }}>%</div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+
+              {/* ─── Evidencia objetiva (HRV delta MDC95-gated) ───── */}
+              {delta && delta.hrv && (() => {
+                const dh = delta.hrv;
+                const isVerified = dh.significant === true;
+                const isSuppression = dh.classification === "vagal-suppression";
+                const isLift = dh.classification === "vagal-lift";
+                const isSteady = dh.classification === "no-change";
+                const isUnverified = dh.classification === "unverified";
+                // Tono: lift=phosphorCyan (señal positiva); suppression=signalAmber
+                // (warning, no alarma — ser honesto sin alarmar); steady=accent
+                // suave del protocolo; unverified=accent (no comprometer con
+                // verdad cuando falta historial). Evitamos plasmaRed: este
+                // dato no es médico ni crítico.
+                const tone = isLift
+                  ? bioSignal.phosphorCyan
+                  : isSuppression
+                    ? bioSignal.signalAmber
+                    : isSteady
+                      ? ac
+                      : ac;
+                const sign = dh.deltaRmssd > 0 ? "+" : "";
+                const headlineKey = isVerified
+                  ? (isLift ? "Tu HRV subió" : "Tu HRV bajó")
+                  : isSteady
+                    ? "Tu sistema se mantuvo estable"
+                    : "HRV registrado";
+                const subKey = isVerified
+                  ? "Variabilidad parasimpática, cambio verificado"
+                  : isSteady
+                    ? "El cambio fue menor al ruido medible (MDC95)"
+                    : isUnverified
+                      ? "Necesitamos 7+ lecturas previas para verificar"
+                      : "Variabilidad parasimpática registrada";
+                const chipText = isVerified
+                  ? "MDC95"
+                  : isSteady
+                    ? "Sin cambio significativo"
+                    : "Sin verificar";
+                return (
+                  <motion.div
+                    role="group"
+                    aria-label={`${headlineKey} ${sign}${dh.deltaRmssd} milisegundos. ${subKey}`}
+                    initial={reduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={reduced ? { duration: 0 } : { delay: 0.6, duration: 0.4 }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: space[3],
+                      padding: `${space[3]}px ${space[4]}px`,
+                      marginBlockEnd: space[3],
+                      background: `linear-gradient(135deg, ${withAlpha(tone, 8)}, ${withAlpha(tone, 4)})`,
+                      borderRadius: radius.lg,
+                      border: `1px solid ${withAlpha(tone, 15)}`,
+                    }}
+                  >
+                    <div style={{ minInlineSize: 0, flex: 1 }}>
+                      <div style={{
+                        ...ty.caption(t3),
+                        letterSpacing: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: font.size.xs,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: space[1],
+                        flexWrap: "wrap",
+                      }}>
+                        Evidencia objetiva
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            fontSize: 9,
+                            letterSpacing: 0.5,
+                            padding: `2px ${space[1]}px`,
+                            borderRadius: radius.full,
+                            background: withAlpha(tone, 14),
+                            color: tone,
+                            textTransform: "none",
+                            fontWeight: font.weight.semibold,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {chipText}
+                        </span>
+                      </div>
+                      <div style={{ ...ty.body(t1), fontWeight: font.weight.semibold, marginBlockStart: 2 }}>
+                        {headlineKey}
+                      </div>
+                      <div style={{ ...ty.caption(t3), fontSize: font.size.sm, marginBlockStart: 1 }}>
+                        {subKey}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 2, flexShrink: 0 }}>
+                      <div style={{ ...ty.metric(tone, font.size["2xl"]), fontVariantNumeric: "tabular-nums" }}>
+                        {sign}{dh.deltaRmssd}
+                      </div>
+                      <div style={{ ...ty.caption(t3), fontSize: font.size.xs }}>ms</div>
                     </div>
                   </motion.div>
                 );
