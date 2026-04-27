@@ -58,6 +58,8 @@ import { computePhaseIndex, timeToNextPhase } from "@/lib/phaseEngine";
 import { computeSessionMetrics, sessionQualityMessage } from "@/lib/sessionClose";
 import { buildCheckinEntry } from "@/lib/sessionCheckin";
 import { computeBreathFrame } from "@/lib/breathCycle";
+import { buildSessionDelta, buildSessionOutboxPayload } from "@/lib/sessionDelta";
+import { outboxAdd } from "@/lib/storage";
 import { readStoredNom35Level, recommendProtocolForNivel, bannerForNivel } from "@/lib/nom35/recommend";
 import { useReducedMotion, useFocusTrap, KEY, announce } from "@/lib/a11y";
 import { semantic, protoColor } from "@/lib/tokens";
@@ -126,6 +128,16 @@ export default function BioIgnicion(){
   const[entryDone,setEntryDone]=useState(false);
   const[nfcCtx,setNfcCtx]=useState(null);
   const[sessionData,setSessionData]=useState({pauses:0,scienceViews:0,phaseTimings:[]});
+  // Anclajes temporales reales (Date.now()) para emparejar HRV pre/post.
+  // sessionStartedAt se setea al primer "running" del run; sessionEndedAt al
+  // entrar comp(). Se reinician en rs() para no contaminar la siguiente sesión.
+  const sessionStartedAtRef=useRef(null);
+  const sessionEndedAtRef=useRef(null);
+  // Delta objetivo (HRV+mood) calculado en comp(); pasado a PostSessionFlow.
+  const[postDelta,setPostDelta]=useState(null);
+  // Idempotencia del envío a outbox: 1 push por sesión, ya sea desde
+  // submitCheckin o desde el path "Omitir check-in".
+  const sessionShippedRef=useRef(false);
   const[showCalibration,setShowCalibration]=useState(false);
   const[showProtoDetail,setShowProtoDetail]=useState(false);
   const[showMore,setShowMore]=useState(false);
@@ -474,6 +486,9 @@ export default function BioIgnicion(){
       countdownRef.current=0;
       setCountdown(0);
       setTs("running");
+      // Anclaje wall-clock para emparejar HRV pre/post post-sesión.
+      // Solo se setea aquí (transición real a "running"); resume() no lo toca.
+      sessionStartedAtRef.current=Date.now();
       H("go");
       if(st.soundOn!==false)playCountdownTick(0);
       const firstKicker=pr?.ph?.[0]?.k;
@@ -487,7 +502,7 @@ export default function BioIgnicion(){
   useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];},[]);
   function pa(){if(actLockRef.current||ts!=="running")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
   function resume(){if(actLockRef.current||ts!=="paused")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);if(st.wakeLockEnabled!==false)requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}
-  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];countdownRef.current=0;setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();}
+  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];countdownRef.current=0;setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();sessionStartedAtRef.current=null;sessionEndedAtRef.current=null;setPostDelta(null);sessionShippedRef.current=false;}
   function sp(p){
     // Inline reset against the NEW protocol so we don't batch a setSec that
     // races with rs()'s stale-closure setSec(pr.d). Keeps sheet-to-idle
@@ -539,8 +554,22 @@ export default function BioIgnicion(){
   }),[st,durMult,ts,pr,tab]);
 
   function comp(){if(pauseTRef.current)clearTimeout(pauseTRef.current);if(motionRef.current){motionRef.current.cleanup();motionRef.current=null;}
+    sessionEndedAtRef.current=Date.now();
     const{sessionDataFull}=computeSessionMetrics({sessionData,protocol:pr,durMult,now:Date.now()});
     const result=calcSessionCompletion(st,{protocol:pr,durMult,sessionData:sessionDataFull,nfcCtx,circadian});
+    // Evidencia objetiva post-sesión. preMood ya está capturado; postMood
+    // entra después en submitCheckin → entonces se enriquece el delta.
+    try{
+      const delta0=buildSessionDelta({
+        sessionStartedAt:sessionStartedAtRef.current,
+        sessionEndedAt:sessionEndedAtRef.current,
+        hrvLog:st.hrvLog,
+        preMood,
+        postMood:null,
+        durationSec:Math.round(pr.d*durMult),
+      });
+      setPostDelta(delta0);
+    }catch(e){setPostDelta(null);}
     setPostVC(result.eVC);setPostMsg(POST_MSGS[Math.floor(Math.random()*POST_MSGS.length)]);
     releaseWakeLock();speakNow(sessionQualityMessage(result.bioQ.quality),circadian,voiceOn);
     // Finale unificado para TODOS los protocolos y duraciones.
@@ -604,7 +633,40 @@ export default function BioIgnicion(){
         try{store.recordSessionOutcome(built.outcome);setSt_(useStore.getState());}catch{}
       }
     }
+    shipSessionToOutbox(checkMood>0?checkMood:null);
     setPostStep("summary");
+  }
+  // Envío idempotente a outbox. Llamado desde submitCheckin y desde el path
+  // de "Omitir check-in". Solo se dispara una vez por sesión.
+  function shipSessionToOutbox(postMoodValue){
+    if(sessionShippedRef.current)return;
+    sessionShippedRef.current=true;
+    try{
+      const finalDelta=buildSessionDelta({
+        sessionStartedAt:sessionStartedAtRef.current,
+        sessionEndedAt:sessionEndedAtRef.current,
+        hrvLog:useStore.getState().hrvLog,
+        preMood,
+        postMood:postMoodValue,
+        durationSec:Math.round(pr.d*durMult),
+      });
+      setPostDelta(finalDelta);
+      const payload=buildSessionOutboxPayload({
+        protocolId:pr?.id||pr?.n||"unknown",
+        durationSec:Math.round(pr.d*durMult),
+        delta:finalDelta,
+        preMood,
+        postMood:postMoodValue,
+        completedAt:sessionEndedAtRef.current||Date.now(),
+      });
+      const userId=useStore.getState()._userId??null;
+      // id determinístico: completedAt(ISO) + protocolId. Idempotente en
+      // outbox upsert. Para sesiones sin protocolId resolvido, agregamos un
+      // sufijo aleatorio corto para evitar colisión por mismo segundo.
+      const idBase=`s-${payload.completedAt}-${payload.protocolId||`p-${Math.random().toString(36).slice(2,8)}`}`;
+      const sessionId=idBase.slice(0,128);
+      outboxAdd({id:sessionId,kind:"session",payload,userId}).catch(()=>{});
+    }catch(e){/* silencioso: el envío no debe romper el cierre de sesión */}
   }
 
   const lv=gL(st.totalSessions),ph=pr?.ph?.[pi]||pr?.ph?.[0]||{k:"",i:"",l:"",r:"",ic:"focus",sc:"",s:0,e:0,br:null},fl=INTENTS.some(i=>i.id===sc)?P.filter(p=>p.int===sc):P.filter(p=>p.ct===sc);
@@ -989,7 +1051,7 @@ export default function BioIgnicion(){
   </AnimatePresence>
 
   {/* ═══ POST-SESSION FLOW ═══ */}
-  <PostSessionFlow postStep={postStep} ts={ts} ac={ac} isDark={isDark} pr={pr} durMult={durMult} st={st} checkMood={checkMood} setCheckMood={setCheckMood} checkEnergy={checkEnergy} setCheckEnergy={setCheckEnergy} checkTag={checkTag} setCheckTag={setCheckTag} preMood={preMood} postVC={postVC} postMsg={postMsg} moodDiff={moodDiff} H={H} submitCheckin={submitCheckin} onSetPostStep={setPostStep} onReset={rs}/>
+  <PostSessionFlow postStep={postStep} ts={ts} ac={ac} isDark={isDark} pr={pr} durMult={durMult} st={st} checkMood={checkMood} setCheckMood={setCheckMood} checkEnergy={checkEnergy} setCheckEnergy={setCheckEnergy} checkTag={checkTag} setCheckTag={setCheckTag} preMood={preMood} postVC={postVC} postMsg={postMsg} moodDiff={moodDiff} delta={postDelta} H={H} submitCheckin={submitCheckin} onSetPostStep={setPostStep} onReset={rs} onSkipCheckin={()=>{shipSessionToOutbox(null);setPostStep("summary");}}/>
 
   {/* ═══ INTENT PICKER ═══ */}
   <AnimatePresence>
