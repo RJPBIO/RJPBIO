@@ -698,7 +698,13 @@ export function adaptiveProtocolEngine(st, options = {}) {
     // hace que siempre devuelva un score finito, sin empates triviales.
     if (banditArms) {
       const ctxArm = banditArms[armKey(p.int, bucket)] || banditArms[p.int] || null;
-      const ucb = scoreArm(ctxArm, armsTotal, sCfg.banditExplorationConst);
+      // Sprint 47 — time-based decay lazy-on-read. Si la arm tiene
+      // lastUpdatedAt, su evidencia se descuenta por tiempo transcurrido.
+      const ucb = scoreArm(ctxArm, armsTotal, sCfg.banditExplorationConst, {
+        now: now.getTime(),
+        timeDecay: true,
+        halfLifeDays: NC.banditTime.halfLifeDays,
+      });
       if (Number.isFinite(ucb)) score += ucb * sCfg.banditUcbWeight;
     }
 

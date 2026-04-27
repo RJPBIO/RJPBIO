@@ -24,6 +24,56 @@ const PRIOR_MEAN = 0.3;       // Δmood esperado optimista moderado
 const PRIOR_N_VIRTUAL = 1;    // fuerza del prior (equivale a 1 obs)
 const DEFAULT_DECAY = 0.97;   // ~33 observaciones de vida media
 
+// Sprint 47 — time-based decay (calendario, no observaciones).
+// Maneja el caso donde el usuario se queda inactivo y el bandit se
+// queda anclado a preferencias viejas que ya no aplican. Mientras
+// observation-decay (0.97) opera al actualizar, time-decay opera
+// LAZY-ON-READ: cuando se lee la arm, se aplica decay según el
+// elapsed time desde lastUpdatedAt.
+const DEFAULT_TIME_HALF_LIFE_DAYS = 30;
+const DEFAULT_TIME_DECAY_FLOOR = 0.10;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Calcula el factor de decay temporal para una arm dado un timestamp
+ * de referencia (now). Retorna 1.0 cuando arm es fresh o sin
+ * lastUpdatedAt (backwards compat con arms pre-Sprint-47).
+ *
+ * @param {object} arm - debe tener lastUpdatedAt opcional
+ * @param {number} now - ms epoch de referencia
+ * @param {number} [halfLifeDays] - default 30
+ * @param {number} [floor] - factor mínimo (default 0.10)
+ * @returns {number} factor ∈ [floor, 1]
+ */
+export function timeDecayFactor(arm, now = Date.now(), {
+  halfLifeDays = DEFAULT_TIME_HALF_LIFE_DAYS,
+  floor = DEFAULT_TIME_DECAY_FLOOR,
+} = {}) {
+  if (!arm || typeof arm.lastUpdatedAt !== "number") return 1;
+  const days = Math.max(0, (now - arm.lastUpdatedAt) / DAY_MS);
+  if (days === 0) return 1;
+  // Decay exponencial: f(d) = 0.5 ^ (d / halfLifeDays)
+  const f = Math.pow(0.5, days / halfLifeDays);
+  return Math.max(floor, Math.min(1, f));
+}
+
+/**
+ * Devuelve una copia decayada por tiempo. Útil para snapshots/UI.
+ * El arm original NO se muta. Si no hay lastUpdatedAt, retorna copia
+ * shallow sin cambios numéricos.
+ */
+export function decayByTime(arm, now = Date.now(), opts = {}) {
+  if (!arm) return arm;
+  const f = timeDecayFactor(arm, now, opts);
+  if (f === 1) return { ...arm };
+  return {
+    n: (arm.n || 0) * f,
+    sum: (arm.sum || 0) * f,
+    sumsq: (arm.sumsq || 0) * f,
+    lastUpdatedAt: arm.lastUpdatedAt,
+  };
+}
+
 /** Llave contextual del brazo: intent + bucket temporal. */
 export function armKey(intent, bucket = null) {
   return bucket ? `${intent}:${bucket}` : `${intent}`;
@@ -41,24 +91,58 @@ export function timeBucket(date = new Date()) {
 /**
  * Actualiza el brazo con una nueva observación (reward) aplicando
  * decay exponencial para dar más peso a observaciones recientes.
+ *
+ * Sprint 47: si se pasa `now`, también se guarda lastUpdatedAt para
+ * que time-based decay pueda calcularse en lecturas futuras. También
+ * aplica time-decay a los datos del arm previo ANTES de añadir la
+ * nueva observación (evita que un arm vieja repentinamente "vuelva
+ * a la vida" al recibir una nueva obs sin que pase su penalty).
+ *
+ * Backwards compat: sin `now`, comportamiento idéntico a antes.
  */
-export function updateArm(arm, observation, { decay = DEFAULT_DECAY } = {}) {
+export function updateArm(arm, observation, {
+  decay = DEFAULT_DECAY,
+  now = null,
+  timeDecay = true,
+  halfLifeDays = DEFAULT_TIME_HALF_LIFE_DAYS,
+} = {}) {
   const x = Number(observation);
   if (!Number.isFinite(x)) return arm || { n: 0, sum: 0, sumsq: 0 };
-  const prev = arm || { n: 0, sum: 0, sumsq: 0 };
+  // Si se pasa now y el arm tiene lastUpdatedAt, primero aplicar time-decay.
+  let prev = arm || { n: 0, sum: 0, sumsq: 0 };
+  if (now !== null && timeDecay && arm?.lastUpdatedAt) {
+    prev = decayByTime(arm, now, { halfLifeDays });
+  }
   const d = Math.min(1, Math.max(0, decay));
-  return {
+  const next = {
     n: prev.n * d + 1,
     sum: prev.sum * d + x,
     sumsq: prev.sumsq * d + x * x,
   };
+  if (now !== null) next.lastUpdatedAt = now;
+  return next;
 }
 
-/** Estadísticos del brazo con prior poblacional (media, varianza, n, se). */
-export function armStats(arm, { priorMean = PRIOR_MEAN, priorN = PRIOR_N_VIRTUAL } = {}) {
-  const n0 = arm?.n || 0;
-  const sum0 = arm?.sum || 0;
-  const sumsq0 = arm?.sumsq || 0;
+/**
+ * Estadísticos del brazo con prior poblacional (media, varianza, n, se).
+ *
+ * Sprint 47: si se pasa `now` y `timeDecay: true`, aplica decay temporal
+ * lazy-on-read antes de calcular stats. Backwards compat: sin estos
+ * params, comportamiento idéntico a versiones previas.
+ */
+export function armStats(arm, {
+  priorMean = PRIOR_MEAN,
+  priorN = PRIOR_N_VIRTUAL,
+  now = null,
+  timeDecay = false,
+  halfLifeDays = DEFAULT_TIME_HALF_LIFE_DAYS,
+} = {}) {
+  const effective = (now !== null && timeDecay && arm?.lastUpdatedAt)
+    ? decayByTime(arm, now, { halfLifeDays })
+    : arm;
+  const n0 = effective?.n || 0;
+  const sum0 = effective?.sum || 0;
+  const sumsq0 = effective?.sumsq || 0;
   // Fusión con prior: n_eff = n + priorN, sum_eff = sum + priorN * priorMean
   const n = n0 + priorN;
   const sum = sum0 + priorN * priorMean;
@@ -72,9 +156,12 @@ export function armStats(arm, { priorMean = PRIOR_MEAN, priorN = PRIOR_N_VIRTUAL
 /**
  * UCB1-Normal score. Con prior, todos los brazos tienen al menos
  * n_virtual observaciones, así que nunca devuelve +Infinity.
+ *
+ * Sprint 47: cuarto param opcional `{now, timeDecay, halfLifeDays}` para
+ * aplicar time-based decay sobre la arm antes de calcular el score.
  */
-export function scoreArm(arm, totalPulls, c = 1.0) {
-  const { mean, variance, n } = armStats(arm);
+export function scoreArm(arm, totalPulls, c = 1.0, statsOpts = {}) {
+  const { mean, variance, n } = armStats(arm, statsOpts);
   // Total efectivo incluye el prior para evitar log(0) o log negativo.
   const total = Math.max(2, totalPulls + PRIOR_N_VIRTUAL);
   const bonus = c * Math.sqrt((16 * variance * Math.log(total - 1)) / Math.max(1, n));

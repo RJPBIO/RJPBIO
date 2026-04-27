@@ -239,6 +239,20 @@ export const NEURAL_CONFIG = FREEZE({
     minSessionGapMs: 30000,       // <30s entre sesiones = gaming
   }),
 
+  // ── Bandit time-based decay (Sprint 47) ───────────────────────
+  // El bandit (UCB1) tiene decay por OBSERVACIÓN (factor 0.97 default).
+  // Pero ese decay solo aplica cuando hay una nueva observación. Si el
+  // usuario está inactivo o cambió rutina, los arms se quedan congelados.
+  // Sprint 47 agrega decay por TIEMPO calendario (lazy on read).
+  banditTime: FREEZE({
+    // Half-life en días: a 30d una arm vale 50% de su evidencia.
+    // Razonable para entornos donde la rutina cambia (trabajo, vida).
+    halfLifeDays: 30,
+    // Floor: ninguna arm cae a menos de este % de su evidencia.
+    // Evita borrar completamente memoria valiosa de hace 1 año.
+    minDecayFactor: 0.10,
+  }),
+
   // ── Anti-gaming v2 (Sprint 45) ────────────────────────────────
   // Detector multi-signal con scoring [0..100]. Thresholds:
   //   <30 = clean, 30-59 = suspicious, ≥60 = likely-gaming.

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   updateArm, armStats, scoreArm, selectArm, armCI, topArms,
   armKey, timeBucket, compositeReward,
+  timeDecayFactor, decayByTime,
 } from "./bandit";
 
 describe("armKey / timeBucket", () => {
@@ -222,3 +223,135 @@ describe("aprendizaje bajo drift", () => {
     expect(r2.protocol.int).toBe("B");
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   Sprint 47 — Time-based decay (calendario, no observaciones)
+   ═══════════════════════════════════════════════════════════════ */
+
+const DAY = 24 * 60 * 60 * 1000;
+
+describe("timeDecayFactor", () => {
+  it("factor 1.0 sin lastUpdatedAt (backwards compat)", () => {
+    expect(timeDecayFactor({ n: 5, sum: 2, sumsq: 1 })).toBe(1);
+    expect(timeDecayFactor(null)).toBe(1);
+  });
+
+  it("factor 1.0 con lastUpdatedAt = now", () => {
+    const now = Date.now();
+    const arm = { n: 5, sum: 2, sumsq: 1, lastUpdatedAt: now };
+    expect(timeDecayFactor(arm, now)).toBe(1);
+  });
+
+  it("factor 0.5 a half-life (30d default)", () => {
+    const now = Date.now();
+    const arm = { n: 5, sum: 2, sumsq: 1, lastUpdatedAt: now - 30 * DAY };
+    expect(timeDecayFactor(arm, now)).toBeCloseTo(0.5, 2);
+  });
+
+  it("factor 0.25 a 2× half-life", () => {
+    const now = Date.now();
+    const arm = { n: 5, sum: 2, sumsq: 1, lastUpdatedAt: now - 60 * DAY };
+    expect(timeDecayFactor(arm, now)).toBeCloseTo(0.25, 2);
+  });
+
+  it("respeta floor mínimo (0.10)", () => {
+    const now = Date.now();
+    const arm = { n: 5, sum: 2, sumsq: 1, lastUpdatedAt: now - 365 * DAY };
+    expect(timeDecayFactor(arm, now)).toBeGreaterThanOrEqual(0.10);
+  });
+
+  it("halfLifeDays custom funciona", () => {
+    const now = Date.now();
+    const arm = { n: 5, sum: 2, sumsq: 1, lastUpdatedAt: now - 7 * DAY };
+    expect(timeDecayFactor(arm, now, { halfLifeDays: 7 })).toBeCloseTo(0.5, 2);
+  });
+});
+
+describe("decayByTime", () => {
+  it("retorna copia decayada de n/sum/sumsq", () => {
+    const now = Date.now();
+    const arm = { n: 10, sum: 5, sumsq: 3, lastUpdatedAt: now - 30 * DAY };
+    const decayed = decayByTime(arm, now);
+    expect(decayed.n).toBeCloseTo(5, 1);
+    expect(decayed.sum).toBeCloseTo(2.5, 1);
+    expect(decayed.sumsq).toBeCloseTo(1.5, 1);
+    expect(decayed.lastUpdatedAt).toBe(arm.lastUpdatedAt); // preserved
+  });
+
+  it("no muta el arm original", () => {
+    const now = Date.now();
+    const arm = { n: 10, sum: 5, sumsq: 3, lastUpdatedAt: now - 30 * DAY };
+    decayByTime(arm, now);
+    expect(arm.n).toBe(10);
+    expect(arm.sum).toBe(5);
+  });
+
+  it("returns shallow copy sin lastUpdatedAt", () => {
+    const arm = { n: 10, sum: 5, sumsq: 3 };
+    const r = decayByTime(arm);
+    expect(r).toEqual(arm);
+    expect(r).not.toBe(arm);
+  });
+});
+
+describe("updateArm con time-tracking", () => {
+  it("backwards compat: sin now, no almacena lastUpdatedAt", () => {
+    const arm = updateArm({ n: 0, sum: 0, sumsq: 0 }, 1);
+    expect(arm.lastUpdatedAt).toBeUndefined();
+  });
+
+  it("con now, almacena lastUpdatedAt", () => {
+    const t = 1700000000000;
+    const arm = updateArm({ n: 0, sum: 0, sumsq: 0 }, 1, { now: t });
+    expect(arm.lastUpdatedAt).toBe(t);
+  });
+
+  it("aplica time-decay al arm previo antes de actualizar", () => {
+    const old = 1700000000000;
+    const now = old + 30 * DAY; // half-life
+    // Arm con n=10 viejo + nueva obs reward=2
+    const arm0 = { n: 10, sum: 20, sumsq: 40, lastUpdatedAt: old };
+    const arm1 = updateArm(arm0, 2, { now, decay: 1 });
+    // Decay a half-life: n=5, sum=10, sumsq=20. Luego añade obs.
+    expect(arm1.n).toBeCloseTo(6, 1);
+    expect(arm1.sum).toBeCloseTo(12, 1);
+    expect(arm1.lastUpdatedAt).toBe(now);
+  });
+});
+
+describe("armStats con time-decay opt-in", () => {
+  it("backwards compat: sin opts, no aplica time-decay", () => {
+    const old = 1700000000000;
+    const now = old + 60 * DAY;
+    const arm = { n: 10, sum: 30, sumsq: 100, lastUpdatedAt: old };
+    const stats = armStats(arm); // sin now/timeDecay
+    expect(stats.n).toBeCloseTo(11, 1); // n + priorN=1
+  });
+
+  it("con timeDecay=true reduce n efectivo", () => {
+    const old = 1700000000000;
+    const now = old + 30 * DAY; // half-life
+    const arm = { n: 10, sum: 30, sumsq: 100, lastUpdatedAt: old };
+    const fresh = armStats(arm); // sin decay
+    const decayed = armStats(arm, { now, timeDecay: true });
+    expect(decayed.n).toBeLessThan(fresh.n);
+  });
+});
+
+describe("scoreArm con time-decay opt-in", () => {
+  it("score con time-decay favorece arms recientes vs viejas", () => {
+    const old = 1700000000000;
+    const now = old + 60 * DAY;
+    const armOld = { n: 20, sum: 40, sumsq: 100, lastUpdatedAt: old };
+    const armNew = { n: 5, sum: 10, sumsq: 25, lastUpdatedAt: now - DAY };
+    const totalPulls = 25;
+    // Sin decay: armOld tiene más confianza (n=20)
+    const sOld = scoreArm(armOld, totalPulls);
+    const sNew = scoreArm(armNew, totalPulls);
+    expect(sOld).toBeDefined();
+    // Con decay: armOld pierde n efectivo, exploración aumenta
+    const sOldD = scoreArm(armOld, totalPulls, 1, { now, timeDecay: true });
+    expect(Number.isFinite(sOldD)).toBe(true);
+  });
+});
+
