@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
 import { DataTable } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
@@ -244,6 +245,18 @@ export default function WebhooksClient({ initial }) {
   const [rowBusy, setRowBusy] = useState(null); // "${id}:${action}"
   const [revealed, setRevealed] = useState(null);
   const [deliveriesFor, setDeliveriesFor] = useState(null);
+  const urlInputRef = useRef(null);
+
+  // Sprint 36/37 — Cmd+K action: ?action=create scrolls + focuses the URL input
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("action") === "create") {
+      requestAnimationFrame(() => {
+        urlInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        urlInputRef.current?.focus({ preventScroll: true });
+      });
+    }
+  }, [searchParams]);
 
   const urlError = urlTouched && url && !isValidHttpsUrl(url)
     ? "Debe ser una URL completa (https://…)"
@@ -363,6 +376,7 @@ export default function WebhooksClient({ initial }) {
         <label>
           <span style={labelStyle}>URL del endpoint</span>
           <Input
+            ref={urlInputRef}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onBlur={() => setUrlTouched(true)}

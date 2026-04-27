@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
 import { DataTable } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
@@ -81,6 +82,16 @@ function Reveal({ token, onClose }) {
 export default function ApiKeysClient({ initial, plan = "FREE" }) {
   const [keys, setKeys] = useState(initial);
   const [name, setName] = useState("");
+  const nameInputRef = useRef(null);
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("action") === "create") {
+      requestAnimationFrame(() => {
+        nameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        nameInputRef.current?.focus({ preventScroll: true });
+      });
+    }
+  }, [searchParams]);
   const [scopes, setScopes] = useState(new Set(["read:sessions"]));
   const [expiresAtDays, setExpiresAtDays] = useState(""); // "" = sin expiry
   const [expiryError, setExpiryError] = useState(null);
@@ -242,7 +253,7 @@ export default function ApiKeysClient({ initial, plan = "FREE" }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: space[3] }}>
           <label>
             <span style={labelStyle}>Nombre</span>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Zapier prod" required maxLength={80} />
+            <Input ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Zapier prod" required maxLength={80} />
           </label>
           <label>
             <span style={labelStyle}>Expira en (días, opcional)</span>
