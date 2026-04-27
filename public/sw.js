@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 17;
+const CACHE_VERSION = 19; // Sprint 53 — Y-glyph canon icon (replaced legacy circles)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -16,6 +16,11 @@ const PRECACHE = [
   "/icon.svg",
   "/icon-maskable.svg",
   "/apple-touch-icon.svg",
+  "/apple-touch-icon.png",
+  "/apple-touch-icon-180x180.png",
+  "/apple-touch-icon-152x152.png",
+  "/apple-touch-icon-120x120.png",
+  "/favicon.ico",
 ];
 
 // ─── Install ─────────────────────────────────────────────

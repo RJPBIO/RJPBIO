@@ -58,8 +58,21 @@ export const metadata = {
   },
   robots: { index: true, follow: true },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/apple-touch-icon.svg", sizes: "any", type: "image/svg+xml" }],
+    // Sprint 53 — PNG fallback agregados tras test real con iPhone iOS 16.6.1
+    // (404s en apple-touch-icon.png + variantes 120/152/180). PNG primero,
+    // SVG como progressive enhancement.
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon-v3.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-touch-icon-152x152-v3.png", sizes: "152x152", type: "image/png" },
+      { url: "/apple-touch-icon-120x120-v3.png", sizes: "120x120", type: "image/png" },
+      { url: "/apple-touch-icon.svg", sizes: "any", type: "image/svg+xml" },
+    ],
     other: [{ rel: "mask-icon", url: "/icon-monochrome.svg", color: "#059669" }],
   },
 };
@@ -130,8 +143,11 @@ export default async function RootLayout({ children }) {
         <meta name="msapplication-TileColor" content="#059669" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="color-scheme" content="light dark" />
-        {/* Apple touch icon — también para splash en home screen install */}
-        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+        {/* Apple touch icons — v3 light-bg canon (igual al home). */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152-v3.png" />
+        <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120-v3.png" />
+        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-v3.png" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {JSON_LD.map((ld, i) => (
           <script

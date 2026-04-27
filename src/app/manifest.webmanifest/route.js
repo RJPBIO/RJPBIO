@@ -72,6 +72,11 @@ export async function GET() {
     handle_links: "preferred",
     edge_side_panel: { preferred_width: 480 },
     icons: [
+      // Sprint 53 — PNG primero para mejor compat (iOS, browsers viejos,
+      // launchers que no rastericen SVG bien). SVG como progressive enhancement.
+      { src: "/apple-touch-icon-180x180.png", sizes: "180x180", type: "image/png", purpose: "any" },
+      { src: "/apple-touch-icon-152x152.png", sizes: "152x152", type: "image/png", purpose: "any" },
+      { src: "/apple-touch-icon-120x120.png", sizes: "120x120", type: "image/png", purpose: "any" },
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
       { src: "/icon-maskable.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
       { src: "/icon-monochrome.svg", sizes: "any", type: "image/svg+xml", purpose: "monochrome" },
