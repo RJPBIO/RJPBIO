@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import TeamsClient from "./TeamsClient";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Equipos · Admin" };
@@ -31,24 +32,18 @@ export default async function TeamsPage() {
 
   return (
     <>
-      <h1 style={{
-        margin: 0,
-        fontSize: font.size["2xl"],
-        fontWeight: font.weight.black,
-        letterSpacing: font.tracking.tight,
-        color: cssVar.text,
-      }}>
-        Equipos ({teams.length})
-      </h1>
-      <p style={{
-        color: cssVar.textMuted,
-        marginTop: space[1],
-        fontSize: font.size.sm,
-        lineHeight: 1.5,
-      }}>
-        Agrupa a tus miembros para comparar engagement y resultados por cohorte.
-        La anonimización <code style={{ fontFamily: cssVar.fontMono, color: cssVar.text }}>k=5</code> requiere al menos 5 personas activas por equipo.
-      </p>
+      <PageHeader
+        eyebrow="Personas · cohort analytics"
+        italic="Equipos"
+        title={`que se miden juntos.`}
+        subtitle={
+          <>
+            Agrupa miembros para comparar engagement y resultados por cohorte.
+            Anonimización <code style={{ fontFamily: cssVar.fontMono, color: cssVar.text }}>k=5</code> requiere ≥5 personas activas por equipo.
+            <span style={{ marginInlineStart: 8, opacity: 0.7 }}>· {teams.length} equipo(s)</span>
+          </>
+        }
+      />
       <TeamsClient initial={initial} managersById={managersById} unassigned={unassigned} />
     </>
   );

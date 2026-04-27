@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const POLICIES = [
@@ -164,26 +165,12 @@ export default function StationsClient({ orgId, origin, initial }) {
 
   return (
     <div>
-      <header style={{ marginBottom: space[4] }}>
-        <h1 style={{
-          margin: 0,
-          fontSize: font.size["2xl"],
-          fontWeight: font.weight.black,
-          letterSpacing: font.tracking.tight,
-          color: cssVar.text,
-        }}>
-          Estaciones · Tap-to-Ignite
-        </h1>
-        <p style={{
-          margin: `${space[1]}px 0 0`,
-          color: cssVar.textMuted,
-          fontSize: font.size.sm,
-          lineHeight: 1.5,
-        }}>
-          Cada estación genera una URL firmada para imprimir en QR o grabar en NFC.
-          Los empleados tapean para iniciar sesión en 1 segundo.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Producto · físico"
+        italic="Tap"
+        title="para iniciar."
+        subtitle="Cada estación genera una URL firmada para imprimir en QR o grabar en NFC. Los empleados tapean para iniciar sesión en 1 segundo."
+      />
 
       <form
         onSubmit={create}

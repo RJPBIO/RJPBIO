@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
 import { DataTable, TableToolbar } from "@/components/ui/Table";
 import { Input, Select, Textarea } from "@/components/ui/Input";
@@ -67,6 +68,12 @@ export default function MembersClient({ initialRows, pendingInvites = [], orgId 
   const [busy, setBusy] = useState(false);
   const [busyToken, setBusyToken] = useState(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Sprint 36 — Cmd+K action: ?action=invite auto-opens invite form
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("action") === "invite") setInviteOpen(true);
+  }, [searchParams]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();

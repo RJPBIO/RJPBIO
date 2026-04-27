@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Input";
 import { Field } from "@/components/ui/Field";
@@ -45,6 +46,12 @@ export default function MaintenanceClient({ initial }) {
   const [windows, setWindows] = useState(initial);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Sprint 36 — Cmd+K action: ?action=create auto-opens form
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("action") === "create") setCreating(true);
+  }, [searchParams]);
   const [form, setForm] = useState({
     title: "", body: "",
     scheduledStart: "", scheduledEnd: "",
