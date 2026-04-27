@@ -15,6 +15,19 @@ function sealHmac(prevHash, hash) {
   return sealHmacPure(prevHash, hash, process.env.AUDIT_HMAC_KEY);
 }
 
+// Hash determinístico de orgId a int64 para advisory lock. Postgres
+// pg_advisory_xact_lock acepta bigint; usamos los primeros 8 bytes del
+// SHA-256 del orgId. Probabilidad de colisión entre orgs distintos es
+// despreciable, y una colisión solo serializaría 2 orgs (zero-impact).
+function orgLockKey(orgId) {
+  const h = sha256(`audit:${orgId}`);
+  // Toma los primeros 16 hex chars (8 bytes) y signed-shift al rango
+  // bigint signed válido para Postgres (-2^63 .. 2^63-1).
+  const big = BigInt("0x" + h.slice(0, 16));
+  // Postgres bigint es signed; cast 2-complement.
+  return big > (1n << 63n) - 1n ? big - (1n << 64n) : big;
+}
+
 export async function auditLog({ orgId, actorId, actorEmail, action, target, payload }) {
   const orm = await db();
   let ip, ua;
@@ -24,25 +37,42 @@ export async function auditLog({ orgId, actorId, actorEmail, action, target, pay
     ua = h.get("user-agent") || null;
   } catch {}
 
-  const last = orgId ? await orm.auditLog.findFirst({
-    where: { orgId }, orderBy: { ts: "desc" },
-  }) : null;
-
-  const entry = {
-    orgId: orgId || null,
-    actorId: actorId || null,
-    actorEmail: actorEmail || null,
-    action,
-    target: target || null,
-    ip, ua,
-    payload: payload || null,
-    prevHash: last?.hash || null,
+  // Transacción con advisory lock per-org: serializa findFirst+create
+  // del audit log para que dos calls concurrentes no lean el mismo
+  // "last" y produzcan dos rows con el mismo prevHash (chain rota).
+  // Sin orgId no hay encadenamiento, no necesita lock.
+  const writeRow = async (tx) => {
+    const last = orgId ? await tx.auditLog.findFirst({
+      where: { orgId }, orderBy: { ts: "desc" },
+    }) : null;
+    const entry = {
+      orgId: orgId || null,
+      actorId: actorId || null,
+      actorEmail: actorEmail || null,
+      action,
+      target: target || null,
+      ip, ua,
+      payload: payload || null,
+      prevHash: last?.hash || null,
+    };
+    const hash = sha256(canonicalize(entry));
+    const seal = sealHmac(entry.prevHash, hash);
+    const data = { ...entry, hash, ts: new Date() };
+    if (seal) data.payload = { ...(entry.payload || {}), _seal: seal };
+    return tx.auditLog.create({ data });
   };
-  const hash = sha256(canonicalize(entry));
-  const seal = sealHmac(entry.prevHash, hash);
-  const data = { ...entry, hash, ts: new Date() };
-  if (seal) data.payload = { ...(entry.payload || {}), _seal: seal };
-  return orm.auditLog.create({ data });
+
+  // Memory adapter (tests) no tiene $executeRaw — skip el lock; la única
+  // concurrencia ahí es el event loop, que ya serializa awaits dentro de
+  // un mismo proceso single-threaded.
+  if (!orgId || typeof orm.$executeRaw !== "function") return writeRow(orm);
+
+  return orm.$transaction(async (tx) => {
+    // pg_advisory_xact_lock: lock liberado al commit/rollback. Compatible
+    // con PgBouncer transaction-mode. Serializa writes per-org.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${orgLockKey(orgId)})`;
+    return writeRow(tx);
+  });
 }
 
 export async function verifyChain(orgId) {

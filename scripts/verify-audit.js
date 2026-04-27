@@ -11,6 +11,8 @@
    Exit: 0 ok, 1 tampered, 2 usage.
    ═══════════════════════════════════════════════════════════════ */
 
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
 import { PrismaClient } from "@prisma/client";
 import { recomputeRow } from "../src/lib/audit-chain.js";
 
