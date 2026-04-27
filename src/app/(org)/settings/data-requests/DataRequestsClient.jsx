@@ -15,6 +15,7 @@ const SETTINGS_NAV = [
   { href: "/settings/security/mfa", label: "MFA" },
   { href: "/settings/sso", label: "SSO" },
   { href: "/settings/data-requests", label: "Mis datos (GDPR)" },
+  { href: "/settings/neural", label: "Motor adaptativo" },
 ];
 import {
   DSAR_KINDS,
