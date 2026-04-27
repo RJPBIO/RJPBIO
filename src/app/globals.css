@@ -13794,6 +13794,12 @@ a.bi-learn-trail-link,
   border-block-end: 1px solid var(--bi-border);
 }
 .bi-drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+.bi-drawer-footer {
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding: 14px 20px;
+  border-block-start: 1px solid var(--bi-border);
+  background: var(--bi-surface-2);
+}
 .bi-drawer-close {
   background: transparent; border: 0; cursor: pointer;
   width: 32px; height: 32px; border-radius: 8px;

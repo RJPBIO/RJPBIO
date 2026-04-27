@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Input";
 import { Field } from "@/components/ui/Field";
@@ -37,6 +38,12 @@ export default function IncidentsClient({ initial }) {
   const [form, setForm] = useState({
     title: "", body: "", severity: "minor", components: new Set(),
   });
+
+  // Sprint 36 — Cmd+K action: ?action=create auto-opens incident form
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("action") === "create") setCreating(true);
+  }, [searchParams]);
 
   function toggleComponent(c) {
     setForm((s) => {

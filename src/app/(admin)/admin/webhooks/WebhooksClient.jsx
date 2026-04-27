@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
+import Drawer from "@/components/admin/Drawer";
 import { Alert } from "@/components/ui/Alert";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 // Sprint 29 — delivery search v2 (operadores Stripe-style + chips)
@@ -142,10 +143,10 @@ function DeliveriesDialog({ hookId, onClose }) {
   ];
 
   return (
-    <Dialog
+    <Drawer
       open={!!hookId}
       onClose={onClose}
-      size="lg"
+      width={720}
       title="Últimas entregas"
       footer={
         <>
@@ -204,7 +205,7 @@ function DeliveriesDialog({ hookId, onClose }) {
         emptyTitle={q ? "Sin coincidencias" : "Sin entregas aún"}
         emptyDescription={q ? "Ajusta los filtros o limpia la búsqueda." : 'Prueba con "Test ping" para generar una.'}
       />
-    </Dialog>
+    </Drawer>
   );
 }
 
