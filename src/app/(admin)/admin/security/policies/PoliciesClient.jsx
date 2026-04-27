@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import SegmentedNav from "@/components/admin/SegmentedNav";
+import HelpTooltip from "@/components/admin/HelpTooltip";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const SECURITY_NAV = [
@@ -200,7 +201,16 @@ export default function PoliciesClient({ orgId, orgName, plan, initial }) {
         {/* IP Allowlist */}
         <section style={cardStyle}>
           <header style={cardHeaderStyle}>
-            <h2 style={cardTitleStyle}>IP allowlist (CIDR)</h2>
+            <h2 style={cardTitleStyle}>
+              IP allowlist (CIDR)
+              <HelpTooltip>
+                Una entrada por línea, formato CIDR IPv4. Ejemplos:<br />
+                <code>10.0.0.0/8</code> · <code>192.168.1.0/24</code> · <code>203.0.113.42/32</code><br />
+                IPv6 hace pass-through (sin enforcement). El middleware aplica
+                most-restrictive: si tienes membership en varios orgs, todos
+                deben permitir tu IP.
+              </HelpTooltip>
+            </h2>
             <Toggle checked={ipAllowlistEnabled} onChange={setIpAllowlistEnabled} disabled={!planAllowsAdvanced} />
           </header>
           <p style={cardDescStyle}>

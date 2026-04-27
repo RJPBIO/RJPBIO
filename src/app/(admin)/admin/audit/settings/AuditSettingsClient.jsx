@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import SegmentedNav from "@/components/admin/SegmentedNav";
+import HelpTooltip from "@/components/admin/HelpTooltip";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const AUDIT_NAV = [
@@ -179,7 +180,15 @@ export default function AuditSettingsClient({
       {/* Retention */}
       <section style={cardStyle}>
         <header style={cardHeaderStyle}>
-          <h2 style={cardTitleStyle}>Retención de logs</h2>
+          <h2 style={cardTitleStyle}>
+            Retención de logs
+            <HelpTooltip>
+              Default 365 días. Rango permitido: <code>30</code>–<code>2555</code> (≈7 años).
+              SOC 2 requiere ≥365 días. ISO 27001 ≥3 años para evidencia.
+              Borrar logs antiguos NO rompe la verificación de los restantes
+              (la cadena se reancla en el primer entry vivo).
+            </HelpTooltip>
+          </h2>
         </header>
         <p style={cardDescStyle}>
           Logs con <code>ts</code> más viejos que el cutoff serán borrados por el sweeper.

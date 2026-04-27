@@ -14070,6 +14070,89 @@ a.bi-learn-trail-link,
     inset 0 0 0 1px color-mix(in srgb, #22D3EE 28%, transparent);
 }
 
+/* ── HelpTooltip / inline help primitive ────────────────────────── */
+.bi-help {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-inline-start: 6px;
+}
+.bi-help-trigger {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  color: var(--bi-text-muted);
+  cursor: help;
+  transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bi-help-trigger:hover,
+.bi-help-trigger:focus-visible {
+  color: #22D3EE;
+  outline: none;
+}
+.bi-help-trigger:focus-visible {
+  box-shadow: 0 0 0 2px var(--bi-bg), 0 0 0 4px #22D3EE;
+}
+.bi-help-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  width: max-content;
+  max-width: 320px;
+  padding: 9px 12px;
+  background: #0F172A;
+  color: #ECFDF5;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  box-shadow:
+    0 1px 0 rgba(15,23,42,0.04),
+    0 4px 12px rgba(15,23,42,0.16),
+    0 12px 32px -16px rgba(15,23,42,0.30);
+  pointer-events: none;
+  animation: bi-help-pop 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bi-help-bubble code {
+  font-family: var(--font-mono);
+  background: color-mix(in srgb, #22D3EE 14%, transparent);
+  color: #67E8F9;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.bi-help-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #0F172A;
+}
+@keyframes bi-help-pop {
+  from { opacity: 0; transform: translateX(-50%) translateY(2px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.bi-help[data-placement="right"] .bi-help-bubble {
+  bottom: auto; left: calc(100% + 8px); top: 50%;
+  transform: translateY(-50%);
+}
+.bi-help[data-placement="right"] .bi-help-bubble::after {
+  top: 50%; left: -5px;
+  transform: translateY(-50%);
+  border-top-color: transparent;
+  border-right-color: #0F172A;
+}
+
 /* ── Notifications bell brand polish ────────────────────────────── */
 .bi-admin-shell .bi-bell {
   position: relative;
