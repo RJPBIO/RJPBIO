@@ -5,6 +5,7 @@ import { DataTable, TableToolbar } from "@/components/ui/Table";
 import { Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const PAGE = 25;
@@ -218,24 +219,22 @@ export default function MembersClient({ initialRows, pendingInvites = [], orgId 
 
   return (
     <>
-      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: space[4], flexWrap: "wrap", marginBottom: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Miembros
-          </h1>
-          <p style={{ margin: `${space[1]}px 0 0`, color: cssVar.textMuted, fontSize: font.size.sm }}>
-            {filtered.length} de {rows.length}
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: space[2] }}>
-          <Button variant="secondary" size="sm" onClick={() => setInviteOpen((v) => !v)}>
-            {inviteOpen ? "Cerrar invitación" : "Invitar miembros"}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => download(`members-${Date.now()}.csv`, toCSV(filtered))}>
-            Exportar CSV
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Personas · roster"
+        italic="Tu"
+        title="equipo."
+        subtitle={`${filtered.length} de ${rows.length} miembros visibles.`}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setInviteOpen((v) => !v)}>
+              {inviteOpen ? "Cerrar invitación" : "Invitar miembros"}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => download(`members-${Date.now()}.csv`, toCSV(filtered))}>
+              Exportar CSV
+            </Button>
+          </>
+        }
+      />
 
       {inviteOpen && (
         <form

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   summarizeService, formatLatency, formatCounter, overallSystemHealth,
@@ -135,24 +136,21 @@ export default function HealthClient({ initial }) {
   const aRate = snap.metrics.auth?.successRate?.rate;
 
   return (
-    <article style={{ maxWidth: 1080, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Health monitoring
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            Platform-wide observability · auto-refresh cada 30s ·
-            snapshot {new Date(snap.snapshotAt).toLocaleTimeString()}
-          </p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-          <Badge variant={TONE_VARIANT[overall.tone]} size="sm">{overall.label}</Badge>
-          <Button variant="ghost" size="sm" onClick={refresh} loading={loading}>
-            Refresh
-          </Button>
-        </div>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Plataforma · observability"
+        italic="Plataforma"
+        title="en señal."
+        subtitle={`Auto-refresh cada 30s · snapshot ${new Date(snap.snapshotAt).toLocaleTimeString()}`}
+        actions={
+          <>
+            <Badge variant={TONE_VARIANT[overall.tone]} size="sm">{overall.label}</Badge>
+            <Button variant="ghost" size="sm" onClick={refresh} loading={loading}>
+              Refresh
+            </Button>
+          </>
+        }
+      />
 
       <Alert kind="info" style={{ marginBlockEnd: space[5] }}>
         Platform admin dashboard. Métricas agregadas de TODOS los orgs.

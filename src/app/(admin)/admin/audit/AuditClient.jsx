@@ -5,7 +5,14 @@ import { Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const AUDIT_NAV = [
+  { href: "/admin/audit", label: "Eventos" },
+  { href: "/admin/audit/settings", label: "Configuración" },
+];
 import { AUDIT_CATEGORIES, isInCategory, countByCategory } from "@/lib/audit-categories";
 // Sprint 28 — Stripe-style search operators
 import {
@@ -97,23 +104,26 @@ export default function AuditClient({ rows, chain }) {
 
   return (
     <>
-      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: space[4], flexWrap: "wrap", marginBottom: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>Auditoría</h1>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: space[2], marginTop: space[1] }}>
+      <PageHeader
+        eyebrow="Compliance · hash chain"
+        italic="Trazabilidad"
+        title="cripto-firmada."
+        subtitle={
+          <span style={{ display: "inline-flex", alignItems: "center", gap: space[2] }}>
             <Badge variant={chain.ok ? "success" : "danger"} size="sm">
               {chain.ok ? "Cadena verificada" : "Cadena ROTA"}
             </Badge>
-            <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>
-              {chain.ok ? `${chain.entries} entradas` : `roto en ${chain.brokenAt}`}
-            </span>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: space[2] }}>
-          <Button onClick={() => download(`audit-${fmtDate(new Date())}.csv`, toCSV(filtered))} variant="secondary" size="sm" disabled={filtered.length === 0}>Exportar CSV</Button>
-          <Button onClick={() => download(`audit-${fmtDate(new Date())}.json`, JSON.stringify(filtered, null, 2), "application/json")} variant="secondary" size="sm" disabled={filtered.length === 0}>Exportar JSON</Button>
-        </div>
-      </header>
+            <span>{chain.ok ? `${chain.entries} entradas` : `roto en ${chain.brokenAt}`}</span>
+          </span>
+        }
+        actions={
+          <>
+            <Button onClick={() => download(`audit-${fmtDate(new Date())}.csv`, toCSV(filtered))} variant="secondary" size="sm" disabled={filtered.length === 0}>Exportar CSV</Button>
+            <Button onClick={() => download(`audit-${fmtDate(new Date())}.json`, JSON.stringify(filtered, null, 2), "application/json")} variant="secondary" size="sm" disabled={filtered.length === 0}>Exportar JSON</Button>
+          </>
+        }
+      />
+      <SegmentedNav items={AUDIT_NAV} ariaLabel="Sub-navegación de auditoría" />
 
       {/* Quickfilter chips por categoría — un click filtra todos los
           eventos de auth/billing/sso/etc. Visualmente prominente arriba

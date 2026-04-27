@@ -67,7 +67,7 @@ async function sendMagicLink({ identifier, url, provider }) {
   // Lookup branding del recipient (best-effort).
   const { branding, orgName, customDomainVerified } = await lookupRecipientBranding(identifier);
 
-  if (provider.server) {
+  if (process.env.EMAIL_SERVER) {
     const { default: nodemailer } = await import("nodemailer");
     const t = nodemailer.createTransport(provider.server);
     // Sprint 18 — render con branding si está disponible.

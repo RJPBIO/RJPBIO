@@ -6,7 +6,15 @@ import { Field } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const SECURITY_NAV = [
+  { href: "/admin/security/policies", label: "Políticas" },
+  { href: "/admin/security/sessions", label: "Sesiones" },
+  { href: "/admin/security", label: "Reset MFA" },
+];
 import {
   validatePolicy,
   isIpAllowed,
@@ -159,20 +167,19 @@ export default function PoliciesClient({ orgId, orgName, plan, initial }) {
   const isActive = requireMfa || ipAllowlistEnabled || sessionMaxAgeMinutes !== "";
 
   return (
-    <article style={{ maxWidth: 760, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Políticas de seguridad
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            MFA obligatorio · IP allowlist · TTL de sesión · {orgName}
-          </p>
-        </div>
-        <Badge variant={isActive ? "success" : "soft"} size="sm">
-          {isActive ? "Activas" : "Sin políticas"}
-        </Badge>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Seguridad · org policies"
+        italic="Defensa"
+        title="perimetral."
+        subtitle={`MFA obligatorio · IP allowlist · TTL de sesión · ${orgName}`}
+        actions={
+          <Badge variant={isActive ? "success" : "soft"} size="sm">
+            {isActive ? "Activas" : "Sin políticas"}
+          </Badge>
+        }
+      />
+      <SegmentedNav items={SECURITY_NAV} ariaLabel="Sub-navegación de seguridad" />
 
       <form onSubmit={onSave} style={{ display: "grid", gap: space[5] }}>
         {/* Require MFA */}

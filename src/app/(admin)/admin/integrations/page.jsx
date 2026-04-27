@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import IntegrationsClient from "./IntegrationsClient";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Integraciones · Admin" };
@@ -25,24 +26,12 @@ export default async function IntegrationsPage() {
 
   return (
     <>
-      <h1 style={{
-        margin: 0,
-        fontSize: font.size["2xl"],
-        fontWeight: font.weight.black,
-        letterSpacing: font.tracking.tight,
-        color: cssVar.text,
-      }}>
-        Integraciones
-      </h1>
-      <p style={{
-        color: cssVar.textMuted,
-        marginTop: space[1],
-        fontSize: font.size.sm,
-        lineHeight: 1.5,
-      }}>
-        Conecta BIO-IGNICIÓN con el stack de tu organización. Cada integración corre con
-        credenciales mínimas y revocables desde aquí.
-      </p>
+      <PageHeader
+        eyebrow="Seguridad · stack connections"
+        italic="SCIM"
+        title="conectado."
+        subtitle="Conecta BIO-IGNICIÓN con tu stack. Cada integración corre con credenciales mínimas y revocables."
+      />
       <IntegrationsClient orgId={orgId} catalog={CATALOG} installed={byProvider} />
       <p style={{
         marginTop: space[5],

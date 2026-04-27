@@ -2,7 +2,15 @@
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const COMPLIANCE_NAV = [
+  { href: "/admin/compliance", label: "SOC 2 · ISO 27001" },
+  { href: "/admin/compliance/dsar", label: "DSAR" },
+  { href: "/admin/audit", label: "Audit log" },
+];
 
 const TONE_VARIANT = {
   success: "success",
@@ -84,29 +92,28 @@ export default function ComplianceClient({ orgId, orgName, pack }) {
   const downloadUrl = (format) => `/api/v1/orgs/${orgId}/compliance/export?format=${format}`;
 
   return (
-    <article style={{ maxWidth: 1080, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[5] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Compliance dashboard
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            SOC 2 Trust Services Criteria + ISO/IEC 27001:2022 Annex A · {orgName}
-          </p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: space[3] }}>
-          <CoverageRing coverage={pack.summary.coverage} />
-          <div style={{ fontSize: font.size.sm }}>
-            <div style={{ color: cssVar.text, fontWeight: font.weight.bold }}>
-              {pack.summary.totalSatisfied}/{pack.summary.totalControls} controls
-            </div>
-            <div style={{ color: cssVar.textMuted, fontSize: font.size.xs }}>
-              SOC 2: {pack.summary.soc2.satisfied}/{pack.summary.soc2.total}<br />
-              ISO 27001: {pack.summary.iso27001.satisfied}/{pack.summary.iso27001.total}
+    <article>
+      <PageHeader
+        eyebrow="Compliance · evidence pack"
+        italic="Auditable"
+        title="por diseño."
+        subtitle={`SOC 2 Trust Services Criteria + ISO/IEC 27001:2022 Annex A · ${orgName}`}
+        actions={
+          <div style={{ display: "flex", alignItems: "center", gap: space[3] }}>
+            <CoverageRing coverage={pack.summary.coverage} />
+            <div style={{ fontSize: font.size.sm }}>
+              <div style={{ color: cssVar.text, fontWeight: font.weight.bold }}>
+                {pack.summary.totalSatisfied}/{pack.summary.totalControls} controls
+              </div>
+              <div style={{ color: cssVar.textMuted, fontSize: font.size.xs }}>
+                SOC 2: {pack.summary.soc2.satisfied}/{pack.summary.soc2.total}<br />
+                ISO 27001: {pack.summary.iso27001.satisfied}/{pack.summary.iso27001.total}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        }
+      />
+      <SegmentedNav items={COMPLIANCE_NAV} ariaLabel="Sub-navegación de compliance" />
 
       <div style={{
         display: "flex", gap: space[2], flexWrap: "wrap",

@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import { SUPPORTED_SSO_PROVIDERS, SSO_PROVIDER_LABELS } from "@/lib/sso";
 
@@ -109,20 +110,18 @@ export default function SsoClient({ orgId, orgName, plan, initial }) {
   }
 
   return (
-    <article style={{ maxWidth: 720, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Single Sign-On
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            Federation via Okta, Microsoft, Google o SAML 2.0. Solo OWNER del org puede modificar.
-          </p>
-        </div>
-        <Badge variant={isConfigured ? "success" : "soft"} size="sm">
-          {isConfigured ? "Activo" : "No configurado"}
-        </Badge>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Seguridad · federation"
+        italic="Identidad"
+        title="centralizada."
+        subtitle="Federation via Okta, Microsoft, Google o SAML 2.0. Solo OWNER del org puede modificar."
+        actions={
+          <Badge variant={isConfigured ? "success" : "soft"} size="sm">
+            {isConfigured ? "Activo" : "No configurado"}
+          </Badge>
+        }
+      />
 
       <form onSubmit={onSave} style={{ display: "grid", gap: space[4], padding: space[5], background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md }}>
         <Field label="Dominio de email" hint="Usuarios con email en este dominio serán redirigidos al IdP." error={ERROR_MSGS.domain[errors.domain]}>

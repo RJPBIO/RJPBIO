@@ -5,6 +5,7 @@ import { listInvoices } from "@/server/billing";
 import SubmitButton from "@/components/ui/SubmitButton";
 import { Badge } from "@/components/ui/Badge";
 import { Progress } from "@/components/ui/Progress";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "Facturación · Admin" };
@@ -109,36 +110,18 @@ export default async function BillingPage({ searchParams }) {
           Checkout cancelado. Puedes reintentar cuando quieras.
         </div>
       )}
-      <header style={{
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: space[3],
-      }}>
-        <div>
-          <h1 style={{
-            margin: 0,
-            fontSize: font.size["2xl"],
-            fontWeight: font.weight.black,
-            letterSpacing: font.tracking.tight,
-            color: cssVar.text,
-          }}>
-            Facturación
-          </h1>
-          <p style={{
-            margin: `${space[1]}px 0 0`,
-            color: cssVar.textMuted,
-            fontSize: font.size.sm,
-          }}>
-            Plan actual: <strong style={{ color: cssVar.text }}>{plan}</strong> · {limits.price}
-          </p>
-        </div>
-        <form action="/api/billing/portal" method="post">
-          <input type="hidden" name="orgId" value={orgId} />
-          <SubmitButton variant="primary" loadingLabel="Abriendo portal…">Abrir portal de facturación</SubmitButton>
-        </form>
-      </header>
+      <PageHeader
+        eyebrow="Cuenta · billing"
+        italic="Plan"
+        title={`y consumo.`}
+        subtitle={<>Plan actual: <strong style={{ color: cssVar.text }}>{plan}</strong> · {limits.price}</>}
+        actions={
+          <form action="/api/billing/portal" method="post">
+            <input type="hidden" name="orgId" value={orgId} />
+            <SubmitButton variant="primary" loadingLabel="Abriendo portal…">Portal de facturación</SubmitButton>
+          </form>
+        }
+      />
 
       <section style={{
         marginTop: space[5],

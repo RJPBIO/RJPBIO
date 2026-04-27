@@ -4,7 +4,15 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const SECURITY_NAV = [
+  { href: "/admin/security/policies", label: "Políticas" },
+  { href: "/admin/security/sessions", label: "Sesiones" },
+  { href: "/admin/security", label: "Reset MFA" },
+];
 import { canRevokeTarget } from "@/lib/org-sessions";
 
 async function getCsrf() {
@@ -120,21 +128,19 @@ export default function OrgSessionsClient({ orgId, orgName, actorRole, actorUser
   }
 
   return (
-    <article style={{ maxWidth: 960, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Sesiones del org
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            {total} sesión(es) {includeRevoked ? "(activas + revocadas recientes)" : "activa(s)"} en {orgName}.
-            Revoca específicas o todas al offboardear.
-          </p>
-        </div>
-        <Badge variant={actorRole === "OWNER" ? "success" : "soft"} size="sm">
-          {actorRole}
-        </Badge>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Seguridad · live sessions"
+        italic="Quién"
+        title="está dentro, ahora."
+        subtitle={`${total} sesión(es) ${includeRevoked ? "(activas + revocadas recientes)" : "activa(s)"} en ${orgName}. Revoca específicas o todas al offboardear.`}
+        actions={
+          <Badge variant={actorRole === "OWNER" ? "success" : "soft"} size="sm">
+            {actorRole}
+          </Badge>
+        }
+      />
+      <SegmentedNav items={SECURITY_NAV} ariaLabel="Sub-navegación de seguridad" />
 
       {/* Toolbar: search + include-revoked toggle */}
       <div style={{

@@ -4,7 +4,15 @@ import { toast } from "@/components/ui/Toast";
 import { DataTable } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const SECURITY_NAV = [
+  { href: "/admin/security/policies", label: "Políticas" },
+  { href: "/admin/security/sessions", label: "Sesiones" },
+  { href: "/admin/security", label: "Reset MFA" },
+];
 
 const STATUS_VARIANT = { pending: "warn", approved: "success", rejected: "soft" };
 
@@ -188,16 +196,13 @@ export default function SecurityResetsClient({ pending = [], resolved = [] }) {
 
   return (
     <>
-      <header style={{ marginBottom: space[4] }}>
-        <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-          Reset de MFA
-        </h1>
-        <p style={{ margin: `${space[1]}px 0 0`, color: cssVar.textMuted, fontSize: font.size.sm, maxWidth: 680, lineHeight: 1.5 }}>
-          Solicitudes auto-registradas por usuarios que perdieron su dispositivo de segundo factor.
-          Al aprobar, se borra el TOTP, los códigos de respaldo y los dispositivos de confianza,
-          y se revocan todas las sesiones activas del usuario. Toda acción queda en audit log con hash-chain.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Seguridad · MFA recovery"
+        italic="Reactivación"
+        title="con auditoría completa."
+        subtitle="Solicitudes auto-registradas por usuarios que perdieron su segundo factor. Al aprobar se borra TOTP + backup codes + trusted devices, y se revocan todas las sesiones. Toda acción queda en audit log con hash-chain."
+      />
+      <SegmentedNav items={SECURITY_NAV} ariaLabel="Sub-navegación de seguridad" />
 
       <section style={{ marginBlockEnd: space[6] }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: space[3], marginBlockEnd: space[3] }}>

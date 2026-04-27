@@ -6,6 +6,8 @@ import { Field } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   MAINTENANCE_STATUSES,
@@ -123,20 +125,18 @@ export default function MaintenanceClient({ initial }) {
   }
 
   return (
-    <article style={{ maxWidth: 960, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Maintenance windows
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            Programa ventanas de mantenimiento. Subscribers reciben notify a T-24h, T-0 y T+done.
-          </p>
-        </div>
-        <Button variant="primary" onClick={() => setCreating(!creating)}>
-          {creating ? "Cancelar" : "Nueva ventana"}
-        </Button>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Plataforma · scheduled"
+        italic="Ventanas"
+        title="de mantenimiento."
+        subtitle="Programa con notify automático a T-24h, T-0 y T+done."
+        actions={
+          <Button variant="primary" onClick={() => setCreating(!creating)}>
+            {creating ? "Cancelar" : "Nueva ventana"}
+          </Button>
+        }
+      />
 
       <Alert kind="info" style={{ marginBlockEnd: space[4] }}>
         <strong>Notify cadence:</strong> los subscribers verificados (Sprint 20)
@@ -233,8 +233,12 @@ export default function MaintenanceClient({ initial }) {
       )}
 
       {windows.length === 0 ? (
-        <div style={{ padding: space[6], textAlign: "center", color: cssVar.textMuted, background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md }}>
-          No hay maintenance windows programadas.
+        <div className="bi-admin-empty">
+          <span className="bi-admin-empty-glyph"><BioGlyph size={36} /></span>
+          <div className="bi-admin-empty-title">Sin ventanas programadas.</div>
+          <div className="bi-admin-empty-body">
+            Cuando programes mantenimiento, los subscribers recibirán notify automático a T-24h, T-0 y T+done.
+          </div>
         </div>
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: space[3] }}>

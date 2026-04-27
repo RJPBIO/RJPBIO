@@ -251,6 +251,14 @@ model Session {
   @@index([userId])
 }
 
+// NextAuth Email provider — magic-link token store.
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
 // ─── Auditoría (append-only, hash chain) ────────────────
 model AuditLog {
   id         BigInt   @id @default(autoincrement())

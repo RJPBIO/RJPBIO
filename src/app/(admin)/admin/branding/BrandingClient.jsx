@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   BRANDING_DEFAULTS,
@@ -128,21 +129,19 @@ export default function BrandingClient({ orgId, orgName, plan, canEdit, initial 
   }
 
   return (
-    <article style={{ maxWidth: 1080, margin: "0 auto" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: space[3], marginBlockEnd: space[4] }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: font.size["2xl"], fontWeight: font.weight.black, letterSpacing: font.tracking.tight, color: cssVar.text }}>
-            Branding
-          </h1>
-          <p style={{ color: cssVar.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
-            Personaliza logo, colores y tono del coach para {orgName}.
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: space[2] }}>
-          <Badge variant={planEdits ? "success" : "soft"} size="sm">{plan}</Badge>
-          {!canEdit && <Badge variant="soft" size="sm">Read-only (ADMIN)</Badge>}
-        </div>
-      </header>
+    <article>
+      <PageHeader
+        eyebrow="Producto · white-label"
+        italic="Tu marca,"
+        title="el producto."
+        subtitle={`Personaliza logo, colores y tono del coach para ${orgName}.`}
+        actions={
+          <>
+            <Badge variant={planEdits ? "success" : "soft"} size="sm">{plan}</Badge>
+            {!canEdit && <Badge variant="soft" size="sm">Read-only (ADMIN)</Badge>}
+          </>
+        }
+      />
 
       {!planEdits && (
         <Alert kind="warn">
