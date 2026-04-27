@@ -4,6 +4,7 @@ import { aggregateScores } from "@/lib/nom35/scoring";
 import { DOMINIOS, CATEGORIAS } from "@/lib/nom35/items";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { KPITile } from "@/components/admin/KPITile";
 import Link from "next/link";
 
 export const metadata = { title: "NOM-035 · Admin" };
@@ -142,22 +143,11 @@ export default async function Nom35AdminPage() {
 }
 
 function Kpi({ title, value, sub, tone }) {
-  const toneMap = { ok: "var(--bi-ok)", warn: "var(--bi-warn)", danger: "var(--bi-danger)" };
-  const col = toneMap[tone] || tone || cssVar.text;
-  return (
-    <div style={{
-      padding: space[4], borderRadius: radius.md,
-      background: cssVar.accentSoft, border: `1px solid ${cssVar.border}`,
-    }}>
-      <div style={{ fontSize: font.size.xs, color: cssVar.textDim, textTransform: "uppercase", letterSpacing: font.tracking.wide, fontWeight: font.weight.semibold }}>
-        {title}
-      </div>
-      <div style={{ fontSize: font.size["2xl"], fontWeight: font.weight.black, margin: `${space[1]}px 0`, color: col, fontFamily: cssVar.fontMono }}>
-        {value}
-      </div>
-      <div style={{ fontSize: font.size.xs, color: cssVar.textMuted }}>{sub}</div>
-    </div>
-  );
+  const kpiTone = tone === "ok" ? "success"
+    : tone === "warn" ? "warn"
+    : tone === "danger" ? "danger"
+    : "signal";
+  return <KPITile label={title} value={value} sub={sub} tone={kpiTone} />;
 }
 
 const grid = {
