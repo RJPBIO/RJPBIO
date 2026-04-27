@@ -13844,17 +13844,43 @@ a.bi-learn-trail-link,
 }
 
 /* ── Stagger sections enter ──────────────────────────────────────── */
-.bi-admin-content > * { animation: bi-section-enter 360ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-.bi-admin-content > *:nth-child(2)  { animation-delay: 60ms; }
-.bi-admin-content > *:nth-child(3)  { animation-delay: 120ms; }
-.bi-admin-content > *:nth-child(4)  { animation-delay: 180ms; }
-.bi-admin-content > *:nth-child(5)  { animation-delay: 240ms; }
-.bi-admin-content > *:nth-child(n+6){ animation-delay: 300ms; }
+/* Targets both pages with multiple top-level children AND pages that wrap
+   everything in a single <article>/<>...</> root (resolves through to the
+   first real children). */
+.bi-admin-content > *,
+.bi-admin-content > article > *,
+.bi-admin-content > main > *,
+.bi-admin-content > section > * {
+  animation: bi-section-enter 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.bi-admin-content > *:nth-child(2),
+.bi-admin-content > article > *:nth-child(2),
+.bi-admin-content > main > *:nth-child(2),
+.bi-admin-content > section > *:nth-child(2)  { animation-delay: 60ms; }
+.bi-admin-content > *:nth-child(3),
+.bi-admin-content > article > *:nth-child(3),
+.bi-admin-content > main > *:nth-child(3),
+.bi-admin-content > section > *:nth-child(3)  { animation-delay: 120ms; }
+.bi-admin-content > *:nth-child(4),
+.bi-admin-content > article > *:nth-child(4),
+.bi-admin-content > main > *:nth-child(4),
+.bi-admin-content > section > *:nth-child(4)  { animation-delay: 180ms; }
+.bi-admin-content > *:nth-child(5),
+.bi-admin-content > article > *:nth-child(5),
+.bi-admin-content > main > *:nth-child(5),
+.bi-admin-content > section > *:nth-child(5)  { animation-delay: 240ms; }
+.bi-admin-content > *:nth-child(n+6),
+.bi-admin-content > article > *:nth-child(n+6),
+.bi-admin-content > main > *:nth-child(n+6),
+.bi-admin-content > section > *:nth-child(n+6) { animation-delay: 300ms; }
 @keyframes bi-section-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .bi-admin-content { animation: none !important; } /* override block animation */
+.bi-admin-content > article,
+.bi-admin-content > main,
+.bi-admin-content > section { animation: none !important; }
 
 /* ── Toast brand polish ──────────────────────────────────────────── */
 .bi-toast {
@@ -14038,6 +14064,44 @@ a.bi-learn-trail-link,
     inset 0 0 0 1px color-mix(in srgb, #22D3EE 28%, transparent);
 }
 
+/* ── Notifications bell brand polish ────────────────────────────── */
+.bi-admin-shell .bi-bell {
+  position: relative;
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  color: var(--bi-text-muted);
+  border: 1px solid var(--bi-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms, background 200ms;
+}
+.bi-admin-shell .bi-bell:hover {
+  color: var(--bi-text);
+  border-color: color-mix(in srgb, #22D3EE 35%, var(--bi-border));
+  background: color-mix(in srgb, #22D3EE 4%, transparent);
+}
+.bi-admin-shell .bi-bell:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bi-bg), 0 0 0 4px #22D3EE;
+}
+.bi-admin-shell .bi-bell-badge {
+  position: absolute;
+  top: -4px; right: -4px;
+  min-width: 16px; height: 16px;
+  padding: 0 4px;
+  background: linear-gradient(135deg, #22D3EE, #0E7490);
+  color: #041019;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--bi-bg);
+  box-shadow: 0 0 8px -2px color-mix(in srgb, #22D3EE 60%, transparent);
+}
+
 /* ── Account menu dropdown ───────────────────────────────────────── */
 .bi-account-menu { position: relative; }
 .bi-account-menu-panel {
@@ -14213,11 +14277,30 @@ a.bi-learn-trail-link,
 .bi-cmdk-item-active {
   background: color-mix(in srgb, #22D3EE 10%, transparent);
 }
+.bi-cmdk-item-left {
+  display: inline-flex; align-items: center; gap: 10px;
+  flex: 1; min-width: 0;
+}
 .bi-cmdk-item-label {
   font-size: 14px;
   color: var(--bi-text);
   font-weight: 500;
   letter-spacing: -0.005em;
+}
+.bi-cmdk-action-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #22D3EE, #0E7490);
+  color: #041019;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.10), 0 0 8px -2px color-mix(in srgb, #22D3EE 50%, transparent);
+}
+.bi-cmdk-item[data-kind="action"] .bi-cmdk-item-group {
+  color: #155E75;
+  font-weight: 700;
 }
 .bi-cmdk-item-group {
   font-family: var(--font-mono);

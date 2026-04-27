@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { KPITile } from "@/components/admin/KPITile";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import {
   summarizeService, formatLatency, formatCounter, overallSystemHealth,
@@ -48,41 +49,18 @@ function StatusCard({ name, probe, description }) {
 }
 
 function MetricCard({ title, big, sub, tone = "soft" }) {
+  const kpiTone = tone === "danger" ? "danger"
+    : tone === "warn" ? "warn"
+    : tone === "success" ? "success"
+    : tone === "soft" ? "neutral"
+    : "neutral";
   return (
-    <div style={{
-      padding: space[4],
-      background: cssVar.surface,
-      border: `1px solid ${cssVar.border}`,
-      borderRadius: radius.md,
-    }}>
-      <p style={{
-        margin: 0,
-        color: cssVar.textDim,
-        fontSize: font.size.xs,
-        textTransform: "uppercase",
-        letterSpacing: font.tracking.wide,
-        fontWeight: font.weight.semibold,
-      }}>
-        {title}
-      </p>
-      <p style={{
-        margin: `${space[2]}px 0 0`,
-        fontSize: font.size["2xl"],
-        fontWeight: font.weight.black,
-        color: tone === "danger" ? "var(--bi-danger)"
-          : tone === "warn" ? "#F59E0B"
-          : cssVar.text,
-        fontFamily: cssVar.fontMono,
-        lineHeight: 1,
-      }}>
-        {big}
-      </p>
-      {sub && (
-        <p style={{ margin: `${space[2]}px 0 0`, color: cssVar.textMuted, fontSize: font.size.xs }}>
-          {sub}
-        </p>
-      )}
-    </div>
+    <KPITile
+      label={title}
+      value={big}
+      sub={sub}
+      tone={kpiTone}
+    />
   );
 }
 

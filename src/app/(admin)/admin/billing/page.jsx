@@ -235,65 +235,33 @@ export default async function BillingPage({ searchParams }) {
 function UsageCard({ title, used, total, hint, danger }) {
   const unlimited = total === Infinity;
   const pct = unlimited ? 0 : Math.min(100, Math.round((used / Math.max(1, total)) * 100));
+  const tone = danger ? "warn" : pct >= 60 ? "signal" : "neutral";
   return (
-    <div style={{
-      padding: space[4],
-      borderRadius: radius.md,
-      border: `1px solid ${danger ? cssVar.warn : cssVar.border}`,
-      background: danger
-        ? "color-mix(in srgb, var(--bi-warn) 8%, transparent)"
-        : cssVar.surface2,
-    }}>
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        fontSize: font.size.xs,
-        color: cssVar.textDim,
-      }}>
-        <span style={{
-          textTransform: "uppercase",
-          letterSpacing: font.tracking.wide,
-          fontWeight: font.weight.semibold,
-        }}>
-          {title}
-        </span>
-        <span style={{ fontFamily: cssVar.fontMono }}>
-          {unlimited ? "Ilimitado" : `${pct}%`}
+    <div className="bi-kpi-tile" data-tone={tone} data-glow={danger ? "1" : undefined}>
+      <div className="bi-kpi-eyebrow">
+        <span className="bi-kpi-dot" aria-hidden style={{ background: danger ? "#D97706" : "#22D3EE", boxShadow: `0 0 6px ${danger ? "#D97706" : "#22D3EE"}` }} />
+        {title}
+        <span style={{ marginInlineStart: "auto", color: cssVar.textMuted, fontWeight: 600 }}>
+          {unlimited ? "∞" : `${pct}%`}
         </span>
       </div>
-      <div style={{
-        marginTop: space[2],
-        fontSize: font.size["2xl"],
-        fontWeight: font.weight.black,
-        fontFamily: cssVar.fontMono,
-        color: cssVar.text,
-      }}>
-        {used.toLocaleString()}
-        {!unlimited && (
-          <span style={{
-            fontSize: font.size.md,
-            color: cssVar.textMuted,
-            marginInlineStart: space[2],
-            fontWeight: font.weight.medium,
-          }}>
-            / {total.toLocaleString()}
-          </span>
-        )}
+      <div className="bi-kpi-value-row">
+        <span className="bi-kpi-value">
+          {used.toLocaleString()}
+          {!unlimited && (
+            <span className="bi-kpi-unit">/ {total.toLocaleString()}</span>
+          )}
+        </span>
       </div>
       {!unlimited && (
-        <div style={{ marginTop: space[2] }}>
+        <div style={{ marginTop: 10 }}>
           <Progress value={pct} tone={danger ? "warn" : "accent"} size="sm" />
         </div>
       )}
       {hint && (
-        <p style={{
-          fontSize: font.size.xs,
-          margin: `${space[2]}px 0 0`,
-          color: danger ? cssVar.warn : cssVar.textMuted,
-        }}>
+        <div className="bi-kpi-sub" style={{ color: danger ? "#D97706" : undefined }}>
           {hint}
-        </p>
+        </div>
       )}
     </div>
   );

@@ -3,6 +3,15 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 const ROUTES = [
+  // Acciones — siempre arriba en el orden por defecto
+  { href: "/admin/members?action=invite",    label: "Invitar miembro",          group: "Acciones", kind: "action" },
+  { href: "/admin/webhooks?action=create",   label: "Crear webhook",            group: "Acciones", kind: "action" },
+  { href: "/admin/api-keys?action=create",   label: "Generar API key",          group: "Acciones", kind: "action" },
+  { href: "/admin/incidents?action=create",  label: "Reportar incidente",       group: "Acciones", kind: "action" },
+  { href: "/admin/maintenance?action=create",label: "Programar mantenimiento",  group: "Acciones", kind: "action" },
+  { href: "/admin/audit?action=verify",      label: "Verificar audit chain",    group: "Acciones", kind: "action" },
+
+  // Navegación
   { href: "/admin",                          label: "Resumen",                  group: "General" },
   { href: "/admin/onboarding",               label: "Onboarding",               group: "General" },
   { href: "/admin/members",                  label: "Miembros",                 group: "Personas" },
@@ -120,10 +129,18 @@ export default function AdminCommandPalette() {
               role="option"
               aria-selected={i === active}
               className={`bi-cmdk-item ${i === active ? "bi-cmdk-item-active" : ""}`}
+              data-kind={r.kind}
               onMouseEnter={() => setActive(i)}
               onClick={() => go(r.href)}
             >
-              <span className="bi-cmdk-item-label">{r.label}</span>
+              <span className="bi-cmdk-item-left">
+                {r.kind === "action" && (
+                  <span aria-hidden className="bi-cmdk-action-glyph">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                  </span>
+                )}
+                <span className="bi-cmdk-item-label">{r.label}</span>
+              </span>
               <span className="bi-cmdk-item-group">{r.group}</span>
             </li>
           ))}

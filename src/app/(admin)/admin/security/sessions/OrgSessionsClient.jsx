@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { toast } from "@/components/ui/Toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import SegmentedNav from "@/components/admin/SegmentedNav";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const SECURITY_NAV = [
@@ -184,8 +185,16 @@ export default function OrgSessionsClient({ orgId, orgName, actorRole, actorUser
       </div>
 
       {filteredGroups.length === 0 ? (
-        <div style={{ padding: space[6], textAlign: "center", color: cssVar.textMuted, background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md }}>
-          {query ? `Sin resultados para "${query}".` : "No hay sesiones activas en este org."}
+        <div className="bi-admin-empty">
+          <span className="bi-admin-empty-glyph"><BioGlyph size={36} /></span>
+          <div className="bi-admin-empty-title">
+            {query ? "Sin coincidencias." : "Nadie conectado ahora mismo."}
+          </div>
+          <div className="bi-admin-empty-body">
+            {query
+              ? `No hay sesiones que coincidan con "${query}".`
+              : "Cuando los miembros inicien sesión aparecerán aquí — con su dispositivo, IP y last-seen."}
+          </div>
         </div>
       ) : (
         <div style={{ display: "grid", gap: space[4] }}>

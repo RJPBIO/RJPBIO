@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import SegmentedNav from "@/components/admin/SegmentedNav";
+import { BioGlyph } from "@/components/BioIgnicionMark";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const COMPLIANCE_NAV = [
@@ -124,10 +125,16 @@ export default function DsarQueueClient({ orgId, orgName, actorRole, initialRequ
       </div>
 
       {filtered.length === 0 ? (
-        <div style={{ padding: space[6], textAlign: "center", color: cssVar.textMuted, background: cssVar.surface, border: `1px solid ${cssVar.border}`, borderRadius: radius.md }}>
-          {filter === "PENDING"
-            ? "No hay solicitudes pendientes — todo al día."
-            : `No hay solicitudes con status ${statusLabel(filter)}`}
+        <div className="bi-admin-empty">
+          <span className="bi-admin-empty-glyph"><BioGlyph size={36} /></span>
+          <div className="bi-admin-empty-title">
+            {filter === "PENDING" ? "Cola vacía. Buena señal." : "Sin solicitudes en este estado."}
+          </div>
+          <div className="bi-admin-empty-body">
+            {filter === "PENDING"
+              ? "Cuando un usuario solicite acceso/borrado/portabilidad de sus datos, llegarán aquí en orden FIFO."
+              : `Cambia el filtro arriba para ver otras solicitudes.`}
+          </div>
         </div>
       ) : (
         <div style={{ display: "grid", gap: space[3] }}>

@@ -135,15 +135,18 @@ export default function NotificationsBell() {
     <div ref={anchor} style={{ position: "relative" }}>
       <button
         type="button"
+        className="bi-bell"
         aria-label={`Notificaciones${unread ? ` (${unread} sin leer)` : ""}`}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        style={btn}
       >
-        <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>🔔</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M6 8a6 6 0 1 1 12 0c0 3 .5 5 2 6H4c1.5-1 2-3 2-6z" />
+          <path d="M10 21a2 2 0 0 0 4 0" />
+        </svg>
         {unread > 0 && (
-          <span aria-hidden="true" style={badge}>{unread > 9 ? "9+" : unread}</span>
+          <span aria-hidden="true" className="bi-bell-badge">{unread > 9 ? "9+" : unread}</span>
         )}
       </button>
       {open && (
