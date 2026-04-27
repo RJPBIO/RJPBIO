@@ -234,16 +234,41 @@ export function computeProtocolEffectiveness(sessions, options = {}) {
       continue;
     }
     if (bucket.moodDeltas.length >= 3) {
+      const n = bucket.moodDeltas.length;
       const sum = bucket.moodDeltas.reduce((a, b) => a + b, 0);
-      const mean = sum / bucket.moodDeltas.length;
-      // Stdev para una banda de confianza informativa.
-      const v = bucket.moodDeltas.reduce((a, d) => a + (d - mean) * (d - mean), 0) / bucket.moodDeltas.length;
+      const mean = sum / n;
+      // Sprint 52 — sample variance (n-1) para inferencia, no population (n).
+      const sampleVar = bucket.moodDeltas.reduce((a, d) => a + (d - mean) * (d - mean), 0) / Math.max(1, n - 1);
+      const sd = Math.sqrt(sampleVar);
+      // 95% CI (z=1.96 gaussian aproximation; con n≥3 sub-estima ligeramente
+      // vs t-distribution pero evita lookup tables y dep adicional).
+      const margin = 1.96 * (sd / Math.sqrt(n));
+      const ciLower = mean - margin;
+      const ciUpper = mean + margin;
+      // Cohen's d (Cohen 1988): magnitud de impacto independiente de n.
+      // small=0.2, medium=0.5, large=0.8.
+      // Caso especial: sd=0 (todos los deltas idénticos). Cohen's d formal
+      // es indefinido pero la interpretación práctica es "consistencia
+      // perfecta" — tratamos como large si mean ≠ 0, trivial si mean = 0.
+      const cohensD = sd > 0 ? mean / sd : (mean === 0 ? 0 : Math.sign(mean) * 9.99);
+      const cohensDLabel = Math.abs(cohensD) >= 0.8 ? "large"
+        : Math.abs(cohensD) >= 0.5 ? "medium"
+        : Math.abs(cohensD) >= 0.2 ? "small"
+        : "trivial";
+      // Significance: CI95 excluye 0 → diferencia estadísticamente detectable
+      const significant = ciLower > 0 || ciUpper < 0;
+
       item.moodDelta = +mean.toFixed(2);
-      item.moodDeltaStdev = +Math.sqrt(v).toFixed(2);
-      item.moodSampleSize = bucket.moodDeltas.length;
+      item.moodDeltaStdev = +sd.toFixed(2);
+      item.moodSampleSize = n;
+      item.ci95Lower = +ciLower.toFixed(2);
+      item.ci95Upper = +ciUpper.toFixed(2);
+      item.cohensD = +cohensD.toFixed(2);
+      item.effectSize = cohensDLabel;
+      item.significant = significant;
       // Hit rate: % sesiones con delta positivo (impacto observable)
       const hits = bucket.moodDeltas.filter((d) => d > 0).length;
-      item.hitRate = +(hits / bucket.moodDeltas.length).toFixed(3);
+      item.hitRate = +(hits / n).toFixed(3);
     }
     if (bucket.coherenciaDeltas.length >= 3) {
       const mean = bucket.coherenciaDeltas.reduce((a, b) => a + b, 0) / bucket.coherenciaDeltas.length;
@@ -285,6 +310,11 @@ export function computeProtocolEffectiveness(sessions, options = {}) {
  * @property {number} [moodDelta]
  * @property {number} [moodDeltaStdev]
  * @property {number} [moodSampleSize]
+ * @property {number} [ci95Lower] - Sprint 52: límite inferior 95% CI
+ * @property {number} [ci95Upper] - Sprint 52: límite superior 95% CI
+ * @property {number} [cohensD]   - Sprint 52: effect size Cohen's d
+ * @property {"trivial"|"small"|"medium"|"large"} [effectSize] - Sprint 52
+ * @property {boolean} [significant] - Sprint 52: CI95 excluye 0
  * @property {number} [hitRate]
  * @property {number} [coherenciaDelta]
  * @property {number} [coherenciaSampleSize]

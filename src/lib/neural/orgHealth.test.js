@@ -344,4 +344,105 @@ describe("computeProtocolEffectiveness", () => {
     ]);
     expect(r.length).toBeLessThanOrEqual(1);
   });
+
+  /* ═══════════════════════════════════════════════════════════════
+     Sprint 52 — CI95 + Cohen's d + significance
+     ═══════════════════════════════════════════════════════════════ */
+
+  describe("Sprint 52 — statistical rigor", () => {
+    it("expone ci95Lower, ci95Upper, cohensD, effectSize, significant", () => {
+      const sessions = [
+        session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u4", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 4 }),
+      ];
+      const r = computeProtocolEffectiveness(sessions);
+      expect(r[0]).toMatchObject({
+        ci95Lower: expect.any(Number),
+        ci95Upper: expect.any(Number),
+        cohensD: expect.any(Number),
+        effectSize: expect.any(String),
+        significant: expect.any(Boolean),
+      });
+    });
+
+    it("CI95 contiene la mean", () => {
+      const sessions = [
+        session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u2", protocolId: "X", moodPre: 2, moodPost: 4 }),
+        session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 5 }),
+        session({ userId: "u4", protocolId: "X", moodPre: 2, moodPost: 3 }),
+        session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 5 }),
+      ];
+      const r = computeProtocolEffectiveness(sessions);
+      const item = r[0];
+      expect(item.ci95Lower).toBeLessThanOrEqual(item.moodDelta);
+      expect(item.ci95Upper).toBeGreaterThanOrEqual(item.moodDelta);
+    });
+
+    it("significant=true cuando deltas son consistentemente positivos", () => {
+      const sessions = [
+        session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u4", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 4 }),
+      ];
+      const r = computeProtocolEffectiveness(sessions);
+      expect(r[0].significant).toBe(true);
+    });
+
+    it("significant=false cuando deltas oscilan entre + y −", () => {
+      const sessions = [
+        session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 4 }),  // +1
+        session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 2 }),  // -1
+        session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 4 }),  // +1
+        session({ userId: "u4", protocolId: "X", moodPre: 3, moodPost: 2 }),  // -1
+        session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 3 }),  // 0
+      ];
+      const r = computeProtocolEffectiveness(sessions);
+      expect(r[0].significant).toBe(false);
+      expect(r[0].ci95Lower).toBeLessThan(0);
+      expect(r[0].ci95Upper).toBeGreaterThan(0);
+    });
+
+    it("effectSize alto cuando deltas son consistentes y grandes", () => {
+      const sessions = [
+        session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 5 }),
+        session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 5 }),
+        session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 5 }),
+        session({ userId: "u4", protocolId: "X", moodPre: 3, moodPost: 5 }),
+        session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 5 }),
+      ];
+      const r = computeProtocolEffectiveness(sessions);
+      expect(["medium", "large"]).toContain(r[0].effectSize);
+    });
+
+    it("effectSize trivial/small cuando deltas son mínimos y dispersos", () => {
+      const sessions = [
+        session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 3 }),
+        session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 4 }),
+        session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 3 }),
+        session({ userId: "u4", protocolId: "X", moodPre: 3, moodPost: 2 }),
+        session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 3 }),
+      ];
+      const r = computeProtocolEffectiveness(sessions);
+      expect(["trivial", "small"]).toContain(r[0].effectSize);
+    });
+
+    it("usa sample variance (n-1)", () => {
+      const sessions = [
+        session({ userId: "u1", protocolId: "X", moodPre: 3, moodPost: 5 }), // +2
+        session({ userId: "u2", protocolId: "X", moodPre: 3, moodPost: 4 }), // +1
+        session({ userId: "u3", protocolId: "X", moodPre: 3, moodPost: 4 }), // +1
+        session({ userId: "u4", protocolId: "X", moodPre: 3, moodPost: 4 }), // +1
+        session({ userId: "u5", protocolId: "X", moodPre: 3, moodPost: 4 }), // +1
+      ];
+      const r = computeProtocolEffectiveness(sessions);
+      // mean=1.2, sample var=(0.64+0.04*4)/4=0.20, sd≈0.447
+      expect(r[0].moodDeltaStdev).toBeCloseTo(0.45, 1);
+    });
+  });
 });
