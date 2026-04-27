@@ -239,6 +239,71 @@ export const NEURAL_CONFIG = FREEZE({
     minSessionGapMs: 30000,       // <30s entre sesiones = gaming
   }),
 
+  // ── Anti-gaming v2 (Sprint 45) ────────────────────────────────
+  // Detector multi-signal con scoring [0..100]. Thresholds:
+  //   <30 = clean, 30-59 = suspicious, ≥60 = likely-gaming.
+  // Cada signal aporta puntos. Múltiples señales débiles compuestas
+  // pueden alcanzar un veredicto fuerte (signal-fusion approach).
+  gamingV2: FREEZE({
+    minHistory: 5,
+    windowSize: 10,
+    // Veredicto thresholds
+    suspiciousScore: 30,
+    likelyScore: 60,
+
+    // Signal A: variance de reaction times.
+    // CV humano típico 0.15-0.40. CV<0.05 = robotic, >0.80 = random fake.
+    rt: FREEZE({
+      minSamples: 4,
+      humanCvMin: 0.10,
+      humanCvMax: 0.50,
+      bothFlanksPenalty: 25, // penalty cuando CV está fuera de banda
+    }),
+
+    // Signal B: touch hold pattern.
+    // Variance < ε y count ≥ 3 = todos iguales (instant tap o robotic hold).
+    touchHold: FREEZE({
+      minSamples: 3,
+      uniformVarianceMax: 0.005, // sec²
+      uniformPenalty: 20,
+    }),
+
+    // Signal C: time-of-day distribution.
+    // Sessions a las 3am todos los días = sospechoso. Calculamos la
+    // entropía de la distribución horaria; humanos tienen entropía
+    // baja-moderada (concentración en pocas horas), bots tienen alta
+    // (uniforme) o muy baja (siempre exactamente la misma hora).
+    timeOfDay: FREEZE({
+      minSessions: 8,
+      lowEntropyMax: 0.5,    // todas a la misma hora ≤0.5 nats
+      highEntropyMin: 2.5,   // uniforme ≈ ln(24)=3.18 nats; >2.5 muy uniforme
+      lowEntropyPenalty: 15,
+      highEntropyPenalty: 10,
+      // Plausibility window: sessions entre 4am-2am del día siguiente.
+      implausibleHourPenalty: 5, // por sesión en horario implausible
+      implausibleHourStart: 2,
+      implausibleHourEnd: 4,     // 02-04 = madrugada implausible
+    }),
+
+    // Signal D: bioQ distribution.
+    // Real users tienen bell-curve. Bot/gaming: uniforme, bimodal o
+    // con varianza muy baja sin estar en el rango bueno.
+    bioQ: FREEZE({
+      minSamples: 5,
+      lowVarianceMax: 50,     // varianza ≤50 con quality < 50 = sospechoso
+      lowVariancePenalty: 15,
+    }),
+
+    // Signal E: session duration variance.
+    // Real: variabilidad por interrupciones, abandono, completion parcial.
+    // Bots: completan exactamente el mínimo del protocolo.
+    duration: FREEZE({
+      minSamples: 5,
+      uniformVarianceMax: 9, // sec²; ~3s de stdev
+      uniformPenalty: 15,
+    }),
+  }),
+
   // ── Recovery Index ────────────────────────────────────────────
   recovery: FREEZE({
     minMoodLog: 4,
