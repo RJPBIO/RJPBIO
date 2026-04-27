@@ -10,10 +10,12 @@ import { getCircadianPersonalized } from "./neural/chronoCircadian";
 import { calibratePrediction } from "./neural/residuals";
 import { protocolBiasFromDomain, applyBiasToScore } from "./nom35/protocolBias";
 import { NEURAL_CONFIG as NC } from "./neural/config";
+import { getColdStartPrior, priorBonus, priorPredictionShape } from "./neural/coldStart";
 
 // Re-export para que consumers puedan importar desde @/lib/neural
 export { NEURAL_CONFIG } from "./neural/config";
 export { evaluateEngineHealth } from "./neural/health";
+export { getColdStartPrior, BASELINE_BY_BUCKET } from "./neural/coldStart";
 
 // ─── Level System ─────────────────────────────────────────
 export function gL(s) {
@@ -424,7 +426,18 @@ function _applyResidualCalibration(raw, st, protocol) {
   return calibrated;
 }
 
-export function predictSessionImpact(st, protocol) {
+/**
+ * Predice el impacto esperado de una sesión.
+ *
+ * @param {object}   st          - state del store
+ * @param {object}   protocol    - protocolo objetivo (n, int)
+ * @param {object}   [options]
+ * @param {object|null} [options.chronotype] - resultado MEQ-SA. Si presente,
+ *   activa el prior cronobiológico (Sprint 41) en cold-start.
+ * @param {Date}     [options.now] - timestamp de evaluación (default: now)
+ */
+export function predictSessionImpact(st, protocol, options = {}) {
+  const { chronotype = null, now = new Date() } = options;
   const cfg = NC.prediction;
   const ml = st.moodLog || [];
   const withProto = ml.filter(m => m.proto === protocol.n && m.pre > 0);
@@ -459,15 +472,28 @@ export function predictSessionImpact(st, protocol) {
         message: `+${mean.toFixed(1)} estimado basado en protocolos de ${protocol.int}`
       };
     } else {
-      raw = {
-        predictedDelta: cfg.fallbackPredictedDelta,
-        lower: +(cfg.fallbackPredictedDelta - cfg.fallbackBandHalfWidth).toFixed(2),
-        upper: +(cfg.fallbackPredictedDelta + cfg.fallbackBandHalfWidth).toFixed(2),
-        confidence: cfg.coldStartConfidence,
-        sampleSize: 0,
-        basis: "promedio global",
-        message: `Primera sesión con este protocolo. Impacto promedio: +${cfg.fallbackPredictedDelta}`
-      };
+      // Sprint 41 — si tenemos chronotype, usamos prior cronobiológico
+      // condicionado a hora subjetiva + intent. Sin chronotype, mantenemos
+      // el fallback global de toda la vida (compat hacia atrás).
+      if (chronotype) {
+        const prior = getColdStartPrior({
+          chronotype,
+          intent: protocol.int,
+          now,
+          sessionsCount: ml.length,
+        });
+        raw = priorPredictionShape(prior, "prior cronobiológico");
+      } else {
+        raw = {
+          predictedDelta: cfg.fallbackPredictedDelta,
+          lower: +(cfg.fallbackPredictedDelta - cfg.fallbackBandHalfWidth).toFixed(2),
+          upper: +(cfg.fallbackPredictedDelta + cfg.fallbackBandHalfWidth).toFixed(2),
+          confidence: cfg.coldStartConfidence,
+          sampleSize: 0,
+          basis: "promedio global",
+          message: `Primera sesión con este protocolo. Impacto promedio: +${cfg.fallbackPredictedDelta}`
+        };
+      }
     }
   }
   return _applyResidualCalibration(raw, st, protocol);
@@ -644,6 +670,20 @@ export function adaptiveProtocolEngine(st, options = {}) {
 
     // Sesgo NOM-035 (dominio psicosocial dominante → intent preferido)
     if (nom35Bias) score = applyBiasToScore(score, p, nom35Bias);
+
+    // Sprint 41 — Cold-start prior bonus. Solo aporta cuando el usuario
+    // tiene pocas sesiones (priorWeight decae a 0 a los 5+). Capped a
+    // ±6 puntos para no dominar sobre datos personales reales.
+    const totalSessions = (st.totalSessions || hist.length || 0);
+    if (totalSessions < 5) {
+      const prior = getColdStartPrior({
+        chronotype,
+        intent: p.int,
+        now,
+        sessionsCount: totalSessions,
+      });
+      score += priorBonus(prior);
+    }
 
     // Generar razón contextual (prioriza NOM-35 si aplica)
     const reason = _generateReason(p, primaryNeed, sens, burnout, momentum, nom35Bias, readiness, moodIsExplicit, lastMood);
