@@ -185,7 +185,9 @@ async function seed(prisma) {
         personal: true,
       });
       memberRows.push({ id: randomUUID(), userId, orgId: personalOrgId, role: "OWNER" });
-      memberRows.push({ id: randomUUID(), userId, orgId: b2bOrgId, role: "MEMBER" });
+      // user[0] es OWNER del B2B — el resto MEMBER. Necesario para que el
+      // admin elija el B2B al hacer dev-login (admin filtra por OWNER/ADMIN).
+      memberRows.push({ id: randomUUID(), userId, orgId: b2bOrgId, role: u === 0 ? "OWNER" : "MEMBER" });
 
       // Sesiones de este user, attached a su personal-org
       for (const s of generateSessionsFor(userId, profile)) {

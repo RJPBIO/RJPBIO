@@ -12,7 +12,12 @@ const PERIODS = {
 
 export default async function AdminHome({ searchParams }) {
   const session = await auth();
-  const orgId = session?.memberships?.find((m) => ["OWNER", "ADMIN"].includes(m.role))?.orgId
+  // Si el user es OWNER/ADMIN de varias orgs (típicamente su personal-org +
+  // una B2B), preferimos la B2B — el admin existe para gestión de equipo,
+  // no para wellness individual (que vive en /app, /account).
+  const adminMems = (session?.memberships || []).filter((m) => ["OWNER", "ADMIN"].includes(m.role));
+  const orgId = adminMems.find((m) => m.org && !m.org.personal)?.orgId
+             ?? adminMems[0]?.orgId
              ?? session?.memberships?.[0]?.orgId;
   if (!orgId) return null;
   const sp = (await searchParams) || {};
