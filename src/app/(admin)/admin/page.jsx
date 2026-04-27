@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { anonymize } from "@/server/analytics";
@@ -20,14 +21,30 @@ export default async function AdminHome({ searchParams }) {
 
   const orm = await db();
   const since = new Date(Date.now() - days * 86400_000);
-  const [org, members, sessions, prevSessions] = await Promise.all([
+  const prevSince = new Date(Date.now() - days * 2 * 86400_000);
+  // Las sesiones del PWA viven en la personal-org del usuario (sync/outbox
+  // route las crea ahí). Para que el admin del B2B vea agregados de su
+  // equipo, queremos por userId ∈ memberships(orgId) — no por orgId.
+  // K-anonymity (k=5) sigue cubriendo: solo se exponen buckets ≥5 únicos.
+  const [org, memberships] = await Promise.all([
     orm.org.findUnique({ where: { id: orgId } }),
-    orm.membership.count({ where: { orgId } }),
-    orm.neuralSession.findMany({ where: { orgId, completedAt: { gte: since } } }),
-    orm.neuralSession.count({
-      where: { orgId, completedAt: { gte: new Date(Date.now() - days * 2 * 86400_000), lt: since } },
+    orm.membership.findMany({
+      where: { orgId, deactivatedAt: null },
+      select: { userId: true },
     }),
   ]);
+  const memberIds = memberships.map((m) => m.userId);
+  const members = memberships.length;
+  const [sessions, prevSessions] = memberIds.length === 0
+    ? [[], 0]
+    : await Promise.all([
+        orm.neuralSession.findMany({
+          where: { userId: { in: memberIds }, completedAt: { gte: since } },
+        }),
+        orm.neuralSession.count({
+          where: { userId: { in: memberIds }, completedAt: { gte: prevSince, lt: since } },
+        }),
+      ]);
   const agg = anonymize(sessions, { k: 5 });
   const delta = prevSessions === 0 ? null : ((sessions.length - prevSessions) / prevSessions) * 100;
 
@@ -120,9 +137,51 @@ export default async function AdminHome({ searchParams }) {
       </h2>
 
       {agg.buckets.length === 0 ? (
-        <p style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>
-          Sin datos suficientes para el periodo seleccionado. Prueba un rango más amplio.
-        </p>
+        <div style={{
+          marginTop: space[3],
+          padding: space[5],
+          background: cssVar.surface,
+          border: `1px solid ${cssVar.border}`,
+          borderRadius: radius.md,
+        }}>
+          <p style={{
+            color: cssVar.text,
+            fontSize: font.size.sm,
+            fontWeight: font.weight.semibold,
+            margin: 0,
+          }}>
+            Sin datos agregados para mostrar.
+          </p>
+          <p style={{
+            color: cssVar.textMuted,
+            fontSize: font.size.sm,
+            marginTop: space[2],
+            marginBottom: 0,
+            lineHeight: 1.5,
+          }}>
+            Bio-Ignición protege la privacidad con k-anonymity (k≥5): cada bucket día/cohorte requiere 5+ miembros activos para mostrarse.{" "}
+            {members < 5
+              ? `Tu org tiene ${members} miembro${members === 1 ? "" : "s"} — invita ${5 - members} más para activar agregados.`
+              : sessions.length === 0
+                ? "Aún no hay actividad de tu equipo en este periodo."
+                : "Prueba un rango más amplio o pide a tu equipo más actividad regular."}
+          </p>
+          {members < 5 && (
+            <Link
+              href="/admin/members"
+              style={{
+                display: "inline-block",
+                marginTop: space[3],
+                color: cssVar.accent,
+                fontSize: font.size.sm,
+                fontWeight: font.weight.semibold,
+                textDecoration: "none",
+              }}
+            >
+              Invitar miembros →
+            </Link>
+          )}
+        </div>
       ) : (
         <div style={{
           marginTop: space[3],
