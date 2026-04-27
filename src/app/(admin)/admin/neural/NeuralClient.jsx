@@ -130,7 +130,7 @@ export default function NeuralClient({ health }) {
         <>
           <h2 style={h2Style}>Effectiveness por protocolo</h2>
           <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginBlockStart: -8, marginBlockEnd: space[3] }}>
-            Mood delta promedio (post − pre) cuando ambos están reportados. Protocolos con &lt;5 usuarios distintos quedan suprimidos por privacidad.
+            Mood delta promedio (post − pre) con CI95 + Cohen&apos;s d (effect size). Marcado &quot;significativo&quot; si el intervalo excluye 0. Protocolos con &lt;5 usuarios distintos quedan suprimidos.
           </p>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
             {health.protocolEffectiveness.map((p) => (
@@ -191,6 +191,12 @@ function ProtocolEffectivenessRow({ item }) {
     : "warn";
   const toneColor = { success: "#10B981", signal: "#22D3EE", warn: "#D97706" }[tone];
   const deltaSign = (item.moodDelta ?? 0) >= 0 ? "+" : "";
+  const effectVariant = {
+    large: "success",
+    medium: "info",
+    small: "soft",
+    trivial: "soft",
+  }[item.effectSize] || "soft";
   return (
     <li style={{
       padding: space[3],
@@ -198,45 +204,114 @@ function ProtocolEffectivenessRow({ item }) {
       border: `1px solid ${cssVar.border}`,
       borderRadius: radius.sm,
       display: "grid",
-      gridTemplateColumns: "1fr auto auto auto",
       gap: space[3],
-      alignItems: "center",
     }}>
-      <span style={{ fontWeight: font.weight.semibold, color: cssVar.text }}>
-        {item.protocol}
-      </span>
-      <span style={{
-        fontFamily: cssVar.fontMono,
-        fontSize: font.size.sm,
-        color: cssVar.textMuted,
-        whiteSpace: "nowrap",
-      }}>
-        {item.count} sesiones · {item.distinctUsers} users
-      </span>
-      {typeof item.moodDelta === "number" ? (
-        <span style={{
-          fontFamily: cssVar.fontMono,
-          fontWeight: font.weight.bold,
-          color: toneColor,
-          fontSize: font.size.md,
-          whiteSpace: "nowrap",
-        }}>
-          {deltaSign}{item.moodDelta} mood
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: space[3], alignItems: "center" }}>
+        <span style={{ fontWeight: font.weight.semibold, color: cssVar.text }}>
+          {item.protocol}
         </span>
-      ) : (
-        <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>—</span>
-      )}
-      {typeof item.hitRate === "number" && (
         <span style={{
           fontFamily: cssVar.fontMono,
           fontSize: font.size.sm,
           color: cssVar.textMuted,
           whiteSpace: "nowrap",
         }}>
-          hit {(item.hitRate * 100).toFixed(0)}% (n={item.moodSampleSize})
+          {item.count} sesiones · {item.distinctUsers} users
         </span>
+        {typeof item.moodDelta === "number" ? (
+          <span style={{
+            fontFamily: cssVar.fontMono,
+            fontWeight: font.weight.bold,
+            color: toneColor,
+            fontSize: font.size.md,
+            whiteSpace: "nowrap",
+          }}>
+            {deltaSign}{item.moodDelta} mood
+          </span>
+        ) : (
+          <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>—</span>
+        )}
+        {typeof item.hitRate === "number" && (
+          <span style={{
+            fontFamily: cssVar.fontMono,
+            fontSize: font.size.sm,
+            color: cssVar.textMuted,
+            whiteSpace: "nowrap",
+          }}>
+            hit {(item.hitRate * 100).toFixed(0)}% (n={item.moodSampleSize})
+          </span>
+        )}
+      </div>
+      {/* Sprint 52 — CI95 visualization + effect size + significance */}
+      {typeof item.ci95Lower === "number" && (
+        <div style={{ display: "flex", alignItems: "center", gap: space[3], flexWrap: "wrap" }}>
+          <CIBar lower={item.ci95Lower} upper={item.ci95Upper} mean={item.moodDelta} />
+          <span style={{
+            fontFamily: cssVar.fontMono,
+            fontSize: font.size.xs,
+            color: cssVar.textMuted,
+            whiteSpace: "nowrap",
+          }}>
+            CI95 [{item.ci95Lower}, {item.ci95Upper}] · d={item.cohensD}
+          </span>
+          <Badge variant={effectVariant} size="sm">{item.effectSize}</Badge>
+          {item.significant && (
+            <Badge variant="success" size="sm">significativo</Badge>
+          )}
+        </div>
       )}
     </li>
+  );
+}
+
+function CIBar({ lower, upper, mean }) {
+  // Visual whisker: rango [-3, +3] mood delta. Centro en 0.
+  const min = -3, max = 3;
+  const clamp = (x) => Math.max(min, Math.min(max, x));
+  const pct = (x) => ((clamp(x) - min) / (max - min)) * 100;
+  const lo = pct(lower);
+  const hi = pct(upper);
+  const m = pct(mean);
+  const zero = pct(0);
+  const significant = lower > 0 || upper < 0;
+  const barColor = significant ? "#22D3EE" : "rgba(148, 163, 184, 0.45)";
+  return (
+    <div style={{
+      position: "relative",
+      flex: "1 1 220px",
+      height: 18,
+      background: "rgba(148, 163, 184, 0.12)",
+      borderRadius: 9,
+      overflow: "visible",
+      minWidth: 200,
+    }}>
+      {/* zero line */}
+      <span aria-hidden style={{
+        position: "absolute",
+        left: `${zero}%`,
+        top: -2, bottom: -2,
+        width: 1,
+        background: cssVar.borderStrong,
+      }} />
+      {/* CI range bar */}
+      <span aria-hidden style={{
+        position: "absolute",
+        left: `${lo}%`,
+        right: `${100 - hi}%`,
+        top: 6, height: 6,
+        background: barColor,
+        borderRadius: 3,
+      }} />
+      {/* mean dot */}
+      <span aria-hidden style={{
+        position: "absolute",
+        left: `calc(${m}% - 4px)`,
+        top: 4, width: 8, height: 8,
+        borderRadius: "50%",
+        background: significant ? "#155E75" : cssVar.text,
+        boxShadow: significant ? `0 0 6px #22D3EE` : "none",
+      }} />
+    </div>
   );
 }
 
