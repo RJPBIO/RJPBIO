@@ -165,7 +165,15 @@ export async function clearAll() {
 // (storage no importa sync).
 export async function outboxAdd(entry) {
   if (!hasIDB()) return null;
-  const stored = await idbSet(STORE_OUTBOX, undefined, { ...entry, ts: Date.now() });
+  // El server valida `typeof entry.id === "string"` (sync-validation.js).
+  // IDB autoIncrement asigna ids numéricos → rechazo silencioso (failed[]).
+  // Forzamos UUID string si el caller no provee uno.
+  const id = (typeof entry?.id === "string" && entry.id.length > 0)
+    ? entry.id
+    : (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `obx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`);
+  const stored = await idbSet(STORE_OUTBOX, undefined, { ...entry, id, ts: Date.now() });
   try {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("bio-outbox-changed", { detail: { kind: entry?.kind } }));
