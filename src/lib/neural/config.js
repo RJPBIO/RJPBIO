@@ -239,6 +239,37 @@ export const NEURAL_CONFIG = FREEZE({
     minSessionGapMs: 30000,       // <30s entre sesiones = gaming
   }),
 
+  // ── Pause/break fatigue detection (Sprint 50) ─────────────────
+  // Cuando el usuario empieza a abandonar sesiones (partial flag activo,
+  // pausas frecuentes, mucho tiempo en background), es señal de:
+  //   - fatiga acumulada
+  //   - dificultad demasiado alta
+  //   - mismatch protocol-context
+  // Motor responde reduciendo dificultad sugerida y biasing hacia
+  // protocolos de calma/reset.
+  pauseFatigue: FREEZE({
+    minHistory: 5,                  // ventana mínima para evaluar
+    windowSize: 5,                  // últimas 5 sesiones
+    // Detección por ratio de partial sessions (quality="ligera")
+    mildPartialRatio: 0.3,          // ≥30% partial en ventana = mild
+    severePartialRatio: 0.5,        // ≥50% partial = severe
+
+    // Detección por pausas promedio
+    avgPausesMild: 2,               // ≥2 avg pauses por sesión = mild
+    avgPausesSevere: 4,
+
+    // Detección por hidden time ratio (% sesión en background)
+    hiddenRatioMild: 0.20,
+    hiddenRatioSevere: 0.40,
+
+    // Engine response: difficulty score penalty
+    mildDifficultyPenalty: -5,      // protocolos high-dif pierden 5 pts
+    severeDifficultyPenalty: -15,
+
+    // Severe → fuerza primaryNeed a calma o reset
+    severeForceIntents: FREEZE(["calma", "reset"]),
+  }),
+
   // ── Bandit time-based decay (Sprint 47) ───────────────────────
   // El bandit (UCB1) tiene decay por OBSERVACIÓN (factor 0.97 default).
   // Pero ese decay solo aplica cuando hay una nueva observación. Si el

@@ -23,6 +23,7 @@
 
 import { NEURAL_CONFIG as NC } from "./config";
 import { detectStaleness } from "./staleness";
+import { detectPauseFatigue } from "./pauseFatigue";
 
 const HOUR_MS = 3600000;
 const DAY_MS = 24 * HOUR_MS;
@@ -50,6 +51,8 @@ export function evaluateEngineHealth(state) {
   // y debería ofrecer recalibración al usuario.
   const stalenessReport = detectStaleness(state);
   const recalibrationNeeded = stalenessReport.recalibrate !== false;
+  // Sprint 50 — fatigue detection surfaceable
+  const fatigueReport = detectPauseFatigue(hist);
 
   // Prediction accuracy: usa pares (m.proto, m.pre, m.mood) del moodLog.
   // No tenemos predicciones registradas históricamente, pero podemos
@@ -78,16 +81,22 @@ export function evaluateEngineHealth(state) {
     recalibrationNeeded,
     recalibrationSeverity: stalenessReport.recalibrate || null,
     dataConfidence: stalenessReport.dataConfidence,
+    fatigue: {
+      level: fatigueReport.level,
+      partialRatio: fatigueReport.partialRatio,
+      avgPauses: fatigueReport.avgPauses,
+      signals: fatigueReport.signals,
+    },
 
     predictionAccuracy: accuracy,
     recommendationAcceptance: acceptance,
     personalization,
 
     // Resumen ejecutivo: una palabra que indica salud global.
-    overall: synthesizeOverall({ accuracy, acceptance, personalization, staleness, dataMaturity }),
+    overall: synthesizeOverall({ accuracy, acceptance, personalization, staleness, dataMaturity, fatigue: fatigueReport }),
 
     // Recomendaciones accionables para el operador del sistema.
-    actions: synthesizeActions({ accuracy, acceptance, personalization, staleness, dataMaturity }),
+    actions: synthesizeActions({ accuracy, acceptance, personalization, staleness, dataMaturity, fatigue: fatigueReport }),
 
     // Versión del schema — facilita migrations futuras.
     schemaVersion: 1,
@@ -209,9 +218,11 @@ function computePersonalizationStrength(state, cfg) {
   };
 }
 
-function synthesizeOverall({ accuracy, acceptance, personalization, staleness, dataMaturity }) {
+function synthesizeOverall({ accuracy, acceptance, personalization, staleness, dataMaturity, fatigue }) {
   if (dataMaturity === "cold-start") return "cold-start";
   if (staleness.status === "stale") return "stale";
+  // Sprint 50 — fatiga severa precede a otros estados (señal de bienestar)
+  if (fatigue?.level === "severe") return "fatigued";
   // Si tenemos accuracy y es "poor", la salud es "calibrating" (motor aprende).
   if (accuracy.status === "poor") return "calibrating";
   // Personalización mínima con muchas sesiones = problema serio.
@@ -244,6 +255,19 @@ function synthesizeActions(snap) {
       kind: "warn",
       title: "Predicciones poco precisas",
       detail: `Hit rate ${(snap.accuracy.hitRate * 100).toFixed(0)}%. Considera revisar tolerancia o aumentar muestras.`,
+    });
+  }
+  if (snap.fatigue?.level === "severe") {
+    actions.push({
+      kind: "warn",
+      title: "Fatiga severa detectada",
+      detail: `${(snap.fatigue.partialRatio * 100).toFixed(0)}% de sesiones recientes incompletas. El motor está priorizando regulación parasimpática.`,
+    });
+  } else if (snap.fatigue?.level === "mild") {
+    actions.push({
+      kind: "info",
+      title: "Patrón de fatiga leve",
+      detail: `Algunas sesiones recientes con pausas frecuentes. Motor reduce dificultad recomendada.`,
     });
   }
   if (snap.acceptance.status === "poor") {

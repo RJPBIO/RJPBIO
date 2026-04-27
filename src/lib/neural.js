@@ -12,6 +12,12 @@ import { protocolBiasFromDomain, applyBiasToScore } from "./nom35/protocolBias";
 import { NEURAL_CONFIG as NC } from "./neural/config";
 import { getColdStartPrior, priorBonus, priorPredictionShape } from "./neural/coldStart";
 import { detectStaleness, recalibrationGuidance, sampleAgeWeight } from "./neural/staleness";
+import {
+  detectPauseFatigue,
+  applyFatigueAdjustment,
+  fatigueOverridePrimaryNeed,
+  fatigueGuidance,
+} from "./neural/pauseFatigue";
 
 // Re-export para que consumers puedan importar desde @/lib/neural
 export { NEURAL_CONFIG } from "./neural/config";
@@ -26,6 +32,12 @@ export {
   analyzeBioQDistribution,
   analyzeDurationUniformity,
 } from "./neural/antiGaming";
+export {
+  detectPauseFatigue,
+  applyFatigueAdjustment,
+  fatigueOverridePrimaryNeed,
+  fatigueGuidance,
+} from "./neural/pauseFatigue";
 
 // ─── Level System ─────────────────────────────────────────
 /**
@@ -611,12 +623,21 @@ export function adaptiveProtocolEngine(st, options = {}) {
   // Sprint 42 — detectar staleness para escalar confianza en datos personales
   const staleness = detectStaleness(st, { now });
   const dataConfidence = staleness.dataConfidence;
+  // Sprint 50 — detectar fatiga (partial sessions, pausas, hidden time)
+  const fatigue = detectPauseFatigue(hist);
 
   // Determinar necesidad primaria por contexto
   let primaryNeed = circadian.intent;
 
+  // Sprint 50 — Override por fatiga severa. Aún más prioritario que burnout
+  // porque la fatiga partial es señal directa observable (pausas, abandono),
+  // mientras que burnout es inferencia.
+  const fatigueOverride = fatigueOverridePrimaryNeed(fatigue, primaryNeed);
+  if (fatigueOverride) {
+    primaryNeed = fatigueOverride;
+  }
   // Override por burnout
-  if (burnout.risk === "crítico" || burnout.risk === "alto") {
+  else if (burnout.risk === "crítico" || burnout.risk === "alto") {
     primaryNeed = "calma";
   }
   // Override por readiness crítico: HRV/RHR/sueño fisiológicos mandan sobre
@@ -722,6 +743,12 @@ export function adaptiveProtocolEngine(st, options = {}) {
     // Sesgo NOM-035 (dominio psicosocial dominante → intent preferido)
     if (nom35Bias) score = applyBiasToScore(score, p, nom35Bias);
 
+    // Sprint 50 — Pause fatigue adjustment: cuando hay fatiga, penaliza
+    // protocolos de dif alta y boostea regulación.
+    if (fatigue.level !== "none") {
+      score = applyFatigueAdjustment(score, p, fatigue);
+    }
+
     // Sprint 41 — Cold-start prior bonus. Aporta cuando totalSessions<5
     // O cuando hay staleness fuerte (recalibrate truthy) — el prior se
     // reactiva como si el usuario fuera nuevo, escalado por la pérdida
@@ -780,6 +807,14 @@ export function adaptiveProtocolEngine(st, options = {}) {
         recalibrate: staleness.recalibrate,
       },
       recalibration: recalibrationGuidance(staleness, { now }),
+      // Sprint 50 — fatigue surface al consumer
+      fatigue: {
+        level: fatigue.level,
+        partialRatio: fatigue.partialRatio,
+        avgPauses: fatigue.avgPauses,
+        signals: fatigue.signals,
+      },
+      fatigueGuidance: fatigueGuidance(fatigue),
     },
   };
 }
