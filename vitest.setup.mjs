@@ -1,5 +1,6 @@
 import { webcrypto } from "node:crypto";
 import "fake-indexeddb/auto";
+import "@testing-library/jest-dom/vitest";
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 

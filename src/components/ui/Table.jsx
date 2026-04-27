@@ -49,11 +49,33 @@ export function DataTable({
       <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: 560 }}>
         <thead>
           <tr>
-            {columns.map((c) => (
-              <th key={c.key} scope="col" style={{ ...headStyle, textAlign: c.align || "left", width: c.width }}>
-                {c.label}
-              </th>
-            ))}
+            {columns.map((c) => {
+              const sortable = !!c.sortable;
+              const dir = c.sortDir; // "asc" | "desc" | undefined
+              const onClick = sortable && c.onSort
+                ? () => c.onSort(dir === "asc" ? "desc" : "asc")
+                : undefined;
+              return (
+                <th
+                  key={c.key}
+                  scope="col"
+                  aria-sort={dir === "asc" ? "ascending" : dir === "desc" ? "descending" : undefined}
+                  style={{
+                    ...headStyle,
+                    textAlign: c.align || "left",
+                    width: c.width,
+                    cursor: sortable ? "pointer" : undefined,
+                    userSelect: sortable ? "none" : undefined,
+                  }}
+                  onClick={onClick}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    {c.label}
+                    {sortable && <SortGlyph dir={dir} />}
+                  </span>
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -119,6 +141,20 @@ export function DataTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function SortGlyph({ dir }) {
+  // Twin chevrons; active one in cyan signal, inactive in muted.
+  const ascActive = dir === "asc";
+  const descActive = dir === "desc";
+  const active = "#22D3EE";
+  const muted = "var(--bi-text-muted)";
+  return (
+    <svg width="9" height="11" viewBox="0 0 9 11" aria-hidden style={{ flexShrink: 0, opacity: 0.85 }}>
+      <path d="M4.5 1.5 L1 5 H8 Z" fill={ascActive ? active : muted} opacity={ascActive ? 1 : 0.35} />
+      <path d="M4.5 9.5 L1 6 H8 Z" fill={descActive ? active : muted} opacity={descActive ? 1 : 0.35} />
+    </svg>
   );
 }
 

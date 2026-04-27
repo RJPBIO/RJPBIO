@@ -35,6 +35,7 @@ export default defineConfig({
     include: ["src/**/*.test.{js,jsx}"],
     alias: {
       "server-only": new URL("./test-stubs/server-only.js", import.meta.url).pathname,
+      "@/": new URL("./src/", import.meta.url).pathname,
     },
   },
 });

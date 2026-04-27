@@ -20,7 +20,7 @@ export function Field({ label, hint, error, required, children, id, className = 
 
   return (
     <div className={`bi-field ${className}`} style={{ display: "block", marginBottom: space[4], ...style }}>
-      <label htmlFor={fieldId} style={{ display: "block", fontSize: font.size.md, color: cssVar.textDim, marginBottom: space[1], fontWeight: font.weight.semibold }}>
+      <label htmlFor={fieldId} className="bi-field-label" style={{ display: "block", fontSize: font.size.md, color: cssVar.textDim, marginBottom: space[1], fontWeight: font.weight.semibold }}>
         {label}
         {required && (
           <>
