@@ -178,3 +178,185 @@ describe("priorPredictionShape", () => {
     expect(shape.basis).toBe("test-basis");
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   Sprint 48 — Cohort priors
+   ═══════════════════════════════════════════════════════════════ */
+import {
+  computeCohortPrior,
+  blendBaselineWithCohort,
+} from "./coldStart";
+import { P } from "../protocols";
+
+const PCALMA = P.find((p) => p.int === "calma");
+const PENFOQUE = P.find((p) => p.int === "enfoque");
+
+function sess(userId, protocolName, hour, moodPre, moodPost) {
+  const d = new Date("2026-04-26T00:00:00");
+  d.setHours(hour);
+  return {
+    userId,
+    protocolId: protocolName,
+    completedAt: d,
+    moodPre,
+    moodPost,
+  };
+}
+
+describe("computeCohortPrior", () => {
+  it("retorna null sin sessions", () => {
+    expect(computeCohortPrior([])).toBeNull();
+    expect(computeCohortPrior(null)).toBeNull();
+  });
+
+  it("celda con <5 users distintos NO se reporta (k-anonymity)", () => {
+    const sessions = [
+      sess("u1", PCALMA.n, 22, 2, 4),
+      sess("u2", PCALMA.n, 22, 2, 4),
+      sess("u3", PCALMA.n, 22, 2, 4),
+      sess("u4", PCALMA.n, 22, 2, 4),
+    ]; // solo 4 users distintos
+    const r = computeCohortPrior(sessions);
+    // El bucket-intent existe pero está vacío (no se populated)
+    const bucket = 7; // 22h → bucket 7
+    expect(r.table?.[bucket]?.calma).toBeUndefined();
+  });
+
+  it("celda con ≥5 users distintos SÍ se reporta", () => {
+    const sessions = [
+      sess("u1", PCALMA.n, 22, 2, 4),
+      sess("u2", PCALMA.n, 22, 2, 4),
+      sess("u3", PCALMA.n, 22, 2, 4),
+      sess("u4", PCALMA.n, 22, 2, 4),
+      sess("u5", PCALMA.n, 22, 2, 4),
+    ];
+    const r = computeCohortPrior(sessions);
+    expect(r.table[7].calma).toBeDefined();
+    expect(r.table[7].calma.delta).toBeCloseTo(2, 1); // 4-2 = +2
+    expect(r.table[7].calma.distinctUsers).toBe(5);
+  });
+
+  it("expone totalSessions y totalUsers", () => {
+    const sessions = [
+      sess("u1", PCALMA.n, 22, 2, 4),
+      sess("u2", PCALMA.n, 22, 2, 4),
+      sess("u3", PCALMA.n, 22, 2, 4),
+      sess("u4", PCALMA.n, 22, 2, 4),
+      sess("u5", PCALMA.n, 22, 2, 4),
+    ];
+    const r = computeCohortPrior(sessions);
+    expect(r.totalSessions).toBe(5);
+    expect(r.totalUsers).toBe(5);
+  });
+
+  it("kmin custom funciona", () => {
+    const sessions = [
+      sess("u1", PCALMA.n, 22, 2, 4),
+      sess("u2", PCALMA.n, 22, 2, 4),
+      sess("u3", PCALMA.n, 22, 2, 4),
+    ];
+    const r1 = computeCohortPrior(sessions); // kmin 5 → undefined
+    const r2 = computeCohortPrior(sessions, { kmin: 3 }); // kmin 3 → reportable
+    expect(r1.table[7]?.calma).toBeUndefined();
+    expect(r2.table[7].calma).toBeDefined();
+  });
+
+  it("ignora sesiones sin moodPre/moodPost", () => {
+    const sessions = [
+      sess("u1", PCALMA.n, 22, 2, 4),
+      sess("u2", PCALMA.n, 22, null, 4),
+      sess("u3", PCALMA.n, 22, 2, null),
+      sess("u4", PCALMA.n, 22, 2, 4),
+      sess("u5", PCALMA.n, 22, 2, 4),
+    ];
+    const r = computeCohortPrior(sessions);
+    expect(r.totalSessions).toBe(3); // solo 3 con ambos campos
+  });
+
+  it("agrupa correctamente por bucket × intent", () => {
+    // 5 users, 2 buckets, 2 intents
+    const sessions = [];
+    for (let u = 1; u <= 5; u++) {
+      sessions.push(sess(`u${u}`, PCALMA.n, 22, 2, 4));   // bucket 7, calma
+      sessions.push(sess(`u${u}`, PENFOQUE.n, 10, 3, 5)); // bucket 3, enfoque
+    }
+    const r = computeCohortPrior(sessions);
+    expect(r.table[7].calma).toBeDefined();
+    expect(r.table[3].enfoque).toBeDefined();
+    expect(r.table[7].enfoque).toBeUndefined(); // sin datos
+  });
+});
+
+describe("blendBaselineWithCohort", () => {
+  it("sin cohort → usa literatura", () => {
+    const r = blendBaselineWithCohort(0.5, null);
+    expect(r.delta).toBe(0.5);
+    expect(r.source).toBe("literature");
+    expect(r.cohortWeight).toBe(0);
+  });
+
+  it("cohort vacío con n=0 → usa literatura", () => {
+    const r = blendBaselineWithCohort(0.5, { delta: 1.5, n: 0 });
+    expect(r.source).toBe("literature");
+  });
+
+  it("cohort con n bajo → blend ponderado", () => {
+    const r = blendBaselineWithCohort(0.5, { delta: 1.5, n: 15 });
+    // weight = 15/30 = 0.5
+    expect(r.cohortWeight).toBeCloseTo(0.5, 2);
+    expect(r.delta).toBeCloseTo(1.0, 1); // 0.5*0.5 + 1.5*0.5
+    expect(r.source).toBe("blend");
+  });
+
+  it("cohort con n alto → predomina cohort", () => {
+    const r = blendBaselineWithCohort(0.5, { delta: 1.5, n: 30 });
+    expect(r.cohortWeight).toBe(1);
+    expect(r.delta).toBeCloseTo(1.5, 2);
+    expect(r.source).toBe("cohort");
+  });
+
+  it("cohort con n>=30 → cap weight a 1.0", () => {
+    const r = blendBaselineWithCohort(0.5, { delta: 1.5, n: 100 });
+    expect(r.cohortWeight).toBe(1);
+  });
+});
+
+describe("getColdStartPrior con cohort", () => {
+  it("sin cohortPrior funciona como antes", () => {
+    const r = getColdStartPrior({
+      intent: "calma",
+      now: new Date("2026-04-26T22:00:00"),
+    });
+    expect(r.source).toBe("literature");
+    expect(r.cohortWeight).toBe(0);
+  });
+
+  it("con cohortPrior aplica blend", () => {
+    const cohortPrior = {
+      table: {
+        7: { calma: { delta: 1.8, n: 30, distinctUsers: 10 } },
+      },
+      totalSessions: 30, totalUsers: 10,
+    };
+    const r = getColdStartPrior({
+      intent: "calma",
+      now: new Date("2026-04-26T22:00:00"),
+      cohortPrior,
+    });
+    expect(r.source).toBe("cohort");
+    expect(r.delta).toBeCloseTo(1.8, 1);
+  });
+
+  it("celda sin cohort cae a literatura", () => {
+    const cohortPrior = {
+      table: { 3: { enfoque: { delta: 1.8, n: 30 } } }, // distinto bucket/intent
+      totalSessions: 30, totalUsers: 10,
+    };
+    const r = getColdStartPrior({
+      intent: "calma",
+      now: new Date("2026-04-26T22:00:00"),
+      cohortPrior,
+    });
+    expect(r.source).toBe("literature");
+  });
+});
