@@ -317,6 +317,28 @@ export const NEURAL_CONFIG = FREEZE({
     // circadiano-only ≥ X% del tiempo, la personalización es débil.
     personalizationWeakThreshold: 0.85,
   }),
+
+  // ── Staleness detection + recalibration (Sprint 42) ───────────
+  // Cuando un usuario vuelve después de varios días sin actividad,
+  // sus patrones pueden haber driftado. Detectamos el gap y reducimos
+  // confianza en datos personales, reactivando el cold-start prior.
+  staleness: FREEZE({
+    // Ventanas de gap (días) y multiplicador de confianza en datos
+    // personales. 1.0 = full trust, 0.0 = treat as cold-start.
+    windows: FREEZE([
+      { maxDays: 7,  level: "fresh",     dataConfidence: 1.0,  recalibrate: false },
+      { maxDays: 14, level: "active",    dataConfidence: 0.85, recalibrate: false },
+      { maxDays: 30, level: "cooling",   dataConfidence: 0.55, recalibrate: "soft" },
+      { maxDays: 60, level: "stale",     dataConfidence: 0.25, recalibrate: "hard" },
+      { maxDays: Infinity, level: "abandoned", dataConfidence: 0.05, recalibrate: "hard" },
+    ]),
+    // Decay del peso de muestras de moodLog según antigüedad.
+    // Half-life en días: una muestra vale 50% a los `decayHalfLifeDays` días.
+    decayHalfLifeDays: 21,
+    // Decay floor: ninguna muestra pesa menos que este mínimo
+    // (evita olvido completo y respeta historial).
+    decayMinWeight: 0.10,
+  }),
 });
 
 /**

@@ -22,6 +22,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { NEURAL_CONFIG as NC } from "./config";
+import { detectStaleness } from "./staleness";
 
 const HOUR_MS = 3600000;
 const DAY_MS = 24 * HOUR_MS;
@@ -45,6 +46,10 @@ export function evaluateEngineHealth(state) {
       : "personalized";
 
   const staleness = computeStaleness(hist);
+  // Sprint 42 — Detectar si el motor está operando con datos obsoletos
+  // y debería ofrecer recalibración al usuario.
+  const stalenessReport = detectStaleness(state);
+  const recalibrationNeeded = stalenessReport.recalibrate !== false;
 
   // Prediction accuracy: usa pares (m.proto, m.pre, m.mood) del moodLog.
   // No tenemos predicciones registradas históricamente, pero podemos
@@ -70,6 +75,9 @@ export function evaluateEngineHealth(state) {
     moodSamples: ml.length,
 
     staleness,
+    recalibrationNeeded,
+    recalibrationSeverity: stalenessReport.recalibrate || null,
+    dataConfidence: stalenessReport.dataConfidence,
 
     predictionAccuracy: accuracy,
     recommendationAcceptance: acceptance,
