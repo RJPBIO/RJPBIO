@@ -11,11 +11,13 @@ import { calibratePrediction } from "./neural/residuals";
 import { protocolBiasFromDomain, applyBiasToScore } from "./nom35/protocolBias";
 import { NEURAL_CONFIG as NC } from "./neural/config";
 import { getColdStartPrior, priorBonus, priorPredictionShape } from "./neural/coldStart";
+import { detectStaleness, recalibrationGuidance, sampleAgeWeight } from "./neural/staleness";
 
 // Re-export para que consumers puedan importar desde @/lib/neural
 export { NEURAL_CONFIG } from "./neural/config";
 export { evaluateEngineHealth } from "./neural/health";
 export { getColdStartPrior, BASELINE_BY_BUCKET } from "./neural/coldStart";
+export { detectStaleness, recalibrationGuidance, sampleAgeWeight } from "./neural/staleness";
 
 // ─── Level System ─────────────────────────────────────────
 export function gL(s) {
@@ -569,6 +571,9 @@ export function adaptiveProtocolEngine(st, options = {}) {
   const sensitivity = calcProtoSensitivity(ml);
   const momentum = calcNeuralMomentum(st);
   const nom35Bias = porDominio ? protocolBiasFromDomain(porDominio) : null;
+  // Sprint 42 — detectar staleness para escalar confianza en datos personales
+  const staleness = detectStaleness(st, { now });
+  const dataConfidence = staleness.dataConfidence;
 
   // Determinar necesidad primaria por contexto
   let primaryNeed = circadian.intent;
@@ -623,11 +628,14 @@ export function adaptiveProtocolEngine(st, options = {}) {
   const scored = candidates.map((p) => {
     let score = sCfg.baseScore;
 
-    // Sensibilidad personal al protocolo
+    // Sensibilidad personal al protocolo (escalada por dataConfidence
+    // si hay staleness — datos viejos pesan menos)
     const sens = sensitivity[p.n];
     if (sens) {
-      score += sens.avgDelta * sCfg.sensitivity.deltaMultiplier;
-      if (sens.sessions >= sCfg.sensitivity.sessionsBonusThreshold) score += sCfg.sensitivity.sessionsBonus;
+      score += sens.avgDelta * sCfg.sensitivity.deltaMultiplier * dataConfidence;
+      if (sens.sessions >= sCfg.sensitivity.sessionsBonusThreshold) {
+        score += sCfg.sensitivity.sessionsBonus * dataConfidence;
+      }
     }
 
     // Diversidad: evitar repetir últimos 3 protocolos
@@ -671,16 +679,24 @@ export function adaptiveProtocolEngine(st, options = {}) {
     // Sesgo NOM-035 (dominio psicosocial dominante → intent preferido)
     if (nom35Bias) score = applyBiasToScore(score, p, nom35Bias);
 
-    // Sprint 41 — Cold-start prior bonus. Solo aporta cuando el usuario
-    // tiene pocas sesiones (priorWeight decae a 0 a los 5+). Capped a
-    // ±6 puntos para no dominar sobre datos personales reales.
+    // Sprint 41 — Cold-start prior bonus. Aporta cuando totalSessions<5
+    // O cuando hay staleness fuerte (recalibrate truthy) — el prior se
+    // reactiva como si el usuario fuera nuevo, escalado por la pérdida
+    // de confianza en sus datos personales.
     const totalSessions = (st.totalSessions || hist.length || 0);
-    if (totalSessions < 5) {
+    const stalenessBoosts = staleness.recalibrate !== false;
+    if (totalSessions < 5 || stalenessBoosts) {
+      // Effective sessionsCount: bajo staleness, fingimos menos sesiones
+      // para que priorWeight sea > 0. Mapping: dataConfidence 1.0 → real,
+      // dataConfidence 0.0 → cero sesiones (full prior).
+      const effective = stalenessBoosts
+        ? Math.round(totalSessions * dataConfidence)
+        : totalSessions;
       const prior = getColdStartPrior({
         chronotype,
         intent: p.int,
         now,
-        sessionsCount: totalSessions,
+        sessionsCount: effective,
       });
       score += priorBonus(prior);
     }
@@ -712,6 +728,15 @@ export function adaptiveProtocolEngine(st, options = {}) {
       readiness: readiness && typeof readiness.score === "number"
         ? { score: readiness.score, interpretation: readiness.interpretation }
         : null,
+      // Sprint 42 — staleness expone al consumer si el motor está
+      // operando con datos potencialmente obsoletos.
+      staleness: {
+        level: staleness.level,
+        daysSinceLast: staleness.daysSinceLast,
+        dataConfidence: staleness.dataConfidence,
+        recalibrate: staleness.recalibrate,
+      },
+      recalibration: recalibrationGuidance(staleness, { now }),
     },
   };
 }
