@@ -11,7 +11,16 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmForm } from "@/components/ui/ConfirmForm";
+import { PageHeader } from "@/components/admin/PageHeader";
+import SegmentedNav from "@/components/admin/SegmentedNav";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
+
+const SETTINGS_NAV = [
+  { href: "/settings/sessions", label: "Sesiones" },
+  { href: "/settings/security/mfa", label: "MFA" },
+  { href: "/settings/sso", label: "SSO" },
+  { href: "/settings/data-requests", label: "Mis datos (GDPR)" },
+];
 
 export const dynamic = "force-dynamic";
 
@@ -87,28 +96,20 @@ export default async function Sessions() {
   const items = markCurrent(live, session.jti);
 
   return (
-    <article style={{
-      maxWidth: 760,
+    <article className="bi-admin-shell" style={{
+      maxWidth: 880,
       margin: "0 auto",
       padding: `${space[6]}px ${space[4]}px`,
       color: cssVar.text,
       fontFamily: cssVar.fontSans,
     }}>
-      <h1 style={{
-        margin: 0,
-        fontSize: font.size["2xl"],
-        fontWeight: font.weight.black,
-        letterSpacing: font.tracking.tight,
-      }}>
-        Sesiones activas
-      </h1>
-      <p style={{
-        color: cssVar.textMuted,
-        fontSize: font.size.sm,
-        marginTop: space[2],
-      }}>
-        Revoca cualquier sesión que no reconozcas. La sesión actual está marcada.
-      </p>
+      <PageHeader
+        eyebrow="Cuenta · seguridad"
+        italic="Tus"
+        title="sesiones activas."
+        subtitle="Revoca cualquier sesión que no reconozcas. La sesión actual está marcada."
+      />
+      <SegmentedNav items={SETTINGS_NAV} ariaLabel="Sub-navegación de cuenta" />
 
       <div style={{
         marginTop: space[4],
