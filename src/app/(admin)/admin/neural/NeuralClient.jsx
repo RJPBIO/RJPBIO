@@ -125,6 +125,21 @@ export default function NeuralClient({ health }) {
         </>
       )}
 
+      {/* Sprint 46 — Effectiveness por protocolo */}
+      {Array.isArray(health.protocolEffectiveness) && health.protocolEffectiveness.length > 0 && (
+        <>
+          <h2 style={h2Style}>Effectiveness por protocolo</h2>
+          <p style={{ color: cssVar.textMuted, fontSize: font.size.sm, marginBlockStart: -8, marginBlockEnd: space[3] }}>
+            Mood delta promedio (post − pre) cuando ambos están reportados. Protocolos con &lt;5 usuarios distintos quedan suprimidos por privacidad.
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
+            {health.protocolEffectiveness.map((p) => (
+              <ProtocolEffectivenessRow key={p.protocol} item={p} />
+            ))}
+          </ul>
+        </>
+      )}
+
       {/* Action items */}
       <h2 style={h2Style}>Acciones recomendadas</h2>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: space[2] }}>
@@ -150,6 +165,78 @@ export default function NeuralClient({ health }) {
         (no es streaming). El motor adaptativo opera client-side per-user; aquí ves el agregado anonimizado.
       </p>
     </>
+  );
+}
+
+function ProtocolEffectivenessRow({ item }) {
+  if (item.suppressed) {
+    return (
+      <li style={{
+        padding: space[3],
+        background: cssVar.surface,
+        border: `1px dashed ${cssVar.border}`,
+        borderRadius: radius.sm,
+        display: "flex", gap: space[3], alignItems: "center",
+        opacity: 0.65,
+      }}>
+        <span style={{ fontWeight: font.weight.semibold, flex: 1 }}>{item.protocol}</span>
+        <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>
+          {item.count} sesión(es) · {item.distinctUsers} user(s) · suprimido (k&lt;5)
+        </span>
+      </li>
+    );
+  }
+  const tone = (item.moodDelta ?? 0) > 0.5 ? "success"
+    : (item.moodDelta ?? 0) > 0 ? "signal"
+    : "warn";
+  const toneColor = { success: "#10B981", signal: "#22D3EE", warn: "#D97706" }[tone];
+  const deltaSign = (item.moodDelta ?? 0) >= 0 ? "+" : "";
+  return (
+    <li style={{
+      padding: space[3],
+      background: cssVar.surface,
+      border: `1px solid ${cssVar.border}`,
+      borderRadius: radius.sm,
+      display: "grid",
+      gridTemplateColumns: "1fr auto auto auto",
+      gap: space[3],
+      alignItems: "center",
+    }}>
+      <span style={{ fontWeight: font.weight.semibold, color: cssVar.text }}>
+        {item.protocol}
+      </span>
+      <span style={{
+        fontFamily: cssVar.fontMono,
+        fontSize: font.size.sm,
+        color: cssVar.textMuted,
+        whiteSpace: "nowrap",
+      }}>
+        {item.count} sesiones · {item.distinctUsers} users
+      </span>
+      {typeof item.moodDelta === "number" ? (
+        <span style={{
+          fontFamily: cssVar.fontMono,
+          fontWeight: font.weight.bold,
+          color: toneColor,
+          fontSize: font.size.md,
+          whiteSpace: "nowrap",
+        }}>
+          {deltaSign}{item.moodDelta} mood
+        </span>
+      ) : (
+        <span style={{ color: cssVar.textMuted, fontSize: font.size.sm }}>—</span>
+      )}
+      {typeof item.hitRate === "number" && (
+        <span style={{
+          fontFamily: cssVar.fontMono,
+          fontSize: font.size.sm,
+          color: cssVar.textMuted,
+          whiteSpace: "nowrap",
+        }}>
+          hit {(item.hitRate * 100).toFixed(0)}% (n={item.moodSampleSize})
+        </span>
+      )}
+    </li>
   );
 }
 
