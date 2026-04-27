@@ -20,22 +20,39 @@ export { getColdStartPrior, BASELINE_BY_BUCKET } from "./neural/coldStart";
 export { detectStaleness, recalibrationGuidance, sampleAgeWeight } from "./neural/staleness";
 
 // ─── Level System ─────────────────────────────────────────
-export function gL(s) {
+/**
+ * Resuelve el nivel del usuario dado un score (totalSessions).
+ * @param {number} s - score (típicamente totalSessions)
+ * @returns {{n:string, m:number, mx:number}} nivel correspondiente
+ */
+export function getLevel(s) {
   let l = LVL[0];
   for (const v of LVL) if (s >= v.m) l = v;
   return l;
 }
 
-export function lvPct(s) {
-  const l = gL(s);
+/**
+ * Porcentaje de progreso dentro del nivel actual (0-100).
+ */
+export function getLevelPercent(s) {
+  const l = getLevel(s);
   if (s >= l.mx) return 100;
   return Math.round(((s - l.m) / (l.mx - l.m)) * 100);
 }
 
-export function nxtLv(s) {
-  const i = LVL.findIndex((l) => l.n === gL(s).n);
+/**
+ * Próximo nivel a alcanzar, o null si está en el último nivel.
+ */
+export function getNextLevel(s) {
+  const i = LVL.findIndex((l) => l.n === getLevel(s).n);
   return i < LVL.length - 1 ? LVL[i + 1] : null;
 }
+
+// Aliases legacy — mantenidos para backwards compat. Código nuevo debe
+// usar getLevel/getLevelPercent/getNextLevel (Sprint 44 rename).
+export const gL = getLevel;
+export const lvPct = getLevelPercent;
+export const nxtLv = getNextLevel;
 
 export function getStatus(v) {
   for (const s of STATUS_MSGS) if (v >= s.min && v < s.max) return s;
@@ -310,7 +327,16 @@ export function calcRecoveryIndex(moodLog) {
   };
 }
 
-// ─── Insights Generator ──────────────────────────────────
+// ─── Insights Generator (LEGACY) ─────────────────────────
+/**
+ * @deprecated desde Sprint 44 — usar `generateCoachingInsights(st)` para
+ * insights más ricos y priorizados (10+ tipos de señal vs los ~6 de aquí).
+ * Se mantiene por backwards compat con consumers existentes.
+ *
+ * Migration path: reemplazar `genIns(st)` con `generateCoachingInsights(st)`
+ * y mapear el shape — el nuevo retorna {type, priority, icon, color, title,
+ * message, action?} en lugar de {t, x}.
+ */
 export function genIns(st) {
   const r = [];
   if (st.totalSessions > 0) {
@@ -643,7 +669,7 @@ export function adaptiveProtocolEngine(st, options = {}) {
     if (last3.includes(p.n)) score += sCfg.diversityPenalty;
 
     // Match de dificultad con nivel del usuario
-    const level = gL(st.totalSessions);
+    const level = getLevel(st.totalSessions);
     const levelIdx = LVL.findIndex((l) => l.n === level.n);
     if (p.dif <= levelIdx + 1) score += sCfg.levelMatch.withinReach;
     if (p.dif > levelIdx + 2) score += sCfg.levelMatch.tooHigh;
@@ -1146,8 +1172,11 @@ export function analyzeStreakChain(st) {
   let currentStreak = 1;
 
   for (let i = 1; i < dates.length; i++) {
-    const diff = (new Date(dates[i]) - new Date(dates[i - 1])) / 86400000;
-    if (diff <= 1.5) {
+    // DST safety: cambios horarios pueden hacer que un día tenga 23h o 25h.
+    // Math.round() resuelve el delta a número entero de días, evitando
+    // que una transición DST genere un break espurio.
+    const diff = Math.round((new Date(dates[i]) - new Date(dates[i - 1])) / 86400000);
+    if (diff <= 1) {
       currentStreak++;
     } else {
       streaks.push(currentStreak);
@@ -1278,98 +1307,182 @@ export function interpretCalibration(baseline) {
 }
 
 // ─── Session Completion Calculator ───────────────────────
-// Pure function: given current state + session context, returns new metrics
+// Pure function: given current state + session context, returns new metrics.
+// Sprint 44 — descompuesto en helpers privados para testabilidad y lectura.
+
+/** Calcula nueva racha (streak) según fecha relativa de la última sesión. */
+function _computeStreakUpdate(st, today, yesterday) {
+  return st.lastDate === today ? st.streak
+    : st.lastDate === yesterday ? st.streak + 1
+    : 1;
+}
+
+/** Coherencia desde mood deltas + nivel base previo. */
+function _computeCoherence(st, recentDeltas, avgDelta, cohBoost, cohDecay) {
+  return Math.min(100, Math.max(20,
+    recentDeltas.length >= 3
+      ? Math.round(50 + avgDelta * 15 + recentDeltas.length * 2 + cohDecay)
+      : st.coherencia + cohBoost + cohDecay
+  ));
+}
+
+/** Resiliencia desde consistencia semanal + streak. */
+function _computeResilience(weekTotal, streak) {
+  const consistencyScore = Math.min(7, weekTotal) / 7;
+  const streakBonus = Math.min(30, streak) * 0.5;
+  return {
+    value: Math.min(100, Math.max(20, Math.round(40 + consistencyScore * 30 + streakBonus))),
+    consistencyScore,
+  };
+}
+
+/** Capacidad desde diversidad de protocolos + experiencia (sqrt sessions). */
+function _computeCapacity(uniqueProtos, totalSessions) {
+  const diversityScore = (uniqueProtos / 14) * 30;
+  const expScore = Math.min(30, Math.sqrt(totalSessions || 0) * 3);
+  return Math.min(100, Math.max(20, Math.round(30 + diversityScore + expScore)));
+}
+
+/** Detecta partial / ligera y ajusta bioQ in-place. Retorna isPartial flag. */
+function _classifyPartialSession(bioQ, sessionData, protocol, durMult) {
+  const completeness = typeof sessionData?.completeness === "number" ? sessionData.completeness : 1;
+  const isPartial = completeness < 0.85 || (sessionData?.hiddenSec || 0) > (protocol.d * durMult) * 0.3;
+  if (isPartial && bioQ.quality !== "inválida") {
+    bioQ.quality = "ligera";
+    bioQ.score = Math.min(bioQ.score, 40);
+  }
+  return { isPartial, completeness };
+}
+
+/** Multiplicador de quality para vCores. */
+function _qualityMultiplier(quality) {
+  return quality === "alta" ? 1.5
+    : quality === "media" ? 1.0
+    : quality === "baja" ? 0.5
+    : quality === "ligera" ? 0.4
+    : 0.2;
+}
+
+/** Calcula achievements unlocked nuevos. Retorna array completo merged. */
+function _computeAchievements(currentAch, ctx) {
+  const { newStreak, newSessionsTotal, newCoherence, totalTime, hour, uniqueProtoCount } = ctx;
+  const ach = [...currentAch];
+  if (newStreak >= 7  && !ach.includes("streak7"))   ach.push("streak7");
+  if (newStreak >= 30 && !ach.includes("streak30"))  ach.push("streak30");
+  if (newCoherence >= 90 && !ach.includes("coherencia90")) ach.push("coherencia90");
+  if (newSessionsTotal >= 50  && !ach.includes("sessions50"))  ach.push("sessions50");
+  if (newSessionsTotal >= 100 && !ach.includes("sessions100")) ach.push("sessions100");
+  if (totalTime >= 3600 && !ach.includes("time60")) ach.push("time60");
+  if (hour < 7  && !ach.includes("earlyBird")) ach.push("earlyBird");
+  if (hour >= 22 && !ach.includes("nightOwl"))  ach.push("nightOwl");
+  if (uniqueProtoCount >= 14 && !ach.includes("allProtos")) ach.push("allProtos");
+  return ach;
+}
+
+/** Construye el entry del history append. */
+function _buildHistoryEntry(args) {
+  const { protocol, durMult, sessionData, nfcCtx, circadian, eVC, newCoherence,
+          newResilience, bioQ, burnoutIdx, bioSignalScore, isPartial, completeness } = args;
+  const coh = sessionData?.coherenceLive;
+  const coherenceLive = coh && typeof coh.score === "number"
+    ? { score: coh.score, amplitude: coh.amplitude, phaseLock: coh.phaseLock, n: coh.n }
+    : undefined;
+  return {
+    p: protocol.n, ts: Date.now(), vc: eVC, c: newCoherence, r: newResilience,
+    dur: Math.round(protocol.d * durMult), ctx: nfcCtx?.type || "manual",
+    bioQ: bioQ.score, quality: bioQ.quality,
+    interactions: sessionData.interactions || 0,
+    motionSamples: sessionData.motionSamples || 0,
+    pauses: sessionData.pauses || 0,
+    burnoutIdx,
+    circadian: circadian?.period || "day",
+    bioSignal: bioSignalScore,
+    partial: !!isPartial,
+    hiddenSec: Math.round(sessionData?.hiddenSec || 0),
+    completeness: Math.round(completeness * 100) / 100,
+    ...(coherenceLive ? { coherenceLive } : {}),
+  };
+}
+
 export function calcSessionCompletion(st, sessionCtx) {
   const { protocol, durMult, sessionData, nfcCtx, circadian } = sessionCtx;
-  const td = new Date().toDateString();
+  const today = new Date().toDateString();
   const di = new Date().getDay();
   const ad = di === 0 ? 6 : di - 1;
   const nw = [...st.weeklyData];
   nw[ad] = (nw[ad] || 0) + 1;
-  const ys = new Date(Date.now() - 864e5).toDateString();
-  let nsk = st.lastDate === td ? st.streak : st.lastDate === ys ? st.streak + 1 : 1;
+  const yesterday = new Date(Date.now() - 864e5).toDateString();
+  let newStreak = _computeStreakUpdate(st, today, yesterday);
   // Ligeras NO avanzan racha (se recalcula más abajo tras determinar quality)
 
   const ml = st.moodLog || [];
   const hist = st.history || [];
   const recentDeltas = ml.filter((m) => m.pre > 0).slice(-10);
-  const avgDelta = recentDeltas.length >= 2 ? recentDeltas.reduce((a, m) => a + (m.mood - m.pre), 0) / recentDeltas.length : 0;
+  const avgDelta = recentDeltas.length >= 2
+    ? recentDeltas.reduce((a, m) => a + (m.mood - m.pre), 0) / recentDeltas.length
+    : 0;
   const cohBoost = Math.max(0, Math.min(8, Math.round(avgDelta * 3 + 2)));
   const cohDecay = avgDelta <= 0 && recentDeltas.length >= 3 ? -3 : 0;
-  const nC = Math.min(100, Math.max(20, recentDeltas.length >= 3 ? Math.round(50 + avgDelta * 15 + recentDeltas.length * 2 + cohDecay) : st.coherencia + cohBoost + cohDecay));
+  const newCoherence = _computeCoherence(st, recentDeltas, avgDelta, cohBoost, cohDecay);
 
   const weekTotal = nw.reduce((a, b) => a + b, 0);
-  const consistencyScore = Math.min(7, weekTotal) / 7;
-  const streakBonus = Math.min(30, nsk) * 0.5;
-  const nR = Math.min(100, Math.max(20, Math.round(40 + consistencyScore * 30 + streakBonus)));
+  const { value: newResilience, consistencyScore } = _computeResilience(weekTotal, newStreak);
 
   const uniqueProtos = new Set([...hist.map((h) => h.p), protocol.n]).size;
-  const diversityScore = (uniqueProtos / 14) * 30;
-  const expScore = Math.min(30, Math.sqrt(st.totalSessions || 0) * 3);
-  const nE = Math.min(100, Math.max(20, Math.round(30 + diversityScore + expScore)));
+  const newCapacity = _computeCapacity(uniqueProtos, st.totalSessions);
 
-  const ns = st.totalSessions + 1;
+  const newSessionsTotal = st.totalSessions + 1;
   const bioQ = calcBioQuality(sessionData);
   const gamingCheck = detectGamingPattern(hist);
   if (gamingCheck.gaming) { bioQ.score = Math.min(bioQ.score, 20); bioQ.quality = "inválida"; }
 
-  // Partial / ligera: sesión incompleta o mucho tiempo en background.
-  // No rompe racha ni la extiende; vale 40% de vCores.
-  const completeness = typeof sessionData?.completeness === "number" ? sessionData.completeness : 1;
-  const isPartial = completeness < 0.85 || (sessionData?.hiddenSec || 0) > (protocol.d * durMult) * 0.3;
-  if (isPartial && bioQ.quality !== "inválida") { bioQ.quality = "ligera"; bioQ.score = Math.min(bioQ.score, 40); }
+  const { isPartial, completeness } = _classifyPartialSession(bioQ, sessionData, protocol, durMult);
 
-  const qualityMult = bioQ.quality === "alta" ? 1.5 : bioQ.quality === "media" ? 1.0 : bioQ.quality === "baja" ? 0.5 : bioQ.quality === "ligera" ? 0.4 : 0.2;
-  const eVC = Math.max(3, Math.round((5 + (cohBoost * 1.5) + (consistencyScore * 5) + (uniqueProtos * 0.5)) * qualityMult));
-  if (bioQ.quality === "ligera") { nsk = st.streak; }
+  const qualityMult = _qualityMultiplier(bioQ.quality);
+  const eVC = Math.max(3, Math.round(
+    (5 + (cohBoost * 1.5) + (consistencyScore * 5) + (uniqueProtos * 0.5)) * qualityMult
+  ));
+  if (bioQ.quality === "ligera") newStreak = st.streak; // no extiende racha
   const vc = (st.vCores || 0) + eVC;
 
-  const ach = [...st.achievements];
-  if (nsk >= 7 && !ach.includes("streak7")) ach.push("streak7");
-  if (nsk >= 30 && !ach.includes("streak30")) ach.push("streak30");
-  if (nC >= 90 && !ach.includes("coherencia90")) ach.push("coherencia90");
-  if (ns >= 50 && !ach.includes("sessions50")) ach.push("sessions50");
-  if (ns >= 100 && !ach.includes("sessions100")) ach.push("sessions100");
   const totalT = (st.totalTime || 0) + Math.round(protocol.d * durMult);
-  if (totalT >= 3600 && !ach.includes("time60")) ach.push("time60");
   const hr = new Date().getHours();
-  if (hr < 7 && !ach.includes("earlyBird")) ach.push("earlyBird");
-  if (hr >= 22 && !ach.includes("nightOwl")) ach.push("nightOwl");
-  const uP = new Set([...hist.map((h) => h.p), protocol.n]);
-  if (uP.size >= 14 && !ach.includes("allProtos")) ach.push("allProtos");
+  const ach = _computeAchievements(st.achievements, {
+    newStreak,
+    newSessionsTotal,
+    newCoherence,
+    totalTime: totalT,
+    hour: hr,
+    uniqueProtoCount: uniqueProtos,
+  });
 
   const burnout = calcBurnoutIndex(ml, hist);
   const bioSignal = calcBioSignal(st);
-  // coherenceLive (opcional): score de coherencia HRV calculada en
-  // streaming durante la sesión vía strap BLE. Solo se persiste si el
-  // user conectó el strap; si no, undefined (no contamina la métrica).
-  const coh = sessionData?.coherenceLive;
-  const coherenceLive =
-    coh && typeof coh.score === "number"
-      ? { score: coh.score, amplitude: coh.amplitude, phaseLock: coh.phaseLock, n: coh.n }
-      : undefined;
 
-  const newHist = [...hist, {
-    p: protocol.n, ts: Date.now(), vc: eVC, c: nC, r: nR,
-    dur: Math.round(protocol.d * durMult), ctx: nfcCtx?.type || "manual",
-    bioQ: bioQ.score, quality: bioQ.quality,
-    interactions: sessionData.interactions || 0, motionSamples: sessionData.motionSamples || 0,
-    pauses: sessionData.pauses || 0, burnoutIdx: burnout.index,
-    circadian: circadian?.period || "day", bioSignal: bioSignal.score,
-    partial: !!isPartial, hiddenSec: Math.round(sessionData?.hiddenSec || 0),
-    completeness: Math.round((completeness) * 100) / 100,
-    ...(coherenceLive ? { coherenceLive } : {}),
-  }].slice(-200);
+  const newHist = [...hist, _buildHistoryEntry({
+    protocol, durMult, sessionData, nfcCtx, circadian,
+    eVC, newCoherence, newResilience, bioQ,
+    burnoutIdx: burnout.index, bioSignalScore: bioSignal.score,
+    isPartial, completeness,
+  })].slice(-200);
 
   return {
     eVC,
     newState: {
-      totalSessions: ns, streak: nsk,
-      todaySessions: st.lastDate === td ? st.todaySessions + 1 : 1,
-      lastDate: td, weeklyData: nw, weekNum: getWeekNum(),
-      coherencia: nC, resiliencia: nR, capacidad: nE,
-      achievements: ach, vCores: vc, history: newHist,
-      totalTime: totalT, firstDone: true,
+      totalSessions: newSessionsTotal,
+      streak: newStreak,
+      todaySessions: st.lastDate === today ? st.todaySessions + 1 : 1,
+      lastDate: today,
+      weeklyData: nw,
+      weekNum: getWeekNum(),
+      coherencia: newCoherence,
+      resiliencia: newResilience,
+      capacidad: newCapacity,
+      achievements: ach,
+      vCores: vc,
+      history: newHist,
+      totalTime: totalT,
+      firstDone: true,
       progDay: Math.min((st.progDay || 0) + 1, 7),
     },
     bioQ,
