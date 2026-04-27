@@ -6,7 +6,7 @@ import { anonymize } from "@/server/analytics";
 import { buildRateLimitHeaders } from "@/lib/rate-limit-headers";
 
 export async function GET(req) {
-  const r = await verifyApiKeyAndRateLimit(req, "read");
+  const r = await verifyApiKeyAndRateLimit(req, "read:analytics");
   if (!r.ok) {
     const headers = buildRateLimitHeaders({
       policy: r.rateLimit?.policy,

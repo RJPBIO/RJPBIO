@@ -5,7 +5,7 @@ import { db } from "@/server/db";
 import { buildRateLimitHeaders } from "@/lib/rate-limit-headers";
 
 export async function GET(req) {
-  const r = await verifyApiKeyAndRateLimit(req, "read");
+  const r = await verifyApiKeyAndRateLimit(req, "read:members");
   if (!r.ok) {
     const headers = buildRateLimitHeaders({
       policy: r.rateLimit?.policy,
