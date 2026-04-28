@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 35; // Sprint 98 — fix string-concat compatibility en dark.border + text colors (rgba rompía withAlpha en CorrelationMatrix + StreakCalendar)
+const CACHE_VERSION = 36; // Sprint 99 — light theme Apple HIG-grade: systemGroupedBackground bg + Apple separator + label hierarchy (era Tailwind slate cool-tinted)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
