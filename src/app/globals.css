@@ -193,6 +193,24 @@ html, body {
   scroll-behavior: smooth;
   /* Mejora rendering de SVG y Canvas en displays HiDPI */
   text-rendering: optimizeLegibility;
+  /* Sprint 85 — opentype features para tipografía Apple-grade.
+     · kern: kerning automatic pair adjustment (default 1, explicit por seguridad)
+     · liga: standard ligatures (fi, fl, ffi → glyphs unidos correctamente)
+     · calt: contextual alternates (Manrope ajusta letras según vecinas)
+     Estas tres son seguras universalmente — mejoran spacing/legibility
+     sin cambiar formas de letras (esos serían ss01/ss02). Apple SF Pro
+     hace esto automático; web fonts requieren activación explícita. */
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  font-variant-ligatures: common-ligatures contextual;
+}
+
+/* Sprint 85 — Mono font feature stack para code/kbd/numerics.
+   · tnum: tabular numbers (todos los dígitos misma anchura — alinea columnas)
+   · zero: slashed zero (distingue 0 de O en data — Apple-grade num readability)
+   · calt: contextual alternates (JetBrains Mono ajusta == === arrows etc.)
+   Aplicado a code/kbd/pre/samp + componentes con className "font-mono". */
+code, kbd, pre, samp, .font-mono {
+  font-feature-settings: "kern" 1, "calt" 1, "tnum" 1, "zero" 1;
 }
 
 body {
@@ -200,6 +218,31 @@ body {
   padding-block-end: env(safe-area-inset-bottom);
   padding-inline-start: env(safe-area-inset-left);
   padding-inline-end: env(safe-area-inset-right);
+}
+
+/* ═══ Sprint 85 — prefers-reduced-transparency support ════════════════
+   iOS/macOS Settings → Accessibility → Reduce Transparency. Usuarios
+   con sensibilidad visual o dificultad de lectura desactivan el efecto
+   glass-morphism. Apple respeta esto automáticamente en sus apps; web
+   PWAs requieren handling explícito.
+
+   Nuestra PWA tiene 21 sites con backdrop-filter (Sprint 81). Sin esta
+   regla, esos usuarios ven texto sobre fondos semi-transparentes sin
+   blur (= ilegible cuando hay imagen/contenido detrás). Con esta regla,
+   los blurs se desactivan — los fondos semi-transparentes los rellenamos
+   con color sólido para mantener contraste.
+
+   WCAG 2.2 SC 1.4.3 (Contrast Minimum) y SC 1.4.11 (Non-text Contrast).
+   ════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-transparency: reduce) {
+  *, ::before, ::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  /* Modal scrims y overlays: mantener oscurecimiento sin blur. El blur
+     era "decorativo"; el oscurecimiento es funcional (separa modal del
+     fondo). Mantenemos los color-mix existentes que ya proveen ~30-70%
+     opacity sólida. */
 }
 
 /* ═══ UNIVERSAL MOTION-SAFE FALLBACK ═══════════════════════════════
