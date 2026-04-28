@@ -160,7 +160,11 @@ export const useStore = create((set, get) => ({
       history: newHist,
       totalTime: totalT,
       firstDone: true,
-      progDay: Math.min((st.progDay || 0) + 1, 7),
+      // Sprint 77 — progDay deprecated. El bloque legacy "Programa 7 Días"
+      // fue eliminado por bug (incrementaba con cada sesión, no calendar-
+      // based, no reset). El nuevo sistema (Sprint 64+) usa programs.js +
+      // ActiveProgramCard + programSuggestion.js. Campo se conserva en
+      // saves antiguos por backcompat pero ya no avanza.
     };
     set(update);
     scheduleSave({ ...st, ...update });
