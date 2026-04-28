@@ -322,6 +322,12 @@ export const P = [
      activa vago por nervio laríngeo. Ojos ABIERTOS — no es
      meditación, es interrupción de patrón simpático. */
   {id:18,n:"Emergency Reset",ct:"Activación",d:90,sb:"Crisis aguda — interrumpe el patrón",tg:"ER",cl:"#F43F5E",int:"reset",dif:1,
+  safety:"Si tienes condiciones cardiovasculares (arritmia, hipertensión severa, post-infarto) consulta con tu médico de trabajo antes de usarlo. La activación motora rápida eleva temporalmente la frecuencia cardíaca.",
+  variants:[
+    {id:"seated",label:"Sentado",when:"Si no puedes estar de pie",notes:"Fase 1: tap palmas a muslos sin levantarte. Fase 2: sacudir solo brazos y manos. Fase 3: pies firmes en el suelo desde la silla."},
+    {id:"silent",label:"Silencioso",when:"En oficina o lugar público",notes:"Fase 2: sustituye la vocalización audible por exhalación silenciosa fuerte por la boca. Mantén la sacudida de manos."},
+    {id:"oneHanded",label:"Una mano",when:"Limitación en una extremidad superior",notes:"Fase 1: tap con la mano disponible alternando muslo izquierdo y derecho. Fase 2: sacudir esa mano con vigor."}
+  ],
   ph:[{l:"Tap Bilateral Acelerado",r:"0–30s",s:0,e:30,k:"Palmas a muslos. Alterna rápido. Ojos abiertos.",i:"Sin pensar, sin respirar lento. Palmas alternadas golpean tus muslos lo más rápido que puedas — izquierda, derecha, izquierda, derecha. Sin ritmo perfecto, solo velocidad. Mantén los ojos abiertos mirando al frente. 30 segundos completos. Esto rompe el congelamiento simpático antes de que cualquier respiración funcione.",iExec:[
     {from:0,to:5,text:"Palmas a muslos. Tan rápido como puedas. No cuentes."},
     {from:5,to:20,text:"Izquierda. Derecha. Sin pausa. Ojos al frente."},
@@ -343,6 +349,12 @@ export const P = [
      Frío facial activa reflejo de inmersión (bradicardia inmediata);
      activación motora rompe freeze; vocalización vagal cierra. */
   {id:19,n:"Panic Interrupt",ct:"Reset",d:120,sb:"Pánico agudo — frío + movimiento + voz",tg:"PI",cl:"#22D3EE",int:"reset",dif:1,
+  safety:"NO usar si tienes arritmia, bradicardia conocida, marcapasos, o condiciones que contraindiquen actividad física súbita. El reflejo de inmersión y los saltos están contraindicados en estos casos. Consulta con tu médico de trabajo. Si presentas dolor torácico o desmayo, suspende y busca atención médica inmediata.",
+  variants:[
+    {id:"noWater",label:"Sin lavabo",when:"No hay agua disponible",notes:"Fase 1: aplica las palmas frías sobre frente y mejillas, o un objeto frío (botella, hielo en pañuelo). Misma duración 30s."},
+    {id:"seated",label:"Sentado",when:"No puedes saltar ni hay espacio",notes:"Fase 2: marcha en sitio sentado levantando rodillas alto y rápido por 30s. Acepta que el efecto será menor que jumping jacks."},
+    {id:"silent",label:"Silencioso",when:"En lugar público o sin privacidad",notes:"Fase 3: sustituye la vocalización audible por exhalación silenciosa larga por la boca con vibración torácica voluntaria (humming muy bajo). Pierdes magnitud pero conservas mecanismo."}
+  ],
   ph:[{l:"Frío Facial",r:"0–50s",s:0,e:50,k:"Agua fría en la cara. Sostén 30s.",i:"Camina al lavabo o consigue un paño con agua fría. Moja tu cara — frente, mejillas, alrededor de los ojos — con agua lo más fría que puedas. Si no hay lavabo, presiona un paño frío o algo helado contra tu frente y mejillas. Sostén el frío 30 segundos completos. Tu frecuencia cardíaca va a bajar en menos de un minuto. Esto es fisiológico, no psicológico.",iExec:[
     {from:0,to:15,text:"Camina al lavabo o consigue agua/paño frío."},
     {from:15,to:35,text:"Moja la cara — frente, mejillas, ojos. Frío sostenido."},
@@ -364,6 +376,12 @@ export const P = [
      Postura expandida + activación motora + isometric release.
      Para sacar inercia, no para calmar. */
   {id:20,n:"Block Break",ct:"Activación",d:60,sb:"Bloqueo — saca la inercia con cuerpo",tg:"BB",cl:"#FBBF24",int:"energia",dif:1,
+  safety:"Si tienes hipertensión no controlada, glaucoma, o lesiones de túnel carpiano, omite la fase 3 (apretar puños al máximo). El isometric handgrip eleva presión brevemente. Si tienes condición cardiovascular, sustituye saltos por marcha en sitio.",
+  variants:[
+    {id:"seated",label:"Sentado",when:"En reunión o sin espacio",notes:"Fase 1: postura expandida sentado con espalda erguida y brazos en V apoyados. Fase 2: levanta talones rápido alternados sin saltar. Fase 3: igual con puños."},
+    {id:"noJump",label:"Sin saltar",when:"Lesión de rodilla, embarazo, o oficina con piso ruidoso",notes:"Fase 2: 20 levantamientos de talones rápidos en sitio. Conserva el componente bilateral motor."},
+    {id:"noGrip",label:"Sin apretar máximo",when:"Hipertensión, glaucoma, túnel carpiano",notes:"Fase 3: sustituye apretar puños al 100% por contracción suave 50% durante 10s, soltar gradualmente (no de golpe). Pierde el reflejo Golgi pero evita pico de presión."}
+  ],
   ph:[{l:"Postura Expandida",r:"0–20s",s:0,e:20,k:"De pie. Brazos en V. Pecho abierto. Mira arriba.",i:"Levántate de la silla. Plantas firmes, separación cadera. Brazos hacia arriba en forma de V — ancho, abierto. Pecho hacia adelante, hombros lejos de las orejas. Cabeza levantada, mira al techo o al cielo. Mantén la postura 20 segundos sin moverte. Esto NO es para calmarte. Es para que tu cuerpo le diga a tu cerebro: 'soy más grande que este bloqueo'.",iExec:[
     {from:0,to:5,text:"Levántate. Pies separados ancho de cadera."},
     {from:5,to:12,text:"Brazos en V hacia arriba. Pecho adelante. Mira arriba."},
