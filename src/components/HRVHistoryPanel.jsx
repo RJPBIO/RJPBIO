@@ -1,15 +1,20 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   HRV HISTORY PANEL — comparativa de mediciones HRV en el tiempo
+   HRV HISTORY PANEL — Sprint 74→75 (production polish a 10/10)
 
-   Sprint 74. Antes el user solo veía "última HRV: X ms · hace Yh"
-   en el caption del botón quick-action. No había manera de comparar
-   evolución, ver tendencia, o validar que sus mediciones persistían.
-   Esto es el panel comparativo: stats + sparkline + tabla.
+   Stats + sparkline + tabla agrupada por día + vínculo con sesiones
+   + baseline ±SD + export CSV. Toda la lógica vive en lib/hrvStats.js
+   (puro, testable). Este componente es PRESENTACIONAL.
 
-   Datos: hrvLog del store (hasta 365 entradas, ordenadas por ts).
-   Cada entry: { ts, rmssd, rhr, meanHR, sdnn, pnn50, sqi, sqiBand,
-   source, durationSec }.
+   Nuevo en Sprint 75:
+   · Tendencia con min N=3 en cada bucket de 7d (antes ruido con n=1)
+   · Mediciones agrupadas por día con headers Hoy/Ayer/fecha
+   · Cada fila vinculada con la sesión más cercana → badge "post-Reset
+     Ejecutivo" — diferenciador único vs Calm/Headspace
+   · Personal baseline ±SD line en sparkline
+   · Export CSV botón en header
+   · Responsive sparkline (viewBox + preserveAspectRatio)
+   · Safe-area inset para sticky footer en iPhone notch
    ═══════════════════════════════════════════════════════════════ */
 
 import { useMemo } from "react";
@@ -17,131 +22,170 @@ import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
+import {
+  computeHrvStats,
+  groupByDay,
+  findSessionContext,
+  buildBaseline,
+  relativeTime,
+  toCSV,
+} from "../lib/hrvStats";
 
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
-
-function formatRelative(ts) {
-  const now = Date.now();
-  const ms = now - ts;
-  if (ms < 60_000) return "ahora";
-  if (ms < 3_600_000) return `hace ${Math.round(ms / 60_000)} min`;
-  if (ms < 86_400_000) return `hace ${Math.round(ms / 3_600_000)} h`;
-  if (ms < 604_800_000) return `hace ${Math.round(ms / 86_400_000)} d`;
-  return new Date(ts).toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
-}
-
-function formatDateTime(ts) {
-  const d = new Date(ts);
-  return d.toLocaleString("es-MX", {
-    day: "2-digit", month: "short",
-    hour: "2-digit", minute: "2-digit",
-  });
-}
 
 function sqiColor(band) {
   if (band === "good" || band === "high") return "#059669";
   if (band === "ok" || band === "medium") return "#D97706";
   return "#DC2626";
 }
-
 function sqiLabel(band) {
   if (band === "good" || band === "high") return "buena";
   if (band === "ok" || band === "medium") return "media";
   return "baja";
 }
-
-function average(values) {
-  if (values.length === 0) return null;
-  return values.reduce((a, b) => a + b, 0) / values.length;
+function fmtDateTime(ts) {
+  return new Date(ts).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
 }
 
-function sparkline(values, width = 280, height = 60, color = brand.primary) {
-  if (values.length < 2) return null;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
+// SVG sparkline responsive (viewBox + 100% width). Si baseline existe,
+// dibuja una línea horizontal sutil con la media + banda ±SD.
+function Sparkline({ values, baseline, color = brand.primary }) {
+  if (!Array.isArray(values) || values.length < 2) return null;
+  const W = 1000; // viewBox virtual (cualquier ancho real escala)
+  const H = 120;
+  const max = Math.max(...values, baseline ? baseline.mean + (baseline.sd || 0) * 2 : -Infinity);
+  const min = Math.min(...values, baseline ? baseline.mean - (baseline.sd || 0) * 2 : Infinity);
   const range = max - min || 1;
-  const stepX = width / (values.length - 1);
-  const points = values.map((v, i) => {
-    const x = i * stepX;
-    const y = height - ((v - min) / range) * height;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
+  const stepX = W / (values.length - 1);
+  const yOf = (v) => H - ((v - min) / range) * H;
+  const points = values.map((v, i) => `${(i * stepX).toFixed(1)},${yOf(v).toFixed(1)}`);
+
+  const blMeanY = baseline ? yOf(baseline.mean) : null;
+  const blPlusY = baseline ? yOf(baseline.mean + baseline.sd) : null;
+  const blMinusY = baseline ? yOf(baseline.mean - baseline.sd) : null;
+
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" style={{ display: "block" }}>
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      width="100%"
+      height="64"
+      aria-hidden="true"
+      style={{ display: "block" }}
+    >
       <defs>
-        <linearGradient id="hrv-spark-fill" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id="hrv-spark-fill-v2" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.18" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
+      {/* Baseline ± SD band (si hay) */}
+      {baseline && blPlusY != null && blMinusY != null && (
+        <rect
+          x="0"
+          y={blPlusY}
+          width={W}
+          height={Math.max(0, blMinusY - blPlusY)}
+          fill={withAlpha(color, 6)}
+        />
+      )}
+      {baseline && blMeanY != null && (
+        <line
+          x1="0"
+          x2={W}
+          y1={blMeanY}
+          y2={blMeanY}
+          stroke={color}
+          strokeWidth="0.8"
+          strokeDasharray="4 4"
+          opacity="0.45"
+        />
+      )}
+      {/* Fill bajo la línea */}
       <polyline
-        points={`0,${height} ${points.join(" ")} ${width},${height}`}
-        fill="url(#hrv-spark-fill)"
+        points={`0,${H} ${points.join(" ")} ${W},${H}`}
+        fill="url(#hrv-spark-fill-v2)"
         stroke="none"
       />
       <polyline
         points={points.join(" ")}
         fill="none"
         stroke={color}
-        strokeWidth="1.8"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* Último punto destacado */}
-      {values.length > 0 && (() => {
+      {/* Último punto */}
+      {(() => {
         const i = values.length - 1;
         const x = i * stepX;
-        const y = height - ((values[i] - min) / range) * height;
-        return <circle cx={x.toFixed(1)} cy={y.toFixed(1)} r="3" fill={color} />;
+        const y = yOf(values[i]);
+        return <circle cx={x.toFixed(1)} cy={y.toFixed(1)} r="6" fill={color} />;
       })()}
     </svg>
   );
 }
 
-export default function HRVHistoryPanel({ show, isDark, hrvLog, onClose, onMeasureNew }) {
+function downloadCSV(filename, csv) {
+  if (typeof window === "undefined") return;
+  try {
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    // Silent fail — botón de export es opcional.
+  }
+}
+
+export default function HRVHistoryPanel({
+  show,
+  isDark,
+  hrvLog,
+  history,
+  onClose,
+  onMeasureNew,
+}) {
   const reduced = useReducedMotion();
   const ref = useFocusTrap(show, onClose);
   const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
 
-  const stats = useMemo(() => {
-    const log = Array.isArray(hrvLog) ? hrvLog : [];
-    const sorted = [...log].sort((a, b) => a.ts - b.ts);
-    const now = Date.now();
-    const last7d = sorted.filter((e) => now - e.ts < 7 * 86_400_000);
-    const prev7d = sorted.filter((e) => {
-      const age = now - e.ts;
-      return age >= 7 * 86_400_000 && age < 14 * 86_400_000;
-    });
-    const last = sorted[sorted.length - 1] || null;
-    const avg7 = average(last7d.map((e) => e.rmssd).filter((v) => typeof v === "number"));
-    const avgPrev7 = average(prev7d.map((e) => e.rmssd).filter((v) => typeof v === "number"));
-    const trendDelta = avg7 != null && avgPrev7 != null ? avg7 - avgPrev7 : null;
-    const trendDir = trendDelta == null
-      ? null
-      : Math.abs(trendDelta) < 1.5 ? "estable"
-      : trendDelta > 0 ? "mejora"
-      : "baja";
-    return {
-      total: log.length,
-      last,
-      avg7,
-      avg7Count: last7d.length,
-      trendDelta,
-      trendDir,
-      sortedAsc: sorted,
-      lastN: sorted.slice(-15).reverse(),
-    };
+  const stats = useMemo(() => computeHrvStats(hrvLog), [hrvLog]);
+  const baseline = useMemo(() => buildBaseline(hrvLog), [hrvLog]);
+  const grouped = useMemo(() => {
+    if (!Array.isArray(hrvLog)) return [];
+    return groupByDay(hrvLog).slice(0, 14); // últimos 14 días con mediciones
   }, [hrvLog]);
 
   if (!show) return null;
 
   const hasData = stats.total > 0;
-  const trendColor = stats.trendDir === "mejora" ? "#059669"
-                   : stats.trendDir === "baja" ? "#DC2626"
-                   : t3;
-  const trendArrow = stats.trendDir === "mejora" ? "↑"
-                   : stats.trendDir === "baja" ? "↓"
-                   : "→";
+  const trendColor =
+    stats.trendDir === "mejora" ? "#059669"
+    : stats.trendDir === "baja" ? "#DC2626"
+    : t3;
+  const trendArrow =
+    stats.trendDir === "mejora" ? "↑"
+    : stats.trendDir === "baja" ? "↓"
+    : stats.trendDir === "estable" ? "→"
+    : "·";
+  const trendValue =
+    stats.trendDir == null
+      ? "—"
+      : stats.trendDelta == null
+      ? trendArrow
+      : `${trendArrow} ${stats.trendDelta > 0 ? "+" : ""}${Math.round(stats.trendDelta)}`;
+  const trendSub =
+    stats.trendDir
+      ? stats.trendDir + " · " + (stats.trendDelta != null ? "vs 7d previos" : "")
+      : stats.trendReason === "insufficient_recent"
+      ? `Necesita ≥3 mediciones en últimos 7d (tienes ${stats.avg7Count})`
+      : stats.trendReason === "insufficient_baseline"
+      ? `Necesita ≥3 mediciones en 7d previos (tienes ${stats.avgPrev7Count})`
+      : "Sin datos suficientes";
 
   return (
     <motion.div
@@ -156,27 +200,46 @@ export default function HRVHistoryPanel({ show, isDark, hrvLog, onClose, onMeasu
         inset: 0,
         background: bg,
         zIndex: 220,
-        padding: 20,
+        padding: "20px 20px 100px",
         overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
       }}
     >
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 18 }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 18, gap: 8 }}>
         <h2 style={{ fontSize: 14, fontWeight: font.weight.black, color: t1, margin: 0, letterSpacing: 0.4 }}>
           HRV · Historial
         </h2>
-        <button
-          onClick={onClose}
-          aria-label="Cerrar historial HRV"
-          style={{
-            border: "none",
-            background: "transparent",
-            color: t2,
-            padding: 8,
-            cursor: "pointer",
-          }}
-        >
-          <Icon name="close" size={20} color={t2} aria-hidden="true" />
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {hasData && (
+            <button
+              type="button"
+              onClick={() => downloadCSV(`bio-hrv-${new Date().toISOString().split("T")[0]}.csv`, toCSV(stats.sortedAsc))}
+              aria-label="Exportar historial como CSV"
+              style={{
+                background: "transparent",
+                color: t2,
+                border: `1px solid ${bd}`,
+                borderRadius: 8,
+                paddingBlock: 6,
+                paddingInline: 10,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 0.6,
+                cursor: "pointer",
+                textTransform: "uppercase",
+              }}
+            >
+              CSV
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            aria-label="Cerrar historial HRV"
+            style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer" }}
+          >
+            <Icon name="close" size={20} color={t2} aria-hidden="true" />
+          </button>
+        </div>
       </header>
 
       {!hasData ? (
@@ -211,170 +274,116 @@ export default function HRVHistoryPanel({ show, isDark, hrvLog, onClose, onMeasu
       ) : (
         <section style={{ maxInlineSize: 540, marginInline: "auto" }}>
           {/* Stats summary */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 10,
-              marginBlockEnd: 20,
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBlockEnd: 18 }}>
             <StatCard
               label="Última"
               value={`${Math.round(stats.last.rmssd)} ms`}
-              sub={formatRelative(stats.last.ts)}
+              sub={relativeTime(stats.last.ts)}
               color={brand.primary}
-              cd={cd}
-              bd={bd}
-              t1={t1}
-              t3={t3}
+              cd={cd} bd={bd} t1={t1} t3={t3}
             />
             <StatCard
               label="Promedio 7d"
               value={stats.avg7 != null ? `${Math.round(stats.avg7)} ms` : "—"}
               sub={`${stats.avg7Count} ${stats.avg7Count === 1 ? "medición" : "mediciones"}`}
               color={t1}
-              cd={cd}
-              bd={bd}
-              t1={t1}
-              t3={t3}
+              cd={cd} bd={bd} t1={t1} t3={t3}
             />
             <StatCard
               label="Tendencia"
-              value={stats.trendDir == null ? "—" : `${trendArrow} ${stats.trendDelta > 0 ? "+" : ""}${Math.round(stats.trendDelta)}`}
-              sub={stats.trendDir || "Sin datos previos"}
+              value={trendValue}
+              sub={trendSub}
               color={trendColor}
-              cd={cd}
-              bd={bd}
-              t1={t1}
-              t3={t3}
+              cd={cd} bd={bd} t1={t1} t3={t3}
             />
           </div>
 
-          {/* Sparkline */}
-          {stats.sortedAsc.length >= 2 && (
+          {/* Baseline si hay */}
+          {baseline && (
             <div
               style={{
                 background: cd,
                 border: `1px solid ${bd}`,
-                borderRadius: 14,
-                padding: 14,
-                marginBlockEnd: 20,
+                borderRadius: 12,
+                padding: "10px 12px",
+                marginBlockEnd: 14,
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: 12,
               }}
             >
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 2 }}>
+                  Tu baseline · {baseline.days}d
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: t1, fontVariantNumeric: "tabular-nums" }}>
+                  {Math.round(baseline.mean)} ms · ±{Math.round(baseline.sd)}
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: t3, textAlign: "end", lineHeight: 1.4 }}>
+                {baseline.n} mediciones<br />n=últimos {baseline.days}d
+              </div>
+            </div>
+          )}
+
+          {/* Sparkline */}
+          {stats.sortedAsc.length >= 2 && (
+            <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 14, marginBlockEnd: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBlockEnd: 8 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase" }}>
                   RMSSD · {stats.sortedAsc.length} mediciones
                 </span>
                 <span style={{ fontFamily: MONO, fontSize: 10, color: t3 }}>ms</span>
               </div>
-              {sparkline(
-                stats.sortedAsc.map((e) => e.rmssd).filter((v) => typeof v === "number"),
-                540 - 28, 64, brand.primary
+              <Sparkline
+                values={stats.sortedAsc.map((e) => e.rmssd).filter((v) => typeof v === "number")}
+                baseline={baseline}
+                color={brand.primary}
+              />
+              {baseline && (
+                <p style={{ fontSize: 9, color: t3, marginBlockStart: 6, lineHeight: 1.4 }}>
+                  Línea punteada y banda: tu baseline ±SD ({Math.round(baseline.mean)} ms ±{Math.round(baseline.sd)}). Variabilidad fuera de la banda merece atención.
+                </p>
               )}
             </div>
           )}
 
-          {/* Tabla comparativa */}
-          <div style={{ marginBlockEnd: 80 }}>
-            <span
-              style={{
-                display: "block",
-                fontSize: 10,
-                fontWeight: 700,
-                color: t3,
-                letterSpacing: 1.2,
-                textTransform: "uppercase",
-                marginBlockEnd: 8,
-              }}
-            >
-              Mediciones recientes
+          {/* Tabla agrupada por día */}
+          <div style={{ marginBlockEnd: 30 }}>
+            <span style={{ display: "block", fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 10 }}>
+              Mediciones por día
             </span>
-            <div role="table" aria-label="Tabla de mediciones HRV" style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, overflow: "hidden" }}>
-              {/* Header */}
-              <div
-                role="row"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.8fr",
-                  gap: 8,
-                  padding: "10px 12px",
-                  background: withAlpha(t1, 4),
-                  borderBlockEnd: `1px solid ${bd}`,
-                }}
-              >
-                <span style={{ fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 0.8, textTransform: "uppercase" }}>Cuándo</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 0.8, textTransform: "uppercase", textAlign: "end" }}>RMSSD</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 0.8, textTransform: "uppercase", textAlign: "end" }}>RHR</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 0.8, textTransform: "uppercase", textAlign: "end" }}>Calidad</span>
-              </div>
-              {stats.lastN.map((entry, i) => {
-                const rhr = entry.rhr ?? (entry.meanHR ? Math.round(entry.meanHR) : null);
-                const sqiBand = entry.sqiBand || null;
-                return (
-                  <div
-                    key={`${entry.ts}-${i}`}
-                    role="row"
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1.4fr 0.9fr 0.9fr 0.8fr",
-                      gap: 8,
-                      padding: "12px",
-                      borderBlockEnd: i < stats.lastN.length - 1 ? `1px solid ${withAlpha(t1, 4)}` : "none",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: 12, color: t1, fontWeight: 600 }}>
-                      {formatDateTime(entry.ts)}
-                    </span>
-                    <span style={{ fontFamily: MONO, fontSize: 13, color: t1, fontWeight: 700, textAlign: "end", fontVariantNumeric: "tabular-nums" }}>
-                      {entry.rmssd != null ? `${Math.round(entry.rmssd)}` : "—"}
-                    </span>
-                    <span style={{ fontFamily: MONO, fontSize: 12, color: t2, textAlign: "end", fontVariantNumeric: "tabular-nums" }}>
-                      {rhr != null ? rhr : "—"}
-                    </span>
-                    <span style={{ textAlign: "end" }}>
-                      {sqiBand ? (
-                        <span
-                          style={{
-                            display: "inline-block",
-                            paddingBlock: 2,
-                            paddingInline: 6,
-                            borderRadius: 4,
-                            fontSize: 10,
-                            fontWeight: 700,
-                            letterSpacing: 0.4,
-                            color: sqiColor(sqiBand),
-                            background: withAlpha(sqiColor(sqiBand), 12),
-                          }}
-                        >
-                          {sqiLabel(sqiBand)}
-                        </span>
-                      ) : (
-                        <span style={{ color: t3, fontSize: 10 }}>—</span>
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            {stats.total > stats.lastN.length && (
+            {grouped.map((group) => (
+              <DayGroup
+                key={group.key}
+                group={group}
+                history={history}
+                cd={cd}
+                bd={bd}
+                t1={t1}
+                t2={t2}
+                t3={t3}
+              />
+            ))}
+            {stats.total > grouped.reduce((a, g) => a + g.entries.length, 0) && (
               <p style={{ fontSize: 10, color: t3, textAlign: "center", marginBlockStart: 8 }}>
-                Mostrando últimas {stats.lastN.length} de {stats.total} mediciones. El historial completo (hasta 365 entradas) se conserva en tu dispositivo.
+                Mostrando {grouped.length} días con mediciones. El historial completo (hasta 365 entradas) se conserva en tu dispositivo.
               </p>
             )}
           </div>
 
-          {/* CTA pie */}
+          {/* CTA sticky con safe-area-inset para iPhone */}
           {onMeasureNew && (
             <div
               style={{
                 position: "fixed",
                 insetBlockEnd: 0,
                 insetInline: 0,
-                padding: "12px 20px 18px",
+                padding: "12px 20px max(18px, env(safe-area-inset-bottom))",
                 background: bg,
                 borderBlockStart: `1px solid ${bd}`,
+                zIndex: 5,
               }}
             >
               <button
@@ -405,22 +414,125 @@ export default function HRVHistoryPanel({ show, isDark, hrvLog, onClose, onMeasu
 
 function StatCard({ label, value, sub, color, cd, bd, t1, t3 }) {
   return (
-    <div
-      style={{
-        background: cd,
-        border: `1px solid ${bd}`,
-        borderRadius: 12,
-        padding: "10px 12px",
-      }}
-    >
+    <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 12, padding: "10px 12px" }}>
       <div style={{ fontSize: 9, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 4 }}>
         {label}
       </div>
       <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 800, color: color || t1, letterSpacing: -0.5, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
         {value}
       </div>
-      <div style={{ fontSize: 10, color: t3, marginBlockStart: 4 }}>
+      <div style={{ fontSize: 10, color: t3, marginBlockStart: 4, lineHeight: 1.3 }}>
         {sub}
+      </div>
+    </div>
+  );
+}
+
+function DayGroup({ group, history, cd, bd, t1, t2, t3 }) {
+  return (
+    <section style={{ marginBlockEnd: 14 }}>
+      <h3
+        style={{
+          fontSize: 10,
+          fontWeight: 800,
+          color: t2,
+          letterSpacing: 1.2,
+          textTransform: "uppercase",
+          marginBlockEnd: 6,
+          paddingInlineStart: 4,
+        }}
+      >
+        {group.label}
+        <span style={{ marginInlineStart: 8, fontWeight: 600, color: t3 }}>
+          {group.entries.length} {group.entries.length === 1 ? "medición" : "mediciones"}
+        </span>
+      </h3>
+      <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 12, overflow: "hidden" }}>
+        {group.entries.map((entry, i) => (
+          <HrvRow
+            key={`${entry.ts}-${i}`}
+            entry={entry}
+            history={history}
+            isLast={i === group.entries.length - 1}
+            t1={t1}
+            t2={t2}
+            t3={t3}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HrvRow({ entry, history, isLast, t1, t2, t3 }) {
+  const ctx = useMemo(() => findSessionContext(entry, history), [entry, history]);
+  const rhr = entry.rhr ?? (typeof entry.meanHR === "number" ? Math.round(entry.meanHR) : null);
+  const sqiBand = entry.sqiBand || null;
+
+  return (
+    <div
+      role="row"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto auto",
+        gap: 10,
+        padding: "10px 12px",
+        borderBlockEnd: isLast ? "none" : `1px solid ${withAlpha(t1, 4)}`,
+        alignItems: "center",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, minInlineSize: 0 }}>
+        <span style={{ fontSize: 12, color: t1, fontWeight: 600, fontFamily: MONO, fontVariantNumeric: "tabular-nums" }}>
+          {fmtDateTime(entry.ts)}
+        </span>
+        {ctx.protocol && (
+          <span
+            title={`${ctx.phase === "post" ? "post-" : "pre-"}${ctx.protocol}`}
+            style={{
+              fontSize: 10,
+              color: ctx.phase === "post" ? "#059669" : "#6366F1",
+              fontWeight: 700,
+              letterSpacing: 0.2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {ctx.phase === "post" ? "↑ post" : "↓ pre"} · {ctx.protocol}
+          </span>
+        )}
+      </div>
+      <div style={{ textAlign: "end" }}>
+        <div style={{ fontFamily: MONO, fontSize: 13, color: t1, fontWeight: 800, fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
+          {entry.rmssd != null ? `${Math.round(entry.rmssd)}` : "—"}
+          <span style={{ fontSize: 9, color: t3, marginInlineStart: 2 }}>ms</span>
+        </div>
+        {rhr != null && (
+          <div style={{ fontFamily: MONO, fontSize: 10, color: t2, marginBlockStart: 2 }}>
+            {rhr} bpm
+          </div>
+        )}
+      </div>
+      <div style={{ minInlineSize: 50, textAlign: "end" }}>
+        {sqiBand ? (
+          <span
+            style={{
+              display: "inline-block",
+              paddingBlock: 2,
+              paddingInline: 6,
+              borderRadius: 4,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 0.4,
+              color: sqiColor(sqiBand),
+              background: withAlpha(sqiColor(sqiBand), 12),
+            }}
+          >
+            {sqiLabel(sqiBand)}
+          </span>
+        ) : (
+          <span style={{ color: t3, fontSize: 10 }}>—</span>
+        )}
       </div>
     </div>
   );
