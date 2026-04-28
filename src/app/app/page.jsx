@@ -16,7 +16,7 @@ import { programTodayStatus, programRequiredSessions, getProgramById } from "@/l
 import { resolveProgramSuggestion } from "@/lib/programSuggestion";
 import {
   MOODS, INTENTS,
-  POST_MSGS, PROG_7, DS,
+  POST_MSGS, DS,
 } from "@/lib/constants";
 import {
   gL, lvPct, getStatus, getWeekNum, getDailyIgn, getCircadian,
@@ -689,7 +689,10 @@ export default function BioIgnicion(){
   const aiRec=useAdaptiveRecommendation(st,{nom35Dominios,readiness,currentMood:preMood>0?preMood:null});
   const smartPick=aiRec?.primary?.protocol||null;
   const daily=useMemo(()=>getDailyIgn(st),[st.moodLog]);
-  const progStep=PROG_7[(st.progDay||0)%7];
+  // Sprint 77 — progStep / PROG_7 deprecated. El nuevo sistema (Sprint 64+)
+  // usa programs.js + programSuggestion.js + ActiveProgramCard con calendar-
+  // based progress + weekly cooldown. Reemplaza el bloque legacy "Programa
+  // 7 Días" que tenía el bug del progDay-counter.
   const prediction=useMemo(()=>predictSessionImpact(st,pr),[st.moodLog,pr.id]);
   const cogLoad=useMemo(()=>estimateCognitiveLoad(st),[st.todaySessions,st.moodLog]);
   const optimalTime=useMemo(()=>{try{return suggestOptimalTime(st);}catch(e){return null;}},[st.history,st.moodLog]);
@@ -1288,7 +1291,6 @@ export default function BioIgnicion(){
           · EvidenceStrip (trust badge estático)
           · ProgramBrowser (catálogo 5 programas multi-día)
           · Prediction (impacto esperado de próxima sesión)
-          · Programa 7 Días
         El usuario diario ya no scrollea por encima de estos. Si quiere
         explorar/calibrar/elegir programa, expand "Más". */}
     {ts==="idle"&&<>
@@ -1406,25 +1408,14 @@ export default function BioIgnicion(){
             {drift&&<div style={{fontSize:9,color:brand.secondary,marginTop:2,fontWeight:600}}>Tu respuesta está cambiando — estamos recalibrando.</div>}
           </div>
         </div>);})()}
-      {/* 7-Day Program */}
-      {(st.progDay||0)<7&&<div style={{marginBottom:10,background:cd,borderRadius:16,padding:"12px",border:`1px solid ${bd}`}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{fontSize:10,fontWeight:800,letterSpacing:2,color:ac,textTransform:"uppercase"}}>Programa 7 Días</div>
-          <span style={{display:"inline-flex",alignItems:"baseline",gap:3,fontFamily:font.mono,fontSize:11,fontWeight:800,color:t1,fontVariantNumeric:"tabular-nums",letterSpacing:-0.1}}>
-            <span style={{fontSize:9,fontWeight:600,color:t3,letterSpacing:1,textTransform:"uppercase",marginInlineEnd:3}}>Día</span>
-            <span>{Math.min((st.progDay||0)+1,7)}</span>
-            <span style={{color:t3}}>/</span>
-            <span style={{color:t3}}>7</span>
-          </span>
-        </div>
-        <div style={{display:"flex",gap:3,marginBottom:10}}>
-          {PROG_7.map((p,i)=>{const done=i<(st.progDay||0);const curr=i===(st.progDay||0);return<div key={i} style={{flex:1,height:4,borderRadius:2,background:done?ac:curr?ac+"50":bd,transition:"background .5s"}}/>;})}</div>
-        <motion.button whileTap={{scale:.97}} onClick={()=>{const p=P.find(x=>x.id===progStep.pid);if(p)sp(p);}} style={{width:"100%",padding:"10px",borderRadius:12,border:`1px solid ${bd}`,background:surface,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:28,height:28,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="mind" size={12} color={ac}/></div>
-          <div style={{flex:1,textAlign:"left"}}><div style={{fontSize:11,fontWeight:700,color:t1}}>{progStep.t}</div><div style={{fontSize:10,color:t3}}>{progStep.d}</div></div>
-          <Icon name="chevron" size={12} color={ac}/>
-        </motion.button>
-      </div>}
+      {/* Sprint 77 — bloque legacy "Programa 7 Días" eliminado.
+          Tenía bug estructural: progDay incrementaba con cada sesión
+          (no calendar-based) → 7 sesiones en 1 día marcaba todos los
+          días → al llegar a 7 el bloque desaparecía para siempre.
+          El sistema nuevo (Sprint 64+) reemplaza con:
+            · ActiveProgramCard cuando hay programa en curso
+            · ProgramBrowser con catálogo de 5 programas
+            · programSuggestion.js que sugiere weekly con cooldown */}
     </motion.div>}
     </AnimatePresence>
 

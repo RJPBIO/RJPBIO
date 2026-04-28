@@ -1567,7 +1567,7 @@ export function calcSessionCompletion(st, sessionCtx) {
       history: newHist,
       totalTime: totalT,
       firstDone: true,
-      progDay: Math.min((st.progDay || 0) + 1, 7),
+      // Sprint 77 — progDay deprecated (ver useStore.js completeSession).
     },
     bioQ,
   };
