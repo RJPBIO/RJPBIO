@@ -1115,10 +1115,17 @@ export default function BioIgnicion(){
         (trial activo, expirando, expirado pidiendo reactivar, dunning).
         Self-hides cuando plan ≥ PRO confirmado y FREE sin trial. */}
     {ts==="idle"&&<BillingBanner accent={ac}/>}
-    {/* Brand kicker — wordmark micro-strip en momento-cero (solo idle) */}
-    {ts==="idle"&&(
-      <div aria-hidden="true" style={{display:"flex",justifyContent:"center",marginBlockEnd:space[3]}}>
-        <span style={{display:"inline-flex",alignItems:"center",gap:6,paddingBlock:4,paddingInline:10,borderRadius:999,background:withAlpha(ac,6),border:`1px solid ${withAlpha(ac,14)}`}}>
+    {/* Brand kicker + Carga hoy — Sprint 78. Antes el wordmark vivía
+        solo y "Carga hoy" ocupaba una card separada después. Ahora
+        wordmark + chip de carga conviven en una row centrada. Reduce
+        2 bloques a 1 sin perder información. */}
+    {ts==="idle"&&(()=>{
+      const done=st.todaySessions||0;
+      const goal=st.sessionGoal||2;
+      const showLoad=goal>0;
+      return(
+      <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginBlockEnd:space[3],flexWrap:"wrap"}}>
+        <span aria-hidden="true" style={{display:"inline-flex",alignItems:"center",gap:6,paddingBlock:4,paddingInline:10,borderRadius:999,background:withAlpha(ac,6),border:`1px solid ${withAlpha(ac,14)}`}}>
           <span style={{inlineSize:4,blockSize:4,borderRadius:"50%",background:ac,boxShadow:`0 0 6px ${withAlpha(ac,70)}`}}/>
           <span style={{display:"inline-flex",alignItems:"baseline",gap:3,fontFamily:font.family,fontSize:10,letterSpacing:3,textTransform:"uppercase",lineHeight:1}}>
             <span style={{fontWeight:font.weight.normal,color:t3}}>BIO</span>
@@ -1126,8 +1133,16 @@ export default function BioIgnicion(){
             <span style={{fontWeight:font.weight.black,color:t1}}>IGNICIÓN</span>
           </span>
         </span>
+        {showLoad&&(
+          <span aria-label={`Carga hoy: ${done} de ${goal} sesiones · ${cogLoad.level}`} style={{display:"inline-flex",alignItems:"center",gap:6,paddingBlock:4,paddingInline:10,borderRadius:999,background:withAlpha(cogLoad.color,8),border:`1px solid ${withAlpha(cogLoad.color,22)}`}}>
+            <span aria-hidden="true" style={{inlineSize:4,blockSize:4,borderRadius:"50%",background:cogLoad.color,boxShadow:`0 0 5px ${withAlpha(cogLoad.color,60)}`}}/>
+            <span style={{fontFamily:font.mono,fontSize:10,fontWeight:800,color:t1,fontVariantNumeric:"tabular-nums",letterSpacing:-0.1}}>{done}/{goal}</span>
+            <span aria-hidden="true" style={{fontSize:9,fontWeight:700,color:cogLoad.color,letterSpacing:1,textTransform:"uppercase"}}>{cogLoad.level}</span>
+          </span>
+        )}
       </div>
-    )}
+      );
+    })()}
     {/* Adaptive hint — "tu sistema se afina tras 3 sesiones". Único valor rescatado del tour.
         Auto-hide al llegar a 3. Dismissible con flag local (adaptiveHintDismissed). */}
     {ts==="idle"&&(st.totalSessions||0)<3&&!st.adaptiveHintDismissed&&(
@@ -1206,38 +1221,28 @@ export default function BioIgnicion(){
       </div>
       );})()}
 
-    {/* Cognitive Load indicator — carga del día con label + MONO tabular */}
-    {ts==="idle"&&(()=>{
-      const done=st.todaySessions||0;
-      const goal=st.sessionGoal||2;
-      const pct=Math.min(100,(done/goal)*100);
-      return(
-        <div aria-label={`Carga hoy: ${done} de ${goal} sesiones. Nivel ${cogLoad.level}`} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:space[3],padding:`${space[3]}px ${space[4]}px`,marginBottom:space[3],background:surface,border:`1px solid ${bd}`,borderRadius:radius.md}}>
-          <div style={{display:"flex",alignItems:"center",gap:space[2],minInlineSize:0}}>
-            <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:withAlpha(ac,10),border:`1px solid ${withAlpha(ac,18)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              <Icon name="cpu" size={13} color={ac}/>
-            </div>
-            <div style={{minInlineSize:0}}>
-              <div style={{fontSize:10,fontWeight:700,color:t3,letterSpacing:2,textTransform:"uppercase",lineHeight:1}}>Carga hoy</div>
-              <div style={{display:"inline-flex",alignItems:"baseline",gap:4,marginBlockStart:3,lineHeight:1}}>
-                <span style={{fontFamily:font.mono,fontSize:15,fontWeight:800,color:t1,letterSpacing:-0.3,fontVariantNumeric:"tabular-nums"}}>{done}</span>
-                <span style={{fontSize:11,fontWeight:500,color:t3}}>/</span>
-                <span style={{fontFamily:font.mono,fontSize:12,fontWeight:600,color:t3,fontVariantNumeric:"tabular-nums"}}>{goal}</span>
-                <span style={{fontSize:11,fontWeight:500,color:t3,marginInlineStart:2}}>sesiones</span>
-              </div>
-            </div>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:space[2],flexShrink:0}}>
-            <span style={{fontSize:10,fontWeight:700,color:cogLoad.color,letterSpacing:0.3,textTransform:"uppercase"}}>{cogLoad.level}</span>
-            <div aria-hidden="true" style={{inlineSize:44,blockSize:5,borderRadius:999,background:bd,overflow:"hidden"}}>
-              <div style={{inlineSize:pct+"%",blockSize:"100%",background:`linear-gradient(90deg, ${withAlpha(cogLoad.color,60)}, ${cogLoad.color})`,borderRadius:999,transition:"width .4s ease"}}/>
-            </div>
-          </div>
-        </div>
-      );
-    })()}
+    {/* Sprint 78 — Cognitive Load card eliminada. Su info se compactó
+        en chip dentro del brand kicker arriba (done/goal + nivel).
+        Reduce ruido visual sin perder dato. */}
 
-    {/* Bioneural quick actions — evidence-based rescue protocols */}
+    {/* Sprint 78 — Daily Ignición ahora va PRIMERO (CTA principal,
+        hero), seguido del trio quick actions como secondary access.
+        Antes vivía debajo del trio y duplicaba intent sin jerarquía. */}
+    {ts==="idle"&&<motion.button whileTap={{scale:.97}} onClick={()=>sp(daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:10,borderRadius:18,border:`1.5px solid ${daily.proto.cl}20`,background:`linear-gradient(135deg,${daily.proto.cl}06,${daily.proto.cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
+      <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
+      <div style={{flex:1,position:"relative",zIndex:1}}>
+        <div style={{fontSize:12,fontWeight:600,letterSpacing:-0.05,color:daily.proto.cl,marginBottom:2}}>Ignición del día</div>
+        <div style={{...ty.title(t1),fontWeight:font.weight.black}}>{daily.proto.n}</div>
+        <div style={{...ty.caption(t3),marginTop:2,fontStyle:"italic",lineHeight:font.leading.snug}}>{daily.phrase}</div>
+      </div>
+      <Icon name="bolt" size={16} color={daily.proto.cl}/>
+    </motion.button>}
+
+    {/* Bioneural quick actions — evidence-based rescue protocols.
+        Sprint 78: ahora secondary access debajo del Daily Ignición.
+        Su rol es atajo a protocolos específicos (suspiro / HRV / NSDR)
+        cuando el user no quiere el daily auto-recomendado. */}
     {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
         <Icon name="calm" size={14} color={protoColor.calma}/>
@@ -1271,18 +1276,32 @@ export default function BioIgnicion(){
       Ver histórico HRV ({(st.hrvLog||[]).length} {(st.hrvLog||[]).length===1?"medición":"mediciones"})
     </button>}
 
-    {/* Daily Ignición with AI reasoning */}
-    {ts==="idle"&&<motion.button whileTap={{scale:.97}} onClick={()=>sp(daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:14,borderRadius:18,border:`1.5px solid ${daily.proto.cl}20`,background:`linear-gradient(135deg,${daily.proto.cl}06,${daily.proto.cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:daily.proto.cl+"08"}}/>
-      <div style={{width:44,height:44,borderRadius:13,background:daily.proto.cl+"12",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:daily.proto.cl,flexShrink:0,border:`1px solid ${daily.proto.cl}15`}}>{daily.proto.tg}</div>
-      <div style={{flex:1,position:"relative",zIndex:1}}>
-        <div style={{fontSize:12,fontWeight:600,letterSpacing:-0.05,color:daily.proto.cl,marginBottom:2}}>Ignición del día</div>
-        <div style={{...ty.title(t1),fontWeight:font.weight.black}}>{daily.proto.n}</div>
-        <div style={{...ty.caption(t3),marginTop:2,fontStyle:"italic",lineHeight:font.leading.snug}}>{daily.phrase}</div>
-      </div>
-      <Icon name="bolt" size={16} color={daily.proto.cl}/>
-    </motion.button>}
+    {/* Sprint 78 — Daily Ignición original eliminado de aquí (movido
+        arriba del trio como hero CTA). El bloque queda como referencia
+        del cambio de jerarquía. */}
 
+    {/* Sprint 78 — ProgramBrowser sube above-the-fold. Antes estaba
+        oculto detrás del expand "Más"; el catálogo de 5 programas
+        es contenido principal del producto, no accessory. Solo se
+        muestra si NO hay activeProgram (cuando hay, el ActiveProgramCard
+        arriba ya cubre el rol). Marketing fold parity. */}
+    {ts==="idle"&&!st.activeProgram&&(()=>{
+      const burnout=calcBurnoutIndex(st.moodLog||[],st.history||[]);
+      const suggestion=resolveProgramSuggestion(st,{burnout,readiness});
+      return(
+        <ProgramBrowser
+          isDark={isDark}
+          programHistory={st.programHistory||[]}
+          suggestion={suggestion}
+          onStart={(programId)=>{
+            store.startProgram(programId);
+            setSt_(useStore.getState());
+            const p=getProgramById(programId);
+            if(p)announce(`Programa ${p.n} iniciado. Día 1: ${p.sessions?.[0]?.note||p.sb}`,"polite");
+          }}
+        />
+      );
+    })()}
 
     {/* Expandable secondary section
         Contiene contenido secundario que ocupaba above-the-fold sin
@@ -1368,25 +1387,9 @@ export default function BioIgnicion(){
         try{if(typeof window!=="undefined")window.open("/evidencia","_blank","noopener,noreferrer");}catch{}
       }}/>
 
-      {/* Program Browser — 5 trayectorias multi-día. Solo si no hay programa activo
-          (cuando hay activo, el ActiveProgramCard arriba cubre el CTA). */}
-      {!st.activeProgram&&(()=>{
-        const burnout=calcBurnoutIndex(st.moodLog||[],st.history||[]);
-        const suggestion=resolveProgramSuggestion(st,{burnout,readiness});
-        return(
-          <ProgramBrowser
-            isDark={isDark}
-            programHistory={st.programHistory||[]}
-            suggestion={suggestion}
-            onStart={(programId)=>{
-              store.startProgram(programId);
-              setSt_(useStore.getState());
-              const p=getProgramById(programId);
-              if(p)announce(`Programa ${p.n} iniciado. Día 1: ${p.sessions?.[0]?.note||p.sb}`,"polite");
-            }}
-          />
-        );
-      })()}
+      {/* Sprint 78 — ProgramBrowser movido arriba (above-the-fold).
+          Cuando hay activeProgram, el ActiveProgramCard arriba lo
+          reemplaza naturalmente. */}
 
       {/* Prediction */}
       {prediction&&(()=>{const pos=prediction.predictedDelta>0;const tone=pos?brand.primary:brand.secondary;const hasCI=typeof prediction.lower==="number"&&typeof prediction.upper==="number";const fmt=(v)=>(v>=0?"+":"")+v.toFixed(1);const drift=!!prediction.drift;return(

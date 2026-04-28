@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 27; // Sprint 77 — eliminado bloque legacy "Programa 7 Días" (bug counter-based) → reemplazado por ActiveProgramCard + ProgramBrowser (Sprint 64+)
+const CACHE_VERSION = 28; // Sprint 78 — pantalla inicial re-jerarquizada: kicker+carga, Daily hero, ProgramBrowser above-the-fold
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
