@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { useReducedMotion } from "../lib/a11y";
+import { SPRING } from "../lib/easings";
 import { cssVar, space, font } from "./ui/tokens";
 
 export default function OfflineChip() {
@@ -48,7 +49,7 @@ export default function OfflineChip() {
           initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.95 }}
           animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.95 }}
-          transition={reduced ? { duration: 0.2 } : { type: "spring", stiffness: 280, damping: 26 }}
+          transition={reduced ? { duration: 0.2 } : SPRING.snappy}
           style={{
             position: "fixed",
             insetBlockEnd: `calc(${space[4]}px + env(safe-area-inset-bottom, 0px))`,

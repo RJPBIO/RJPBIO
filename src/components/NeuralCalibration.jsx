@@ -8,6 +8,7 @@
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SPRING } from "../lib/easings";
 import Icon from "./Icon";
 import { resolveTheme, brand, font } from "../lib/theme";
 import { semantic } from "../lib/tokens";
@@ -809,7 +810,7 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                    transition={{ ...SPRING.default, delay: 0.2 }}
                   >
                     <svg
                       width="64"

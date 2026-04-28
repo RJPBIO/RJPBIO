@@ -5,6 +5,7 @@
 
 import { useId, useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SPRING } from "../lib/easings";
 import Icon from "./Icon";
 import BioSparkline from "./BioSparkline";
 import IllustratedEmpty from "./IllustratedEmpty";
@@ -113,7 +114,7 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
             initial={reduced ? { opacity: 0 } : { y: "100%" }}
             animate={reduced ? { opacity: 1 } : { y: 0 }}
             exit={reduced ? { opacity: 0 } : { y: "100%" }}
-            transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }}
+            transition={reduced ? { duration: 0 } : SPRING.smooth}
             style={{
               inlineSize: "100%",
               maxInlineSize: 430,

@@ -7,6 +7,7 @@
 
 import { useMemo, useId } from "react";
 import { motion } from "framer-motion";
+import { SPRING } from "../lib/easings";
 import Icon from "./Icon";
 import { SCIENCE_DEEP } from "../lib/protocols";
 import { DIF_LABELS } from "../lib/constants";
@@ -97,7 +98,7 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
         initial={reduced ? { opacity: 0 } : { y: "100%" }}
         animate={reduced ? { opacity: 1 } : { y: 0 }}
         exit={reduced ? { opacity: 0 } : { y: "100%" }}
-        transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }}
+        transition={reduced ? { duration: 0 } : SPRING.smooth}
         style={{
           inlineSize: "100%",
           maxInlineSize: 430,

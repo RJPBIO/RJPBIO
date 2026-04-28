@@ -18,6 +18,7 @@ import { useStore } from "../store/useStore";
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import { useReducedMotion } from "../lib/a11y";
 import { useHaptic } from "../hooks/useHaptic";
+import { SPRING } from "../lib/easings";
 import { cssVar, radius, space, font } from "./ui/tokens";
 
 export default function InstallBanner() {
@@ -36,7 +37,7 @@ export default function InstallBanner() {
           initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
           animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.96 }}
-          transition={reduced ? { duration: 0.2 } : { type: "spring", stiffness: 300, damping: 28 }}
+          transition={reduced ? { duration: 0.2 } : SPRING.snappy}
           style={{
             position: "fixed",
             insetBlockEnd: `calc(${space[4]}px + 68px + env(safe-area-inset-bottom, 0px))`,

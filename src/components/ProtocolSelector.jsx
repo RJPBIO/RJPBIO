@@ -11,6 +11,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef, useEffect } from "react";
+import { SPRING } from "../lib/easings";
 import Icon from "./Icon";
 import EvidenceBadge from "./EvidenceBadge";
 import { CATS, INTENTS, DIF_LABELS } from "../lib/constants";
@@ -94,7 +95,7 @@ export default function ProtocolSelector({
             initial={reduced ? { opacity: 0 } : { y: "100%" }}
             animate={reduced ? { opacity: 1 } : { y: 0 }}
             exit={reduced ? { opacity: 0 } : { y: "100%" }}
-            transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }}
+            transition={reduced ? { duration: 0 } : SPRING.smooth}
             style={{
               inlineSize: "100%",
               maxInlineSize: 430,
@@ -331,7 +332,7 @@ export default function ProtocolSelector({
                       />
                       <motion.div
                         layoutId={reduced ? undefined : `proto-glyph-${p.id}`}
-                        transition={{ type: "spring", stiffness: 360, damping: 32 }}
+                        transition={SPRING.snappy}
                         aria-hidden="true"
                         style={{
                           inlineSize: 40, blockSize: 40,

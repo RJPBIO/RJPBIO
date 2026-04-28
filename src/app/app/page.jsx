@@ -49,6 +49,7 @@ import Icon from "@/components/Icon";
 import { useSync } from "@/hooks/useSync";
 import { useDeepLink } from "@/hooks/useDeepLink";
 import { setReloadGate } from "@/hooks/useServiceWorkerUpdate";
+import { SPRING } from "@/lib/easings";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { useThemeDark } from "@/hooks/useThemeDark";
 import { useTapEntry } from "@/hooks/useTapEntry";
@@ -1149,7 +1150,7 @@ export default function BioIgnicion(){
   {/* ═══ INTENT PICKER ═══ */}
   <AnimatePresence>
   {showIntent&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.modal,background:scrim,backdropFilter:"blur(24px) saturate(180%)",WebkitBackdropFilter:"blur(24px) saturate(180%)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[6]}} onClick={()=>setShowIntent(false)}>
-    <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%"}} onClick={e=>e.stopPropagation()}>
+    <motion.div initial={{scale:.9}} animate={{scale:1}} transition={SPRING.default} style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%"}} onClick={e=>e.stopPropagation()}>
     <div style={{textAlign:"center",marginBottom:space[5]}}><div style={{fontSize:font.size.xl,fontWeight:font.weight.black,color:t1}}>¿Qué necesitas?</div>
     {aiRec&&<div style={{...ty.caption(t3),marginTop:space[1]}}>IA sugiere: <span style={{color:ac,fontWeight:font.weight.bold}}>{aiRec.need}</span> · {aiRec.context.circadian}</div>}
     </div>
@@ -1520,7 +1521,7 @@ export default function BioIgnicion(){
       return(
     <div style={{display:"flex",gap:7,marginBottom:16}}>
       <motion.button whileTap={{scale:.96}} onClick={()=>setSl(true)} style={{flex:1,padding:"10px 12px",borderRadius:15,border:`1.5px solid ${engineReason?withAlpha(ac,22):bd}`,background:engineReason?withAlpha(ac,isDark?8:4):cd,cursor:"pointer",display:"flex",alignItems:"center",gap:9}}>
-        <motion.div layoutId={sl||reducedMotion?undefined:`proto-glyph-${pr.id}`} transition={{type:"spring",stiffness:360,damping:32}} style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:ac}}>{pr.tg}</motion.div>
+        <motion.div layoutId={sl||reducedMotion?undefined:`proto-glyph-${pr.id}`} transition={SPRING.snappy} style={{width:32,height:32,borderRadius:8,background:ac+"10",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:ac}}>{pr.tg}</motion.div>
         <div style={{flex:1,textAlign:"left",minInlineSize:0}}>
           <div style={{display:"inline-flex",alignItems:"center",gap:5}}>
             <span style={{fontWeight:700,fontSize:11,color:t1,letterSpacing:-0.05}}>{pr.n}</span>
@@ -1963,9 +1964,9 @@ export default function BioIgnicion(){
       const inactiveSpark=isIgnicion?withAlpha(bioSignal.ignition,45):t3;
       return(<motion.button key={t.id} role="tab" aria-selected={a} aria-controls={`tab-${t.id}-panel`} id={`tab-${t.id}`} tabIndex={ts==="running"?-1:(a?0:-1)} onKeyDown={e=>onTabKey(e,t.id,order)} whileTap={reducedMotion?{}:{scale:.92}} onClick={()=>switchTab(t.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 0 4px",border:"none",background:"transparent",borderRadius:14,position:"relative",minHeight:48}}>
         {/* Active indicator — neural-spark dot con glow (reemplaza línea genérica) */}
-        {a&&<motion.div layoutId="navIndicator" aria-hidden="true" style={{position:"absolute",top:3,left:"50%",translateX:"-50%",width:5,height:5,borderRadius:"50%",background:t.ac,boxShadow:`0 0 8px ${withAlpha(t.ac,90)}, 0 0 2px #fff`}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:400,damping:30}}/>}
+        {a&&<motion.div layoutId="navIndicator" aria-hidden="true" style={{position:"absolute",top:3,left:"50%",translateX:"-50%",width:5,height:5,borderRadius:"50%",background:t.ac,boxShadow:`0 0 8px ${withAlpha(t.ac,90)}, 0 0 2px #fff`}} transition={reducedMotion?{duration:0}:SPRING.snappy}/>}
         {/* Glyph slot: Ignición usa BioGlyph (trademark), los demás Icon */}
-        <motion.div aria-hidden="true" animate={reducedMotion?{}:{scale:a?1:0.9,y:a?-1:0}} transition={reducedMotion?{duration:0}:{type:"spring",stiffness:300,damping:20}} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":isIgnicion?withAlpha(brand.primary,6):"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
+        <motion.div aria-hidden="true" animate={reducedMotion?{}:{scale:a?1:0.9,y:a?-1:0}} transition={reducedMotion?{duration:0}:SPRING.snappy} style={{width:32,height:32,borderRadius:10,background:a?t.ac+"12":isIgnicion?withAlpha(brand.primary,6):"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
           {isIgnicion?(
             <BioGlyph size={a?20:18} color={a?t.ac:inactiveGlyphColor} spark={a?bioSignal.ignition:inactiveSpark} animated={a&&!reducedMotion}/>
           ):(

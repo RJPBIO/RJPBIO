@@ -5,6 +5,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { SPRING } from "../lib/easings";
 import Link from "next/link";
 import Icon from "./Icon";
 import AnimatedNumber from "./AnimatedNumber";
@@ -80,7 +81,7 @@ export default function ProfileView({
         <motion.div
           initial={reduced ? { opacity: 1 } : { scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 200 }}
+          transition={reduced ? { duration: 0 } : SPRING.default}
         >
           <div
             aria-label={`Identidad bioneural, nivel ${lv.n}`}

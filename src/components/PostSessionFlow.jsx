@@ -6,6 +6,7 @@
 
 import { useId, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SPRING } from "../lib/easings";
 import Icon from "./Icon";
 import SessionShareCard from "./SessionShareCard";
 import BioIgnicionMark from "./BioIgnicionMark";
@@ -97,7 +98,7 @@ export default function PostSessionFlow({
               aria-labelledby={breatheTitleId}
               initial={reduced ? { opacity: 0 } : { scale: 0.9 }}
               animate={reduced ? { opacity: 1 } : { scale: 1 }}
-              transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 200, damping: 20 }}
+              transition={reduced ? { duration: 0 } : SPRING.default}
               style={{
                 background: cd,
                 borderRadius: radius["2xl"],
@@ -338,7 +339,7 @@ export default function PostSessionFlow({
               aria-labelledby={summaryTitleId}
               initial={reduced ? { opacity: 0 } : { scale: 0.9 }}
               animate={reduced ? { opacity: 1 } : { scale: 1 }}
-              transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 200, damping: 20 }}
+              transition={reduced ? { duration: 0 } : SPRING.default}
               style={{
                 background: cd,
                 borderRadius: radius["2xl"],
@@ -606,7 +607,7 @@ export default function PostSessionFlow({
                   <motion.div
                     initial={reduced ? { scale: 1 } : { scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={reduced ? { duration: 0 } : { type: "spring", delay: 0.3 }}
+                    transition={reduced ? { duration: 0 } : { ...SPRING.default, delay: 0.3 }}
                     style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
                   >
                     <div
