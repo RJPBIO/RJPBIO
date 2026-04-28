@@ -837,19 +837,30 @@ export default function ProfileView({
           <h3 style={sectionLabel(t3)}>Ciencia & Resultados</h3>
         </header>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Sprint 101 — Apple Health pattern: icon container 36px
+              circular con bg fill saturado en category color. Bumpea
+              icons 14→18px. Inyecta brand vibrancy en chrome neutral
+              tras user report "todo gris seco, sin color". */}
           <Link
             href="/reporte"
             aria-label="Ver informe trimestral"
             className="bi-row-link"
             style={{
-              display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+              display: "flex", alignItems: "center", gap: 12, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
               background: sf,
               border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
               textAlign: "start", textDecoration: "none",
             }}
           >
-            <Icon name="trophy" size={14} color={ac} aria-hidden="true" />
+            <div style={{
+              inlineSize: 36, blockSize: 36, borderRadius: "50%",
+              background: withAlpha(ac, 18),
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <Icon name="trophy" size={18} color={ac} aria-hidden="true" />
+            </div>
             <div style={{ flex: 1 }}>
               <div style={{ ...ty.title(t1) }}>Informe trimestral</div>
               <div style={ty.caption(t3)}>Sesiones, HRV, ánimo y escalas validadas · 90 días</div>
@@ -861,14 +872,21 @@ export default function ProfileView({
             aria-label="Biblioteca de evidencia científica"
             className="bi-row-link"
             style={{
-              display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+              display: "flex", alignItems: "center", gap: 12, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
               background: sf,
               border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
               textAlign: "start", textDecoration: "none",
             }}
           >
-            <Icon name="fingerprint" size={14} color="#8B5CF6" aria-hidden="true" />
+            <div style={{
+              inlineSize: 36, blockSize: 36, borderRadius: "50%",
+              background: withAlpha("#8B5CF6", 18),
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <Icon name="fingerprint" size={18} color="#8B5CF6" aria-hidden="true" />
+            </div>
             <div style={{ flex: 1 }}>
               <div style={{ ...ty.title(t1) }}>Biblioteca de evidencia</div>
               <div style={ty.caption(t3)}>Estudios y mecanismos detrás de cada protocolo</div>
@@ -880,14 +898,21 @@ export default function ProfileView({
             aria-label="Artículos de fundamentos"
             className="bi-row-link"
             style={{
-              display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+              display: "flex", alignItems: "center", gap: 12, inlineSize: "100%",
               paddingBlock: 10, paddingInline: 12,
               background: sf,
               border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer",
               textAlign: "start", textDecoration: "none",
             }}
           >
-            <Icon name="lightbulb" size={14} color="#F59E0B" aria-hidden="true" />
+            <div style={{
+              inlineSize: 36, blockSize: 36, borderRadius: "50%",
+              background: withAlpha("#F59E0B", 18),
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <Icon name="lightbulb" size={18} color="#F59E0B" aria-hidden="true" />
+            </div>
             <div style={{ flex: 1 }}>
               <div style={{ ...ty.title(t1) }}>Aprende</div>
               <div style={ty.caption(t3)}>HRV, cronotipo, respiración resonante · con citas</div>
@@ -916,18 +941,28 @@ export default function ProfileView({
             <h3 style={sectionLabel(t3)}>Perfil Bioneural</h3>
           </header>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Sprint 101 — Apple Health pattern. Cada card de Perfil
+                Bioneural ahora tiene icon container 36px circular en
+                category color saturado. Inyecta brand vibrancy. */}
             {onShowChronotype && (
               <button
                 onClick={onShowChronotype}
                 aria-label="Test de cronotipo MEQ-SA"
                 style={{
-                  display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+                  display: "flex", alignItems: "center", gap: 12, inlineSize: "100%",
                   minBlockSize: 44, paddingBlock: 10, paddingInline: 12,
                   background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
               >
-                <Icon name="clock" size={14} color="#D97706" aria-hidden="true" />
+                <div style={{
+                  inlineSize: 36, blockSize: 36, borderRadius: "50%",
+                  background: withAlpha("#D97706", 18),
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Icon name="clock" size={18} color="#D97706" aria-hidden="true" />
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...ty.title(t1) }}>Cronotipo (MEQ-SA)</div>
                   <div style={ty.caption(t3)}>
@@ -942,13 +977,20 @@ export default function ProfileView({
                 onClick={onShowResonance}
                 aria-label="Calibrar frecuencia resonante con sensor de HR"
                 style={{
-                  display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+                  display: "flex", alignItems: "center", gap: 12, inlineSize: "100%",
                   minBlockSize: 44, paddingBlock: 10, paddingInline: 12,
                   background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
               >
-                <Icon name="predict" size={14} color="#6366F1" aria-hidden="true" />
+                <div style={{
+                  inlineSize: 36, blockSize: 36, borderRadius: "50%",
+                  background: withAlpha("#6366F1", 18),
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Icon name="predict" size={18} color="#6366F1" aria-hidden="true" />
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...ty.title(t1) }}>Frecuencia Resonante</div>
                   <div style={ty.caption(t3)}>
@@ -963,13 +1005,20 @@ export default function ProfileView({
                 onClick={onShowNOM035}
                 aria-label="Evaluación NOM-035"
                 style={{
-                  display: "flex", alignItems: "center", gap: 10, inlineSize: "100%",
+                  display: "flex", alignItems: "center", gap: 12, inlineSize: "100%",
                   minBlockSize: 44, paddingBlock: 10, paddingInline: 12,
                   background: sf,
                   border: `1px solid ${bd}`, borderRadius: 12, cursor: "pointer", textAlign: "start",
                 }}
               >
-                <Icon name="shield" size={14} color="#059669" aria-hidden="true" />
+                <div style={{
+                  inlineSize: 36, blockSize: 36, borderRadius: "50%",
+                  background: withAlpha("#059669", 18),
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Icon name="shield" size={18} color="#059669" aria-hidden="true" />
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...ty.title(t1) }}>NOM-035 · Riesgo psicosocial</div>
                   <div style={ty.caption(t3)}>
