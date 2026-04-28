@@ -20,6 +20,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
+import IllustratedEmpty from "./IllustratedEmpty";
 import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 import {
@@ -243,33 +244,20 @@ export default function HRVHistoryPanel({
       </header>
 
       {!hasData ? (
-        <section style={{ maxInlineSize: 420, marginInline: "auto", textAlign: "center", marginBlockStart: 60 }}>
-          <Icon name="predict" size={36} color={t3} aria-hidden="true" />
-          <h3 style={{ color: t1, fontSize: 17, fontWeight: font.weight.bold, marginBlockStart: 16, marginBlockEnd: 8 }}>
-            Aún no tienes mediciones
-          </h3>
-          <p style={{ color: t2, fontSize: 13, lineHeight: 1.55, marginBlockEnd: 24 }}>
-            Mide tu HRV con la cámara durante 60 segundos. Tu primera medición establece la línea base; las siguientes muestran tu evolución.
-          </p>
-          {onMeasureNew && (
-            <button
-              onClick={() => { onClose?.(); onMeasureNew(); }}
-              style={{
-                paddingBlock: 14,
-                paddingInline: 28,
-                background: brand.primary,
-                color: "#fff",
-                border: "none",
-                borderRadius: 14,
-                fontSize: 14,
-                fontWeight: 700,
-                letterSpacing: -0.05,
-                cursor: "pointer",
-              }}
-            >
-              Medir ahora
-            </button>
-          )}
+        <section style={{ maxInlineSize: 420, marginInline: "auto", marginBlockStart: 32 }}>
+          {/* Sprint 89 — refactor a IllustratedEmpty para Apple-grade
+              empty state. Antes: Icon plano + texto. Ahora: ilustración
+              SignalField animada (wave + spark moving) que comunica
+              visualmente "señal en espera". */}
+          <IllustratedEmpty
+            illustration="signal"
+            title="Aún no tienes mediciones"
+            body="Mide tu HRV con la cámara durante 60 segundos. Tu primera medición establece la línea base; las siguientes muestran tu evolución."
+            actionLabel={onMeasureNew ? "Medir ahora" : undefined}
+            action={onMeasureNew ? () => { onClose?.(); onMeasureNew(); } : undefined}
+            textPrimary={t1}
+            textMuted={t2}
+          />
         </section>
       ) : (
         <section style={{ maxInlineSize: 540, marginInline: "auto" }}>

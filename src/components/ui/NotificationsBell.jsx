@@ -167,7 +167,33 @@ export default function NotificationsBell() {
             </div>
           </div>
           {items.length === 0 ? (
-            <p style={{ padding: 16, color: "#94A3B8", fontSize: 13, margin: 0, textAlign: "center" }}>Sin notificaciones.</p>
+            /* Sprint 89 — empty state Apple-grade. Antes: "Sin notificaciones."
+               plano gris. Ahora: ilustración HistoryConstellation animada
+               + copy explicativo. La constelación visualmente sugiere
+               "puntos de info se conectan en patrón" sin requerir CTA. */
+            <div style={{ paddingBlock: 18 }}>
+              <svg width="180" height="64" viewBox="0 0 180 64" role="img" aria-label="Sin notificaciones aún" style={{ display: "block", margin: "0 auto 12px" }}>
+                <defs>
+                  <filter id="nb-empty-glow"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                {/* Constelación de puntos sugiriendo "el patrón llega cuando hay datos" */}
+                <line x1="35" y1="40" x2="65" y2="22" stroke="#22D3EE" strokeWidth="0.6" opacity="0.3" strokeDasharray="2 3"/>
+                <line x1="65" y1="22" x2="100" y2="32" stroke="#22D3EE" strokeWidth="0.6" opacity="0.3" strokeDasharray="2 3"/>
+                <line x1="100" y1="32" x2="135" y2="18" stroke="#22D3EE" strokeWidth="0.6" opacity="0.3" strokeDasharray="2 3"/>
+                <line x1="135" y1="18" x2="155" y2="38" stroke="#22D3EE" strokeWidth="0.6" opacity="0.3" strokeDasharray="2 3"/>
+                <circle cx="35" cy="40" r="2.5" fill="#22D3EE" opacity="0.5" filter="url(#nb-empty-glow)"/>
+                <circle cx="65" cy="22" r="3" fill="#22D3EE" opacity="0.7" filter="url(#nb-empty-glow)"/>
+                <circle cx="100" cy="32" r="2.8" fill="#22D3EE" opacity="0.6" filter="url(#nb-empty-glow)"/>
+                <circle cx="135" cy="18" r="3.2" fill="#22D3EE" opacity="0.75" filter="url(#nb-empty-glow)"/>
+                <circle cx="155" cy="38" r="2.5" fill="#FDE68A" opacity="0.9" filter="url(#nb-empty-glow)"/>
+              </svg>
+              <h3 style={{ color: "#E8ECF4", fontSize: 14, fontWeight: 800, margin: 0, textAlign: "center", letterSpacing: -0.1 }}>
+                Bandeja al día
+              </h3>
+              <p style={{ padding: "6px 24px 0", color: "#94A3B8", fontSize: 12, margin: 0, textAlign: "center", lineHeight: 1.5 }}>
+                Recibirás aquí avisos de calibración, achievements y nuevos datos relevantes.
+              </p>
+            </div>
           ) : (
             <ul style={{ listStyle: "none", margin: 0, padding: 0, maxHeight: 340, overflow: "auto" }}>
               {items.map((n) => (
