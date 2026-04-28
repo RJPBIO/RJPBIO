@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 25; // Sprint 75 — HRV history a 10/10: minN=3 + grouped by day + session linking + baseline + CSV export
+const CACHE_VERSION = 26; // Sprint 76 — UX measuring screen: narrativa honesta + contexto + SQI accionable + Cancelar puro
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

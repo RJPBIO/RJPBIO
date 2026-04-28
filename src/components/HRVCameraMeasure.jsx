@@ -318,12 +318,12 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   }
 
   function handleStop() {
-    // Durante settling o <20s de medición: cancelar limpio al intro.
-    // Tras >=20s: guardar parcial (mejor un dato marginal que perder el esfuerzo).
-    if (phaseRef.current === "measuring" && elapsedSec >= 20) {
-      finish();
-      return;
-    }
+    // Sprint 76 — handleStop SIEMPRE cancela al intro, nunca guarda
+    // datos parciales. Antes (≥20s mostraba "Detener y guardar" y
+    // llamaba finish()) un usuario impaciente podía guardar mediciones
+    // incompletas que contaminaban su histórico (RMSSD calculado con
+    // <60s tiene CI95 ancho y sesgo conocido). Ahora la medición solo
+    // se guarda cuando completa los 60s naturalmente vía finish().
     try { captureRef.current?.setTorch?.(false); } catch {}
     try { captureRef.current?.stop?.(); } catch {}
     releaseWakeLock();
@@ -712,20 +712,97 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         </section>
       )}
 
-      {phase === "measuring" && (
+      {phase === "measuring" && (() => {
+        // Sprint 76 — UX rework de la pantalla de medición.
+        //
+        // PRINCIPIO CLÍNICO: NO modular el estado del usuario durante
+        // la medición. NO breathing pacer, NO audio rítmico, NO haptic
+        // sincronizado al ritmo cardíaco. La medición debe reflejar el
+        // estado natural del usuario; cualquier prescripción rítmica
+        // contamina la lectura. Esta pantalla solo INFORMA, nunca dirige.
+        //
+        // Cambios vs Sprint 73:
+        //  · Narrativa honesta rotativa (refuerza "respira natural")
+        //  · Comparación contextual debajo del bpm (última, baseline)
+        //  · SQI chip con hint accionable (qué hacer si calidad baja)
+        //  · Solo botón "Cancelar" (eliminado "Detener y guardar"
+        //    porque incentivaba mediciones incompletas que contaminaban
+        //    el histórico)
+        //  · Flash y opciones secundarias arriba (no compiten con el
+        //    foco principal)
+        const stage =
+          elapsedSec < 12 ? 0 : elapsedSec < 28 ? 1 : elapsedSec < 45 ? 2 : 3;
+        const narrative = paused
+          ? null // el chip de "Pausado" reemplaza la narrativa
+          : [
+              "Respira como sea natural — esto mide tu estado real",
+              "Mantén el dedo apoyado · no fuerces nada",
+              "Casi listo · tu HRV se está estabilizando",
+              "Últimos segundos · sostén la calma",
+            ][stage];
+
+        const recentForContext = (useStore.getState().hrvLog || [])
+          .filter((e) => e && typeof e.rmssd === "number")
+          .sort((a, b) => b.ts - a.ts);
+        const lastEntry = recentForContext[0] || null;
+        const baselineRecent = (() => {
+          if (recentForContext.length < 5) return null;
+          const last30d = recentForContext.filter((e) => Date.now() - e.ts < 30 * 86_400_000);
+          if (last30d.length < 5) return null;
+          const xs = last30d.map((e) => e.rmssd);
+          const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+          return Math.round(m);
+        })();
+
+        const sqiHint = (() => {
+          if (!liveSqi) return null;
+          const band = liveSqi.band;
+          if (band === "good" || band === "high") return "Señal limpia — sigue así";
+          if (band === "ok" || band === "medium") return "Apoya el dedo más firme y centrado en la cámara";
+          return "Apóyalo más firme · busca más luz si es de noche";
+        })();
+
+        return (
         <section
           aria-label="Medición en curso"
           style={{
-            maxInlineSize: 420,
+            maxInlineSize: 440,
             marginInline: "auto",
-            marginBlockStart: 40,
+            marginBlockStart: 24,
             textAlign: "center",
             position: "relative",
+            paddingBlockEnd: 40,
           }}
         >
-          {/* Beat-synced halo: cada nuevo pico reacumula key → re-anima
-              un pulso sutil del color brand. Le da "vida" a los 50 s
-              después que el bpm se estabiliza. Respeta reduced-motion. */}
+          {/* Header secundario discreto: Flash si aplica. Antes vivía al
+              fondo compitiendo con Cancelar. */}
+          {torchAvailable && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBlockEnd: 16 }}>
+              <button
+                onClick={toggleTorch}
+                aria-pressed={torchOn}
+                aria-label={torchOn ? "Apagar flash" : "Encender flash"}
+                style={{
+                  paddingBlock: 6,
+                  paddingInline: 10,
+                  background: "transparent",
+                  color: t3,
+                  border: `1px solid ${bd}`,
+                  borderRadius: 8,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: 0.6,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                Flash {torchOn ? "ON" : "OFF"}
+              </button>
+            </div>
+          )}
+
+          {/* Beat-synced halo (passive, sólo confirma que detectamos peak;
+              NO prescribe ritmo) */}
           {!reduced && live?.lastPeakTs && !paused && live?.fingerOk && (
             <motion.div
               key={live.lastPeakTs}
@@ -735,8 +812,11 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               transition={{ duration: 0.55, ease: "easeOut" }}
               style={{
                 position: "absolute",
-                inset: "-30px -30px auto -30px",
-                blockSize: 220,
+                insetInlineStart: "50%",
+                insetBlockStart: 42,
+                inlineSize: 240,
+                blockSize: 240,
+                marginInlineStart: -120,
                 borderRadius: "50%",
                 background: `radial-gradient(circle, ${withAlpha(brand.primary, 100)} 0%, transparent 65%)`,
                 pointerEvents: "none",
@@ -745,28 +825,59 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             />
           )}
 
+          {/* Number bpm pulsante al ritmo del corazón del USUARIO (no
+              prescriptivo; refleja su tasa actual). */}
           <motion.div
             animate={reduced || !liveHr ? {} : { scale: [1, 1.035, 1] }}
             transition={reduced || !liveHr ? {} : { duration: 60 / (liveHr || 60), repeat: Infinity, ease: "easeInOut" }}
             style={{
               color: t1,
               fontFamily: MONO,
-              fontSize: 96,
+              fontSize: 104,
               fontWeight: 500,
               lineHeight: 1,
               letterSpacing: -3,
-              marginBlockEnd: 8,
+              marginBlockEnd: 4,
               position: "relative",
               zIndex: 1,
             }}
           >
             {liveHr || "--"}
           </motion.div>
-          <div style={{ color: t3, fontSize: 12, letterSpacing: 0.5, marginBlockEnd: 32 }}>bpm</div>
+          <div style={{ color: t3, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, textTransform: "uppercase", marginBlockEnd: 14 }}>bpm</div>
 
-          {/* Finger-placement warning + paused indicator. El reloj está
-              congelado cuando paused=true → señalamos con texto claro. */}
-          {paused && (
+          {/* Comparación contextual — solo si hay datos previos. Da
+              motivación implícita sin distraer. Mono. */}
+          {(lastEntry || baselineRecent != null) && (
+            <div
+              style={{
+                display: "inline-flex",
+                gap: 18,
+                padding: "8px 14px",
+                background: withAlpha(t1, 4),
+                borderRadius: 8,
+                marginBlockEnd: 22,
+                fontFamily: MONO,
+                fontSize: 11,
+                color: t3,
+                letterSpacing: 0.3,
+              }}
+            >
+              {lastEntry && (
+                <span>
+                  Última <span style={{ color: t1, fontWeight: 700 }}>{Math.round(lastEntry.rmssd)} ms</span>
+                </span>
+              )}
+              {baselineRecent != null && (
+                <span>
+                  Baseline <span style={{ color: t1, fontWeight: 700 }}>{baselineRecent} ms</span>
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Estado: pausado o narrativa rotativa. Mutuamente exclusivos. */}
+          {paused ? (
             <div
               role="alert"
               style={{
@@ -777,7 +888,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 borderRadius: 999,
                 background: withAlpha(bioSignal.ignition, 15),
                 border: `1px solid ${withAlpha(bioSignal.ignition, 40)}`,
-                marginBlockEnd: 16,
+                marginBlockEnd: 18,
               }}
             >
               <span style={{ inlineSize: 8, blockSize: 8, borderRadius: "50%", background: bioSignal.ignition }} />
@@ -785,36 +896,69 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 Pausado — apoya el dedo para continuar
               </span>
             </div>
+          ) : (
+            narrative && (
+              <motion.p
+                key={stage}
+                initial={reduced ? { opacity: 1 } : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={reduced ? { duration: 0 } : { duration: 0.35, ease: "easeOut" }}
+                style={{
+                  fontSize: 12.5,
+                  color: t2,
+                  lineHeight: 1.55,
+                  fontStyle: "italic",
+                  marginBlockEnd: 18,
+                  maxInlineSize: 320,
+                  marginInline: "auto",
+                }}
+              >
+                {narrative}
+              </motion.p>
+            )
           )}
 
-          {/* Waveform sparkline */}
+          {/* Waveform — visualización pasiva del PPG. Label arriba para
+              que el usuario sepa qué está viendo. */}
           {live?.waveform && live.waveform.length > 10 && (
-            <Waveform values={live.waveform} color={brand.primary} height={48} />
-          )}
-
-          {/* SQI chip */}
-          {liveSqi && (
-            <div
-              aria-label={`Calidad de señal: ${liveSqi.band}, puntaje ${liveSqi.score}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "6px 12px",
-                borderRadius: 999,
-                background: withAlpha(sqiColor(liveSqi.band), 15),
-                border: `1px solid ${withAlpha(sqiColor(liveSqi.band), 40)}`,
-                marginBlockStart: 16,
-                marginBlockEnd: 24,
-              }}
-            >
-              <span style={{ inlineSize: 8, blockSize: 8, borderRadius: "50%", background: sqiColor(liveSqi.band) }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: t1, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                {sqiLabel(liveSqi.band)} · {liveSqi.score}
-              </span>
+            <div style={{ marginBlockEnd: 18 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 6, textAlign: "start" }}>
+                Tu pulso · señal en vivo
+              </div>
+              <Waveform values={live.waveform} color={brand.primary} height={48} />
             </div>
           )}
 
+          {/* SQI chip con HINT accionable. Antes solo decía "media · 65"
+              y el usuario no sabía qué hacer. */}
+          {liveSqi && (
+            <div style={{ marginBlockEnd: 26 }}>
+              <div
+                aria-label={`Calidad de señal: ${liveSqi.band}, puntaje ${liveSqi.score}`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  background: withAlpha(sqiColor(liveSqi.band), 15),
+                  border: `1px solid ${withAlpha(sqiColor(liveSqi.band), 40)}`,
+                }}
+              >
+                <span style={{ inlineSize: 8, blockSize: 8, borderRadius: "50%", background: sqiColor(liveSqi.band) }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: t1, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  Calidad: {sqiLabel(liveSqi.band)}
+                </span>
+              </div>
+              {sqiHint && (
+                <div style={{ fontSize: 11, color: t3, marginBlockStart: 6, lineHeight: 1.4, maxInlineSize: 320, marginInline: "auto" }}>
+                  {sqiHint}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Progress + tiempo */}
           <div
             role="progressbar"
             aria-valuemin={0}
@@ -825,8 +969,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               background: withAlpha(t3, 20),
               borderRadius: 2,
               overflow: "hidden",
-              marginBlockEnd: 10,
-              marginBlockStart: 16,
+              marginBlockEnd: 8,
             }}
           >
             <motion.div
@@ -836,51 +979,37 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               style={{ blockSize: "100%", background: brand.primary }}
             />
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 12, color: t3, marginBlockEnd: 32 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 11, color: t3, marginBlockEnd: 32 }}>
             <span>{formatTime(elapsedSec)}</span>
-            <span>{formatTime(FULL_DURATION_SEC)}</span>
+            <span style={{ color: t2 }}>de {formatTime(FULL_DURATION_SEC)}</span>
           </div>
 
-          {torchAvailable && (
-            <button
-              onClick={toggleTorch}
-              aria-pressed={torchOn}
-              aria-label={torchOn ? "Apagar flash" : "Encender flash"}
-              style={{
-                inlineSize: "100%",
-                minBlockSize: 40,
-                paddingBlock: 10,
-                background: "transparent",
-                color: t2,
-                border: `1px solid ${bd}`,
-                borderRadius: 10,
-                fontSize: 12,
-                cursor: "pointer",
-                marginBlockEnd: 12,
-              }}
-            >
-              {torchOn ? "Flash ON" : "Flash OFF"}
-            </button>
-          )}
-
+          {/* Sprint 76 — eliminado "Detener y guardar". Antes el botón
+              cambiaba a este texto después de 20s y permitía guardar
+              datos incompletos que contaminaban el histórico. Ahora SOLO
+              "Cancelar" hasta que la medición termine sola en 60s. */}
           <button
             onClick={handleStop}
-            aria-label="Detener medición antes de tiempo"
+            aria-label="Cancelar medición"
             style={{
-              inlineSize: "100%",
-              minBlockSize: 44,
-              paddingBlock: 12,
+              minInlineSize: 120,
+              paddingBlock: 10,
+              paddingInline: 18,
               background: "transparent",
               color: t3,
-              border: "none",
-              fontSize: 13,
+              border: `1px solid ${bd}`,
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: 0.3,
               cursor: "pointer",
             }}
           >
-            {elapsedSec >= 20 ? "Detener y guardar" : "Cancelar"}
+            Cancelar
           </button>
         </section>
-      )}
+        );
+      })()}
 
       {phase === "done" && finalResult?.hrv && (() => {
         // Compute trend & interpretation vs personal baseline (excludes
