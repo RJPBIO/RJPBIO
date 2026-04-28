@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 33; // Sprint 96 — fix bug: P3 @media block override stale del Sprint 83 hacía que displays P3 (iPhone 12+/MacBook M1+) ignoraran el dark theme Apple-grade del Sprint 95
+const CACHE_VERSION = 34; // Sprint 97 — fix REAL del dark theme: la PWA usa tokens.js JS palette no CSS vars, y ese palette seguía emerald-tinted hasta ahora
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

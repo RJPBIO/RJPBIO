@@ -183,23 +183,39 @@ export const alpha = {
   100: "FF",
 };
 
-// ─── Dim Theme (PWA only — emerald-undertone graphite) ────
-// Retains the legacy `dark` export name for back-compat with
-// /app/page.jsx call sites, but the palette is the "dim" family:
-// warm graphite with a trace of emerald so the brand color
-// (#059669) still reads as the star even in low-light mode.
+// ─── Dim Theme (PWA — Apple HIG-grade neutral dark) ──────
+// Sprint 97 — refactor crítico: este palette es lo que ve el USER en
+// la PWA dark mode. Los componentes hacen style={{background: dark.bg}}
+// con valores literales de aquí, bypass total de CSS vars.
+//
+// El palette previo era emerald-undertone heavy (bg #0A130E green-
+// tinted, surface verde, text-secondary pastel-verde #A7F3D0!) — user
+// reportó "verde raro, no es modo dark normal". Yo intenté fix en
+// CSS vars (Sprints 94/95/96) pero la PWA no las usa — los Sprints
+// no surtieron efecto porque la palette JS aquí seguía verde.
+//
+// Apple iOS 13+ / macOS Big Sur+ dark reference:
+//   systemBackground:           #000000
+//   secondarySystemBackground:  #1C1C1E  (systemGray6)
+//   tertiarySystemBackground:   #2C2C2E  (systemGray5)
+//   label.primary:              #FFFFFF
+//   label.secondary:            rgba(235,235,245,0.6)
+//   label.tertiary:             rgba(235,235,245,0.3)
+//
+// El brand cyan #22D3EE se mantiene como signal — viene via
+// bioSignal.phosphorCyan o el accent del orb. Bg neutral no compite.
 export const dark = {
-  bg:      "#0A130E",
-  card:    "#0F1B14",
-  surface: "#13231B",
-  border:  "#1A2922",
+  bg:      "#000000",   // pure black, OLED-optimal + max contrast cyan
+  card:    "#1C1C1E",   // Apple systemGray6
+  surface: "#2C2C2E",   // Apple systemGray5 (elevated chrome)
+  border:  "rgba(255, 255, 255, 0.08)", // Apple separator opacity
   text: {
-    primary:   "#E6F1EA",
-    secondary: "#A7F3D0",
-    muted:     "#8FA598",
+    primary:   "#FFFFFF",
+    secondary: "rgba(235, 235, 245, 0.6)", // Apple label.secondary
+    muted:     "rgba(235, 235, 245, 0.3)", // Apple label.tertiary
   },
-  overlay: "rgba(10, 19, 14, 0.96)",
-  glass:   "rgba(15, 27, 20, 0.92)",
+  overlay: "rgba(0, 0, 0, 0.96)",
+  glass:   "rgba(28, 28, 30, 0.92)", // glassmorphism over surface gray
 };
 
 // ─── Light Theme ─────────────────────────────────────────
