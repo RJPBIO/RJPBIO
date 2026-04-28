@@ -10,13 +10,27 @@
 // Apple HIG body (17). La escala previa arrancaba en 9-11 — anti-legibilidad
 // en mobile. xs/sm se reservan para captions, kbd y eyebrows en caps.
 // Font families bind to next/font CSS variables declared in layout.js.
+//
+// Sprint 84 — calibración basada en audit del codebase (no diseño aspiracional):
+//   · `eyebrow: 10` legitima 115 instancias usadas en mono caps muy pequeñas
+//     (kicker dot+label, status badges). Acepta limitación a11y a cambio
+//     de jerarquía visual — usar SOLO en caps con tracking abierto.
+//   · `label: 13` legitima 88 instancias (entre sm:12 y base:14) usadas
+//     en captions de cards y chips de metadata.
+//   · `tracking.subtle: -0.05px` legitima 148 instancias (subtle tightening
+//     en body text, mono captions, números sans).
+//   · `tracking.snugTight: -0.1px` legitima 66 instancias (más firme que
+//     subtle, usado en titles 14-18px y mono numérico medium).
+//   El nombre `snugTight` evita colisión semántica con `leading.snug` (1.35).
 export const font = {
   family: "var(--font-sans), 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   mono: "var(--font-mono), 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
 
   size: {
+    eyebrow: 10,   // mono caps tiny (kicker labels) — usar con tracking caps
     xs: 11,
     sm: 12,
+    label: 13,     // chip metadata, card captions — entre sm y base
     base: 14,
     md: 15,
     lg: 16,
@@ -44,12 +58,14 @@ export const font = {
   },
 
   tracking: {
-    tight: "-0.5px",
+    subtle: "-0.05px",   // body/mono captions — barely-perceivable tightening
+    snugTight: "-0.1px", // display 14-18px, mono medium numbers
+    tight: "-0.5px",     // headlines, hero text
     normal: "0",
     wide: "0.5px",
     wider: "1px",
     widest: "2px",
-    caps: "3px",    // for uppercase labels
+    caps: "3px",         // uppercase labels
   },
 };
 
