@@ -103,6 +103,26 @@ model User {
   dsarRequests DsarRequest[] @relation("DsarRequester")
   dsarResolutions DsarRequest[] @relation("DsarResolver")
   notifications Notification[] @relation("UserNotifications")
+  pushSubscriptions PushSubscription[]
+}
+
+// Sprint 91 — Web Push subscriptions persistidas para que el server
+// pueda enviar push notifications. Antes el endpoint /api/push/resubscribe
+// era no-op y subscribePush() del client no posteaba a server →
+// feature de push notifications era teatro (UI permitía toggle pero
+// el server nunca tenía endpoints registrados).
+model PushSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  endpoint    String   @unique
+  p256dh      String   // public key (Base64URL)
+  authKey     String   // shared secret (Base64URL) — column "authKey" porque "auth" es palabra reservada
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Sprint 8 — DB-backed sessions para visibilidad + remote revoke con

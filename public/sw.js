@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 29; // Sprint 85 — Apple HIG sweep: opentype features + reduced-transparency + iOS PWA splash screens (15 sizes)
+const CACHE_VERSION = 30; // Sprint 91 — pushsubscriptionchange handler ahora envía oldEndpoint para que el server reasigne sub antes-vs-después al mismo user
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -183,10 +183,21 @@ self.addEventListener("notificationclick", (e) => {
 });
 
 self.addEventListener("pushsubscriptionchange", (e) => {
+  // Sprint 91 — el evento incluye `oldSubscription` que el server usa
+  // para identificar al user (y borrar la entry obsoleta). Sin esto
+  // el server no puede reasignar — orphan resubscribe.
+  const oldEndpoint = e.oldSubscription?.endpoint || null;
   e.waitUntil((async () => {
     try {
-      const sub = await self.registration.pushManager.subscribe({ userVisibleOnly: true });
-      await fetch("/api/push/resubscribe", { method: "POST", body: JSON.stringify(sub), headers: { "Content-Type": "application/json" } });
+      const newSub = await self.registration.pushManager.subscribe({ userVisibleOnly: true });
+      await fetch("/api/push/resubscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          oldEndpoint,
+          newSubscription: newSub.toJSON ? newSub.toJSON() : newSub,
+        }),
+      });
     } catch {}
   })());
 });

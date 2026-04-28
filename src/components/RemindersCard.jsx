@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useStore } from "../store/useStore";
 import {
   requestPushPermission, subscribePush, unsubscribePush, scheduleLocalReminder,
+  registerPeriodicReminder, unregisterPeriodicReminder,
 } from "../lib/push";
 import { toast } from "./ui/Toast";
 import { resolveTheme, withAlpha, font, space, radius } from "../lib/theme";
@@ -74,6 +75,11 @@ export default function RemindersCard({ isDark = true, ac = "#10B981" }) {
         return;
       }
       try { await subscribePush(); } catch { /* noop */ }
+      // Sprint 91 — registrar periodicSync como capa adicional para PWA
+      // instalada (browser dispara SW handler bio-daily-reminder ~24h
+      // independiente de tab abierto). Plus el setTimeout-fallback si
+      // user mantiene tab abierto.
+      try { await registerPeriodicReminder(); } catch { /* noop */ }
       update({ remindersEnabled: true });
       scheduleLocalReminder({ hour, minute });
       toast.success(`Te recordaré a las ${formatHM(hour, minute)}`);
@@ -86,6 +92,7 @@ export default function RemindersCard({ isDark = true, ac = "#10B981" }) {
     setBusy(true);
     try {
       try { await unsubscribePush(); } catch { /* noop */ }
+      try { await unregisterPeriodicReminder(); } catch { /* noop */ }
       update({ remindersEnabled: false });
       toast.info("Recordatorios desactivados");
     } finally {
