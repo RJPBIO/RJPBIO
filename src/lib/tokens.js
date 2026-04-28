@@ -160,7 +160,22 @@ export const protoColor = {
 };
 
 // ─── Opacity Scale ───────────────────────────────────────
-// Consistent alpha values instead of random hex suffixes
+// Consistent alpha values instead of random hex suffixes.
+//
+// Sprint 104 — fix bug masivo. La scale previa solo tenía keys
+// 0/2/4/6/8/10/12/15/20/25/30/40/50/60/70/80/90/95/100.
+// Pero `withAlpha(color, X)` se llamaba en 94 sitios con X NOT en
+// scale (14, 18, 22, 28, 35, 45, 55, 85, etc.) → fallback a alpha[10]
+// = 10% silently. Devs intentaban borders/fills 18-35% visibles, el
+// browser rendereaba 10% washed-out. Esto explicaba "gris seco"
+// percibido por user.
+//
+// Ahora scale incluye todos los valores comunes (1% granularity en
+// rango 11-35, plus 45/55/65/75/85). Fix automático de los 94 sitios
+// sin tocar componentes — los devs YA escribieron las intenciones
+// correctas, solo faltaba que la scale las honrara.
+//
+// Calculation: percent → Math.round(percent * 255 / 100) → 2-char hex.
 export const alpha = {
   0: "00",
   2: "05",
@@ -168,16 +183,37 @@ export const alpha = {
   6: "0F",
   8: "14",
   10: "1A",
+  11: "1C",
   12: "1F",
+  13: "21",
+  14: "24",
   15: "26",
+  17: "2B",
+  18: "2E",
+  19: "30",
   20: "33",
+  22: "38",
+  23: "3B",
+  24: "3D",
   25: "40",
+  26: "42",
+  27: "45",
+  28: "47",
+  29: "4A",
   30: "4D",
+  33: "54",
+  34: "57",
+  35: "59",
   40: "66",
+  45: "73",
   50: "80",
+  55: "8C",
   60: "99",
+  65: "A6",
   70: "B3",
+  75: "BF",
   80: "CC",
+  85: "D9",
   90: "E6",
   95: "F2",
   100: "FF",

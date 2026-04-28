@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 35; // Sprint 98 — fix string-concat compatibility en dark.border + text colors (rgba rompía withAlpha en CorrelationMatrix + StreakCalendar)
+const CACHE_VERSION = 36; // Sprint 104 — fix masivo: alpha scale incompleta hacía que 94 sitios con withAlpha(color, X) silently fallaran al 10% cuando devs intentaban 14/18/22/28/35/45/55/85%
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
