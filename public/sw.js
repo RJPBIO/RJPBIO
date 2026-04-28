@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 38; // Sprint 101 — Apple Health pattern: icon containers 36px circulares con bg fill saturado category color en ProfileView (cards eran muy grises, icons 14px sobre bg neutral invisibles)
+const CACHE_VERSION = 39; // Sprint 102 — color sweep masivo: stats cards (ProfileView+DashboardView) + trio /app con bg+border tinted en category color; era "todo gris seco" sobre bg Apple-grade neutral
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

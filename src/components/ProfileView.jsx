@@ -188,29 +188,48 @@ export default function ProfileView({
             background: withAlpha(ac, 6),
           }}
         />
+        {/* Sprint 102 — Apple Fitness pattern. Stats con icon container
+            circular saturado + número grande color category + label
+            visible. Antes: 14px icon casi invisible + label en t3 muted
+            (#48484A) que se perdía sobre bg neutral = "gris seco". */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBlockEnd: 14 }}>
           {[
-            { v: totalSessions, l: "Sesiones", c: ac, ic: "bolt" },
+            { v: totalSessions, l: "Sesiones", c: bioSignal.phosphorCyan, ic: "bolt" },
             {
               v: `${Math.floor((st.totalTime || 0) / 3600)}h${Math.floor(((st.totalTime || 0) % 3600) / 60)}m`,
               l: "Tiempo",
-              c: t1,
+              c: "#A78BFA", // violet-400 — distintivo, no neutral
               ic: "clock",
             },
-            { v: streak, l: "Racha", c: semantic.warning, ic: "fire" },
+            { v: streak, l: "Racha", c: "#F59E0B", ic: "fire" },
           ].map((m, i) => (
             <div
               key={i}
               role="group"
               aria-label={`${m.l}: ${m.v}`}
-              style={{ textAlign: "center", padding: 8, background: subtle, borderRadius: 14 }}
+              style={{
+                textAlign: "center",
+                padding: "10px 8px",
+                background: withAlpha(m.c, 6),
+                borderRadius: 14,
+                border: `1px solid ${withAlpha(m.c, 18)}`,
+              }}
             >
-              <Icon name={m.ic} size={14} color={m.c} aria-hidden="true" />
+              <div style={{
+                inlineSize: 32, blockSize: 32, borderRadius: "50%",
+                background: withAlpha(m.c, 22),
+                display: "flex", alignItems: "center", justifyContent: "center",
+                margin: "0 auto 6px",
+              }}>
+                <Icon name={m.ic} size={16} color={m.c} aria-hidden="true" />
+              </div>
               <div style={ty.metric(m.c, font.size["2xl"])}>{m.v}</div>
               <div
                 style={{
-                  ...sectionLabel(t3),
                   fontSize: font.size.xs,
+                  fontWeight: 600,
+                  color: t2,
+                  letterSpacing: -0.05,
                   marginBlockStart: 3,
                 }}
               >

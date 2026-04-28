@@ -1336,27 +1336,33 @@ export default function BioIgnicion(){
         Sprint 78: ahora secondary access debajo del Daily Ignición.
         Su rol es atajo a protocolos específicos (suspiro / HRV / NSDR)
         cuando el user no quiere el daily auto-recomendado. */}
-    {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="calm" size={14} color={protoColor.calma}/>
-        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
-        <span style={{fontSize:8,color:t3}}>60s · calma</span>
+    {/* Sprint 102 — Apple Health pattern para trio. Antes: icon 14px
+        sobre cd neutral con border bd = invisible. Ahora: icon container
+        circular 36px en category color saturado + border tinted.
+        Cada acción comunica su intent a la primera mirada. */}
+    {ts==="idle"&&<div style={{display:"flex",gap:8,marginBottom:14}}>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${withAlpha(protoColor.calma,18)}`,background:withAlpha(protoColor.calma,5),cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+        <div style={{inlineSize:36,blockSize:36,borderRadius:"50%",background:withAlpha(protoColor.calma,22),display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Icon name="calm" size={18} color={protoColor.calma}/>
+        </div>
+        <span style={{fontSize:10,fontWeight:800,color:protoColor.calma,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
+        <span style={{fontSize:9,color:t2,fontWeight:600}}>60s · calma</span>
       </motion.button>
-      {/* Sprint 73 — el caption ahora refleja la última medición si existe.
-          Antes mostraba siempre "1 min · cámara" — el user no veía
-          confirmación de que su medición había persistido. Ahora ve
-          "RMSSD 45 ms · hace 2h" inmediatamente, mismo botón. */}
       {(()=>{const lastHrv=(st.hrvLog||[]).slice(-1)[0];const ageMs=lastHrv?Date.now()-lastHrv.ts:null;const ageLabel=ageMs==null?"1 min · cámara":ageMs<60000?"hace un momento":ageMs<3600000?`hace ${Math.round(ageMs/60000)} min`:ageMs<86400000?`hace ${Math.round(ageMs/3600000)} h`:`hace ${Math.round(ageMs/86400000)} d`;const caption=lastHrv?`${Math.round(lastHrv.rmssd)} ms · ${ageLabel}`:"1 min · cámara";return(
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRVCam(true);H("tap");}} aria-label={lastHrv?`Última HRV ${Math.round(lastHrv.rmssd)} ms · medir de nuevo`:"Medir HRV con la cámara"} style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="predict" size={14} color={protoColor.enfoque}/>
-        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
-        <span style={{fontSize:8,color:t3}}>{caption}</span>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRVCam(true);H("tap");}} aria-label={lastHrv?`Última HRV ${Math.round(lastHrv.rmssd)} ms · medir de nuevo`:"Medir HRV con la cámara"} style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${withAlpha(protoColor.enfoque,18)}`,background:withAlpha(protoColor.enfoque,5),cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+        <div style={{inlineSize:36,blockSize:36,borderRadius:"50%",background:withAlpha(protoColor.enfoque,22),display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Icon name="predict" size={18} color={protoColor.enfoque}/>
+        </div>
+        <span style={{fontSize:10,fontWeight:800,color:protoColor.enfoque,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
+        <span style={{fontSize:9,color:t2,fontWeight:600}}>{caption}</span>
       </motion.button>
       );})()}
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-        <Icon name="mind" size={14} color={protoColor.reset}/>
-        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>
-        <span style={{fontSize:8,color:t3}}>10 min · reset</span>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${withAlpha(protoColor.reset,18)}`,background:withAlpha(protoColor.reset,5),cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+        <div style={{inlineSize:36,blockSize:36,borderRadius:"50%",background:withAlpha(protoColor.reset,22),display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Icon name="mind" size={18} color={protoColor.reset}/>
+        </div>
+        <span style={{fontSize:10,fontWeight:800,color:protoColor.reset,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>
+        <span style={{fontSize:9,color:t2,fontWeight:600}}>10 min · reset</span>
       </motion.button>
     </div>}
 
