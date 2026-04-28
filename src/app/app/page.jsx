@@ -78,6 +78,7 @@ const HistorySheet = dynamic(() => import("@/components/HistorySheet"), { ssr: f
 const ProtocolSelector = dynamic(() => import("@/components/ProtocolSelector"), { ssr: false });
 const HRVMonitor = dynamic(() => import("@/components/HRVMonitor"), { ssr: false });
 const HRVCameraMeasure = dynamic(() => import("@/components/HRVCameraMeasure"), { ssr: false });
+const HRVHistoryPanel = dynamic(() => import("@/components/HRVHistoryPanel"), { ssr: false });
 const PhysiologicalSigh = dynamic(() => import("@/components/PhysiologicalSigh"), { ssr: false });
 const NSDR = dynamic(() => import("@/components/NSDR"), { ssr: false });
 const ChronotypeTest = dynamic(() => import("@/components/ChronotypeTest"), { ssr: false });
@@ -143,6 +144,7 @@ export default function BioIgnicion(){
   const[showMore,setShowMore]=useState(false);
   const[showHRV,setShowHRV]=useState(false);
   const[showHRVCam,setShowHRVCam]=useState(false);
+  const[showHRVHistory,setShowHRVHistory]=useState(false);
   const[showSigh,setShowSigh]=useState(false);
   const[showNSDR,setShowNSDR]=useState(false);
   const[showChronoTest,setShowChronoTest]=useState(false);
@@ -1076,6 +1078,7 @@ export default function BioIgnicion(){
   {/* ═══ BIONEURAL MODALS ═══ */}
   <HRVMonitor show={showHRV} isDark={isDark} onClose={()=>setShowHRV(false)} onComplete={(entry)=>{store.logHRV(entry);setSt_(useStore.getState());}}/>
   <HRVCameraMeasure show={showHRVCam} isDark={isDark} onClose={()=>setShowHRVCam(false)} onComplete={(entry)=>{store.logHRV(entry);setSt_(useStore.getState());}} onUseBLE={()=>setShowHRV(true)}/>
+  <HRVHistoryPanel show={showHRVHistory} isDark={isDark} hrvLog={st.hrvLog} onClose={()=>setShowHRVHistory(false)} onMeasureNew={()=>setShowHRVCam(true)}/>
   <PhysiologicalSigh show={showSigh} isDark={isDark} onClose={()=>setShowSigh(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
   <NSDR show={showNSDR} isDark={isDark} onClose={()=>setShowNSDR(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
   <ChronotypeTest show={showChronoTest} isDark={isDark} onClose={()=>setShowChronoTest(false)} onComplete={(ct)=>{store.setChronotype(ct);setSt_(useStore.getState());}}/>
@@ -1255,6 +1258,15 @@ export default function BioIgnicion(){
         <span style={{fontSize:8,color:t3}}>10 min · reset</span>
       </motion.button>
     </div>}
+
+    {/* Sprint 74 — link "Ver histórico HRV" debajo del trío. Solo aparece
+        si hay ≥1 medición. Abre HRVHistoryPanel con stats + sparkline +
+        tabla comparativa. Discreto: text-only, no compite con los CTA
+        principales pero da entrada clara al historial. */}
+    {ts==="idle"&&(st.hrvLog||[]).length>0&&<button type="button" onClick={()=>{setShowHRVHistory(true);H("tap");}} aria-label="Ver historial HRV" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,inlineSize:"100%",paddingBlock:6,paddingInline:8,marginBlockStart:-6,marginBlockEnd:14,background:"transparent",border:"none",color:t3,fontSize:10,fontWeight:600,letterSpacing:0.4,textTransform:"uppercase",cursor:"pointer"}}>
+      <Icon name="predict" size={11} color={t3}/>
+      Ver histórico HRV ({(st.hrvLog||[]).length} {(st.hrvLog||[]).length===1?"medición":"mediciones"})
+    </button>}
 
     {/* Daily Ignición with AI reasoning */}
     {ts==="idle"&&<motion.button whileTap={{scale:.97}} onClick={()=>sp(daily.proto)} style={{width:"100%",padding:"16px 14px",marginBottom:14,borderRadius:18,border:`1.5px solid ${daily.proto.cl}20`,background:`linear-gradient(135deg,${daily.proto.cl}06,${daily.proto.cl}02)`,cursor:"pointer",textAlign:"left",display:"flex",gap:12,alignItems:"center",position:"relative",overflow:"hidden"}}>

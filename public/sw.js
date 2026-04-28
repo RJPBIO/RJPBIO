@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 23; // Sprint 73 — fix HRV save flow (saveNow flush + botón Continuar + caption última medición)
+const CACHE_VERSION = 24; // Sprint 74 — HRVHistoryPanel: stats + sparkline + tabla comparativa de mediciones
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
