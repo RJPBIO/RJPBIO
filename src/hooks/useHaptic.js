@@ -26,10 +26,14 @@
 import { useCallback } from "react";
 import { useStore } from "../store/useStore";
 
+// Sprint 72: piso 30ms en pulsos individuales. Antes tap:10 / beat:15
+// quedaban por debajo del umbral perceptual del motor háptico de
+// teléfonos modernos (≈ 20-30ms). El user reportaba "no vibran los
+// teléfonos" — éste era uno de los culpables.
 const PATTERNS = {
-  tap: 10,
-  beat: 15,
-  ok: [20, 40, 20],
+  tap: 30,
+  beat: 30,
+  ok: [40, 40, 40],
   warn: [40, 60, 40],
   success: [40, 60, 40, 60, 80],
   error: 100,
@@ -45,8 +49,9 @@ export function useHaptic() {
       const p = typeof pattern === "string" ? PATTERNS[pattern] : pattern;
       if (p == null) return false;
       try {
-        navigator.vibrate(p);
-        return true;
+        // navigator.vibrate retorna true si se disparó, false si bloqueado
+        // (ej. iOS Safari, modo silencio absoluto en algunos Android).
+        return navigator.vibrate(p) === true;
       } catch {
         return false;
       }

@@ -124,25 +124,68 @@ export function setHapticFallback(fn) {
 }
 
 // Wrapper único — todos los audio.js vibrate calls deben usar esto.
+//
+// Sprint 72: piso de 30ms en duraciones (Math.max(30, ...)). Antes el
+// piso era 1ms — pulsos de 5-12ms son técnicamente válidos pero el
+// motor háptico de teléfonos modernos no los registra (umbral perceptual
+// ≈ 20-30ms en literatura UX). Con hapticIntensity=light (0.6x) los
+// pulsos quedaban en 3-7ms = invisibles. Ahora cualquier pulso entrante
+// se redondea a 30ms mínimo después del scaling.
+//
+// Retorna boolean: true si la vibración se disparó realmente, false
+// si el device no soporta o el user la desactivó. Útil para
+// diagnóstico desde SettingsSheet ("Probar vibración").
 function vibrate(pattern) {
-  if (!_hapticEnabled) return;
+  if (!_hapticEnabled) return false;
   // Si el device tiene vibrate API, lo usamos. Si no, fallback visual.
   if (typeof navigator !== "undefined" && navigator.vibrate) {
     try {
+      let result;
       if (typeof pattern === "number") {
-        navigator.vibrate(Math.max(1, Math.round(pattern * _hapticIntensity)));
+        const scaled = Math.round(pattern * _hapticIntensity);
+        result = navigator.vibrate(Math.max(30, scaled));
       } else if (Array.isArray(pattern)) {
-        navigator.vibrate(pattern.map((d, i) => i % 2 === 0 ? Math.max(1, Math.round(d * _hapticIntensity)) : d));
+        // Índices pares = duraciones (vibran), impares = pausas.
+        // Pausas no tocan el piso de 30ms — preservan ritmo del patrón.
+        const adjusted = pattern.map((d, i) =>
+          i % 2 === 0 ? Math.max(30, Math.round(d * _hapticIntensity)) : d
+        );
+        result = navigator.vibrate(adjusted);
       } else {
-        navigator.vibrate(pattern);
+        result = navigator.vibrate(pattern);
       }
-    } catch (e) {}
-    return;
+      return result === true;
+    } catch (e) {
+      return false;
+    }
   }
   // Fallback: dispatch al callback registrado (visual flash en page.jsx)
   if (_hapticFallback) {
     try { _hapticFallback(pattern); } catch (e) {}
   }
+  return false;
+}
+
+// Diagnóstico — el SettingsSheet expone un botón "Probar vibración"
+// que llama a esto. Devuelve estado del API + resultado del intento.
+export function diagnoseHaptic() {
+  const supported = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+  const enabled = _hapticEnabled;
+  if (!supported) return { supported: false, enabled, fired: false, reason: "device_no_support" };
+  if (!enabled) return { supported: true, enabled: false, fired: false, reason: "user_disabled" };
+  let fired = false;
+  try {
+    // Patrón obvio de prueba: 200ms · pausa 100 · 200ms · pausa 100 · 400ms
+    fired = navigator.vibrate([200, 100, 200, 100, 400]) === true;
+  } catch (e) {
+    fired = false;
+  }
+  return {
+    supported: true,
+    enabled: true,
+    fired,
+    reason: fired ? null : "blocked_by_browser_or_silent_mode",
+  };
 }
 
 export function setMasterVolume(v) {
@@ -1137,11 +1180,14 @@ export function stopBinaural() {
 // _hapticIntensity (settings.hapticIntensity).
 export function hap(t, sO, hO) {
   if (hO !== false) {
-    if (t === "go") vibrate([20, 40, 20]);
-    else if (t === "ph") vibrate(12);
+    // Sprint 72: pulsos cortos (5/8/12 ms) eran imperceptibles. Subidos
+    // a 30ms — el wrapper vibrate() ya hace Math.max(30) defensivo
+    // pero declaramos arriba para que el código sea explícito.
+    if (t === "go") vibrate([40, 40, 40]);
+    else if (t === "ph") vibrate(35);
     else if (t === "ok") vibrate([40, 60, 40, 60, 80]);
-    else if (t === "tick") vibrate(5);
-    else if (t === "tap") vibrate(8);
+    else if (t === "tick") vibrate(30);
+    else if (t === "tap") vibrate(35);
   }
   if (sO !== false) {
     try {
@@ -1176,44 +1222,48 @@ export function hapticPhase(type) {
 // MANTÉN: dos golpes firmes con silencio largo entre.
 // SOSTÉN/VACÍO: pulsos mínimos perceptibles + gaps largos.
 export function hapticBreath(label) {
+  // Sprint 72: piso 30ms (antes 12-14ms en pulsos cortos = invisibles).
+  // El gradient ascendente/descendente se preserva con rangos 30→55ms.
   if (label === "INHALA") {
-    // 6 pulsos crecientes 12→32ms, ~250ms total
-    vibrate([12, 35, 16, 30, 20, 25, 24, 20, 28, 15, 32]);
+    // 6 pulsos crecientes 30→55ms (rango más estrecho pero PERCEPTIBLE)
+    vibrate([30, 35, 35, 30, 40, 25, 45, 20, 50, 15, 55]);
   } else if (label === "EXHALA") {
-    // 6 pulsos decrecientes 32→12ms (espejo)
-    vibrate([32, 15, 28, 20, 24, 25, 20, 30, 16, 35, 12]);
+    // 6 pulsos decrecientes 55→30ms (espejo)
+    vibrate([55, 15, 50, 20, 45, 25, 40, 30, 35, 35, 30]);
   } else if (label === "MANTÉN") {
     // Dos golpes firmes con silencio sostenido — freeze cue
-    vibrate([20, 80, 20]);
+    vibrate([35, 80, 35]);
   } else {
-    // SOSTÉN/VACÍO — barely-there pero perceptible
-    vibrate([14, 100, 14]);
+    // SOSTÉN/VACÍO — barely-there pero perceptible (≥30ms)
+    vibrate([30, 100, 30]);
   }
 }
 
 // ─── Haptic Firma ─────────────────────────────────────────
 export function hapticSignature(kind) {
-  if (kind === "ignition") vibrate([18, 30, 26, 20, 40, 40, 100]);
+  // Sprint 72: piso 30ms (ignition tenía 18ms primer pulso = invisible).
+  if (kind === "ignition") vibrate([35, 30, 35, 20, 40, 40, 100]);
   else if (kind === "checkpoint") vibrate([50, 50, 50]);
-  else if (kind === "phaseShift") vibrate([12, 18, 24]);
-  else if (kind === "award") vibrate([30, 40, 30, 40, 90]);
-  else vibrate(15);
+  else if (kind === "phaseShift") vibrate([30, 18, 35]);
+  else if (kind === "award") vibrate([35, 40, 35, 40, 90]);
+  else vibrate(35);
 }
 
 export function hapticPreShift() {
-  vibrate([6, 40, 10]);
+  // Sprint 72: 6ms primer pulso era invisible. 30ms ahora.
+  vibrate([30, 40, 35]);
 }
 
 // Countdown gradient — escalada de tensión 3→2→1.
-// Piso 14ms para garantizar perceptibilidad en motor háptico.
+// Sprint 72: piso 30ms (antes 14-16-18ms primer pulso = invisible).
 //   Step 3: tap suave + eco (anticipation suave)
 //   Step 2: 3 pulsos crecientes (tensión sube)
 //   Step 1: anticipation crescendo + golpe + follow-through
 //          (cinematográfico: el cuerpo se prepara para GO)
 export function hapticCountdown(step) {
-  if (step === 3) vibrate([14, 30, 18]);
-  else if (step === 2) vibrate([16, 20, 22, 15, 28]);
-  else if (step === 1) vibrate([18, 25, 24, 20, 30, 60, 36, 25, 44]);
+  if (step === 3) vibrate([30, 30, 35]);
+  else if (step === 2) vibrate([30, 20, 35, 15, 40]);
+  else if (step === 1) vibrate([30, 25, 35, 20, 40, 60, 45, 25, 55]);
 }
 
 // Tick auditivo del countdown — nota de cristal breve, sine pura,
