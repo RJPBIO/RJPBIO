@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 31; // Sprint 94 — dark theme refactor: emerald-tinted → cyan-aligned (matches phosphorCyan brand DNA del PWA)
+const CACHE_VERSION = 32; // Sprint 95 — dark theme Apple HIG-grade: pure black bg + 3 niveles de elevación (Apple systemGray6/5) + label hierarchy via rgba opacity
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

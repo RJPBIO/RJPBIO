@@ -133,46 +133,59 @@ html.theme-light {
   --bi-focus-ring: var(--focus-ring);
 }
 
-/* "Dim" — brand night palette for the PWA. Sprint 94 — refactor:
-   antes el palette tenía undertone emerald HEAVY (bg #0A130E green-
-   tinted, surface verde, text-dim pastel-verde #A7F3D0!, accent emerald
-   #10B981). Pero project_brand_palette_dna.md establece que phosphorCyan
-   es la señal brand-defining del PWA, NO emerald. Resultado: orb cyan +
-   CTAs cyan + bg verde = discordante, "verde raro" perceptible.
+/* "Dim" — brand night palette for the PWA. Sprint 95 — Apple HIG-grade
+   refactor (post-Sprint 94 que era cyan-aligned pero no Apple-grade).
+   El user reportó que sigue sintiéndose "raro, no normal" — diagnóstico:
+     1. bg #0A0F14 tenía subtle cyan-blue tint. Apple iOS dark es negro
+        neutral o puro #000000.
+     2. surface #0F141B en algunos casos era MÁS OSCURO que el bg —
+        violación regla Apple: surface SIEMPRE más clara (elevation).
+     3. text-dim/muted slate-400/500 con tint cyan. Apple usa rgba
+        white con opacity para neutralidad cromática.
+     4. Sin 3 niveles de elevación claros (bg → surface → surface-2).
 
-   Ahora: dark-neutral con subtle cyan undertone. El brand identity sigue
-   ahí (surface-2 cyan tint + accent cyan + focus ring cyan) pero el fondo
-   no compite con la señal cyan. Slate gray para text-dim/muted (legible,
-   no verde). WCAG AA verificado en todos los pares.
+   Reference Apple iOS 13+ / macOS Big Sur+ dark:
+     systemBackground:           #000000  (pure black, OLED-optimal)
+     secondarySystemBackground:  #1C1C1E  (systemGray6)
+     tertiarySystemBackground:   #2C2C2E  (systemGray5)
+     separator:                  rgba(255,255,255,0.08)
+     label.primary:              #FFFFFF
+     label.secondary:            rgba(235,235,245,0.6)
+     label.tertiary:             rgba(235,235,245,0.3)
+     label.quaternary:           rgba(235,235,245,0.18)
 
-   Nota legacy: --bi-emerald sigue disponible para protocolos "calma" via
-   tokens.js protoColor.calma. Esto solo afecta el theme accent base. */
+   Reglas Apple cumplidas:
+     · bg pure black para OLED battery + máximo contrast del cyan
+     · surfaces ASCIENDEN en brightness con elevation
+     · text usa opacity-based blanco, no slate tinted
+     · separators casi invisibles (~8% white)
+     · brand cyan accent se preserva (NO compite con neutral bg)         */
 html.theme-dark, html.theme-dim {
-  /* Background — neutral dark, no green tint */
-  --bi-bg: #0A0F14;
-  --bi-surface: #0F141B;
-  --bi-surface-2: rgba(34, 211, 238, 0.05); /* cyan 5% — brand signature subtle */
+  /* Background — pure black + elevation tiers. Apple systemGray6/5. */
+  --bi-bg: #000000;
+  --bi-surface: #1C1C1E;
+  --bi-surface-2: #2C2C2E;
 
-  /* Borders — slate dark, no green */
-  --bi-border: #1A2230;
-  --bi-border-strong: #26303C;
+  /* Borders/separators — opacity-based white para neutralidad. */
+  --bi-border: rgba(255, 255, 255, 0.08);
+  --bi-border-strong: rgba(255, 255, 255, 0.16);
 
-  /* Text — neutral white + slate grays (no más pastel verde body text) */
-  --bi-text: #E8ECF4;
-  --bi-text-dim: #94A3B8;     /* slate-400 (was #A7F3D0 pastel-emerald) */
-  --bi-text-muted: #64748B;   /* slate-500 (was #8FA598 green-gray) */
+  /* Text — Apple label hierarchy via rgba. Pure white primary + opacity steps. */
+  --bi-text: #FFFFFF;
+  --bi-text-dim: rgba(235, 235, 245, 0.6);    /* label.secondary */
+  --bi-text-muted: rgba(235, 235, 245, 0.3);  /* label.tertiary */
 
-  /* Accent — phosphorCyan, brand-defining signal del PWA */
-  --bi-accent: var(--bi-phosphor-cyan); /* #22D3EE base; P3 boost en displays modernos */
-  --bi-link: #67E8F9;          /* cyan-300 — alta contrast en dark, AAA */
-  --bi-accent-soft: rgba(34, 211, 238, 0.10);
-  --bi-accent-ink: #053342;    /* cyan-900 — texto sobre cyan accent */
+  /* Accent — phosphorCyan brand-defining signal. P3 boost via :root override. */
+  --bi-accent: var(--bi-phosphor-cyan);
+  --bi-link: #67E8F9;          /* cyan-300, AAA en black bg */
+  --bi-accent-soft: rgba(34, 211, 238, 0.12);
+  --bi-accent-ink: #053342;
 
   --bi-focus-ring: var(--focus-ring-inverse);
 }
 
-/* P3 wide-gamut override para dark theme — el brand cyan en OLED se ve
-   ~25-30% más eléctrico. Mismo patrón que :root pero scope al tema. */
+/* P3 wide-gamut override para link en dark theme (cyan-300 más eléctrico
+   en OLED). El --bi-accent ya está en color(display-p3) via :root P3 block. */
 @media (color-gamut: p3) {
   html.theme-dark, html.theme-dim {
     --bi-link: color(display-p3 0.404 0.910 0.976);
