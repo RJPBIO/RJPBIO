@@ -103,10 +103,13 @@
     --bi-warn: color(display-p3 0.851 0.467 0.024);
     --bi-danger: color(display-p3 0.863 0.149 0.149);
   }
-  html.theme-dark, html.theme-dim {
-    --bi-accent: color(display-p3 0.063 0.725 0.506);
-    --bi-text-dim: color(display-p3 0.655 0.953 0.816);
-  }
+  /* Sprint 95 — REMOVED el override stale del theme-dim que dejaba
+     --bi-accent emerald-P3 + --bi-text-dim pastel-emerald-P3 en
+     displays modernos. Era el fix Sprint 83 calibrado contra el theme
+     emerald-undertone, pero el theme cambió a Apple-grade neutral en
+     Sprint 95. Ahora --bi-accent en theme-dim referencia --bi-phosphor-cyan
+     que ya tiene su propio P3 override más arriba; --bi-text-dim es
+     rgba opacity-based (no necesita conversion P3). */
 }
 
 /* Public/marketing pages = light-only (single brand identity). No

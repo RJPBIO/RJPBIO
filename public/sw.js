@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 32; // Sprint 95 — dark theme Apple HIG-grade: pure black bg + 3 niveles de elevación (Apple systemGray6/5) + label hierarchy via rgba opacity
+const CACHE_VERSION = 33; // Sprint 96 — fix bug: P3 @media block override stale del Sprint 83 hacía que displays P3 (iPhone 12+/MacBook M1+) ignoraran el dark theme Apple-grade del Sprint 95
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
