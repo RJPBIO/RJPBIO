@@ -1558,29 +1558,31 @@ export default function BioIgnicion(){
       const readinessMeta=({optimal:"óptimo",primed:"elevado",neutral:"neutral",recover:"bajo"})[rInt];
       const showPred=prediction&&prediction.confidence>=50&&prediction.predictedDelta>0;
       const optHour=optimalTime?.best?.hour;
+      // Sprint 103 — adaptive strip cada chip en su category color (era todo t2 muted = invisible).
+      const readinessColor=rInt==="optimal"?"#10B981":rInt==="primed"?protoColor.energia:rInt==="recover"?"#F43F5E":t2;
       return(
-        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",borderRadius:12,background:surface,border:`1px solid ${bd}`}}>
+        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",borderRadius:12,background:withAlpha(ac,4),border:`1px solid ${withAlpha(ac,18)}`}}>
           {cPeriod&&(
             <div style={{display:"flex",alignItems:"center",gap:5}}>
-              <span aria-hidden="true" style={{inlineSize:5,blockSize:5,borderRadius:"50%",background:ac,boxShadow:`0 0 6px ${withAlpha(ac,60)}`,flexShrink:0}}/>
-              <span style={{fontSize:10,fontWeight:700,color:t2,letterSpacing:0.3,textTransform:"uppercase"}}>Ventana · {cPeriod}</span>
+              <span aria-hidden="true" style={{inlineSize:6,blockSize:6,borderRadius:"50%",background:ac,boxShadow:`0 0 8px ${withAlpha(ac,80)}`,flexShrink:0}}/>
+              <span style={{fontSize:10,fontWeight:800,color:ac,letterSpacing:0.3,textTransform:"uppercase"}}>Ventana · {cPeriod}</span>
             </div>
           )}
           {readinessMeta&&(<>
-            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
-            <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2,textTransform:"uppercase"}}>Readiness {readinessMeta}</span>
+            <span aria-hidden="true" style={{width:1,height:10,background:withAlpha(ac,30)}}/>
+            <span style={{fontSize:10,fontWeight:800,color:readinessColor,letterSpacing:0.2,textTransform:"uppercase"}}>Readiness {readinessMeta}</span>
           </>)}
           {typeof optHour==="number"&&(<>
-            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
-            <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2,textTransform:"uppercase",display:"inline-flex",alignItems:"center",gap:4}}>
+            <span aria-hidden="true" style={{width:1,height:10,background:withAlpha(ac,30)}}/>
+            <span style={{fontSize:10,fontWeight:800,color:protoColor.energia,letterSpacing:0.2,textTransform:"uppercase",display:"inline-flex",alignItems:"center",gap:4}}>
               Pico <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>{String(optHour).padStart(2,"0")}:00</span>
             </span>
           </>)}
           {showPred&&(<>
-            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
+            <span aria-hidden="true" style={{width:1,height:10,background:withAlpha(ac,30)}}/>
             <span style={{display:"inline-flex",alignItems:"center",gap:4}}>
-              <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontSize:10,fontWeight:700,color:semantic.success,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>+{prediction.predictedDelta.toFixed(1)}</span>
-              <span style={{fontSize:10,fontWeight:500,color:t3,letterSpacing:0.2}}>· {prediction.confidence}%</span>
+              <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontSize:11,fontWeight:800,color:semantic.success,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>+{prediction.predictedDelta.toFixed(1)}</span>
+              <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2}}>· {prediction.confidence}%</span>
             </span>
           </>)}
         </div>
@@ -1646,6 +1648,13 @@ export default function BioIgnicion(){
         <div role="radiogroup" aria-label="Tu estado ahora" style={{display:"flex",gap:4}}>
           {MOODS.map(m=>{
             const selected=preMood===m.value;
+            // Sprint 103 — Apple Health mood pattern. Antes: unselected
+            // pills usaban withAlpha(m.color,55) que NO existe en alpha
+            // scale → fallback alpha[10] = 10% invisible. Label en t3
+            // muted = invisible. Resultado: 4 pills grises + 1 seleccionada
+            // vibrant. Ahora: incluso unselected mantiene identity vía
+            // bg subtle category color + icon alpha 70 + label en color
+            // saturado. Selected sube a alpha 18 bg + border 2px.
             return(
               <motion.button
                 key={m.id}
@@ -1662,21 +1671,22 @@ export default function BioIgnicion(){
                   paddingBlock:9,
                   paddingInline:2,
                   borderRadius:12,
-                  border:selected?`2px solid ${m.color}`:`1.5px solid ${bd}`,
-                  background:selected?withAlpha(m.color,10):cd,
+                  border:selected?`2px solid ${m.color}`:`1.5px solid ${withAlpha(m.color,18)}`,
+                  background:selected?withAlpha(m.color,18):withAlpha(m.color,5),
                   cursor:"pointer",
-                  transition:"all .2s",
+                  transition:"all .2s cubic-bezier(0.22, 1, 0.36, 1)",
                   position:"relative",
                 }}
               >
-                <Icon name={m.icon} size={16} color={selected?m.color:withAlpha(m.color,55)}/>
+                <Icon name={m.icon} size={16} color={selected?m.color:withAlpha(m.color,70)}/>
                 <span style={{
                   fontSize:10,
-                  fontWeight:selected?800:600,
-                  color:selected?m.color:t3,
+                  fontWeight:selected?800:700,
+                  color:m.color,
                   lineHeight:1.1,
                   textAlign:"center",
                   letterSpacing:-0.02,
+                  opacity:selected?1:0.85,
                 }}>{m.label}</span>
               </motion.button>
             );
@@ -1957,9 +1967,14 @@ export default function BioIgnicion(){
     const tintOpacity=neural>=70?(isDark?0.07:0.05):neural>=50?(isDark?0.05:0.035):0;
     const barAlpha=Math.round(tintOpacity*255).toString(16).padStart(2,"0");
     return <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:`calc(${layout.bottomNav}px + env(safe-area-inset-bottom, 0px))`,left:"50%",transform:"translateX(-50%)",width:"calc(100% - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right) + 32px))",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:`linear-gradient(180deg, ${vitalTint}${barAlpha}, ${vitalTint}00), ${resolveTheme(isDark).glass}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${neural>=70?bioSignal.phosphorCyan+"22":bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}${neural>=70?`, 0 0 28px ${bioSignal.phosphorCyan}14`:""}`,transition:"background .8s cubic-bezier(0.22, 1, 0.36, 1), border-color .8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .8s cubic-bezier(0.22, 1, 0.36, 1)"}}>
-      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:protoColor.enfoque,ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:protoColor.calma,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:protoColor.energia,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
-        <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
-        <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
+      {/* Sprint 103 — bottom metrics bar Apple Health pattern.
+          Antes: icon container 28×28 con bg solo m.c+"10" (alpha 10),
+          icon 12px gris-feel. Label en t3 muted. Ahora: container 32×32
+          con bg saturado 22% + icon 14px en color full + label en
+          color category (no t3 muted). */}
+      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:protoColor.enfoque,ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:protoColor.calma,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:protoColor.energia,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:8,flex:1,justifyContent:"center"}}>
+        <div aria-hidden="true" style={{width:32,height:32,borderRadius:9,background:withAlpha(m.c,22),display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={14} color={m.c}/></div>
+        <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:m.c,fontWeight:font.weight.bold,display:"flex",alignItems:"center",gap:2,letterSpacing:0.2,textTransform:"uppercase"}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
       </div>)}
     </aside>;
   })()}

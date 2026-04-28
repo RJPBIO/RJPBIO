@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 39; // Sprint 102 — color sweep masivo: stats cards (ProfileView+DashboardView) + trio /app con bg+border tinted en category color; era "todo gris seco" sobre bg Apple-grade neutral
+const CACHE_VERSION = 40; // Sprint 103 — color sweep wave 2: bottom metrics bar containers 32×32 saturados + mood pills cada uno con su category color (era 4 grises + 1 vibrant) + Settings icons brand cyan + Adaptive context strip cada chip en category color
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
