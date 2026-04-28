@@ -684,7 +684,7 @@ export default function SettingsSheet({
               </motion.button>
               <motion.button
                 whileTap={reduced ? {} : { scale: 0.96 }}
-                onClick={() => exportNOM035(st)}
+                onClick={openNOM035Report}
                 aria-label={t("settings.exportNomLabel")}
                 style={{
                   flex: 1,
@@ -746,16 +746,15 @@ export default function SettingsSheet({
   );
 }
 
-function exportNOM035(st){try{
-  const ml=st.moodLog||[];const h=st.history||[];const now=new Date();
-  const totalMin=Math.round((st.totalTime||0)/60);
-  const withPre=ml.filter(m=>m.pre>0);
-  const delta=withPre.length?+(withPre.reduce((a,m)=>a+(m.mood-m.pre),0)/withPre.length).toFixed(2):0;
-  const riskCount=ml.filter(m=>m.mood<=2).length;
-  const riskPct=ml.length?Math.round((riskCount/ml.length)*100):0;
-  const protos={};h.forEach(x=>{protos[x.p]=(protos[x.p]||0)+1;});
-  const topProtos=Object.entries(protos).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const uniqueDays=new Set(h.map(x=>new Date(x.ts).toDateString())).size;
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe NOM-035</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,sans-serif;color:#0F172A;background:#fff;padding:40px;max-width:800px;margin:0 auto;font-size:14px}.header{border-bottom:3px solid #059669;padding-bottom:20px;margin-bottom:30px}.logo{font-size:24px;font-weight:800;color:#059669}h2{font-size:16px;margin:28px 0 14px;border-bottom:1px solid #E2E8F0;padding-bottom:6px}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}.card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px}.card .v{font-size:22px;font-weight:800}.card .l{font-size:10px;color:#64748B;margin-top:2px;text-transform:uppercase}.imp{font-size:28px;font-weight:800;color:${delta>=0?"#059669":"#DC2626"};text-align:center;padding:20px;background:${delta>=0?"#F0FDF4":"#FEF2F2"};border-radius:12px;margin-bottom:20px}.footer{margin-top:40px;border-top:2px solid #E2E8F0;padding-top:16px;font-size:10px;color:#94A3B8;text-align:center}</style></head><body><div class="header"><div class="logo">BIO-IGNICIÓN</div><div style="font-size:11px;color:#64748B;margin-top:4px">Informe de Bienestar Laboral — NOM-035-STPS-2018</div><div style="font-size:11px;color:#475569;margin-top:8px">Fecha: ${now.toLocaleDateString("es-MX",{year:"numeric",month:"long",day:"numeric"})}</div></div><h2>Resumen</h2><div class="grid"><div class="card"><div class="v">${st.totalSessions}</div><div class="l">Sesiones</div></div><div class="card"><div class="v">${totalMin}min</div><div class="l">Tiempo</div></div><div class="card"><div class="v">${uniqueDays}</div><div class="l">Días activos</div></div></div><div class="imp">${delta>=0?"+":""}${delta} puntos<br><span style="font-size:11px;font-weight:400;color:#64748B">Mejora promedio por sesión</span></div><h2>Protocolos</h2>${topProtos.map(([n,c])=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9"><span>${n}</span><span>${c}x (${Math.round(c/st.totalSessions*100)}%)</span></div>`).join("")}<h2>Riesgo</h2><div style="padding:14px;background:${riskPct>30?"#FEF2F2":"#F0FDF4"};border-radius:10px;margin-bottom:20px"><div style="font-size:20px;font-weight:800;color:${riskPct>30?"#DC2626":"#059669"}">${riskPct}%</div><div style="font-size:11px;color:${riskPct>30?"#DC2626":"#059669"}">Sesiones con tensión alta</div></div><div class="footer"><p><strong>BIO-IGNICIÓN</strong> — Generado: ${now.toLocaleString("es-MX")}</p></div></body></html>`;
-  const blob=new Blob([html],{type:"text/html"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`NOM035-${now.toISOString().split("T")[0]}.html`;a.click();URL.revokeObjectURL(url);
-}catch(e){console.error(e);}}
+// Sprint 71 — abre el reporte NOM-035 oficial (server-side, 5 páginas,
+// marca canónica) en pestaña nueva. Reemplaza la función vieja
+// exportNOM035(st) que generaba un HTML mínimo desde datos de uso de
+// la app (history/moodLog) y se llamaba "NOM-035" engañosamente —
+// los datos eran de uso del producto, no del cuestionario oficial
+// Guía III. La ruta /nom35/aplicador/reporte lee Nom35Response real
+// del usuario; si aún no completó el cuestionario, muestra un mensaje
+// claro invitando a hacerlo.
+function openNOM035Report() {
+  if (typeof window === "undefined") return;
+  window.open("/nom35/aplicador/reporte", "_blank", "noopener,noreferrer");
+}
