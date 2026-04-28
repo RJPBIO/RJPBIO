@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 20; // Sprint 67 — NOM-35 personal report integration (Nom35Client.jsx button → /reporte)
+const CACHE_VERSION = 21; // Sprint 71 — SettingsSheet NOM-035 button → /nom35/aplicador/reporte (no más HTML mínimo legacy)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
