@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 22; // Sprint 72 — fix vibración (piso 30ms en patterns + diagnóstico boolean + botón Probar con feedback)
+const CACHE_VERSION = 23; // Sprint 73 — fix HRV save flow (saveNow flush + botón Continuar + caption última medición)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
