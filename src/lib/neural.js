@@ -1495,7 +1495,13 @@ export function calcSessionCompletion(st, sessionCtx) {
   const ad = di === 0 ? 6 : di - 1;
   const nw = [...st.weeklyData];
   nw[ad] = (nw[ad] || 0) + 1;
-  const yesterday = new Date(Date.now() - 864e5).toDateString();
+  // Sprint 80 — DST-safe "yesterday". Antes: `Date.now() - 864e5` resta
+  // exactamente 24h en ms, que NO equivale a "ayer calendárico" en días
+  // con cambio de horario (US/EU spring-forward = 23h, fall-back = 25h).
+  // En esos días la racha se rompía o duplicaba injustamente. setDate
+  // opera sobre días calendáricos respetando DST de la TZ local.
+  const _yd = new Date(); _yd.setDate(_yd.getDate() - 1);
+  const yesterday = _yd.toDateString();
   let newStreak = _computeStreakUpdate(st, today, yesterday);
   // Ligeras NO avanzan racha (se recalcula más abajo tras determinar quality)
 

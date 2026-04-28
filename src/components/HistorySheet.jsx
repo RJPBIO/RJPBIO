@@ -32,7 +32,11 @@ const kickerStyle = (color) => ({
 function groupHist(h) {
   const n = new Date();
   const td = n.toDateString();
-  const yd = new Date(Date.now() - 864e5).toDateString();
+  // Sprint 80 — DST-safe ayer. setDate respeta días calendáricos
+  // (23h en spring-forward, 25h en fall-back) — `Date.now() - 864e5`
+  // mete sesiones en grupo equivocado en transiciones DST.
+  const _y = new Date(); _y.setDate(_y.getDate() - 1);
+  const yd = _y.toDateString();
   const g = { hoy: [], ayer: [], antes: [] };
   for (const x of h) {
     const d = new Date(x.ts).toDateString();

@@ -48,6 +48,7 @@ import { useStore } from "@/store/useStore";
 import Icon from "@/components/Icon";
 import { useSync } from "@/hooks/useSync";
 import { useDeepLink } from "@/hooks/useDeepLink";
+import { setReloadGate } from "@/hooks/useServiceWorkerUpdate";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { useThemeDark } from "@/hooks/useThemeDark";
 import { useTapEntry } from "@/hooks/useTapEntry";
@@ -292,7 +293,69 @@ export default function BioIgnicion(){
   // Si el usuario hizo login/logout en otra pestaña mientras esta quedó en
   // background, al volver debemos detectar el cambio de userId y re-inicializar
   // el store para no mezclar datos de dos cuentas en la misma pestaña.
-  useEffect(()=>{if(typeof document==="undefined")return;let busy=false;async function recheck(){if(busy)return;if(document.visibilityState!=="visible")return;busy=true;try{const r=await Promise.race([fetch("/api/auth/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),new Promise(res=>setTimeout(()=>res(null),1200))]);const nextId=r?.user?.id??null;const curId=useStore.getState()._userId??null;if(nextId!==curId){await store.init({userId:nextId});setSt_(useStore.getState());}}catch{}finally{busy=false;}}document.addEventListener("visibilitychange",recheck);return()=>document.removeEventListener("visibilitychange",recheck);},[]);
+  //
+  // Sprint 80 — bug fix crítico: la versión previa colapsaba "fetch falló"
+  // (timeout 1200ms o network error) y "user confirmado null" en el mismo
+  // path → llamaba store.init({userId:null}) → belongsToUser falla porque
+  // loaded._userId era un user real → clearAll() borra IDB + localStorage.
+  // Resultado: usuario perdía TODO su estado local en cualquier flicker de
+  // red al volver de background. Ahora solo actuamos con confirmación
+  // explícita del server (200 con body, o 401 = definitivamente null).
+  // Timeout / network error / 5xx = estado desconocido → no tocar nada.
+  useEffect(()=>{
+    if(typeof document==="undefined")return;
+    let busy=false;
+    async function recheck(){
+      if(busy)return;
+      if(document.visibilityState!=="visible")return;
+      busy=true;
+      try{
+        const probe=await Promise.race([
+          fetch("/api/auth/session",{credentials:"same-origin",cache:"no-store"})
+            .then(async r=>{
+              // 401 = server confirma que no hay sesión activa
+              if(r.status===401)return{ok:true,userId:null};
+              // 200 con body = parseamos el user
+              if(r.ok){
+                try{const j=await r.json();return{ok:true,userId:j?.user?.id??null};}
+                catch{return{ok:false};}
+              }
+              // 5xx u otro = estado desconocido, preservar local
+              return{ok:false};
+            })
+            .catch(()=>({ok:false})), // network error
+          new Promise(res=>setTimeout(()=>res({ok:false}),1200)), // timeout
+        ]);
+        // Sin confirmación del server, NO tocar el estado local. Mejor
+        // false-negative (no detectamos logout) que false-positive (borrar
+        // datos del usuario por un blip).
+        if(!probe.ok)return;
+        const nextId=probe.userId;
+        const curId=useStore.getState()._userId??null;
+        if(nextId!==curId){
+          await store.init({userId:nextId});
+          setSt_(useStore.getState());
+        }
+      }catch{}
+      finally{busy=false;}
+    }
+    document.addEventListener("visibilitychange",recheck);
+    return()=>document.removeEventListener("visibilitychange",recheck);
+  },[]);
+
+  // ═══ SW RELOAD GATE ═══
+  // Sprint 80 — registramos un gate que difiere reload por update del
+  // service worker mientras hay sesión activa. Antes: otra tab acepta el
+  // update → controllerchange dispara global → ESTA tab recarga aunque
+  // el user esté a 30s de cerrar su Reset Ejecutivo. Estado de sesión
+  // (ts, sec, pi, sessionData) vive en React state, no persistido →
+  // sesión muere irrecuperable. Ahora: el hook poll cada 2s hasta que
+  // ts vuelva a "idle". Ref-based para no re-registrar en cada cambio.
+  const tsRef=useRef(ts);tsRef.current=ts;
+  useEffect(()=>{
+    setReloadGate(()=>tsRef.current==="running"||tsRef.current==="paused");
+    return()=>setReloadGate(null);
+  },[]);
 
   useCommandKey(setShowCmd, st.soundOn);
 
@@ -301,6 +364,24 @@ export default function BioIgnicion(){
   // reemite esas function decls como const y pierde el hoisting estándar de JS.
 
   useEffect(()=>{if(ts!=="running"||typeof document==="undefined")return;function onVis(){if(document.visibilityState==="hidden"&&ts==="running"){setSessionData(d=>({...d,hiddenStart:Date.now()}));pa();}else if(document.visibilityState==="visible"){setSessionData(d=>{if(!d.hiddenStart)return d;return{...d,hiddenMs:(d.hiddenMs||0)+(Date.now()-d.hiddenStart),hiddenStart:null};});}}document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[ts]);
+
+  // Sprint 80 — pausa: validación wall-clock cuando la tab vuelve visible.
+  // Mobile browsers throttlean setTimeout en background → el auto-reset
+  // de 5min puede no dispararse nunca. Si el user pausa, deja la tab
+  // backgrounded por 8 minutos y vuelve, este handler detecta que ya
+  // pasaron >= 300s y dispara rs() inmediatamente — la sesión no queda
+  // colgada con audio/wakelock fantasma.
+  useEffect(()=>{
+    if(ts!=="paused"||typeof document==="undefined")return;
+    function onVisPaused(){
+      if(document.visibilityState!=="visible")return;
+      if(!pauseStartedAtRef.current)return;
+      const elapsed=Date.now()-pauseStartedAtRef.current;
+      if(elapsed>=300000)rs();
+    }
+    document.addEventListener("visibilitychange",onVisPaused);
+    return()=>document.removeEventListener("visibilitychange",onVisPaused);
+  },[ts]);
   const stRef=useRef(st);useEffect(()=>{stRef.current=st;},[st]);
   useAutoSave(mt, useCallback(()=>store.update(stRef.current),[]));
   const isDark=useThemeDark({ready:mt,mode:st.themeMode||"auto"});
@@ -501,10 +582,17 @@ export default function BioIgnicion(){
   }
   function go(){if(actLockRef.current||ts!=="idle"||countdown>0)return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);unlockVoice();if(st.wakeLockEnabled!==false)requestWakeLock();try{const fs=document.documentElement.requestFullscreen?.();if(fs&&typeof fs.catch==="function")fs.catch(()=>{});}catch(e){}setPostStep("none");setPi(0);setSec(Math.round(pr.d*durMult));setSessionData({pauses:0,scienceViews:0,interactions:0,touchHolds:0,motionSamples:0,stability:0,reactionTimes:[],phaseTimings:[],startedAt:Date.now(),hiddenMs:0,hiddenStart:null,expectedSec:Math.round(pr.d*durMult)});startCountdown();}
   const pauseTRef=useRef(null);
+  // Sprint 80 — wall-clock anchor para auto-reset 5min en pausa.
+  // Antes: pa() programaba setTimeout(rs, 300000) puro. Mobile browsers
+  // throttlean setTimeout cuando la tab está backgrounded (Chrome ≈1min,
+  // Safari más agresivo) → el timer no dispara → sesión queda colgada
+  // con audio/binaural/wakelock activos indefinidamente. Ahora marcamos
+  // el momento real de la pausa y validamos en visibilitychange.
+  const pauseStartedAtRef=useRef(0);
   useEffect(()=>()=>{if(cdR.current)clearInterval(cdR.current);if(pauseTRef.current)clearTimeout(pauseTRef.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];},[]);
-  function pa(){if(actLockRef.current||ts!=="running")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseTRef.current=setTimeout(()=>{rs();},300000);}
-  function resume(){if(actLockRef.current||ts!=="paused")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(pauseTRef.current)clearTimeout(pauseTRef.current);setTs("running");H("go");speakNow("continúa",circadian,voiceOn);if(st.wakeLockEnabled!==false)requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}
-  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];countdownRef.current=0;setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();sessionStartedAtRef.current=null;sessionEndedAtRef.current=null;setPostDelta(null);sessionShippedRef.current=false;}
+  function pa(){if(actLockRef.current||ts!=="running")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(iR.current)clearInterval(iR.current);if(tR.current)clearInterval(tR.current);setTs("paused");stopVoice();stopBinaural();releaseWakeLock();setSessionData(d=>({...d,pauses:d.pauses+1}));if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseStartedAtRef.current=Date.now();pauseTRef.current=setTimeout(()=>{rs();},300000);}
+  function resume(){if(actLockRef.current||ts!=="paused")return;actLockRef.current=true;setTimeout(()=>{actLockRef.current=false;},500);if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseStartedAtRef.current=0;setTs("running");H("go");speakNow("continúa",circadian,voiceOn);if(st.wakeLockEnabled!==false)requestWakeLock();if(st.soundOn!==false)startBinaural(pr.int);}
+  function rs(){releaseWakeLock();if(pauseTRef.current)clearTimeout(pauseTRef.current);pauseStartedAtRef.current=0;try{if(document.fullscreenElement){const ef=document.exitFullscreen?.();if(ef&&typeof ef.catch==="function")ef.catch(()=>{});}}catch(e){}if(iR.current)clearInterval(iR.current);if(bR.current)clearInterval(bR.current);if(tR.current)clearInterval(tR.current);if(cdR.current)clearInterval(cdR.current);cdVisualTOsRef.current.forEach(clearTimeout);cdVisualTOsRef.current=[];countdownRef.current=0;setTs("idle");setSec(Math.round(pr.d*durMult));setPi(0);setBL("");setBS(1);setBCnt(0);setPostStep("none");setCheckMood(0);setCheckEnergy(0);setCheckTag("");setPreMood(0);setCountdown(0);setCompFlash(false);stopVoice();sessionStartedAtRef.current=null;sessionEndedAtRef.current=null;setPostDelta(null);sessionShippedRef.current=false;}
   function sp(p){
     // Inline reset against the NEW protocol so we don't batch a setSec that
     // races with rs()'s stale-closure setSec(pr.d). Keeps sheet-to-idle

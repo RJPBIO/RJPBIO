@@ -124,6 +124,11 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   }, []);
 
   useEffect(() => () => {
+    // Sprint 80 — torch off explícito antes de stop(). En Chrome stock
+    // de algunos Android, track.stop() libera la cámara pero el LED
+    // queda encendido hasta que la página recarga. setTorch(false) es
+    // idempotente y barato; siempre lo intentamos primero.
+    try { captureRef.current?.setTorch?.(false); } catch {}
     try { captureRef.current?.stop?.(); } catch {}
     releaseWakeLock();
   }, []);

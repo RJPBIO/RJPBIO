@@ -11,10 +11,26 @@ const STORE_OUTBOX = "outbox";
 const STORE_META = "meta";
 const STATE_KEY = "app";
 const CRYPTO_KEY_NAME = "bio-crypto-key";
+const SYNC_CHANNEL_NAME = "bio-store-sync";
 
 const isBrowser = () => typeof window !== "undefined";
 const hasIDB = () => isBrowser() && "indexedDB" in window;
 const hasCrypto = () => isBrowser() && window.crypto?.subtle;
+
+// Sprint 80 — cross-tab sync. Singleton BroadcastChannel para coordinar
+// dos pestañas del mismo origen. Por spec, postMessage no se entrega al
+// emisor → tanto saveState (post) como useStore (listen) usan ESTA misma
+// instancia, sin echo en la misma tab. Otras tabs reciben normal.
+let _syncChannel = null; // null=uninit · false=unsupported · BroadcastChannel=ok
+export function getSyncChannel() {
+  if (!isBrowser()) return null;
+  if (typeof BroadcastChannel === "undefined") return null;
+  if (_syncChannel === null) {
+    try { _syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME); }
+    catch { _syncChannel = false; }
+  }
+  return _syncChannel || null;
+}
 
 // ─── IndexedDB primitives ────────────────────────────────
 // Safari iOS (modo privado / Home Screen PWA) a veces deja open() en pending
@@ -141,13 +157,39 @@ export async function loadState() {
 
 export async function saveState(state) {
   if (!isBrowser()) return;
+  // Sprint 80 — bug fix de seguridad: la versión previa SIEMPRE escribía
+  // localStorage en plano además del IDB cifrado. CLAUDE.md afirma "IDB
+  // cifrado > localStorage plano" pero la copia plana coexistía → el
+  // cifrado AES-GCM era teatro: un atacante con acceso al storage
+  // (extensión, bookmarklet, malware) leía los datos del shadow plano.
+  // Ahora: localStorage SOLO si IDB falla. Si IDB está disponible y
+  // succeed, eliminamos cualquier shadow plano residual de versiones
+  // anteriores (migración silenciosa al guardar).
+  let idbOk = false;
   try {
     if (hasIDB()) {
       const blob = await encrypt(state);
       await idbSet(STORE_STATE, STATE_KEY, blob);
+      idbOk = true;
     }
   } catch {}
+  if (idbOk) {
+    // Limpia el shadow plaintext de versiones previas. Sin esto, los
+    // datos viejos quedarían lingering aunque las nuevas escrituras ya
+    // no los actualicen — exposición de información obsoleta.
+    try { localStorage.removeItem("bio-g2"); } catch {}
+    // Sprint 80 — broadcast cross-tab. Otras pestañas del mismo origen
+    // reciben este mensaje y se re-sincronizan desde IDB → previene
+    // overwrites silenciosos cuando dos tabs hacen completeSession con
+    // estado caché desactualizado.
+    try { getSyncChannel()?.postMessage({ kind: "state-saved", ts: Date.now() }); } catch {}
+    return;
+  }
+  // Fallback: IDB no disponible o falló → último recurso plaintext.
   try { localStorage.setItem("bio-g2", JSON.stringify(state)); } catch {}
+  // Aún en path de fallback, broadcast: otras tabs deben re-sync. Si
+  // ellas tampoco tienen IDB, leerán el localStorage actualizado.
+  try { getSyncChannel()?.postMessage({ kind: "state-saved", ts: Date.now() }); } catch {}
 }
 
 export async function clearAll() {

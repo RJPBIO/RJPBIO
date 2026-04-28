@@ -7,7 +7,7 @@
 import { create } from "zustand";
 import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
-import { loadState, saveState, clearAll, outboxAdd } from "../lib/storage";
+import { loadState, saveState, clearAll, outboxAdd, getSyncChannel } from "../lib/storage";
 // Nota: outboxAdd ahora dispatcha "bio-outbox-changed" event al
 // completar el IndexedDB write; sync.js (vía wireBackgroundSync)
 // escucha ese event y dispara drain debounced. Sin circular dep
@@ -520,4 +520,47 @@ export const useStore = create((set, get) => ({
     set(fresh);
     scheduleSave(fresh);
   },
+
+  // Sprint 80 — cross-tab sync. Triggered cuando otra pestaña broadcast
+  // que persistió cambios. Recargamos desde IDB y aplicamos a la memoria
+  // local SIN volver a persistir (sería loop infinito de broadcasts).
+  // Preserva flags volátiles (_loaded, _syncing) que no pertenecen al
+  // estado persistido.
+  syncFromStorage: async () => {
+    try {
+      const fresh = await loadState();
+      if (!fresh) return;
+      const cur = get();
+      // Si el state persistido es de otro user (race con login/logout en
+      // otra tab), no aplicar — dejamos que el path de auth recheck en
+      // page.jsx lo maneje con su propia lógica.
+      if ((fresh._userId ?? null) !== (cur._userId ?? null)) return;
+      const migrated = migrate(fresh);
+      // No llamar scheduleSave — esto es read-only desde la perspectiva
+      // de persistencia. Preservamos flags runtime de esta tab.
+      set({ ...migrated, _loaded: cur._loaded, _syncing: cur._syncing });
+    } catch (e) {
+      logger.error("store.syncFromStorage", e);
+    }
+  },
 }));
+
+// Sprint 80 — listener cross-tab. Setup once por tab, después de crear
+// el store. BroadcastChannel.postMessage no se entrega al emisor (spec),
+// así que el saveState de ESTA tab no dispara este handler — solo lo
+// disparan saves de otras pestañas del mismo origen.
+(function setupCrossTabSync() {
+  if (typeof window === "undefined") return;
+  try {
+    const ch = getSyncChannel();
+    if (!ch) return;
+    ch.addEventListener("message", (e) => {
+      const data = e?.data || {};
+      if (data.kind === "state-saved") {
+        useStore.getState().syncFromStorage?.();
+      }
+    });
+  } catch (e) {
+    logger.error("store.setupCrossTabSync", e);
+  }
+})();
