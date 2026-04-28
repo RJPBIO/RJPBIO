@@ -42,7 +42,7 @@ export function CopyButton({
         borderRadius: radius.sm,
         cursor: "pointer",
         lineHeight: 1,
-        transition: "color .12s ease, background .12s ease",
+        transition: "color .12s cubic-bezier(0.22, 1, 0.36, 1), background .12s cubic-bezier(0.22, 1, 0.36, 1)",
         ...variantStyle,
         ...style,
       }}

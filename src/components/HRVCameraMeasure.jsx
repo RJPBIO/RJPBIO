@@ -814,7 +814,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               aria-hidden="true"
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: [0.85, 1.05, 1.15], opacity: [0, 0.18, 0] }}
-              transition={{ duration: 0.55, ease: "easeOut" }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 position: "absolute",
                 insetInlineStart: "50%",
@@ -907,7 +907,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 key={stage}
                 initial={reduced ? { opacity: 1 } : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={reduced ? { duration: 0 } : { duration: 0.35, ease: "easeOut" }}
+                transition={reduced ? { duration: 0 } : { duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 style={{
                   fontSize: 12.5,
                   color: t2,
@@ -1249,7 +1249,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 strokeLinejoin="round"
                 initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
                 animate={{ pathLength: 1 }}
-                transition={reduced ? { duration: 0 } : { duration: 0.45, delay: 0.15, ease: "easeOut" }}
+                transition={reduced ? { duration: 0 } : { duration: 0.45, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               />
             </svg>
           </motion.div>

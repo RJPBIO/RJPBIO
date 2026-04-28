@@ -237,7 +237,7 @@ export default function ProfileView({
             <motion.div
               initial={reduced ? { width: lPct + "%" } : { width: 0 }}
               animate={{ width: lPct + "%" }}
-              transition={reduced ? { duration: 0 } : { duration: 1, ease: "easeOut" }}
+              transition={reduced ? { duration: 0 } : { duration: 1, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 blockSize: "100%",
                 borderRadius: 6,

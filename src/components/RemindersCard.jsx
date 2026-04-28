@@ -160,7 +160,7 @@ export default function RemindersCard({ isDark = true, ac = "#10B981" }) {
               background: enabled ? ac : bd,
               borderRadius: 999,
               position: "relative",
-              transition: "background 0.2s ease",
+              transition: "background 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
             <span
@@ -173,7 +173,7 @@ export default function RemindersCard({ isDark = true, ac = "#10B981" }) {
                 background: "#fff",
                 borderRadius: 999,
                 transform: enabled ? "translateX(18px)" : "translateX(0)",
-                transition: "transform 0.2s ease",
+                transition: "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
               }}
             />

@@ -876,7 +876,7 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                         style={{
                           transform: "rotate(-90deg)",
                           transformOrigin: "50% 50%",
-                          transition: "stroke-dashoffset 1s ease",
+                          transition: "stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1)",
                         }}
                       />
                     </svg>

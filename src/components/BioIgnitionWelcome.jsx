@@ -197,7 +197,7 @@ export default function BioIgnitionWelcome({ onComplete, onSkip }) {
                 borderRadius: 2,
                 background: i === step ? bioSignal.phosphorCyan : "rgba(255,255,255,0.18)",
                 boxShadow: i === step ? `0 0 8px ${withAlpha(bioSignal.phosphorCyan, 60)}` : "none",
-                transition: "inline-size 0.3s ease, background 0.3s ease, box-shadow 0.3s ease",
+                transition: "inline-size 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             />
           ))}

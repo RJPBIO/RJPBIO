@@ -66,7 +66,7 @@ export default function CodeTabs({ tabs, ariaLabel = "Code samples", copyLabel =
                 fontWeight: font.weight.semibold,
                 cursor: "pointer",
                 fontFamily: cssVar.fontMono,
-                transition: "color .12s ease, background .12s ease",
+                transition: "color .12s cubic-bezier(0.22, 1, 0.36, 1), background .12s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
               {t.label}

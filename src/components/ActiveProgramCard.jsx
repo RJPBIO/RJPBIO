@@ -241,7 +241,7 @@ export default function ActiveProgramCard({
             cursor: "pointer",
             textAlign: "left",
             marginBlockEnd: space[3],
-            transition: "background .2s ease, border-color .2s ease",
+            transition: "background .2s cubic-bezier(0.22, 1, 0.36, 1), border-color .2s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
           <div

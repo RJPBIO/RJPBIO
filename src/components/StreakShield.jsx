@@ -262,7 +262,7 @@ export default function StreakShield({ st, isDark, onQuickSession, onFreezeStrea
               justifyContent: "center",
               gap: 8,
               fontFamily: "inherit",
-              transition: "background 0.18s ease",
+              transition: "background 0.18s cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
             <Icon name="bolt" size={14} color={shield.color} aria-hidden="true" />

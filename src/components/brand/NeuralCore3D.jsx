@@ -868,7 +868,7 @@ export default function NeuralCore3D({
                 `inset 0 -20px 40px -16px rgba(0,0,0,0.45)`,
           pointerEvents: "none",
           opacity: baseSphereOp,
-          transition: "opacity .4s ease, border-color .6s ease, box-shadow .6s ease",
+          transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1), border-color .6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .6s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       />
 
@@ -932,7 +932,7 @@ export default function NeuralCore3D({
             filter: `blur(${4 + haloIntensity * 5}px)`,
             opacity: (ember ? emberOp : 1) * (0.5 + haloIntensity * 0.5),
             pointerEvents: "none",
-            transition: "opacity .5s ease, filter .5s ease",
+            transition: "opacity .5s cubic-bezier(0.22, 1, 0.36, 1), filter .5s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
@@ -987,7 +987,7 @@ export default function NeuralCore3D({
             pointerEvents: "none",
             mixBlendMode: "screen",
             opacity: baseNebulaOp,
-            transition: "opacity .4s ease",
+            transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
@@ -1007,7 +1007,7 @@ export default function NeuralCore3D({
             WebkitMaskImage: "radial-gradient(circle, transparent 57%, black 60%, black 62%, transparent 65%)",
             pointerEvents: "none",
             opacity: baseAuraOp * auraMultRef.current,
-            transition: "opacity .4s ease",
+            transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
@@ -1025,7 +1025,7 @@ export default function NeuralCore3D({
             boxShadow: `0 0 24px -4px ${color}44, inset 0 0 16px -6px ${color}33`,
             pointerEvents: "none",
             opacity: baseAuraOp * auraMultRef.current,
-            transition: "opacity .4s ease",
+            transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
@@ -1096,7 +1096,7 @@ export default function NeuralCore3D({
           maskImage: "radial-gradient(circle, transparent 0%, transparent 20%, rgba(0,0,0,0.55) 30%, black 46%, black 100%)",
           WebkitMaskImage: "radial-gradient(circle, transparent 0%, transparent 20%, rgba(0,0,0,0.55) 30%, black 46%, black 100%)",
           opacity: (paused ? 0.55 : 1) * (ember ? emberOp : 1),
-          transition: "opacity .4s ease",
+          transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         {/* Edges — depth-faded, respetan emerge alpha.

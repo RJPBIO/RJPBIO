@@ -818,7 +818,7 @@ export default function BioIgnicion(){
   <div data-bp={bp} style={{maxWidth:rootMaxWidth,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflowX:"hidden",fontFamily:font.family,transition:"background .8s, max-width .25s",paddingBlockEnd:"env(safe-area-inset-bottom)",paddingInlineStart:`max(${rootPadInline}px, env(safe-area-inset-left))`,paddingInlineEnd:`max(${rootPadInline}px, env(safe-area-inset-right))`}}>
 
   {/* Background aura — dims during running session (cinematic focus) */}
-  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s ease"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
+  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s cubic-bezier(0.22, 1, 0.36, 1)"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
 
   {/* iOS haptic visual fallback — flash visible top-edge cuando el
       device no soporta navigator.vibrate. El usuario lee la cadencia
@@ -1434,7 +1434,7 @@ export default function BioIgnicion(){
         borderRadius:99,
         background:withAlpha(ac,4),
         border:`1px solid ${withAlpha(ac,18)}`,
-        transition:"all .2s ease",
+        transition:"all .2s cubic-bezier(0.22, 1, 0.36, 1)",
       }}>
         <span aria-hidden="true" style={{
           inlineSize:5,
@@ -1455,7 +1455,7 @@ export default function BioIgnicion(){
           color:ac,
           transform:showMore?"rotate(180deg)":"rotate(0)",
           display:"inline-block",
-          transition:"transform .25s ease",
+          transition:"transform .25s cubic-bezier(0.22, 1, 0.36, 1)",
         }}>▾</span>
       </span>
       {!showMore&&<span aria-hidden="true" style={{
@@ -1720,7 +1720,7 @@ export default function BioIgnicion(){
       {/* Phosphor glow ambiental — grande y suave, se siente desde lejos */}
       <motion.div aria-hidden="true" animate={isBr&&!reducedMotion?{scale:bS*1.08,opacity:.55}:ts==="idle"?{scale:[1,1.08,1],opacity:[.35,.6,.35]}:isActive?{scale:[1,1.05,1],opacity:[.45,.7,.45]}:{opacity:.3}} transition={isBr&&!reducedMotion?{scale:{type:"spring",stiffness:30,damping:20,mass:1.2},opacity:{duration:.6}}:{duration:ts==="idle"?4:2.8,repeat:Infinity,ease:"easeInOut"}} style={{position:"absolute",inset:-52,borderRadius:"50%",background:`radial-gradient(circle, ${withAlpha(ac,30)}, ${withAlpha(ac,10)} 45%, transparent 70%)`,filter:"blur(22px)",pointerEvents:"none"}}/>
       {/* Ripple rings — se expanden en idle (invitación a tocar) y durante sesión activa (confirmación de pulso) */}
-      {(ts==="idle"||isActive)&&!reducedMotion&&[0,1].map(i=><motion.span key={i} aria-hidden="true" initial={{scale:.88,opacity:.5}} animate={{scale:1.45,opacity:0}} transition={{duration:isActive?2.2:3.2,delay:i*(isActive?1.1:1.6),ease:"easeOut",repeat:Infinity}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1px solid ${ac}`,pointerEvents:"none"}}/>)}
+      {(ts==="idle"||isActive)&&!reducedMotion&&[0,1].map(i=><motion.span key={i} aria-hidden="true" initial={{scale:.88,opacity:.5}} animate={{scale:1.45,opacity:0}} transition={{duration:isActive?2.2:3.2,delay:i*(isActive?1.1:1.6),ease: [0.22, 1, 0.36, 1],repeat:Infinity}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1px solid ${ac}`,pointerEvents:"none"}}/>)}
       {/* ── Núcleo neural 3D — reemplaza el orb sólido previo.
           Cámara glass translúcida con la lattice del trademark en
           3D real. Personalidad por protocol.int (calma/enfoque/
@@ -1763,18 +1763,18 @@ export default function BioIgnicion(){
           Materializa la metáfora de "ignición": la chispa se enciende. */}
       <AnimatePresence>
         {ignitionFlash&&!reducedMotion&&<motion.div key="ignition" aria-hidden="true" initial={{scale:.15,opacity:1}} animate={{scale:2.4,opacity:0}} exit={{opacity:0}} transition={{duration:.85,ease:[.16,1,.3,1]}} style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle, #ffffff 0%, ${withAlpha(ac,80)} 30%, ${withAlpha(ac,20)} 60%, transparent 80%)`,pointerEvents:"none",zIndex:4,filter:"blur(2px)"}}/>}
-        {ignitionFlash&&!reducedMotion&&[0,1,2].map(i=><motion.span key={`spark-${i}`} aria-hidden="true" initial={{scale:.6,opacity:.9}} animate={{scale:2,opacity:0}} transition={{duration:.7,delay:i*.08,ease:"easeOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid ${ac}`,pointerEvents:"none",zIndex:4}}/>)}
+        {ignitionFlash&&!reducedMotion&&[0,1,2].map(i=><motion.span key={`spark-${i}`} aria-hidden="true" initial={{scale:.6,opacity:.9}} animate={{scale:2,opacity:0}} transition={{duration:.7,delay:i*.08,ease: [0.22, 1, 0.36, 1]}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid ${ac}`,pointerEvents:"none",zIndex:4}}/>)}
         {/* Phase flash — pulso sutil al transicionar entre fases, más suave que ignition */}
-        {phaseFlash&&!reducedMotion&&<motion.span key="phase-flash" aria-hidden="true" initial={{scale:.85,opacity:.55}} animate={{scale:1.3,opacity:0}} transition={{duration:.6,ease:"easeOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid ${ac}`,pointerEvents:"none",zIndex:4,boxShadow:`0 0 20px ${withAlpha(ac,60)}`}}/>}
+        {phaseFlash&&!reducedMotion&&<motion.span key="phase-flash" aria-hidden="true" initial={{scale:.85,opacity:.55}} animate={{scale:1.3,opacity:0}} transition={{duration:.6,ease: [0.22, 1, 0.36, 1]}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid ${ac}`,pointerEvents:"none",zIndex:4,boxShadow:`0 0 20px ${withAlpha(ac,60)}`}}/>}
         {/* Orb-done flash — burst emerald que cierra el ciclo del orb antes de que el IgnitionBurst
             full-screen tome el control. Signature end-state: el orb completa su propia narrativa. */}
         {orbDoneFlash&&!reducedMotion&&<motion.div key="orb-done" aria-hidden="true" initial={{scale:.3,opacity:1}} animate={{scale:2.2,opacity:0}} transition={{duration:.55,ease:[.16,1,.3,1]}} style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle, #ffffff 0%, #34d39988 25%, #22c55e44 55%, transparent 80%)`,pointerEvents:"none",zIndex:5,filter:"blur(1px)"}}/>}
-        {orbDoneFlash&&!reducedMotion&&[0,1,2].map(i=><motion.span key={`done-ring-${i}`} aria-hidden="true" initial={{scale:.8,opacity:.8}} animate={{scale:1.8,opacity:0}} transition={{duration:.6,delay:i*.07,ease:"easeOut"}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid #22c55e`,pointerEvents:"none",zIndex:5,boxShadow:`0 0 20px #22c55e88`}}/>)}
+        {orbDoneFlash&&!reducedMotion&&[0,1,2].map(i=><motion.span key={`done-ring-${i}`} aria-hidden="true" initial={{scale:.8,opacity:.8}} animate={{scale:1.8,opacity:0}} transition={{duration:.6,delay:i*.07,ease: [0.22, 1, 0.36, 1]}} style={{position:"absolute",inset:0,borderRadius:"50%",border:`1.5px solid #22c55e`,pointerEvents:"none",zIndex:5,boxShadow:`0 0 20px #22c55e88`}}/>)}
       </AnimatePresence>
       {/* Progress ring como corona exterior — brillante sobre el orb oscuro */}
       <svg width={isActive?"240":"260"} height={isActive?"240":"260"} viewBox="0 0 260 260" style={{transform:"rotate(-90deg)",position:"absolute",inset:0,pointerEvents:"none"}}>
         <circle cx="130" cy="130" r="122" fill="none" stroke={withAlpha(ac,18)} strokeWidth={ts==="idle"?"3":"2.5"}/>
-        <circle cx="130" cy="130" r="122" fill="none" stroke={ac} strokeWidth={isActive?"6":ts==="idle"?"4":"3"} strokeLinecap="round" strokeDasharray={2*Math.PI*122} strokeDashoffset={ts==="idle"?0:(2*Math.PI*122)*(sec/totalDur)} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s ease",filter:`drop-shadow(0 0 10px ${withAlpha(ac,isActive?85:65)}) drop-shadow(0 0 4px ${withAlpha(ac,50)})`}}/>
+        <circle cx="130" cy="130" r="122" fill="none" stroke={ac} strokeWidth={isActive?"6":ts==="idle"?"4":"3"} strokeLinecap="round" strokeDasharray={2*Math.PI*122} strokeDashoffset={ts==="idle"?0:(2*Math.PI*122)*(sec/totalDur)} style={{transition:isActive?"stroke-dashoffset .95s linear":"stroke-dashoffset .3s cubic-bezier(0.22, 1, 0.36, 1)",filter:`drop-shadow(0 0 10px ${withAlpha(ac,isActive?85:65)}) drop-shadow(0 0 4px ${withAlpha(ac,50)})`}}/>
       </svg>
       {/* Contenido central — countdown + labels en colores claros (contraste contra orb oscuro) */}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none",zIndex:2,width:"88%",display:"flex",flexDirection:"column",alignItems:"center"}}>
@@ -1822,7 +1822,7 @@ export default function BioIgnicion(){
     {/* Phase info — solo en preview (idle); durante sesión activa la fase vive dentro del core */}
     {!isActive&&<div style={{textAlign:"center",marginBottom:10}}><div style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon name={ph.ic} size={13} color={ac}/><span style={{fontSize:14,fontWeight:800,color:t1}}>{ph.l}</span></div><div style={{fontSize:10,color:t3,marginTop:2}}>{ph.r}</div></div>}
     <motion.div key={pi} initial={{opacity:0,x:12}} animate={{opacity:1,x:0}} transition={{duration:.3}} style={{background:cd,borderRadius:16,padding:"16px",marginBottom:10,border:`1px solid ${bd}`}}>
-      {isActive&&<div aria-hidden="true" style={{height:3,borderRadius:2,background:bd,overflow:"hidden",marginBottom:12}}><div style={{width:`${Math.round((pi+1)/pr.ph.length*100)}%`,height:"100%",background:`linear-gradient(90deg,${ac}60,${ac})`,transition:"width .3s ease"}}/></div>}
+      {isActive&&<div aria-hidden="true" style={{height:3,borderRadius:2,background:bd,overflow:"hidden",marginBottom:12}}><div style={{width:`${Math.round((pi+1)/pr.ph.length*100)}%`,height:"100%",background:`linear-gradient(90deg,${ac}60,${ac})`,transition:"width .3s cubic-bezier(0.22, 1, 0.36, 1)"}}/></div>}
       {ph.k&&<div style={{fontSize:15,fontWeight:800,color:t1,lineHeight:1.45,marginBottom:8,letterSpacing:"-0.2px"}}>{ph.k}</div>}
       <p style={{fontSize:12,lineHeight:1.7,color:t2,margin:0}}>{ph.i}</p>
 
@@ -1857,7 +1857,7 @@ export default function BioIgnicion(){
             <div key={i} role="listitem" aria-current={isCurr?"step":undefined} style={{
               inlineSize:`${segW}%`,
               background:isDone?ac:isCurr?`linear-gradient(90deg,${ac},${withAlpha(ac,70)})`:withAlpha(ac,14),
-              transition:"background .35s ease",
+              transition:"background .35s cubic-bezier(0.22, 1, 0.36, 1)",
             }}/>
           );
         })}
@@ -1878,7 +1878,7 @@ export default function BioIgnicion(){
               gap:4,
               paddingInline:4,
               opacity:i<=pi?1:0.55,
-              transition:"opacity .3s ease",
+              transition:"opacity .3s cubic-bezier(0.22, 1, 0.36, 1)",
               overflow:"hidden",
             }}>
               <Icon name={p.ic} size={10} color={iconColor} aria-hidden="true"/>
@@ -1945,7 +1945,7 @@ export default function BioIgnicion(){
     const vitalTint=neural>=70?bioSignal.phosphorCyan:neural>=50?bioSignal.neuralViolet:"transparent";
     const tintOpacity=neural>=70?(isDark?0.07:0.05):neural>=50?(isDark?0.05:0.035):0;
     const barAlpha=Math.round(tintOpacity*255).toString(16).padStart(2,"0");
-    return <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:`calc(${layout.bottomNav}px + env(safe-area-inset-bottom, 0px))`,left:"50%",transform:"translateX(-50%)",width:"calc(100% - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right) + 32px))",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:`linear-gradient(180deg, ${vitalTint}${barAlpha}, ${vitalTint}00), ${resolveTheme(isDark).glass}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${neural>=70?bioSignal.phosphorCyan+"22":bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}${neural>=70?`, 0 0 28px ${bioSignal.phosphorCyan}14`:""}`,transition:"background .8s ease, border-color .8s ease, box-shadow .8s ease"}}>
+    return <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:`calc(${layout.bottomNav}px + env(safe-area-inset-bottom, 0px))`,left:"50%",transform:"translateX(-50%)",width:"calc(100% - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right) + 32px))",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:`linear-gradient(180deg, ${vitalTint}${barAlpha}, ${vitalTint}00), ${resolveTheme(isDark).glass}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${neural>=70?bioSignal.phosphorCyan+"22":bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}${neural>=70?`, 0 0 28px ${bioSignal.phosphorCyan}14`:""}`,transition:"background .8s cubic-bezier(0.22, 1, 0.36, 1), border-color .8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .8s cubic-bezier(0.22, 1, 0.36, 1)"}}>
       {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:protoColor.enfoque,ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:protoColor.calma,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:protoColor.energia,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
         <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
         <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
@@ -1954,7 +1954,7 @@ export default function BioIgnicion(){
   })()}
 
   {/* ═══ BOTTOM NAV ═══ */}
-  <nav role="tablist" aria-label="Navegación principal" aria-hidden={ts==="running"?"true":undefined} style={{position:"fixed",bottom:0,left:"50%",transform:`translateX(-50%) translateY(${ts==="running"?"72px":"0"})`,width:"100%",maxWidth:rootMaxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,paddingBlockStart:6,paddingBlockEnd:"max(10px, env(safe-area-inset-bottom))",paddingInlineStart:`max(${space[4]}px, env(safe-area-inset-left))`,paddingInlineEnd:`max(${space[4]}px, env(safe-area-inset-right))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav,opacity:ts==="running"?0:1,pointerEvents:ts==="running"?"none":"auto",transition:reducedMotion?"none":"transform .45s cubic-bezier(.16,1,.3,1), opacity .35s ease"}}>
+  <nav role="tablist" aria-label="Navegación principal" aria-hidden={ts==="running"?"true":undefined} style={{position:"fixed",bottom:0,left:"50%",transform:`translateX(-50%) translateY(${ts==="running"?"72px":"0"})`,width:"100%",maxWidth:rootMaxWidth,background:resolveTheme(isDark).overlay,backdropFilter:"blur(20px)",borderTop:`1px solid ${bd}`,paddingBlockStart:6,paddingBlockEnd:"max(10px, env(safe-area-inset-bottom))",paddingInlineStart:`max(${space[4]}px, env(safe-area-inset-left))`,paddingInlineEnd:`max(${space[4]}px, env(safe-area-inset-right))`,display:"flex",justifyContent:"center",gap:space[1],zIndex:z.nav,opacity:ts==="running"?0:1,pointerEvents:ts==="running"?"none":"auto",transition:reducedMotion?"none":"transform .45s cubic-bezier(.16,1,.3,1), opacity .35s cubic-bezier(0.22, 1, 0.36, 1)"}}>
     {[{id:"ignicion",lb:"Ignición",ic:"bolt",ac:ac},{id:"dashboard",lb:"Dashboard",ic:"gauge",ac:bioSignal.phosphorCyan},{id:"perfil",lb:"Perfil",ic:"user",ac:brand.accent}].map((t,order)=>{
       const a=tab===t.id;
       const isIgnicion=t.id==="ignicion";

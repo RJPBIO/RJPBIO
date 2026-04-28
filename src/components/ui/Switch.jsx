@@ -38,7 +38,7 @@ export function Switch({ checked, onChange, label, hint, disabled, size = "md", 
           width: dims.w, height: dims.h,
           background: checked ? cssVar.accent : cssVar.border,
           borderRadius: radius.full,
-          transition: "background .18s ease",
+          transition: "background .18s cubic-bezier(0.22, 1, 0.36, 1)",
           flexShrink: 0,
           display: "inline-block",
         }}

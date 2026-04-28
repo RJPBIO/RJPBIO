@@ -264,7 +264,7 @@ export default function SessionBiofeedback({ breathCycle, elapsedSec, active, is
             >
               <motion.div
                 animate={{ inlineSize: `${coherenceData?.score ?? 0}%` }}
-                transition={reduced ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
+                transition={reduced ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 style={{
                   blockSize: "100%",
                   background: coherenceColor(coherenceData?.score),

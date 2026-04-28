@@ -299,7 +299,7 @@ export default function SessionShareCard({
     cursor: busy ? "wait" : "pointer",
     fontFamily: "inherit",
     opacity: busy ? 0.7 : 1,
-    transition: "transform 0.15s ease, opacity 0.15s ease",
+    transition: "transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.15s cubic-bezier(0.22, 1, 0.36, 1)",
   };
 
   return (

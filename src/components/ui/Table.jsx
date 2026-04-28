@@ -107,7 +107,7 @@ export function DataTable({
               style={{
                 background: zebra && i % 2 === 1 ? cssVar.surface2 : "transparent",
                 cursor: onRowClick ? "pointer" : "default",
-                transition: "background .12s ease",
+                transition: "background .12s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
               {columns.map((c) => (

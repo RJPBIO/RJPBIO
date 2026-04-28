@@ -214,7 +214,7 @@ export default function CommandPalette() {
                   cursor: "pointer",
                   background: active ? cssVar.accentSoft : "transparent",
                   color: active ? cssVar.text : cssVar.textDim,
-                  transition: "background .12s ease, color .12s ease",
+                  transition: "background .12s cubic-bezier(0.22, 1, 0.36, 1), color .12s cubic-bezier(0.22, 1, 0.36, 1)",
                 }}
               >
                 <span aria-hidden style={{

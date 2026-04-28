@@ -148,7 +148,7 @@ export default function InstrumentDueCard({ isDark, ac, defaultForce = null }) {
             whiteSpace: "nowrap",
             fontFamily: "inherit",
             minBlockSize: 48,
-            transition: "filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
+            transition: "filter 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s cubic-bezier(0.22, 1, 0.36, 1), transform 0.15s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
           Empezar

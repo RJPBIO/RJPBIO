@@ -140,7 +140,7 @@ export default function ReadinessRing({
           background: `radial-gradient(circle, ${centerColor}14, transparent 70%)`,
           filter: "blur(30px)",
           pointerEvents: "none",
-          transition: "background 0.35s ease",
+          transition: "background 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       />
 
@@ -265,7 +265,7 @@ export default function ReadinessRing({
                     initial={{ strokeDashoffset: circ }}
                     animate={{ strokeDashoffset: circ * (1 - pct) }}
                     transition={{ duration: reduced ? 0 : 1 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    style={{ transition: "stroke-width 0.2s ease, opacity 0.2s ease" }}
+                    style={{ transition: "stroke-width 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1)" }}
                   />
                   {/* Endpoint marker — cinematic instrument */}
                   {pct > 0.02 && pct < 1 && (
@@ -279,7 +279,7 @@ export default function ReadinessRing({
                       opacity={isDim ? 0.35 : 1}
                       style={{
                         filter: `drop-shadow(0 0 ${isActive ? 6 : 3}px ${ring.color})`,
-                        transition: "r 0.2s ease, stroke-width 0.2s ease",
+                        transition: "r 0.2s cubic-bezier(0.22, 1, 0.36, 1), stroke-width 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
                       }}
                     />
                   )}
@@ -398,7 +398,7 @@ export default function ReadinessRing({
               letterSpacing: font.tracking.caps,
               textTransform: "uppercase",
               cursor: "pointer",
-              transition: "background 0.18s ease, border-color 0.18s ease",
+              transition: "background 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.18s cubic-bezier(0.22, 1, 0.36, 1)",
               minBlockSize: 22,
             }}
           >
@@ -477,7 +477,7 @@ export default function ReadinessRing({
                   borderRadius: radius.sm,
                   background: isActive ? withAlpha(r.color, 8) : "transparent",
                   cursor: "pointer",
-                  transition: "background 0.18s ease",
+                  transition: "background 0.18s cubic-bezier(0.22, 1, 0.36, 1)",
                   outline: "none",
                   minBlockSize: 28,
                 }}
@@ -490,13 +490,13 @@ export default function ReadinessRing({
                     borderRadius: "50%",
                     background: r.color,
                     boxShadow: isActive ? `0 0 0 3px ${withAlpha(r.color, 20)}` : "none",
-                    transition: "box-shadow 0.18s ease",
+                    transition: "box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 />
-                <dt style={{ ...ty.caption(isActive ? r.color : t3), fontWeight: font.weight.bold, inlineSize: 64, transition: "color 0.18s ease" }}>
+                <dt style={{ ...ty.caption(isActive ? r.color : t3), fontWeight: font.weight.bold, inlineSize: 64, transition: "color 0.18s cubic-bezier(0.22, 1, 0.36, 1)" }}>
                   {r.label}
                 </dt>
-                <dd style={{ ...ty.biometric(isActive ? r.color : t1, font.size.md), margin: 0, transition: "color 0.18s ease" }}>{r.score}%</dd>
+                <dd style={{ ...ty.biometric(isActive ? r.color : t1, font.size.md), margin: 0, transition: "color 0.18s cubic-bezier(0.22, 1, 0.36, 1)" }}>{r.score}%</dd>
               </div>
             );
           })}

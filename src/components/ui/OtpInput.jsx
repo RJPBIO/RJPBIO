@@ -97,7 +97,7 @@ export function OtpInput({ length = 6, value, onChange, onComplete, autoFocus = 
             fontWeight: 700,
             textAlign: "center",
             outline: "none",
-            transition: "border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease",
+            transition: "border-color 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s cubic-bezier(0.22, 1, 0.36, 1), transform 0.1s cubic-bezier(0.22, 1, 0.36, 1)",
             boxShadow: d ? `0 0 0 2px ${bioSignal.phosphorCyan}33` : undefined,
           }}
         />

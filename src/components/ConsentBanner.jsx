@@ -71,7 +71,7 @@ export default function ConsentBanner() {
         fontFamily: "inherit",
         maxInlineSize: expanded ? 620 : 560,
         marginInline: "auto",
-        transition: "max-inline-size 220ms ease",
+        transition: "max-inline-size 220ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -215,7 +215,7 @@ function Toggle({ id, checked, onChange, disabled }) {
           background: checked ? `linear-gradient(135deg, ${CY}, ${CY_D})` : "rgba(148,163,184,0.25)",
           border: `1px solid ${checked ? `${CY}66` : "rgba(148,163,184,0.35)"}`,
           padding: 2,
-          transition: "background 180ms ease, border-color 180ms ease",
+          transition: "background 180ms cubic-bezier(0.22, 1, 0.36, 1), border-color 180ms cubic-bezier(0.22, 1, 0.36, 1)",
           boxShadow: checked ? `0 0 0 3px ${CY}14` : "none",
           opacity: disabled ? 0.7 : 1,
         }}
@@ -254,7 +254,7 @@ function PrimaryButton({ onClick, label }) {
         color: "#042933",
         cursor: "pointer",
         boxShadow: `0 8px 24px -10px ${CY}99`,
-        transition: "transform 160ms ease, filter 160ms ease",
+        transition: "transform 160ms cubic-bezier(0.2, 0.5, 0.2, 1), filter 160ms cubic-bezier(0.2, 0.5, 0.2, 1)",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.filter = "brightness(1.06)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.filter = "none"; }}
@@ -281,7 +281,7 @@ function GhostButton({ onClick, label }) {
         background: "rgba(255,255,255,0.04)",
         border: `1px solid rgba(255,255,255,0.12)`,
         cursor: "pointer",
-        transition: "border-color 160ms ease, background 160ms ease",
+        transition: "border-color 160ms cubic-bezier(0.2, 0.5, 0.2, 1), background 160ms cubic-bezier(0.2, 0.5, 0.2, 1)",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${CY}55`; e.currentTarget.style.background = `${CY}0F`; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}

@@ -130,7 +130,7 @@ function ProgramCard({ program, expanded, onToggle, onStart, completionStats, re
         border: `1px solid ${expanded ? withAlpha(accent, 30) : bd}`,
         borderRadius: 14,
         overflow: "hidden",
-        transition: "border-color .2s ease",
+        transition: "border-color .2s cubic-bezier(0.22, 1, 0.36, 1)",
       }}
     >
       {/* Header (clickable) */}

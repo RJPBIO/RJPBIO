@@ -105,7 +105,7 @@ export default function IgnitionBurst({ show, onDone, accent }) {
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: [0, 0.5, 0], scale: [0.8, 1, 1.1] }}
-                transition={{ duration: 1.1, times: [0, 0.35, 1], ease: "easeOut" }}
+                transition={{ duration: 1.1, times: [0, 0.35, 1], ease: [0.22, 1, 0.36, 1] }}
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -143,7 +143,7 @@ export default function IgnitionBurst({ show, onDone, accent }) {
                 <motion.div
                   initial={{ scale: 0, opacity: 1 }}
                   animate={{ scale: [0, 1.2, 0.9, 1], opacity: [1, 1, 0.9, 0] }}
-                  transition={{ duration: 1.4, times: [0, 0.22, 0.5, 1], ease: "easeOut" }}
+                  transition={{ duration: 1.4, times: [0, 0.22, 0.5, 1], ease: [0.22, 1, 0.36, 1] }}
                   style={{
                     position: "absolute",
                     left: -60,
@@ -181,7 +181,7 @@ export default function IgnitionBurst({ show, onDone, accent }) {
                 <motion.div
                   initial={{ scale: 0, opacity: 0.9, rotate: 0 }}
                   animate={{ scale: 3.5, opacity: 0, rotate: 180 }}
-                  transition={{ duration: 1.3, ease: "easeOut" }}
+                  transition={{ duration: 1.3, ease: [0.22, 1, 0.36, 1] }}
                   style={{
                     position: "absolute",
                     left: -80,
@@ -201,7 +201,7 @@ export default function IgnitionBurst({ show, onDone, accent }) {
                     key={`p-${p.id}`}
                     initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
                     animate={{ x: p.x, y: p.y, scale: [0, 1, 0.3], opacity: [0, 1, 0] }}
-                    transition={{ duration: 1.2, delay: p.delay, ease: "easeOut" }}
+                    transition={{ duration: 1.2, delay: p.delay, ease: [0.22, 1, 0.36, 1] }}
                     style={{
                       position: "absolute",
                       left: -p.size / 2,

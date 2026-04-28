@@ -365,7 +365,7 @@ export default function PostSessionFlow({
                       x: Math.cos(angle) * dist,
                       y: Math.sin(angle) * dist - 20,
                     }}
-                    transition={{ duration: 1.8, delay: i * 0.04, ease: "easeOut" }}
+                    transition={{ duration: 1.8, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
                     style={{
                       position: "absolute",
                       insetBlockStart: "22%",

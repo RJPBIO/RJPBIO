@@ -51,7 +51,7 @@ export function Button({
     cursor: isDisabled ? "not-allowed" : "pointer",
     opacity: isDisabled ? 0.65 : 1,
     position: "relative",
-    transition: "background .15s ease, transform .1s ease, box-shadow .15s ease",
+    transition: "background .15s cubic-bezier(0.22, 1, 0.36, 1), transform .1s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .15s cubic-bezier(0.22, 1, 0.36, 1)",
     ...sizes[size],
     ...variants[variant],
   };

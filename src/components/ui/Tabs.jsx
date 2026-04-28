@@ -56,7 +56,7 @@ export function Tabs({ value, onChange, children }) {
                 fontWeight: font.weight.semibold,
                 cursor: "pointer",
                 boxShadow: selected ? `0 1px 2px rgba(0,0,0,0.08)` : "none",
-                transition: "color .12s ease, background .12s ease",
+                transition: "color .12s cubic-bezier(0.22, 1, 0.36, 1), background .12s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
               {c.props.label}

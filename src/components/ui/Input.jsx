@@ -52,7 +52,7 @@ export const Input = forwardRef(function Input(
           fontFamily: "inherit",
           lineHeight: 1.4,
           minHeight: 44,
-          transition: "border-color .15s ease, box-shadow .15s ease",
+          transition: "border-color .15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .15s cubic-bezier(0.22, 1, 0.36, 1)",
           ...style,
         }}
         {...rest}
@@ -73,7 +73,7 @@ export const Input = forwardRef(function Input(
         border: `1px solid ${invalid ? cssVar.danger : cssVar.border}`,
         borderRadius: radius.sm,
         minHeight: 44,
-        transition: "border-color .15s ease, box-shadow .15s ease",
+        transition: "border-color .15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .15s cubic-bezier(0.22, 1, 0.36, 1)",
         ...style,
       }}
     >

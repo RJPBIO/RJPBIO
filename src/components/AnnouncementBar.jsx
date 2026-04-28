@@ -123,7 +123,7 @@ export default function AnnouncementBar({ id, label, cta, href, tone = "default"
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          transition: "color 160ms ease, background 160ms ease",
+          transition: "color 160ms cubic-bezier(0.2, 0.5, 0.2, 1), background 160ms cubic-bezier(0.2, 0.5, 0.2, 1)",
         }}
         onMouseEnter={(e) => { e.currentTarget.style.color = "#ECFEFF"; e.currentTarget.style.background = "rgba(236,254,255,0.1)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(236,254,255,0.7)"; e.currentTarget.style.background = "transparent"; }}

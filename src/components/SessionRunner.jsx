@@ -261,7 +261,7 @@ function PhaseTimeline({ accent, safePh, safePr, sec, totalDur, reducedMotion })
                 width: 1,
                 height: 9,
                 background: withAlpha(accent, passed ? 60 : 30),
-                transition: "background .35s ease",
+                transition: "background .35s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             />
           );
@@ -294,7 +294,7 @@ function PhaseTimeline({ accent, safePh, safePr, sec, totalDur, reducedMotion })
             borderRadius: "50%",
             background: progress >= 0.99 ? accent : withAlpha(accent, 28),
             boxShadow: progress >= 0.99 ? `0 0 8px ${withAlpha(accent, 70)}` : "none",
-            transition: "background .4s ease, box-shadow .4s ease",
+            transition: "background .4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .4s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
 
@@ -422,7 +422,7 @@ function PhaseBurst({ burstKey, accent, reducedMotion }) {
             key={`phase-ring-${burstKey}`}
             initial={{ scale: 0.88, opacity: 0.85 }}
             animate={{ scale: 1.32, opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             style={{
               position: "absolute",
               inset: 0,
@@ -525,7 +525,7 @@ function IgnitionSpark({ show, accent, reducedMotion }) {
               key={`ring-${i}`}
               initial={{ scale: 0.6, opacity: 0.95 }}
               animate={{ scale: 2.4, opacity: 0 }}
-              transition={{ duration: 0.75, delay: i * 0.09, ease: "easeOut" }}
+              transition={{ duration: 0.75, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 position: "absolute",
                 inset: 0,
@@ -989,7 +989,7 @@ export default function SessionRunner({
               momento-share (screenshot) que antes salía sin trademark
               visible — quien viera el screenshot no podía identificar
               la app ni su nombre. El #N es el gatillo FOMO. */}
-          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
+          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: sealing ? 0.2 : 1, transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1)" }}>
             {countingDown ? (
               <div aria-hidden="true" style={{ display: "inline-flex", alignItems: "baseline", gap: 3, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", lineHeight: 1, opacity: 0.9 }}>
                 <span style={{ fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>BIO</span>
@@ -1100,7 +1100,7 @@ export default function SessionRunner({
 
           {/* ═══ INSTRUCTION + WAVEFORM + SCIENCE (running only) ═══ */}
           {!countingDown && (
-            <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 10, marginTop: 8, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
+            <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 10, marginTop: 8, opacity: sealing ? 0.2 : 1, transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1)" }}>
               {/* Live biofeedback (opcional) — solo durante respiración con ciclo declarado */}
               {isBr && safePh.br && !sealing && (
                 <SessionBiofeedback
@@ -1216,7 +1216,7 @@ export default function SessionRunner({
                                 gap: 10,
                                 alignItems: "start",
                                 opacity: isActive ? 1 : isPast ? 0.36 : 0.58,
-                                transition: "opacity .35s ease",
+                                transition: "opacity .35s cubic-bezier(0.22, 1, 0.36, 1)",
                               }}
                             >
                               <span
@@ -1386,7 +1386,7 @@ export default function SessionRunner({
           )}
 
           {/* ═══ BOTTOM — segmented timeline + controls ═══ */}
-          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 14, opacity: sealing ? 0.2 : 1, transition: "opacity .4s ease" }}>
+          <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 14, opacity: sealing ? 0.2 : 1, transition: "opacity .4s cubic-bezier(0.22, 1, 0.36, 1)" }}>
             {!countingDown && phaseCount > 0 && (
               <div>
                 <div role="list" aria-label="Progreso de fases" style={{ display: "flex", gap: 3, height: 5, borderRadius: 3, overflow: "hidden" }}>
@@ -1402,7 +1402,7 @@ export default function SessionRunner({
                         style={{
                           flex: `0 0 ${segW}%`,
                           background: isDone ? accent : isCurr ? `linear-gradient(90deg, ${accent}, ${withAlpha(accent, 70)})` : withAlpha(accent, 14),
-                          transition: "background .35s ease",
+                          transition: "background .35s cubic-bezier(0.22, 1, 0.36, 1)",
                         }}
                       />
                     );
@@ -1423,7 +1423,7 @@ export default function SessionRunner({
                           justifyContent: "center",
                           gap: 4,
                           opacity: isCurr ? 1 : isDone ? 0.7 : 0.35,
-                          transition: "opacity .3s ease",
+                          transition: "opacity .3s cubic-bezier(0.22, 1, 0.36, 1)",
                           overflow: "hidden",
                         }}
                       >
