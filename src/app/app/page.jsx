@@ -1078,7 +1078,7 @@ export default function BioIgnicion(){
   {/* ═══ BIONEURAL MODALS ═══ */}
   <HRVMonitor show={showHRV} isDark={isDark} onClose={()=>setShowHRV(false)} onComplete={(entry)=>{store.logHRV(entry);setSt_(useStore.getState());}}/>
   <HRVCameraMeasure show={showHRVCam} isDark={isDark} onClose={()=>setShowHRVCam(false)} onComplete={(entry)=>{store.logHRV(entry);setSt_(useStore.getState());}} onUseBLE={()=>setShowHRV(true)}/>
-  <HRVHistoryPanel show={showHRVHistory} isDark={isDark} hrvLog={st.hrvLog} onClose={()=>setShowHRVHistory(false)} onMeasureNew={()=>setShowHRVCam(true)}/>
+  <HRVHistoryPanel show={showHRVHistory} isDark={isDark} hrvLog={st.hrvLog} history={st.history} onClose={()=>setShowHRVHistory(false)} onMeasureNew={()=>setShowHRVCam(true)}/>
   <PhysiologicalSigh show={showSigh} isDark={isDark} onClose={()=>setShowSigh(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
   <NSDR show={showNSDR} isDark={isDark} onClose={()=>setShowNSDR(false)} onComplete={(entry)=>{store.logBreathTechnique(entry);setSt_(useStore.getState());}}/>
   <ChronotypeTest show={showChronoTest} isDark={isDark} onClose={()=>setShowChronoTest(false)} onComplete={(ct)=>{store.setChronotype(ct);setSt_(useStore.getState());}}/>
