@@ -61,6 +61,7 @@
   --bi-danger: #DC2626;
   --bi-warn: #D97706;
   --bi-success: #10B981;
+  --bi-ok: #10B981; /* Sprint 105 — alias de success. Usado por NOM-035 risk levels (nulo/bajo) en /admin/nom35 + /nom35/aplicador. Antes undefined → bg transparent en risk chips. */
   --bi-focus-ring: var(--focus-ring);
 
   /* ═══ Sprint 83 — Brand color tokens (sRGB defaults) ═══════════════

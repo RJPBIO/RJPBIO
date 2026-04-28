@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 36; // Sprint 104 — fix masivo: alpha scale incompleta hacía que 94 sitios con withAlpha(color, X) silently fallaran al 10% cuando devs intentaban 14/18/22/28/35/45/55/85%
+const CACHE_VERSION = 37; // Sprint 105 — más undefined-token bugs: space[9]/space[3.5] (26 sitios padding 0), radius.pill (corners cuadrados), font.weight.regular (default weight), --bi-ok (NOM-035 risk colors invisibles)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

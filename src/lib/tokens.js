@@ -43,6 +43,9 @@ export const font = {
 
   weight: {
     normal: 400,
+    regular: 400,   // Sprint 105 — alias de `normal` (2 sitios usaban
+                    // font.weight.regular y caía undefined → fontWeight
+                    // se renderea como default browser, no consistente).
     medium: 500,
     semibold: 600,
     bold: 700,
@@ -71,6 +74,13 @@ export const font = {
 
 // ─── Spacing Scale ───────────────────────────────────────
 // 4px base grid. Every spacing value is a multiple of 4.
+//
+// Sprint 105 — añadidos 3.5, 9, 11, 14, 18 que el codebase ya usaba
+// (encontré en audit que `space[9]` se llamaba en 26 sitios de marketing
+// pages — undefined silently → paddings 0 en lugar de 36px). Sólo
+// añadidos no rompen nada; los componentes que usaban con `|| 14`
+// fallback siguen funcionando, los que esperaban valor real ahora
+// reciben el correcto.
 export const space = {
   0: 0,
   px: 1,
@@ -80,18 +90,26 @@ export const space = {
   2: 8,
   2.5: 10,
   3: 12,
+  3.5: 14,   // entre 3 (12) y 4 (16)
   4: 16,
   5: 20,
   6: 24,
   7: 28,
   8: 32,
+  9: 36,     // entre 8 (32) y 10 (40)
   10: 40,
+  11: 44,    // Apple HIG min target size
   12: 48,
+  14: 56,
   16: 64,
+  18: 72,
   20: 80,
 };
 
 // ─── Border Radius ───────────────────────────────────────
+// Sprint 105 — añadido `pill` (2 sitios en /vs y /why usaban radius.pill
+// para shape pill-button → undefined → border-radius 0 → corners
+// cuadrados en vez de pill). Alias de `full` (9999).
 export const radius = {
   sm: 8,
   md: 12,
@@ -99,6 +117,7 @@ export const radius = {
   xl: 20,
   "2xl": 28,
   full: 9999,
+  pill: 9999,   // alias semántico de full para pill-shaped buttons
 };
 
 // ─── Shadows ─────────────────────────────────────────────
