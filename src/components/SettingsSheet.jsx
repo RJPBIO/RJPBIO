@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Icon from "./Icon";
 import LocaleSelect from "./ui/LocaleSelect";
 import { SOUNDSCAPES } from "../lib/constants";
-import { exportData, listAvailableVoices, loadVoices, hapticSignature } from "../lib/audio";
+import { exportData, listAvailableVoices, loadVoices, hapticSignature, diagnoseHaptic } from "../lib/audio";
 import { resolveTheme, withAlpha, ty, font, space, radius, z } from "../lib/theme";
 import { semantic } from "../lib/tokens";
 import { useReducedMotion, useFocusTrap, KEY } from "../lib/a11y";
@@ -413,32 +413,25 @@ export default function SettingsSheet({
                     }}
                     ariaLabel="Intensidad de vibración"
                   />
-                  {/* Probar — botón discreto, dispara pattern signature.
-                      Si el dispositivo no vibra, el usuario sabe que es
-                      limitación del browser/OS, no del app. */}
-                  {hasVibrate && st.hapticOn && (
-                    <button
-                      type="button"
-                      onClick={() => { try { hapticSignature("ignition"); } catch (e) {} }}
-                      style={{
-                        inlineSize: "100%",
-                        marginBlockStart: 6,
-                        paddingBlock: 8,
-                        paddingInline: 12,
-                        borderRadius: radius.sm,
-                        border: `1px dashed ${withAlpha(ac, 30)}`,
-                        background: "transparent",
-                        color: ac,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: 1.2,
-                        textTransform: "uppercase",
-                        cursor: "pointer",
-                      }}
-                      aria-label="Probar vibración"
-                    >
-                      Probar vibración
-                    </button>
+                  {/* Sprint 72 — Probar + diagnóstico: ahora muestra
+                      resultado claro al usuario.
+                      · Verde "✓ Vibración detectada" → se disparó OK
+                      · Ámbar "Sin respuesta" → API existe pero el browser
+                        o el modo silencio del teléfono la bloqueó
+                      · Gris "No soportado" → device sin Vibration API (iOS)
+                      · "Desactivada" → user apagó el toggle
+                      Antes el botón llamaba hapticSignature("ignition")
+                      sin feedback — si no vibraba, el user no sabía
+                      por qué. */}
+                  <HapticDiagnoseButton
+                    enabled={!!st.hapticOn}
+                    hasVibrate={hasVibrate}
+                    accentColor={ac}
+                  />
+                  {!hasVibrate && (
+                    <p style={{ marginBlockStart: 8, fontSize: 11, color: t3, lineHeight: 1.5 }}>
+                      iOS Safari no soporta la Vibration API por decisión de Apple. La aplicación reemplaza la vibración con un destello visual sincronizado.
+                    </p>
                   )}
                 </>
               );
@@ -757,4 +750,74 @@ export default function SettingsSheet({
 function openNOM035Report() {
   if (typeof window === "undefined") return;
   window.open("/nom35/aplicador/reporte", "_blank", "noopener,noreferrer");
+}
+
+// Sprint 72 — botón que dispara diagnoseHaptic() y muestra resultado.
+// Reemplaza el botón anterior que solo llamaba hapticSignature("ignition")
+// sin retroalimentación — si no vibraba, el usuario no sabía si el
+// problema era browser, modo silencio, o el toggle apagado.
+function HapticDiagnoseButton({ enabled, hasVibrate, accentColor }) {
+  const [result, setResult] = useState(null);
+  const handleTest = () => {
+    try {
+      const r = diagnoseHaptic();
+      setResult(r);
+      // Limpia el estado después de 4s para que el user pueda probar de nuevo
+      setTimeout(() => setResult(null), 4000);
+    } catch (e) {
+      setResult({ supported: false, enabled: false, fired: false, reason: "exception" });
+    }
+  };
+  const statusText = (() => {
+    if (!result) return null;
+    if (!result.supported) return { text: "✗ Tu dispositivo no soporta Vibration API", color: "#94A3B8" };
+    if (!result.enabled) return { text: "Vibración desactivada en ajustes", color: "#94A3B8" };
+    if (result.fired) return { text: "✓ Vibración detectada", color: "#059669" };
+    return { text: "Sin respuesta — verifica modo silencio del teléfono", color: "#D97706" };
+  })();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={handleTest}
+        disabled={!hasVibrate || !enabled}
+        style={{
+          inlineSize: "100%",
+          marginBlockStart: 6,
+          paddingBlock: 8,
+          paddingInline: 12,
+          borderRadius: 8,
+          border: `1px dashed ${hasVibrate && enabled ? `${accentColor}55` : "#94A3B855"}`,
+          background: "transparent",
+          color: hasVibrate && enabled ? accentColor : "#94A3B8",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 1.2,
+          textTransform: "uppercase",
+          cursor: hasVibrate && enabled ? "pointer" : "not-allowed",
+          opacity: hasVibrate && enabled ? 1 : 0.6,
+        }}
+        aria-label="Probar vibración con diagnóstico"
+      >
+        Probar vibración
+      </button>
+      {statusText && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            marginBlockStart: 6,
+            fontSize: 11,
+            fontWeight: 600,
+            color: statusText.color,
+            letterSpacing: 0.2,
+            textAlign: "center",
+            paddingBlock: 4,
+          }}
+        >
+          {statusText.text}
+        </div>
+      )}
+    </>
+  );
 }
