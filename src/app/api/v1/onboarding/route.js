@@ -29,18 +29,44 @@ export async function POST(request) {
   const orgId = randomUUID();
   const userId = randomUUID();
   const { wrapped } = await newTenantKey();
-  await client.org.create({
-    data: {
-      id: orgId,
-      name: orgName,
-      slug: slugify(orgName) + "-" + orgId.slice(0, 6),
-      plan, region, seats: 5,
-      dpaAccepted: new Date(dpaAccepted),
-      branding: { encryption: { wrapped } },
-    },
-  });
-  await client.user.create({ data: { id: userId, email, name, locale } });
-  await client.membership.create({ data: { id: randomUUID(), userId, orgId, role: "OWNER" } });
+
+  // Sprint 93 — fix transaccionalidad (bug #7 round 2). Antes: 3 awaits
+  // secuenciales sin transaction. Si user.create fallaba (email duplicado),
+  // dejaba org huérfana sin owner ni membership → invisible para el user
+  // pero ocupando slug + tenant key. Ahora $transaction garantiza all-or-
+  // nothing: si cualquier paso falla, rollback completo.
+  //
+  // Pre-check email único antes del transaction para early-fail con 409
+  // user-friendly en lugar de 500 desde unique constraint violation.
+  try {
+    const existing = await client.user.findUnique({ where: { email }, select: { id: true } });
+    if (existing) return new Response("email_in_use", { status: 409 });
+  } catch {}
+
+  try {
+    await client.$transaction([
+      client.org.create({
+        data: {
+          id: orgId,
+          name: orgName,
+          slug: slugify(orgName) + "-" + orgId.slice(0, 6),
+          plan, region, seats: 5,
+          dpaAccepted: new Date(dpaAccepted),
+          branding: { encryption: { wrapped } },
+        },
+      }),
+      client.user.create({ data: { id: userId, email, name, locale } }),
+      client.membership.create({ data: { id: randomUUID(), userId, orgId, role: "OWNER" } }),
+    ]);
+  } catch (e) {
+    // Race contra email único — devolver 409 si lo es; otherwise 500.
+    if (e?.code === "P2002" && e?.meta?.target?.includes?.("email")) {
+      return new Response("email_in_use", { status: 409 });
+    }
+    return new Response("creation_failed", { status: 500 });
+  }
+
+  // Audit + welcome fuera del transaction (no críticos para integridad)
   await auditLog({ orgId, actorId: userId, action: "org.created", payload: { plan, region, dpaAccepted, teamSize: teamSizeClean } });
   await sendWelcome({ to: email, name, locale }).catch(() => {});
   return Response.json({ orgId, userId }, { status: 201 });

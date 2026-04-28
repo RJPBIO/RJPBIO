@@ -73,10 +73,30 @@ export async function POST(req) {
   const existing = await orm.membership.findFirst({ where: { userId: user.id, orgId: ctx.orgId } });
   if (existing) {
     if (existing.deactivatedAt) {
-      const reactivated = await orm.membership.update({
-        where: { id: existing.id },
-        data: { deactivatedAt: null, scimId: body.externalId || existing.scimId },
+      // Sprint 93 — verificar seats antes de re-activar (bug #8 round 2).
+      // Antes: re-activar saltaba el check → seatsUsed drift permanente.
+      // Tx atómica: read seats/seatsUsed → update if cap allows.
+      const reactivated = await orm.$transaction(async (tx) => {
+        const org = await tx.org.findUnique({
+          where: { id: ctx.orgId },
+          select: { seats: true, seatsUsed: true },
+        });
+        if (!org) throw new Error("org_not_found");
+        if (org.seatsUsed >= org.seats) throw new Error("seats_exhausted");
+        const m = await tx.membership.update({
+          where: { id: existing.id },
+          data: { deactivatedAt: null, scimId: body.externalId || existing.scimId },
+        });
+        await tx.org.update({
+          where: { id: ctx.orgId },
+          data: { seatsUsed: { increment: 1 } },
+        });
+        return m;
+      }).catch((e) => {
+        if (e?.message === "seats_exhausted") return { __seatsExhausted: true };
+        throw e;
       });
+      if (reactivated?.__seatsExhausted) return scimError(409, "seats limit exhausted");
       await auditLog({
         orgId: ctx.orgId, action: "scim.user.reactivate", target: user.id, payload: { email },
       }).catch(() => {});
@@ -84,9 +104,32 @@ export async function POST(req) {
     }
     return scimError(409, "already a member");
   }
-  const m = await orm.membership.create({
-    data: { userId: user.id, orgId: ctx.orgId, role: "MEMBER", scimId: body.externalId || null },
+
+  // Sprint 93 — bug #8 round 2: SCIM provisioning ignoraba `seats` cap +
+  // no incrementaba `seatsUsed`. Atacker via Okta podía crear ilimitados
+  // memberships → org plan-FREE seats=10 podía tener 100 → billing
+  // undercharge si bills usan seatsUsed. Atomic check + increment.
+  const m = await orm.$transaction(async (tx) => {
+    const org = await tx.org.findUnique({
+      where: { id: ctx.orgId },
+      select: { seats: true, seatsUsed: true },
+    });
+    if (!org) throw new Error("org_not_found");
+    if (org.seatsUsed >= org.seats) throw new Error("seats_exhausted");
+    const newM = await tx.membership.create({
+      data: { userId: user.id, orgId: ctx.orgId, role: "MEMBER", scimId: body.externalId || null },
+    });
+    await tx.org.update({
+      where: { id: ctx.orgId },
+      data: { seatsUsed: { increment: 1 } },
+    });
+    return newM;
+  }).catch((e) => {
+    if (e?.message === "seats_exhausted") return { __seatsExhausted: true };
+    throw e;
   });
+  if (m?.__seatsExhausted) return scimError(409, "seats limit exhausted");
+
   await auditLog({
     orgId: ctx.orgId, action: "scim.user.create", target: user.id, payload: { email },
   }).catch(() => {});

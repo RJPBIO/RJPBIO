@@ -99,22 +99,36 @@ export async function POST(request) {
 
     // Resolver personal-org del usuario (creado en signIn). Si no existe
     // por algún razón, lo creamos lazily aquí — defensa en profundidad.
-    let personalOrg = await orm.org.findUnique({ where: { slug: `personal-${userId}` } });
-    if (!personalOrg) {
-      personalOrg = await orm.org.create({
-        data: {
-          name: `Personal · ${userId.slice(0, 6)}`,
-          slug: `personal-${userId}`,
-          plan: "FREE",
-          personal: true,
-          seats: 1,
-          seatsUsed: 1,
-        },
-      });
-      await orm.membership.create({
-        data: { userId, orgId: personalOrg.id, role: "OWNER" },
-      });
-    }
+    //
+    // Sprint 93 — fix race (bug #6 round 2). Antes: findUnique → if-null
+    // → create. Patrón check-then-act NO atómico. 2 devices del mismo user
+    // sincronizando simultáneamente post-signup pasaban findUnique con
+    // null, ambos llamaban create, segundo fallaba con P2002 → 500.
+    //
+    // Ahora: org.upsert + membership.upsert. Idempotent. La única race
+    // residual es si dos requests entran a upsert mismo slug AT THE SAME
+    // INSTANT — Postgres serializa con unique constraint y uno gana
+    // limpio (no error 500), el otro recibe el row recién creado.
+    const slug = `personal-${userId}`;
+    const personalOrg = await orm.org.upsert({
+      where: { slug },
+      create: {
+        name: `Personal · ${userId.slice(0, 6)}`,
+        slug,
+        plan: "FREE",
+        personal: true,
+        seats: 1,
+        seatsUsed: 1,
+      },
+      update: {}, // no-op si ya existe
+    });
+    // Membership puede existir o no — depende de si el flujo de signup
+    // creó la org pero falló creando membership (Sprint 7). Idempotent.
+    await orm.membership.upsert({
+      where: { userId_orgId: { userId, orgId: personalOrg.id } },
+      create: { userId, orgId: personalOrg.id, role: "OWNER" },
+      update: {},
+    });
 
     const synced = [];
     const failed = [];
