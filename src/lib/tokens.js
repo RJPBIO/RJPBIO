@@ -208,14 +208,24 @@ export const dark = {
   bg:      "#000000",   // pure black, OLED-optimal + max contrast cyan
   card:    "#1C1C1E",   // Apple systemGray6
   surface: "#2C2C2E",   // Apple systemGray5 (elevated chrome)
-  border:  "rgba(255, 255, 255, 0.08)", // Apple separator opacity
+  // Sprint 98 — solid hex en lugar de rgba para `border` y text.*.
+  // Razón: withAlpha(hex, pct) en theme.js hace `hex + alpha[pct]`
+  // (string concat) — rompe con rgba() inputs (e.g.,
+  // CorrelationMatrix:221, StreakCalendar:265). #1F1F1F equivale
+  // visualmente a rgba(255,255,255,0.08) sobre fondo #000000.
+  border:  "#1F1F1F",   // ≈ rgba(255,255,255,0.08) over black
   text: {
     primary:   "#FFFFFF",
-    secondary: "rgba(235, 235, 245, 0.6)", // Apple label.secondary
-    muted:     "rgba(235, 235, 245, 0.3)", // Apple label.tertiary
+    // Apple label.secondary = rgba(235,235,245,0.6) over #000.
+    // Equivalente solid: #8E8E93 (Apple systemGray, official iOS dark
+    // mode secondary text color). withAlpha-safe.
+    secondary: "#8E8E93",
+    // Apple label.tertiary = rgba(235,235,245,0.3) over #000.
+    // Equivalente solid: #48484A (Apple systemGray3 dark).
+    muted:     "#48484A",
   },
   overlay: "rgba(0, 0, 0, 0.96)",
-  glass:   "rgba(28, 28, 30, 0.92)", // glassmorphism over surface gray
+  glass:   "rgba(28, 28, 30, 0.92)", // glassmorphism over systemGray6
 };
 
 // ─── Light Theme ─────────────────────────────────────────

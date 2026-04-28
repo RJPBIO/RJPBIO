@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 34; // Sprint 97 — fix REAL del dark theme: la PWA usa tokens.js JS palette no CSS vars, y ese palette seguía emerald-tinted hasta ahora
+const CACHE_VERSION = 35; // Sprint 98 — fix string-concat compatibility en dark.border + text colors (rgba rompía withAlpha en CorrelationMatrix + StreakCalendar)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
