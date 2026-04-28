@@ -150,6 +150,11 @@ function Banner({ tone, accent, message, cta, href, onDismiss }) {
             opacity: 0.6,
             fontSize: 14,
             lineHeight: 1,
+            minInlineSize: 44,
+            minBlockSize: 44,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           ×

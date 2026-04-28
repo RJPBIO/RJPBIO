@@ -117,7 +117,7 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
         <button
           onClick={onClose}
           aria-label="Cerrar NSDR"
-          style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer" }}
+          style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer", minInlineSize: 44, minBlockSize: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
         >
           <Icon name="close" size={20} color={t2} aria-hidden="true" />
         </button>

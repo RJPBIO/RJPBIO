@@ -1253,7 +1253,7 @@ export default function BioIgnicion(){
           type="button"
           aria-label="Descartar este mensaje"
           onClick={()=>setSt(s=>({...s,adaptiveHintDismissed:true}))}
-          style={{flexShrink:0,inlineSize:22,blockSize:22,borderRadius:"50%",border:"none",background:"transparent",color:t3,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,lineHeight:1}}
+          style={{flexShrink:0,minInlineSize:44,minBlockSize:44,inlineSize:44,blockSize:44,borderRadius:"50%",border:"none",background:"transparent",color:t3,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,lineHeight:1}}
         >×</button>
       </div>
     )}

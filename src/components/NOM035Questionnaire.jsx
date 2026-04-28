@@ -72,7 +72,7 @@ export default function NOM035Questionnaire({ show, isDark, onClose, onComplete 
         <h2 id={titleId} style={{ fontSize: 14, fontWeight: font.weight.black, color: t1, margin: 0 }}>
           NOM-035 · Riesgo psicosocial
         </h2>
-        <button onClick={onClose} aria-label="Cerrar cuestionario" style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer" }}>
+        <button onClick={onClose} aria-label="Cerrar cuestionario" style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer", minInlineSize: 44, minBlockSize: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
           <Icon name="close" size={20} color={t2} aria-hidden="true" />
         </button>
       </header>
