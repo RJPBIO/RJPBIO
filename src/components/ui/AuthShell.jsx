@@ -92,8 +92,8 @@ export function AuthShell({ children, title, subtitle, kicker, footer, size = "m
               background: "color-mix(in srgb, var(--bi-surface) 92%, transparent)",
               border: `1px solid ${cssVar.border}`,
               borderRadius: radius.xl,
-              backdropFilter: "blur(16px) saturate(140%)",
-              WebkitBackdropFilter: "blur(16px) saturate(140%)",
+              backdropFilter: "blur(20px) saturate(180%)",
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
               boxShadow: `0 28px 80px -40px color-mix(in srgb, #000 55%, transparent)`,
             }}
           >

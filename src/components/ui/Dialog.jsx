@@ -63,7 +63,8 @@ export function Dialog({ open, onClose, title, description, children, footer, si
         position: "fixed", inset: 0, zIndex: 210,
         display: "grid", placeItems: "center",
         background: "color-mix(in srgb, var(--bi-bg) 70%, #000 30%)",
-        backdropFilter: "blur(6px)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
         padding: space[4],
         animation: "fi 0.18s ease-out",
       }}

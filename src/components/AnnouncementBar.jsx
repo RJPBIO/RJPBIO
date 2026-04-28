@@ -67,8 +67,8 @@ export default function AnnouncementBar({ id, label, cta, href, tone = "default"
           ? "linear-gradient(90deg, rgba(8,145,178,0.85), rgba(34,211,238,0.78), rgba(8,145,178,0.85))"
           : "linear-gradient(90deg, rgba(11,14,20,0.92), rgba(15,23,42,0.92))",
         borderBlockEnd: `1px solid ${isAccent ? "rgba(34,211,238,0.55)" : "rgba(34,211,238,0.22)"}`,
-        backdropFilter: "blur(10px) saturate(140%)",
-        WebkitBackdropFilter: "blur(10px) saturate(140%)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
       }}
     >
       <span

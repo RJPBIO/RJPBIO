@@ -102,8 +102,8 @@ export default function AuthBadge() {
     border: `1px solid ${bioSignal.phosphorCyan}59`,
     background: `color-mix(in oklab, ${cssVar.surface} 85%, transparent)`,
     color: bioSignal.ghostCyan,
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
+    backdropFilter: "blur(16px) saturate(180%)",
+    WebkitBackdropFilter: "blur(16px) saturate(180%)",
     boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
     cursor: "pointer",
     lineHeight: 1,
@@ -173,8 +173,8 @@ export default function AuthBadge() {
             border: `1px solid ${cssVar.border}`,
             borderRadius: radius.md,
             boxShadow: "0 12px 32px rgba(0,0,0,0.45)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
           }}
         >
           <MenuLink href="/account">{t.account}</MenuLink>

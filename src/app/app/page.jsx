@@ -1026,8 +1026,8 @@ export default function BioIgnicion(){
             padding:22,
             borderRadius:22,
             background:cardBg,
-            backdropFilter:"blur(22px) saturate(1.1)",
-            WebkitBackdropFilter:"blur(22px) saturate(1.1)",
+            backdropFilter:"blur(20px) saturate(180%)",
+            WebkitBackdropFilter:"blur(20px) saturate(180%)",
             border:`1px solid ${fomo.urgent?withAlpha(semantic.warning,30):cardBorder}`,
             boxShadow:cardShadow,
             cursor:"default",
@@ -1148,7 +1148,7 @@ export default function BioIgnicion(){
 
   {/* ═══ INTENT PICKER ═══ */}
   <AnimatePresence>
-  {showIntent&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.modal,background:scrim,backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[6]}} onClick={()=>setShowIntent(false)}>
+  {showIntent&&<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} style={{position:"fixed",inset:0,zIndex:z.modal,background:scrim,backdropFilter:"blur(24px) saturate(180%)",WebkitBackdropFilter:"blur(24px) saturate(180%)",display:"flex",alignItems:"center",justifyContent:"center",padding:space[6]}} onClick={()=>setShowIntent(false)}>
     <motion.div initial={{scale:.9}} animate={{scale:1}} transition={{type:"spring",stiffness:200,damping:20}} style={{background:cd,borderRadius:28,padding:"26px 20px",maxWidth:380,width:"100%"}} onClick={e=>e.stopPropagation()}>
     <div style={{textAlign:"center",marginBottom:space[5]}}><div style={{fontSize:font.size.xl,fontWeight:font.weight.black,color:t1}}>¿Qué necesitas?</div>
     {aiRec&&<div style={{...ty.caption(t3),marginTop:space[1]}}>IA sugiere: <span style={{color:ac,fontWeight:font.weight.bold}}>{aiRec.need}</span> · {aiRec.context.circadian}</div>}

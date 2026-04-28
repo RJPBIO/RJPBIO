@@ -52,7 +52,7 @@ export default function ShellMobileNav({ items, activePath, triggerLabel = "MenÃ
             onClick={() => setOpen(false)}
             style={{
               position: "fixed", inset: 0, zIndex: 70,
-              background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+              background: "rgba(0,0,0,0.5)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)",
             }}
           />
           <div
