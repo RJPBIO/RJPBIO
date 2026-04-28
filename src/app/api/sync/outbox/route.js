@@ -30,6 +30,7 @@ import { db } from "../../../../server/db";
 import { auditLog } from "../../../../server/audit";
 import { requireCsrf } from "../../../../server/csrf";
 import { check } from "../../../../server/ratelimit";
+import { mergeNeuralState } from "../../../../server/sync-merge";
 import {
   validateEntry, jsonSize,
   MAX_BATCH, MAX_PAYLOAD_BYTES, MAX_NEURAL_STATE_BYTES,
@@ -155,12 +156,22 @@ export async function POST(request) {
       }
     }
 
-    // Merge neuralState (JSON blob completo del Zustand store)
+    // Sprint 90 — fix bug #1 round 2: merge neuralState en lugar de
+    // sobrescribir. Antes era last-writer-wins entre devices → user
+    // en phone agregaba HRV #101, sync. Laptop con cache pre-#101
+    // agregaba HRV #102, sync → server replaza → #101 desaparece.
+    // Ahora: cargar neuralState existente, merge por ts/key, persistir.
+    // mergeNeuralState() respeta caps históricos para no rebasar tamaño.
     if (neuralState && typeof neuralState === "object") {
+      const existing = await orm.user.findUnique({
+        where: { id: userId },
+        select: { neuralState: true },
+      });
+      const merged = mergeNeuralState(existing?.neuralState || null, neuralState);
       await orm.user.update({
         where: { id: userId },
         data: {
-          neuralState,
+          neuralState: merged,
           lastSyncedAt: new Date(),
         },
       });
