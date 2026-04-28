@@ -11,6 +11,7 @@ import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { dispatchWebhooks } from "@/server/webhooks";
 import { buildRateLimitHeaders } from "@/lib/rate-limit-headers";
+import { findSessionsForOrgMembers } from "@/server/org-neural-sessions";
 
 // Idempotency store (in-memory; Upstash si hay REDIS_URL)
 const idemMem = new Map();
@@ -69,18 +70,9 @@ export async function GET(req) {
   const url = new URL(req.url);
   const take = Math.min(Number(url.searchParams.get("limit") || 50), 200);
   const skip = Number(url.searchParams.get("offset") || 0);
-  const orm = await db();
-  // Sprint 59 — espejo del fix Sprint 55 en /admin: las sesiones del PWA
-  // viven en la personal-org de cada miembro. Queremos que el API expose
-  // las sesiones de los MIEMBROS de la org dueña de la API key, no solo
-  // las directas (stations/kiosk). userId∈membership(orgId) cubre ambos.
-  const memberships = await orm.membership.findMany({
-    where: { orgId: a.ctx.orgId, deactivatedAt: null },
-    select: { userId: true },
-  });
-  const memberIds = memberships.map((m) => m.userId);
-  const rows = memberIds.length === 0 ? [] : await orm.neuralSession.findMany({
-    where: { userId: { in: memberIds } },
+  // Sprint 63 — usa helper canónico (sessions viven en personal-org del
+  // user, no en B2B-org). Sprint 55 patrón consolidado.
+  const rows = await findSessionsForOrgMembers(a.ctx.orgId, {
     orderBy: { completedAt: "desc" },
     take, skip,
   });

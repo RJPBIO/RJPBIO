@@ -38,7 +38,13 @@ export async function POST(request) {
 
   const userId = session.user.id;
   const memberships = session.memberships || [];
-  const orgId = memberships[0]?.orgId;
+  // BUG FIX (Sprint 62): NOM-035-STPS-2018 es regulación workplace.
+  // memberships[0] tomaba el primero indistintamente — si el user tenía
+  // [personal-org, B2B-org], la respuesta se guardaba en personal-org y
+  // el aggregate del B2B nunca la veía. Mismo patrón Sprint 57 (admin
+  // prefiere B2B sobre personal).
+  const target = memberships.find((m) => m.org && !m.org.personal) || memberships[0];
+  const orgId = target?.orgId;
   if (!orgId) return NextResponse.json({ error: "no_membership" }, { status: 403 });
 
   // Rate: máx 3 envíos por hora por user (reevaluaciones razonables).

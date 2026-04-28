@@ -366,8 +366,24 @@ function ResultPane({ result, onSubmit, submitting, submittedAt, error, complete
               <Button variant="secondary" href="/app">
                 Ir a BIO-IGNICIÓN →
               </Button>
-              <Button variant="ghost" onClick={() => typeof window !== "undefined" && window.print()}>
-                Descargar / imprimir
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (typeof window === "undefined") return;
+                  if (submittedAt) {
+                    // Sprint 66 — reporte oficial server-side con la marca,
+                    // 5 páginas y privacidad correcta. Requiere envío previo
+                    // porque la ruta lee Nom35Response del servidor.
+                    window.open("/nom35/aplicador/reporte", "_blank", "noopener,noreferrer");
+                  } else {
+                    // Fallback para quien no quiere enviar — imprime la
+                    // vista actual del aplicador (legacy window.print).
+                    window.print();
+                  }
+                }}
+                title={submittedAt ? "Abrir reporte oficial en nueva pestaña" : "Imprimir vista actual"}
+              >
+                {submittedAt ? "Descargar reporte oficial" : "Imprimir vista"}
               </Button>
             </div>
 

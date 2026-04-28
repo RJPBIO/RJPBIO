@@ -28,19 +28,21 @@ export async function getOrgNeuralHealth(orgId) {
 
     // Total members en el org (independiente de actividad).
     const memberships = await orm.membership.findMany({
-      where: { orgId },
+      where: { orgId, deactivatedAt: null },
       select: { userId: true },
     });
     const userIds = memberships.map((m) => m.userId);
     if (userIds.length === 0) return computeOrgNeuralHealth([]);
 
-    // Sesiones del último año por usuario — ventana razonable para
-    // calcular maturity + staleness. Sprint 46: incluimos moodPre/Post
-    // y coherenciaDelta para computar effectiveness por protocolo.
+    // BUG FIX (Sprint 62): NeuralSession.orgId es la personal-org del user,
+    // no la B2B-org (ver /api/sync/outbox/route.js:137). Query por
+    // {orgId: B2B} devolvía [] → /admin/neural mostraba "0 sesiones" con
+    // users activos. Mismo patrón que Sprint 55/59. Fix: query por
+    // userId∈members del B2B org.
     const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
     const sessions = await orm.neuralSession.findMany({
       where: {
-        orgId,
+        userId: { in: userIds },
         completedAt: { gte: oneYearAgo },
       },
       select: {
@@ -108,12 +110,22 @@ export async function getOrgCohortPrior(orgId) {
   if (!orgId) return null;
   try {
     const orm = await db();
+    // BUG FIX (Sprint 62): mismo patrón Sprint 55/59 — NeuralSession.orgId
+    // es personal-org. Cohort prior del B2B salía vacío silently → cold-start
+    // de new users no recibía blending real. Fix: query por userId∈members.
+    const memberships = await orm.membership.findMany({
+      where: { orgId, deactivatedAt: null },
+      select: { userId: true },
+    });
+    const userIds = memberships.map((m) => m.userId);
+    if (userIds.length === 0) return computeCohortPrior([]);
+
     // Solo sesiones de últimos 6 meses para que el prior refleje rutinas
     // actuales del org (post Sprint 47 también haría sentido decay temporal).
     const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
     const sessions = await orm.neuralSession.findMany({
       where: {
-        orgId,
+        userId: { in: userIds },
         completedAt: { gte: sixMonthsAgo },
         moodPre: { not: null },
         moodPost: { not: null },
