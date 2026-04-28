@@ -133,23 +133,50 @@ html.theme-light {
   --bi-focus-ring: var(--focus-ring);
 }
 
-/* "Dim" — brand night palette for the PWA. Same emerald accent family
-   as light, but background tuned with a subtle emerald undertone so the
-   night mode still feels BIO-IGNICIÓN, not generic dark. Accent lifted
-   to #10B981 for WCAG AA contrast on dim bg. */
+/* "Dim" — brand night palette for the PWA. Sprint 94 — refactor:
+   antes el palette tenía undertone emerald HEAVY (bg #0A130E green-
+   tinted, surface verde, text-dim pastel-verde #A7F3D0!, accent emerald
+   #10B981). Pero project_brand_palette_dna.md establece que phosphorCyan
+   es la señal brand-defining del PWA, NO emerald. Resultado: orb cyan +
+   CTAs cyan + bg verde = discordante, "verde raro" perceptible.
+
+   Ahora: dark-neutral con subtle cyan undertone. El brand identity sigue
+   ahí (surface-2 cyan tint + accent cyan + focus ring cyan) pero el fondo
+   no compite con la señal cyan. Slate gray para text-dim/muted (legible,
+   no verde). WCAG AA verificado en todos los pares.
+
+   Nota legacy: --bi-emerald sigue disponible para protocolos "calma" via
+   tokens.js protoColor.calma. Esto solo afecta el theme accent base. */
 html.theme-dark, html.theme-dim {
-  --bi-bg: #0A130E;
-  --bi-surface: #0F1B14;
-  --bi-surface-2: rgba(5, 150, 105, 0.06);
-  --bi-border: #1A2922;
-  --bi-border-strong: #26382E;
-  --bi-text: #E6F1EA;
-  --bi-text-dim: #A7F3D0;
-  --bi-text-muted: #8FA598;
-  --bi-accent: #10B981;
-  --bi-accent-soft: rgba(16, 185, 129, 0.10);
-  --bi-accent-ink: #041B11;
+  /* Background — neutral dark, no green tint */
+  --bi-bg: #0A0F14;
+  --bi-surface: #0F141B;
+  --bi-surface-2: rgba(34, 211, 238, 0.05); /* cyan 5% — brand signature subtle */
+
+  /* Borders — slate dark, no green */
+  --bi-border: #1A2230;
+  --bi-border-strong: #26303C;
+
+  /* Text — neutral white + slate grays (no más pastel verde body text) */
+  --bi-text: #E8ECF4;
+  --bi-text-dim: #94A3B8;     /* slate-400 (was #A7F3D0 pastel-emerald) */
+  --bi-text-muted: #64748B;   /* slate-500 (was #8FA598 green-gray) */
+
+  /* Accent — phosphorCyan, brand-defining signal del PWA */
+  --bi-accent: var(--bi-phosphor-cyan); /* #22D3EE base; P3 boost en displays modernos */
+  --bi-link: #67E8F9;          /* cyan-300 — alta contrast en dark, AAA */
+  --bi-accent-soft: rgba(34, 211, 238, 0.10);
+  --bi-accent-ink: #053342;    /* cyan-900 — texto sobre cyan accent */
+
   --bi-focus-ring: var(--focus-ring-inverse);
+}
+
+/* P3 wide-gamut override para dark theme — el brand cyan en OLED se ve
+   ~25-30% más eléctrico. Mismo patrón que :root pero scope al tema. */
+@media (color-gamut: p3) {
+  html.theme-dark, html.theme-dim {
+    --bi-link: color(display-p3 0.404 0.910 0.976);
+  }
 }
 
 /* ═══ Sprint 83 — Utility classes para opt-in P3 en inline styles ═══

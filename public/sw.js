@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 30; // Sprint 91 — pushsubscriptionchange handler ahora envía oldEndpoint para que el server reasigne sub antes-vs-después al mismo user
+const CACHE_VERSION = 31; // Sprint 94 — dark theme refactor: emerald-tinted → cyan-aligned (matches phosphorCyan brand DNA del PWA)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
