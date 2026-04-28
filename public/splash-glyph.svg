@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sprint 85 — BioGlyph master para splash screens iOS PWA.
+  Sin background rect (transparente) — el script de splash compone
+  sobre canvas con bg #0B0E14 (manifest background_color). Mismo
+  glyph que icon.svg pero sin la light plate de 112rx — splash
+  es full-bleed dark, no rounded square.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="BIO-IGNICIÓN">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="1"/>
+      <stop offset="60%" stop-color="#22D3EE" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- halo radial -->
+  <circle cx="256" cy="256" r="240" fill="url(#halo)"/>
+  <!-- ring punteado -->
+  <circle cx="256" cy="256" r="183" fill="none" stroke="#22D3EE" stroke-width="7.7"
+          stroke-dasharray="10.2 17.9" opacity="0.55"/>
+  <!-- 3 rayos asimétricos (cos(-π/6, 7π/6, π/2) × 174 + 256) -->
+  <line x1="256" y1="256" x2="406.7" y2="169.0" stroke="#22D3EE" stroke-width="25.6" stroke-linecap="round" opacity="1" filter="url(#glow)"/>
+  <line x1="256" y1="256" x2="105.3" y2="169.0" stroke="#22D3EE" stroke-width="25.6" stroke-linecap="round" opacity="0.7" filter="url(#glow)"/>
+  <line x1="256" y1="256" x2="256" y2="430.0" stroke="#22D3EE" stroke-width="25.6" stroke-linecap="round" opacity="0.85" filter="url(#glow)"/>
+  <!-- núcleo + spark -->
+  <circle cx="256" cy="256" r="66" fill="url(#core)" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="23" fill="#FDE68A" opacity="0.95"/>
+</svg>

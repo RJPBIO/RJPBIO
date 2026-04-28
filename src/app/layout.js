@@ -148,6 +148,35 @@ export default async function RootLayout({ children }) {
         <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152-v3.png" />
         <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120-v3.png" />
         <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-v3.png" />
+        {/* Sprint 85 — Apple PWA splash screens. iOS busca match exacto por
+            device-width/height + dpr + orientation. Sin esto: blank screen
+            durante load. Cubre 95%+ del market actual (top 15 devices).
+            Generados por scripts/gen-splash-screens.mjs (BioGlyph centrado
+            sobre #0B0E14 = manifest background_color). */}
+        {[
+          { w:1290, h:2796, dw:430, dh:932, dpr:3, label:"iPhone 14/15 Pro Max" },
+          { w:1179, h:2556, dw:393, dh:852, dpr:3, label:"iPhone 14/15 Pro" },
+          { w:1284, h:2778, dw:428, dh:926, dpr:3, label:"iPhone 14 Plus, 12/13 Pro Max" },
+          { w:1170, h:2532, dw:390, dh:844, dpr:3, label:"iPhone 14/15/12/13 + Pro" },
+          { w:1125, h:2436, dw:375, dh:812, dpr:3, label:"iPhone X/XS/11 Pro/12 mini/13 mini" },
+          { w:1242, h:2688, dw:414, dh:896, dpr:3, label:"iPhone 11 Pro Max, XS Max" },
+          { w:828,  h:1792, dw:414, dh:896, dpr:2, label:"iPhone 11, XR" },
+          { w:1242, h:2208, dw:414, dh:736, dpr:3, label:"iPhone 6/7/8 Plus" },
+          { w:750,  h:1334, dw:375, dh:667, dpr:2, label:"iPhone 6/7/8/SE 2/3" },
+          { w:2048, h:2732, dw:1024, dh:1366, dpr:2, label:"iPad Pro 12.9\"" },
+          { w:1668, h:2388, dw:834, dh:1194, dpr:2, label:"iPad Pro 11\"/Air 11\"" },
+          { w:1640, h:2360, dw:820, dh:1180, dpr:2, label:"iPad Air 10.9\"" },
+          { w:1620, h:2160, dw:810, dh:1080, dpr:2, label:"iPad 10.2\"" },
+          { w:1488, h:2266, dw:744, dh:1133, dpr:2, label:"iPad mini 8.3\"/7.9\"" },
+          { w:1536, h:2048, dw:768, dh:1024, dpr:2, label:"iPad 9.7\"" },
+        ].map((s) => (
+          <link
+            key={`splash-${s.w}x${s.h}`}
+            rel="apple-touch-startup-image"
+            media={`screen and (device-width: ${s.dw}px) and (device-height: ${s.dh}px) and (-webkit-device-pixel-ratio: ${s.dpr}) and (orientation: portrait)`}
+            href={`/splash/splash-${s.w}x${s.h}.png`}
+          />
+        ))}
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {JSON_LD.map((ld, i) => (
           <script

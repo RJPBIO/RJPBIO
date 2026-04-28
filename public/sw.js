@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 28; // Sprint 78 — pantalla inicial re-jerarquizada: kicker+carga, Daily hero, ProgramBrowser above-the-fold
+const CACHE_VERSION = 29; // Sprint 85 — Apple HIG sweep: opentype features + reduced-transparency + iOS PWA splash screens (15 sizes)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
