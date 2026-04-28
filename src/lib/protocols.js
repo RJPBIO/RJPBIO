@@ -3,6 +3,19 @@
    14 protocolos con base neurocientífica documentada
    ═══════════════════════════════════════════════════════════════ */
 
+// Sprint 70 — useCase categoriza protocolos por contexto de uso:
+//   "active"   → recomendación diaria default (60-120s, sin extremos)
+//   "training" → práctica sostenida 10 min, NO para crisis ni recomendación
+//                espontánea. Usado dentro de programas o cuando el user lo
+//                elige explícitamente.
+//   "crisis"   → protocolos para crisis aguda (#18-20). NO se recomiendan
+//                automáticamente — el user los invoca desde un acceso
+//                explícito. Excluidos del bandit y del daily ignition.
+// Ausencia del campo = "active" (default implícito).
+export function getUseCase(p) {
+  return p?.useCase || "active";
+}
+
 export const P = [
   /* ═══ #1 REINICIO PARASIMPÁTICO ═══ */
   {id:1,n:"Reinicio Parasimpático",ct:"Reset",d:120,sb:"Restaura función ejecutiva",tg:"R1",cl:"#059669",int:"calma",dif:1,
@@ -275,7 +288,7 @@ export const P = [
   ],sc:"Ventana post-ejercicio parasimpático: recuperación espontánea consolida adaptación aguda.",ic:"mind",br:null}]},
 
   /* ═══ #16 RESONANCIA VAGAL · Lehrer & Gevirtz 2014 ═══ */
-  {id:16,n:"Resonancia Vagal",ct:"Protocolo",d:600,sb:"Entrenamiento de baroreflex a 5.5 rpm",tg:"RV",cl:"#059669",int:"calma",dif:2,
+  {id:16,n:"Resonancia Vagal",ct:"Protocolo",d:600,sb:"Entrenamiento de baroreflex a 5.5 rpm",tg:"RV",cl:"#059669",int:"calma",dif:2,useCase:"training",
   ph:[{l:"Calibración Inicial",r:"0–60s",s:0,e:60,k:"Respira a 5.5 rpm. Inhala 5s. Exhala 6s.",i:"Siéntate con la espalda recta pero relajada. Inhala por la nariz 5 segundos, expandiendo el abdomen. Exhala por la boca 6 segundos, vaciando desde abajo. No fuerces. El ritmo exacto es 5.5 respiraciones por minuto — el punto donde el barorreflejo entra en resonancia con la respiración.",iExec:[
     {from:0,to:20,text:"Espalda recta pero relajada. Inhala 5s por la nariz, expande el abdomen."},
     {from:20,to:40,text:"Exhala 6s por la boca, vacía desde abajo."},
@@ -294,7 +307,7 @@ export const P = [
   ],sc:"Steffen et al. 2017: 20 min de RFB bajan presión sistólica 6 mmHg vs control y mejoran afecto positivo.",ic:"mind",br:{in:5,h1:0,ex:6,h2:0}}]},
 
   /* ═══ #17 NSDR · Kjaer et al. 2002 / Datta et al. 2017 ═══ */
-  {id:17,n:"NSDR 10 min",ct:"Reset",d:600,sb:"Descanso profundo no-sueño",tg:"NS",cl:"#8B5CF6",int:"reset",dif:1,
+  {id:17,n:"NSDR 10 min",ct:"Reset",d:600,sb:"Descanso profundo no-sueño",tg:"NS",cl:"#8B5CF6",int:"reset",dif:1,useCase:"training",
   ph:[{l:"Instalación Corporal",r:"0–90s",s:0,e:90,k:"Acuéstate. Ojos cerrados. Respiración natural.",i:"Acuéstate boca arriba, manos a los lados con las palmas hacia arriba. Pies relajados abiertos en V. Cierra los ojos. No controles la respiración — deja que sea como sea. Toma 3 respiraciones profundas para señalar al cuerpo que comienza el descenso.",iExec:[
     {from:0,to:30,text:"Acuéstate boca arriba. Palmas arriba, pies en V."},
     {from:30,to:90,text:"Ojos cerrados. No controles la respiración. 3 respiraciones profundas para descender."}
@@ -321,7 +334,7 @@ export const P = [
      Movimiento motor bilateral interrumpe freeze; vocalización
      activa vago por nervio laríngeo. Ojos ABIERTOS — no es
      meditación, es interrupción de patrón simpático. */
-  {id:18,n:"Emergency Reset",ct:"Activación",d:90,sb:"Crisis aguda — interrumpe el patrón",tg:"ER",cl:"#F43F5E",int:"reset",dif:1,
+  {id:18,n:"Emergency Reset",ct:"Activación",d:90,sb:"Crisis aguda — interrumpe el patrón",tg:"ER",cl:"#F43F5E",int:"reset",dif:1,useCase:"crisis",
   safety:"Si tienes condiciones cardiovasculares (arritmia, hipertensión severa, post-infarto) consulta con tu médico de trabajo antes de usarlo. La activación motora rápida eleva temporalmente la frecuencia cardíaca.",
   variants:[
     {id:"seated",label:"Sentado",when:"Si no puedes estar de pie",notes:"Fase 1: tap palmas a muslos sin levantarte. Fase 2: sacudir solo brazos y manos. Fase 3: pies firmes en el suelo desde la silla."},
@@ -348,7 +361,7 @@ export const P = [
      PÁNICO AGUDO — cuando la frecuencia cardíaca está disparada.
      Frío facial activa reflejo de inmersión (bradicardia inmediata);
      activación motora rompe freeze; vocalización vagal cierra. */
-  {id:19,n:"Panic Interrupt",ct:"Reset",d:120,sb:"Pánico agudo — frío + movimiento + voz",tg:"PI",cl:"#22D3EE",int:"reset",dif:1,
+  {id:19,n:"Panic Interrupt",ct:"Reset",d:120,sb:"Pánico agudo — frío + movimiento + voz",tg:"PI",cl:"#22D3EE",int:"reset",dif:1,useCase:"crisis",
   safety:"NO usar si tienes arritmia, bradicardia conocida, marcapasos, o condiciones que contraindiquen actividad física súbita. El reflejo de inmersión y los saltos están contraindicados en estos casos. Consulta con tu médico de trabajo. Si presentas dolor torácico o desmayo, suspende y busca atención médica inmediata.",
   variants:[
     {id:"noWater",label:"Sin lavabo",when:"No hay agua disponible",notes:"Fase 1: aplica las palmas frías sobre frente y mejillas, o un objeto frío (botella, hielo en pañuelo). Misma duración 30s."},
@@ -375,7 +388,7 @@ export const P = [
      BLOQUEO COGNITIVO — quedarse atorado sin poder arrancar.
      Postura expandida + activación motora + isometric release.
      Para sacar inercia, no para calmar. */
-  {id:20,n:"Block Break",ct:"Activación",d:60,sb:"Bloqueo — saca la inercia con cuerpo",tg:"BB",cl:"#FBBF24",int:"energia",dif:1,
+  {id:20,n:"Block Break",ct:"Activación",d:60,sb:"Bloqueo — saca la inercia con cuerpo",tg:"BB",cl:"#FBBF24",int:"energia",dif:1,useCase:"crisis",
   safety:"Si tienes hipertensión no controlada, glaucoma, o lesiones de túnel carpiano, omite la fase 3 (apretar puños al máximo). El isometric handgrip eleva presión brevemente. Si tienes condición cardiovascular, sustituye saltos por marcha en sitio.",
   variants:[
     {id:"seated",label:"Sentado",when:"En reunión o sin espacio",notes:"Fase 1: postura expandida sentado con espalda erguida y brazos en V apoyados. Fase 2: levanta talones rápido alternados sin saltar. Fase 3: igual con puños."},

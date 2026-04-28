@@ -3,7 +3,7 @@
    Motor de cálculos neurológicos, métricas y predicciones
    ═══════════════════════════════════════════════════════════════ */
 
-import { P } from "./protocols";
+import { P, getUseCase } from "./protocols";
 import { LVL, STATUS_MSGS, DAILY_PHRASES } from "./constants";
 import { scoreArm, armKey, timeBucket } from "./neural/bandit";
 import { getCircadianPersonalized } from "./neural/chronoCircadian";
@@ -85,19 +85,32 @@ export function getWeekNum() {
   return Math.ceil(((d - j) / 864e5 + j.getDay() + 1) / 7);
 }
 
+// Sprint 70 — pool default excluye useCase "crisis" (acceso explícito por
+// botón de crisis aguda) y "training" (10 min, solo dentro de programas o
+// elección manual). El recommendation diario / bandit / candidates del
+// motor neural usan SIEMPRE este pool acotado para no recomendar protocolos
+// inadecuados al contexto.
+export function defaultRecommendationPool() {
+  return P.filter((p) => {
+    const uc = getUseCase(p);
+    return uc !== "crisis" && uc !== "training";
+  });
+}
+
 // ─── Daily Ignición ───────────────────────────────────────
 export function getDailyIgn(st) {
   const d = new Date();
   const seed = d.getFullYear() * 1000 + d.getMonth() * 50 + d.getDate();
   const h = d.getHours();
   const lastMood = (st.moodLog || []).slice(-1)[0]?.mood || 3;
-  let pool = P;
-  if (h < 10) pool = P.filter((p) => p.int === "calma" || p.int === "energia");
-  else if (h < 15) pool = P.filter((p) => p.int === "enfoque");
-  else if (h < 19) pool = P.filter((p) => p.int === "enfoque" || p.int === "reset");
-  else pool = P.filter((p) => p.int === "calma" || p.int === "reset");
+  const eligible = defaultRecommendationPool();
+  let pool = eligible;
+  if (h < 10) pool = eligible.filter((p) => p.int === "calma" || p.int === "energia");
+  else if (h < 15) pool = eligible.filter((p) => p.int === "enfoque");
+  else if (h < 19) pool = eligible.filter((p) => p.int === "enfoque" || p.int === "reset");
+  else pool = eligible.filter((p) => p.int === "calma" || p.int === "reset");
   if (lastMood <= 2) pool = pool.filter((p) => p.dif <= 2);
-  const pick = pool[seed % pool.length] || P[0];
+  const pick = pool[seed % pool.length] || eligible[0] || P[0];
   const phrase = DAILY_PHRASES[seed % DAILY_PHRASES.length];
   return { proto: pick, phrase };
 }
@@ -686,9 +699,12 @@ export function adaptiveProtocolEngine(st, options = {}) {
     primaryNeed = "reset";
   }
 
-  // Obtener candidatos
-  let candidates = P.filter((p) => p.int === primaryNeed);
-  if (!candidates.length) candidates = [...P];
+  // Obtener candidatos — Sprint 70 excluye useCase crisis/training
+  // del recommendation pool (crisis se accede explícitamente, training
+  // dentro de programas).
+  const eligible = defaultRecommendationPool();
+  let candidates = eligible.filter((p) => p.int === primaryNeed);
+  if (!candidates.length) candidates = [...eligible];
 
   // Bucket temporal actual (contexto del bandit) y total de pulls.
   const bucket = timeBucket(now);
