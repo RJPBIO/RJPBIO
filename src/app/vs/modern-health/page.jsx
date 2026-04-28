@@ -269,7 +269,7 @@ const COPY = {
       },
       {
         q: "¿Modern Health no tiene también contenido self-guided?",
-        a: "Sí, lo ofrecen como tier 0 de su escalado clínico (antes de que el empleado hable con un humano). Eso los acerca a Calm/Headspace en contenido, pero el diferenciador sigue siendo la red de humanos. Nosotros no competimos en contenido self-guided — tenemos 17 protocolos, no miles de sesiones narradas.",
+        a: "Sí, lo ofrecen como tier 0 de su escalado clínico (antes de que el empleado hable con un humano). Eso los acerca a Calm/Headspace en contenido, pero el diferenciador sigue siendo la red de humanos. Nosotros no competimos en contenido self-guided — tenemos 20 protocolos, no miles de sesiones narradas.",
       },
       {
         q: "¿Por qué cuestan tanto más que Calm/Headspace?",
@@ -487,7 +487,7 @@ const COPY = {
       },
       {
         q: "Doesn't Modern Health also have self-guided content?",
-        a: "Yes, they offer it as tier 0 of their clinical escalation (before the employee speaks with a human). That brings them closer to Calm/Headspace on content, but the differentiator remains the human network. We don't compete on self-guided content — we have 17 protocols, not thousands of narrated sessions.",
+        a: "Yes, they offer it as tier 0 of their clinical escalation (before the employee speaks with a human). That brings them closer to Calm/Headspace on content, but the differentiator remains the human network. We don't compete on self-guided content — we have 20 protocols, not thousands of narrated sessions.",
       },
       {
         q: "Why do they cost so much more than Calm/Headspace?",

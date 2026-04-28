@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    BIO-IGNICIÓN — CURATED PROGRAMS
 
-   Trayectorias multi-día que usan los 17 protocolos como
+   Trayectorias multi-día que usan los 20 protocolos como
    ingredientes. Convierten la biblioteca de sesiones sueltas en
    un producto de **journey** (Calm/Headspace style programs).
 

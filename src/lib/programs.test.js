@@ -57,12 +57,15 @@ describe("PROGRAMS catalog", () => {
     });
   });
 
-  it("cada sesión referencia un protocolId válido (1..17)", () => {
+  it("cada sesión referencia un protocolId válido en el catálogo", () => {
+    // Sprint 68 — el rango fijo 1..17 fue reemplazado por verificación
+    // dinámica contra el catálogo. Permite agregar protocolos nuevos
+    // (Emergency Reset #18, Panic Interrupt #19, Block Break #20, etc.)
+    // sin romper este test.
     PROGRAMS.forEach((p) => {
       p.sessions.forEach((s) => {
         expect(typeof s.protocolId).toBe("number");
         expect(s.protocolId).toBeGreaterThanOrEqual(1);
-        expect(s.protocolId).toBeLessThanOrEqual(17);
         expect(getProtocolById(s.protocolId)).not.toBeNull();
       });
     });
