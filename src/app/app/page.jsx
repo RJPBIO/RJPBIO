@@ -818,12 +818,8 @@ export default function BioIgnicion(){
   return(
   <div data-bp={bp} style={{maxWidth:rootMaxWidth,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflowX:"hidden",fontFamily:font.family,transition:"background .8s, max-width .25s",paddingBlockEnd:"env(safe-area-inset-bottom)",paddingInlineStart:`max(${rootPadInline}px, env(safe-area-inset-left))`,paddingInlineEnd:`max(${rootPadInline}px, env(safe-area-inset-right))`}}>
 
-  {/* Background aura — dims during running session (cinematic focus).
-      Sprint 100 — bump opacity 12→22 (dark) y 8→15 (light) tras user
-      report "muy gris seco, sin color". Con bg Apple-pure (#000/#F2),
-      los blobs ambient previos eran imperceptibles. Bump da brand glow
-      visible cyan top-right + indigo bottom-left sin ser distracting. */}
-  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s cubic-bezier(0.22, 1, 0.36, 1)"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"22":"15"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"18":"12"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
+  {/* Background aura — dims during running session (cinematic focus) */}
+  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s cubic-bezier(0.22, 1, 0.36, 1)"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
 
   {/* iOS haptic visual fallback — flash visible top-edge cuando el
       device no soporta navigator.vibrate. El usuario lee la cadencia
@@ -1336,33 +1332,27 @@ export default function BioIgnicion(){
         Sprint 78: ahora secondary access debajo del Daily Ignición.
         Su rol es atajo a protocolos específicos (suspiro / HRV / NSDR)
         cuando el user no quiere el daily auto-recomendado. */}
-    {/* Sprint 102 — Apple Health pattern para trio. Antes: icon 14px
-        sobre cd neutral con border bd = invisible. Ahora: icon container
-        circular 36px en category color saturado + border tinted.
-        Cada acción comunica su intent a la primera mirada. */}
-    {ts==="idle"&&<div style={{display:"flex",gap:8,marginBottom:14}}>
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${withAlpha(protoColor.calma,18)}`,background:withAlpha(protoColor.calma,5),cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-        <div style={{inlineSize:36,blockSize:36,borderRadius:"50%",background:withAlpha(protoColor.calma,22),display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <Icon name="calm" size={18} color={protoColor.calma}/>
-        </div>
-        <span style={{fontSize:10,fontWeight:800,color:protoColor.calma,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
-        <span style={{fontSize:9,color:t2,fontWeight:600}}>60s · calma</span>
+    {ts==="idle"&&<div style={{display:"flex",gap:6,marginBottom:14}}>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowSigh(true);H("tap");}} aria-label="Suspiro fisiológico, 60 segundos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <Icon name="calm" size={14} color={protoColor.calma}/>
+        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
+        <span style={{fontSize:8,color:t3}}>60s · calma</span>
       </motion.button>
+      {/* Sprint 73 — el caption ahora refleja la última medición si existe.
+          Antes mostraba siempre "1 min · cámara" — el user no veía
+          confirmación de que su medición había persistido. Ahora ve
+          "RMSSD 45 ms · hace 2h" inmediatamente, mismo botón. */}
       {(()=>{const lastHrv=(st.hrvLog||[]).slice(-1)[0];const ageMs=lastHrv?Date.now()-lastHrv.ts:null;const ageLabel=ageMs==null?"1 min · cámara":ageMs<60000?"hace un momento":ageMs<3600000?`hace ${Math.round(ageMs/60000)} min`:ageMs<86400000?`hace ${Math.round(ageMs/3600000)} h`:`hace ${Math.round(ageMs/86400000)} d`;const caption=lastHrv?`${Math.round(lastHrv.rmssd)} ms · ${ageLabel}`:"1 min · cámara";return(
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRVCam(true);H("tap");}} aria-label={lastHrv?`Última HRV ${Math.round(lastHrv.rmssd)} ms · medir de nuevo`:"Medir HRV con la cámara"} style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${withAlpha(protoColor.enfoque,18)}`,background:withAlpha(protoColor.enfoque,5),cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-        <div style={{inlineSize:36,blockSize:36,borderRadius:"50%",background:withAlpha(protoColor.enfoque,22),display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <Icon name="predict" size={18} color={protoColor.enfoque}/>
-        </div>
-        <span style={{fontSize:10,fontWeight:800,color:protoColor.enfoque,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
-        <span style={{fontSize:9,color:t2,fontWeight:600}}>{caption}</span>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRVCam(true);H("tap");}} aria-label={lastHrv?`Última HRV ${Math.round(lastHrv.rmssd)} ms · medir de nuevo`:"Medir HRV con la cámara"} style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <Icon name="predict" size={14} color={protoColor.enfoque}/>
+        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
+        <span style={{fontSize:8,color:t3}}>{caption}</span>
       </motion.button>
       );})()}
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"12px 8px",borderRadius:14,border:`1px solid ${withAlpha(protoColor.reset,18)}`,background:withAlpha(protoColor.reset,5),cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-        <div style={{inlineSize:36,blockSize:36,borderRadius:"50%",background:withAlpha(protoColor.reset,22),display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <Icon name="mind" size={18} color={protoColor.reset}/>
-        </div>
-        <span style={{fontSize:10,fontWeight:800,color:protoColor.reset,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>
-        <span style={{fontSize:9,color:t2,fontWeight:600}}>10 min · reset</span>
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <Icon name="mind" size={14} color={protoColor.reset}/>
+        <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>
+        <span style={{fontSize:8,color:t3}}>10 min · reset</span>
       </motion.button>
     </div>}
 
@@ -1558,31 +1548,29 @@ export default function BioIgnicion(){
       const readinessMeta=({optimal:"óptimo",primed:"elevado",neutral:"neutral",recover:"bajo"})[rInt];
       const showPred=prediction&&prediction.confidence>=50&&prediction.predictedDelta>0;
       const optHour=optimalTime?.best?.hour;
-      // Sprint 103 — adaptive strip cada chip en su category color (era todo t2 muted = invisible).
-      const readinessColor=rInt==="optimal"?"#10B981":rInt==="primed"?protoColor.energia:rInt==="recover"?"#F43F5E":t2;
       return(
-        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",borderRadius:12,background:withAlpha(ac,4),border:`1px solid ${withAlpha(ac,18)}`}}>
+        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",borderRadius:12,background:surface,border:`1px solid ${bd}`}}>
           {cPeriod&&(
             <div style={{display:"flex",alignItems:"center",gap:5}}>
-              <span aria-hidden="true" style={{inlineSize:6,blockSize:6,borderRadius:"50%",background:ac,boxShadow:`0 0 8px ${withAlpha(ac,80)}`,flexShrink:0}}/>
-              <span style={{fontSize:10,fontWeight:800,color:ac,letterSpacing:0.3,textTransform:"uppercase"}}>Ventana · {cPeriod}</span>
+              <span aria-hidden="true" style={{inlineSize:5,blockSize:5,borderRadius:"50%",background:ac,boxShadow:`0 0 6px ${withAlpha(ac,60)}`,flexShrink:0}}/>
+              <span style={{fontSize:10,fontWeight:700,color:t2,letterSpacing:0.3,textTransform:"uppercase"}}>Ventana · {cPeriod}</span>
             </div>
           )}
           {readinessMeta&&(<>
-            <span aria-hidden="true" style={{width:1,height:10,background:withAlpha(ac,30)}}/>
-            <span style={{fontSize:10,fontWeight:800,color:readinessColor,letterSpacing:0.2,textTransform:"uppercase"}}>Readiness {readinessMeta}</span>
+            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
+            <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2,textTransform:"uppercase"}}>Readiness {readinessMeta}</span>
           </>)}
           {typeof optHour==="number"&&(<>
-            <span aria-hidden="true" style={{width:1,height:10,background:withAlpha(ac,30)}}/>
-            <span style={{fontSize:10,fontWeight:800,color:protoColor.energia,letterSpacing:0.2,textTransform:"uppercase",display:"inline-flex",alignItems:"center",gap:4}}>
+            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
+            <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2,textTransform:"uppercase",display:"inline-flex",alignItems:"center",gap:4}}>
               Pico <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>{String(optHour).padStart(2,"0")}:00</span>
             </span>
           </>)}
           {showPred&&(<>
-            <span aria-hidden="true" style={{width:1,height:10,background:withAlpha(ac,30)}}/>
+            <span aria-hidden="true" style={{width:1,height:10,background:bd}}/>
             <span style={{display:"inline-flex",alignItems:"center",gap:4}}>
-              <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontSize:11,fontWeight:800,color:semantic.success,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>+{prediction.predictedDelta.toFixed(1)}</span>
-              <span style={{fontSize:10,fontWeight:600,color:t2,letterSpacing:0.2}}>· {prediction.confidence}%</span>
+              <span style={{fontFamily:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",fontSize:10,fontWeight:700,color:semantic.success,fontVariantNumeric:"tabular-nums",letterSpacing:-0.05}}>+{prediction.predictedDelta.toFixed(1)}</span>
+              <span style={{fontSize:10,fontWeight:500,color:t3,letterSpacing:0.2}}>· {prediction.confidence}%</span>
             </span>
           </>)}
         </div>
@@ -1648,13 +1636,6 @@ export default function BioIgnicion(){
         <div role="radiogroup" aria-label="Tu estado ahora" style={{display:"flex",gap:4}}>
           {MOODS.map(m=>{
             const selected=preMood===m.value;
-            // Sprint 103 — Apple Health mood pattern. Antes: unselected
-            // pills usaban withAlpha(m.color,55) que NO existe en alpha
-            // scale → fallback alpha[10] = 10% invisible. Label en t3
-            // muted = invisible. Resultado: 4 pills grises + 1 seleccionada
-            // vibrant. Ahora: incluso unselected mantiene identity vía
-            // bg subtle category color + icon alpha 70 + label en color
-            // saturado. Selected sube a alpha 18 bg + border 2px.
             return(
               <motion.button
                 key={m.id}
@@ -1671,22 +1652,21 @@ export default function BioIgnicion(){
                   paddingBlock:9,
                   paddingInline:2,
                   borderRadius:12,
-                  border:selected?`2px solid ${m.color}`:`1.5px solid ${withAlpha(m.color,18)}`,
-                  background:selected?withAlpha(m.color,18):withAlpha(m.color,5),
+                  border:selected?`2px solid ${m.color}`:`1.5px solid ${bd}`,
+                  background:selected?withAlpha(m.color,10):cd,
                   cursor:"pointer",
-                  transition:"all .2s cubic-bezier(0.22, 1, 0.36, 1)",
+                  transition:"all .2s",
                   position:"relative",
                 }}
               >
-                <Icon name={m.icon} size={16} color={selected?m.color:withAlpha(m.color,70)}/>
+                <Icon name={m.icon} size={16} color={selected?m.color:withAlpha(m.color,55)}/>
                 <span style={{
                   fontSize:10,
-                  fontWeight:selected?800:700,
-                  color:m.color,
+                  fontWeight:selected?800:600,
+                  color:selected?m.color:t3,
                   lineHeight:1.1,
                   textAlign:"center",
                   letterSpacing:-0.02,
-                  opacity:selected?1:0.85,
                 }}>{m.label}</span>
               </motion.button>
             );
@@ -1967,14 +1947,9 @@ export default function BioIgnicion(){
     const tintOpacity=neural>=70?(isDark?0.07:0.05):neural>=50?(isDark?0.05:0.035):0;
     const barAlpha=Math.round(tintOpacity*255).toString(16).padStart(2,"0");
     return <aside role="group" aria-label="Métricas neurales en tiempo real" style={{position:"fixed",bottom:`calc(${layout.bottomNav}px + env(safe-area-inset-bottom, 0px))`,left:"50%",transform:"translateX(-50%)",width:"calc(100% - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right) + 32px))",maxWidth:400,padding:`${space[2]}px ${space[4]}px`,background:`linear-gradient(180deg, ${vitalTint}${barAlpha}, ${vitalTint}00), ${resolveTheme(isDark).glass}`,backdropFilter:"blur(16px)",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:z.sticky,borderRadius:radius.lg,border:`1px solid ${neural>=70?bioSignal.phosphorCyan+"22":bd}`,boxShadow:`0 4px 20px ${isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)"}${neural>=70?`, 0 0 28px ${bioSignal.phosphorCyan}14`:""}`,transition:"background .8s cubic-bezier(0.22, 1, 0.36, 1), border-color .8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow .8s cubic-bezier(0.22, 1, 0.36, 1)"}}>
-      {/* Sprint 103 — bottom metrics bar Apple Health pattern.
-          Antes: icon container 28×28 con bg solo m.c+"10" (alpha 10),
-          icon 12px gris-feel. Label en t3 muted. Ahora: container 32×32
-          con bg saturado 22% + icon 14px en color full + label en
-          color category (no t3 muted). */}
-      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:protoColor.enfoque,ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:protoColor.calma,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:protoColor.energia,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:8,flex:1,justifyContent:"center"}}>
-        <div aria-hidden="true" style={{width:32,height:32,borderRadius:9,background:withAlpha(m.c,22),display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={14} color={m.c}/></div>
-        <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:m.c,fontWeight:font.weight.bold,display:"flex",alignItems:"center",gap:2,letterSpacing:0.2,textTransform:"uppercase"}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
+      {[{v:st.coherencia,l:"Enfoque",d:rD.c,c:protoColor.enfoque,ic:"focus"},{v:st.resiliencia,l:"Calma",d:rD.r,c:protoColor.calma,ic:"calm"},{v:st.capacidad,l:"Energía",d:0,c:protoColor.energia,ic:"energy"}].map((m,i)=><div key={i} role="group" aria-label={`${m.l}: ${m.v}%${m.d>0?`, +${m.d} esta semana`:""}`} style={{display:"flex",alignItems:"center",gap:6,flex:1,justifyContent:"center"}}>
+        <div aria-hidden="true" style={{width:28,height:28,borderRadius:8,background:m.c+"10",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={m.ic} size={12} color={m.c}/></div>
+        <div><div style={{...ty.biometric(m.c,font.size.md),lineHeight:font.leading.none}}>{m.v}%</div><div style={{fontSize:font.size.xs,color:t3,fontWeight:font.weight.semibold,display:"flex",alignItems:"center",gap:2}}>{m.l}{m.d>0&&<span style={{color:semantic.success,fontWeight:font.weight.bold}}>+{m.d}</span>}</div></div>
       </div>)}
     </aside>;
   })()}

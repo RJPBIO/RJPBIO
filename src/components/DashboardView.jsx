@@ -215,9 +215,6 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           aria-label="Resumen semanal"
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: space[2], marginBlockEnd: space[3] }}
         >
-          {/* Sprint 102 — Apple Fitness pattern. Card bg + border tinted
-              en category color para identidad inmediata. Label visible
-              (era t3 muted = invisible sobre Apple-grade neutral bg). */}
           {[
             { v: weeklyTotal, l: "Semana", c: ac, aria: `Sesiones esta semana: ${weeklyTotal}` },
             { v: bioSignal.score, l: "BioSignal", c: bioColor, aria: `BioSignal: ${bioSignal.score} por ciento` },
@@ -228,15 +225,14 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
               aria-label={m.aria}
               style={{
                 textAlign: "center",
-                paddingBlock: space[2.5],
+                paddingBlock: space[2],
                 paddingInline: space[1],
-                background: withAlpha(m.c, 6),
-                border: `1px solid ${withAlpha(m.c, 18)}`,
+                background: tint,
                 borderRadius: radius.md,
               }}
             >
               <div style={ty.metric(m.c, font.size.xl)}>{m.v}</div>
-              <div style={{ fontSize: font.size.xs, fontWeight: 600, color: t2, letterSpacing: -0.05, marginBlockStart: 2 }}>{m.l}</div>
+              <div style={{ ...sectionLabel(t3), fontSize: font.size.xs, marginBlockStart: 2 }}>{m.l}</div>
             </div>
           ))}
         </div>
@@ -525,24 +521,15 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
             { l: "Sesiones", v: st.totalSessions, d: streak > 0 ? `${streak}d racha` : "—", dPositive: streak > 0, c: semantic.success, ic: "bolt", suffix: "" },
           ];
         })().map((k, i) => (
-          /* Sprint 102 — bg subtle category-tinted + icon en category
-             color full (era 10px gris invisible). Card pop por color
-             distintivo (Enfoque blue, Calma violet, V-Cores amber,
-             Sesiones green) — identidad reconocible al instante. */
           <article
             key={i}
             aria-label={`${k.l}: ${k.v}${k.suffix}. ${k.dPositive ? k.d : "sin cambio"}`}
-            style={{
-              background: withAlpha(k.c, 6),
-              borderRadius: radius.md + 2,
-              padding: `${space[2.5] + 1}px ${space[2.5]}px`,
-              border: `1px solid ${withAlpha(k.c, 18)}`,
-            }}
+            style={{ background: cd, borderRadius: radius.md + 2, padding: `${space[2.5] + 1}px ${space[2.5]}px`, border: `1px solid ${bd}` }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBlockEnd: space[1] }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <Icon name={k.ic} size={12} color={k.c} aria-hidden="true" />
-                <span style={{ fontSize: font.size.xs, fontWeight: 700, color: k.c, letterSpacing: 0.2, textTransform: "uppercase" }}>{k.l}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <Icon name={k.ic} size={10} color={t3} aria-hidden="true" />
+                <span style={ty.caption(t3)}>{k.l}</span>
               </div>
               <span style={{ ...ty.caption(k.dPositive ? semantic.success : t3), fontWeight: font.weight.bold }}>{k.d}</span>
             </div>

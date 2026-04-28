@@ -88,7 +88,7 @@ export default function SettingsSheet({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-        {icon && <Icon name={icon} size={15} color={ac} />}
+        {icon && <Icon name={icon} size={15} color={t3} />}
         <div>
           <div style={ty.title(t1)}>{label}</div>
           {desc && <div style={{ ...ty.caption(t3), marginBlockStart: 1 }}>{desc}</div>}
@@ -144,7 +144,7 @@ export default function SettingsSheet({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: space[2], minInlineSize: 0 }}>
-        {icon && <Icon name={icon} size={15} color={ac} />}
+        {icon && <Icon name={icon} size={15} color={t3} />}
         <div style={ty.title(t1)}>{label}</div>
       </div>
       <div style={{ display: "flex", gap: space[1], flexShrink: 0 }}>
@@ -188,7 +188,7 @@ export default function SettingsSheet({
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-          {icon && <Icon name={icon} size={15} color={ac} />}
+          {icon && <Icon name={icon} size={15} color={t3} />}
           <div style={ty.title(t1)}>{label}</div>
         </div>
         <span style={{ ...numStyle(ac, 700), fontSize: 12 }}>
@@ -347,7 +347,7 @@ export default function SettingsSheet({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: space[2], minInlineSize: 0 }}>
-                  <Icon name="mind" size={15} color={ac} />
+                  <Icon name="mind" size={15} color={t3} />
                   <div style={{ minInlineSize: 0 }}>
                     <div style={ty.title(t1)}>Voz</div>
                     <div style={{ ...ty.caption(t3), marginBlockStart: 1 }}>
@@ -470,7 +470,7 @@ export default function SettingsSheet({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-                  <Icon name="bell" size={15} color={ac} />
+                  <Icon name="bell" size={15} color={t3} />
                   <div style={ty.title(t1)}>Hora</div>
                 </div>
                 <input
@@ -533,7 +533,7 @@ export default function SettingsSheet({
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-                <Icon name="mind" size={15} color={ac} />
+                <Icon name="mind" size={15} color={t3} />
                 <div style={ty.title(t1)}>{t("settings.language")}</div>
               </div>
               <LocaleSelect variant="radiogroup" />
@@ -553,7 +553,7 @@ export default function SettingsSheet({
             >
               <legend style={{ padding: 0, marginBlockEnd: space[2.5] || 10, display: "block", inlineSize: "100%" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-                  <Icon name="breath" size={15} color={ac} />
+                  <Icon name="breath" size={15} color={t3} />
                   <div>
                     <div style={ty.title(t1)}>{t("settings.soundscape")}</div>
                     <div style={ty.caption(t3)}>{t("settings.soundscapeDesc")}</div>

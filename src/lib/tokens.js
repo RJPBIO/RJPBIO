@@ -208,14 +208,12 @@ export const dark = {
   bg:      "#000000",   // pure black, OLED-optimal + max contrast cyan
   card:    "#1C1C1E",   // Apple systemGray6
   surface: "#2C2C2E",   // Apple systemGray5 (elevated chrome)
-  // Sprint 98 — solid hex en lugar de rgba para compat con withAlpha
-  // (string concat patrón en CorrelationMatrix:221, StreakCalendar:265).
-  // Sprint 100 — subtle cyan undertone vs pure neutral. User reportó
-  // "mucho gris seco, sin color" — cards Apple-correct pero muertas.
-  // Apple Music/Health usan brand-tinted borders sutiles para inyectar
-  // identity en chrome neutral. R31 G34 B39 = imperceptible blue tint
-  // a la luz directa, perceptible en uso prolongado como "cards bio".
-  border:  "#1F2227",   // brand-cyan-tinted dark border (era #1F1F1F)
+  // Sprint 98 — solid hex en lugar de rgba para `border` y text.*.
+  // Razón: withAlpha(hex, pct) en theme.js hace `hex + alpha[pct]`
+  // (string concat) — rompe con rgba() inputs (e.g.,
+  // CorrelationMatrix:221, StreakCalendar:265). #1F1F1F equivale
+  // visualmente a rgba(255,255,255,0.08) sobre fondo #000000.
+  border:  "#1F1F1F",   // ≈ rgba(255,255,255,0.08) over black
   text: {
     primary:   "#FFFFFF",
     // Apple label.secondary = rgba(235,235,245,0.6) over #000.
@@ -230,45 +228,16 @@ export const dark = {
   glass:   "rgba(28, 28, 30, 0.92)", // glassmorphism over systemGray6
 };
 
-// ─── Light Theme — Apple HIG-grade neutral ───────────────
-// Sprint 99 — refactor paralelo al Sprint 97/98 (dark theme).
-// Antes: Tailwind slate palette con 3 problemas:
-//   1. surface (#F8FAFC) MÁS CLARO que bg (#F1F4F9) — jerarquía
-//      invertida vs Apple regla (surfaces elevated SE oscurecen
-//      ligeramente sobre bg claro).
-//   2. Slate cool/blue tint en TODOS los grises. Apple light es
-//      chromatically neutral (warm-ish gray, no blue).
-//   3. Border slate-200 #E2E8F0 muy claro vs Apple separator
-//      #C6C6C8 → separators casi invisibles.
-//
-// Apple iOS 13+ / macOS Big Sur+ light reference:
-//   systemGroupedBackground:    #F2F2F7  (groupedBackground for
-//                                          screens with cards on bg)
-//   systemBackground (cards):   #FFFFFF
-//   separator:                  #C6C6C8
-//   label.primary:              #000000
-//   label.secondary:            #3C3C43  (rgba 0.6 over white)
-//   label.tertiary:             #3C3C4399 (rgba 0.3 ≈ #8E8E93)
-//
-// Bio's PWA layout = cards-on-background → systemGroupedBackground
-// is the correct bg choice.
+// ─── Light Theme ─────────────────────────────────────────
 export const light = {
-  bg:      "#F2F2F7",   // Apple systemGroupedBackground
-  card:    "#FFFFFF",   // Apple systemBackground (clean white)
-  surface: "#F9F9FA",   // Sprint 99 — solo ligeramente más oscuro
-                        // que card para diferenciar elevations sin
-                        // invertir jerarquía vs bg.
-  // Sprint 100 — subtle cyan undertone (paralelo dark). Apple separator
-  // base #C6C6C8 + bump azul para brand identity en cards light.
-  border:  "#C5CAD2",   // brand-cyan-tinted light border
+  bg:      "#F1F4F9",
+  card:    "#FFFFFF",
+  surface: "#F8FAFC",
+  border:  "#E2E8F0",
   text: {
-    primary:   "#000000",   // Apple label.primary (era #0F172A slate)
-    // Apple label.secondary = rgba(60,60,67,0.6). Solid hex
-    // equivalente para compat con withAlpha (string concat patrón
-    // del codebase, ver Sprint 98 contexto):
-    secondary: "#3C3C43",   // Apple label.secondary equiv
-    // Apple label.tertiary = rgba(60,60,67,0.3) ≈ #8E8E93.
-    muted:     "#8E8E93",   // Apple label.tertiary equiv
+    primary:   "#0F172A",
+    secondary: "#475569",
+    muted:     "#94A3B8",
   },
   overlay: "rgba(255, 255, 255, 0.96)",
   glass:   "rgba(255, 255, 255, 0.92)",
