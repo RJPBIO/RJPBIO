@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 36; // Sprint 99 — light theme Apple HIG-grade: systemGroupedBackground bg + Apple separator + label hierarchy (era Tailwind slate cool-tinted)
+const CACHE_VERSION = 37; // Sprint 100 — bring back brand vibrancy a Apple-grade themes: subtle cyan-tinted borders + bumped ambient bg blobs (era "gris seco sin color" tras Sprints 97-99)
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

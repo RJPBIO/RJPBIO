@@ -208,12 +208,14 @@ export const dark = {
   bg:      "#000000",   // pure black, OLED-optimal + max contrast cyan
   card:    "#1C1C1E",   // Apple systemGray6
   surface: "#2C2C2E",   // Apple systemGray5 (elevated chrome)
-  // Sprint 98 — solid hex en lugar de rgba para `border` y text.*.
-  // Razón: withAlpha(hex, pct) en theme.js hace `hex + alpha[pct]`
-  // (string concat) — rompe con rgba() inputs (e.g.,
-  // CorrelationMatrix:221, StreakCalendar:265). #1F1F1F equivale
-  // visualmente a rgba(255,255,255,0.08) sobre fondo #000000.
-  border:  "#1F1F1F",   // ≈ rgba(255,255,255,0.08) over black
+  // Sprint 98 — solid hex en lugar de rgba para compat con withAlpha
+  // (string concat patrón en CorrelationMatrix:221, StreakCalendar:265).
+  // Sprint 100 — subtle cyan undertone vs pure neutral. User reportó
+  // "mucho gris seco, sin color" — cards Apple-correct pero muertas.
+  // Apple Music/Health usan brand-tinted borders sutiles para inyectar
+  // identity en chrome neutral. R31 G34 B39 = imperceptible blue tint
+  // a la luz directa, perceptible en uso prolongado como "cards bio".
+  border:  "#1F2227",   // brand-cyan-tinted dark border (era #1F1F1F)
   text: {
     primary:   "#FFFFFF",
     // Apple label.secondary = rgba(235,235,245,0.6) over #000.
@@ -256,8 +258,9 @@ export const light = {
   surface: "#F9F9FA",   // Sprint 99 — solo ligeramente más oscuro
                         // que card para diferenciar elevations sin
                         // invertir jerarquía vs bg.
-  border:  "#C6C6C8",   // Apple separator (era #E2E8F0 slate-200,
-                        // demasiado claro)
+  // Sprint 100 — subtle cyan undertone (paralelo dark). Apple separator
+  // base #C6C6C8 + bump azul para brand identity en cards light.
+  border:  "#C5CAD2",   // brand-cyan-tinted light border
   text: {
     primary:   "#000000",   // Apple label.primary (era #0F172A slate)
     // Apple label.secondary = rgba(60,60,67,0.6). Solid hex

@@ -818,8 +818,12 @@ export default function BioIgnicion(){
   return(
   <div data-bp={bp} style={{maxWidth:rootMaxWidth,margin:"0 auto",minHeight:"100dvh",background:bg,position:"relative",overflowX:"hidden",fontFamily:font.family,transition:"background .8s, max-width .25s",paddingBlockEnd:"env(safe-area-inset-bottom)",paddingInlineStart:`max(${rootPadInline}px, env(safe-area-inset-left))`,paddingInlineEnd:`max(${rootPadInline}px, env(safe-area-inset-right))`}}>
 
-  {/* Background aura — dims during running session (cinematic focus) */}
-  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s cubic-bezier(0.22, 1, 0.36, 1)"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"12":"08"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"10":"08"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
+  {/* Background aura — dims during running session (cinematic focus).
+      Sprint 100 — bump opacity 12→22 (dark) y 8→15 (light) tras user
+      report "muy gris seco, sin color". Con bg Apple-pure (#000/#F2),
+      los blobs ambient previos eran imperceptibles. Bump da brand glow
+      visible cyan top-right + indigo bottom-left sin ser distracting. */}
+  <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",opacity:ts==="running"?0.35:1,transition:"opacity .8s cubic-bezier(0.22, 1, 0.36, 1)"}}><div style={{position:"absolute",top:"-15%",right:"-15%",width:"50%",height:"50%",borderRadius:"50%",background:`radial-gradient(circle,${ac}${isDark?"22":"15"},transparent)`,animation:"am 25s ease-in-out infinite",filter:"blur(50px)"}}/><div style={{position:"absolute",bottom:"-10%",left:"-10%",width:"40%",height:"40%",borderRadius:"50%",background:`radial-gradient(circle,#818CF8${isDark?"18":"12"},transparent)`,animation:"am 30s ease-in-out infinite reverse",filter:"blur(45px)"}}/></div>
 
   {/* iOS haptic visual fallback — flash visible top-edge cuando el
       device no soporta navigator.vibrate. El usuario lee la cadencia
