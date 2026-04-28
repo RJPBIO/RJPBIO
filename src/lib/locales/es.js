@@ -240,7 +240,7 @@ export const es = {
   // ─── Programas (trayectorias curadas multi-día) ───────────
   programs: {
     section: "PROGRAMAS",
-    sectionSub: "Trayectorias curadas de varios días. Cada programa usa los 17 protocolos como ingredientes.",
+    sectionSub: "Trayectorias curadas de varios días. Cada programa usa los 20 protocolos como ingredientes.",
     schedule: "AGENDA",
     whyArc: "Por qué este arco",
     evidence: "Evidencia",
@@ -329,6 +329,9 @@ export const es = {
     "15": { n: "Suspiro Fisiológico",        sb: "Descarga parasimpática aguda" },
     "16": { n: "Resonancia Vagal",           sb: "Entrenamiento de baroreflex a 5.5 rpm" },
     "17": { n: "NSDR 10 min",                sb: "Descanso profundo no-sueño" },
+    "18": { n: "Emergency Reset",            sb: "Crisis aguda — interrumpe el patrón" },
+    "19": { n: "Panic Interrupt",            sb: "Pánico agudo — frío + movimiento + voz" },
+    "20": { n: "Block Break",                sb: "Bloqueo — saca la inercia con cuerpo" },
   },
 
   // ─── Programas: display names + subtítulos + rationale ───

@@ -240,7 +240,7 @@ export const en = {
   // ─── Programs (multi-day curated journeys) ─────────────────
   programs: {
     section: "PROGRAMS",
-    sectionSub: "Curated journeys spanning several days. Each program uses the 17 protocols as ingredients.",
+    sectionSub: "Curated journeys spanning several days. Each program uses the 20 protocols as ingredients.",
     schedule: "SCHEDULE",
     whyArc: "Why this arc",
     evidence: "Evidence",
@@ -329,6 +329,9 @@ export const en = {
     "15": { n: "Physiological Sigh",          sb: "Acute parasympathetic release" },
     "16": { n: "Vagal Resonance",             sb: "Baroreflex training at 5.5 rpm" },
     "17": { n: "NSDR 10 min",                 sb: "Deep non-sleep rest" },
+    "18": { n: "Emergency Reset",             sb: "Acute crisis — break the pattern" },
+    "19": { n: "Panic Interrupt",             sb: "Acute panic — cold + motion + voice" },
+    "20": { n: "Block Break",                 sb: "Blockage — push inertia with body" },
   },
 
   // ─── Program display names + subtitles + rationale (short) ───

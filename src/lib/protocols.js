@@ -314,7 +314,71 @@ export const P = [
     {from:0,to:20,text:"Mueve dedos de manos y pies. 3 respiraciones profundas."},
     {from:20,to:40,text:"Estira brazos sobre la cabeza. Gira hacia un costado."},
     {from:40,to:60,text:"Abre los ojos suave. Sin inercia — solo claridad."}
-  ],sc:"Protocolo de salida evita la inercia de sueño (sleep inertia) que sí aparece en siestas reales de ≥30 min.",ic:"body",br:null}]}
+  ],sc:"Protocolo de salida evita la inercia de sueño (sleep inertia) que sí aparece en siestas reales de ≥30 min.",ic:"body",br:null}]},
+
+  /* ═══ #18 EMERGENCY RESET · TRE / Berceli + Porges ═══
+     CRISIS AGUDA — cuando ni se puede respirar.
+     Movimiento motor bilateral interrumpe freeze; vocalización
+     activa vago por nervio laríngeo. Ojos ABIERTOS — no es
+     meditación, es interrupción de patrón simpático. */
+  {id:18,n:"Emergency Reset",ct:"Activación",d:90,sb:"Crisis aguda — interrumpe el patrón",tg:"ER",cl:"#F43F5E",int:"reset",dif:1,
+  ph:[{l:"Tap Bilateral Acelerado",r:"0–30s",s:0,e:30,k:"Palmas a muslos. Alterna rápido. Ojos abiertos.",i:"Sin pensar, sin respirar lento. Palmas alternadas golpean tus muslos lo más rápido que puedas — izquierda, derecha, izquierda, derecha. Sin ritmo perfecto, solo velocidad. Mantén los ojos abiertos mirando al frente. 30 segundos completos. Esto rompe el congelamiento simpático antes de que cualquier respiración funcione.",iExec:[
+    {from:0,to:5,text:"Palmas a muslos. Tan rápido como puedas. No cuentes."},
+    {from:5,to:20,text:"Izquierda. Derecha. Sin pausa. Ojos al frente."},
+    {from:20,to:30,text:"Sigue. El cuerpo se mueve antes que la mente."}
+  ],sc:"Movimiento bilateral acelerado interrumpe tonic immobility (congelamiento) y activa cerebelo + ganglios basales, bypaseando el cortex paralizado por estrés agudo.",ic:"body",br:null},
+  {l:"Sacudir + Vocalizar",r:"30–60s",s:30,e:60,k:"Sacude manos. Exhala fuerte con sonido. Suelta.",i:"Detén el tap. Sacude las manos vigorosamente — como si tuvieras agua y la tiraras. Al mismo tiempo, exhala con fuerza por la boca haciendo el sonido 'haaaa' o 'shhhh'. Inhala normal entre exhalaciones. La vocalización fuerte activa el nervio vago directamente por las cuerdas vocales. La sacudida descarga tensión muscular acumulada.",iExec:[
+    {from:0,to:10,text:"Sacude las manos vigorosamente. Como si tuvieras agua y la tiraras."},
+    {from:10,to:20,text:"Exhala con sonido: \"haaaa\" o \"shhhh\". Fuerte, audible."},
+    {from:20,to:30,text:"Sigue sacudiendo. La tensión se descarga sola."}
+  ],sc:"Berceli (TRE 2008): vibración muscular voluntaria libera tensión almacenada en el psoas y diafragma. Porges (Polyvagal 2011): vocalización activa rama vagal ventral por nervio laríngeo recurrente.",ic:"body",br:null},
+  {l:"Anclaje Sensorial",r:"60–90s",s:60,e:90,k:"Pies firmes. Mira un objeto. \"Estoy aquí.\"",i:"Detente. Pies plantados firmes en el suelo. Elige UN objeto en tu entorno — una taza, una pluma, una grieta en la pared. Míralo fijo 10 segundos. Nómbralo en voz alta o internamente: 'Esto es una taza.' Di tres veces, firme: 'Estoy aquí. Esto pasa. Estoy aquí.' La crisis ya empezó a pasar.",iExec:[
+    {from:0,to:10,text:"Pies firmes. Un objeto. Míralo. Nómbralo: \"Esto es una _____\"."},
+    {from:10,to:20,text:"Di tres veces firme: \"Estoy aquí. Esto pasa. Estoy aquí.\""},
+    {from:20,to:30,text:"La crisis empezó a pasar. Tu cuerpo ya cambió de modo."}
+  ],sc:"Grounding 5-4-3-2-1 modificado. Activación de corteza prefrontal por nominación verbal reduce activación amigdalar; conexión visual sostenida con objeto neutro reorienta atención fuera del estado interno.",ic:"focus",br:null}]},
+
+  /* ═══ #19 PANIC INTERRUPT · Mammalian Dive Reflex + Porges ═══
+     PÁNICO AGUDO — cuando la frecuencia cardíaca está disparada.
+     Frío facial activa reflejo de inmersión (bradicardia inmediata);
+     activación motora rompe freeze; vocalización vagal cierra. */
+  {id:19,n:"Panic Interrupt",ct:"Reset",d:120,sb:"Pánico agudo — frío + movimiento + voz",tg:"PI",cl:"#22D3EE",int:"reset",dif:1,
+  ph:[{l:"Frío Facial",r:"0–50s",s:0,e:50,k:"Agua fría en la cara. Sostén 30s.",i:"Camina al lavabo o consigue un paño con agua fría. Moja tu cara — frente, mejillas, alrededor de los ojos — con agua lo más fría que puedas. Si no hay lavabo, presiona un paño frío o algo helado contra tu frente y mejillas. Sostén el frío 30 segundos completos. Tu frecuencia cardíaca va a bajar en menos de un minuto. Esto es fisiológico, no psicológico.",iExec:[
+    {from:0,to:15,text:"Camina al lavabo o consigue agua/paño frío."},
+    {from:15,to:35,text:"Moja la cara — frente, mejillas, ojos. Frío sostenido."},
+    {from:35,to:50,text:"Sostén 30s. La FC empieza a bajar. Es fisiología."}
+  ],sc:"Mammalian Dive Reflex (Heath 1992 NEJM, Foster 1991): el frío facial activa el nervio trigémino → bradicardia inmediata + vasoconstricción periférica. Reduce FC 10-25% en <60s. Usado clínicamente en taquicardia supraventricular.",ic:"body",br:null},
+  {l:"Activación Bilateral Rápida",r:"50–90s",s:50,e:90,k:"10 jumping jacks o marcha rápida en sitio.",i:"Inmediatamente después del frío, haz 10 jumping jacks completos. Si no puedes saltar, marcha en sitio levantando rodillas alto, lo más rápido posible 30 segundos. El movimiento bilateral acelerado quema la adrenalina circulante y rompe el ciclo de freeze. Respira como puedas — no fuerces.",iExec:[
+    {from:0,to:15,text:"10 jumping jacks completos. O marcha rápida levantando rodillas."},
+    {from:15,to:30,text:"Lo más rápido que puedas. La adrenalina necesita salir."},
+    {from:30,to:40,text:"Sigue 10 segundos más. Termina sin pausa."}
+  ],sc:"Tsatsoulis & Fountoulakis 2006: ejercicio agudo metaboliza catecolaminas circulantes y restaura HPA balance. Movimiento bilateral activa cerebelo y rompe la inhibición motora del trauma.",ic:"body",br:null},
+  {l:"Vocalización Vagal",r:"90–120s",s:90,e:120,k:"3 exhalaciones largas con sonido grave.",i:"Detente. Plantas firmes. Inhala normal por la nariz, después exhala lentamente por la boca haciendo un sonido grave — un 'aaaaaah' largo y profundo, como un suspiro pesado audible. La voz debe vibrar en tu pecho. 3 ciclos. Cada vocalización más larga que la anterior. Cuando termines, la crisis ya pasó su pico.",iExec:[
+    {from:0,to:10,text:"Inhala normal por nariz. Exhala con sonido grave: \"aaaaaah\"."},
+    {from:10,to:20,text:"Repite. Cada vez más larga. Que vibre en el pecho."},
+    {from:20,to:30,text:"Tercera vez. La crisis pasó su pico. Estás de regreso."}
+  ],sc:"Porges (Polyvagal 2011, 2017): vocalización con resonancia torácica activa rama vagal ventral por nervio laríngeo recurrente. Reduce frecuencia cardíaca y restaura tono parasimpático.",ic:"body",br:null}]},
+
+  /* ═══ #20 BLOCK BREAK · Power Pose + Isometric Discharge ═══
+     BLOQUEO COGNITIVO — quedarse atorado sin poder arrancar.
+     Postura expandida + activación motora + isometric release.
+     Para sacar inercia, no para calmar. */
+  {id:20,n:"Block Break",ct:"Activación",d:60,sb:"Bloqueo — saca la inercia con cuerpo",tg:"BB",cl:"#FBBF24",int:"energia",dif:1,
+  ph:[{l:"Postura Expandida",r:"0–20s",s:0,e:20,k:"De pie. Brazos en V. Pecho abierto. Mira arriba.",i:"Levántate de la silla. Plantas firmes, separación cadera. Brazos hacia arriba en forma de V — ancho, abierto. Pecho hacia adelante, hombros lejos de las orejas. Cabeza levantada, mira al techo o al cielo. Mantén la postura 20 segundos sin moverte. Esto NO es para calmarte. Es para que tu cuerpo le diga a tu cerebro: 'soy más grande que este bloqueo'.",iExec:[
+    {from:0,to:5,text:"Levántate. Pies separados ancho de cadera."},
+    {from:5,to:12,text:"Brazos en V hacia arriba. Pecho adelante. Mira arriba."},
+    {from:12,to:20,text:"Sostén. No te muevas. \"Soy más grande que este bloqueo\"."}
+  ],sc:"Carney et al. 2010 (efecto subjetivo robusto en estudios de réplica): postura expandida durante 2 min cambia autoreporte de poder y tolerancia al riesgo. Mecanismo propioceptivo + somatomotor.",ic:"body",br:null},
+  {l:"Saltos Bilaterales",r:"20–40s",s:20,e:40,k:"15-20 saltos en sitio. Rápido. Sin pensar.",i:"Baja los brazos. Salta en sitio levantando las dos piernas a la vez — pequeños saltos, rápidos. 15 a 20 saltos sin contar exacto. Si no puedes saltar, levanta talones lo más rápido que puedas alternándolos. El movimiento bilateral acelerado libera dopamina y rompe la rigidez del bloqueo cognitivo. No respires lento — respira como puedas.",iExec:[
+    {from:0,to:7,text:"15-20 saltos en sitio. Pequeños y rápidos."},
+    {from:7,to:14,text:"O levanta talones alternados, lo más rápido posible."},
+    {from:14,to:20,text:"Sigue. La rigidez se rompe con velocidad, no con calma."}
+  ],sc:"Knab & Lightfoot 2010: ejercicio agudo de alta intensidad (>30s) eleva BDNF y dopamina central. Movimiento bilateral activa coordinación cruzada → desbloqueo de circuitos prefrontal-motor.",ic:"body",br:null},
+  {l:"Apretar y Liberar Máximo",r:"40–60s",s:40,e:60,k:"Puños al máximo 10s. Suelta de golpe. Una vez más.",i:"Detente. Cierra ambos puños lo más fuerte que puedas — al 100%. Mantén 10 segundos completos sintiendo la tensión subir por antebrazos y hombros. Suelta de golpe — abre las manos, deja caer los brazos. Siente la ola de descarga. Repite una vez más: 10s al máximo, soltar de golpe. Termina con manos abiertas. Ya tienes la energía para arrancar.",iExec:[
+    {from:0,to:10,text:"Puños al 100% por 10s. Siente la tensión subir."},
+    {from:10,to:13,text:"Suelta de golpe. Brazos caen. Siente la descarga."},
+    {from:13,to:20,text:"Una vez más. 10s tensión, soltar. Listo para arrancar."}
+  ],sc:"Maximum voluntary contraction + súbita relajación genera reflejo miotático inverso (Golgi tendon) → caída brusca del tono muscular y activación parasimpática post-isometric. Patrón usado en PRT (Progressive Resistance Training) clínico.",ic:"body",br:null}]}
 ];
 
 export const SCIENCE_DEEP = {
@@ -335,4 +399,7 @@ export const SCIENCE_DEEP = {
   15: "El suspiro fisiológico es el único patrón respiratorio que produce descarga parasimpática aguda con evidencia RCT directa. Balban et al. 2023 (Stanford, Cell Reports Medicine) demostraron que 5 min/día durante 28 días superó a meditación de atención focalizada en reducción de ansiedad estado y mejora de afecto positivo. La doble inhalación reinfla alvéolos colapsados durante estrés y la exhalación prolongada activa los baroreceptores pulmonares.",
   16: "La respiración a frecuencia de resonancia (~5.5 rpm para la mayoría de adultos) induce un estado donde el barorreflejo entra en resonancia con el ritmo respiratorio. Vaschillo et al. 2006 documentaron que en este estado la amplitud de HRV se multiplica por 2-3x. Lehrer & Gevirtz 2014 muestran que 4 semanas de práctica (20 min/día) mejoran la ganancia baroreflex de forma sostenida. El meta-análisis de Goessl et al. 2017 (N=1868) reporta d=0.83 en reducción de ansiedad-estrés, uno de los efectos más grandes documentados para una intervención no-farmacológica.",
   17: "NSDR (Non-Sleep Deep Rest) y Yoga Nidra están entre las pocas prácticas con evidencia directa en neuroimagen. Kjaer et al. 2002 (Cognitive Brain Research) usando PET [11C]raclopride documentaron un incremento del 65% en dopamina endógena durante el estado hipnagógico de yoga nidra. Datta et al. 2017 muestran mejora en calidad de sueño en insomnio crónico. El barrido corporal activa la ínsula (centro de interocepción) sin inducir la inercia de sueño que sí produce una siesta >30 min.",
+  18: "Emergency Reset es activación motora bilateral acelerada — el inverso de la respiración consciente. En crisis aguda, el sistema simpático bloquea el control respiratorio voluntario; pedir 'respira lento' a alguien en pánico es contraproducente. Berceli (TRE 2008) y la línea Somatic Experiencing de Levine usan vibración muscular voluntaria para liberar tensión almacenada en psoas y diafragma. La vocalización audible activa la rama vagal ventral por estimulación del nervio laríngeo recurrente (Porges 2011). El cierre con anclaje sensorial (nominar un objeto, decir frases firmes) reactiva la corteza prefrontal por compromiso verbal, reduciendo la activación amigdalar.",
+  19: "Panic Interrupt usa el reflejo de inmersión mamífero (Mammalian Dive Reflex, Heath 1992 NEJM): el frío facial activa el nervio trigémino y produce bradicardia inmediata + vasoconstricción periférica. Es la única técnica que reduce frecuencia cardíaca elevada en menos de 60 segundos sin medicación; se usa clínicamente en taquicardia supraventricular. La activación motora bilateral siguiente quema catecolaminas circulantes (Tsatsoulis & Fountoulakis 2006) y rompe el ciclo de freeze. La vocalización con resonancia torácica activa el complejo vagal ventral y restaura tono parasimpático. Diseñado para pánico agudo donde respirar no es opción.",
+  20: "Block Break combina power pose (Carney et al. 2010, efecto subjetivo robusto en réplicas), activación motora bilateral de alta intensidad (Knab & Lightfoot 2010 — eleva BDNF y dopamina central), y descarga isométrica máxima por contracción-liberación. La descarga isométrica activa el reflejo miotático inverso (Golgi tendon organ): tras 10 segundos de contracción al 100%, el órgano de Golgi inhibe la motoneurona y produce una caída brusca del tono muscular acompañada de activación parasimpática post-isometric. Es el patrón usado en PRT (Progressive Resistance Training) clínico para desbloqueo somatomotor en estados de inercia cognitiva.",
 };

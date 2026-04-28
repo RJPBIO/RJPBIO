@@ -132,7 +132,7 @@ const COPY = {
     whenHsItems: [
       {
         t: "Necesitas volumen de contenido de mindfulness.",
-        b: "Miles de sesiones guiadas, instructores reconocidos, catálogo infantil, sleepcasts con celebridades. Si el ROI buscado es 'mi empleado abre una app y escucha algo', Headspace lo hace mejor. Nosotros tenemos 17 protocolos — no competimos en volumen de meditación.",
+        b: "Miles de sesiones guiadas, instructores reconocidos, catálogo infantil, sleepcasts con celebridades. Si el ROI buscado es 'mi empleado abre una app y escucha algo', Headspace lo hace mejor. Nosotros tenemos 20 protocolos — no competimos en volumen de meditación.",
       },
       {
         t: "Tu empresa ya tiene EAP y quieres añadir coaching + terapia.",
@@ -338,7 +338,7 @@ const COPY = {
     whenHsItems: [
       {
         t: "You need volume of mindfulness content.",
-        b: "Thousands of guided sessions, recognized instructors, kids library, sleepcasts with celebrities. If the ROI you're chasing is 'my employee opens an app and listens to something,' Headspace does that better. We have 17 protocols — we don't compete on meditation volume.",
+        b: "Thousands of guided sessions, recognized instructors, kids library, sleepcasts with celebrities. If the ROI you're chasing is 'my employee opens an app and listens to something,' Headspace does that better. We have 20 protocols — we don't compete on meditation volume.",
       },
       {
         t: "You have EAP already and want to add coaching + therapy.",

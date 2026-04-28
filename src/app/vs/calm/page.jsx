@@ -237,7 +237,7 @@ const COPY = {
         bullets: [
           "Lee HRV del empleado, ejecuta protocolo pre-shift, mide delta.",
           "Optimiza la ventana pre-turno — 2–3 min antes de operar.",
-          "Catálogo enfocado: 17 protocolos con mecanismo citado en literatura.",
+          "Catálogo enfocado: 20 protocolos con mecanismo citado en literatura.",
           "Modelo de seat activo · adoption-guarantee documentado en MSA.",
           "Complementa EAP + wearable + contenido (Calm/Headspace) — no los reemplaza.",
         ],
@@ -445,7 +445,7 @@ const COPY = {
         bullets: [
           "Reads employee HRV, runs pre-shift protocol, measures delta.",
           "Optimizes the pre-shift window — 2–3 min before operating.",
-          "Focused catalog: 17 protocols with mechanism cited in literature.",
+          "Focused catalog: 20 protocols with mechanism cited in literature.",
           "Active-seat model · adoption-guarantee documented in MSA.",
           "Complements EAP + wearable + content (Calm/Headspace) — doesn't replace.",
         ],

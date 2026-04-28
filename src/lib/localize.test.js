@@ -31,7 +31,7 @@ describe("protocolDisplayName", () => {
     expect(protocolDisplayName(null, "en")).toBe("");
   });
 
-  it("all 17 protocols have EN names", () => {
+  it("all protocols have EN names", () => {
     PROTOCOLS.forEach((p) => {
       const name = protocolDisplayName(p, "en");
       expect(name).toBeTruthy();
@@ -39,7 +39,7 @@ describe("protocolDisplayName", () => {
     });
   });
 
-  it("all 17 protocols have ES names", () => {
+  it("all protocols have ES names", () => {
     PROTOCOLS.forEach((p) => {
       const name = protocolDisplayName(p, "es");
       expect(name).toBeTruthy();
