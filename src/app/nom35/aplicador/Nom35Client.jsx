@@ -370,20 +370,16 @@ function ResultPane({ result, onSubmit, submitting, submittedAt, error, complete
                 variant="ghost"
                 onClick={() => {
                   if (typeof window === "undefined") return;
-                  if (submittedAt) {
-                    // Sprint 66 — reporte oficial server-side con la marca,
-                    // 5 páginas y privacidad correcta. Requiere envío previo
-                    // porque la ruta lee Nom35Response del servidor.
-                    window.open("/nom35/aplicador/reporte", "_blank", "noopener,noreferrer");
-                  } else {
-                    // Fallback para quien no quiere enviar — imprime la
-                    // vista actual del aplicador (legacy window.print).
-                    window.print();
-                  }
+                  // Sprint 67 — siempre abrir el reporte oficial server-side.
+                  // El fallback window.print() anterior daba la "versión vieja"
+                  // si el usuario clickeaba antes de enviar. La ruta /reporte
+                  // ya maneja el caso "no Nom35Response aún" con un mensaje
+                  // claro que invita a completar el envío primero.
+                  window.open("/nom35/aplicador/reporte", "_blank", "noopener,noreferrer");
                 }}
-                title={submittedAt ? "Abrir reporte oficial en nueva pestaña" : "Imprimir vista actual"}
+                title="Abrir reporte oficial en nueva pestaña"
               >
-                {submittedAt ? "Descargar reporte oficial" : "Imprimir vista"}
+                Descargar reporte oficial
               </Button>
             </div>
 
