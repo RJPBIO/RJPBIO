@@ -6,7 +6,7 @@
    transparent rationale.
    ═══════════════════════════════════════════════════════════════ */
 
-import { P } from "./protocols";
+import { P, getUseCase } from "./protocols";
 import { calcReadiness } from "./readiness";
 import { isInDeepWorkWindow } from "./chronotype";
 import {
@@ -159,7 +159,13 @@ function firstMatchingRule({ signals, st, hour, lastMood, readiness, last2hSessi
 }
 
 function pickProtocol(st, intent, preferKey) {
-  const pool = P.filter((p) => p.int === intent);
+  // Sprint 70 — el prescriber NUNCA recomienda useCase crisis (acceso
+  // explícito) ni training (10 min, dentro de programa o elección manual).
+  const pool = P.filter((p) => {
+    if (p.int !== intent) return false;
+    const uc = getUseCase(p);
+    return uc !== "crisis" && uc !== "training";
+  });
   if (pool.length === 0) return null;
   if (preferKey) {
     const special = pool.find((p) => (p.n || "").toLowerCase().includes(preferKey.replace("_", " ")));
