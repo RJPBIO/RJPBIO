@@ -1238,11 +1238,17 @@ export default function BioIgnicion(){
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>Suspiro</span>
         <span style={{fontSize:8,color:t3}}>60s · calma</span>
       </motion.button>
-      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRVCam(true);H("tap");}} aria-label="Medir HRV con la cámara" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      {/* Sprint 73 — el caption ahora refleja la última medición si existe.
+          Antes mostraba siempre "1 min · cámara" — el user no veía
+          confirmación de que su medición había persistido. Ahora ve
+          "RMSSD 45 ms · hace 2h" inmediatamente, mismo botón. */}
+      {(()=>{const lastHrv=(st.hrvLog||[]).slice(-1)[0];const ageMs=lastHrv?Date.now()-lastHrv.ts:null;const ageLabel=ageMs==null?"1 min · cámara":ageMs<60000?"hace un momento":ageMs<3600000?`hace ${Math.round(ageMs/60000)} min`:ageMs<86400000?`hace ${Math.round(ageMs/3600000)} h`:`hace ${Math.round(ageMs/86400000)} d`;const caption=lastHrv?`${Math.round(lastHrv.rmssd)} ms · ${ageLabel}`:"1 min · cámara";return(
+      <motion.button whileTap={{scale:.94}} onClick={()=>{setShowHRVCam(true);H("tap");}} aria-label={lastHrv?`Última HRV ${Math.round(lastHrv.rmssd)} ms · medir de nuevo`:"Medir HRV con la cámara"} style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
         <Icon name="predict" size={14} color={protoColor.enfoque}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>HRV</span>
-        <span style={{fontSize:8,color:t3}}>1 min · cámara</span>
+        <span style={{fontSize:8,color:t3}}>{caption}</span>
       </motion.button>
+      );})()}
       <motion.button whileTap={{scale:.94}} onClick={()=>{setShowNSDR(true);H("tap");}} aria-label="NSDR Yoga Nidra, 10 minutos" style={{flex:1,padding:"10px 8px",borderRadius:12,border:`1.5px solid ${bd}`,background:cd,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
         <Icon name="mind" size={14} color={protoColor.reset}/>
         <span style={{fontSize:9,fontWeight:700,color:t1,letterSpacing:1,textTransform:"uppercase"}}>NSDR</span>

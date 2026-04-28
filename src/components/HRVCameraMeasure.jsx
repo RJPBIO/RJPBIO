@@ -360,11 +360,21 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
       sqi: sqi?.score,
       sqiBand: sqi?.band,
     });
-    // Confirmación breve antes de cerrar — cierra el loop emocional y
-    // confirma que el dato entró al historial. Auto-close 1500ms.
+    // Sprint 73 — flush síncrono del debounce (300ms) ANTES de mostrar
+    // pantalla "saved". Antes: si el user fuerza salida con back-button
+    // dentro de los 300ms, scheduleSave nunca dispara → datos perdidos.
+    // saveNow() flushea inmediatamente; queda persistido en IDB antes
+    // de que cualquier navegación pueda interferir.
+    try { useStore.getState().saveNow?.(); } catch {}
+    // Confirmación visual — cierra el loop emocional y confirma que el
+    // dato entró al historial. Sprint 73 agrega botón explícito
+    // "Continuar" en la pantalla saved (antes solo había auto-close
+    // 1500ms y el user quedaba atorado si quería salir antes).
     setPhaseSafe("saved");
     announce("Medición guardada en tu historial.");
-    setTimeout(() => onClose?.(), 1500);
+    // Auto-close se mantiene como fallback (1.8s, un poco más largo
+    // para que el user pueda leer el resultado sin sentirse apurado).
+    setTimeout(() => onClose?.(), 1800);
   }
 
   if (!show) return null;
@@ -1121,9 +1131,33 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
           >
             Guardado en tu historial
           </h3>
-          <p style={{ color: t2, fontSize: 14, lineHeight: 1.5, margin: 0 }}>
+          <p style={{ color: t2, fontSize: 14, lineHeight: 1.5, margin: 0, marginBlockEnd: 24 }}>
             RMSSD {finalResult.hrv.rmssd} ms · {Math.round(finalResult.hrv.meanHr)} bpm
           </p>
+          {/* Sprint 73 — botón explícito. Antes solo había auto-close
+              setTimeout(1500). Si el user quería salir antes, no había
+              forma obvia (la X del header podía no ser visible en
+              algunos viewport mobile). Ahora hay un CTA claro. */}
+          <button
+            type="button"
+            onClick={() => onClose?.()}
+            aria-label="Cerrar y volver"
+            style={{
+              minBlockSize: 48,
+              paddingBlock: 14,
+              paddingInline: 32,
+              background: brand.primary,
+              color: "#fff",
+              border: "none",
+              borderRadius: 14,
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: -0.1,
+              cursor: "pointer",
+            }}
+          >
+            Continuar
+          </button>
         </section>
       )}
 

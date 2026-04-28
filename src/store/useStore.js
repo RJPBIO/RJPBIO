@@ -75,11 +75,31 @@ function belongsToUser(loaded, currentUserId) {
 }
 
 let persistTimer = null;
+let lastScheduledState = null;
 function scheduleSave(state) {
+  lastScheduledState = state;
   if (persistTimer) clearTimeout(persistTimer);
   persistTimer = setTimeout(() => {
+    persistTimer = null;
     saveState(state).catch((e) => logger.error("persist.save", e));
   }, 300);
+}
+
+// Sprint 73 — flush síncrono del debounce. Usar antes de operaciones
+// que cierran/navegan rápido (HRV save → modal close → user puede
+// salir antes de los 300ms del debounce → datos perdidos).
+async function saveNow(state) {
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  const target = state || lastScheduledState;
+  if (!target) return;
+  try {
+    await saveState(target);
+  } catch (e) {
+    logger.error("persist.saveNow", e);
+  }
 }
 
 export const useStore = create((set, get) => ({
@@ -118,6 +138,7 @@ export const useStore = create((set, get) => ({
   },
 
   save: () => scheduleSave(get()),
+  saveNow: () => saveNow(get()),
 
   completeSession: (r) => {
     const st = get();
