@@ -1,6 +1,7 @@
 /* LLM Coach — Anthropic Claude Sonnet 4.6 con prompt caching y streaming. */
 import { auth } from "@/server/auth";
 import { requireMembership } from "@/server/rbac";
+import { requireCsrf } from "@/server/csrf";
 import { check } from "@/server/ratelimit";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
@@ -8,7 +9,18 @@ import { buildSystemPrompt, sanitizeUserTurn } from "@/lib/coach-prompts";
 
 export const runtime = "nodejs";
 
+// Sprint 92 — cap mensajes incoming. Antes solo había messages.length>0
+// check, atacante podía enviar 10K mensajes de 4KB = 40MB upstream burn.
+const MAX_MESSAGES = 50;
+
 export async function POST(req) {
+  // Sprint 92 — CSRF check (bug #4 round 2). Endpoint costoso (Anthropic
+  // API $$$), defense-in-depth crítico. Auth cookie es SameSite=Lax por
+  // lo que el browser ya bloquea cross-origin POST, pero CSRF protege
+  // contra XSS o subdomain takeover.
+  const csrf = requireCsrf(req);
+  if (csrf) return csrf;
+
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
 
@@ -16,6 +28,9 @@ export async function POST(req) {
   const { messages = [], orgId, userContext } = body;
   if (!Array.isArray(messages) || messages.length === 0) {
     return new Response("empty_messages", { status: 400 });
+  }
+  if (messages.length > MAX_MESSAGES) {
+    return new Response("too_many_messages", { status: 413 });
   }
 
   let org = null;

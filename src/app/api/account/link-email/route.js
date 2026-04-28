@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { check } from "@/server/ratelimit";
+import { requireCsrf } from "@/server/csrf";
 import { auditLog } from "@/server/audit";
 
 export const runtime = "nodejs";
@@ -19,6 +20,17 @@ export const dynamic = "force-dynamic";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req) {
+  // Sprint 92 — CSRF (bug #5 round 2). Endpoint cambia user.email →
+  // vector de account-hijack si attacker logra disparar via XSS/
+  // subdomain takeover. SameSite=Lax mitiga cross-origin POST pero
+  // no defense-in-depth. Account hijack via:
+  //   1. POST { email: "attacker@evil.com" }
+  //   2. Server: user.email = ..., emailVerified = null
+  //   3. Magic link enviado a attacker
+  //   4. Attacker confirma → owns la cuenta
+  const csrf = requireCsrf(req);
+  if (csrf) return csrf;
+
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

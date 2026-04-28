@@ -23,11 +23,20 @@ export async function GET(req) {
     remaining: r.rateLimit?.remaining,
     reset: r.rateLimit?.reset,
   });
+  // Sprint 92 — fix N+1 (bug #9 round 2). Antes: 1 query findMany +
+  // N queries findUnique en Promise.all. Org con 100 members = 101
+  // queries → latencia O(n). Ahora: 1 query con include = O(1).
   const orm = await db();
-  const members = await orm.membership.findMany({ where: { orgId: r.key.orgId } });
-  const enriched = await Promise.all(members.map(async (m) => {
-    const u = await orm.user.findUnique({ where: { id: m.userId } });
-    return { id: m.id, role: m.role, email: u?.email, name: u?.name, joinedAt: m.createdAt };
+  const members = await orm.membership.findMany({
+    where: { orgId: r.key.orgId },
+    include: { user: { select: { email: true, name: true } } },
+  });
+  const enriched = members.map((m) => ({
+    id: m.id,
+    role: m.role,
+    email: m.user?.email,
+    name: m.user?.name,
+    joinedAt: m.createdAt,
   }));
   return NextResponse.json({ data: enriched }, { headers });
 }
