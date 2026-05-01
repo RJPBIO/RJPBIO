@@ -400,9 +400,10 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
       style={{
         position: "fixed",
         inset: 0,
-        background: bg,
+        // Glass dark + cyan accent radial
+        background: `radial-gradient(ellipse 70% 80% at 50% 0%, ${withAlpha(brand.primary, 18)} 0%, transparent 55%), linear-gradient(180deg, #0a0a10 0%, #08080A 100%)`,
         zIndex: 220,
-        padding: 20,
+        padding: "20px 20px 60px",
         paddingBlockStart: 40,
         overflowY: "auto",
         inlineSize: "100%",
@@ -410,35 +411,49 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     >
       {phase !== "measuring" && phase !== "saved" && (
         <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 24, maxInlineSize: 500, marginInline: "auto" }}>
-          <h2
-            id={titleId}
-            style={{
-              fontSize: 22,
-              fontWeight: font.weight.black,
-              color: t1,
-              margin: 0,
-              letterSpacing: -0.4,
-            }}
-          >
-            HRV con cámara
-          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <span aria-hidden="true" style={{ position: "relative", inlineSize: 5, blockSize: 5 }}>
+                <motion.span
+                  animate={reduced ? {} : { scale: [1, 2.4, 1], opacity: [0.55, 0, 0.55] }}
+                  transition={reduced ? {} : { duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+                  style={{ position: "absolute", inset: 0, borderRadius: "50%", background: brand.primary }}
+                />
+                <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #fff 0%, ${brand.primary} 55%)`, boxShadow: `0 0 8px ${brand.primary}` }} />
+              </span>
+              <span style={{
+                fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+                fontSize: 9, fontWeight: 500,
+                color: brand.primary, letterSpacing: "0.30em", textTransform: "uppercase",
+                textShadow: `0 0 6px ${withAlpha(brand.primary, 50)}`,
+              }}>
+                Cámara · Sin sensor BLE
+              </span>
+            </span>
+            <h2 id={titleId} style={{
+              fontSize: 22, fontWeight: 300, color: t1,
+              letterSpacing: -0.5, lineHeight: 1.1, margin: 0,
+            }}>
+              HRV con cámara
+            </h2>
+          </div>
           <button
             onClick={onClose}
             aria-label="Cerrar medición HRV"
             style={{
-              border: "none",
-              background: "transparent",
-              color: t2,
-              padding: 12,
-              minInlineSize: 44,
-              minBlockSize: 44,
+              inlineSize: 38, blockSize: 38,
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              background: `linear-gradient(180deg, ${withAlpha(brand.primary, 18)} 0%, ${withAlpha(brand.primary, 6)} 100%)`,
+              border: `0.5px solid ${withAlpha(brand.primary, 38)}`,
+              borderRadius: "50%",
+              color: brand.primary,
               cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08)`,
             }}
           >
-            <Icon name="close" size={20} color={t2} aria-hidden="true" />
+            <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+              <path d="M3 3 L10 10 M10 3 L3 10" stroke={brand.primary} strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
           </button>
         </header>
       )}

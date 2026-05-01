@@ -97,9 +97,9 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
             position: "fixed",
             inset: 0,
             zIndex: z.overlay,
-            background: "rgba(15,23,42,.3)",
-            backdropFilter: "blur(24px) saturate(180%)",
-            WebkitBackdropFilter: "blur(24px) saturate(180%)",
+            background: "rgba(8,8,12,.55)",
+            backdropFilter: "blur(28px) saturate(180%)",
+            WebkitBackdropFilter: "blur(28px) saturate(180%)",
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
@@ -116,12 +116,18 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
             exit={reduced ? { opacity: 0 } : { y: "100%" }}
             transition={reduced ? { duration: 0 } : SPRING.smooth}
             style={{
+              position: "relative",
               inlineSize: "100%",
               maxInlineSize: 430,
-              maxBlockSize: "75vh",
-              background: cd,
-              borderStartStartRadius: radius["2xl"],
-              borderStartEndRadius: radius["2xl"],
+              maxBlockSize: "78dvh",
+              // Glass dark + accent corner radial (Menu Strip /perfil canon)
+              background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${withAlpha(ac, 14)} 0%, transparent 55%), linear-gradient(180deg, rgba(20,20,28,0.96) 0%, rgba(8,8,12,0.98) 100%)`,
+              backdropFilter: "blur(30px) saturate(160%)",
+              WebkitBackdropFilter: "blur(30px) saturate(160%)",
+              borderStartStartRadius: 24,
+              borderStartEndRadius: 24,
+              border: `0.5px solid rgba(255,255,255,0.10)`,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 1px ${withAlpha(ac, 16)}, 0 -12px 40px rgba(0,0,0,0.45), 0 0 22px ${withAlpha(ac, 10)}`,
               paddingBlock: `${space[5]}px ${space[10]}px`,
               paddingInline: space[5],
               overflowY: "auto",
@@ -130,75 +136,101 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              aria-hidden="true"
-              style={{
-                inlineSize: 36,
-                blockSize: 4,
-                background: bd,
-                borderRadius: 2,
-                margin: `0 auto ${space[5]}px`,
-              }}
-            />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: space[3], marginBlockEnd: space[3] }}>
-              <h3 id={titleId} style={{ ...ty.heading(t1), margin: 0 }}>
-                Historial
-              </h3>
+            {/* Top sheen */}
+            <span aria-hidden="true" style={{ position: "absolute", insetBlockStart: 0, insetInlineStart: "20%", insetInlineEnd: "20%", blockSize: 1, background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.30) 50%, transparent 100%)`, pointerEvents: "none" }} />
+            {/* Pull handle premium with glow */}
+            <div aria-hidden="true" style={{
+              inlineSize: 40, blockSize: 4,
+              background: `linear-gradient(90deg, ${withAlpha(ac, 40)} 0%, ${withAlpha(ac, 70)} 50%, ${withAlpha(ac, 40)} 100%)`,
+              borderRadius: 99,
+              margin: `0 auto ${space[4]}px`,
+              boxShadow: `0 0 8px ${withAlpha(ac, 30)}`,
+            }} />
+
+            {/* Header — eyebrow + title + close */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: space[3], marginBlockEnd: space[4] }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                  <span aria-hidden="true" style={{ position: "relative", inlineSize: 5, blockSize: 5 }}>
+                    <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #fff 0%, ${ac} 55%)`, boxShadow: `0 0 6px ${ac}` }} />
+                  </span>
+                  <span style={{
+                    fontFamily: MONO, fontSize: 9, fontWeight: 500,
+                    color: ac, letterSpacing: "0.30em", textTransform: "uppercase",
+                    textShadow: `0 0 6px ${withAlpha(ac, 50)}`,
+                  }}>
+                    Historial · {total} sesiones
+                  </span>
+                </span>
+                <h3 id={titleId} style={{
+                  fontSize: 26, fontWeight: 300, color: t1,
+                  letterSpacing: -0.6, lineHeight: 1.05, margin: 0,
+                }}>
+                  Trayectoria neural
+                </h3>
+              </div>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Cerrar historial"
                 style={{
-                  inlineSize: 44,
-                  blockSize: 44,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "transparent",
-                  border: `1px solid ${bd}`,
-                  borderRadius: radius.md,
-                  color: t3,
+                  inlineSize: 38, blockSize: 38,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  background: `linear-gradient(180deg, ${withAlpha(ac, 14)} 0%, ${withAlpha(ac, 4)} 100%)`,
+                  border: `0.5px solid ${withAlpha(ac, 35)}`,
+                  borderRadius: "50%",
+                  color: ac,
                   cursor: "pointer",
                   flexShrink: 0,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08)`,
                 }}
               >
-                <Icon name="x" size={14} color={t3} aria-hidden="true" />
+                <svg width="13" height="13" viewBox="0 0 13 13">
+                  <path d="M3 3 L10 10 M10 3 L3 10" stroke={ac} strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </button>
             </div>
 
+            {/* Trend bar — Señal sparkline (glass + accent ring) */}
             {trendData.length >= 3 && (
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: space[2],
-                  paddingBlock: space[2],
-                  paddingInline: space[2.5],
-                  marginBlockEnd: space[3],
-                  borderRadius: radius.md,
-                  background: withAlpha(ac, 4),
-                  border: `1px solid ${withAlpha(ac, 8)}`,
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  gap: 10,
+                  paddingBlock: 12, paddingInline: 14,
+                  marginBlockEnd: space[4],
+                  borderRadius: 16,
+                  background: `radial-gradient(ellipse 60% 100% at 100% 50%, ${withAlpha(bioQColor(trendData[trendData.length - 1]), 16)} 0%, transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.10) 100%)`,
+                  border: `0.5px solid ${withAlpha(bioQColor(trendData[trendData.length - 1]), 22)}`,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px ${withAlpha(bioQColor(trendData[trendData.length - 1]), 14)}, 0 4px 14px rgba(0,0,0,0.24)`,
                 }}
               >
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <span style={kickerStyle(t3)}>
-                    Señal ·{" "}
-                    <span style={numStyle(t3, 600)}>{trendData.length}</span> sesiones
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{
+                    fontFamily: MONO, fontSize: 8.5, fontWeight: 500,
+                    color: bioQColor(trendData[trendData.length - 1]),
+                    letterSpacing: "0.24em", textTransform: "uppercase",
+                    textShadow: `0 0 5px ${withAlpha(bioQColor(trendData[trendData.length - 1]), 50)}`,
+                  }}>
+                    Señal · {trendData.length} sesiones
                   </span>
-                  <span
-                    style={{
-                      ...ty.biometric(bioQColor(trendData[trendData.length - 1]), font.size.lg),
-                    }}
-                  >
-                    {trendData[trendData.length - 1]}%
-                  </span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{
+                      fontFamily: MONO, fontSize: 22, fontWeight: 250,
+                      color: t1,
+                      letterSpacing: -0.5, fontVariantNumeric: "tabular-nums",
+                      textShadow: `0 0 10px ${withAlpha(bioQColor(trendData[trendData.length - 1]), 35)}`,
+                    }}>
+                      {trendData[trendData.length - 1]}
+                    </span>
+                    <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 500, color: t3 }}>%</span>
+                  </div>
                 </div>
                 <BioSparkline
                   data={trendData}
                   width={150}
                   height={32}
-                  color={ac}
+                  color={bioQColor(trendData[trendData.length - 1])}
                   ariaLabel={`Curva de calidad biométrica últimas ${trendData.length} sesiones`}
                 />
               </div>
@@ -226,37 +258,40 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
               const hiddenCount = isOlder ? Math.max(0, gi.length - visible.length) : 0;
               return (
                 <section key={k} aria-label={`${groupLabel}: ${gi.length} sesiones`}>
-                  <h4
-                    style={{
-                      ...kickerStyle(t3),
-                      marginBlockEnd: space[2],
-                      marginBlockStart: space[3],
-                    }}
-                  >
-                    {groupLabel}
+                  {/* Group label — mono caps tracked + accent line */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    marginBlockStart: space[3], marginBlockEnd: space[2],
+                  }}>
+                    <span style={{
+                      fontFamily: MONO, fontSize: 8.5, fontWeight: 500,
+                      color: ac, letterSpacing: "0.30em", textTransform: "uppercase",
+                      textShadow: `0 0 5px ${withAlpha(ac, 50)}`,
+                    }}>
+                      {groupLabel}
+                    </span>
                     {isOlder && gi.length > OLDER_PAGE && (
-                      <span style={{ marginInlineStart: 6, color: t3, fontWeight: 500 }}>
-                        ·{" "}
-                        <span style={numStyle(t3, 600)}>
-                          {visible.length}/{gi.length}
-                        </span>
+                      <span style={{
+                        fontFamily: MONO, fontSize: 8.5, fontWeight: 500, color: t3,
+                        letterSpacing: "0.10em", fontVariantNumeric: "tabular-nums",
+                      }}>
+                        · {visible.length}/{gi.length}
                       </span>
                     )}
-                  </h4>
-                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                    <span aria-hidden="true" style={{
+                      flex: 1, blockSize: 1,
+                      background: `linear-gradient(90deg, ${withAlpha(ac, 30)} 0%, ${withAlpha(ac, 5)} 70%, transparent 100%)`,
+                    }} />
+                  </div>
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
                     {visible.map((h, i) => {
-                      const tm = new Date(h.ts).toLocaleTimeString("es", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      });
+                      const tm = new Date(h.ts).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
                       const ml = (st.moodLog || []).find((m) => Math.abs(m.ts - h.ts) < 10000);
                       const moodIcon = ml ? MOODS[(ml.mood || 3) - 1]?.icon || "neutral" : null;
                       const moodLabel = ml ? MOODS[(ml.mood || 3) - 1]?.label || "neutral" : "";
-                      const itemAria =
-                        `${h.p}, ${tm}` +
-                        (h.bioQ ? `, calidad ${h.bioQ}%` : "") +
-                        (ml ? `, ánimo ${moodLabel}` : "") +
-                        `, +${h.vc} V-Cores`;
+                      const moodColor = ml ? (MOODS[(ml.mood || 3) - 1]?.color || t3) : t3;
+                      const itemAria = `${h.p}, ${tm}` + (h.bioQ ? `, calidad ${h.bioQ}%` : "") + (ml ? `, ánimo ${moodLabel}` : "") + `, +${h.vc} V-Cores`;
+                      const qcolor = h.bioQ ? bioQColor(h.bioQ) : ac;
                       return (
                         <li
                           key={i}
@@ -264,52 +299,47 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: space[2],
-                            paddingBlock: space[2],
-                            borderBlockEnd: `1px solid ${bd}`,
+                            gap: 12,
+                            paddingBlock: 10, paddingInline: 12,
+                            background: `radial-gradient(ellipse 60% 100% at 0% 50%, ${withAlpha(qcolor, 10)} 0%, transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.08) 100%)`,
+                            border: `0.5px solid rgba(255,255,255,0.06)`,
+                            borderRadius: 12,
+                            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 0.5px ${withAlpha(qcolor, 12)}`,
                           }}
                         >
-                          <div
-                            aria-hidden="true"
-                            style={{
-                              inlineSize: 30,
-                              blockSize: 30,
-                              borderRadius: radius.sm,
-                              background: withAlpha(ac, 6),
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0,
-                            }}
-                          >
-                            <Icon name="bolt" size={12} color={ac} />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={ty.caption(t1)}>{h.p}</div>
-                            <div
-                              aria-hidden="true"
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 3,
-                                marginBlockStart: 1,
-                              }}
-                            >
-                              <span style={{ ...numStyle(t3, 600), fontSize: font.size.sm }}>{tm}</span>
+                          {/* IconTile mini squircle (consistente con dashboard) */}
+                          <span aria-hidden="true" style={{
+                            position: "relative",
+                            flexShrink: 0,
+                            inlineSize: 32, blockSize: 32,
+                            borderRadius: 9,
+                            background: `radial-gradient(circle at 28% 22%, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 50%), linear-gradient(145deg, ${withAlpha(qcolor, 32)} 0%, ${withAlpha(qcolor, 10)} 100%)`,
+                            border: `0.5px solid ${withAlpha(qcolor, 50)}`,
+                            boxShadow: `inset 0 1.2px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.20), 0 0 10px ${withAlpha(qcolor, 28)}`,
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            overflow: "hidden",
+                          }}>
+                            <span aria-hidden="true" style={{ position: "absolute", insetBlockStart: 0, insetInlineStart: "14%", insetInlineEnd: "14%", blockSize: 1, background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)` }} />
+                            <Icon name="bolt" size={14} color={qcolor} />
+                          </span>
+                          {/* Identity stack */}
+                          <div style={{ flex: 1, minInlineSize: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: t1, letterSpacing: -0.2, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {h.p}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBlockStart: 3, flexWrap: "wrap" }}>
+                              <span style={{ fontFamily: MONO, fontSize: 9.5, fontWeight: 500, color: t3, letterSpacing: "0.04em", fontVariantNumeric: "tabular-nums" }}>{tm}</span>
                               {moodIcon && (
-                                <Icon
-                                  name={moodIcon}
-                                  size={10}
-                                  color={MOODS[(ml.mood || 3) - 1]?.color || t3}
-                                />
+                                <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", filter: `drop-shadow(0 0 4px ${withAlpha(moodColor, 50)})` }}>
+                                  <Icon name={moodIcon} size={11} color={moodColor} />
+                                </span>
                               )}
                               {h.bioQ && (
-                                <span
-                                  style={{
-                                    ...ty.biometric(bioQColor(h.bioQ), font.size.sm),
-                                    fontWeight: font.weight.bold,
-                                  }}
-                                >
+                                <span style={{
+                                  fontFamily: MONO, fontSize: 9.5, fontWeight: 500,
+                                  color: qcolor, letterSpacing: "0.04em", fontVariantNumeric: "tabular-nums",
+                                  textShadow: `0 0 5px ${withAlpha(qcolor, 50)}`,
+                                }}>
                                   {h.bioQ}%
                                 </span>
                               )}
@@ -318,20 +348,30 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                                   title={`Sello: ${b.label}${h.partial ? " · parcial" : ""}${h.hiddenSec ? ` · ${h.hiddenSec}s en segundo plano` : ""}`}
                                   style={{
                                     display: "inline-flex", alignItems: "center", gap: 3,
-                                    marginInlineStart: 4, paddingInline: 6, paddingBlock: 1,
-                                    borderRadius: 6, background: withAlpha(b.color, 10),
-                                    color: b.color, fontSize: 10, fontWeight: 600,
-                                    letterSpacing: -0.05,
+                                    paddingInline: 6, paddingBlock: 1.5,
+                                    borderRadius: 99,
+                                    background: withAlpha(b.color, 12),
+                                    border: `0.5px solid ${withAlpha(b.color, 28)}`,
+                                    color: b.color,
+                                    fontFamily: MONO, fontSize: 8, fontWeight: 500,
+                                    letterSpacing: "0.10em", textTransform: "uppercase",
+                                    textShadow: `0 0 4px ${withAlpha(b.color, 40)}`,
                                   }}
                                 >
-                                  <Icon name={b.icon} size={9} color={b.color} />
                                   {b.label}
                                 </span>
                               ); })()}
                             </div>
                           </div>
-                          <div style={{ textAlign: "end" }} aria-hidden="true">
-                            <div style={{ ...numStyle(ac, 700), fontSize: font.size.md }}>+{h.vc}</div>
+                          {/* V-Cores reward */}
+                          <div style={{ textAlign: "end", flexShrink: 0 }} aria-hidden="true">
+                            <span style={{
+                              fontFamily: MONO, fontSize: 14, fontWeight: 500,
+                              color: ac, letterSpacing: -0.2, fontVariantNumeric: "tabular-nums",
+                              textShadow: `0 0 6px ${withAlpha(ac, 50)}`,
+                            }}>
+                              +{h.vc}
+                            </span>
                           </div>
                         </li>
                       );
@@ -341,27 +381,31 @@ export default function HistorySheet({ show, onClose, st, isDark, ac }) {
                     <button
                       type="button"
                       onClick={() => setOlderShown((n) => n + OLDER_PAGE)}
+                      aria-label={`Cargar ${Math.min(OLDER_PAGE, hiddenCount)} sesiones más`}
                       style={{
-                        display: "block",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                         inlineSize: "100%",
                         marginBlockStart: space[2],
                         marginBlockEnd: space[3],
-                        paddingBlock: space[2],
-                        paddingInline: space[3],
-                        background: withAlpha(ac, 6),
-                        border: `1px solid ${withAlpha(ac, 14)}`,
-                        borderRadius: radius.sm,
-                        color: ac,
-                        fontSize: font.size.sm,
-                        fontWeight: font.weight.semibold,
+                        paddingBlock: 12, paddingInline: 14,
+                        borderRadius: 14,
+                        background: `radial-gradient(ellipse 60% 100% at 0% 50%, ${withAlpha(ac, 12)} 0%, transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.10) 100%)`,
+                        border: `0.5px solid ${withAlpha(ac, 30)}`,
+                        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px ${withAlpha(ac, 14)}, 0 4px 14px rgba(0,0,0,0.24)`,
                         cursor: "pointer",
-                        fontFamily: "inherit",
+                        fontFamily: MONO,
+                        fontSize: 9, fontWeight: 500,
+                        color: ac,
+                        letterSpacing: "0.20em", textTransform: "uppercase",
+                        textShadow: `0 0 5px ${withAlpha(ac, 50)}`,
                         minBlockSize: 44,
                       }}
-                      aria-label={`Cargar ${Math.min(OLDER_PAGE, hiddenCount)} sesiones más`}
                     >
-                      Ver <span style={numStyle(ac, 700)}>{Math.min(OLDER_PAGE, hiddenCount)}</span> más ·{" "}
-                      <span style={numStyle(ac, 600)}>{hiddenCount}</span> restantes
+                      Ver <span style={{ fontVariantNumeric: "tabular-nums", color: t1 }}>{Math.min(OLDER_PAGE, hiddenCount)}</span> más
+                      <span style={{ color: t3, fontWeight: 400 }}>· {hiddenCount} restantes</span>
+                      <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true">
+                        <path d="M1.5 3.5 L5.5 7.5 L9.5 3.5" stroke={ac} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      </svg>
                     </button>
                   )}
                 </section>

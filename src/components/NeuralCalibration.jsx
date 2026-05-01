@@ -241,6 +241,11 @@ export default function NeuralCalibration({ onComplete, isDark }) {
     onComplete(baseline);
   }, [calcBaseline, onComplete]);
 
+  // Mono font for ADN consistency
+  const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+  // Trinity colors for multi-segment progress
+  const SIG = { calma: "#22D3EE", enfoque: "#A78BFA", energia: "#F59E0B" };
+
   return (
     <motion.div
       role="dialog"
@@ -254,7 +259,13 @@ export default function NeuralCalibration({ onComplete, isDark }) {
         position: "fixed",
         inset: 0,
         zIndex: 260,
-        background: bg,
+        // Deep dark base + Trinity Aurora ambient (calibration-specific)
+        background: `
+          radial-gradient(ellipse 60% 80% at 15% 20%, ${SIG.calma}14 0%, transparent 55%),
+          radial-gradient(ellipse 70% 60% at 85% 15%, ${SIG.enfoque}11 0%, transparent 55%),
+          radial-gradient(ellipse 80% 70% at 50% 80%, ${SIG.energia}0d 0%, transparent 60%),
+          linear-gradient(180deg, #0a0a10 0%, #08080A 100%)
+        `,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -263,6 +274,17 @@ export default function NeuralCalibration({ onComplete, isDark }) {
         overflowY: "auto",
       }}
     >
+      {/* Top sheen */}
+      <span aria-hidden="true" style={{
+        position: "absolute",
+        insetBlockStart: 3,
+        insetInlineStart: "20%", insetInlineEnd: "20%",
+        blockSize: 1,
+        background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%)`,
+        pointerEvents: "none",
+      }} />
+
+      {/* Multi-segment progress bar Trinity-tinted */}
       <div
         role="progressbar"
         aria-valuemin={0}
@@ -275,31 +297,60 @@ export default function NeuralCalibration({ onComplete, isDark }) {
           insetInlineStart: 0,
           insetInlineEnd: 0,
           blockSize: 3,
-          background: bd,
+          background: "rgba(255,255,255,0.04)",
+          overflow: "hidden",
         }}
       >
         <motion.div
           animate={{ width: `${(step / (CALIBRATION_STEPS.length - 1)) * 100}%` }}
-          transition={reduced ? { duration: 0 } : { duration: 0.5 }}
-          style={{ blockSize: "100%", background: ac, borderRadius: 3 }}
+          transition={reduced ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            blockSize: "100%",
+            background: `linear-gradient(90deg, ${SIG.calma} 0%, ${SIG.enfoque} 50%, ${SIG.energia} 100%)`,
+            boxShadow: `0 0 8px ${SIG.calma}80, 0 0 4px ${SIG.calma}`,
+          }}
         />
       </div>
 
-      {/* Step indicator */}
-      <div
-        style={{
-          position: "absolute",
-          top: 16,
-          right: 20,
-          fontSize: 12,
-          fontWeight: 700,
-          color: t3,
-          letterSpacing: -0.1,
-          fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {step + 1}/{CALIBRATION_STEPS.length}
+      {/* Top eyebrow row — calibration meta + step counter */}
+      <div style={{
+        position: "absolute",
+        top: 18, left: 20, right: 20,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        pointerEvents: "none",
+      }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+          <span aria-hidden="true" style={{ position: "relative", inlineSize: 5, blockSize: 5, display: "inline-block" }}>
+            <motion.span
+              animate={reduced ? {} : { scale: [1, 2.4, 1], opacity: [0.55, 0, 0.55] }}
+              transition={reduced ? {} : { duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+              style={{ position: "absolute", inset: 0, borderRadius: "50%", background: SIG.calma }}
+            />
+            <span style={{
+              position: "absolute", inset: 0, borderRadius: "50%",
+              background: `radial-gradient(circle at 35% 30%, #fff 0%, ${SIG.calma} 55%)`,
+              boxShadow: `0 0 8px ${SIG.calma}`,
+            }} />
+          </span>
+          <span style={{
+            fontFamily: MONO, fontSize: 9, fontWeight: 500,
+            color: SIG.calma, letterSpacing: "0.30em", textTransform: "uppercase",
+            textShadow: `0 0 6px ${SIG.calma}80`,
+          }}>
+            Calibración Neural
+          </span>
+        </span>
+        <span style={{
+          fontFamily: MONO, fontSize: 10, fontWeight: 500,
+          color: SIG.calma, letterSpacing: "0.18em", fontVariantNumeric: "tabular-nums",
+          paddingInline: 8, paddingBlock: 3,
+          background: `linear-gradient(180deg, ${SIG.calma}24 0%, ${SIG.calma}0c 100%)`,
+          border: `0.5px solid ${SIG.calma}38`,
+          borderRadius: 99,
+          textShadow: `0 0 5px ${SIG.calma}80`,
+        }}>
+          {String(step + 1).padStart(2, "0")}<span style={{ color: t3, fontWeight: 400 }}>/{String(CALIBRATION_STEPS.length).padStart(2, "0")}</span>
+        </span>
       </div>
 
       <AnimatePresence mode="wait">
@@ -315,42 +366,97 @@ export default function NeuralCalibration({ onComplete, isDark }) {
             textAlign: "center",
           }}
         >
-          {/* ═══ STEP 0: WELCOME ═══ */}
+          {/* ═══ STEP 0: WELCOME — Trinity hero glyph + display gradient title ═══ */}
           {step === 0 && (
             <>
               <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
                 style={{
-                  width: 72,
-                  height: 72,
-                  margin: "0 auto 20px",
+                  width: 96, height: 96,
+                  margin: "0 auto 24px",
+                  position: "relative",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  filter: `drop-shadow(0 0 18px ${SIG.calma}50) drop-shadow(0 0 8px ${SIG.calma}30)`,
                 }}
               >
-                <svg width="72" height="72" viewBox="0 0 72 72">
-                  <circle cx="36" cy="36" r="32" fill="none" stroke={ac} strokeWidth="2" opacity=".4" />
-                  <circle cx="36" cy="36" r="22" fill="none" stroke="#6366F1" strokeWidth="1.5" strokeDasharray="8 4" />
-                  <circle cx="36" cy="36" r="12" fill="none" stroke="#D97706" strokeWidth="1" strokeDasharray="4 6" />
-                  <circle cx="36" cy="36" r="4" fill={ac} opacity=".5" />
+                <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+                  <defs>
+                    <radialGradient id="trinityCenter" cx="50%" cy="50%">
+                      <stop offset="0%" stopColor="#fff" stopOpacity="0.55" />
+                      <stop offset="100%" stopColor="transparent" />
+                    </radialGradient>
+                  </defs>
+                  {/* Outer rotating dashed ring */}
+                  <motion.circle
+                    cx="48" cy="48" r="42"
+                    fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="0.7" strokeDasharray="3 4"
+                    animate={reduced ? {} : { rotate: 360 }}
+                    transition={reduced ? {} : { duration: 25, repeat: Infinity, ease: "linear" }}
+                    style={{ transformOrigin: "48px 48px" }}
+                  />
+                  {/* Center halo */}
+                  <circle cx="48" cy="48" r="26" fill="url(#trinityCenter)" />
+                  {/* Triangle connecting Trinity nodes */}
+                  <line x1="48" y1="14" x2="20" y2="64" stroke={`${SIG.calma}80`} strokeWidth="0.9" />
+                  <line x1="48" y1="14" x2="76" y2="64" stroke={`${SIG.energia}80`} strokeWidth="0.9" />
+                  <line x1="20" y1="64" x2="76" y2="64" stroke={`${SIG.enfoque}80`} strokeWidth="0.9" />
+                  {/* Calma node (top, cyan) */}
+                  <circle cx="48" cy="14" r="6" fill={SIG.calma} />
+                  <circle cx="48" cy="14" r="6" fill="none" stroke="#fff" strokeWidth="0.7" />
+                  <motion.circle
+                    cx="48" cy="14" r="9"
+                    fill="none" stroke={SIG.calma} strokeWidth="0.7"
+                    animate={reduced ? {} : { r: [6, 12, 6], opacity: [0.6, 0, 0.6] }}
+                    transition={reduced ? {} : { duration: 2.6, repeat: Infinity, ease: "easeOut" }}
+                  />
+                  {/* Enfoque node (bottom-left, violet) */}
+                  <circle cx="20" cy="64" r="5.5" fill={SIG.enfoque} />
+                  <circle cx="20" cy="64" r="5.5" fill="none" stroke="#fff" strokeWidth="0.7" />
+                  <motion.circle
+                    cx="20" cy="64" r="8.5"
+                    fill="none" stroke={SIG.enfoque} strokeWidth="0.7"
+                    animate={reduced ? {} : { r: [5.5, 11, 5.5], opacity: [0.6, 0, 0.6] }}
+                    transition={reduced ? {} : { duration: 2.6, repeat: Infinity, ease: "easeOut", delay: 0.85 }}
+                  />
+                  {/* Energia node (bottom-right, amber) */}
+                  <circle cx="76" cy="64" r="5.5" fill={SIG.energia} />
+                  <circle cx="76" cy="64" r="5.5" fill="none" stroke="#fff" strokeWidth="0.7" />
+                  <motion.circle
+                    cx="76" cy="64" r="8.5"
+                    fill="none" stroke={SIG.energia} strokeWidth="0.7"
+                    animate={reduced ? {} : { r: [5.5, 11, 5.5], opacity: [0.6, 0, 0.6] }}
+                    transition={reduced ? {} : { duration: 2.6, repeat: Infinity, ease: "easeOut", delay: 1.7 }}
+                  />
+                  {/* Center pulse */}
+                  <circle cx="48" cy="48" r="2" fill="#fff" />
                 </svg>
               </motion.div>
-              <h2 id={titleId} style={{ fontSize: 24, fontWeight: 800, color: t1, marginBottom: 4 }}>
+              <h2 id={titleId} style={{
+                fontSize: 32, fontWeight: 250,
+                backgroundImage: `linear-gradient(135deg, ${SIG.calma} 0%, ${SIG.enfoque} 50%, ${SIG.energia} 100%)`,
+                WebkitBackgroundClip: "text", backgroundClip: "text",
+                WebkitTextFillColor: "transparent", color: "transparent",
+                letterSpacing: -0.9, lineHeight: 1.05,
+                margin: 0, marginBottom: 8,
+                filter: `drop-shadow(0 0 18px ${SIG.calma}28)`,
+              }}>
                 {currentStep.title}
               </h2>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: ac,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                }}
-              >
+              <div style={{
+                fontFamily: MONO, fontSize: 9, fontWeight: 500,
+                color: SIG.calma, letterSpacing: "0.30em", textTransform: "uppercase",
+                textShadow: `0 0 6px ${SIG.calma}80`,
+                marginBottom: 18,
+              }}>
                 {currentStep.subtitle}
               </div>
-              <p style={{ fontSize: 12, color: t2, lineHeight: 1.7, marginBottom: 28 }}>
+              <p style={{
+                fontSize: 13, fontWeight: 400, color: t2,
+                lineHeight: 1.55, letterSpacing: -0.05,
+                margin: 0, marginBottom: 28,
+                maxWidth: 320, marginInline: "auto",
+              }}>
                 {currentStep.description}
               </p>
 

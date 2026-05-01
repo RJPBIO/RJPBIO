@@ -117,53 +117,109 @@ export default function InstrumentRunner({
       aria-labelledby={titleId}
       initial={reduced ? { opacity: 1 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      style={{ position: "fixed", inset: 0, background: bg, zIndex: 220, padding: 20, overflowY: "auto" }}
+      style={{
+        position: "fixed", inset: 0,
+        background: `radial-gradient(ellipse 70% 80% at 50% 0%, ${withAlpha(brand.primary, 18)} 0%, transparent 55%), linear-gradient(180deg, #0a0a10 0%, #08080A 100%)`,
+        zIndex: 220, padding: "20px 20px 60px", overflowY: "auto",
+      }}
     >
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 16 }}>
-        <div>
-          <h2 id={titleId} style={{ fontSize: 15, fontWeight: 800, letterSpacing: -0.1, color: t1, margin: 0 }}>
+      <header style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBlockEnd: 24,
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <span aria-hidden="true" style={{ position: "relative", inlineSize: 5, blockSize: 5 }}>
+              <motion.span
+                animate={reduced ? {} : { scale: [1, 2.4, 1], opacity: [0.55, 0, 0.55] }}
+                transition={reduced ? {} : { duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+                style={{ position: "absolute", inset: 0, borderRadius: "50%", background: brand.primary }}
+              />
+              <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #fff 0%, ${brand.primary} 55%)`, boxShadow: `0 0 8px ${brand.primary}` }} />
+            </span>
+            <span style={{
+              fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 9, fontWeight: 500,
+              color: brand.primary, letterSpacing: "0.30em", textTransform: "uppercase",
+              textShadow: `0 0 6px ${withAlpha(brand.primary, 50)}`,
+            }}>
+              Evaluación validada · {instrument.version}
+            </span>
+          </span>
+          <h2 id={titleId} style={{
+            fontSize: 22, fontWeight: 300, color: t1,
+            letterSpacing: -0.5, lineHeight: 1.1, margin: 0,
+          }}>
             {instrument.name}
           </h2>
-          <p style={{ fontSize: 12, color: t3, margin: 0, marginBlockStart: 2, letterSpacing: -0.05, fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontVariantNumeric: "tabular-nums" }}>
-            {instrument.version}
-          </p>
         </div>
         <button
           onClick={onClose}
           aria-label="Cerrar evaluación"
           style={{
-            inlineSize: 44, blockSize: 44,
-            border: "none", background: "transparent", color: t2,
-            display: "flex", alignItems: "center", justifyContent: "center",
+            inlineSize: 38, blockSize: 38,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            background: `linear-gradient(180deg, ${withAlpha(brand.primary, 18)} 0%, ${withAlpha(brand.primary, 6)} 100%)`,
+            border: `0.5px solid ${withAlpha(brand.primary, 38)}`,
+            borderRadius: "50%",
+            color: brand.primary,
             cursor: "pointer",
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08)`,
           }}
         >
-          <Icon name="close" size={20} color={t2} aria-hidden="true" />
+          <svg width="13" height="13" viewBox="0 0 13 13"><path d="M3 3 L10 10 M10 3 L3 10" stroke={brand.primary} strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
       </header>
 
       {!result && item && (
         <section aria-label={`Pregunta ${idx + 1} de ${total}`} style={{ maxInlineSize: 560, marginInline: "auto" }}>
+          {/* Progress bar with cyan gradient + glow */}
           <div
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={total}
             aria-valuenow={idx + 1}
             aria-label={`Pregunta ${idx + 1} de ${total}`}
-            style={{ blockSize: 4, background: bd, borderRadius: 2, overflow: "hidden", marginBlockEnd: 14 }}
+            style={{ blockSize: 4, background: "rgba(255,255,255,0.05)", borderRadius: 99, overflow: "hidden", marginBlockEnd: 16, boxShadow: `inset 0 0.5px 0 rgba(0,0,0,0.4)` }}
           >
-            <div style={{ blockSize: "100%", inlineSize: `${((idx + 1) / total) * 100}%`, background: brand.primary, transition: "inline-size .3s" }} />
+            <div style={{
+              blockSize: "100%",
+              inlineSize: `${((idx + 1) / total) * 100}%`,
+              background: `linear-gradient(90deg, ${withAlpha(brand.primary, 60)} 0%, ${brand.primary} 100%)`,
+              borderRadius: 99,
+              boxShadow: `0 0 8px ${withAlpha(brand.primary, 60)}`,
+              transition: "inline-size .35s cubic-bezier(0.16, 1, 0.3, 1)",
+            }} />
           </div>
 
-          <div style={{ color: t3, fontSize: 12, marginBlockEnd: 12 }}>
-            Pregunta {idx + 1} de {total}
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            marginBlockEnd: 14,
+          }}>
+            <span style={{
+              fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 8.5, fontWeight: 500,
+              color: brand.primary, letterSpacing: "0.24em", textTransform: "uppercase",
+              textShadow: `0 0 5px ${withAlpha(brand.primary, 50)}`,
+            }}>
+              Pregunta · {String(idx + 1).padStart(2, "0")}/{String(total).padStart(2, "0")}
+            </span>
+            <span aria-hidden="true" style={{
+              flex: 1, blockSize: 1, marginInlineStart: 8,
+              background: `linear-gradient(90deg, ${withAlpha(brand.primary, 30)} 0%, ${withAlpha(brand.primary, 5)} 70%, transparent 100%)`,
+            }} />
           </div>
 
-          <h3 style={{ color: t1, fontSize: 15, fontWeight: 700, lineHeight: 1.5, marginBlockEnd: 20 }}>
+          <h3 style={{
+            color: t1, fontSize: 18, fontWeight: 400,
+            letterSpacing: -0.3, lineHeight: 1.4,
+            marginBlockEnd: 24, margin: 0,
+            paddingBlockEnd: 24,
+          }}>
             {item.text}
           </h3>
 
-          <div role="radiogroup" aria-label="Frecuencia" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div role="radiogroup" aria-label="Frecuencia" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {instrument.scale.map((label, i) => {
               const value = i + offset;
               const selected = answers[item.id] === value;
@@ -174,20 +230,47 @@ export default function InstrumentRunner({
                   aria-checked={selected}
                   onClick={() => pick(i)}
                   style={{
+                    position: "relative",
+                    display: "flex", alignItems: "center", gap: 12,
                     inlineSize: "100%",
-                    paddingBlock: 12,
-                    paddingInline: 14,
-                    background: selected ? withAlpha(brand.primary, 10) : cd,
+                    paddingBlock: 14, paddingInline: 14,
+                    background: selected
+                      ? `radial-gradient(ellipse 70% 100% at 0% 50%, ${withAlpha(brand.primary, 18)} 0%, transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.10) 100%)`
+                      : `linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.08) 100%)`,
                     color: t1,
-                    border: `1px solid ${selected ? brand.primary : bd}`,
-                    borderRadius: 10,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    textAlign: "start",
-                    cursor: "pointer",
+                    border: `0.5px solid ${selected ? withAlpha(brand.primary, 40) : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: 14,
+                    fontSize: 14, fontWeight: 500, letterSpacing: -0.2,
+                    textAlign: "start", cursor: "pointer",
+                    fontFamily: "inherit",
+                    boxShadow: selected
+                      ? `inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px ${withAlpha(brand.primary, 28)}, 0 4px 14px rgba(0,0,0,0.24), 0 0 12px ${withAlpha(brand.primary, 14)}`
+                      : `inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 8px rgba(0,0,0,0.18)`,
+                    transition: "all 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 >
-                  {label}
+                  {/* Custom radio bullet */}
+                  <span aria-hidden="true" style={{
+                    flexShrink: 0,
+                    inlineSize: 18, blockSize: 18,
+                    borderRadius: "50%",
+                    background: selected
+                      ? `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 50%), linear-gradient(140deg, ${withAlpha(brand.primary, 32)} 0%, ${withAlpha(brand.primary, 10)} 100%)`
+                      : "rgba(255,255,255,0.04)",
+                    border: `0.5px solid ${selected ? withAlpha(brand.primary, 60) : "rgba(255,255,255,0.15)"}`,
+                    boxShadow: selected ? `inset 0 1px 0 rgba(255,255,255,0.18), 0 0 8px ${withAlpha(brand.primary, 40)}` : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {selected && (
+                      <span aria-hidden="true" style={{
+                        inlineSize: 7, blockSize: 7,
+                        borderRadius: "50%",
+                        background: brand.primary,
+                        boxShadow: `0 0 6px ${brand.primary}`,
+                      }} />
+                    )}
+                  </span>
+                  <span style={{ flex: 1 }}>{label}</span>
                 </button>
               );
             })}
@@ -197,9 +280,20 @@ export default function InstrumentRunner({
             <button
               onClick={prev}
               aria-label="Volver a pregunta anterior"
-              style={{ marginBlockStart: 14, background: "transparent", color: t2, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer", padding: 8 }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                marginBlockStart: 18,
+                background: "transparent",
+                color: t3, border: "none",
+                fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+                fontSize: 8.5, fontWeight: 500,
+                letterSpacing: "0.18em", textTransform: "uppercase",
+                cursor: "pointer",
+                padding: "8px 4px",
+              }}
             >
-              ← Anterior
+              <svg width="9" height="9" viewBox="0 0 9 9"><path d="M5.5 1.5 L1.5 4.5 L5.5 7.5" stroke={t3} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>
+              Anterior
             </button>
           )}
         </section>

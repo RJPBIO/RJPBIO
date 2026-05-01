@@ -62,18 +62,56 @@ export default function ChronotypeTest({ show, isDark, onClose, onComplete }) {
       aria-labelledby={titleId}
       initial={reduced ? { opacity: 1 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      style={{ position: "fixed", inset: 0, background: bg, zIndex: 220, padding: 20, overflowY: "auto" }}
+      style={{
+        position: "fixed", inset: 0,
+        background: `radial-gradient(ellipse 70% 80% at 50% 0%, #D9770624 0%, transparent 55%), linear-gradient(180deg, #0a0a10 0%, #08080A 100%)`,
+        zIndex: 220, padding: "20px 20px 60px", overflowY: "auto",
+      }}
     >
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 20 }}>
-        <h2 id={titleId} style={{ fontSize: 16, fontWeight: font.weight.black, color: t1, margin: 0 }}>
-          Cronotipo (MEQ-SA)
-        </h2>
+      <header style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBlockEnd: 24,
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <span aria-hidden="true" style={{ position: "relative", inlineSize: 5, blockSize: 5, display: "inline-block" }}>
+              <motion.span
+                animate={reduced ? {} : { scale: [1, 2.4, 1], opacity: [0.55, 0, 0.55] }}
+                transition={reduced ? {} : { duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+                style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#D97706" }}
+              />
+              <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #fff 0%, #D97706 55%)`, boxShadow: `0 0 8px #D97706` }} />
+            </span>
+            <span style={{
+              fontFamily: MONO, fontSize: 9, fontWeight: 500,
+              color: "#D97706", letterSpacing: "0.30em", textTransform: "uppercase",
+              textShadow: `0 0 6px #D9770680`,
+            }}>
+              MEQ-SA · Cronotipo
+            </span>
+          </span>
+          <h2 id={titleId} style={{
+            fontSize: 22, fontWeight: 300, color: t1,
+            letterSpacing: -0.5, lineHeight: 1.1, margin: 0,
+          }}>
+            Tu ritmo circadiano
+          </h2>
+        </div>
         <button
           onClick={onClose}
           aria-label="Cerrar test"
-          style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer", minInlineSize: 44, minBlockSize: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+          style={{
+            inlineSize: 38, blockSize: 38,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            background: `linear-gradient(180deg, #D9770618 0%, #D9770608 100%)`,
+            border: `0.5px solid #D9770638`,
+            borderRadius: "50%",
+            color: "#D97706",
+            cursor: "pointer",
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08)`,
+          }}
         >
-          <Icon name="close" size={20} color={t2} aria-hidden="true" />
+          <svg width="13" height="13" viewBox="0 0 13 13"><path d="M3 3 L10 10 M10 3 L3 10" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
       </header>
 

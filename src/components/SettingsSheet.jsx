@@ -69,148 +69,232 @@ export default function SettingsSheet({
     }
   };
 
-  // ─── Helper subcomponents (locales, mismo styling system) ───
+  // ─── Helper subcomponents — ADN unified (Menu Strip /perfil + IconTile dimensional + Trinity colors) ───
+
+  // IconTile mini (squircle 32px) for ToggleRow/SegmentedRow icons
+  const ICON_TILE = (iconName, color) => (
+    <span aria-hidden="true" style={{
+      position: "relative",
+      flexShrink: 0,
+      inlineSize: 32, blockSize: 32,
+      borderRadius: 9,
+      background: `radial-gradient(circle at 28% 22%, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 50%), linear-gradient(145deg, ${withAlpha(color, 32)} 0%, ${withAlpha(color, 12)} 100%)`,
+      border: `0.5px solid ${withAlpha(color, 50)}`,
+      boxShadow: `inset 0 1.2px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.20), 0 0 12px ${withAlpha(color, 28)}`,
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      overflow: "hidden",
+    }}>
+      <span aria-hidden="true" style={{ position: "absolute", insetBlockStart: 0, insetInlineStart: "14%", insetInlineEnd: "14%", blockSize: 1, background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)` }} />
+      <Icon name={iconName} size={14} color={color} />
+    </span>
+  );
+
   const SectionLabel = ({ children, icon }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBlockStart: space[3], paddingBlockEnd: 6, fontSize: 10, fontWeight: 800, letterSpacing: 1.4, textTransform: "uppercase", color: t3 }}>
-      {icon && <Icon name={icon} size={11} color={t3} />}
-      {children}
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8,
+      paddingBlockStart: space[4], paddingBlockEnd: space[2],
+      marginBlockStart: space[2],
+    }}>
+      <span aria-hidden="true" style={{
+        fontFamily: MONO, fontSize: 8.5, fontWeight: 500,
+        color: ac, letterSpacing: "0.30em", textTransform: "uppercase",
+        textShadow: `0 0 5px ${withAlpha(ac, 50)}`,
+      }}>
+        {children}
+      </span>
+      <span aria-hidden="true" style={{
+        flex: 1, blockSize: 1,
+        background: `linear-gradient(90deg, ${withAlpha(ac, 30)} 0%, ${withAlpha(ac, 5)} 70%, transparent 100%)`,
+      }} />
     </div>
   );
 
-  const ToggleRow = ({ label, desc, icon, checked, onToggle }) => (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
+  const ToggleRow = ({ label, desc, icon, checked, onToggle, color }) => {
+    const tone = color || ac;
+    return (
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 12,
         paddingBlock: space[3],
-        borderBlockEnd: `1px solid ${bd}`,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-        {icon && <Icon name={icon} size={15} color={t3} />}
-        <div>
-          <div style={ty.title(t1)}>{label}</div>
-          {desc && <div style={{ ...ty.caption(t3), marginBlockStart: 1 }}>{desc}</div>}
+        borderBlockEnd: `0.5px solid ${withAlpha("#FFFFFF", 8)}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minInlineSize: 0 }}>
+          {icon && ICON_TILE(icon, tone)}
+          <div style={{ minInlineSize: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 500, color: t1, letterSpacing: -0.2, lineHeight: 1.25 }}>
+              {label}
+            </div>
+            {desc && (
+              <div style={{ fontSize: 11, fontWeight: 400, color: t3, letterSpacing: 0, lineHeight: 1.35, marginBlockStart: 2 }}>
+                {desc}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-      <button
-        role="switch"
-        aria-checked={checked}
-        aria-label={`${label}: ${checked ? t("settings.on") : t("settings.off")}`}
-        onClick={onToggle}
-        style={{
-          inlineSize: 42,
-          blockSize: 24,
-          borderRadius: 12,
-          background: checked ? ac : bd,
-          border: "none",
-          cursor: "pointer",
-          position: "relative",
-          transition: reduced ? "none" : "background .3s",
-          padding: 0,
-        }}
-      >
-        <span
-          aria-hidden="true"
+        <button
+          role="switch"
+          aria-checked={checked}
+          aria-label={`${label}: ${checked ? t("settings.on") : t("settings.off")}`}
+          onClick={onToggle}
           style={{
+            position: "relative",
+            inlineSize: 44, blockSize: 24,
+            borderRadius: 99,
+            background: checked
+              ? `linear-gradient(180deg, ${tone} 0%, ${withAlpha(tone, 80)} 100%)`
+              : "rgba(255,255,255,0.10)",
+            border: checked ? `0.5px solid ${withAlpha(tone, 50)}` : "0.5px solid rgba(255,255,255,0.12)",
+            cursor: "pointer",
+            padding: 0,
+            boxShadow: checked
+              ? `inset 0 1px 0 rgba(255,255,255,0.30), 0 0 10px ${withAlpha(tone, 40)}`
+              : "inset 0 1px 0 rgba(255,255,255,0.06)",
+            transition: reduced ? "none" : "background .25s, box-shadow .25s",
+            flexShrink: 0,
+          }}
+        >
+          <span aria-hidden="true" style={{
             display: "block",
-            inlineSize: 20,
-            blockSize: 20,
-            borderRadius: 10,
+            inlineSize: 18, blockSize: 18,
+            borderRadius: "50%",
             background: "#fff",
             position: "absolute",
             insetBlockStart: 2,
-            insetInlineStart: checked ? 20 : 2,
-            transition: reduced ? "none" : "inset-inline-start .3s",
-            boxShadow: "0 1px 3px rgba(0,0,0,.15)",
-          }}
-        />
-      </button>
-    </div>
-  );
-
-  const SegmentedRow = ({ label, icon, value, options, onChange, ariaLabel }) => (
-    <div
-      role="radiogroup"
-      aria-label={ariaLabel || label}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingBlock: space[3],
-        borderBlockEnd: `1px solid ${bd}`,
-        gap: 8,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: space[2], minInlineSize: 0 }}>
-        {icon && <Icon name={icon} size={15} color={t3} />}
-        <div style={ty.title(t1)}>{label}</div>
+            insetInlineStart: checked ? 22 : 2,
+            transition: reduced ? "none" : "inset-inline-start .25s cubic-bezier(0.22, 1, 0.36, 1)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.30)",
+          }} />
+        </button>
       </div>
-      <div style={{ display: "flex", gap: space[1], flexShrink: 0 }}>
-        {options.map((m) => {
-          const active = value === m.id;
-          return (
-            <button
-              key={m.id}
-              role="radio"
-              aria-checked={active}
-              aria-label={`${label}: ${m.label}`}
-              onClick={() => onChange(m.id)}
-              style={{
-                paddingBlock: space[1],
-                paddingInline: space[3],
-                borderRadius: radius.sm - 1,
-                border: `1px solid ${active ? ac : bd}`,
-                background: active ? withAlpha(ac, 6) : cd,
-                color: active ? ac : t3,
-                ...ty.caption(active ? ac : t3),
-                cursor: "pointer",
-              }}
-            >
-              {m.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+    );
+  };
 
-  const SliderRow = ({ label, icon, value, min = 0, max = 1, step = 0.05, formatValue, onChange }) => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
+  const SegmentedRow = ({ label, icon, value, options, onChange, ariaLabel, color }) => {
+    const tone = color || ac;
+    return (
+      <div role="radiogroup" aria-label={ariaLabel || label} style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 12,
         paddingBlock: space[3],
-        borderBlockEnd: `1px solid ${bd}`,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: space[2] }}>
-          {icon && <Icon name={icon} size={15} color={t3} />}
-          <div style={ty.title(t1)}>{label}</div>
+        borderBlockEnd: `0.5px solid ${withAlpha("#FFFFFF", 8)}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minInlineSize: 0 }}>
+          {icon && ICON_TILE(icon, tone)}
+          <div style={{ fontSize: 14, fontWeight: 500, color: t1, letterSpacing: -0.2, lineHeight: 1.25 }}>{label}</div>
         </div>
-        <span style={{ ...numStyle(ac, 700), fontSize: 12 }}>
-          {formatValue ? formatValue(value) : `${Math.round(value * 100)}%`}
-        </span>
+        <div style={{ display: "flex", gap: 4, flexShrink: 0, padding: 2, background: "rgba(255,255,255,0.04)", borderRadius: 99, border: "0.5px solid rgba(255,255,255,0.08)" }}>
+          {options.map((m) => {
+            const active = value === m.id;
+            return (
+              <button
+                key={m.id}
+                role="radio"
+                aria-checked={active}
+                aria-label={`${label}: ${m.label}`}
+                onClick={() => onChange(m.id)}
+                style={{
+                  paddingBlock: 4, paddingInline: 11,
+                  borderRadius: 99,
+                  border: "none",
+                  background: active ? `linear-gradient(180deg, ${withAlpha(tone, 28)} 0%, ${withAlpha(tone, 12)} 100%)` : "transparent",
+                  color: active ? tone : t3,
+                  fontFamily: MONO,
+                  fontSize: 9.5,
+                  fontWeight: 500,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  textShadow: active ? `0 0 5px ${withAlpha(tone, 50)}` : "none",
+                  boxShadow: active ? `inset 0 0.5px 0 rgba(255,255,255,0.18), 0 0 0 0.5px ${withAlpha(tone, 35)}` : "none",
+                  transition: reduced ? "none" : "all .2s cubic-bezier(0.22, 1, 0.36, 1)",
+                }}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        aria-label={label}
-        style={{
-          inlineSize: "100%",
-          accentColor: ac,
-          cursor: "pointer",
-        }}
-      />
-    </div>
-  );
+    );
+  };
+
+  const SliderRow = ({ label, icon, value, min = 0, max = 1, step = 0.05, formatValue, onChange, color }) => {
+    const tone = color || ac;
+    const pct = ((value - min) / (max - min)) * 100;
+    return (
+      <div style={{
+        display: "flex", flexDirection: "column", gap: 10,
+        paddingBlock: space[3],
+        borderBlockEnd: `0.5px solid ${withAlpha("#FFFFFF", 8)}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, minInlineSize: 0 }}>
+            {icon && ICON_TILE(icon, tone)}
+            <div style={{ fontSize: 14, fontWeight: 500, color: t1, letterSpacing: -0.2, lineHeight: 1.25 }}>{label}</div>
+          </div>
+          <span style={{
+            fontFamily: MONO, fontSize: 11, fontWeight: 500, color: tone,
+            letterSpacing: "0.06em", fontVariantNumeric: "tabular-nums",
+            paddingInline: 8, paddingBlock: 3,
+            background: withAlpha(tone, 14),
+            border: `0.5px solid ${withAlpha(tone, 30)}`,
+            borderRadius: 99,
+            textShadow: `0 0 5px ${withAlpha(tone, 50)}`,
+          }}>
+            {formatValue ? formatValue(value) : `${Math.round(value * 100)}%`}
+          </span>
+        </div>
+        <div style={{ position: "relative", padding: "8px 0" }}>
+          <div aria-hidden="true" style={{
+            position: "absolute", insetBlockStart: "50%", insetInlineStart: 0, insetInlineEnd: 0,
+            transform: "translateY(-50%)",
+            blockSize: 4,
+            background: "rgba(255,255,255,0.06)",
+            borderRadius: 99,
+            overflow: "hidden",
+          }}>
+            <div style={{
+              blockSize: "100%",
+              inlineSize: `${pct}%`,
+              background: `linear-gradient(90deg, ${withAlpha(tone, 50)} 0%, ${tone} 100%)`,
+              borderRadius: 99,
+              boxShadow: `0 0 8px ${withAlpha(tone, 50)}`,
+            }} />
+          </div>
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(parseFloat(e.target.value))}
+            aria-label={label}
+            style={{
+              position: "relative",
+              inlineSize: "100%",
+              accentColor: tone,
+              cursor: "pointer",
+              opacity: 0.0001,
+              blockSize: 22,
+              zIndex: 2,
+            }}
+          />
+          <div aria-hidden="true" style={{
+            position: "absolute",
+            insetBlockStart: "50%",
+            insetInlineStart: `${pct}%`,
+            transform: "translate(-50%, -50%)",
+            inlineSize: 18, blockSize: 18,
+            borderRadius: "50%",
+            background: `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0) 60%), linear-gradient(180deg, ${tone} 0%, ${withAlpha(tone, 80)} 100%)`,
+            border: `0.5px solid ${withAlpha(tone, 60)}`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.40), 0 0 0 1px ${withAlpha(tone, 40)}, 0 0 10px ${withAlpha(tone, 50)}, 0 2px 6px rgba(0,0,0,0.25)`,
+            pointerEvents: "none",
+          }} />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -224,9 +308,9 @@ export default function SettingsSheet({
             position: "fixed",
             inset: 0,
             zIndex: z.overlay,
-            background: "rgba(15,23,42,.3)",
-            backdropFilter: "blur(24px) saturate(180%)",
-            WebkitBackdropFilter: "blur(24px) saturate(180%)",
+            background: "rgba(8,8,12,.55)",
+            backdropFilter: "blur(28px) saturate(180%)",
+            WebkitBackdropFilter: "blur(28px) saturate(180%)",
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
@@ -243,39 +327,59 @@ export default function SettingsSheet({
             exit={reduced ? { opacity: 0 } : { y: "100%" }}
             transition={reduced ? { duration: 0 } : SPRING.smooth}
             style={{
+              position: "relative",
               inlineSize: "100%",
               maxInlineSize: 430,
-              // Cap altura al 88% del viewport para que NUNCA se salga
-              // por arriba y bloquee el contenido. Las secciones nuevas
-              // (audio + voz + vibración + sesión + recordatorios +
-              // display + ambientes + datos + cuenta) suman más content
-              // del que cabe en una pantalla móvil — sin scroll, el
-              // sheet se trababa y parecía fullscreen.
               maxBlockSize: "88dvh",
               overflowY: "auto",
               overscrollBehavior: "contain",
               WebkitOverflowScrolling: "touch",
-              background: cd,
-              borderStartStartRadius: radius["2xl"],
-              borderStartEndRadius: radius["2xl"],
+              // Glass dark + accent corner radial (Menu Strip /perfil canon)
+              background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${withAlpha(ac, 14)} 0%, transparent 55%), linear-gradient(180deg, rgba(20,20,28,0.96) 0%, rgba(8,8,12,0.98) 100%)`,
+              backdropFilter: "blur(30px) saturate(160%)",
+              WebkitBackdropFilter: "blur(30px) saturate(160%)",
+              borderStartStartRadius: 24,
+              borderStartEndRadius: 24,
+              border: `0.5px solid rgba(255,255,255,0.10)`,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 1px ${withAlpha(ac, 16)}, 0 -12px 40px rgba(0,0,0,0.45), 0 0 22px ${withAlpha(ac, 10)}`,
               paddingBlock: `${space[5]}px ${space[10]}px`,
               paddingInline: space[5],
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              aria-hidden="true"
-              style={{
-                inlineSize: 36,
-                blockSize: 4,
-                background: bd,
-                borderRadius: 2,
-                margin: `0 auto ${space[5]}px`,
-              }}
-            />
-            <h3 id={titleId} style={{ ...ty.heading(t1), marginBlockEnd: space[2] }}>
-              {t("settings.title")}
-            </h3>
+            {/* Top sheen */}
+            <span aria-hidden="true" style={{ position: "absolute", insetBlockStart: 0, insetInlineStart: "20%", insetInlineEnd: "20%", blockSize: 1, background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.30) 50%, transparent 100%)`, pointerEvents: "none" }} />
+            {/* Pull handle — premium with glow */}
+            <div aria-hidden="true" style={{
+              inlineSize: 40,
+              blockSize: 4,
+              background: `linear-gradient(90deg, ${withAlpha(ac, 40)} 0%, ${withAlpha(ac, 70)} 50%, ${withAlpha(ac, 40)} 100%)`,
+              borderRadius: 99,
+              margin: `0 auto ${space[5]}px`,
+              boxShadow: `0 0 8px ${withAlpha(ac, 30)}`,
+            }} />
+            {/* Header eyebrow + title */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBlockEnd: space[3] }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                <span aria-hidden="true" style={{ position: "relative", inlineSize: 5, blockSize: 5 }}>
+                  <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #fff 0%, ${ac} 55%)`, boxShadow: `0 0 6px ${ac}` }} />
+                </span>
+                <span style={{
+                  fontFamily: MONO, fontSize: 9, fontWeight: 500,
+                  color: ac, letterSpacing: "0.30em", textTransform: "uppercase",
+                  textShadow: `0 0 6px ${withAlpha(ac, 50)}`,
+                }}>
+                  Preferencias · audio · háptica · sesión
+                </span>
+              </span>
+              <h3 id={titleId} style={{
+                fontSize: 26, fontWeight: 300, color: t1,
+                letterSpacing: -0.6, lineHeight: 1.05,
+                margin: 0,
+              }}>
+                {t("settings.title")}
+              </h3>
+            </div>
 
             {/* ═══ AUDIO ═══ */}
             <SectionLabel icon="volume-on">Audio</SectionLabel>

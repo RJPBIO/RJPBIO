@@ -102,6 +102,13 @@ async function saveNow(state) {
   }
 }
 
+// Dev-mode: expose store on window for browser-side seeding/inspection.
+// Active only when NODE_ENV !== "production". No effect in builds.
+if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+  // Defer so the create() below has run before assignment.
+  setTimeout(() => { try { window.__BIO_STORE__ = useStore; } catch {} }, 0);
+}
+
 export const useStore = create((set, get) => ({
   ...DS,
   _loaded: false,

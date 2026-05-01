@@ -66,14 +66,57 @@ export default function NOM035Questionnaire({ show, isDark, onClose, onComplete 
       aria-labelledby={titleId}
       initial={reduced ? { opacity: 1 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      style={{ position: "fixed", inset: 0, background: bg, zIndex: 220, padding: 20, overflowY: "auto" }}
+      style={{
+        position: "fixed", inset: 0,
+        background: `radial-gradient(ellipse 70% 80% at 50% 0%, #EF444424 0%, transparent 55%), linear-gradient(180deg, #0a0a10 0%, #08080A 100%)`,
+        zIndex: 220, padding: "20px 20px 60px", overflowY: "auto",
+      }}
     >
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBlockEnd: 16 }}>
-        <h2 id={titleId} style={{ fontSize: 14, fontWeight: font.weight.black, color: t1, margin: 0 }}>
-          NOM-035 · Riesgo psicosocial
-        </h2>
-        <button onClick={onClose} aria-label="Cerrar cuestionario" style={{ border: "none", background: "transparent", color: t2, padding: 8, cursor: "pointer", minInlineSize: 44, minBlockSize: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="close" size={20} color={t2} aria-hidden="true" />
+      <header style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBlockEnd: 24,
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <span aria-hidden="true" style={{ position: "relative", inlineSize: 5, blockSize: 5 }}>
+              <motion.span
+                animate={reduced ? {} : { scale: [1, 2.4, 1], opacity: [0.55, 0, 0.55] }}
+                transition={reduced ? {} : { duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+                style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#EF4444" }}
+              />
+              <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #fff 0%, #EF4444 55%)`, boxShadow: `0 0 8px #EF4444` }} />
+            </span>
+            <span style={{
+              fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 9, fontWeight: 500,
+              color: "#EF4444", letterSpacing: "0.30em", textTransform: "uppercase",
+              textShadow: `0 0 6px #EF444480`,
+            }}>
+              NOM-035 · Guía II · 46 ítems
+            </span>
+          </span>
+          <h2 id={titleId} style={{
+            fontSize: 22, fontWeight: 300, color: t1,
+            letterSpacing: -0.5, lineHeight: 1.1, margin: 0,
+          }}>
+            Riesgo psicosocial
+          </h2>
+        </div>
+        <button
+          onClick={onClose}
+          aria-label="Cerrar cuestionario"
+          style={{
+            inlineSize: 38, blockSize: 38,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            background: `linear-gradient(180deg, #EF444418 0%, #EF444408 100%)`,
+            border: `0.5px solid #EF444438`,
+            borderRadius: "50%",
+            color: "#EF4444",
+            cursor: "pointer",
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08)`,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 13 13"><path d="M3 3 L10 10 M10 3 L3 10" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
       </header>
 

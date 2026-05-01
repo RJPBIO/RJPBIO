@@ -46,3 +46,12 @@ next-env.d.ts
 # claude code settings (machine-local)
 .claude/settings.json
 .claude/settings.local.json
+
+# research/dev artifacts (root-level only — keep public/*.png tracked)
+/*.png
+/.playwright-mcp/
+/BACKEND_AUDIT.md
+/EXECUTIVE_SUMMARY.md
+/FRONTEND_UI_UX_AUDIT.md
+/RECON.md
+/SYSTEM_OVERVIEW.md
