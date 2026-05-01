@@ -524,7 +524,7 @@ function CoachDetail({ st, onSelectProtocol, color }) {
         overflow: "hidden",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBlockEnd: 12 }}>
-          <IconTile color={intentColor} glyph={<IntentGlyph color={intentColor} />} size={56} radius={14} />
+          <IconTile color={intentColor} glyph={<IntentGlyph color={intentColor} />} size={46} radius={12} />
           <div style={{ flex: 1, minInlineSize: 0 }}>
             <div style={{
               fontFamily: MONO, fontSize: 8, fontWeight: 500,
@@ -696,7 +696,7 @@ function MetricDetail({ history, dataKey, value, delta, color, description, prot
                 <div style={{ fontFamily: MONO, fontSize: 7.5, fontWeight: 500, color: m.c, letterSpacing: "0.20em", textTransform: "uppercase", textShadow: `0 0 4px ${withAlpha(m.c, 50)}`, marginBlockEnd: 4 }}>
                   {m.l}
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 250, color: T.textHi, letterSpacing: -0.4, fontVariantNumeric: "tabular-nums", textShadow: `0 0 8px ${withAlpha(m.c, 30)}` }}>
+                <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 300, color: T.textHi, letterSpacing: -0.35, fontVariantNumeric: "tabular-nums", textShadow: `0 0 6px ${withAlpha(m.c, 30)}` }}>
                   {m.v}
                 </div>
               </div>
@@ -795,17 +795,17 @@ function IconTile({ color, glyph, size = 76, radius = 18 }) {
         radial-gradient(circle at 75% 80%, ${withAlpha(color, 22)} 0%, transparent 60%),
         linear-gradient(145deg, ${withAlpha(color, 38)} 0%, ${withAlpha(color, 18)} 50%, ${withAlpha(color, 8)} 100%)
       `,
-      border: `0.5px solid ${withAlpha(color, 55)}`,
+      border: `0.5px solid ${withAlpha(color, 50)}`,
       boxShadow: `
-        inset 0 1.5px 0 rgba(255,255,255,0.30),
-        inset 0 -1px 0 rgba(0,0,0,0.25),
-        inset 0 0 0 0.5px ${withAlpha(color, 40)},
-        0 0 18px ${withAlpha(color, 35)},
-        0 4px 12px rgba(0,0,0,0.30),
-        0 0 0 1px rgba(0,0,0,0.18)
+        inset 0 1px 0 rgba(255,255,255,0.24),
+        inset 0 -1px 0 rgba(0,0,0,0.22),
+        inset 0 0 0 0.5px ${withAlpha(color, 32)},
+        0 0 12px ${withAlpha(color, 24)},
+        0 3px 9px rgba(0,0,0,0.26),
+        0 0 0 1px rgba(0,0,0,0.16)
       `,
       display: "inline-flex", alignItems: "center", justifyContent: "center",
-      filter: `drop-shadow(0 0 10px ${withAlpha(color, 30)})`,
+      filter: `drop-shadow(0 0 7px ${withAlpha(color, 22)})`,
       overflow: "hidden",
     }}>
       {/* Top-edge sheen — premium gleam (Vision Pro signature) */}
@@ -851,12 +851,12 @@ function BentoTile({
       style={{
         position: "relative",
         gridColumn: expanded ? "1 / -1" : "auto",
-        aspectRatio: expanded ? "auto" : "1 / 1.08",
+        aspectRatio: expanded ? "auto" : "1 / 0.86",
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
         textAlign: "start",
-        padding: 16,
+        padding: 13,
         // Glass dark base (Menu Strip /perfil canon — NO solid color halo)
         background: expanded
           ? `radial-gradient(ellipse 70% 100% at 0% 0%, ${withAlpha(color, 16)} 0%, transparent 55%), ${T.glassBg}`
@@ -899,7 +899,7 @@ function BentoTile({
       {/* Squircle IconTile top-left (collapsed) */}
       {!expanded && glyph && (
         <div style={{ position: "relative", zIndex: 1 }}>
-          <IconTile color={color} glyph={glyph} size={76} radius={18} />
+          <IconTile color={color} glyph={glyph} size={54} radius={14} />
         </div>
       )}
 
@@ -907,9 +907,9 @@ function BentoTile({
       {!expanded && (
         <div style={{ position: "relative", zIndex: 1, marginBlockStart: "auto" }}>
           <div style={{
-            fontSize: 17, fontWeight: 500,
+            fontSize: 15, fontWeight: 500,
             color: T.textHi,
-            letterSpacing: -0.3, lineHeight: 1.15,
+            letterSpacing: -0.25, lineHeight: 1.15,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}>
             {name}
@@ -917,10 +917,10 @@ function BentoTile({
           {subtitle && (
             <div style={{
               fontFamily: MONO,
-              fontSize: 9.5, fontWeight: 500,
+              fontSize: 8.5, fontWeight: 500,
               color: withAlpha(color, 75),
-              letterSpacing: "0.16em", textTransform: "uppercase",
-              marginBlockStart: 4,
+              letterSpacing: "0.14em", textTransform: "uppercase",
+              marginBlockStart: 3,
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
               textShadow: `0 0 5px ${withAlpha(color, 40)}`,
             }}>
@@ -944,12 +944,12 @@ function BentoTile({
             {/* Header row when expanded */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {glyph && <IconTile color={color} glyph={glyph} size={56} radius={14} />}
+                {glyph && <IconTile color={color} glyph={glyph} size={46} radius={12} />}
                 <div>
                   <div style={{
-                    fontSize: 17, fontWeight: 500,
+                    fontSize: 15, fontWeight: 500,
                     color: T.textHi,
-                    letterSpacing: -0.3, lineHeight: 1.15,
+                    letterSpacing: -0.25, lineHeight: 1.15,
                   }}>
                     {expandedTitle || name}
                   </div>
@@ -1196,12 +1196,12 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           </span>
         </span>
         <h2 style={{
-          fontSize: 30, fontWeight: 250,
+          fontSize: 24, fontWeight: 300,
           backgroundImage: `linear-gradient(135deg, ${SIG.calma} 0%, ${SIG.enfoque} 50%, ${SIG.energia} 100%)`,
           WebkitBackgroundClip: "text", backgroundClip: "text",
           WebkitTextFillColor: "transparent", color: "transparent",
-          letterSpacing: -0.9, lineHeight: 1.05, margin: 0,
-          filter: `drop-shadow(0 0 18px ${withAlpha(SIG.primary, 16)})`,
+          letterSpacing: -0.7, lineHeight: 1.05, margin: 0,
+          filter: `drop-shadow(0 0 14px ${withAlpha(SIG.primary, 16)})`,
         }}>
           Tu motor neural
         </h2>
@@ -1291,7 +1291,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
               transition={reduced ? {} : { duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
               style={{ flexShrink: 0 }}
             >
-              <IconTile color={perfColor} glyph={<EstadoGlyph color={perfColor} score={perf} />} size={92} radius={22} />
+              <IconTile color={perfColor} glyph={<EstadoGlyph color={perfColor} score={perf} />} size={68} radius={16} />
             </motion.div>
             <div style={{ flex: 1, minInlineSize: 0 }}>
               <div style={{
@@ -1335,7 +1335,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <IconTile color={perfColor} glyph={<EstadoGlyph color={perfColor} score={perf} />} size={56} radius={14} />
+                  <IconTile color={perfColor} glyph={<EstadoGlyph color={perfColor} score={perf} />} size={48} radius={12} />
                   <div>
                     <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 500, color: perfColor, letterSpacing: "0.24em", textTransform: "uppercase", textShadow: `0 0 5px ${withAlpha(perfColor, 50)}` }}>Tu estado</div>
                     <div style={{ fontSize: 17, fontWeight: 500, color: T.textHi, letterSpacing: -0.3, lineHeight: 1.15, marginBlockStart: 4 }}>{perf >= 70 ? "Óptimo · Tu motor está cocinando" : perf >= 50 ? "Funcional · Camino estable" : "Atención · Necesitas reset"}</div>
@@ -1793,7 +1793,7 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
             zIndex: 1,
           }} />
           <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 14, marginBlockEnd: 14 }}>
-            <IconTile color={SIG.ignition} glyph={<GlyphTrophy color={SIG.ignition} />} size={64} radius={16} />
+            <IconTile color={SIG.ignition} glyph={<GlyphTrophy color={SIG.ignition} />} size={50} radius={13} />
             <div style={{ flex: 1, minInlineSize: 0 }}>
               <div style={{
                 fontFamily: MONO, fontSize: 8.5, fontWeight: 500,
@@ -1849,12 +1849,12 @@ export default function DashboardView({ st, isDark, ac, switchTab, sp, onShowHis
           fontFamily: "inherit",
         }}
       >
-        <IconTile color={SIG.primary} glyph={<ClockGlyph color={SIG.primary} />} size={56} radius={14} />
-        <span style={{ minInlineSize: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 17, fontWeight: 500, color: T.textHi, letterSpacing: -0.3, lineHeight: 1.15 }}>
+        <IconTile color={SIG.primary} glyph={<ClockGlyph color={SIG.primary} />} size={46} radius={12} />
+        <span style={{ minInlineSize: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+          <span style={{ fontSize: 15, fontWeight: 500, color: T.textHi, letterSpacing: -0.25, lineHeight: 1.15 }}>
             Toda tu trayectoria
           </span>
-          <span style={{ fontFamily: MONO, fontSize: 9.5, fontWeight: 500, color: SIG.primary, letterSpacing: "0.18em", textTransform: "uppercase", textShadow: `0 0 5px ${withAlpha(SIG.primary, 50)}` }}>
+          <span style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 500, color: SIG.primary, letterSpacing: "0.16em", textTransform: "uppercase", textShadow: `0 0 5px ${withAlpha(SIG.primary, 50)}` }}>
             Historial · {(st.history || []).length} sesiones
           </span>
         </span>

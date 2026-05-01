@@ -433,11 +433,11 @@ export default function NeuralCalibration({ onComplete, isDark }) {
                 </svg>
               </motion.div>
               <h2 id={titleId} style={{
-                fontSize: 32, fontWeight: 250,
+                fontSize: 24, fontWeight: 300,
                 backgroundImage: `linear-gradient(135deg, ${SIG.calma} 0%, ${SIG.enfoque} 50%, ${SIG.energia} 100%)`,
                 WebkitBackgroundClip: "text", backgroundClip: "text",
                 WebkitTextFillColor: "transparent", color: "transparent",
-                letterSpacing: -0.9, lineHeight: 1.05,
+                letterSpacing: -0.7, lineHeight: 1.05,
                 margin: 0, marginBottom: 8,
                 filter: `drop-shadow(0 0 18px ${SIG.calma}28)`,
               }}>

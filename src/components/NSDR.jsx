@@ -157,15 +157,15 @@ function BodyRail({ activeRegion, reduced }) {
 function BreathingCapsule({ reduced, accent = VIOLET, paused = false }) {
   const breathDur = paused ? 0 : 14;
   return (
-    <div style={{ position: "relative", inlineSize: 220, blockSize: 320, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "relative", inlineSize: 168, blockSize: 244, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <motion.div
         animate={reduced || paused ? {} : { scale: [1, 1.06, 1], opacity: [0.25, 0.5, 0.25] }}
         transition={reduced || paused ? {} : { duration: breathDur, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: "absolute",
-          inlineSize: 220, blockSize: 320, borderRadius: 110,
+          inlineSize: 168, blockSize: 244, borderRadius: 84,
           background: `radial-gradient(ellipse 50% 50% at 50% 50%, ${withAlpha(accent, 40)} 0%, transparent 70%)`,
-          filter: "blur(28px)",
+          filter: "blur(22px)",
         }}
       />
       <motion.div
@@ -173,10 +173,10 @@ function BreathingCapsule({ reduced, accent = VIOLET, paused = false }) {
         transition={reduced || paused ? {} : { duration: breathDur, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: "absolute",
-          inlineSize: 150, blockSize: 240, borderRadius: 75,
+          inlineSize: 116, blockSize: 184, borderRadius: 58,
           background: `linear-gradient(180deg, ${withAlpha(accent, 32)} 0%, ${withAlpha(accent, 16)} 50%, ${withAlpha(accent, 6)} 100%)`,
           border: `0.5px solid ${withAlpha(accent, 45)}`,
-          boxShadow: `0 0 80px ${withAlpha(accent, 38)}, inset 0 1.5px 0 ${withAlpha("#fff", 12)}, inset 0 -40px 80px ${withAlpha(accent, 20)}`,
+          boxShadow: `0 0 60px ${withAlpha(accent, 38)}, inset 0 1.5px 0 ${withAlpha("#fff", 12)}, inset 0 -32px 60px ${withAlpha(accent, 20)}`,
           backdropFilter: "blur(8px)",
         }}
       />
@@ -185,7 +185,7 @@ function BreathingCapsule({ reduced, accent = VIOLET, paused = false }) {
         transition={reduced || paused ? {} : { duration: breathDur, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: "absolute",
-          inlineSize: 64, blockSize: 110, borderRadius: 32,
+          inlineSize: 50, blockSize: 84, borderRadius: 25,
           background: `radial-gradient(ellipse 50% 50% at 50% 50%, ${withAlpha(accent, 70)} 0%, ${withAlpha(accent, 28)} 60%, transparent 100%)`,
         }}
       />
@@ -308,8 +308,8 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
             </span>
           </span>
           <h2 id={titleId} style={{
-            fontSize: 22, fontWeight: 300, color: t1,
-            letterSpacing: -0.5, lineHeight: 1.1, margin: 0,
+            fontSize: 19, fontWeight: 300, color: t1,
+            letterSpacing: -0.4, lineHeight: 1.1, margin: 0,
           }}>
             {!selectedDuration && !done && "Descanso profundo"}
             {selectedDuration && !done && (isWakeStage ? "Despertando" : "En descanso")}
@@ -359,11 +359,11 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
               overflow: "hidden",
               boxShadow: `0 1px 0 ${withAlpha("#fff", 6)} inset, 0 24px 60px ${withAlpha("#000", 50)}, 0 0 50px ${withAlpha(VIOLET, 10)}`,
               backdropFilter: "blur(14px)",
-              minBlockSize: 188,
+              minBlockSize: 156,
             }}
           >
             {/* Decorative breathing orb at right */}
-            <div style={{ position: "absolute", inset: "-30px -60px -30px auto", inlineSize: 220, opacity: 0.85 }} aria-hidden="true">
+            <div style={{ position: "absolute", inset: "-24px -48px -24px auto", inlineSize: 170, opacity: 0.85 }} aria-hidden="true">
               <motion.div
                 animate={reduced ? {} : { scale: [1, 1.08, 1], opacity: [0.5, 0.85, 0.5] }}
                 transition={reduced ? {} : { duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -428,22 +428,22 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
                 {/* IconTile dimensional con dome glyph */}
                 <div style={{
                   position: "relative", flexShrink: 0,
-                  inlineSize: 56, blockSize: 56,
+                  inlineSize: 46, blockSize: 46,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   background: `linear-gradient(180deg, ${withAlpha(VIOLET, 22)} 0%, ${withAlpha(VIOLET_DEEP, 10)} 100%)`,
                   border: `0.5px solid ${withAlpha(VIOLET, 38)}`,
-                  borderRadius: 16,
-                  boxShadow: `inset 0 1px 0 ${withAlpha("#fff", 14)}, inset 0 -8px 16px ${withAlpha(VIOLET, 14)}, 0 4px 16px ${withAlpha(VIOLET, 18)}`,
+                  borderRadius: 13,
+                  boxShadow: `inset 0 1px 0 ${withAlpha("#fff", 14)}, inset 0 -7px 14px ${withAlpha(VIOLET, 14)}, 0 3px 12px ${withAlpha(VIOLET, 18)}`,
                 }}>
-                  <DomeGlyph size={26} color={VIOLET} reduced={reduced} />
+                  <DomeGlyph size={22} color={VIOLET} reduced={reduced} />
                 </div>
 
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
                     <span style={{
                       fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                      fontSize: 26, fontWeight: 500, color: t1,
-                      letterSpacing: -0.8, fontVariantNumeric: "tabular-nums", lineHeight: 1,
+                      fontSize: 21, fontWeight: 500, color: t1,
+                      letterSpacing: -0.6, fontVariantNumeric: "tabular-nums", lineHeight: 1,
                     }}>
                       {d.label}
                     </span>

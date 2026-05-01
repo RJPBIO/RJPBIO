@@ -431,8 +431,8 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               </span>
             </span>
             <h2 id={titleId} style={{
-              fontSize: 22, fontWeight: 300, color: t1,
-              letterSpacing: -0.5, lineHeight: 1.1, margin: 0,
+              fontSize: 19, fontWeight: 300, color: t1,
+              letterSpacing: -0.4, lineHeight: 1.1, margin: 0,
             }}>
               HRV con cámara
             </h2>

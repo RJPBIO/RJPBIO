@@ -508,55 +508,56 @@ export default function PostSessionFlow({
 
                 {typeof lastBioQ === "number" && lastBioQ > 0 ? (() => {
                   const tone = bioQTone(lastBioQ);
-                  const C = 2 * Math.PI * 72;
+                  const RR = 56;
+                  const C = 2 * Math.PI * RR;
                   const offset = C - (lastBioQ / 100) * C;
                   return (
                     <div
                       role="group"
                       aria-label={`BioQ Score ${lastBioQ} por ciento — calidad ${tone.label}`}
-                      style={{ position: "relative", inlineSize: 200, blockSize: 200, marginInline: "auto" }}
+                      style={{ position: "relative", inlineSize: 156, blockSize: 156, marginInline: "auto" }}
                     >
                       <motion.div
                         aria-hidden="true"
-                        animate={reduced ? {} : { scale: [1, 1.06, 1], opacity: [0.4, 0.7, 0.4] }}
+                        animate={reduced ? {} : { scale: [1, 1.05, 1], opacity: [0.35, 0.6, 0.35] }}
                         transition={reduced ? {} : { duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
                         style={{
-                          position: "absolute", inset: -8,
-                          background: `radial-gradient(circle, ${withAlpha(tone.color, 28)} 0%, transparent 65%)`,
-                          filter: "blur(16px)",
+                          position: "absolute", inset: -6,
+                          background: `radial-gradient(circle, ${withAlpha(tone.color, 24)} 0%, transparent 65%)`,
+                          filter: "blur(12px)",
                           pointerEvents: "none",
                         }}
                       />
-                      <svg width="200" height="200" viewBox="0 0 200 200" style={{ position: "relative", display: "block" }} aria-hidden="true">
+                      <svg width="156" height="156" viewBox="0 0 156 156" style={{ position: "relative", display: "block" }} aria-hidden="true">
                         <defs>
                           <linearGradient id={`bioqRing-${summaryTitleId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor={tone.color} stopOpacity="1" />
                             <stop offset="100%" stopColor={tone.color} stopOpacity="0.7" />
                           </linearGradient>
                         </defs>
-                        <circle cx="100" cy="100" r="72" fill="none" stroke={withAlpha(tone.color, 12)} strokeWidth="2" />
+                        <circle cx="78" cy="78" r={RR} fill="none" stroke={withAlpha(tone.color, 12)} strokeWidth="1.5" />
                         <motion.circle
-                          cx="100" cy="100" r="72"
+                          cx="78" cy="78" r={RR}
                           fill="none"
                           stroke={`url(#bioqRing-${summaryTitleId})`}
-                          strokeWidth="3"
+                          strokeWidth="2.4"
                           strokeLinecap="round"
                           strokeDasharray={C}
                           initial={reduced ? { strokeDashoffset: offset } : { strokeDashoffset: C }}
                           animate={{ strokeDashoffset: offset }}
                           transition={reduced ? { duration: 0 } : { duration: 1.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                          transform="rotate(-90 100 100)"
-                          style={{ filter: `drop-shadow(0 0 6px ${withAlpha(tone.color, 70)})` }}
+                          transform="rotate(-90 78 78)"
+                          style={{ filter: `drop-shadow(0 0 5px ${withAlpha(tone.color, 70)})` }}
                         />
                         {[25, 50, 75].map(p => {
                           const a = (p / 100) * 2 * Math.PI - Math.PI / 2;
-                          const r1 = 72 - 5, r2 = 72 + 5;
+                          const r1 = RR - 4, r2 = RR + 4;
                           return (
                             <line
                               key={p}
-                              x1={100 + Math.cos(a) * r1} y1={100 + Math.sin(a) * r1}
-                              x2={100 + Math.cos(a) * r2} y2={100 + Math.sin(a) * r2}
-                              stroke={withAlpha(tone.color, 30)} strokeWidth="0.8"
+                              x1={78 + Math.cos(a) * r1} y1={78 + Math.sin(a) * r1}
+                              x2={78 + Math.cos(a) * r2} y2={78 + Math.sin(a) * r2}
+                              stroke={withAlpha(tone.color, 30)} strokeWidth="0.6"
                               strokeLinecap="round"
                             />
                           );
@@ -565,7 +566,7 @@ export default function PostSessionFlow({
                       <div style={{
                         position: "absolute", inset: 0,
                         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                        gap: 4,
+                        gap: 3,
                       }}>
                         <motion.div
                           initial={reduced ? { opacity: 1 } : { opacity: 0, scale: 0.7 }}
@@ -573,18 +574,18 @@ export default function PostSessionFlow({
                           transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 16, delay: 0.6 }}
                           style={{
                             fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
-                            fontSize: 56, fontWeight: 300, color: t1,
-                            letterSpacing: -2, fontVariantNumeric: "tabular-nums", lineHeight: 1,
-                            textShadow: `0 0 24px ${withAlpha(tone.color, 50)}`,
+                            fontSize: 40, fontWeight: 300, color: t1,
+                            letterSpacing: -1.4, fontVariantNumeric: "tabular-nums", lineHeight: 1,
+                            textShadow: `0 0 18px ${withAlpha(tone.color, 50)}`,
                           }}
                         >
                           {lastBioQ}
                         </motion.div>
                         <div style={{
                           fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
-                          fontSize: 8.5, fontWeight: 500, color: tone.color,
-                          letterSpacing: "0.30em", textTransform: "uppercase",
-                          textShadow: `0 0 6px ${withAlpha(tone.color, 50)}`,
+                          fontSize: 8, fontWeight: 500, color: tone.color,
+                          letterSpacing: "0.26em", textTransform: "uppercase",
+                          textShadow: `0 0 5px ${withAlpha(tone.color, 50)}`,
                         }}>
                           BioQ · {tone.label}
                         </div>
@@ -597,22 +598,22 @@ export default function PostSessionFlow({
                     initial={reduced ? { scale: 1, opacity: 1 } : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 16, delay: 0.2 }}
-                    style={{ position: "relative", inlineSize: 120, blockSize: 120, marginInline: "auto" }}
+                    style={{ position: "relative", inlineSize: 92, blockSize: 92, marginInline: "auto" }}
                   >
                     <motion.div
                       aria-hidden="true"
                       initial={{ scale: 0.3, opacity: 0.8 }}
                       animate={reduced ? {} : { scale: [0.3, 2, 2.4], opacity: [0.6, 0.15, 0] }}
                       transition={reduced ? {} : { duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-                      style={{ position: "absolute", inset: 0, borderRadius: radius.full, border: `2px solid ${ac}` }}
+                      style={{ position: "absolute", inset: 0, borderRadius: radius.full, border: `1.5px solid ${ac}` }}
                     />
-                    <svg width="120" height="120" viewBox="0 0 120 120" style={{ position: "relative" }}>
-                      <circle cx="60" cy="60" r="56" fill={withAlpha(ac, 8)} />
-                      <circle cx="60" cy="60" r="44" fill={withAlpha(ac, 12)} />
+                    <svg width="92" height="92" viewBox="0 0 92 92" style={{ position: "relative" }}>
+                      <circle cx="46" cy="46" r="42" fill={withAlpha(ac, 8)} />
+                      <circle cx="46" cy="46" r="33" fill={withAlpha(ac, 12)} />
                       <motion.path
-                        d="M40 60l13 13 27-27"
+                        d="M30 46l10 10 22-22"
                         stroke={ac}
-                        strokeWidth="4"
+                        strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         fill="none"
@@ -625,8 +626,8 @@ export default function PostSessionFlow({
                 )}
 
                 <h2 id={summaryTitleId} style={{
-                  fontSize: 22, fontWeight: 300, color: t1,
-                  letterSpacing: -0.5, lineHeight: 1.1, margin: 0, marginBlockStart: 14,
+                  fontSize: 19, fontWeight: 300, color: t1,
+                  letterSpacing: -0.4, lineHeight: 1.1, margin: 0, marginBlockStart: 12,
                 }}>
                   Ignición completa
                 </h2>
