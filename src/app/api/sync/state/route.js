@@ -19,6 +19,7 @@
 import { auth } from "../../../../server/auth";
 import { db } from "../../../../server/db";
 import { auditLog } from "../../../../server/audit";
+import { enforceMfaIfPolicyDemands, mfaGateResponse } from "../../../../server/mfa-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,11 @@ export async function GET() {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
   const userId = session.user.id;
+
+  // Sprint S3.1 — MFA policy enforcement (mismo gate que sync/outbox).
+  const mfa = await enforceMfaIfPolicyDemands(session);
+  const mfaResp = mfaGateResponse(mfa);
+  if (mfaResp) return mfaResp;
 
   try {
     const orm = await db();

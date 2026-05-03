@@ -118,8 +118,8 @@ export const PROG_7 = [
   { day: 3, pid: 3, t: "Día 3: Decide", d: "Aprende a priorizar bajo presión." },
   { day: 4, pid: 6, t: "Día 4: Ancla", d: "Presencia ejecutiva. Tu cuerpo como base." },
   { day: 5, pid: 8, t: "Día 5: Intensifica", d: "Enfoque extremo. Nivel avanzado." },
-  { day: 6, pid: 13, t: "Día 6: Realinea", d: "Protocolo OMEGA completo. 6 fases." },
-  { day: 7, pid: 14, t: "Día 7: Enciende", d: "OMNIA. Activación humana total." },
+  { day: 6, pid: 9, t: "Día 6: Realinea", d: "Steel Core Reset. Reinicio nervioso máximo." },
+  { day: 7, pid: 12, t: "Día 7: Enciende", d: "Neural Ascension. Claridad ejecutiva." },
 ];
 
 export const CLARITY_LEVELS = [
@@ -146,7 +146,7 @@ export const DS = {
   soundOn: true,
   hapticOn: true,
   // v13 — voice + audio + session granularity (persistente, antes en useState volátil)
-  voiceOn: true,                    // TTS en sesión
+  voiceOn: false,                   // TTS opt-in (Phase 4 SP2 — antes default true)
   voiceRate: 0.83,                  // 0.7 lento · 0.83 normal · 1.0 rápido
   masterVolume: 1,                  // multiplier sobre el master gain (0.4–1.0)
   wakeLockEnabled: true,            // mantener pantalla activa durante sesión (default ON: completion ↑ → más datos)
@@ -166,6 +166,9 @@ export const DS = {
   unlockedSS: ["off"],
   neuralBaseline: null,
   onboardingComplete: false,
+  // Phase 6 SP5 — pre-calibration welcome (manifesto + intent picker).
+  welcomeDone: false,
+  firstIntent: null,
   sessionGoal: 2,
   // v5 fields
   calibrationHistory: [],

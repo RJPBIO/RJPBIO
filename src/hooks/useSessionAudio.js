@@ -1,4 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════
+/* @deprecated — Phase 4 SP3.
+   La orquestación audio ahora vive dentro de useProtocolPlayer.js
+   (binaural + wakelock + signature al cierre). Este hook se mantiene
+   por backward compat con page.jsx idle-mood-halo binaural y tests.
+   Se removerá en cleanup post-Phase-4 cuando page.jsx ya no lo invoque
+   en idle.
+
+   ═══════════════════════════════════════════════════════════════
    useSessionAudio — arranca/detiene ambient + soundscape + binaural
    según el estado del timer (`timerStatus`).
 

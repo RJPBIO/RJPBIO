@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/cron/dsar-sweep",         "schedule": "0 1 * * *" },
+    { "path": "/api/cron/dunning-check",      "schedule": "30 1 * * *" },
+    { "path": "/api/cron/audit-prune",        "schedule": "0 3 * * *" },
+    { "path": "/api/cron/audit-verify",       "schedule": "0 4 * * 0" },
+    { "path": "/api/cron/audit-export",       "schedule": "30 3 * * *" },
+    { "path": "/api/cron/trial-end-reminder", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/maintenance-notify", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/incident-broadcast", "schedule": "* * * * *" },
+    { "path": "/api/cron/webhook-retry",      "schedule": "* * * * *" },
+    { "path": "/api/cron/push-deliver",       "schedule": "* * * * *" },
+    { "path": "/api/cron/weekly-summary",     "schedule": "0 14 * * 1" }
+  ]
+}

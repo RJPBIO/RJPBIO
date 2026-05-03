@@ -75,13 +75,13 @@ export const PROGRAMS = [
       { day: 4, protocolId: 5, note: "enfoque · visual" },
       { day: 5, protocolId: 4, note: "energia · pulse" },
       { day: 6, protocolId: 10, note: "energia · atomic" },
-      { day: 7, protocolId: 3, note: "reset · ejecutivo" },
+      { day: 7, protocolId: 21, note: "mid-week · reset cognitivo · cierre de capítulo" },
       { day: 8, protocolId: 7, note: "reset · descarga" },
       { day: 9, protocolId: 6, note: "integración · acero" },
       { day: 10, protocolId: 11, note: "integración · anclaje" },
       { day: 11, protocolId: 12, note: "integración · ascenso" },
-      { day: 12, protocolId: 13, note: "síntesis · OMEGA" },
-      { day: 13, protocolId: 14, note: "síntesis · OMNIA" },
+      { day: 12, protocolId: 25, note: "consolidación · interocepción cardíaca + HRV" },
+      { day: 13, protocolId: 4, note: "síntesis · pulse shift" },
       { day: 14, protocolId: 16, note: "sello · resonancia vagal" },
     ],
   },
@@ -105,10 +105,10 @@ export const PROGRAMS = [
       { day: 1, protocolId: 15, note: "entrada suave · suspiro fisiológico" },
       { day: 2, protocolId: 1, note: "reinicio parasimpático" },
       { day: 3, protocolId: 3, note: "reset ejecutivo" },
-      { day: 4, protocolId: 11, note: "quantum grounding" },
+      { day: 4, protocolId: 22, note: "recovery profunda · resonancia vagal por humming" },
       { day: 5, protocolId: 6, note: "grounded steel" },
       { day: 6, protocolId: 16, note: "resonancia vagal · 10 min" },
-      { day: 7, protocolId: 13, note: "OMEGA · realineación completa" },
+      { day: 7, protocolId: 1, note: "reinicio parasimpático · cierre profundo" },
     ],
   },
 
@@ -126,13 +126,13 @@ export const PROGRAMS = [
     sb_long:
       "Semana de deadline, lanzamiento, o cualquier periodo de alta demanda cognitiva. 5 días consecutivos matutinos que entrenan progresivamente el enfoque: de coherencia cardíaca (día 1) a enfoque extremo (día 5).",
     rationale:
-      "Protocolos de enfoque requieren un substrato autonómico estable. Arrancar con coherencia cardíaca calibra el sistema nervioso; recalibración visual + ascenso mental preparan la corteza prefrontal; Lightning Focus y OMNIA son los picos — aplicables solo cuando ya hay base.",
+      "Protocolos de enfoque requieren un substrato autonómico estable. Arrancar con coherencia cardíaca calibra el sistema nervioso; recalibración visual + ascenso mental preparan la corteza prefrontal; Lightning Focus y Sensory Wake son los picos — aplicables solo cuando ya hay base.",
     sessions: [
       { day: 1, protocolId: 2, note: "coherencia cardíaca base" },
       { day: 2, protocolId: 5, note: "recalibración visual" },
-      { day: 3, protocolId: 12, note: "ascenso neural" },
+      { day: 3, protocolId: 23, note: "mid-sprint · postura + breath + isometric" },
       { day: 4, protocolId: 8, note: "enfoque extremo" },
-      { day: 5, protocolId: 14, note: "activación humana total" },
+      { day: 5, protocolId: 10, note: "sensory wake · cierre energético" },
     ],
   },
 
@@ -165,14 +165,15 @@ export const PROGRAMS = [
       // Semana 2 — consolidación / anclaje
       { day: 9, protocolId: 11, note: "semana 2 · anclaje profundo" },
       { day: 11, protocolId: 6, note: "grounded steel" },
+      { day: 12, protocolId: 22, note: "semana 2 · calma profunda no-invasiva" },
       { day: 14, protocolId: 16, note: "resonancia vagal · 10 min" },
       // Semana 3 — re-activación controlada
       { day: 16, protocolId: 3, note: "semana 3 · reset ejecutivo suave" },
       { day: 18, protocolId: 7, note: "HyperShift · descarga emocional" },
       { day: 21, protocolId: 9, note: "steel core reset" },
       // Semana 4 — integración y cierre
-      { day: 23, protocolId: 13, note: "semana 4 · OMEGA" },
-      { day: 25, protocolId: 12, note: "neural ascension" },
+      { day: 23, protocolId: 3, note: "semana 4 · reset ejecutivo" },
+      { day: 25, protocolId: 24, note: "semana 4 · movement reset · walking ambulatorio" },
       { day: 27, protocolId: 16, note: "resonancia vagal · consolidación" },
       { day: 28, protocolId: 17, note: "NSDR · sello integrativo" },
     ],
@@ -192,14 +193,14 @@ export const PROGRAMS = [
     sb_long:
       "Para líderes en posiciones de alta exposición pública y decisión crítica. 10 días alternos (5 sesiones + 5 de reposo) centrados en la familia Steel: presencia que combina calma con no-claudicación.",
     rationale:
-      "Presencia ejecutiva no es calma pura (aburrida) ni energía pura (ansiosa) — es la paradoja acero+calma. Arco de 10 días alternando Grounded Steel, Steel Core Reset, Quantum Grounding, y OMEGA para consolidar el callback 'inquebrantable' como estado operativo repetible.",
+      "Presencia ejecutiva no es calma pura (aburrida) ni energía pura (ansiosa) — es la paradoja acero+calma. Arco de 10 días alternando Grounded Steel, Steel Core Reset, Body Anchor y Reset Ejecutivo para consolidar el callback 'inquebrantable' como estado operativo repetible.",
     sessions: [
       { day: 1, protocolId: 6, note: "grounded steel · base" },
-      { day: 3, protocolId: 11, note: "quantum grounding" },
-      { day: 5, protocolId: 9, note: "steel core reset" },
+      { day: 3, protocolId: 11, note: "body anchor" },
+      { day: 5, protocolId: 21, note: "transition ejecutiva · cierre cognitivo entre tareas" },
       { day: 7, protocolId: 6, note: "grounded steel · profundización" },
-      { day: 9, protocolId: 13, note: "OMEGA · síntesis" },
-      { day: 10, protocolId: 14, note: "OMNIA · sello encendido" },
+      { day: 9, protocolId: 3, note: "reset ejecutivo · síntesis" },
+      { day: 10, protocolId: 9, note: "steel core reset · sello acero" },
     ],
   },
 ];

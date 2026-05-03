@@ -408,7 +408,7 @@ export function genIns(st) {
     }
   }
   const h = new Date().getHours();
-  if (!r.find((x) => x.t === "rec")) r.push({ t: "rec", x: h < 12 ? "Reset Ejecutivo ideal para la mañana." : h < 17 ? "Protocolo OMEGA para la tarde." : "Reinicio Parasimpático para cerrar el día." });
+  if (!r.find((x) => x.t === "rec")) r.push({ t: "rec", x: h < 12 ? "Reset Ejecutivo ideal para la mañana." : h < 17 ? "Reset Ejecutivo para la tarde." : "Reinicio Parasimpático para cerrar el día." });
   if (!r.length) r.push({ t: "star", x: "Tu primera ignición te espera." });
   return r;
 }

@@ -9,6 +9,7 @@ import { db } from "@/server/db";
 import { requireScimAuth, scimError, toScimUser } from "@/server/scim";
 import { auditLog } from "@/server/audit";
 import { parsePatchBody, isDeactivateOp, isActivateOp, applyPatchOps } from "@/lib/scim-patch";
+import { revokeUserAccess } from "@/server/membership-revoke";
 
 export async function GET(req, { params }) {
   const { id } = await params;
@@ -41,6 +42,14 @@ export async function PATCH(req, { params }) {
       where: { id: membership.id },
       data: { deactivatedAt: new Date() },
     });
+    // Sprint S3.3 — cascade revoke. Antes: user mantenía sesiones JWT
+    // hasta 8h después de la deactivation = compliance gap. Ahora:
+    // sessions revoked + sessionEpoch++ → JWT invalida en ≤60s.
+    await revokeUserAccess(id, {
+      orgId: ctx.orgId,
+      reason: "scim.deactivate",
+      actorId: null,
+    }).catch(() => {});
     await auditLog({
       orgId: ctx.orgId, action: "scim.user.deactivate", target: id,
     }).catch(() => {});
@@ -96,6 +105,11 @@ export async function PUT(req, { params }) {
         where: { id: membership.id },
         data: { deactivatedAt: new Date() },
       });
+      // Sprint S3.3 — cascade revoke en PUT path también.
+      await revokeUserAccess(id, {
+        orgId: ctx.orgId,
+        reason: "scim.put.deactivate",
+      }).catch(() => {});
     } else if (!wantDeactivated && isDeactivated) {
       nextMembership = await orm.membership.update({
         where: { id: membership.id },
@@ -133,6 +147,11 @@ export async function DELETE(req, { params }) {
       where: { id: membership.id },
       data: { deactivatedAt: new Date() },
     });
+    // Sprint S3.3 — cascade revoke en DELETE path también.
+    await revokeUserAccess(id, {
+      orgId: ctx.orgId,
+      reason: "scim.delete",
+    }).catch(() => {});
   }
   await auditLog({
     orgId: ctx.orgId, action: "scim.user.deactivate", target: id, payload: { via: "DELETE" },

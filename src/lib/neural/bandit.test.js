@@ -204,6 +204,24 @@ describe("compositeReward", () => {
       moodDelta: 1, energyDelta: NaN, hrvDeltaLnRmssd: null,
     })).toBe(1);
   });
+
+  // Sprint S4.2 — fallback HRV-only cuando mood-post está ausente.
+  it("Sprint S4.2: HRV-only reward cuando moodDelta ausente", () => {
+    expect(compositeReward({ moodDelta: null, hrvDeltaLnRmssd: 0.3 })).toBe(0.45);
+    expect(compositeReward({ moodDelta: undefined, hrvDeltaLnRmssd: -0.2 })).toBe(-0.3);
+    expect(compositeReward({ hrvDeltaLnRmssd: 0.4 })).toBe(0.6);
+  });
+  it("Sprint S4.2: HRV-only path respeta completionRatio", () => {
+    expect(compositeReward({ moodDelta: null, hrvDeltaLnRmssd: 0.4, completionRatio: 0.5 })).toBe(0.45);
+    expect(compositeReward({ moodDelta: null, hrvDeltaLnRmssd: 0.4, completionRatio: 0 })).toBe(0.3);
+  });
+  it("Sprint S4.2: HRV-only path incluye energyDelta si presente", () => {
+    expect(compositeReward({ moodDelta: null, hrvDeltaLnRmssd: 0.2, energyDelta: 1 })).toBe(0.6);
+  });
+  it("Sprint S4.2: sin mood NI HRV → sigue null", () => {
+    expect(compositeReward({ moodDelta: null, energyDelta: 1 })).toBeNull();
+    expect(compositeReward({ moodDelta: null, hrvDeltaLnRmssd: null })).toBeNull();
+  });
 });
 
 describe("aprendizaje bajo drift", () => {

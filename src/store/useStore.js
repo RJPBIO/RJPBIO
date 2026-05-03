@@ -16,10 +16,13 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 14;
+const STORE_VERSION = 15;
 
 function migrate(data) {
-  if (!data) return { ...DS, _v: STORE_VERSION, _created: Date.now() };
+  if (!data) {
+    // New user: voiceOn default OFF (Phase 4 SP2 — TTS opt-in explícito).
+    return { ...DS, voiceOn: false, _v: STORE_VERSION, _created: Date.now() };
+  }
   const merged = { ...DS, ...data };
   if (!merged._v || merged._v < STORE_VERSION) {
     // v7: ensure bioneural arrays exist for users migrating from v6
@@ -58,6 +61,11 @@ function migrate(data) {
     if (typeof merged.binauralOn !== "boolean") merged.binauralOn = true;
     if (typeof merged.hapticIntensity !== "string") merged.hapticIntensity = "medium";
     if (typeof merged.voicePreference === "undefined") merged.voicePreference = null;
+    // v15: voiceOn default OFF para nuevos users (Phase 4 SP2). Users
+    // existentes con voiceOn=true mantienen su preferencia previa
+    // (la condición v13 arriba sólo dispara si el campo no existe).
+    // Sólo si el field está totalmente ausente Y el migración previa nunca corrió,
+    // el v13 lo seteaba true. Aquí no hacemos nada — preservamos preferencia.
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -190,6 +198,21 @@ export const useStore = create((set, get) => ({
 
   setNeuralBaseline: (baseline) => {
     set({ neuralBaseline: baseline, onboardingComplete: true });
+    scheduleSave({ ...get() });
+  },
+
+  // Phase 6 SP5 — onboarding welcome state (BioIgnitionWelcome pre-Calibration).
+  setWelcomeDone: (done = true) => {
+    set({ welcomeDone: !!done });
+    scheduleSave({ ...get() });
+  },
+  setFirstIntent: (intent) => {
+    const valid = ["calma", "enfoque", "energia", "recuperacion", "reset"].includes(intent);
+    set({ firstIntent: valid ? intent : null });
+    scheduleSave({ ...get() });
+  },
+  completeOnboarding: () => {
+    set({ onboardingComplete: true });
     scheduleSave({ ...get() });
   },
 
@@ -349,13 +372,17 @@ export const useStore = create((set, get) => ({
     completionRatio = 1,
   }) => {
     const st = get();
+    if (!intent) return;
     const delta = Number(deltaMood);
-    if (!Number.isFinite(delta) || !intent) return;
-    // El bandit aprende del reward compuesto (mood + energía + HRV +
-    // completitud). Los residuales siguen calibrando contra mood puro —
-    // que es lo que predecimos en la UI.
+    const moodPresent = Number.isFinite(delta);
+    const hrvPresent = typeof hrvDelta === "number" && Number.isFinite(hrvDelta);
+    // Sprint S4.2 — antes: sin mood-post salíamos sin actualizar bandit
+    // (sesión perdida ~30-50% de las veces). Ahora: si hay HRV, compositeReward
+    // infiere reward desde HRV. Mood preferido si presente.
+    if (!moodPresent && !hrvPresent) return;
+
     const reward = compositeReward({
-      moodDelta: delta,
+      moodDelta: moodPresent ? delta : null,
       energyDelta,
       hrvDeltaLnRmssd: hrvDelta,
       completionRatio,
@@ -372,8 +399,11 @@ export const useStore = create((set, get) => ({
       [keyCtx]: updateArm(arms[keyCtx], reward),
       [keyGlb]: updateArm(arms[keyGlb], reward),
     };
+    // Residuales solo se loggean si tenemos mood real (calibran contra
+    // predicción de mood, no contra HRV inferido). Fallback HRV-only no
+    // contamina el calibration bias.
     const nextResiduals =
-      typeof predictedDelta === "number"
+      moodPresent && typeof predictedDelta === "number"
         ? logResidualEntry(st.predictionResiduals || { history: [] }, {
             predicted: predictedDelta,
             actual: delta,

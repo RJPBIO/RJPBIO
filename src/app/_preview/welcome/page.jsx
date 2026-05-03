@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
-const BioIgnitionWelcome = dynamic(() => import("@/components/BioIgnitionWelcome"), { ssr: false });
+const BioIgnitionWelcome = dynamic(() => import("@/components/onboarding/v2/BioIgnitionWelcomeV2"), { ssr: false });
 
 export default function WelcomePreviewPage() {
   const [done, setDone] = useState(false);
@@ -41,7 +41,11 @@ export default function WelcomePreviewPage() {
 
   return (
     <BioIgnitionWelcome
-      onComplete={(i) => { setIntent(i); setDone(true); }}
+      onComplete={(payload) => {
+        const i = typeof payload === "string" ? payload : payload?.intent;
+        setIntent(i || null);
+        setDone(true);
+      }}
       onSkip={() => setDone(true)}
     />
   );

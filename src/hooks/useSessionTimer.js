@@ -1,4 +1,9 @@
 "use client";
+/* @deprecated — Phase 4 SP3.
+   Reemplazado por useProtocolPlayer (Phase 4 SP3). Este hook implementa
+   countdown timer protocol-level; el nuevo motor cronea por acto + valida
+   por contexto (active/training/crisis). Se mantiene por tests existentes;
+   se removerá en cleanup post-Phase-4. */
 import { useEffect, useRef, useState, useCallback } from "react";
 
 /* Cronómetro de sesión desacoplado de la UI.

@@ -75,19 +75,51 @@ export async function auditLog({ orgId, actorId, actorEmail, action, target, pay
   });
 }
 
-export async function verifyChain(orgId) {
+/**
+ * Verifica la audit chain completa. Implementación streamed/batched
+ * (Sprint S3.4) — antes cargaba TODA la cadena en memoria con findMany.
+ * Para orgs con 1M+ entries, OOM seguro. Ahora: cursor por id en chunks
+ * de 5000 rows, hash continuity preservada cross-chunk via prev.
+ *
+ * @param {string} orgId
+ * @param {object} [opts]
+ * @param {number} [opts.chunkSize=5000]   - rows por iteración (cursor)
+ * @param {number} [opts.maxChunks=10000]  - cap defensivo (50M rows max)
+ * @returns {Promise<{ok: boolean, entries?: number, brokenAt?: any, reason?: string}>}
+ */
+export async function verifyChain(orgId, { chunkSize = 5000, maxChunks = 10000 } = {}) {
   const orm = await db();
-  const rows = await orm.auditLog.findMany({ where: { orgId }, orderBy: { ts: "asc" } });
   let prev = null;
-  for (const r of rows) {
-    const { expectedHash, expectedSeal, storedSeal } = recomputeRow(r, prev, process.env.AUDIT_HMAC_KEY);
-    if (r.hash !== expectedHash) return { ok: false, brokenAt: r.id, reason: "hash" };
-    if (expectedSeal && storedSeal !== expectedSeal) {
-      return { ok: false, brokenAt: r.id, reason: "seal" };
+  let cursor = null;
+  let totalEntries = 0;
+
+  for (let chunkIdx = 0; chunkIdx < maxChunks; chunkIdx++) {
+    const where = { orgId };
+    if (cursor !== null && cursor !== undefined) {
+      where.id = { gt: cursor };
     }
-    prev = r.hash;
+    const rows = await orm.auditLog.findMany({
+      where,
+      orderBy: { id: "asc" },
+      take: chunkSize,
+    });
+    if (rows.length === 0) break;
+
+    for (const r of rows) {
+      const { expectedHash, expectedSeal, storedSeal } = recomputeRow(r, prev, process.env.AUDIT_HMAC_KEY);
+      if (r.hash !== expectedHash) return { ok: false, brokenAt: r.id, reason: "hash" };
+      if (expectedSeal && storedSeal !== expectedSeal) {
+        return { ok: false, brokenAt: r.id, reason: "seal" };
+      }
+      prev = r.hash;
+    }
+    totalEntries += rows.length;
+    cursor = rows[rows.length - 1].id;
+
+    // Si recibimos menos rows que el chunkSize, terminamos sin un round-trip extra.
+    if (rows.length < chunkSize) break;
   }
-  return { ok: true, entries: rows.length };
+  return { ok: true, entries: totalEntries };
 }
 
 /**

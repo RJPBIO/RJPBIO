@@ -31,6 +31,7 @@ import { auditLog } from "../../../../server/audit";
 import { requireCsrf } from "../../../../server/csrf";
 import { check } from "../../../../server/ratelimit";
 import { mergeNeuralState } from "../../../../server/sync-merge";
+import { enforceMfaIfPolicyDemands, mfaGateResponse } from "../../../../server/mfa-policy";
 import {
   validateEntry, jsonSize,
   MAX_BATCH, MAX_PAYLOAD_BYTES, MAX_NEURAL_STATE_BYTES,
@@ -49,6 +50,14 @@ export async function POST(request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
   const userId = session.user.id;
+
+  // Sprint S3.1 — MFA policy enforcement. Si alguno de los orgs del user
+  // tiene `requireMfa=true`, bloqueamos el sync hasta que el user tenga
+  // mfaVerifiedAt fresco (<24h). Antes: enforce solo en /admin layout →
+  // member podía capturar HRV/mood y syncear sin MFA = gap real.
+  const mfa = await enforceMfaIfPolicyDemands(session);
+  const mfaResp = mfaGateResponse(mfa);
+  if (mfaResp) return mfaResp;
 
   // Rate limit por usuario — 60 req/min absorbe el debounce 800ms del
   // cliente (~75 max/min) y deja margen. Spam abuser cae en 429.

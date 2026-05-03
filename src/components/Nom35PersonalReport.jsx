@@ -68,7 +68,7 @@ const PROTO_PER_DOMINIO = {
   liderazgo:     { protocolId: 3,  protocolName: "Reset Ejecutivo",     dose: "1× antes de reuniones críticas", rationale: "regula carga de decisiones bajo supervisión. Considera hablar con tu líder sobre claridad de instrucciones." },
   relaciones:    { protocolId: 2,  protocolName: "Activación Cognitiva", dose: "1× al día durante 14 días", rationale: "regulación afectiva mejora capacidad de respuesta no-reactiva en interacciones difíciles." },
   violencia:     { protocolId: null, protocolName: null, dose: null, rationale: "Este dominio no se atiende con protocolos de bienestar. Solicita protocolo de denuncia y atención conforme al Art. 8 NOM-035 y Ley General para la Igualdad. La plataforma no sustituye este recurso.", severeOnly: true },
-  reconocimiento:{ protocolId: 11, protocolName: "Quantum Grounding",   dose: "1× al día durante 21 días", rationale: "anclaje en valor intrínseco — útil cuando el reconocimiento externo es escaso o inconsistente." },
+  reconocimiento:{ protocolId: 11, protocolName: "Body Anchor",         dose: "1× al día durante 21 días", rationale: "anclaje en valor intrínseco — útil cuando el reconocimiento externo es escaso o inconsistente." },
   pertenencia:   { protocolId: 6,  protocolName: "Grounded Steel",      dose: "1× al día durante 14 días", rationale: "presencia inquebrantable — sostiene identidad profesional cuando hay incertidumbre laboral." },
   condiciones:   { protocolId: null, protocolName: null, dose: null, rationale: "Este dominio refiere a infraestructura física (ruido, iluminación, seguridad). Documenta en bitácora y eleva al área de Seguridad y Salud en el Trabajo (SST) de tu empresa.", severeOnly: true },
 };

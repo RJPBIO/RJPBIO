@@ -2,14 +2,14 @@
    protocols.shape.test — validación estructural del catálogo
 
    Tras Sprint 68 (3 protocolos crisis nuevos) y Sprint 69 (campos
-   safety/variants), el catálogo tiene 20 protocolos. Este test
-   garantiza que cualquier protocolo nuevo o modificado mantiene
-   el shape esperado por la UI, el motor neural y los reportes.
+   safety/variants), el catálogo tenía 20 protocolos.
+   Phase 4 SP1 elimina OMEGA (#13) y OMNIA (#14) → 18 protocolos.
+   Los IDs 13 y 14 quedan como gap permanente para integridad
+   histórica.
 
-   Es deuda técnica que NO existía: cualquier dev podía agregar un
-   protocolo con timestamps inconsistentes (iExec fuera de la fase,
-   phases.max.e ≠ duration declarada) y nadie se enteraría hasta
-   que la UI rompiera en producción.
+   Este test garantiza que cualquier protocolo nuevo o modificado
+   mantiene el shape esperado por la UI, el motor neural y los
+   reportes.
    ═══════════════════════════════════════════════════════════════ */
 
 import { describe, it, expect } from "vitest";
@@ -18,18 +18,28 @@ import { P, SCIENCE_DEEP } from "./protocols";
 const REQUIRED_FIELDS = ["id", "n", "ct", "d", "sb", "tg", "cl", "int", "dif", "ph"];
 const PHASE_FIELDS = ["l", "r", "s", "e", "k", "i", "sc"];
 const VALID_INTENTS = new Set(["calma", "enfoque", "energia", "reset"]);
+const RESERVED_IDS = new Set([13, 14]); // OMEGA/OMNIA eliminados Phase4-SP1
 
 describe("protocols catalog shape", () => {
-  it("contiene al menos 20 protocolos", () => {
-    expect(P.length).toBeGreaterThanOrEqual(20);
+  it("contiene al menos 18 protocolos (post-eliminación OMEGA/OMNIA)", () => {
+    expect(P.length).toBeGreaterThanOrEqual(18);
   });
 
-  it("ids únicos y consecutivos desde 1", () => {
-    const ids = P.map((p) => p.id).sort((a, b) => a - b);
-    expect(ids[0]).toBe(1);
-    for (let i = 0; i < ids.length; i++) {
-      expect(ids[i]).toBe(i + 1);
-    }
+  it("ids únicos, positivos y dentro de [1,25] (gap permanente en 13/14)", () => {
+    const ids = P.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    ids.forEach((id) => {
+      expect(Number.isInteger(id)).toBe(true);
+      expect(id).toBeGreaterThanOrEqual(1);
+      expect(id).toBeLessThanOrEqual(25);
+    });
+  });
+
+  it("IDs 13 y 14 están reservados (OMEGA/OMNIA eliminados)", () => {
+    const ids = new Set(P.map((p) => p.id));
+    RESERVED_IDS.forEach((rid) => {
+      expect(ids.has(rid)).toBe(false);
+    });
   });
 
   P.forEach((p) => {
@@ -129,14 +139,19 @@ describe("protocols catalog shape", () => {
           expect(Array.isArray(p.variants)).toBe(true);
           expect(p.variants.length).toBeGreaterThan(0);
           p.variants.forEach((v, i) => {
+            // Phase 4 SP8: variants simplificadas a {id,label}; when/notes opcionales
             expect(typeof v.id, `variant ${i}.id`).toBe("string");
             expect(typeof v.label).toBe("string");
-            expect(typeof v.when).toBe("string");
-            expect(typeof v.notes).toBe("string");
             expect(v.id.length).toBeGreaterThan(0);
             expect(v.label.length).toBeGreaterThan(0);
-            expect(v.when.length).toBeGreaterThan(0);
-            expect(v.notes.length).toBeGreaterThan(0);
+            if (v.when !== undefined) {
+              expect(typeof v.when).toBe("string");
+              expect(v.when.length).toBeGreaterThan(0);
+            }
+            if (v.notes !== undefined) {
+              expect(typeof v.notes).toBe("string");
+              expect(v.notes.length).toBeGreaterThan(0);
+            }
           });
           // ids únicos dentro del protocolo
           const ids = p.variants.map((v) => v.id);
@@ -147,10 +162,11 @@ describe("protocols catalog shape", () => {
   });
 });
 
-describe("protocolos crisis (Sprint 68/69) tienen safety + variants", () => {
+describe("protocolos crisis (Sprint 68/69 + Phase4 SP8 + Phase5 SP1) tienen safety", () => {
   // Los protocolos #18, #19, #20 son los específicos para crisis aguda
-  // y DEBEN tener safety preface + variantes accesibles. Es contrato del
-  // catálogo que no se puede regresar.
+  // y DEBEN tener safety preface. Phase 4 SP8 simplificó la coreografía a
+  // un acto por fase. Phase 5 SP1 refactorizó #19 (eliminó dive reflex con
+  // agua fría) → #19 ya no tiene variants. Ningún crisis tiene variants ahora.
   const crisisIds = [18, 19, 20];
   crisisIds.forEach((id) => {
     it(`#${id} tiene safety preface`, () => {
@@ -158,11 +174,6 @@ describe("protocolos crisis (Sprint 68/69) tienen safety + variants", () => {
       expect(p).toBeDefined();
       expect(typeof p.safety).toBe("string");
       expect(p.safety.length).toBeGreaterThan(40);
-    });
-    it(`#${id} tiene variantes accesibles (≥2)`, () => {
-      const p = P.find((x) => x.id === id);
-      expect(Array.isArray(p.variants)).toBe(true);
-      expect(p.variants.length).toBeGreaterThanOrEqual(2);
     });
   });
 });

@@ -6,6 +6,9 @@ import { check } from "@/server/ratelimit";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { buildSystemPrompt, sanitizeUserTurn } from "@/lib/coach-prompts";
+import { resolveCoachModel } from "@/lib/coach-model";
+import { enforceMfaIfPolicyDemands, mfaGateResponse } from "@/server/mfa-policy";
+import { evaluateQuota, currentBillingPeriod, getCoachQuota } from "@/lib/coach-quota";
 
 export const runtime = "nodejs";
 
@@ -23,6 +26,12 @@ export async function POST(req) {
 
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
+
+  // Sprint S3.1 — MFA policy enforcement. Coach LLM expone contexto
+  // sensible (mood trajectory, instruments scores) — gate igual que sync.
+  const mfa = await enforceMfaIfPolicyDemands(session);
+  const mfaResp = mfaGateResponse(mfa);
+  if (mfaResp) return mfaResp;
 
   const body = await req.json().catch(() => ({}));
   const { messages = [], orgId, userContext } = body;
@@ -47,6 +56,23 @@ export async function POST(req) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return new Response("coach_unavailable", { status: 503 });
 
+  // Sprint S5.1 — quota mensual por plan. Pre-check: 429 si el user
+  // alcanzó su cap. FREE 5/mes, PRO 100/mes, STARTER 500/mes,
+  // GROWTH/ENTERPRISE unlimited. Reset implícito: nueva fila cada mes.
+  const plan = (org?.plan || "FREE").toUpperCase();
+  const period = currentBillingPeriod();
+  const orm = await db();
+  const usage = await orm.coachUsage.findUnique({
+    where: { userId_year_month: { userId: session.user.id, year: period.year, month: period.month } },
+  }).catch(() => null);
+  const quota = evaluateQuota(usage, plan);
+  if (!quota.ok) {
+    return Response.json(
+      { error: "quota_exceeded", plan, max: quota.max, used: quota.used, period },
+      { status: 429, headers: { "X-Quota-Reason": "monthly_cap" } }
+    );
+  }
+
   const system = buildSystemPrompt({ org, locale: session.user.locale || "es" });
   const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content || "";
   const userMsg = sanitizeUserTurn(lastUser, userContext || {});
@@ -54,6 +80,14 @@ export async function POST(req) {
     role: m.role === "user" ? "user" : "assistant",
     content: String(m.content || "").slice(0, 4000),
   }));
+
+  // Sprint S1.6 — modelo decidido por plan + env override (`COACH_MODEL`).
+  // FREE → Haiku, PRO+ → Sonnet, ENTERPRISE+opt → Opus. El gating por
+  // mensajes/mes vive en CoachUsage (Sprint S5).
+  const model = resolveCoachModel(org?.plan || "FREE", {
+    envOverride: process.env.COACH_MODEL,
+    opusEnterprise: process.env.COACH_OPUS_FOR_ENTERPRISE === "1",
+  });
 
   const upstream = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -63,12 +97,17 @@ export async function POST(req) {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: 800,
       temperature: 0.3,
       stream: true,
+      // Sprint S4.4 — TTL 1h. El system prompt no cambia entre turns;
+      // 1h evita re-cache de un prompt grande (~600 tokens base + glossary)
+      // por cada mensaje. Costo del 25% extra al primer write se amortiza
+      // en sesiones de coach >= 2 turns. Ahorro estimado: 60-80% sobre
+      // ephemeral 5min default en uso típico.
       system: [
-        { type: "text", text: system, cache_control: { type: "ephemeral" } },
+        { type: "text", text: system, cache_control: { type: "ephemeral", ttl: "1h" } },
       ],
       messages: [...history, { role: "user", content: userMsg }],
     }),
@@ -78,7 +117,26 @@ export async function POST(req) {
     return new Response("upstream_error", { status: 502 });
   }
 
-  await auditLog({ orgId, actorId: session.user.id, action: "coach.query", payload: { chars: lastUser.length } })
+  // Sprint S5.1 — bump quota counter. Upsert por (userId, year, month).
+  // Best-effort: si falla, no rompemos la stream del coach.
+  const modelTier = getCoachQuota(plan).modelTier;
+  await orm.coachUsage.upsert({
+    where: { userId_year_month: { userId: session.user.id, year: period.year, month: period.month } },
+    create: {
+      userId: session.user.id,
+      orgId: orgId || null,
+      year: period.year,
+      month: period.month,
+      requests: 1,
+      modelTier,
+    },
+    update: {
+      requests: { increment: 1 },
+      modelTier,
+    },
+  }).catch(() => {});
+
+  await auditLog({ orgId, actorId: session.user.id, action: "coach.query", payload: { chars: lastUser.length, plan, used: quota.used + 1, max: quota.max } })
     .catch(() => {});
 
   const encoder = new TextEncoder();

@@ -171,33 +171,54 @@ export function scoreArm(arm, totalPulls, c = 1.0, statsOpts = {}) {
 /**
  * Selecciona el brazo ganador entre candidatos. Si se pasa `bucket`,
  * busca brazos contextuales `intent:bucket`; si no, por `intent`.
+ *
+ * Sprint S4.3 — tie-breaking diversity. Antes: con scores idénticos
+ * (todos cold-start con prior idéntico = mismo score), ganaba el
+ * PRIMER candidato. Resultado: monotonía en cold-start, todos los
+ * usuarios nuevos veían el mismo protocolo. Ahora: random pick entre
+ * los empatados (epsilon=0.01 tolerance). Determinista si rng provided
+ * para tests.
+ *
+ * @param {object} state           - bandit arms state
+ * @param {Array}  candidates      - protocolos candidatos
+ * @param {object} [opts]
+ * @param {number} [opts.c]        - UCB exploration constant
+ * @param {string} [opts.bucket]   - timeBucket actual
+ * @param {()=>number} [opts.rng]  - inyectable para tests deterministas
  */
-export function selectArm(armsState, candidates, { c = 1.0, bucket = null } = {}) {
+export function selectArm(armsState, candidates, { c = 1.0, bucket = null, rng = Math.random } = {}) {
   if (!Array.isArray(candidates) || candidates.length === 0) return null;
   const state = armsState || {};
   const total = Object.values(state).reduce((a, s) => a + (s?.n || 0), 0);
-  let best = null;
-  let bestScore = -Infinity;
-  for (const cand of candidates) {
+
+  // Calcula score por candidato + recolecta empates dentro de epsilon.
+  const TIE_EPSILON = 0.01;
+  const scored = candidates.map((cand) => {
     const intent = cand.int ?? cand.id ?? cand.n;
     const key = armKey(intent, bucket);
-    const arm = state[key] || state[intent] || null; // fallback a llave sin bucket
-    const score = scoreArm(arm, total, c);
-    if (score > bestScore) {
-      bestScore = score;
-      best = cand;
-    }
-  }
-  const intent = best?.int ?? best?.id ?? best?.n;
+    const arm = state[key] || state[intent] || null;
+    return { cand, score: scoreArm(arm, total, c), intent };
+  });
+
+  let bestScore = -Infinity;
+  for (const s of scored) if (s.score > bestScore) bestScore = s.score;
+  const tied = scored.filter((s) => s.score >= bestScore - TIE_EPSILON);
+
+  // Si solo uno empata, lo retornamos. Si múltiples, random uniforme.
+  const winner = tied.length === 1 ? tied[0] : tied[Math.floor(rng() * tied.length)];
+  const intent = winner.intent;
   const key = armKey(intent, bucket);
   const arm = state[key] || state[intent] || null;
   const stats = armStats(arm);
   const isExplore = !arm || arm.n < 2;
   return {
-    protocol: best,
-    score: bestScore,
-    reason: isExplore ? "explorando — pocas observaciones" : "mejor recompensa esperada",
+    protocol: winner.cand,
+    score: winner.score,
+    reason: isExplore
+      ? (tied.length > 1 ? "explorando — diversidad entre opciones equivalentes" : "explorando — pocas observaciones")
+      : "mejor recompensa esperada",
     stats,
+    tied: tied.length,
   };
 }
 
@@ -229,6 +250,16 @@ export function armCI(arm, confidence = 0.9) {
  *   - energy: 0.3 (escala 1-3 → ±2, así que aporta ≤ ±0.6)
  *   - HRV   : 1.5 sobre Δ lnRMSSD (~±0.3 típico post-respiración lenta)
  *   - completionRatio=1 → factor 1; 0.5 → 0.75; 0 → 0.5 (no anula)
+ *
+ * Sprint S4.2 — fallback: si moodDelta es null/NaN PERO hay HRV, computa
+ * reward basado en HRV+energy. Antes: sin moodDelta retornábamos null y
+ * el bandit perdía la sesión completa para aprendizaje. Estimación:
+ * ~30-50% de sesiones vienen sin mood-post (el user salta el check-in).
+ * Esta inferencia usa HRV como proxy (correlated con mood mejora).
+ *
+ * Marca el reward con `_inferredFromHrv: true` (segundo retorno) para
+ * que `recordSessionOutcome` pueda decidir cómo tratarlo (e.g. lower
+ * weight en residuales que solo calibran contra mood real).
  */
 export function compositeReward({
   moodDelta,
@@ -236,17 +267,30 @@ export function compositeReward({
   hrvDeltaLnRmssd = null,
   completionRatio = 1,
 } = {}) {
-  const m = Number(moodDelta);
-  if (!Number.isFinite(m)) return null;
-  let r = m;
-  if (typeof energyDelta === "number" && Number.isFinite(energyDelta)) {
-    r += 0.3 * energyDelta;
-  }
-  if (typeof hrvDeltaLnRmssd === "number" && Number.isFinite(hrvDeltaLnRmssd)) {
-    r += 1.5 * hrvDeltaLnRmssd;
-  }
   const ratio = Math.max(0, Math.min(1, Number.isFinite(completionRatio) ? completionRatio : 1));
-  return +(r * (0.5 + 0.5 * ratio)).toFixed(3);
+  const completionFactor = 0.5 + 0.5 * ratio;
+
+  // Type-strict: rechaza null/undefined/string/NaN (Number(null)=0 sería bug).
+  const moodValid = typeof moodDelta === "number" && Number.isFinite(moodDelta);
+  const hrvValid = typeof hrvDeltaLnRmssd === "number" && Number.isFinite(hrvDeltaLnRmssd);
+  const enValid = typeof energyDelta === "number" && Number.isFinite(energyDelta);
+
+  if (moodValid) {
+    let r = moodDelta;
+    if (enValid) r += 0.3 * energyDelta;
+    if (hrvValid) r += 1.5 * hrvDeltaLnRmssd;
+    return +(r * completionFactor).toFixed(3);
+  }
+
+  // Sprint S4.2 — Mood ausente. Inferir reward si hay HRV (señal robusta).
+  // 1.5 × hrvDelta — típico ±0.3 → reward ±0.45 moderado.
+  if (hrvValid) {
+    let r = 1.5 * hrvDeltaLnRmssd;
+    if (enValid) r += 0.3 * energyDelta;
+    return +(r * completionFactor).toFixed(3);
+  }
+
+  return null;
 }
 
 /** Snapshot para UI/debug: top-k brazos por media con CI. */

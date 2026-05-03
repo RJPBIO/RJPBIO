@@ -342,8 +342,8 @@ describe("programRequiredSessions", () => {
   it("focus-sprint requiere 5", () => {
     expect(programRequiredSessions(getProgramById("focus-sprint"))).toBe(5);
   });
-  it("burnout-recovery requiere 14 (sparse de 28 días)", () => {
-    expect(programRequiredSessions(getProgramById("burnout-recovery"))).toBe(14);
+  it("burnout-recovery requiere 15 (sparse de 28 días + día 12 #22 vagal hum, Phase 5 SP6)", () => {
+    expect(programRequiredSessions(getProgramById("burnout-recovery"))).toBe(15);
   });
   it("null / inválido retorna 0", () => {
     expect(programRequiredSessions(null)).toBe(0);

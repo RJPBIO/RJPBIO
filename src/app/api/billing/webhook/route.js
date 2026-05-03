@@ -34,8 +34,23 @@ export async function POST(req) {
   const { orgId, orgUpdate, notification, action } = resolution;
   const orm = await db();
 
+  // Sprint S1.5 — idempotency. Antes: si Stripe retransmitía un event
+  // (network blip, retry burst), `org.update` se aplicaba 2× y un audit
+  // duplicado se escribía. Ahora: pre-check en StripeEvent, persist tras
+  // aplicar, y skip si ya está. Race-safe: PRIMARY KEY en id permite
+  // que dos webhooks concurrentes con mismo event.id terminen con uno
+  // ganando el insert y el otro tomando el catch path → skip apply.
+  let alreadyProcessed = false;
   try {
-    if (!resolution.skip) {
+    const existing = await orm.stripeEvent.findUnique({ where: { id: event.id } });
+    if (existing) alreadyProcessed = true;
+  } catch {
+    // Si la tabla no existe (migration no aplicada) o el adapter de
+    // memoria no la tiene, seguimos sin idempotency check — best-effort.
+  }
+
+  try {
+    if (!resolution.skip && !alreadyProcessed) {
       if (orgUpdate && orgId) {
         await orm.org.update({ where: { id: orgId }, data: orgUpdate }).catch(() => {});
       }
@@ -44,10 +59,26 @@ export async function POST(req) {
       }
     }
 
+    // Persistir fingerprint del evento (idempotency). Si el insert falla
+    // por unique constraint (race con otro worker), no es problema —
+    // ya quedó registrado por el ganador.
+    if (!alreadyProcessed) {
+      try {
+        await orm.stripeEvent.create({
+          data: {
+            id: event.id,
+            type: event.type,
+            orgId: orgId || null,
+            payload: { type: event.type, livemode: !!event.livemode },
+          },
+        });
+      } catch { /* unique violation race or memory adapter — ignore */ }
+    }
+
     await auditLog({
       orgId: orgId || undefined,
       action,
-      payload: { eventId: event.id },
+      payload: { eventId: event.id, idempotentSkip: alreadyProcessed || undefined },
     }).catch(() => {});
   } catch (e) {
     await auditLog({

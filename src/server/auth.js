@@ -64,6 +64,17 @@ async function lookupRecipientBranding(email) {
 }
 
 async function sendMagicLink({ identifier, url, provider }) {
+  // Sprint S1.1 — refuse boot al console fallback en producción.
+  // Antes: si EMAIL_SERVER ausente en prod, los magic-links iban a stdout,
+  // y un agregador de logs (Sentry/CloudWatch) terminaba indexando un
+  // secret de auth. Ahora: prod sin EMAIL_SERVER lanza error explícito.
+  if (!process.env.EMAIL_SERVER && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "EMAIL_SERVER not configured in production: magic-link fallback to stdout would leak auth secrets to logs. " +
+      "Set EMAIL_SERVER to a SMTP URL (e.g. smtp://user:pass@smtp.postmarkapp.com:587)."
+    );
+  }
+
   // Lookup branding del recipient (best-effort).
   const { branding, orgName, customDomainVerified } = await lookupRecipientBranding(identifier);
 

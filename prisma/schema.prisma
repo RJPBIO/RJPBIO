@@ -62,6 +62,7 @@ model Org {
   nom35Responses Nom35Response[]
   dsarRequests   DsarRequest[]   @relation("DsarOrg")
   notifications  Notification[]  @relation("OrgNotifications")
+  coachUsage     CoachUsage[]
   @@index([region])
   @@index([dunningState])
   @@index([customDomainVerified])
@@ -104,6 +105,12 @@ model User {
   dsarResolutions DsarRequest[] @relation("DsarResolver")
   notifications Notification[] @relation("UserNotifications")
   pushSubscriptions PushSubscription[]
+  wearableEvents WearableEvent[]
+  coachUsage     CoachUsage[]
+  pushOutbox     PushOutbox[]
+  // Sprint S1.3 — index `deletedAt` para que queries "active users"
+  // (el patrón de filtrado más común post Art-17) no hagan full scan.
+  @@index([deletedAt])
 }
 
 // Sprint 91 — Web Push subscriptions persistidas para que el server
@@ -673,7 +680,75 @@ model Nom35Response {
   @@index([userId, completedAt])
 }
 
+// ─── Coach LLM quota tracking (Sprint S5.1) ────────────────
+// Antes: cualquier seat consumía Anthropic API sin gate. Costo runaway
+// si user/org abusaba. Ahora: tracking mensual + hard-cap por plan.
+// Reset implícito: registramos year+month, una nueva fila se crea
+// cuando cambia el mes (no hay job de cleanup — monthly aging keeps
+// table small en relación a users activos).
+model CoachUsage {
+  id         String   @id @default(cuid())
+  userId     String
+  orgId      String?
+  year       Int      // e.g. 2026
+  month      Int      // 1..12
+  requests   Int      @default(0)
+  tokensIn   Int      @default(0)
+  tokensOut  Int      @default(0)
+  modelTier  String?  // "haiku" | "sonnet" | "opus" (último usado)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org        Org?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  @@unique([userId, year, month])
+  @@index([orgId, year, month])
+  @@index([year, month])
+}
+
+// ─── Push outbox (Sprint S5.2) ─────────────────────────────
+// Hasta Sprint 91 push subscriptions se persistían pero no había
+// sender server-side: setTimeout cliente-only era todo. Ahora:
+// outbox con queue pattern + cron drain + retry.
+model PushOutbox {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  body        String?
+  href        String?
+  kind        String?   // "reminder" | "notification" | "weekly-digest" | etc
+  status      String    @default("pending")  // pending | sent | failed | exhausted
+  attempts    Int       @default(0)
+  nextAttempt DateTime  @default(now())
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  sentAt      DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([status, nextAttempt])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+// ─── Stripe webhook idempotency (Sprint S1.5) ──────────────
+// Antes: el webhook handler aplicaba orgUpdate cada vez que Stripe
+// retransmitía un event (retry burst, network blip → Stripe re-envía).
+// Las mutaciones son idempotentes (set plan, set seats), pero esto
+// quería que si Stripe corregía un evento corrupto con un nuevo evento
+// retroactivamente, ambos terminaran aplicando — no había auditoría
+// "este event ya se procesó en X timestamp". Ahora: pre-check + fingerprint.
+model StripeEvent {
+  id          String   @id  // event.id de Stripe
+  type        String
+  orgId       String?
+  processedAt DateTime @default(now())
+  payload     Json?
+  @@index([processedAt])
+  @@index([orgId, processedAt])
+}
+
 // ─── Wearable ingress (Whoop, Oura, Garmin, Apple Health) ──
+// Sprint S1.4 — userId promovido a FK con onDelete: Cascade.
+// Antes: userId era columna sin relation → Art 17 erasure dejaba
+// huérfanos vivos con HRV/sleep/recovery/activity del user borrado,
+// accesibles a admin via JOIN manual. Ahora: cascade automático.
 model WearableEvent {
   id         String   @id @default(cuid())
   orgId      String?
@@ -683,6 +758,9 @@ model WearableEvent {
   payload    Json
   receivedAt DateTime @default(now())
   org        Org?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([provider, receivedAt])
   @@index([userId, provider, receivedAt])
+  // Sprint S1.4 — admin reportes wearable por org necesitan este índice.
+  @@index([orgId, provider, receivedAt])
 }

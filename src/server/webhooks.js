@@ -42,13 +42,24 @@ export function generateWebhookSecret() {
   return randomBytes(32).toString("base64");
 }
 
+// Sprint S4.5 — versión semántica del payload schema. Bump cuando un cambio
+// breaking se ship. Clientes pueden inspeccionar header `webhook-event-version`
+// para distinguir v1 vs v2 schemas.
+export const WEBHOOK_EVENT_VERSION = "1";
+
 export async function dispatchWebhooks(orgId, event, payload) {
   const orm = await db();
   const hooks = await orm.webhook.findMany({ where: { orgId, active: true } });
   const delivers = hooks.filter((h) => h.events.includes(event) || h.events.includes("*"));
   for (const h of delivers) {
     const id = `msg_${randomBytes(12).toString("base64url")}`;
-    const body = JSON.stringify({ id, type: event, timestamp: new Date().toISOString(), data: payload });
+    const body = JSON.stringify({
+      id,
+      type: event,
+      version: WEBHOOK_EVENT_VERSION,  // Sprint S4.5
+      timestamp: new Date().toISOString(),
+      data: payload,
+    });
     const ts = Math.floor(Date.now() / 1000);
     const sig = signForWebhook(h, body, ts, id);
     const delivery = await orm.webhookDelivery.create({
@@ -137,6 +148,7 @@ async function sendWithRetry({ id, url, body, ts, sig, deliveryId, attempt = 0 }
         "webhook-id": id,
         "webhook-timestamp": String(ts),
         "webhook-signature": sig,
+        "webhook-event-version": WEBHOOK_EVENT_VERSION,  // Sprint S4.5
         "user-agent": "BIO-IGNICION-Webhooks/1.0",
       },
       body,
@@ -188,7 +200,14 @@ export async function retryDelivery(deliveryId) {
   const d = await orm.webhookDelivery.findUnique({ where: { id: deliveryId }, include: { webhook: true } });
   if (!d || !d.webhook) return false;
   const id = `msg_${randomBytes(12).toString("base64url")}`;
-  const body = JSON.stringify({ id, type: d.event, timestamp: new Date().toISOString(), data: d.payload, retry: true });
+  const body = JSON.stringify({
+    id,
+    type: d.event,
+    version: WEBHOOK_EVENT_VERSION,  // Sprint S4.5
+    timestamp: new Date().toISOString(),
+    data: d.payload,
+    retry: true,
+  });
   const ts = Math.floor(Date.now() / 1000);
   // Sprint 17 — usa multi-sig si overlap activo (consistencia con dispatch).
   const sig = signForWebhook(d.webhook, body, ts, id);

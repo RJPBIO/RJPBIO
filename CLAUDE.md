@@ -32,3 +32,19 @@
 - **Framer Motion > CSS animations puras.** La UX sensorial lo justifica.
 - **SVG > PNG para iconos.** PWA moderna; iOS acepta SVG en apple-touch-icon desde iOS 16.
 - **i18n casero > next-intl.** 2 locales no justifican otra dep.
+- **Vercel Cron > Inngest** (Phase 2). 11 jobs, cabe en Pro. Migrar a Inngest solo si necesitamos durable workflows o >40 jobs.
+- **RLS Postgres deferred** a Fase 4. Compromiso documentado en `ROADMAP.md`: implementar antes de cerrar deal Enterprise tier (>$50K USD/año contract value). Mientras tanto, defensa via `requireMembership` opt-in en handlers + audit log.
+- **NOM-035 texto ítems** verificado por hash SHA-256 (`integrity.js`). Validación legal vs DOF oficial pendiente — `nom035TextValidatedByLawyer = false`. Reportes oficiales muestran disclaimer hasta review humano.
+- **Coach LLM plan-tiered** (Phase 2): FREE Haiku 5/mes, PRO Sonnet 100/mes, STARTER 500/mes, GROWTH/ENTERPRISE ∞. Hard-cap, no soft.
+- **Magic-link console fallback bloqueado en prod** — falla boot si `EMAIL_SERVER` ausente.
+- **Push delivery server-side real** (Phase 2) vía `web-push` + `PushOutbox` + cron. setTimeout cliente NO se reintroduce.
+- **MFA enforce en `/api/sync/*` + `/api/coach`** (Phase 2), no solo `/admin`.
+
+## Phase 2 elevation context (post 2026-05-01)
+
+- Backend recibió 22 sub-items de mejoras (Sprints 1-5). Ver `ELEVATION_LOG.md` para detalle.
+- Sprint 6 (wearable OAuth Whoop+Oura, HrvSample tables, etc.) deferido — ver `ROADMAP.md`.
+- 6 docs finales para asesor externo: `FINAL_SYSTEM_STATE.md`, `FINAL_BACKEND_STATE.md`, `FINAL_DOMAIN_INTELLIGENCE.md`, `FINAL_FEATURES_CATALOG.md`, `FINAL_FRONTEND_REQUIREMENTS.md`, `DECISION_POINTS.md`.
+- Migraciones nuevas: `0022_sprint1_compliance` y `0023_coach_usage_push_outbox`. Ambas idempotentes — se aplican en próximo `npm run build`.
+- Dependencia nueva: `web-push@^3.6.7`.
+- Cron tasks nuevas en `vercel.json` — requieren `CRON_SECRET` env en Vercel.
