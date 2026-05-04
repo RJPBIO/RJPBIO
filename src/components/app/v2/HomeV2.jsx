@@ -7,6 +7,7 @@ import { evaluateEngineHealth, suggestOptimalTime } from "@/lib/neural";
 import { P as PROTOCOLS } from "@/lib/protocols";
 import HeaderV2 from "./home/HeaderV2";
 import ColdStartView from "./home/ColdStartView";
+import LearningView from "./home/LearningView";
 import PersonalizedView from "./home/PersonalizedView";
 import { devLog } from "@/lib/dev-utils";
 import {
@@ -44,7 +45,27 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
         <HeaderV2 onBellClick={onBellClick} />
         <ColdStartView
           greeting={greeting}
+          totalSessions={health.totalSessions}
           onAction={(item) => onNavigate && onNavigate(item)}
+        />
+      </>
+    );
+  }
+
+  // Phase 6E SP-A — branch "learning" (1 ≤ totalSessions < 20). Antes
+  // este rango caía al default personalized + PersonalizedView con data
+  // ausente (composite 0%, recommendation null, dimensions defaults 50)
+  // → UX engañoso. LearningView muestra progress hacia baseline + next
+  // recommendation con fallback + mini-stats acumulados (Bug-48).
+  if (health.dataMaturity === "learning") {
+    return (
+      <>
+        <HeaderV2 onBellClick={onBellClick} />
+        <LearningView
+          greeting={greeting}
+          subtitle={null}
+          onAction={(item) => onNavigate && onNavigate(item)}
+          onNavigate={onNavigate}
         />
       </>
     );

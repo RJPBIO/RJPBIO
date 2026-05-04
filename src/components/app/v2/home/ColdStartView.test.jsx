@@ -1,10 +1,16 @@
 /* Phase 6D SP1 — ColdStartView buildActions selector tests.
    Verifica el filtrado dinámico de cards basado en state.chronotype,
    instruments, hrvLog y totalSessions, y la derivación del label de
-   "Tu primera sesión" desde firstIntent. */
+   "Tu primera sesión" desde firstIntent.
 
-import { describe, it, expect } from "vitest";
-import { buildActions } from "./ColdStartView";
+   Phase 6E SP-A — extendido con tests del empty state (Bug-48). */
+
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, fireEvent, cleanup } from "@testing-library/react";
+import ColdStartView, { buildActions } from "./ColdStartView";
+import { useStore } from "@/store/useStore";
+
+const initialStoreState = useStore.getState();
 
 const baseState = {
   firstIntent: null,
@@ -156,5 +162,146 @@ describe("buildActions — defensivo contra inputs malformados", () => {
   it("totalSessions undefined trata como 0", () => {
     const actions = buildActions({ ...baseState, totalSessions: undefined });
     expect(actions.map((a) => a.id)).toContain("primera");
+  });
+});
+
+// ─── Phase 6E SP-A — Bug-48 ColdStart Stuck empty state tests ──────
+
+function setStore(partial) {
+  useStore.setState({ ...initialStoreState, ...partial }, true);
+}
+
+describe("ColdStartView empty state — Phase 6E SP-A Bug-48", () => {
+  beforeEach(() => { setStore({}); });
+  afterEach(() => { cleanup(); });
+
+  it("renderiza EmptyColdStart cuando todas las gates pasan (actions=[])", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 1,
+      history: [{ ts: Date.now(), c: 60, p: "test" }],
+      instruments: [{ instrumentId: "pss-4", ts: Date.now(), score: 6 }],
+      chronotype: { type: "intermediate", label: "Intermedio", score: 12 },
+      hrvLog: [{ rmssd: 45, ts: Date.now() }],
+    });
+    const { container } = render(
+      <ColdStartView greeting="Hola." subtitle="Vamos a conocerte." totalSessions={1} onAction={() => {}} />,
+    );
+    expect(container.querySelector("[data-v2-coldstart-empty]")).toBeTruthy();
+    expect(container.querySelector("[data-v2-onboarding-row]")).toBeNull();
+  });
+
+  it("eyebrow cambia a 'TU PRÓXIMA ACCIÓN' cuando empty state activo", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 1,
+      history: [{}],
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [{ rmssd: 45 }],
+    });
+    const { container } = render(
+      <ColdStartView greeting="Hola." totalSessions={1} onAction={() => {}} />,
+    );
+    expect(container.textContent).toMatch(/TU PRÓXIMA ACCIÓN/);
+    expect(container.textContent).not.toMatch(/EMPEZAR POR AQUÍ/);
+  });
+
+  it("greeting/subtitle cambian a 'Listo para tu próxima sesión.' cuando empty", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 1,
+      history: [{}],
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [{ rmssd: 45 }],
+    });
+    const { container } = render(
+      <ColdStartView greeting="Hola." subtitle="Vamos a conocerte." totalSessions={1} onAction={() => {}} />,
+    );
+    expect(container.textContent).toMatch(/Listo para tu próxima sesión/);
+    expect(container.textContent).not.toMatch(/Vamos a conocerte/);
+  });
+
+  it("NO renderiza EmptyColdStart cuando user tiene cards (state inicial)", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 0,
+      history: [],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const { container } = render(
+      <ColdStartView greeting="Hola." totalSessions={0} onAction={() => {}} />,
+    );
+    expect(container.querySelector("[data-v2-coldstart-empty]")).toBeNull();
+    expect(container.querySelectorAll("[data-v2-onboarding-row]").length).toBeGreaterThan(0);
+    expect(container.textContent).toMatch(/EMPEZAR POR AQUÍ/);
+  });
+
+  it("EmptyColdStart CTA dispara onAction con first-session", () => {
+    const onAction = vi.fn();
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 1,
+      history: [{}],
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [{ rmssd: 45 }],
+    });
+    const { getByTestId } = render(
+      <ColdStartView greeting="Hola." totalSessions={1} onAction={onAction} />,
+    );
+    fireEvent.click(getByTestId("coldstart-empty-cta"));
+    expect(onAction).toHaveBeenCalledWith({ action: "first-session" });
+  });
+
+  it("copy refleja sessionsToBaseline correctamente (totalSessions=2 → '3 sesiones más', singular en 4)", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 2,
+      history: [{}, {}],
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [{ rmssd: 45 }],
+    });
+    const { container, rerender } = render(
+      <ColdStartView greeting="Hola." totalSessions={2} onAction={() => {}} />,
+    );
+    expect(container.textContent).toMatch(/Sesión 2 de 5/);
+    expect(container.textContent).toMatch(/3 sesiones más/);
+
+    cleanup();
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 4,
+      history: [{}, {}, {}, {}],
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [{ rmssd: 45 }],
+    });
+    const { container: c2 } = render(
+      <ColdStartView greeting="Hola." totalSessions={4} onAction={() => {}} />,
+    );
+    expect(c2.textContent).toMatch(/Sesión 4 de 5/);
+    expect(c2.textContent).toMatch(/1 sesión más/);
+    expect(c2.textContent).not.toMatch(/1 sesiones más/);
+  });
+
+  it("totalSessions prop tiene precedencia sobre store.totalSessions", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 99, // ← store dice 99 (incorrecto)
+      history: [{}, {}, {}], // ← real es 3
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [{ rmssd: 45 }],
+    });
+    const { container } = render(
+      <ColdStartView greeting="Hola." totalSessions={3} onAction={() => {}} />,
+    );
+    expect(container.textContent).toMatch(/Sesión 3 de 5/);
+    expect(container.textContent).not.toMatch(/Sesión 99/);
   });
 });
