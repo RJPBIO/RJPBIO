@@ -160,6 +160,31 @@ Outcome equivalente al spec original. Mecanismo y citas peer-reviewed (Garfinkel
 
 ---
 
+## 12. Vercel crons downgraded a daily (Hobby plan workaround)
+
+**Qué**: 4 crons en `vercel.json` fueron bajados de sub-daily a daily para que el deployment pase en plan Hobby de Vercel:
+
+| Cron | Schedule original | Schedule actual (Hobby) |
+|---|---|---|
+| `maintenance-notify` | `*/5 * * * *` | `0 8 * * *` |
+| `incident-broadcast` | `* * * * *` | `15 9 * * *` |
+| `webhook-retry` | `* * * * *` | `30 10 * * *` |
+| `push-deliver` | `* * * * *` | `0 11 * * *` |
+
+**Por qué se difirió**: el plan Hobby de Vercel solo permite `Once per day` por cron (cron expressions sub-daily fallan durante deployment). El producto fue diseñado asumiendo plan Pro (CLAUDE.md: "11 jobs, cabe en Pro"). Como aún estamos en preview/dev sin users B2B reales, bajar a daily NO afecta funcionalidad práctica hoy.
+
+**Blast radius si se revierte**: bajo. Solo requiere editar `vercel.json` con los schedules originales + verificar que `CRON_SECRET` esté configurado en Vercel envs. Suite + build no se ven afectados.
+
+**Disparador de prioridad**: cuando upgrades Vercel a Pro plan ($20/mes/user), revertir a los schedules originales para restaurar:
+- Real-time push delivery (cada minuto)
+- Real-time webhook retry (cada minuto)
+- Real-time incident broadcast (cada minuto) — crítico para SLA B2B
+- Maintenance notify cada 5 min
+
+**Detectado en**: Phase 6A post-deployment 2026-05-03.
+
+---
+
 ## Reglas de uso de este documento
 
 1. Cualquier item agregado debe incluir las 4 secciones: **Qué / Por qué se difirió / Blast radius / Disparador de prioridad**.
