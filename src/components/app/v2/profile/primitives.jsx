@@ -103,7 +103,7 @@ export function PillButton({ children, onClick, variant = "primary", disabled = 
           : isPrimary ? colors.accent.phosphorCyan : "transparent",
         color: disabled
           ? "rgba(255,255,255,0.32)"
-          : isPrimary ? "#08080A" : "rgba(255,255,255,0.96)",
+          : isPrimary ? colors.bg.base : colors.text.strong,
         border: isOutlined ? `0.5px solid ${colors.separator}` : "none",
         borderRadius: radii.pill,
         fontFamily: typography.family,

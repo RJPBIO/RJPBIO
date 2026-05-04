@@ -153,7 +153,7 @@ export default function OrgDashboard({
         <InstrumentCard
           agg={pssAgg}
           title="Estrés percibido (PSS-4)"
-          reference="Cohen & Williamson 1988"
+          reference="Cohen 1983"
           scale="0-16"
           isDark={isDark}
         />
@@ -349,7 +349,7 @@ function ComplianceCard({ isDark }) {
       </h3>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
         <ComplianceRow ok label="NOM-035-STPS-2018 Guía II (46 ítems)" />
-        <ComplianceRow ok label="PSS-4 (Cohen & Williamson 1988) — estrés percibido" />
+        <ComplianceRow ok label="PSS-4 (Cohen 1983) — estrés percibido" />
         <ComplianceRow ok label="SWEMWBS (Stewart-Brown 2009) — bienestar mental" />
         <ComplianceRow ok label="PHQ-2 (Kroenke et al. 2003) — screening depresión" />
         <ComplianceRow ok label="HRV RMSSD (Task Force 1996, Shaffer 2017) con MDC95" />

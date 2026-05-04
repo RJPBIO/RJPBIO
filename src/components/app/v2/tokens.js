@@ -18,6 +18,11 @@ export const colors = {
     primary: "rgba(245,245,247,0.92)",
     secondary: "rgba(245,245,247,0.62)",
     muted: "rgba(245,245,247,0.38)",
+    // Phase 6D SP3 — text.strong: variante de mayor contraste usada en
+    // controles activos (Switch ON track) y stat values grandes. Antes
+    // vivía como literal rgba(255,255,255,0.96) duplicado en ~6 archivos
+    // — Bug-43.
+    strong: "rgba(255,255,255,0.96)",
   },
   separator: "rgba(255,255,255,0.06)",
   focusRing: "#22D3EE",
@@ -133,6 +138,11 @@ export const layout = {
   maxContentWidth: 720,
   contentPadInline: 24,
   contentPadInlineMobile: 20,
+  // Phase 6D SP5 Bug-41 — InputBar height hoisted to layout token. Antes
+  // CoachDisclaimer hardcodeaba 56px y la altura real era ~68px (textarea
+  // minHeight 44 + paddingBlock 12*2). Mantenerlos sincronizados aquí
+  // evita drift cuando se ajuste padding o textarea.
+  coachInputBarHeight: 68,
 };
 
 // Phase 6B SP2 — alpha helper local. Reemplaza `withAlpha` legacy de

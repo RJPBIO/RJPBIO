@@ -83,7 +83,14 @@ export default function AnnouncementBar({ id, label, cta, href, tone = "default"
           animation: "biAnnouncePulse 2.6s ease-in-out infinite",
         }}
       />
-      <span style={{ textAlign: "center", lineHeight: 1.4 }}>
+      <span
+        // Phase 6D SP1 — paddingInlineEnd reserva espacio para el botón
+        // close (absolutely positioned insetInlineEnd:10, ~26px wide).
+        // Sin esto, en mobile (≤480px) el texto wrap se mete debajo
+        // del close → "trademark B2B · Ver placas →" se solapaba con
+        // la X y con el CTA "Entrar" del header siguiente.
+        style={{ textAlign: "center", lineHeight: 1.4, paddingInlineEnd: 36 }}
+      >
         {l}
         {href && cl ? (
           <>

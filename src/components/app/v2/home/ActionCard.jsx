@@ -71,7 +71,7 @@ export default function ActionCard({ kicker = "RECOMENDADO AHORA", title, descri
           width: "100%",
           padding: "14px 0",
           background: colors.accent.phosphorCyan,
-          color: "#08080A",
+          color: colors.bg.base,
           border: "none",
           borderRadius: radii.pill,
           fontFamily: typography.family,

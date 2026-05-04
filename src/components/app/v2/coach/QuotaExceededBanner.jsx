@@ -43,6 +43,9 @@ export default function QuotaExceededBanner({ max = 0, onDismiss, autoDismissMs 
           lineHeight: 1.4,
           textAlign: "center",
           pointerEvents: "auto",
+          // Phase 6D SP4b — Bug-28 excepción documentada. Banner de quota
+          // exceeded debe leerse sobre el InputBar y la conversación previa.
+          // Blur preserva contexto sin opacar mensajes recientes.
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
         }}

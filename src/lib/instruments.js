@@ -5,9 +5,10 @@
    publicada y revisada por pares. La plataforma ya contiene NOM-035
    (México); esto añade estándares globales:
 
-     - PSS-4   (Cohen & Williamson 1988) — estrés percibido mensual
+     - PSS-4   (Cohen 1983) — estrés percibido mensual
      - SWEMWBS (Stewart-Brown et al. 2009) — bienestar trimestral
      - PHQ-2   (Kroenke, Spitzer & Williams 2003) — screener depresión
+     - rMEQ    (Adan & Almirall 1991) — cronotipo (Phase 6D SP1)
 
    Funciones puras — scoring, scheduling y agregación k-anónima.
    ═══════════════════════════════════════════════════════════════ */
@@ -15,20 +16,33 @@
 // ─── PSS-4 ──────────────────────────────────────────────────────
 // Perceived Stress Scale 4-item, 0-4 per item, total 0-16.
 // Items q2 & q3 are positively-worded and reverse-scored.
-// Cohen S, Williamson G. (1988). "Perceived stress in a probability
-// sample of the United States." In: The Social Psychology of Health.
+// Cohen S. (1983). "Perceived Stress in a sample of the United
+// States." Reproduced in Cohen, Kamarck, Mermelstein "A global
+// measure of perceived stress." Journal of Health and Social
+// Behavior, 24(4), 385-396.
+//
+// Phase 6D SP2 — canonización Cohen 1983. Antes el repo tenía dos
+// versiones divergentes: lib/instruments.js (esta) usaba Cohen &
+// Williamson 1988 con escala "Casi siempre/Siempre" mientras
+// NeuralCalibrationV2 usaba internal Cohen 1983 con "Frecuentemente/
+// Muy frecuentemente". Adicionalmente InstrumentsView ya citaba
+// "Cohen 1983 · 4 ítems" en el card label — el runner real ejecutaba
+// Cohen & Williamson 1988 → mismatch visible al usuario. El scoring
+// matemático es idéntico (mismos items reversed, mismo range 0-16);
+// la diferencia es wording. Cohen 1983 es la versión original
+// publicada y la más citada en literatura clínica.
 export const PSS4 = {
   id: "pss-4",
-  name: "Perceived Stress Scale (PSS-4)",
-  version: "Cohen & Williamson 1988",
+  name: "Estrés percibido (PSS-4)",
+  version: "Cohen 1983",
   periodicity: "monthly",
   items: [
-    { id: "q1", text: "¿Con qué frecuencia te has sentido incapaz de controlar las cosas importantes en tu vida?", reverse: false },
-    { id: "q2", text: "¿Con qué frecuencia te has sentido confiado sobre tu capacidad para manejar tus problemas personales?", reverse: true },
-    { id: "q3", text: "¿Con qué frecuencia has sentido que las cosas van como tú quieres?", reverse: true },
-    { id: "q4", text: "¿Con qué frecuencia has sentido que las dificultades se acumulan tanto que no puedes superarlas?", reverse: false },
+    { id: "q1", text: "En el último mes, ¿con qué frecuencia te sentiste incapaz de controlar las cosas importantes de tu vida?", reverse: false },
+    { id: "q2", text: "En el último mes, ¿con qué frecuencia te sentiste seguro/a sobre tu capacidad para manejar tus problemas personales?", reverse: true },
+    { id: "q3", text: "En el último mes, ¿con qué frecuencia sentiste que las cosas iban como tú querías?", reverse: true },
+    { id: "q4", text: "En el último mes, ¿con qué frecuencia sentiste que las dificultades se acumulaban tanto que no podías superarlas?", reverse: false },
   ],
-  scale: ["Nunca", "Casi nunca", "A veces", "Casi siempre", "Siempre"], // 0..4
+  scale: ["Nunca", "Casi nunca", "A veces", "Frecuentemente", "Muy frecuentemente"], // 0..4
   min: 0,
   max: 16,
 };
@@ -134,6 +148,150 @@ export function scorePhq2(answers) {
     action: positive ? "refer" : "continue",
     max: PHQ2.max,
     instrumentId: PHQ2.id,
+  };
+}
+
+// ─── rMEQ ──────────────────────────────────────────────────────
+// Reduced Morningness-Eveningness Questionnaire (5 ítems).
+// Adan A, Almirall H. (1991). "Horne & Östberg morningness-
+// eveningness questionnaire: A reduced scale." Personality and
+// Individual Differences, 12(3), 241-253.
+// Cada ítem tiene su propia escala de scores (NO Likert uniforme).
+// Total range 4-25. Categorías:
+//   4-7   definitely_evening
+//   8-11  moderately_evening
+//   12-17 intermediate
+//   18-21 moderately_morning
+//   22-25 definitely_morning
+//
+// El runner genérico (InstrumentRunner) espera answers como
+// objeto { qN: scoreNumeric }. Para rMEQ el scoreNumeric ya es el
+// peso del ítem (no índice de opción), porque cada opción tiene
+// score directo (e.g. "Antes de 6:30" = 5, "Después de 11:00" = 1).
+export const RMEQ = {
+  id: "rmeq",
+  name: "Cuestionario reducido de matutinidad-vespertinidad",
+  version: "Adan & Almirall 1991",
+  periodicity: "asNeeded",
+  // items[].options sobrescribe la escala genérica del runner cuando
+  // existe — permite scores no-Likert por ítem. Renderer (InstrumentRunner
+  // legacy + futuro v2) debe respetar item.options si está presente.
+  items: [
+    {
+      id: "q1",
+      text: "Si fueras totalmente libre de planificar tu día, ¿a qué hora te levantarías?",
+      options: [
+        { label: "Antes de 6:30",    value: 5 },
+        { label: "6:30 — 7:45",      value: 4 },
+        { label: "7:45 — 9:45",      value: 3 },
+        { label: "9:45 — 11:00",     value: 2 },
+        { label: "Después de 11:00", value: 1 },
+      ],
+    },
+    {
+      id: "q2",
+      text: "Después de despertar, ¿cómo te sientes en los primeros 30 minutos?",
+      options: [
+        { label: "Muy alerta",             value: 4 },
+        { label: "Bastante alerta",        value: 3 },
+        { label: "Bastante somnoliento/a", value: 2 },
+        { label: "Muy somnoliento/a",      value: 1 },
+      ],
+    },
+    {
+      id: "q3",
+      text: "¿A qué hora del día te sientes mejor para trabajar mentalmente?",
+      options: [
+        { label: "Pico mañana — antes de 11:00",  value: 6 },
+        { label: "Pico mediodía",                 value: 4 },
+        { label: "Pico tarde — después de 17:00", value: 2 },
+        { label: "Pico noche — después de 21:00", value: 0 },
+      ],
+    },
+    {
+      id: "q4",
+      text: "Cuando te acuestas tarde, ¿qué tipo de día sigue?",
+      options: [
+        { label: "Muy difícil",  value: 1 },
+        { label: "Algo difícil", value: 2 },
+        { label: "Normal",       value: 3 },
+        { label: "Sin problema", value: 4 },
+      ],
+    },
+    {
+      id: "q5",
+      text: "¿De qué tipo te consideras?",
+      options: [
+        { label: "Definitivamente matutino/a",      value: 6 },
+        { label: "Más matutino/a que vespertino/a", value: 4 },
+        { label: "Más vespertino/a que matutino/a", value: 2 },
+        { label: "Definitivamente vespertino/a",    value: 0 },
+      ],
+    },
+  ],
+  // scale es fallback cuando un ítem no define options propias.
+  // No se usa con rMEQ (todos los ítems tienen options) pero se
+  // mantiene por contrato del runner.
+  scale: [],
+  min: 4,
+  max: 25,
+};
+
+export function scoreRmeq(answers) {
+  if (!answers || typeof answers !== "object") return null;
+  let score = 0;
+  for (const item of RMEQ.items) {
+    const v = answers[item.id];
+    if (typeof v !== "number" || !Number.isFinite(v)) return null;
+    score += v;
+  }
+  let chronotype, bestTimeWindow;
+  if (score >= 22)      { chronotype = "definitely_morning"; bestTimeWindow = "morning"; }
+  else if (score >= 18) { chronotype = "moderately_morning"; bestTimeWindow = "morning"; }
+  else if (score >= 12) { chronotype = "intermediate";       bestTimeWindow = "midday"; }
+  else if (score >= 8)  { chronotype = "moderately_evening"; bestTimeWindow = "afternoon"; }
+  else                  { chronotype = "definitely_evening"; bestTimeWindow = "evening"; }
+  return {
+    score,
+    chronotype,
+    bestTimeWindow,
+    level: chronotype, // alias para uniformidad con otros instrumentos
+    instrumentId: RMEQ.id,
+    max: RMEQ.max,
+    min: RMEQ.min,
+  };
+}
+
+// Mapeo categoría → label legible para UI (compartido entre
+// CalibrationView, NeuralCalibrationV2 summary y future Profile).
+const CHRONOTYPE_LABELS = {
+  definitely_morning:  "Definitivamente matutino",
+  moderately_morning:  "Más matutino",
+  intermediate:        "Intermedio",
+  moderately_evening:  "Más vespertino",
+  definitely_evening:  "Definitivamente vespertino",
+};
+
+export function chronotypeLabel(c) {
+  return CHRONOTYPE_LABELS[c] || "Intermedio";
+}
+
+// Helper para construir el shape persistido en store.chronotype.
+// Combina los aliases que distintos consumers usan:
+//   - prescriber.js               → .type
+//   - ProfileView.jsx legacy      → .label, .score
+//   - useAdaptiveRecommendation.js → truthy check
+//   - ColdStartView (Phase 6D SP1) → truthy check
+// Centralizar acá evita drift entre call sites.
+export function buildChronotypeRecord(rmeqResult, ts = Date.now()) {
+  if (!rmeqResult || typeof rmeqResult.score !== "number") return null;
+  return {
+    type: rmeqResult.chronotype,
+    category: rmeqResult.chronotype,
+    label: chronotypeLabel(rmeqResult.chronotype),
+    score: rmeqResult.score,
+    bestTimeWindow: rmeqResult.bestTimeWindow,
+    ts,
   };
 }
 

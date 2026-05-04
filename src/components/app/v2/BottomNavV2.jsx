@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { Home, BarChart2, MessageCircle, User } from "lucide-react";
 import { colors, typography, spacing, layout, surfaces, motion as motionTok, icon } from "./tokens";
+import { devLog } from "@/lib/dev-utils";
 
 const TABS = [
   { id: "hoy",    label: "Hoy",    Icon: Home },
@@ -11,7 +12,7 @@ const TABS = [
 ];
 
 export default function BottomNavV2({ active = "hoy", onSelect }) {
-  useEffect(() => { console.log("[v2] BottomNavV2 active"); }, []);
+  useEffect(() => { devLog("[v2] BottomNavV2 active"); }, []);
   return (
     <nav
       data-v2-nav

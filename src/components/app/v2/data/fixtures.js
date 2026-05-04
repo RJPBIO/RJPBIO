@@ -1,62 +1,21 @@
-// Fixtures realistas para Tab Datos cuando state esta vacio en dev.
-// NO mutan store. Override con ?empty=true para ver con state real.
+// Catalog metadata para Tab Datos — NO es data del usuario.
+//
+// Phase 6D SP3 — eliminados los fakes que se servían como datos del user
+// cuando history.length < 5:
+//   - fixtureComposite28d() (sparkline 28 días sintetizado)
+//   - fixtureDimensions28d() (focus/calm/energy waves)
+//   - FIXTURE_SESSIONS (10 sesiones inventadas)
+//   - FIXTURE_PROGRESS (vCores 1247 · racha 7 · 8 logros)
+//   - FIXTURE_ACHIEVEMENTS_RECENT (3 IDs)
+//   - FIXTURE_ACTIVE_PROGRAM ("Neural Baseline · Día 4 de 14")
+//
+// DataV2 ahora muestra DataEmpty cuando history vacío, vista parcial
+// honesta cuando 1-4 sessions, vista completa con data real cuando 5+.
+//
+// Lo que queda son metadata catalogs (i18n labels, program catalog, active
+// program descriptors) que son fuente de verdad del producto, no fakes.
 
-const DAY = 24 * 60 * 60 * 1000;
-const NOW = () => Date.now();
-
-// 28 dias de composite con leve trayectoria ascendente + ruido organico.
-export function fixtureComposite28d() {
-  const base = NOW();
-  const out = [];
-  for (let i = 27; i >= 0; i--) {
-    const ts = base - i * DAY;
-    const trend = 50 + (27 - i) * 0.45;
-    const wave = Math.sin((27 - i) * 0.7) * 4;
-    const noise = ((i * 9301 + 49297) % 233280) / 233280 * 8 - 4;
-    out.push({ ts, value: Math.max(20, Math.min(95, Math.round(trend + wave + noise))) });
-  }
-  return out;
-}
-
-export function fixtureDimensions28d() {
-  const base = NOW();
-  const out = { focus: [], calm: [], energy: [] };
-  for (let i = 27; i >= 0; i--) {
-    const ts = base - i * DAY;
-    const fwave = Math.sin((27 - i) * 0.55) * 6;
-    const cwave = Math.cos((27 - i) * 0.4) * 5;
-    const ewave = Math.sin((27 - i) * 0.8) * 7;
-    out.focus.push({ ts,  value: Math.round(60 + fwave + (27 - i) * 0.5) });
-    out.calm.push({ ts,   value: Math.round(54 + cwave + (27 - i) * 0.2) });
-    out.energy.push({ ts, value: Math.round(58 + ewave + (27 - i) * 0.4) });
-  }
-  return out;
-}
-
-// 10 sesiones recientes — protocolId del catalogo + delta + ts.
-export const FIXTURE_SESSIONS = [
-  { ts: NOW() - 2 * 60 * 60 * 1000,        p: 4,  int: "energia", deltaC: +5, d: 120 },
-  { ts: NOW() - 8 * 60 * 60 * 1000,        p: 1,  int: "calma",   deltaC: +3, d: 120 },
-  { ts: NOW() - 1 * DAY - 2 * 60 * 60000,  p: 2,  int: "enfoque", deltaC: +6, d: 120 },
-  { ts: NOW() - 1 * DAY - 8 * 60 * 60000,  p: 3,  int: "reset",   deltaC:  0, d: 120 },
-  { ts: NOW() - 2 * DAY,                   p: 4,  int: "energia", deltaC: +4, d: 120 },
-  { ts: NOW() - 3 * DAY,                   p: 6,  int: "calma",   deltaC: -2, d: 120 },
-  { ts: NOW() - 3 * DAY - 6 * 60 * 60000,  p: 5,  int: "enfoque", deltaC: +7, d: 120 },
-  { ts: NOW() - 4 * DAY,                   p: 7,  int: "reset",   deltaC: +1, d: 120 },
-  { ts: NOW() - 5 * DAY,                   p: 11, int: "calma",   deltaC: +2, d: 120 },
-  { ts: NOW() - 6 * DAY,                   p: 12, int: "enfoque", deltaC: +3, d: 120 },
-];
-
-export const FIXTURE_PROGRESS = {
-  vCores: 1247,
-  vCoresThisWeek: 12,
-  streak: 7,
-  bestStreak: 14,
-  achievementsCount: 8,
-  achievementsThisMonth: 1,
-};
-
-// Achievement id -> label humano + icono lucide name.
+// Achievement id -> label humano + icono lucide name. Catalog estable.
 export const ACHIEVEMENT_LABELS = {
   first_session:    { label: "Primera sesión",            icon: "Sparkles"  },
   mood5:            { label: "Mood óptimo registrado",     icon: "TrendingUp" },
@@ -66,15 +25,6 @@ export const ACHIEVEMENT_LABELS = {
   night_owl:        { label: "Sesión nocturna",            icon: "Moon"      },
   deep_focus:       { label: "Foco profundo desbloqueado", icon: "Crosshair" },
   consistent:       { label: "Constancia 14 días",         icon: "CheckCircle2" },
-};
-
-export const FIXTURE_ACHIEVEMENTS_RECENT = ["calibrated", "early_bird", "week_streak"];
-
-// Programa activo simulado (Neural Baseline dia 4 de 14).
-export const FIXTURE_ACTIVE_PROGRAM = {
-  id: "neural-baseline",
-  startedAt: NOW() - 3 * DAY,
-  completedSessionDays: [1, 2, 3],
 };
 
 // Catalog metadata sincronizado con src/lib/programs.js (campo `sb`).

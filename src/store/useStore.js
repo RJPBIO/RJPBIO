@@ -85,14 +85,45 @@ function belongsToUser(loaded, currentUserId) {
   return prev === curr;
 }
 
+// PHASE 6D SP6 Bug-37 — allowlist negative para persist. Antes el state
+// se persistía completo via spread, incluyendo flags volátiles (`_loaded`,
+// `_syncing`) y funciones del store (init, save, completeSession, etc.
+// que el spread no incluye porque Zustand las separa, pero defensivo).
+//
+// Problema observado: `_loaded:true` se persistía → al rehidratar de
+// IDB, el flag llegaba ya en true antes de que loadState() retornara →
+// componentes que checkean `if (state._loaded)` para gate UI mostraban
+// contenido stale del save anterior antes de que init() acabe de
+// reconciliar. Filtrarlo asegura que `_loaded` SOLO se setea via init().
+//
+// `_userId` SÍ se persiste (belongsToUser lo necesita para detectar
+// cambio de owner). _syncing es transient (cross-tab sync flag).
+const VOLATILE_PERSIST_FIELDS = new Set([
+  "_loaded",
+  "_syncing",
+]);
+
+function sanitizeForPersist(state) {
+  if (!state || typeof state !== "object") return state;
+  const out = {};
+  for (const key of Object.keys(state)) {
+    if (VOLATILE_PERSIST_FIELDS.has(key)) continue;
+    const val = state[key];
+    if (typeof val === "function") continue; // funciones del store
+    out[key] = val;
+  }
+  return out;
+}
+
 let persistTimer = null;
 let lastScheduledState = null;
 function scheduleSave(state) {
-  lastScheduledState = state;
+  const clean = sanitizeForPersist(state);
+  lastScheduledState = clean;
   if (persistTimer) clearTimeout(persistTimer);
   persistTimer = setTimeout(() => {
     persistTimer = null;
-    saveState(state).catch((e) => logger.error("persist.save", e));
+    saveState(clean).catch((e) => logger.error("persist.save", e));
   }, 300);
 }
 
@@ -104,7 +135,7 @@ async function saveNow(state) {
     clearTimeout(persistTimer);
     persistTimer = null;
   }
-  const target = state || lastScheduledState;
+  const target = state ? sanitizeForPersist(state) : lastScheduledState;
   if (!target) return;
   try {
     await saveState(target);
@@ -313,6 +344,18 @@ export const useStore = create((set, get) => ({
     set({ chronotype: ct });
     scheduleSave({ ...get() });
     outboxAdd({ kind: "chronotype", payload: ct, userId: get()._userId ?? null }).catch(() => {});
+  },
+
+  // Phase 6D SP3 — cachea el email del user autenticado para que ProfileV2
+  // y AccountView lo muestren post-hidratación sin requerir useSession()
+  // en cada mount. Llamar desde el sign-in flow o un componente raíz que
+  // tenga acceso a session.user.email. Acepta string o null (logout limpia).
+  // No hay outboxAdd: el email es source-of-truth del backend, no algo que
+  // sincronicemos al server.
+  setUserEmail: (email) => {
+    const next = typeof email === "string" && email.length > 0 ? email : null;
+    set({ _userEmail: next });
+    scheduleSave({ ...get() });
   },
 
   setResonanceFreq: (bpm) => {

@@ -231,7 +231,7 @@ function FilterRow({ kicker, options, selected, onChange }) {
                 paddingInline: 12,
                 paddingBlock: 6,
                 background: active ? colors.accent.phosphorCyan : "rgba(255,255,255,0.03)",
-                color: active ? "#08080A" : colors.text.secondary,
+                color: active ? colors.bg.base : colors.text.secondary,
                 border: `0.5px solid ${active ? colors.accent.phosphorCyan : colors.separator}`,
                 borderRadius: 999,
                 fontFamily: typography.family,

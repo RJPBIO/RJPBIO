@@ -228,10 +228,17 @@ function Header({ step, onBack, onSkip }) {
             type="button"
             onClick={onSkip}
             data-testid="welcome-skip"
+            // Phase 6D SP1 — focus ring custom sutil. Antes el browser
+            // default outline cyan (~3px) competía visualmente con el
+            // accent del CTA principal cuando el usuario hacía tab al
+            // botón. Ahora outline 1px dashed con la misma opacidad
+            // del color del texto: visible para keyboard-nav, sin
+            // robar atención del flow.
             style={{
               appearance: "none",
               background: "transparent",
               border: "none",
+              outline: "none",
               color: TEXT_MUTED,
               cursor: "pointer",
               minHeight: 44,
@@ -239,6 +246,14 @@ function Header({ step, onBack, onSkip }) {
               fontFamily: FONT,
               fontSize: 11,
               fontWeight: 400,
+              borderRadius: 4,
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.outline = `1px dashed ${TEXT_MUTED}`;
+              e.currentTarget.style.outlineOffset = "2px";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.outline = "none";
             }}
           >
             Saltar introducción

@@ -1,11 +1,31 @@
 "use client";
+import { useStore } from "@/store/useStore";
 import SubRouteHeader from "../SubRouteHeader";
 import { Section, Kicker, Card, ScrollPad, TextLink } from "../primitives";
 import { typography, colors, spacing } from "../../tokens";
-import { FIXTURE_PRIVACY, FIXTURE_PRIVACY_B2B } from "../fixtures";
+
+// Phase 6D SP3 — fixtures cleanup. Antes leía FIXTURE_PRIVACY (orgs hard-
+// coded "Cuenta personal" + permisos owner) y FIXTURE_PRIVACY_B2B (Acme
+// pre-mockeado con admin access). Ahora deriva del store:
+//
+//   - El user actual SIEMPRE tiene "Cuenta personal" (user-level org).
+//   - Memberships B2B se cargan desde backend en el futuro (SP4 wires
+//     el endpoint /api/v1/users/me/memberships). Hasta entonces NO
+//     mostramos orgs falsas.
+//
+// El contenido educativo (k≥5, "qué ve tu empresa") es copy del producto,
+// no fixture — se mantiene íntegro porque comunica la política de privacidad
+// real de Bio-Ignición.
+//
+// devOverride b2b sigue funcional vía prop b2b: muestra link "IR A CONSOLA
+// ADMIN" para preview, pero NO inyecta orgs falsas en la lista.
 
 export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
-  const p = b2b ? FIXTURE_PRIVACY_B2B : FIXTURE_PRIVACY;
+  // Memberships hasta SP4 wire al endpoint real: solo personal-1.
+  // El user real, una vez SP4 conecte useSession, verá sus orgs B2B
+  // reales aquí. Por ahora cero invención.
+  const userEmail = useStore((s) => s._userEmail);
+  const memberships = buildMemberships({ userEmail, b2b });
 
   return (
     <>
@@ -14,7 +34,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
         <Section>
           <Kicker>MIS MEMBRESÍAS</Kicker>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {p.memberships.map((m, i) => (
+            {memberships.map((m, i) => (
               <li
                 key={m.orgId}
                 style={{
@@ -23,7 +43,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
                   justifyContent: "space-between",
                   gap: spacing.s16,
                   paddingBlock: 14,
-                  borderBlockEnd: i === p.memberships.length - 1 ? "none" : `0.5px solid ${colors.separator}`,
+                  borderBlockEnd: i === memberships.length - 1 ? "none" : `0.5px solid ${colors.separator}`,
                 }}
               >
                 <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -32,7 +52,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
                       fontFamily: typography.family,
                       fontSize: typography.size.bodyMin,
                       fontWeight: typography.weight.medium,
-                      color: "rgba(255,255,255,0.96)",
+                      color: colors.text.primary,
                     }}
                   >
                     {m.orgName}
@@ -43,7 +63,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
                       fontSize: typography.size.microCaps,
                       letterSpacing: "0.18em",
                       textTransform: "uppercase",
-                      color: "rgba(255,255,255,0.55)",
+                      color: colors.text.secondary,
                       fontWeight: typography.weight.medium,
                     }}
                   >
@@ -53,7 +73,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
               </li>
             ))}
           </ul>
-          {p.hasAdminAccess && (
+          {b2b && (
             <div style={{ marginBlockStart: spacing.s16 }}>
               <TextLink tone="cyan" onClick={() => onNavigate && onNavigate({ target: "/admin" })}>
                 IR A CONSOLA ADMIN →
@@ -71,7 +91,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
                 fontFamily: typography.family,
                 fontSize: typography.size.bodyMin,
                 fontWeight: typography.weight.regular,
-                color: "rgba(255,255,255,0.96)",
+                color: colors.text.primary,
                 lineHeight: 1.6,
               }}
             >
@@ -107,7 +127,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
                     fontFamily: typography.family,
                     fontSize: typography.size.bodyMin,
                     fontWeight: typography.weight.regular,
-                    color: "rgba(255,255,255,0.96)",
+                    color: colors.text.primary,
                   }}
                 >
                   {it.label}
@@ -118,7 +138,7 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
                     fontSize: typography.size.microCaps,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
-                    color: it.visible ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.32)",
+                    color: it.visible ? colors.text.secondary : colors.text.muted,
                     fontWeight: typography.weight.medium,
                   }}
                 >
@@ -131,4 +151,18 @@ export default function PrivacyView({ onBack, onNavigate, b2b = false }) {
       </ScrollPad>
     </>
   );
+}
+
+// Phase 6D SP3 — defaults conservadores. Personal-org siempre presente
+// (toda cuenta tiene un personal-org como user-level container). Orgs B2B
+// se cargarán desde backend en SP4 (devOverride b2b=true sigue mostrando
+// preview de "Acme · admin" pero solo cuando explícitamente habilitado).
+function buildMemberships({ userEmail, b2b }) {
+  const list = [
+    { orgId: "personal-1", orgName: "Cuenta personal", role: "OWNER" },
+  ];
+  if (b2b) {
+    list.push({ orgId: "preview-org", orgName: "Empresa (preview)", role: "ADMIN" });
+  }
+  return list;
 }

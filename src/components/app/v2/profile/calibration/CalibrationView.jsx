@@ -1,30 +1,39 @@
 "use client";
+import { useEffect } from "react";
 import { useStore } from "@/store/useStore";
 import { isReliableHrvEntry, buildReliableHrvBaseline } from "@/lib/hrvLog";
+import { chronotypeLabel as resolveChronotypeLabel } from "@/lib/instruments";
 import SubRouteHeader from "../SubRouteHeader";
 import { Section, Kicker, Card, StatLine, PillButton, ScrollPad } from "../primitives";
 import { colors, typography, spacing, radii } from "../../tokens";
 import { relativeTime } from "../fixtures";
 
 // Phase 6B SP1 — fixtures → store real.
-// Chronotype: deriva de neuralBaseline.rmeq (poblado por NeuralCalibrationV2).
+// Chronotype: lee state.chronotype (Phase 6D SP1 wiring) primero, con
+// fallback a neuralBaseline.rmeq legacy. state.chronotype se actualiza
+// inmediato cuando hay retake desde Profile/ColdStart; neuralBaseline
+// solo se actualiza en onboarding completo. Antes Phase 6D: solo leía
+// neuralBaseline → retake nunca se reflejaba en CalibrationView.
 // Resonance: deriva de resonanceFreq (poblado por ResonanceCalibration legacy).
 // HRV: deriva de hrvLog filtrado por isReliableHrvEntry (sólo SQI ≥ 60 para
 // cámara, todo BLE/legacy). Empty state cuando no hay data.
 
-const CHRONOTYPE_LABELS = {
-  definitely_morning: "Definitivamente matutino",
-  moderately_morning: "Más matutino",
-  intermediate: "Intermedio",
-  moderately_evening: "Más vespertino",
-  definitely_evening: "Definitivamente vespertino",
-};
-
-export default function CalibrationView({ onBack, onNavigate }) {
+export default function CalibrationView({ onBack, onNavigate, subAnchor = null }) {
+  // Phase 6D SP4c — scroll al sub-anchor cuando se monta vía
+  // target:/app/profile/calibration#hrv (ColdStart card "Mide tu HRV").
+  useEffect(() => {
+    if (!subAnchor) return;
+    const el = document.querySelector(`[data-anchor="${subAnchor}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [subAnchor]);
   const hrvLog = useStore((s) => s.hrvLog || []);
   const neuralBaseline = useStore((s) => s.neuralBaseline);
+  const chronotype = useStore((s) => s.chronotype);
   const resonanceFreq = useStore((s) => s.resonanceFreq);
   const calibrationHistory = useStore((s) => s.calibrationHistory || []);
+  const instruments = useStore((s) => s.instruments || []);
 
   const reliable = hrvLog
     .filter(isReliableHrvEntry)
@@ -35,8 +44,24 @@ export default function CalibrationView({ onBack, onNavigate }) {
     ? Math.round(Math.exp(baseline14d.reduce((a, b) => a + b, 0) / baseline14d.length))
     : null;
 
+  // Phase 6D SP1 — chronotype prioriza state.chronotype (record fresh
+  // tras retake) y cae a neuralBaseline.rmeq solo si state está vacío
+  // (back-compat para users con onboarding pre-SP1 que aún no han
+  // recalibrado). Soporta dos shapes: objeto rico (Phase 6D) o categoría
+  // string legacy (la lectura usa optional chaining defensiva).
   const rmeq = neuralBaseline?.rmeq;
-  const chronotypeLabel = rmeq?.chronotype ? CHRONOTYPE_LABELS[rmeq.chronotype] : null;
+  const chronoCategory =
+    chronotype?.category || chronotype?.type || rmeq?.chronotype || null;
+  const chronoScore = chronotype?.score ?? rmeq?.score ?? null;
+  const chronoTs = chronotype?.ts || neuralBaseline?.timestamp || null;
+  // Última calibración rMEQ via instruments[] como ts más confiable
+  // (state.chronotype.ts puede venir del onboarding antiguo sin ts si
+  // el record se construyó con shape parcial).
+  const lastRmeqEntry = instruments
+    .filter((e) => e && e.instrumentId === "rmeq" && typeof e.ts === "number")
+    .sort((a, b) => b.ts - a.ts)[0];
+  const chronoTsFinal = lastRmeqEntry?.ts || chronoTs;
+  const chronotypeLabel = chronoCategory ? resolveChronotypeLabel(chronoCategory) : null;
 
   // Resonance lastTs viene del último calibration history entry con kind:resonance,
   // si existe. Si no, mostramos sólo el rate sin "última".
@@ -48,17 +73,18 @@ export default function CalibrationView({ onBack, onNavigate }) {
     <>
       <SubRouteHeader title="Calibración" onBack={onBack} />
       <ScrollPad>
+        <div data-anchor="rmeq">
         <Section>
           <Kicker>CRONOTIPO · rMEQ</Kicker>
           {chronotypeLabel ? (
             <Card>
               <StatLine
-                value={`${chronotypeLabel} · score ${rmeq.score}`}
-                caption={neuralBaseline?.timestamp
-                  ? `Última calibración: ${relativeTime(neuralBaseline.timestamp)}`
+                value={chronoScore != null ? `${chronotypeLabel} · score ${chronoScore}` : chronotypeLabel}
+                caption={chronoTsFinal
+                  ? `Última calibración: ${relativeTime(chronoTsFinal)}`
                   : "Calibrado en onboarding"}
               />
-              <PillButton onClick={() => onNavigate && onNavigate({ action: "retest-chronotype" })}>
+              <PillButton onClick={() => onNavigate && onNavigate({ action: "retake-chronotype" })}>
                 Re-test
               </PillButton>
             </Card>
@@ -67,11 +93,13 @@ export default function CalibrationView({ onBack, onNavigate }) {
               message="Sin calibración de cronotipo"
               subMessage="Completa el onboarding o re-calibra para detectar tu ventana óptima."
               ctaLabel="Calibrar ahora"
-              onCtaPress={() => onNavigate && onNavigate({ action: "retest-chronotype" })}
+              onCtaPress={() => onNavigate && onNavigate({ action: "retake-chronotype" })}
             />
           )}
         </Section>
+        </div>
 
+        <div data-anchor="resonance">
         <Section>
           <Kicker>RESONANCIA · 5 ENSAYOS</Kicker>
           {typeof resonanceFreq === "number" && resonanceFreq > 0 ? (
@@ -95,7 +123,9 @@ export default function CalibrationView({ onBack, onNavigate }) {
             />
           )}
         </Section>
+        </div>
 
+        <div data-anchor="hrv">
         <Section paddingBottom={48}>
           <Kicker>VARIABILIDAD CARDÍACA</Kicker>
           {lastHrv ? (
@@ -121,6 +151,7 @@ export default function CalibrationView({ onBack, onNavigate }) {
             />
           )}
         </Section>
+        </div>
       </ScrollPad>
     </>
   );

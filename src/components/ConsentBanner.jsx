@@ -59,7 +59,15 @@ export default function ConsentBanner() {
         // must NOT overlay app modals (ProtocolSelector, intent picker, etc.
         // sit at z.overlay/modal = 200-230). Previously 9998 intercepted
         // clicks on sheet items near the bottom, blocking protocol selection.
-        zIndex: 70,
+        //
+        // PHASE 6D SP5 Bug-08 — bumped 70 → 105 (above onboarding modals
+        // BioIgnitionWelcomeV2 + NeuralCalibrationV2 at zIndex 100, still
+        // below app modals 200-230). Compliance critical: GDPR consent must
+        // be interactive even during onboarding. Onboarding takes the full
+        // viewport (inset:0) — without this bump the banner was completely
+        // covered, making consent impossible until user finished/skipped
+        // onboarding (illegal under GDPR for EU users).
+        zIndex: 105,
         padding: 18,
         borderRadius: 20,
         background: SURFACE,

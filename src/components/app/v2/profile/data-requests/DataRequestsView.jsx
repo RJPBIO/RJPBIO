@@ -2,10 +2,17 @@
 import SubRouteHeader from "../SubRouteHeader";
 import { Section, Kicker, Card, PillButton, ScrollPad } from "../primitives";
 import { typography, spacing } from "../../tokens";
-import { FIXTURE_DATA_REQUESTS, relativeTime } from "../fixtures";
+import { relativeTime } from "../fixtures";
+
+// Phase 6D SP3 — fixtures cleanup. Antes leía FIXTURE_DATA_REQUESTS que
+// inventaba "1 ACCESS request resolved hace 45 días" para todos los users.
+// Ahora el history viene del endpoint backend (`/api/v1/me/dsar/history`)
+// — wired en SP4. Por SP3 mostramos history vacío, las CTAs principales
+// (acceso, portabilidad, eliminación) siguen funcional con sus actions
+// (handlers caen en console.log hasta SP4 los wired al endpoint real).
 
 export default function DataRequestsView({ onBack, onNavigate }) {
-  const dr = FIXTURE_DATA_REQUESTS;
+  const dr = { history: [] };
 
   return (
     <>

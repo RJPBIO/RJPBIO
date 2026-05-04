@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
-  PSS4, WEMWBS7, PHQ2,
-  scorePss4, scoreWemwbs7, scorePhq2,
+  PSS4, WEMWBS7, PHQ2, RMEQ,
+  scorePss4, scoreWemwbs7, scorePhq2, scoreRmeq,
+  chronotypeLabel, buildChronotypeRecord,
   nextInstrumentDue, aggregateInstrument,
 } from "./instruments";
 
@@ -179,5 +180,161 @@ describe("aggregateInstrument — k-anonymous org rollup", () => {
     const agg = aggregateInstrument(resp, "wemwbs-7", { minK: 5 });
     expect(agg.insufficient).toBe(false);
     expect(agg.n).toBe(6);
+  });
+});
+
+// ─── Phase 6D SP1 — rMEQ + chronotype helpers ───────────────────
+describe("rMEQ definition (Adan & Almirall 1991)", () => {
+  it("tiene id rmeq y 5 ítems", () => {
+    expect(RMEQ.id).toBe("rmeq");
+    expect(RMEQ.items).toHaveLength(5);
+    expect(RMEQ.version).toMatch(/Adan & Almirall 1991/);
+  });
+
+  it("cada ítem tiene options propias (no escala uniforme)", () => {
+    for (const item of RMEQ.items) {
+      expect(Array.isArray(item.options)).toBe(true);
+      expect(item.options.length).toBeGreaterThan(0);
+      for (const opt of item.options) {
+        expect(typeof opt.label).toBe("string");
+        expect(typeof opt.value).toBe("number");
+      }
+    }
+  });
+});
+
+describe("scoreRmeq", () => {
+  it("retorna null si falta alguna respuesta", () => {
+    expect(scoreRmeq(null)).toBeNull();
+    expect(scoreRmeq({})).toBeNull();
+    expect(scoreRmeq({ q1: 5, q2: 4, q3: 4, q4: 3 })).toBeNull(); // falta q5
+  });
+
+  it("score mínimo (4) → definitely_evening", () => {
+    const r = scoreRmeq({ q1: 1, q2: 1, q3: 0, q4: 1, q5: 0 });
+    expect(r.score).toBe(3); // suma 1+1+0+1+0=3, dentro de evening
+    expect(r.chronotype).toBe("definitely_evening");
+    expect(r.bestTimeWindow).toBe("evening");
+  });
+
+  it("score 12 (intermediate) → midday window", () => {
+    // q1=3 + q2=3 + q3=4 + q4=3 + q5=2 = 15 → intermediate
+    const r = scoreRmeq({ q1: 3, q2: 3, q3: 4, q4: 3, q5: 2 });
+    expect(r.score).toBe(15);
+    expect(r.chronotype).toBe("intermediate");
+    expect(r.bestTimeWindow).toBe("midday");
+  });
+
+  it("score 20 → moderately_morning", () => {
+    // q1=4 + q2=3 + q3=6 + q4=3 + q5=4 = 20
+    const r = scoreRmeq({ q1: 4, q2: 3, q3: 6, q4: 3, q5: 4 });
+    expect(r.score).toBe(20);
+    expect(r.chronotype).toBe("moderately_morning");
+    expect(r.bestTimeWindow).toBe("morning");
+  });
+
+  it("score 25 (max) → definitely_morning", () => {
+    // q1=5 + q2=4 + q3=6 + q4=4 + q5=6 = 25
+    const r = scoreRmeq({ q1: 5, q2: 4, q3: 6, q4: 4, q5: 6 });
+    expect(r.score).toBe(25);
+    expect(r.chronotype).toBe("definitely_morning");
+  });
+
+  it("retorna instrumentId 'rmeq' y level alias = chronotype", () => {
+    const r = scoreRmeq({ q1: 3, q2: 3, q3: 4, q4: 3, q5: 2 });
+    expect(r.instrumentId).toBe("rmeq");
+    expect(r.level).toBe(r.chronotype);
+  });
+
+  it("rechaza valores no numéricos", () => {
+    const r = scoreRmeq({ q1: "5", q2: 3, q3: 4, q4: 3, q5: 2 });
+    expect(r).toBeNull();
+  });
+});
+
+describe("chronotypeLabel", () => {
+  it("mapea categorías conocidas a labels en español", () => {
+    expect(chronotypeLabel("definitely_morning")).toBe("Definitivamente matutino");
+    expect(chronotypeLabel("moderately_morning")).toBe("Más matutino");
+    expect(chronotypeLabel("intermediate")).toBe("Intermedio");
+    expect(chronotypeLabel("moderately_evening")).toBe("Más vespertino");
+    expect(chronotypeLabel("definitely_evening")).toBe("Definitivamente vespertino");
+  });
+
+  it("default a 'Intermedio' para categorías desconocidas", () => {
+    expect(chronotypeLabel(null)).toBe("Intermedio");
+    expect(chronotypeLabel("foo")).toBe("Intermedio");
+  });
+});
+
+describe("buildChronotypeRecord (shape persistido en store.chronotype)", () => {
+  it("retorna null si rmeqResult inválido", () => {
+    expect(buildChronotypeRecord(null)).toBeNull();
+    expect(buildChronotypeRecord({})).toBeNull();
+    expect(buildChronotypeRecord({ chronotype: "intermediate" })).toBeNull(); // falta score
+  });
+
+  it("incluye campos type + category (alias) + label + score + bestTimeWindow + ts", () => {
+    const r = scoreRmeq({ q1: 3, q2: 3, q3: 4, q4: 3, q5: 2 });
+    const rec = buildChronotypeRecord(r, 1700000000000);
+    expect(rec.type).toBe("intermediate");        // prescriber.js usa .type
+    expect(rec.category).toBe("intermediate");    // alias canónico Phase 6D
+    expect(rec.label).toBe("Intermedio");         // ProfileView legacy usa .label
+    expect(rec.score).toBe(15);
+    expect(rec.bestTimeWindow).toBe("midday");
+    expect(rec.ts).toBe(1700000000000);
+  });
+
+  it("ts default a Date.now() cuando no se provee", () => {
+    const r = scoreRmeq({ q1: 5, q2: 4, q3: 6, q4: 4, q5: 6 });
+    const before = Date.now();
+    const rec = buildChronotypeRecord(r);
+    const after = Date.now();
+    expect(rec.ts).toBeGreaterThanOrEqual(before);
+    expect(rec.ts).toBeLessThanOrEqual(after);
+  });
+});
+
+// ─── Phase 6D SP2 — PSS-4 canónico Cohen 1983 ───────────────────
+// Verifica que la canonización de PSS-4 (eliminar Cohen & Williamson
+// 1988, mantener Cohen 1983) preservó wording, scale y citation
+// correctos. Los tests de scoring (líneas 9-42) ya cubren la lógica
+// matemática que es idéntica entre versiones; estos tests cubren la
+// identidad clínica del instrumento.
+describe("PSS-4 canonización Cohen 1983 (Phase 6D SP2)", () => {
+  it("version es exactamente 'Cohen 1983' (no Cohen & Williamson 1988)", () => {
+    expect(PSS4.version).toBe("Cohen 1983");
+    expect(PSS4.version).not.toMatch(/Williamson/);
+    expect(PSS4.version).not.toMatch(/1988/);
+  });
+
+  it("scale options usa Cohen 1983 wording ('Frecuentemente/Muy frecuentemente')", () => {
+    expect(PSS4.scale).toEqual([
+      "Nunca",
+      "Casi nunca",
+      "A veces",
+      "Frecuentemente",
+      "Muy frecuentemente",
+    ]);
+    // Anti-regression: asegura que NO regresamos a labels Cohen & Williamson 1988.
+    expect(PSS4.scale).not.toContain("Casi siempre");
+    expect(PSS4.scale).not.toContain("Siempre");
+  });
+
+  it("items wording empieza con 'En el último mes' (Cohen 1983 framing)", () => {
+    for (const item of PSS4.items) {
+      expect(item.text).toMatch(/^En el último mes/);
+    }
+  });
+
+  it("items 2 y 3 son reverse-scored (positivamente formulados)", () => {
+    expect(PSS4.items[0].reverse).toBe(false);  // q1: incapaz de controlar
+    expect(PSS4.items[1].reverse).toBe(true);   // q2: te sentiste seguro/a
+    expect(PSS4.items[2].reverse).toBe(true);   // q3: las cosas iban como querías
+    expect(PSS4.items[3].reverse).toBe(false);  // q4: dificultades se acumulaban
+  });
+
+  it("name display es 'Estrés percibido (PSS-4)'", () => {
+    expect(PSS4.name).toBe("Estrés percibido (PSS-4)");
   });
 });

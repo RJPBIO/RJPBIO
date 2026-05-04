@@ -1,112 +1,17 @@
-// Fixtures dev para Tab Perfil. NO mutan store.
+// Profile helpers — solo lo que NO es data del usuario.
 //
-// Phase 6B SP3 — FIXTURE_CALIBRATION + FIXTURE_INSTRUMENTS eliminados:
-// CalibrationView e InstrumentsView ahora leen del useStore real (hrvLog,
-// instruments, neuralBaseline, resonanceFreq) con empty states cuando no
-// hay data. Wiring en SP1, ADN refactor en SP2, persistencia server en SP3.
-
-export const FIXTURE_PROFILE = {
-  name: "Operador Neural",
-  email: "operador@bio-ignicion.local",
-  avatar: null,
-  level: 3,
-  totalSessions: 47,
-  streak: 7,
-  bestStreak: 14,
-  achievementsCount: 8,
-};
-
-export const FIXTURE_NOM35 = {
-  hasResponse: true,
-  level: "Riesgo medio",
-  lastTs: Date.now() - 60 * 86400000,
-};
-
-export const FIXTURE_ENGINE_HEALTH = {
-  overall: "Personalizado",
-  overallCaption: "El motor te conoce. 47 sesiones procesadas.",
-  hitRate: 82,
-  acceptance: 0.74,
-  personalization: "Alta",
-  dataConfidence: 0.91,
-  cohortPrior: {
-    available: true,
-    teamN: 12,
-    summary: "Tu equipo (n=12) tiene patrones similares al tuyo en horas matutinas.",
-    buckets: [
-      { bucket: "Madrugada", intent: "calma" },
-      { bucket: "Mañana",    intent: "enfoque" },
-      { bucket: "Tarde",     intent: "reset" },
-      { bucket: "Noche",     intent: "calma" },
-    ],
-  },
-  calibrationBias: [
-    { protocol: "Pulse Shift",            bias: +1.2, n: 12 },
-    { protocol: "Reinicio Parasimpático", bias: -0.4, n: 9  },
-    { protocol: "Activación Cognitiva",   bias: +0.7, n: 8  },
-    { protocol: "Reset Ejecutivo",        bias: -1.1, n: 7  },
-    { protocol: "Skyline Focus",          bias:  0.0, n: 6  },
-  ],
-  actions: [
-    "Calibra HRV de nuevo",
-    "Sesión a las 06:00 para mejorar accuracy",
-    "Diversifica intent — solo has hecho enfoque esta semana",
-  ],
-};
-
-export const FIXTURE_SETTINGS = {
-  reminders: { enabled: false, hour: 7, min: 30 },
-  weeklySummary: true,
-  audio: { volume: 0.85, music: true, binaural: true },
-  voice: { enabled: true, preference: "default", rate: 1.0 },
-  haptic: { enabled: true, intensity: "normal" },
-  reducedMotion: false,
-};
-
-export const FIXTURE_SECURITY = {
-  mfaEnabled: true,
-  mfaSetupTs: Date.now() - 90 * 86400000,
-  trustedDevicesCount: 2,
-  sessions: [
-    { id: "s1", device: "Mac · Chrome",   location: "CDMX, MX", lastSeen: Date.now() - 3 * 60 * 1000,        current: true  },
-    { id: "s2", device: "iPhone · Safari", location: "CDMX, MX", lastSeen: Date.now() - 4 * 60 * 60 * 1000,   current: false },
-    { id: "s3", device: "iPad · Safari",   location: "CDMX, MX", lastSeen: Date.now() - 6 * 86400000,         current: false },
-  ],
-  trustedDevices: [
-    { id: "t1", label: "Mac personal",    addedTs: Date.now() - 30 * 86400000 },
-    { id: "t2", label: "iPhone personal", addedTs: Date.now() - 14 * 86400000 },
-  ],
-};
-
-export const FIXTURE_PRIVACY = {
-  memberships: [
-    { orgId: "personal-1", orgName: "Cuenta personal", role: "OWNER",  isPersonal: true  },
-  ],
-  hasAdminAccess: false,
-};
-
-export const FIXTURE_PRIVACY_B2B = {
-  memberships: [
-    { orgId: "personal-1", orgName: "Cuenta personal", role: "OWNER",  isPersonal: true  },
-    { orgId: "acme",       orgName: "Acme",            role: "ADMIN",  isPersonal: false },
-  ],
-  hasAdminAccess: true,
-};
-
-export const FIXTURE_DATA_REQUESTS = {
-  pending: null,
-  history: [
-    { kind: "ACCESS",     status: "RESOLVED", ts: Date.now() - 45 * 86400000 },
-  ],
-};
-
-export const FIXTURE_ACCOUNT = {
-  email: "operador@bio-ignicion.local",
-  hasPassword: true,
-  linkedProviders: [
-    { id: "google", label: "Google",   sub: "operador@gmail.com" },
-  ],
-};
+// Phase 6B SP3 — eliminó FIXTURE_CALIBRATION + FIXTURE_INSTRUMENTS:
+//   CalibrationView e InstrumentsView ahora leen del useStore real.
+//
+// Phase 6D SP3 — eliminó los 7 FIXTURE_* restantes (FIXTURE_PROFILE,
+// FIXTURE_NOM35, FIXTURE_ENGINE_HEALTH, FIXTURE_SECURITY, FIXTURE_PRIVACY,
+// FIXTURE_PRIVACY_B2B, FIXTURE_DATA_REQUESTS, FIXTURE_ACCOUNT). Cada
+// sub-view ahora deriva su data del store o muestra empty state honesto
+// hasta que SP4 wire los endpoints faltantes (security, dsar history).
+//
+// Archivo intencionalmente mantenido (en lugar de borrar) para preservar
+// los dos helpers utilitarios que SÍ se usan: initialsFromName (avatar
+// fallback) y relativeTime (formato "hace X min/h/días").
 
 export function initialsFromName(name) {
   if (!name) return "ON";

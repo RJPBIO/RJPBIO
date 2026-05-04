@@ -5,7 +5,17 @@ import { useStore } from "@/store/useStore";
 import { P as PROTOCOLS } from "@/lib/protocols";
 import { PROGRAMS } from "@/lib/programs";
 import { closeSession, adaptPlayerCompletionToSessionData } from "@/lib/sessionFlow";
-import { PSS4, WEMWBS7, PHQ2, scorePss4, scoreWemwbs7, scorePhq2 } from "@/lib/instruments";
+import {
+  PSS4, WEMWBS7, PHQ2, RMEQ,
+  scorePss4, scoreWemwbs7, scorePhq2, scoreRmeq,
+  buildChronotypeRecord,
+} from "@/lib/instruments";
+// Phase 6D SP1 — FIRST_PROTOCOL_BY_INTENT extraído a módulo compartido
+// para que ColdStartView pueda derivar el label del card "Tu primera
+// sesión" desde el mismo mapeo que el handler real (antes la card
+// hardcodeaba "Pulse Shift" mientras el handler lanzaba el correcto).
+import { FIRST_PROTOCOL_BY_INTENT, DEFAULT_FIRST_PROTOCOL_ID } from "@/lib/first-protocol";
+import { devLog } from "@/lib/dev-utils";
 import { colors, typography, layout } from "./tokens";
 import HomeV2 from "./HomeV2";
 import DataV2 from "./DataV2";
@@ -17,9 +27,46 @@ import CrisisSheet from "./CrisisSheet";
 
 // Phase 6 SP3 — ProtocolPlayer overlay desde AppV2Root.
 // Lazy import para preservar SSR-safety de AppV2Root y evitar bundle bloat.
+// PHASE 6D SP6 Bug-38 — loading shim para dynamic imports.
+// Antes los lazy imports devolvían null mientras el bundle se descargaba
+// → "flash de pantalla negra" entre el tap del CTA y el render del modal.
+// ModalLoadingShim mantiene el viewport con un estado intermedio cyan
+// minimal (tipografía mono 12px) que comunica "preparando". UX más
+// suave especialmente en first-tap (cuando el bundle no está cacheado).
+const ModalLoadingShim = ({ label = "Cargando…" }) => (
+  <div
+    data-v2-modal-loading
+    aria-live="polite"
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(8,8,10,0.92)",
+      zIndex: 199,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(8px)",
+    }}
+  >
+    <div
+      style={{
+        color: "#22D3EE",
+        fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+        fontSize: 11,
+        fontWeight: 500,
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+      }}
+    >
+      {label}
+    </div>
+  </div>
+);
+
 const ProtocolPlayer = dynamic(
   () => import("@/components/protocol/v2/ProtocolPlayer"),
-  { ssr: false }
+  { ssr: false, loading: () => <ModalLoadingShim label="Preparando sesión" /> }
 );
 
 // Phase 6B SP1 — wiring HRV/PPG/BLE + instrumentos psicométricos.
@@ -30,15 +77,15 @@ const ProtocolPlayer = dynamic(
 // browser-only; además mantiene initial bundle ligero.
 const HRVCameraMeasure = dynamic(
   () => import("@/components/HRVCameraMeasure"),
-  { ssr: false }
+  { ssr: false, loading: () => <ModalLoadingShim label="Preparando cámara" /> }
 );
 const HRVMonitor = dynamic(
   () => import("@/components/HRVMonitor"),
-  { ssr: false }
+  { ssr: false, loading: () => <ModalLoadingShim label="Buscando sensor BLE" /> }
 );
 const InstrumentRunner = dynamic(
   () => import("@/components/InstrumentRunner"),
-  { ssr: false }
+  { ssr: false, loading: () => <ModalLoadingShim label="Cargando instrumento" /> }
 );
 
 // Phase 6 quick-fix post-SP5 — Onboarding V2 components reescritos desde
@@ -55,14 +102,61 @@ const NeuralCalibration = dynamic(
   { ssr: false }
 );
 
-// Phase 6 SP5 — Mapeo intent → protocolo recomendado para "Tu primera sesión".
-const FIRST_PROTOCOL_BY_INTENT = {
-  calma: 1,           // Reinicio Parasimpático
-  enfoque: 2,         // Activación Cognitiva
-  energia: 4,         // Pulse Shift
-  reset: 3,           // Reset Ejecutivo
-  recuperacion: 3,    // Reset Ejecutivo (alias welcome → engine)
-};
+// Phase 6D SP4a — modales DSAR + Account. Wired a endpoints reales
+// (DSAR endpoint existente + nuevo /api/v1/me/providers). Lazy:
+// hasta que el user tap una CTA del Profile la bundle no se carga.
+const DsarRequestModal = dynamic(
+  () => import("./profile/modals/DsarRequestModal"),
+  { ssr: false }
+);
+const ChangeEmailModal = dynamic(
+  () => import("./profile/modals/ChangeEmailModal"),
+  { ssr: false }
+);
+const UnlinkProviderModal = dynamic(
+  () => import("./profile/modals/UnlinkProviderModal"),
+  { ssr: false }
+);
+const SignoutModal = dynamic(
+  () => import("./profile/modals/SignoutModal"),
+  { ssr: false }
+);
+
+// Phase 6D SP4b — modales MFA + sessions/trusted-devices. Wired a
+// endpoints reales (existentes auth/mfa/* + nuevo /api/v1/me/security).
+const MfaSetupModal = dynamic(
+  () => import("./profile/modals/MfaSetupModal"),
+  { ssr: false }
+);
+const MfaDisableModal = dynamic(
+  () => import("./profile/modals/MfaDisableModal"),
+  { ssr: false }
+);
+const MfaBackupCodesModal = dynamic(
+  () => import("./profile/modals/MfaBackupCodesModal"),
+  { ssr: false }
+);
+const RevokeSessionModal = dynamic(
+  () => import("./profile/modals/RevokeSessionModal"),
+  { ssr: false }
+);
+const RemoveTrustedDeviceModal = dynamic(
+  () => import("./profile/modals/RemoveTrustedDeviceModal"),
+  { ssr: false }
+);
+
+// Phase 6D SP4c — drawer de notificaciones. Wired al endpoint existente
+// /api/notifications/recent (Sprint 25 — Notification model per-user).
+// Reemplaza el stub onBellClick = console.log placeholder (Bug-10).
+const NotificationDrawerV2 = dynamic(
+  () => import("./notifications/NotificationDrawerV2"),
+  { ssr: false }
+);
+
+// Phase 6 SP5 — Mapeo intent → protocolo recomendado para "Tu primera
+// sesión". Phase 6D SP1 movió la constante a src/lib/first-protocol.js
+// para compartirla con ColdStartView (mantiene label del card y handler
+// del tap en sync). Importada arriba.
 
 // Phase 6B post-SP3 fix — resuelve la próxima sesión pendiente de un
 // programa según completedSessionDays. Retorna {day, protocolId} o null
@@ -95,13 +189,13 @@ export default function AppV2Root() {
   const initialTab = useInitialTab();
   const [tab, setTab] = useState(initialTab);
   const devOverride = useDevOverride();
-  useEffect(() => { console.log("[v2] AppV2Root mounted", { devOverride, initialTab }); }, [devOverride, initialTab]);
+  useEffect(() => { devLog("[v2] AppV2Root mounted", { devOverride, initialTab }); }, [devOverride, initialTab]);
 
   const Screen = SCREENS[tab] || HomeV2;
   const empty = useEmptyOverride();
   const coachOverride = useCoachOverride();
   const profileOverride = useProfileOverride();
-  const profileSection = useProfileSectionInitial();
+  const profileSectionInitial = useProfileSectionInitial();
 
   // Phase 6 SP3 — state lifted para mount del ProtocolPlayer overlay.
   // selectedProtocol: protocolo elegido por el bandit / catálogo.
@@ -131,6 +225,77 @@ export default function AppV2Root() {
   const [hrvModalMode, setHrvModalMode] = useState("camera");
   // instrumentModal: { instrument, scorer } | null — runner genérico.
   const [instrumentModal, setInstrumentModal] = useState(null);
+
+  // Phase 6D SP4a — modales DSAR + Account state lifted.
+  // dsarModal: "access" | "portability" | "erasure" | null — single modal
+  // con 3 types (config interno).
+  // accountModal: "change-email" | "unlink-provider" | "signout-current"
+  // | "signout-all" | null — un slot, modales mutuamente exclusivos.
+  const [dsarModal, setDsarModal] = useState(null);
+  const [accountModal, setAccountModal] = useState(null);
+
+  // Phase 6D SP4b — modales MFA + sessions/trusted-devices state lifted.
+  // mfaModal: { type: "setup" | "disable" | "backup-codes", stepUpFresh? } | null
+  // sessionRevokeModal: { session: {...} } | null
+  // trustedDeviceRemoveModal: { device: {...} } | null
+  // Mutualmente exclusivos entre sí (no entre con DSAR/Account).
+  const [mfaModal, setMfaModal] = useState(null);
+  const [sessionRevokeModal, setSessionRevokeModal] = useState(null);
+  const [trustedDeviceRemoveModal, setTrustedDeviceRemoveModal] = useState(null);
+
+  // Phase 6D SP4c — state lifted para sub-section navigation Profile,
+  // sub-views Data, anchor scroll, y bell drawer. Antes (Bug-11):
+  // ProfileV2 mantenía section local sin setter externo, así que
+  // target:/app/profile/calibration cambiaba a Tab Perfil pero NO
+  // abría la sub-section. Ahora AppV2Root es el source of truth.
+  //
+  // profileSection: id de la sub-section activa (null = lista raíz)
+  // profileSubAnchor: hash dentro de la sub-section (e.g. "hrv" para scroll)
+  // dataSubView: "sessions-all" | "achievements-all" | null
+  // dataDimension: "focus" | "calma" | "energia" | null
+  // dataAnchor: hash dentro de DataV2 main view (e.g. "programs")
+  // notificationDrawerOpen: boolean — bell drawer state
+  const [profileSection, setProfileSection] = useState(profileSectionInitial);
+  const [profileSubAnchor, setProfileSubAnchor] = useState(null);
+  const [dataSubView, setDataSubView] = useState(null);
+  const [dataDimension, setDataDimension] = useState(null);
+  const [dataAnchor, setDataAnchor] = useState(null);
+  const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
+
+  // Phase 6D SP4a (Bug-21 follow-up) — wire NextAuth session.user.email
+  // al store. Sin esto, ProfileV2/AccountView ven _userEmail=null aunque
+  // el user esté autenticado. SP3 agregó setUserEmail action; este
+  // useEffect es el único caller.
+  //
+  // Implementación: fetch directo a /api/auth/session (endpoint estándar
+  // NextAuth que devuelve session JSON). NO usamos useSession() de
+  // next-auth/react porque el repo no tiene <SessionProvider> en su
+  // layout root y agregarlo sería invasivo (touches app/layout.jsx). El
+  // fetch single-shot al mount es suficiente: ProfileV2/AccountView leen
+  // del store cacheado, no necesitan re-poll.
+  const [sessionEmail, setSessionEmail] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/session", { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        const email = data?.user?.email || null;
+        setSessionEmail(email);
+        const storeEmail = useStore.getState()._userEmail;
+        if (email && email !== storeEmail) {
+          try { useStore.getState().setUserEmail(email); } catch (e) { console.error("[v2] setUserEmail", e); }
+        } else if (!email && storeEmail !== null) {
+          try { useStore.getState().setUserEmail(null); } catch (e) { console.error("[v2] setUserEmail clear", e); }
+        }
+      } catch {
+        // Sin conexión / endpoint down: dejamos store como está.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Helper común para mountar el player con un protocolo dado.
   const launchProtocol = useCallback((protocol) => {
@@ -162,6 +327,18 @@ export default function AppV2Root() {
   const handleInstrumentComplete = useCallback((entry) => {
     if (entry) {
       try { useStore.getState().logInstrument(entry); } catch (e) { console.error("[v2] logInstrument error", e); }
+      // Phase 6D SP1 — branch específico rMEQ. Cuando el retake es de
+      // cronotipo, además de logear la entrada al historial de
+      // instrumentos (para "última calibración hace X"), seteamos
+      // state.chronotype con el record canónico para que ColdStart,
+      // prescriber y useAdaptiveRecommendation lo vean inmediato.
+      // El runner pasa el resultado completo de scoreRmeq que ya
+      // contiene chronotype + bestTimeWindow + score.
+      if (entry.instrumentId === "rmeq" && typeof entry.score === "number") {
+        try {
+          useStore.getState().setChronotype(buildChronotypeRecord(entry, entry.ts));
+        } catch (e) { console.error("[v2] setChronotype error", e); }
+      }
     }
     setInstrumentModal(null);
   }, []);
@@ -180,10 +357,21 @@ export default function AppV2Root() {
       launchProtocol(protocol);
       return;
     }
-    // SP5: ColdStart "Tu primera sesión" → arranca protocolo según firstIntent.
-    if (event.action === "start-pulse-shift" || event.id === "primera") {
+    // Phase 6D SP1 — ColdStart "Tu primera sesión". Acepta:
+    //   - action:"first-session"   (canónico Phase 6D)
+    //   - action:"start-pulse-shift" (alias legacy Phase 6 SP5 — backcompat)
+    //   - id:"primera"              (alias legacy id-based)
+    // Default: Reinicio Parasimpático (id 1) — protocolo más universal/
+    // seguro como first-session sin baseline. El default previo era 4
+    // (Pulse Shift = energia) que solo encajaba si user tenía energia
+    // intent → mismatch para users con calma/enfoque/reset.
+    if (
+      event.action === "first-session" ||
+      event.action === "start-pulse-shift" ||
+      event.id === "primera"
+    ) {
       const st = useStore.getState();
-      const id = FIRST_PROTOCOL_BY_INTENT[st.firstIntent] || 4; // default Pulse Shift
+      const id = FIRST_PROTOCOL_BY_INTENT[st.firstIntent] || DEFAULT_FIRST_PROTOCOL_ID;
       const protocol = PROTOCOLS.find((p) => p.id === id);
       if (!protocol) return;
       launchProtocol(protocol);
@@ -212,26 +400,152 @@ export default function AppV2Root() {
       setInstrumentModal({ instrument: PHQ2, scorer: scorePhq2 });
       return;
     }
-    // SP5: targets → switch to perfil tab + initial section.
+    // Phase 6D SP1 — rMEQ retake desde ColdStart o CalibrationView.
+    // Mounts InstrumentRunner con la definición canónica RMEQ + scorer.
+    // handleInstrumentComplete detecta instrumentId === "rmeq" y llama
+    // setChronotype además del logInstrument estándar.
+    if (event.action === "retake-chronotype") {
+      setInstrumentModal({ instrument: RMEQ, scorer: scoreRmeq });
+      return;
+    }
+    // Phase 6D SP4a — DSAR (3 actions). Wired al endpoint real
+    // /api/v1/me/dsar (existente). El modal único acepta type prop.
+    if (event.action === "dsar-access")      { setDsarModal("access"); return; }
+    if (event.action === "dsar-portability") { setDsarModal("portability"); return; }
+    if (event.action === "dsar-erasure")     { setDsarModal("erasure"); return; }
+    // Phase 6D SP4a — Account (4 actions, change-password NO porque User
+    // schema no tiene password field; AccountView ya no lo expone).
+    if (event.action === "change-email")     { setAccountModal("change-email"); return; }
+    if (event.action === "unlink-provider")  { setAccountModal("unlink-provider"); return; }
+    if (event.action === "signout-current")  { setAccountModal("signout-current"); return; }
+    if (event.action === "signout-all")      { setAccountModal("signout-all"); return; }
+    // Phase 6D SP4b — MFA (3 actions). El payload `stepUpFresh` viene de
+    // SecurityView (lectura previa de /api/v1/me/security.mfa.stepUpFreshSeconds).
+    // Si fresh, los modales saltean el StepUpInline; si stale, lo muestran.
+    if (event.action === "mfa-setup") {
+      setMfaModal({ type: "setup" });
+      return;
+    }
+    if (event.action === "mfa-disable") {
+      setMfaModal({ type: "disable", stepUpFresh: !!event.stepUpFresh });
+      return;
+    }
+    if (event.action === "mfa-backup-codes") {
+      setMfaModal({ type: "backup-codes", stepUpFresh: !!event.stepUpFresh });
+      return;
+    }
+    // Phase 6D SP4b — Sessions / Trusted devices (2 actions).
+    if (event.action === "revoke-session" && event.session?.id) {
+      setSessionRevokeModal({ session: event.session });
+      return;
+    }
+    if (event.action === "remove-trusted-device" && event.device?.id) {
+      setTrustedDeviceRemoveModal({ device: event.device });
+      return;
+    }
+    // Phase 6D SP4c — target navigation con resolución completa.
+    // Antes (Bug-11): cambiaba tab pero NO abría sub-section/sub-view ni
+    // aplicaba dimension/anchor. Ahora dispatch coordinado:
+    //   /app/profile/[section]#[anchor] → tab=perfil + setProfileSection +
+    //     setProfileSubAnchor
+    //   /app/data?dimension=X#anchor → tab=datos + setDataDimension +
+    //     setDataAnchor
+    //   /app/data/sessions/all → tab=datos + setDataSubView("sessions-all")
+    //   /app/data/achievements/all → tab=datos + setDataSubView("achievements-all")
     if (typeof event.target === "string") {
       const target = event.target;
-      if (target.startsWith("/app/profile/calibration")) {
-        setTab("perfil");
-        // Sub-section is read by ProfileV2 vía useProfileSectionInitial,
-        // que lee ?ps= del URL. Para v2 intra-shell, abrimos calibración:
-        // ProfileV2 montea SubView via state local; pero ese state no tiene
-        // setter externo. Defer al user navegar manualmente desde Perfil.
+
+      if (target.startsWith("/app/profile/")) {
+        try {
+          const url = new URL(target, "http://dummy");
+          const parts = url.pathname.split("/").filter(Boolean);
+          // ["app","profile","calibration", ...]
+          const sectionId = parts[2] || null;
+          const anchor = url.hash.replace(/^#/, "") || null;
+          const VALID = new Set([
+            "calibration", "instruments", "nom35", "engine-health",
+            "settings", "security", "privacy", "data-requests", "account",
+          ]);
+          setTab("perfil");
+          if (sectionId && VALID.has(sectionId)) {
+            setProfileSection(sectionId);
+            setProfileSubAnchor(anchor);
+          }
+        } catch { /* ignore malformed target */ }
         return;
       }
-      if (target.startsWith("/app/profile/instruments")) {
-        setTab("perfil");
-        return;
-      }
+
       if (target.startsWith("/app/data")) {
-        setTab("datos");
+        try {
+          const url = new URL(target, "http://dummy");
+          const parts = url.pathname.split("/").filter(Boolean);
+          // ["app","data"] | ["app","data","sessions","all"] | etc.
+          const sub2 = parts[2] || null;
+          const sub3 = parts[3] || null;
+          const dimension = url.searchParams.get("dimension");
+          const anchor = url.hash.replace(/^#/, "") || null;
+          setTab("datos");
+          // Sub-views completas (sessions/all, achievements/all).
+          if (sub2 === "sessions" && sub3 === "all") {
+            setDataSubView("sessions-all");
+          } else if (sub2 === "achievements" && sub3 === "all") {
+            setDataSubView("achievements-all");
+          } else {
+            setDataSubView(null);
+          }
+          if (dimension) setDataDimension(dimension);
+          else setDataDimension(null);
+          if (anchor) setDataAnchor(anchor);
+          else setDataAnchor(null);
+        } catch { /* ignore */ }
         return;
       }
-      // Otros targets (e.g. /pricing) — log para SP6 si aplica.
+
+      if (target === "/admin") {
+        // SP4c — admin link con redirect server-side. La verificación de
+        // role real ocurre en el middleware/page de /admin (server-side
+        // auth check). Si user no es admin, /admin retorna 403 — mejor
+        // que pretender que la opción no existe.
+        if (typeof window !== "undefined") {
+          window.location.href = "/admin";
+        }
+        return;
+      }
+
+      if (target === "/pricing" && typeof window !== "undefined") {
+        // Coach upgrade link — page existente.
+        window.location.href = "/pricing";
+        return;
+      }
+
+      if (target.startsWith("/")) {
+        // Cualquier otro target absoluto — fallback a window.location.
+        // Las páginas reales (kit, trust, etc.) son rutas Next.js válidas.
+        if (typeof window !== "undefined") {
+          window.location.href = target;
+        }
+        return;
+      }
+    }
+
+    // Phase 6D SP4c — NOM-035 + Resonance retest deferred Phase 6E.
+    // Razón: NOM-035 son 72 ítems × 5 niveles × 10 dominios + requiere
+    // validación legal (texto vs DOF oficial). Resonance retest es
+    // feature secundaria sin blocker de deployment. Mostramos feedback
+    // honesto en lugar de UI placeholder que pretende funcionar.
+    if (event.action === "take-nom35") {
+      if (typeof window !== "undefined") {
+        window.alert(
+          "NOM-035 estará disponible próximamente. Estamos validando los textos con asesoría legal antes de habilitar la evaluación."
+        );
+      }
+      return;
+    }
+    if (event.action === "retest-resonance") {
+      if (typeof window !== "undefined") {
+        window.alert("Recalibración de frecuencia resonante estará disponible próximamente.");
+      }
+      return;
     }
     // Phase 6B post-SP3 — programs handlers reales (antes caían en log).
     // Modelo: PROGRAMS define sessions[] por día; activeProgram trackea
@@ -287,10 +601,11 @@ export default function AppV2Root() {
       } catch {}
       return;
     }
-    // Otras acciones (dsar-*, mfa-*, retest-chronotype, retest-resonance,
-    // change-email/password, etc.) se manejan en sprints futuros con sus
-    // endpoints respectivos. Por ahora log para que el dev sepa que llegó.
-    console.log("[v2] navigate", event);
+    // Phase 6D SP4c — fallback console.warn (Bug-25 fix). Antes era
+    // console.log silencioso que tragaba ~14 actions sin handler. Post
+    // SP4a/b/c, casi todos los actions tienen handler. Si este warn aparece
+    // en producción indica un handler missing — flag explícito para CI.
+    console.warn("[v2] navigate — UNHANDLED ACTION (no handler matched)", event);
   }, [launchProtocol]);
 
   // Phase 6 SP4 — Crisis quick access.
@@ -398,16 +713,37 @@ export default function AppV2Root() {
     setSessionStartedAt(null);
   }, []);
 
-  const onBellClick = () => { console.log("[v2] bell click — drawer placeholder"); };
-  const screenProps = tab === "hoy"
-    ? { devOverride, onNavigate, onBellClick }
-    : tab === "datos"
-      ? { empty, onNavigate, onBellClick }
-      : tab === "coach"
-        ? { devOverride: coachOverride, onNavigate, onBellClick }
-        : tab === "perfil"
-          ? { devOverride: profileOverride, sectionInitial: profileSection, onNavigate, onBellClick }
-          : { onNavigate, onBellClick };
+  // Phase 6D SP4c — onBellClickReal abre NotificationDrawerV2 (Bug-10
+  // fix). Reemplaza el stub previo `() => console.log("bell click")`.
+  const onBellClickReal = useCallback(() => setNotificationDrawerOpen(true), []);
+
+   const screenProps = tab === "hoy"
+     ? { devOverride, onNavigate, onBellClick: onBellClickReal }
+     : tab === "datos"
+       ? {
+           empty,
+           onNavigate,
+           onBellClick: onBellClickReal,
+           // Phase 6D SP4c — controlled sub-view + dimension + anchor.
+           subView: dataSubView,
+           onSubViewChange: setDataSubView,
+           dimension: dataDimension,
+           subAnchor: dataAnchor,
+         }
+       : tab === "coach"
+         ? { devOverride: coachOverride, onNavigate, onBellClick: onBellClickReal }
+         : tab === "perfil"
+           ? {
+               devOverride: profileOverride,
+               sectionInitial: profileSectionInitial,
+               // Phase 6D SP4c — controlled section + subAnchor (Bug-11 fix).
+               section: profileSection,
+               onSectionChange: (s) => { setProfileSection(s); if (!s) setProfileSubAnchor(null); },
+               subAnchor: profileSubAnchor,
+               onNavigate,
+               onBellClick: onBellClickReal,
+             }
+           : { onNavigate, onBellClick: onBellClickReal };
 
   // Phase 6B post-SP3 — gate de hidratación. SIN esto, el primer render
   // tiene welcomeDone:false (default DS) y muestra BioIgnitionWelcome
@@ -528,8 +864,13 @@ export default function AppV2Root() {
 
       {/* Phase 6 SP4 — CrisisFAB persistente (oculto mientras player,
           sheet, HRV modal o instrumento están abiertos: el user está en
-          flow controlado, no necesita acceso crisis paralelo). */}
-      {!playerOpen && !crisisSheetOpen && !hrvModalOpen && !instrumentModal && (
+          flow controlado, no necesita acceso crisis paralelo).
+          Phase 6D SP4a/b — también oculto durante DSAR/Account/MFA modales
+          (mismo principio de flow controlado). */}
+      {!playerOpen && !crisisSheetOpen && !hrvModalOpen && !instrumentModal &&
+       !dsarModal && !accountModal && !mfaModal &&
+       !sessionRevokeModal && !trustedDeviceRemoveModal &&
+       !notificationDrawerOpen && (
         <CrisisFAB onOpenSheet={handleOpenCrisisSheet} />
       )}
       <CrisisSheet
@@ -590,6 +931,86 @@ export default function AppV2Root() {
           onComplete={handleInstrumentComplete}
         />
       )}
+
+      {/* Phase 6D SP4a — DSAR modal único con 3 types. Wired a
+          /api/v1/me/dsar (existente). */}
+      {dsarModal && (
+        <DsarRequestModal
+          type={dsarModal}
+          onClose={() => setDsarModal(null)}
+          onComplete={() => setDsarModal(null)}
+        />
+      )}
+
+      {/* Phase 6D SP4a — Account modales (4 actions: change-email,
+          unlink-provider, signout-current, signout-all). Mutualmente
+          exclusivos via single `accountModal` state. */}
+      {accountModal === "change-email" && (
+        <ChangeEmailModal
+          currentEmail={sessionEmail || useStore.getState()._userEmail}
+          onClose={() => setAccountModal(null)}
+          onComplete={() => setAccountModal(null)}
+        />
+      )}
+      {accountModal === "unlink-provider" && (
+        <UnlinkProviderModal
+          onClose={() => setAccountModal(null)}
+          onComplete={() => { /* keep modal open for further unlinks */ }}
+        />
+      )}
+      {(accountModal === "signout-current" || accountModal === "signout-all") && (
+        <SignoutModal
+          scope={accountModal === "signout-all" ? "all" : "current"}
+          onClose={() => setAccountModal(null)}
+        />
+      )}
+
+      {/* Phase 6D SP4b — MFA modales (3 types) + sessions/trusted-devices.
+          stepUpFresh viene del payload del action (SecurityView lo lee de
+          /api/v1/me/security antes de tap). */}
+      {mfaModal?.type === "setup" && (
+        <MfaSetupModal
+          onClose={() => setMfaModal(null)}
+          onComplete={() => setMfaModal(null)}
+        />
+      )}
+      {mfaModal?.type === "disable" && (
+        <MfaDisableModal
+          stepUpFresh={!!mfaModal.stepUpFresh}
+          onClose={() => setMfaModal(null)}
+          onComplete={() => setMfaModal(null)}
+        />
+      )}
+      {mfaModal?.type === "backup-codes" && (
+        <MfaBackupCodesModal
+          stepUpFresh={!!mfaModal.stepUpFresh}
+          onClose={() => setMfaModal(null)}
+          onComplete={() => setMfaModal(null)}
+        />
+      )}
+      {sessionRevokeModal && (
+        <RevokeSessionModal
+          session={sessionRevokeModal.session}
+          onClose={() => setSessionRevokeModal(null)}
+          onComplete={() => setSessionRevokeModal(null)}
+        />
+      )}
+      {trustedDeviceRemoveModal && (
+        <RemoveTrustedDeviceModal
+          device={trustedDeviceRemoveModal.device}
+          onClose={() => setTrustedDeviceRemoveModal(null)}
+          onComplete={() => setTrustedDeviceRemoveModal(null)}
+        />
+      )}
+
+      {/* Phase 6D SP4c — NotificationDrawerV2 wired al endpoint existente
+          /api/notifications/recent. Reemplaza el stub onBellClick que
+          solo hacía console.log (Bug-10). */}
+      <NotificationDrawerV2
+        open={notificationDrawerOpen}
+        onClose={() => setNotificationDrawerOpen(false)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

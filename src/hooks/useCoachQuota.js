@@ -22,6 +22,11 @@ export function useCoachQuota() {
   const [quota, setQuota] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Phase 6D SP4a (Bug-12) — unauthenticated flag explícito.
+  // Antes 401 dejaba quota en null y CoachV2 caía al DEFAULT_QUOTA
+  // hardcoded "PLAN PRO 0/100" — engañoso para users no auth. Ahora
+  // el consumer puede chequear isUnauthenticated y mostrar CoachAuthRequired.
+  const [isUnauthenticated, setIsUnauthenticated] = useState(false);
 
   const doFetch = useCallback(async (signal) => {
     setLoading(true);
@@ -30,12 +35,16 @@ export function useCoachQuota() {
       const res = await fetch("/api/coach/quota", { signal, credentials: "same-origin" });
       if (!res.ok) {
         if (res.status === 401) {
-          // Sin sesión: dejamos quota en null para que el consumidor
-          // siga mostrando el placeholder defensivo del initial state.
+          // Sin sesión: marcar el flag para que CoachV2 muestre empty
+          // state honesto (con CTA login) en lugar del PRO 0/100 fake.
+          setIsUnauthenticated(true);
+          setQuota(null);
           return;
         }
         throw new Error(`quota_http_${res.status}`);
       }
+      // 200 OK — user autenticado.
+      setIsUnauthenticated(false);
       const data = await res.json();
       // Normaliza max=null → Infinity (server serializa Infinity como null)
       const normalized = {
@@ -59,5 +68,5 @@ export function useCoachQuota() {
 
   const refetch = useCallback(() => doFetch(undefined), [doFetch]);
 
-  return { quota, loading, error, refetch };
+  return { quota, loading, error, refetch, isUnauthenticated };
 }

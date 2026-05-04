@@ -1,5 +1,5 @@
 "use client";
-import { motion as motionTok } from "../tokens";
+import { colors, motion as motionTok } from "../tokens";
 
 // Spec ajuste cliente SP5: ON track = blanco neutral cool (no cyan).
 // Razon: cyan es accent reservado a acciones primarias / estados de
@@ -38,7 +38,7 @@ export default function Switch({ checked = false, onChange, ariaLabel }) {
           width: 16,
           height: 16,
           borderRadius: "50%",
-          background: checked ? "#08080A" : "rgba(255,255,255,0.96)",
+          background: checked ? colors.bg.base : colors.text.strong,
           transition: `left 200ms ${motionTok.ease.out}, background 200ms ${motionTok.ease.out}`,
         }}
       />

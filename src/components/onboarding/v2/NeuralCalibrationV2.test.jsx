@@ -1,6 +1,8 @@
-/* NeuralCalibrationV2.test — Phase 6 quick-fix */
-import { describe, it, expect, vi } from "vitest";
+/* NeuralCalibrationV2.test — Phase 6 quick-fix + Phase 6D SP1 wiring */
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+// useStore se importa más abajo (Phase 6B SP2 block) para reusar el mismo
+// módulo del mock dinámico — ver línea ~252.
 
 // Stable component reference para evitar remount + state loss bajo proxy.
 const MOTION_KEYS_FILTER = ["initial","animate","exit","transition","layout","layoutId","whileHover","whileTap","whileFocus","whileDrag","whileInView"];
@@ -391,5 +393,134 @@ describe("NeuralCalibrationV2 — Phase 6B SP2 HRV step real", () => {
     fireEvent.click(screen.getByTestId("hrv-enable-camera"));
     fireEvent.click(screen.getByTestId("mock-hrv-complete"));
     expect(screen.getByTestId("hrv-enable-camera").textContent).toMatch(/volver a medir/i);
+  });
+});
+
+/* ────────────────────────────────────────────────────────────────
+   Phase 6D SP1 — wiring real al store en handleAdvance final.
+   Antes: solo onComplete(baseline) → setNeuralBaseline blob.
+   Ahora: además llama logInstrument(pss-4), logInstrument(maia-2),
+   setChronotype(record) y logHRV (si hubo medición).
+   ──────────────────────────────────────────────────────────────── */
+describe("NeuralCalibrationV2 — Phase 6D SP1 wiring real al store", () => {
+  // helper: recorre las 5 pantallas hasta el botón "Empezar".
+  function completeOnboarding(pss4Choice = 2, hrvSkip = true) {
+    [0, 1, 2, 3].forEach((idx) =>
+      fireEvent.click(screen.getByTestId(`pss4-opt-${idx}-${pss4Choice}`))
+    );
+    fireEvent.click(screen.getByTestId("calibration-cta"));
+    [0, 1, 2, 3, 4].forEach(() => {
+      fireEvent.click(screen.getAllByRole("radio")[0]);
+    });
+    fireEvent.click(screen.getByTestId("calibration-cta"));
+    for (let idx = 0; idx < 8; idx++) {
+      fireEvent.click(screen.getByTestId(`maia2-opt-${idx}-3`));
+    }
+    fireEvent.click(screen.getByTestId("calibration-cta"));
+    if (hrvSkip) {
+      fireEvent.click(screen.getByTestId("hrv-skip"));
+    }
+    fireEvent.click(screen.getByTestId("calibration-cta"));
+    // Step 5 summary → "Empezar" final triggers el wiring.
+    fireEvent.click(screen.getByTestId("calibration-cta"));
+  }
+
+  beforeEach(() => {
+    // Reset slots que el wiring escribe — evita leak entre tests.
+    useStore.setState({
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+      neuralBaseline: null,
+    });
+    // Restaura cualquier spy residual de tests previos en otros describes
+    // del mismo file (Phase 6B SP2 spy logHRV en step HRV completo). Sin
+    // esto, vi.spyOn re-aplicado acumula wrappers y hace que un test que
+    // verifica "no se llamó" capture llamadas de runs anteriores con la
+    // misma instancia de useStore.getState().
+    vi.restoreAllMocks();
+  });
+
+  it("logInstrument se llama con instrumentId='pss-4', score numérico y level válido", () => {
+    const logSpy = vi.spyOn(useStore.getState(), "logInstrument");
+    render(<NeuralCalibrationV2 onComplete={() => {}} />);
+    completeOnboarding();
+    const pss4Calls = logSpy.mock.calls.filter((c) => c[0]?.instrumentId === "pss-4");
+    expect(pss4Calls).toHaveLength(1);
+    const entry = pss4Calls[0][0];
+    expect(typeof entry.score).toBe("number");
+    expect(["low", "moderate", "high"]).toContain(entry.level);
+    expect(entry.source).toBe("onboarding");
+    expect(typeof entry.ts).toBe("number");
+    logSpy.mockRestore();
+  });
+
+  it("logInstrument se llama con instrumentId='maia-2' y dimensions", () => {
+    const logSpy = vi.spyOn(useStore.getState(), "logInstrument");
+    render(<NeuralCalibrationV2 onComplete={() => {}} />);
+    completeOnboarding();
+    const maia2Calls = logSpy.mock.calls.filter((c) => c[0]?.instrumentId === "maia-2");
+    expect(maia2Calls).toHaveLength(1);
+    const entry = maia2Calls[0][0];
+    expect(typeof entry.score).toBe("number");
+    expect(entry.dimensions).toBeDefined();
+    expect(typeof entry.dimensions.noticing).toBe("number");
+    expect(typeof entry.dimensions.attentionRegulation).toBe("number");
+    expect(typeof entry.dimensions.emotionalAwareness).toBe("number");
+    expect(typeof entry.dimensions.bodyListening).toBe("number");
+    logSpy.mockRestore();
+  });
+
+  it("setChronotype se llama con record { type, category, label, score, bestTimeWindow, ts }", () => {
+    const setSpy = vi.spyOn(useStore.getState(), "setChronotype");
+    render(<NeuralCalibrationV2 onComplete={() => {}} />);
+    completeOnboarding();
+    expect(setSpy).toHaveBeenCalledTimes(1);
+    const record = setSpy.mock.calls[0][0];
+    expect(record).not.toBeNull();
+    expect(typeof record.type).toBe("string");
+    expect(record.type).toBe(record.category); // alias
+    expect(typeof record.label).toBe("string");
+    expect(typeof record.score).toBe("number");
+    expect(typeof record.bestTimeWindow).toBe("string");
+    expect(typeof record.ts).toBe("number");
+    setSpy.mockRestore();
+  });
+
+  it("hrvLog NO se actualiza cuando user saltó HRV (vía proxy state)", () => {
+    // Verificamos a través del state del store en lugar de spy: cuando el
+    // user salta HRV, hrvLog debe quedar vacío post-onboarding. Spies
+    // sobre useStore.getState().logHRV son frágiles entre describes
+    // porque el spy wrapper puede capturar llamadas de tests vecinos
+    // si no se restaura limpio (las methods del store son singleton).
+    render(<NeuralCalibrationV2 onComplete={() => {}} />);
+    completeOnboarding(2, /* hrvSkip */ true);
+    expect(useStore.getState().hrvLog).toEqual([]);
+  });
+
+  it("onComplete se llama con baseline después del wiring (orden preservado)", () => {
+    const onComplete = vi.fn();
+    const logSpy = vi.spyOn(useStore.getState(), "logInstrument");
+    render(<NeuralCalibrationV2 onComplete={onComplete} />);
+    completeOnboarding();
+    expect(logSpy).toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete.mock.calls[0][0]).toMatchObject({
+      pss4: expect.any(Object),
+      rmeq: expect.any(Object),
+      maia2: expect.any(Object),
+      version: "v2",
+    });
+    logSpy.mockRestore();
+  });
+
+  it("estado del store post-wiring: instruments tiene 2 entries, chronotype set", () => {
+    render(<NeuralCalibrationV2 onComplete={() => {}} />);
+    completeOnboarding();
+    const st = useStore.getState();
+    expect(st.instruments.filter((e) => e.instrumentId === "pss-4")).toHaveLength(1);
+    expect(st.instruments.filter((e) => e.instrumentId === "maia-2")).toHaveLength(1);
+    expect(st.chronotype).not.toBeNull();
+    expect(st.chronotype.type).toBeDefined();
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import {
   average,
   stddev,
@@ -14,6 +14,20 @@ import {
 } from "./hrvStats";
 
 const MS_PER_DAY = 86_400_000;
+
+// PHASE 6D SP6 — fix flaky tests. Antes algunos tests usaban Date.now()
+// directo, lo que causaba false positives cerca de midnight rollover
+// (groupByDay agrupaba ts1+ts2 en distintos días si el test corría
+// justo cuando el reloj cruzaba 23:59 → 00:00). vi.useFakeTimers + un
+// timestamp fijo bien lejos de medianoche elimina la fuente de flake.
+beforeAll(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 4, 4, 12, 0, 0)); // 2026-05-04 12:00:00 local
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 describe("hrvStats — basic stats", () => {
   it("average vacio → null", () => {

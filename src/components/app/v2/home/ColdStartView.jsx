@@ -1,42 +1,35 @@
 "use client";
+import { useMemo } from "react";
 import { Compass, Play, Activity, ClipboardList, ChevronRight } from "lucide-react";
+import { useStore } from "@/store/useStore";
+import { firstProtocolForIntent } from "@/lib/first-protocol";
 import { colors, typography, spacing, radii, surfaces, icon, motion as motionTok } from "../tokens";
 
 // Estado A — cold-start (menos de 5 sesiones).
-// Saludo + 4 cards de accion lista-row. Whitespace 96px hasta nav.
-
-const ACTIONS = [
-  {
-    id: "cronotipo",
-    Icon: Compass,
-    title: "Calibra tu cronotipo",
-    description: "Test MEQ-SA · 19 preguntas · 4 min",
-    target: "/app/profile/calibration",
-  },
-  {
-    id: "primera",
-    Icon: Play,
-    title: "Tu primera sesión",
-    description: "Pulse Shift · 120s · sin protocolo previo necesario",
-    action: "start-pulse-shift",
-  },
-  {
-    id: "hrv",
-    Icon: Activity,
-    title: "Mide tu variabilidad cardíaca",
-    description: "60s con cámara o BLE · primera medición",
-    target: "/app/profile/calibration#hrv",
-  },
-  {
-    id: "pss4",
-    Icon: ClipboardList,
-    title: "Test de estrés percibido",
-    description: "PSS-4 · 4 preguntas · 1 min",
-    target: "/app/profile/instruments#pss4",
-  },
-];
+// Saludo + cards de accion lista-row dinamicamente filtradas:
+//   - "Tu primera sesion": label DERIVADO del firstIntent del user
+//     (Phase 6D SP1, antes hardcodeado a "Pulse Shift" → user con intent
+//     calma veia "Pulse Shift" pero al tap se lanzaba el correcto Reinicio
+//     Parasimpatico → mismatch UI/comportamiento).
+//   - "Calibra cronotipo": oculto si state.chronotype !== null.
+//   - "PSS-4": oculto si state.instruments incluye una entrada pss-4.
+//   - "Mide HRV": siempre visible mientras user no tenga mediciones — la
+//     card permanece como recordatorio (HRV puede medirse muchas veces).
+// Whitespace 96px hasta nav.
 
 export default function ColdStartView({ greeting, subtitle = "Vamos a conocerte.", onAction }) {
+  // Selectores granulares para evitar re-render en cambios irrelevantes.
+  const firstIntent = useStore((s) => s.firstIntent);
+  const chronotype = useStore((s) => s.chronotype);
+  const instruments = useStore((s) => s.instruments);
+  const totalSessions = useStore((s) => s.totalSessions);
+  const hrvLog = useStore((s) => s.hrvLog);
+
+  const actions = useMemo(
+    () => buildActions({ firstIntent, chronotype, instruments, totalSessions, hrvLog }),
+    [firstIntent, chronotype, instruments, totalSessions, hrvLog],
+  );
+
   return (
     <>
       <section
@@ -100,12 +93,89 @@ export default function ColdStartView({ greeting, subtitle = "Vamos a conocerte.
           EMPEZAR POR AQUÍ
         </div>
 
-        {ACTIONS.map((a) => (
+        {actions.map((a) => (
           <ActionRow key={a.id} item={a} onAction={onAction} />
         ))}
       </section>
     </>
   );
+}
+
+// Phase 6D SP1 — buildActions decide qué cards aparecen y con qué
+// label. La función vive afuera del componente para testabilidad
+// directa (tests pueden importarla y verificar el filtrado sin
+// montar el árbol React).
+export function buildActions({
+  firstIntent,
+  chronotype,
+  instruments,
+  totalSessions,
+  hrvLog,
+}) {
+  const safeInstruments = Array.isArray(instruments) ? instruments : [];
+  const safeHrvLog = Array.isArray(hrvLog) ? hrvLog : [];
+  const hasChronotype = chronotype !== null && chronotype !== undefined;
+  const hasPss4 = safeInstruments.some((e) => e && e.instrumentId === "pss-4");
+  const hasFirstSession = (totalSessions || 0) > 0;
+  const hasHrv = safeHrvLog.length > 0;
+
+  // first-session card: label DERIVADO del intent. firstProtocolForIntent
+  // resuelve el catálogo y devuelve el objeto Protocol completo.
+  const firstProtocol = firstProtocolForIntent(firstIntent);
+  const firstProtocolName = firstProtocol?.n || "Sesión inicial";
+  const firstProtocolDuration = firstProtocol?.d || 120;
+
+  const out = [];
+
+  // Card 1 — primera sesión (oculta si user ya tiene sesiones).
+  if (!hasFirstSession) {
+    out.push({
+      id: "primera",
+      Icon: Play,
+      title: "Tu primera sesión",
+      description: `${firstProtocolName} · ${firstProtocolDuration}s · sin protocolo previo necesario`,
+      action: "first-session",
+    });
+  }
+
+  // Card 2 — cronotipo (oculta si ya calibrado).
+  // Bug-15 fix: el instrumento real es rMEQ (5 ítems, Adan & Almirall
+  // 1991), no MEQ-SA (19 ítems, Horne & Östberg 1976).
+  if (!hasChronotype) {
+    out.push({
+      id: "cronotipo",
+      Icon: Compass,
+      title: "Calibra tu cronotipo",
+      description: "rMEQ · 5 ítems · Adan & Almirall 1991",
+      action: "retake-chronotype",
+    });
+  }
+
+  // Card 3 — HRV (siempre visible mientras no haya mediciones; sigue
+  // siendo opcional aún post-onboarding porque algunos users pueden
+  // querer iniciar después).
+  if (!hasHrv) {
+    out.push({
+      id: "hrv",
+      Icon: Activity,
+      title: "Mide tu variabilidad cardíaca",
+      description: "60s con cámara o BLE · primera medición",
+      action: "new-hrv",
+    });
+  }
+
+  // Card 4 — PSS-4 (oculto si ya hecho en onboarding o standalone).
+  if (!hasPss4) {
+    out.push({
+      id: "pss4",
+      Icon: ClipboardList,
+      title: "Test de estrés percibido",
+      description: "PSS-4 · 4 preguntas · 1 min",
+      action: "retake-pss4",
+    });
+  }
+
+  return out;
 }
 
 function ActionRow({ item, onAction }) {

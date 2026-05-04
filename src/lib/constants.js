@@ -213,6 +213,13 @@ export const DS = {
   // próximo mensaje del user creará una nueva.
   coachConversations: [],
   coachActiveConversationId: null,
+  // Phase 6D SP3 — email del user autenticado, cacheado localmente para
+  // que ProfileV2/AccountView lo muestren sin requerir useSession en cada
+  // mount. setUserEmail (action en useStore) lo hidrata desde el sign-in
+  // flow o desde un componente raíz que tenga acceso a session. Cuando es
+  // null, las superficies que lo consumen muestran empty state honesto en
+  // lugar del antiguo fixture "operador@bio-ignicion.local".
+  _userEmail: null,
 };
 
 // ─── Neural State Color Mapping ──────────────────────────

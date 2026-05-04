@@ -56,6 +56,10 @@ export default function CrisisSheet({ open, onClose, onSelectProtocol }) {
         alignItems: "flex-end",
         justifyContent: "center",
         background: "rgba(8,8,10,0.72)",
+        // Phase 6D SP4b — Bug-28 excepción documentada. Crisis sheet
+        // necesita separación clara del background sin perder contexto
+        // (user puede ver brevemente que viene de Hoy/Datos/etc.). Blur
+        // 8px es la cantidad mínima que logra esa hierarchy visual.
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
         animationName: "biCrisisSheetFade",

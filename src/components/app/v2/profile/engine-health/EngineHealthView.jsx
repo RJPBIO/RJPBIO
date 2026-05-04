@@ -1,16 +1,94 @@
 "use client";
+import { useStore } from "@/store/useStore";
 import SubRouteHeader from "../SubRouteHeader";
 import { Section, Kicker, Card, ScrollPad } from "../primitives";
 import { typography, colors, spacing, radii } from "../../tokens";
-import { FIXTURE_ENGINE_HEALTH } from "../fixtures";
 
 // Sub-ruta engine-health — la mas tecnica. Aqui SI se ven nombres
 // tecnicos (composite, cohort prior, calibration bias per arm, hit rate)
 // porque los users que abren esto son power-users que QUIEREN ver los
 // numeros crudos. Pero cada termino tecnico va con caption humano debajo.
+//
+// Phase 6D SP3 — fixtures cleanup. Antes leía FIXTURE_ENGINE_HEALTH que
+// inventaba "Personalizado · 47 sesiones · hit rate 82% · acceptance 0.74"
+// para todos los users. Ahora deriva métricas reales del store:
+//
+//   - overall + descriptor: thresholds basados en totalSessions reales
+//   - hitRate / acceptance / personalization / dataConfidence:
+//     hasta SP6 hay un endpoint server real, mostramos placeholders
+//     honestos cuando user es nuevo (no inventamos números)
+//   - cohortPrior: solo se muestra si hay cohort real (deferido SP4)
+//   - calibrationBias per arm: derivado de banditArms del store
+//   - actions: lista vacía hasta que tengamos suggester real
 
 export default function EngineHealthView({ onBack }) {
-  const eh = FIXTURE_ENGINE_HEALTH;
+  const totalSessions = useStore((s) => s.totalSessions || 0);
+  const historyLen = useStore((s) => Array.isArray(s.history) ? s.history.length : 0);
+  const banditArms = useStore((s) => s.banditArms || {});
+
+  const eh = deriveEngineHealth({ totalSessions: totalSessions || historyLen, banditArms });
+
+  if (eh.isEmpty) {
+    return (
+      <>
+        <SubRouteHeader title="Salud del motor" onBack={onBack} />
+        <ScrollPad>
+          <Section>
+            <Kicker tone="cyan">ESTADO DEL MOTOR</Kicker>
+            <h2
+              style={{
+                margin: 0,
+                fontFamily: typography.family,
+                fontSize: 40,
+                fontWeight: typography.weight.light,
+                letterSpacing: "-0.04em",
+                color: colors.text.primary,
+                lineHeight: 1.05,
+              }}
+            >
+              Sin datos
+            </h2>
+            <p
+              style={{
+                margin: 0,
+                marginBlockStart: 8,
+                fontFamily: typography.family,
+                fontSize: typography.size.body,
+                fontWeight: typography.weight.regular,
+                color: colors.text.secondary,
+                lineHeight: 1.4,
+              }}
+            >
+              {eh.overallCaption}
+            </p>
+          </Section>
+          <Section paddingBottom={48}>
+            <article
+              style={{
+                background: "transparent",
+                border: `0.5px dashed ${colors.separator}`,
+                borderRadius: radii.panelLg,
+                padding: spacing.s24 - 4,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: typography.family,
+                  fontSize: typography.size.caption,
+                  fontWeight: typography.weight.regular,
+                  color: colors.text.secondary,
+                  lineHeight: 1.5,
+                }}
+              >
+                Las métricas del motor (hit rate, calibration bias por protocolo, cohort prior) se calculan después de tu primera sesión. El bandit necesita observaciones reales para reportar precision honesta.
+              </p>
+            </article>
+          </Section>
+        </ScrollPad>
+      </>
+    );
+  }
 
   return (
     <>
@@ -26,7 +104,7 @@ export default function EngineHealthView({ onBack }) {
               fontSize: 48,
               fontWeight: typography.weight.light,
               letterSpacing: "-0.04em",
-              color: "rgba(255,255,255,0.96)",
+              color: colors.text.primary,
               lineHeight: 1.05,
             }}
           >
@@ -39,7 +117,7 @@ export default function EngineHealthView({ onBack }) {
               fontFamily: typography.family,
               fontSize: typography.size.body,
               fontWeight: typography.weight.regular,
-              color: "rgba(255,255,255,0.55)",
+              color: colors.text.secondary,
               lineHeight: 1.4,
             }}
           >
@@ -47,203 +125,122 @@ export default function EngineHealthView({ onBack }) {
           </p>
         </Section>
 
-        {/* Metrics grid 2x2 */}
-        <Section>
-          <Kicker>MÉTRICAS</Kicker>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 0,
-              borderBlock: `0.5px solid ${colors.separator}`,
-            }}
-          >
-            <MetricCell value={`${eh.hitRate}%`}      label="PRECISIÓN DE PREDICCIÓN" right bottom />
-            <MetricCell value={eh.acceptance.toFixed(2)}     label="ACEPTACIÓN DE RECOMENDACIONES"     bottom />
-            <MetricCell value={eh.personalization} label="FUERZA DE PERSONALIZACIÓN" right />
-            <MetricCell value={eh.dataConfidence.toFixed(2)} label="CONFIANZA EN DATOS" />
-          </div>
-        </Section>
-
-        {/* Cohort prior */}
-        {eh.cohortPrior?.available && (
+        {/* Calibration bias per arm — derivado del banditArms real */}
+        {eh.calibrationBias.length > 0 && (
           <Section>
-            <Kicker>COHORT PRIOR · LO QUE APRENDEMOS DEL EQUIPO</Kicker>
-            <Card>
-              <p
-                style={{
-                  margin: 0,
-                  fontFamily: typography.family,
-                  fontSize: typography.size.bodyMin,
-                  fontWeight: typography.weight.regular,
-                  color: "rgba(255,255,255,0.96)",
-                  lineHeight: 1.5,
-                }}
-              >
-                {eh.cohortPrior.summary}
-              </p>
-              <ul
-                style={{
-                  listStyle: "none",
-                  margin: 0,
-                  padding: 0,
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  rowGap: 8,
-                  columnGap: spacing.s16,
-                }}
-              >
-                {eh.cohortPrior.buckets.map((b) => (
-                  <BucketRow key={b.bucket} bucket={b.bucket} intent={b.intent} />
+            <Kicker>BIAS DE PREDICCIÓN POR INTENT</Kicker>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontFamily: typography.familyMono,
+                fontSize: typography.size.caption,
+                color: colors.text.secondary,
+              }}
+            >
+              <thead>
+                <tr>
+                  <Th>INTENT</Th>
+                  <Th align="end">REWARD MEDIO</Th>
+                  <Th align="end">N</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {eh.calibrationBias.map((row, i) => (
+                  <tr
+                    key={row.intent}
+                    style={{
+                      borderBlockStart: i === 0 ? "none" : `0.5px solid ${colors.separator}`,
+                    }}
+                  >
+                    <Td>{row.intent}</Td>
+                    <Td align="end" tone={row.reward === 0 ? "muted" : row.reward > 0 ? "primary" : "secondary"}>
+                      {row.reward > 0 ? "+" : ""}{row.reward.toFixed(2)}
+                    </Td>
+                    <Td align="end" tone="muted">{row.n}</Td>
+                  </tr>
                 ))}
-              </ul>
-            </Card>
+              </tbody>
+            </table>
           </Section>
         )}
 
-        {/* Calibration bias per arm */}
-        <Section>
-          <Kicker>BIAS DE PREDICCIÓN POR PROTOCOLO</Kicker>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontFamily: typography.familyMono,
-              fontSize: typography.size.caption,
-              color: "rgba(255,255,255,0.72)",
-            }}
-          >
-            <thead>
-              <tr>
-                <Th>PROTOCOLO</Th>
-                <Th align="end">BIAS</Th>
-                <Th align="end">N</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {eh.calibrationBias.map((row, i) => (
-                <tr
-                  key={row.protocol}
-                  style={{
-                    borderBlockStart: i === 0 ? "none" : `0.5px solid ${colors.separator}`,
-                  }}
-                >
-                  <Td>{row.protocol}</Td>
-                  <Td align="end" tone={row.bias === 0 ? "muted" : row.bias > 0 ? "primary" : "secondary"}>
-                    {row.bias > 0 ? "+" : ""}{row.bias.toFixed(1)}
-                  </Td>
-                  <Td align="end" tone="muted">{row.n}</Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Section>
-
-        {/* Suggested actions */}
+        {/* Honest stats placeholder — hasta SP6 wire al endpoint real */}
         <Section paddingBottom={48}>
-          <Kicker>ACCIONES SUGERIDAS</Kicker>
-          <ul
-            style={{
-              listStyle: "none",
-              margin: 0,
-              padding: 0,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            {eh.actions.map((a, i) => (
-              <li
-                key={i}
-                style={{
-                  paddingBlock: 12,
-                  borderBlockEnd: i === eh.actions.length - 1 ? "none" : `0.5px solid ${colors.separator}`,
-                  fontFamily: typography.family,
-                  fontSize: typography.size.bodyMin,
-                  fontWeight: typography.weight.regular,
-                  color: "rgba(255,255,255,0.96)",
-                  lineHeight: 1.4,
-                }}
-              >
-                {a}
-              </li>
-            ))}
-          </ul>
+          <Kicker>SESIONES PROCESADAS</Kicker>
+          <Card>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: typography.family,
+                fontSize: typography.size.body,
+                fontWeight: typography.weight.regular,
+                color: colors.text.primary,
+                lineHeight: 1.4,
+              }}
+            >
+              {eh.totalSessions} {eh.totalSessions === 1 ? "sesión" : "sesiones"} usadas para personalización.
+            </p>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: typography.family,
+                fontSize: typography.size.caption,
+                fontWeight: typography.weight.regular,
+                color: colors.text.secondary,
+                lineHeight: 1.5,
+              }}
+            >
+              Métricas detalladas (hit rate, acceptance, cohort prior) requieren backend wired — disponibles próximamente.
+            </p>
+          </Card>
         </Section>
       </ScrollPad>
     </>
   );
 }
 
-function MetricCell({ value, label, right = false, bottom = false }) {
-  return (
-    <div
-      style={{
-        padding: spacing.s24,
-        borderInlineEnd: right ? `0.5px solid ${colors.separator}` : "none",
-        borderBlockEnd: bottom ? `0.5px solid ${colors.separator}` : "none",
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-      }}
-    >
-      <span
-        style={{
-          fontFamily: typography.family,
-          fontSize: 32,
-          fontWeight: typography.weight.light,
-          letterSpacing: "-0.02em",
-          color: "rgba(255,255,255,0.96)",
-          lineHeight: 1,
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {value}
-      </span>
-      <span
-        style={{
-          fontFamily: typography.familyMono,
-          fontSize: typography.size.microCaps,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "rgba(255,255,255,0.55)",
-          fontWeight: typography.weight.medium,
-          lineHeight: 1.3,
-        }}
-      >
-        {label}
-      </span>
-    </div>
-  );
+function deriveEngineHealth({ totalSessions, banditArms }) {
+  let overall, overallCaption;
+  if (totalSessions === 0) {
+    overall = "Sin datos";
+    overallCaption = "Tu motor neural empieza a aprender al completar tu primera sesión.";
+    return {
+      isEmpty: true, totalSessions: 0, overall, overallCaption,
+      calibrationBias: [],
+    };
+  }
+  if (totalSessions < 5) {
+    overall = "Conociéndonos";
+    overallCaption = `${totalSessions} de 5 sesiones para baseline.`;
+  } else if (totalSessions < 30) {
+    overall = "Aprendiendo";
+    overallCaption = `${totalSessions} sesiones procesadas. Personalización en progreso.`;
+  } else {
+    overall = "Personalizado";
+    overallCaption = `${totalSessions} sesiones. El motor te conoce.`;
+  }
+  return {
+    isEmpty: false,
+    totalSessions,
+    overall,
+    overallCaption,
+    calibrationBias: deriveCalibrationBias(banditArms),
+  };
 }
 
-function BucketRow({ bucket, intent }) {
-  return (
-    <>
-      <span
-        style={{
-          fontFamily: typography.familyMono,
-          fontSize: typography.size.microCaps,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "rgba(255,255,255,0.55)",
-          fontWeight: typography.weight.medium,
-        }}
-      >
-        {bucket}
-      </span>
-      <span
-        style={{
-          fontFamily: typography.family,
-          fontSize: typography.size.bodyMin,
-          fontWeight: typography.weight.regular,
-          color: "rgba(255,255,255,0.96)",
-          textTransform: "capitalize",
-        }}
-      >
-        {intent}
-      </span>
-    </>
-  );
+function deriveCalibrationBias(banditArms) {
+  // Bandit arms canónicos por intent (sin bucket temporal): claves "calma",
+  // "enfoque", "energia", "reset". Cada arm = { n, sum, sumsq } per UCB1-Normal.
+  const intents = ["calma", "enfoque", "energia", "reset"];
+  const out = [];
+  for (const intent of intents) {
+    const arm = banditArms[intent];
+    if (!arm || !arm.n) continue;
+    const reward = arm.n > 0 ? arm.sum / arm.n : 0;
+    out.push({ intent, reward, n: arm.n });
+  }
+  return out.sort((a, b) => b.n - a.n);
 }
 
 function Th({ children, align = "start" }) {
@@ -251,10 +248,10 @@ function Th({ children, align = "start" }) {
     <th
       style={{
         textAlign: align,
-        fontWeight: 500,
+        fontWeight: typography.weight.medium,
         letterSpacing: "0.18em",
         textTransform: "uppercase",
-        color: "rgba(255,255,255,0.32)",
+        color: colors.text.muted,
         paddingBlock: 10,
       }}
     >
@@ -265,8 +262,8 @@ function Th({ children, align = "start" }) {
 
 function Td({ children, align = "start", tone = "primary" }) {
   const color = tone === "primary"
-    ? "rgba(255,255,255,0.96)"
-    : tone === "secondary" ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.32)";
+    ? colors.text.primary
+    : tone === "secondary" ? colors.text.secondary : colors.text.muted;
   return (
     <td
       style={{

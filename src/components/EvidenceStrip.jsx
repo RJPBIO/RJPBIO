@@ -48,7 +48,7 @@ const COMPLIANCE_KEYS = ["lfpdppp", "gdpr", "kanon"];
 const INSTRUMENT_FALLBACK = {
   es: {
     pss4Full: "Perceived Stress Scale",
-    pss4Cite: "Cohen & Williamson 1988",
+    pss4Cite: "Cohen 1983",
     swemwbsFull: "Short Warwick-Edinburgh Well-being Scale",
     swemwbsCite: "Stewart-Brown 2009",
     phq2Full: "Patient Health Questionnaire",
@@ -60,7 +60,7 @@ const INSTRUMENT_FALLBACK = {
   },
   en: {
     pss4Full: "Perceived Stress Scale",
-    pss4Cite: "Cohen & Williamson 1988",
+    pss4Cite: "Cohen 1983",
     swemwbsFull: "Short Warwick-Edinburgh Well-being Scale",
     swemwbsCite: "Stewart-Brown 2009",
     phq2Full: "Patient Health Questionnaire",

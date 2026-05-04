@@ -1,4 +1,5 @@
 "use client";
+import { typography } from "../tokens";
 
 // Cursor blink "|" 1s steady, no easing — el blink uniforme lee como
 // terminal/IDE, NO como animacion decorativa.
@@ -14,7 +15,7 @@ export default function StreamingCursor() {
           width: 8,
           color: "rgba(255,255,255,0.96)",
           fontFamily: "inherit",
-          fontWeight: 200,
+          fontWeight: typography.weight.light,
           animation: "v2CoachCursorBlink 1s steps(2, jump-none) infinite",
         }}
       >

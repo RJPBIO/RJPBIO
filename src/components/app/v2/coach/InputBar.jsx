@@ -116,7 +116,7 @@ export default function InputBar({ disabled = false, onSend, valueExternal, onCh
             borderRadius: radii.pill,
             border: "none",
             background: canSend ? colors.accent.phosphorCyan : "rgba(255,255,255,0.06)",
-            color: canSend ? "#08080A" : "rgba(255,255,255,0.32)",
+            color: canSend ? colors.bg.base : "rgba(255,255,255,0.32)",
             cursor: canSend ? "pointer" : "not-allowed",
             display: "inline-flex",
             alignItems: "center",

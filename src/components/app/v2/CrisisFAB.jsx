@@ -31,6 +31,11 @@ export default function CrisisFAB({ onOpenSheet }) {
         paddingInline: 14,
         paddingBlock: 10,
         background: "rgba(8,8,10,0.85)",
+        // Phase 6D SP4b — Bug-28 excepción documentada. ADN v2 prohíbe
+        // glassmorphism en general, pero CrisisFAB necesita legibilidad
+        // sobre cualquier background del tab activo (HomeV2, DataV2,
+        // etc.). Backdrop-filter mantiene el botón visible sin fondo
+        // sólido que rompa el flow visual del contenido.
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         color: colors.accent.phosphorCyan,

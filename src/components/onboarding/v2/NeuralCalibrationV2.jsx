@@ -30,6 +30,17 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion, useFocusTrap } from "../../../lib/a11y";
 import { useStore } from "../../../store/useStore";
+// Phase 6D SP1 — buildChronotypeRecord centraliza el shape de
+// store.chronotype para que el retake (InstrumentRunner + AppV2Root)
+// y el onboarding produzcan exactamente el mismo objeto.
+// Phase 6D SP2 — PSS4 + scorePss4 importados como canónicos desde
+// lib/instruments.js (ahora Cohen 1983). Antes este archivo tenía
+// internal PSS4_ITEMS + PSS4_OPTIONS + scorePSS4 duplicados — el
+// retake desde Profile (que usaba lib/instruments.js Cohen &
+// Williamson 1988) y el onboarding (Cohen 1983 internal) producían
+// scores comparables matemáticamente pero con wording divergente,
+// confundiendo al usuario en la card "Tomar de nuevo".
+import { buildChronotypeRecord, PSS4, scorePss4 } from "../../../lib/instruments";
 
 // Phase 6B SP2 — HRVCameraMeasure mountado dinámicamente desde el step
 // HRV. ssr:false: usa getUserMedia/ImageCapture/wakeLock que no existen
@@ -51,31 +62,16 @@ const FONT = '"Inter Tight", "Sohne", system-ui, -apple-system, sans-serif';
 
 /* ──── Instrument definitions ──────────────────────────── */
 
-const PSS4_ITEMS = [
-  {
-    text: "En el último mes, ¿con qué frecuencia te sentiste incapaz de controlar las cosas importantes de tu vida?",
-    reversed: false,
-  },
-  {
-    text: "En el último mes, ¿con qué frecuencia te sentiste seguro/a sobre tu capacidad para manejar tus problemas personales?",
-    reversed: true,
-  },
-  {
-    text: "En el último mes, ¿con qué frecuencia sentiste que las cosas iban como tú querías?",
-    reversed: true,
-  },
-  {
-    text: "En el último mes, ¿con qué frecuencia sentiste que las dificultades se acumulaban tanto que no podías superarlas?",
-    reversed: false,
-  },
-];
-const PSS4_OPTIONS = [
-  { label: "Nunca",                value: 0 },
-  { label: "Casi nunca",           value: 1 },
-  { label: "A veces",              value: 2 },
-  { label: "Frecuentemente",       value: 3 },
-  { label: "Muy frecuentemente",   value: 4 },
-];
+// Phase 6D SP2 — PSS-4 ahora viene de lib/instruments.js (Cohen 1983).
+// PSS4_ITEMS internal + PSS4_OPTIONS internal eliminados — eran clones
+// del mismo wording que ahora vive en la fuente canónica. Adapters
+// abajo (PSS4_ITEMS_RENDER, PSS4_OPTIONS_RENDER) preservan la API
+// interna del componente sin tocar el rendering.
+const PSS4_ITEMS_RENDER = PSS4.items.map((it) => ({
+  text: it.text,
+  reversed: it.reverse,  // Phase 6D SP2 — alias `reverse` (lib) → `reversed` (legacy interno).
+}));
+const PSS4_OPTIONS_RENDER = PSS4.scale.map((label, value) => ({ label, value }));
 
 const RMEQ_ITEMS = [
   {
@@ -153,16 +149,25 @@ const MAIA2_OPTIONS = [
 
 /* ──── Scoring ─────────────────────────────────────────── */
 
-function scorePSS4(answers) {
-  // answers: array of 4 numbers (0-4) en orden de PSS4_ITEMS.
-  let total = 0;
-  PSS4_ITEMS.forEach((item, i) => {
-    const v = answers[i];
-    if (typeof v !== "number") return;
-    total += item.reversed ? 4 - v : v;
+// Phase 6D SP2 — scorePSS4 internal eliminado. Usamos scorePss4 de
+// lib/instruments.js (Cohen 1983 canónico). Adapter convierte el
+// shape array interno [v0,v1,v2,v3] al objeto {q1,q2,q3,q4} que
+// la API canónica espera. Devuelve el shape canónico completo
+// {score, level, max, instrumentId} pero exponemos también
+// `profile` como alias de `level` para minimizar el delta de
+// callers internos del componente (deriveRecommendations,
+// CalibSummary, profileLabel) — todos pueden seguir leyendo
+// `.profile` sin rotura.
+function scorePss4Adapter(arrAnswers) {
+  if (!Array.isArray(arrAnswers)) return { score: 0, profile: "low", level: "low" };
+  const objAnswers = {};
+  PSS4.items.forEach((item, i) => {
+    objAnswers[item.id] = arrAnswers[i];
   });
-  const profile = total <= 5 ? "low" : total <= 9 ? "moderate" : "high";
-  return { score: total, profile };
+  const r = scorePss4(objAnswers);
+  if (!r) return { score: 0, profile: "low", level: "low" };
+  // Alias profile = level para compat con callers internos.
+  return { ...r, profile: r.level };
 }
 
 function scoreRMEQ(answers) {
@@ -233,7 +238,7 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
   const liveRef = useRef(null);
 
   const [step, setStep] = useState(0);
-  const [pss4Answers, setPss4Answers] = useState(Array(PSS4_ITEMS.length).fill(null));
+  const [pss4Answers, setPss4Answers] = useState(Array(PSS4_ITEMS_RENDER.length).fill(null));
   const [rmeqAnswers, setRmeqAnswers] = useState(Array(RMEQ_ITEMS.length).fill(null));
   const [maia2Answers, setMaia2Answers] = useState(Array(MAIA2_ITEMS.length).fill(null));
 
@@ -244,7 +249,7 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
   const [hrvMeasured, setHrvMeasured] = useState(null);
   const [hrvSkipped, setHrvSkipped] = useState(false);
 
-  const pss4Result = useMemo(() => scorePSS4(pss4Answers), [pss4Answers]);
+  const pss4Result = useMemo(() => scorePss4Adapter(pss4Answers), [pss4Answers]);
   const rmeqResult = useMemo(() => scoreRMEQ(rmeqAnswers), [rmeqAnswers]);
   const maia2Result = useMemo(() => scoreMAIA2(maia2Answers), [maia2Answers]);
   const hrvBaselineForRec = useMemo(
@@ -281,8 +286,62 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
     // Phase 6B SP2 — persistir HRV measurement al cierre completo de
     // Calibration (no antes). Si user solo completó instrumentos pero
     // saltó HRV, hrvMeasured queda null y no escribimos al store.
+    const now = Date.now();
+    const store = useStore.getState();
     if (hrvMeasured) {
-      try { useStore.getState().logHRV(hrvMeasured); } catch (e) { console.error("[calibration] logHRV", e); }
+      try { store.logHRV(hrvMeasured); } catch (e) { console.error("[calibration] logHRV", e); }
+    }
+    // Phase 6D SP1 — wiring real al store. Antes onboarding solo
+    // llamaba setNeuralBaseline(baseline) — los instrumentos quedaban
+    // dentro del blob `neuralBaseline.pss4` etc., pero ColdStart y
+    // InstrumentsView leen state.instruments[] / state.chronotype y
+    // no encontraban nada → cards "Calibra cronotipo" y "PSS-4" se
+    // mostraban inmediato post-onboarding (Bug-03/04). Ahora cada
+    // instrumento se logea a su slot canónico.
+    if (pss4Result && typeof pss4Result.score === "number") {
+      try {
+        store.logInstrument({
+          instrumentId: "pss-4",
+          ts: now,
+          score: pss4Result.score,
+          // El shape interno usa `profile` (low/moderate/high). El runner
+          // standalone (lib/instruments.js scorePss4) usa `level`. Logeamos
+          // ambos para que los selectores existentes funcionen sin importar
+          // cuál camino entró el dato.
+          level: pss4Result.profile,
+          source: "onboarding",
+        });
+      } catch (e) { console.error("[calibration] logInstrument pss-4", e); }
+    }
+    if (maia2Result && typeof maia2Result.composite === "number") {
+      try {
+        store.logInstrument({
+          instrumentId: "maia-2",
+          ts: now,
+          score: maia2Result.composite,
+          // MAIA-2 usa promedio 0-5 sobre 4 dimensiones. >=3.5 alto,
+          // 2-3.5 moderado, <2 bajo (umbrales internos, no clínicos).
+          level: maia2Result.composite >= 3.5
+            ? "high"
+            : maia2Result.composite >= 2
+              ? "moderate"
+              : "low",
+          dimensions: {
+            noticing: maia2Result.noticing,
+            attentionRegulation: maia2Result.attentionRegulation,
+            emotionalAwareness: maia2Result.emotionalAwareness,
+            bodyListening: maia2Result.bodyListening,
+          },
+          source: "onboarding",
+        });
+      } catch (e) { console.error("[calibration] logInstrument maia-2", e); }
+    }
+    if (rmeqResult && typeof rmeqResult.score === "number") {
+      try {
+        // buildChronotypeRecord produce el mismo shape que el retake
+        // path (AppV2Root handleInstrumentComplete cuando viene rMEQ).
+        store.setChronotype(buildChronotypeRecord(rmeqResult, now));
+      } catch (e) { console.error("[calibration] setChronotype", e); }
     }
     const hrvBaseline = hrvMeasured
       ? {
@@ -305,7 +364,7 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
         : pss4Result.profile === "moderate" ? "Funcional"
         : maia2Result.composite >= 3.5 ? "Alto Rendimiento" : "En Desarrollo",
       recommendations,
-      timestamp: Date.now(),
+      timestamp: now,
       version: "v2",
     };
     if (typeof onComplete === "function") onComplete(baseline);
@@ -682,13 +741,13 @@ function InstrumentPSS4({ answers, onAnswer }) {
         badge="PSS-4 · Cohen 1983 · validado peer-reviewed"
       />
       <ItemQuestion
-        text={PSS4_ITEMS[activeItem].text}
+        text={PSS4_ITEMS_RENDER[activeItem].text}
         idx={activeItem}
-        total={PSS4_ITEMS.length}
+        total={PSS4_ITEMS_RENDER.length}
         instrument="pss4"
       />
       <div role="radiogroup" aria-label="Respuesta PSS-4" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {PSS4_OPTIONS.map((opt) => (
+        {PSS4_OPTIONS_RENDER.map((opt) => (
           <LikertOption
             key={opt.value}
             label={opt.label}
@@ -696,7 +755,7 @@ function InstrumentPSS4({ answers, onAnswer }) {
             selected={answers[activeItem] === opt.value}
             onSelect={(v) => {
               onAnswer(activeItem, v);
-              if (activeItem < PSS4_ITEMS.length - 1) {
+              if (activeItem < PSS4_ITEMS_RENDER.length - 1) {
                 setActiveItem(activeItem + 1);
               }
             }}
@@ -706,9 +765,9 @@ function InstrumentPSS4({ answers, onAnswer }) {
       </div>
       <ItemNav
         active={activeItem}
-        total={PSS4_ITEMS.length}
+        total={PSS4_ITEMS_RENDER.length}
         onPrev={activeItem > 0 ? () => setActiveItem(activeItem - 1) : null}
-        onNext={activeItem < PSS4_ITEMS.length - 1 && answers[activeItem] !== null
+        onNext={activeItem < PSS4_ITEMS_RENDER.length - 1 && answers[activeItem] !== null
           ? () => setActiveItem(activeItem + 1)
           : null}
       />

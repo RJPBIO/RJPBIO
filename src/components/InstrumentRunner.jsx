@@ -15,6 +15,11 @@ import { motion } from "framer-motion";
 import Icon from "./Icon";
 import { colors, withAlpha } from "./app/v2/tokens";
 import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
+// Phase 6D SP2 — chronotypeLabel para que el summary del runner muestre
+// "Intermedio" en lugar de "intermediate" raw cuando el instrumento es
+// rMEQ. Reuso del helper canónico de lib/instruments.js (alineado con
+// CalibrationView y el record de store.chronotype).
+import { chronotypeLabel } from "../lib/instruments";
 
 // Phase 6B SP2 — Shim de compatibilidad con tokens.js v2.
 // Reemplaza imports legacy `lib/theme` + `lib/tokens` (brand, semantic,
@@ -36,6 +41,19 @@ const font = {
 // UI agnóstica del scorer.
 const SCALE_OFFSET = { "pss-4": 0, "wemwbs-7": 1, "phq-2": 0 };
 
+// Phase 6D SP1 — soporte de opciones per-item. Algunos instrumentos
+// (rMEQ) tienen escalas distintas por pregunta y valores no-Likert
+// (e.g. q1: 1/2/3/4/5, q3: 0/2/4/6). Cuando un item define `options`,
+// el runner las renderiza en lugar de instrument.scale y usa el
+// option.value directamente (ignorando SCALE_OFFSET).
+function getRenderOptions(instrument, item) {
+  if (Array.isArray(item?.options) && item.options.length > 0) {
+    return item.options.map((o) => ({ label: o.label, value: o.value }));
+  }
+  const offset = SCALE_OFFSET[instrument.id] ?? 0;
+  return (instrument.scale || []).map((label, i) => ({ label, value: i + offset }));
+}
+
 function levelTone(instrumentId, result) {
   if (!result) return { color: brand.primary, label: "—" };
   if (instrumentId === "phq-2") {
@@ -56,6 +74,23 @@ function levelTone(instrumentId, result) {
       low: { color: semantic.danger, label: "Bienestar bajo" },
       average: { color: semantic.warning, label: "Bienestar promedio" },
       high: { color: semantic.success, label: "Bienestar alto" },
+    };
+    return map[result.level] || { color: brand.primary, label: result.level };
+  }
+  // Phase 6D SP2 — rMEQ usa chronotype como level (intermediate / morning /
+  // evening). chronotypeLabel mapea a label legible en español ("Intermedio"
+  // / "Más matutino" / etc.). Color es brand.primary (cyan) — el cronotipo
+  // no tiene "valencia" buena/mala, solo categoría temporal.
+  if (instrumentId === "rmeq") {
+    return { color: brand.primary, label: chronotypeLabel(result.level || result.chronotype) };
+  }
+  // Phase 6D SP2 — MAIA-2 con friendly label por nivel. Conciencia
+  // interocéptiva alta = positivo (success), baja = atención (warning).
+  if (instrumentId === "maia-2") {
+    const map = {
+      low:      { color: semantic.warning, label: "Conciencia interocéptiva baja" },
+      moderate: { color: brand.primary,    label: "Conciencia interocéptiva moderada" },
+      high:     { color: semantic.success, label: "Conciencia interocéptiva alta" },
     };
     return map[result.level] || { color: brand.primary, label: result.level };
   }
@@ -90,10 +125,11 @@ export default function InstrumentRunner({
 
   const total = instrument.items.length;
   const item = instrument.items[idx];
-  const offset = SCALE_OFFSET[instrument.id] ?? 0;
+  // Phase 6D SP1 — getRenderOptions resuelve per-item options vs
+  // escala uniforme. Permite rMEQ (5 ítems con scoring custom).
+  const renderOptions = getRenderOptions(instrument, item);
 
-  function pick(scaleIndex) {
-    const value = scaleIndex + offset;
+  function pick(value) {
     const next = { ...answers, [item.id]: value };
     setAnswers(next);
     if (idx + 1 < total) {
@@ -108,13 +144,21 @@ export default function InstrumentRunner({
 
   function save() {
     if (!result) return;
+    // Phase 6D SP1 — pasar TODOS los campos del result para que
+    // instrumentos extendidos (rMEQ → chronotype, bestTimeWindow)
+    // no pierdan información necesaria del consumer (handleInstrumentComplete
+    // en AppV2Root usa entry.chronotype para construir state.chronotype).
+    // Los campos canónicos (score, level, rawScore) se calculan después
+    // del spread para preservar el mapping legacy (SWEMWBS metricScore →
+    // score, PHQ-2 positive → level "positive").
     onComplete?.({
       instrumentId: instrument.id,
       ts: Date.now(),
+      answers,
+      ...result,
       score: typeof result.metricScore === "number" ? result.metricScore : result.score,
       rawScore: typeof result.rawScore === "number" ? result.rawScore : null,
       level: result.level ?? (result.positive ? "positive" : "negative"),
-      answers,
     });
     setAnswers({});
     setIdx(0);
@@ -241,15 +285,14 @@ export default function InstrumentRunner({
           </h3>
 
           <div role="radiogroup" aria-label="Frecuencia" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {instrument.scale.map((label, i) => {
-              const value = i + offset;
+            {renderOptions.map(({ label, value }, i) => {
               const selected = answers[item.id] === value;
               return (
                 <button
-                  key={i}
+                  key={`${value}-${i}`}
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => pick(i)}
+                  onClick={() => pick(value)}
                   style={{
                     position: "relative",
                     display: "flex", alignItems: "center", gap: 12,

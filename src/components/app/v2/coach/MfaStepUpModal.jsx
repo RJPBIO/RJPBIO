@@ -20,6 +20,9 @@ export default function MfaStepUpModal({ onVerify, onCancel }) {
         justifyContent: "center",
         padding: spacing.s24,
         zIndex: 100,
+        // Phase 6D SP4b — Bug-28 excepción documentada. Modal MFA
+        // step-up es una interrupción de seguridad; blur sutil enfatiza
+        // que el contenido detrás está bloqueado hasta verificar.
         backdropFilter: "blur(4px)",
         WebkitBackdropFilter: "blur(4px)",
       }}
@@ -106,7 +109,7 @@ export default function MfaStepUpModal({ onVerify, onCancel }) {
             width: "100%",
             padding: "14px 0",
             background: canVerify ? colors.accent.phosphorCyan : "rgba(255,255,255,0.06)",
-            color: canVerify ? "#08080A" : "rgba(255,255,255,0.32)",
+            color: canVerify ? colors.bg.base : "rgba(255,255,255,0.32)",
             border: "none",
             borderRadius: radii.pill,
             fontFamily: typography.family,

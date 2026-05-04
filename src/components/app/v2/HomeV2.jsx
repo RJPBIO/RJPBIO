@@ -8,6 +8,7 @@ import { P as PROTOCOLS } from "@/lib/protocols";
 import HeaderV2 from "./home/HeaderV2";
 import ColdStartView from "./home/ColdStartView";
 import PersonalizedView from "./home/PersonalizedView";
+import { devLog } from "@/lib/dev-utils";
 import {
   greetingForHour,
   primaryLineForState,
@@ -22,7 +23,7 @@ import {
 
 export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) {
   const store = useStore();
-  useEffect(() => { console.log("[v2] HomeV2 active", { devOverride }); }, [devOverride]);
+  useEffect(() => { devLog("[v2] HomeV2 active", { devOverride }); }, [devOverride]);
 
   const realState = store;
   const realHealth = useMemo(() => evaluateEngineHealth(realState), [realState]);

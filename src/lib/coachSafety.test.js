@@ -221,6 +221,97 @@ describe("evaluateSafetySignals — locale-aware resources", () => {
   });
 });
 
+describe("coachSafety — Phase 6D SP5 ideación pasiva ES (true positives)", () => {
+  const passiveCrisisExamples = [
+    "no veo salida en mi vida",
+    "ya no aguanto más",
+    "ya no quiero seguir así",
+    "ya no quiero vivir esto",
+    "ya no quiero estar aquí",
+    "todo me pesa demasiado",
+    "todo me pesa mucho",
+    "todo me pesa",
+    "a veces solo me quiero ir",
+    "no puedo más con la vida",
+    "no puedo más con todo",
+    "no le veo sentido a nada",
+    "no veo sentido a seguir",
+    "estoy harto de todo",
+    "estoy harta de la vida",
+    "no vale la pena seguir",
+    "no vale pena vivir",
+    "quiero desaparecer para siempre",
+    "me siento atrapado",
+    "me siento atrapada",
+    "me quiero cortar",
+    "me quiero lastimar",
+  ];
+  for (const text of passiveCrisisExamples) {
+    it(`crisis pasiva ES: "${text}"`, () => {
+      const r = evaluateSafetySignals(base(), { userText: text });
+      expect(r.level).toBe("crisis");
+      expect(r.triggers).toContain("text_crisis");
+      expect(r.recommendation).toBe("refer_human");
+    });
+  }
+});
+
+describe("coachSafety — Phase 6D SP5 ideación pasiva ES (false positive guards)", () => {
+  const innocuousExamples = [
+    "me quiero ir a casa",
+    "me quiero ir de vacaciones",
+    "me quiero ir al cine",
+    "me quiero ir contigo al parque",
+    "no aguanto este calor en agosto",
+    "no aguanto este dolor de muelas",
+    "no aguanto esta humedad",
+    "no veo la salida del estacionamiento",
+    "no veo la salida del edificio",
+    "no veo la salida del metro",
+    "me quiero cortar el pelo",
+    "me quiero cortar las uñas",
+    "me quiero cortar la barba",
+    "no puedo más con la tarea de matemáticas",
+    "no puedo más con la fila del banco",
+    "i can't go on this trip",
+    "i can't go on with the meeting",
+    "no way out of this parking garage",
+    "want to disappear from this meeting",
+  ];
+  for (const text of innocuousExamples) {
+    it(`NO crisis (false positive guard): "${text}"`, () => {
+      const r = evaluateSafetySignals(base(), { userText: text });
+      expect(r.level).not.toBe("crisis");
+    });
+  }
+});
+
+describe("coachSafety — Phase 6D SP5 ideación pasiva EN (true positives)", () => {
+  const passiveCrisisExamplesEN = [
+    "i can't go on",
+    "I can't go on anymore",
+    "there's no way out",
+    "i don't want to exist",
+    "i don't want to be here",
+    "i don't want to wake up",
+    "everyone would be better off dead",
+    "they'd be better off without me",
+    "nothing matters anymore",
+    "i'm so tired of living",
+    "tired of everything",
+    "tired of being alive",
+    "i just want to disappear",
+    "i want to give up on life",
+  ];
+  for (const text of passiveCrisisExamplesEN) {
+    it(`crisis pasiva EN: "${text}"`, () => {
+      const r = evaluateSafetySignals(base(), { userText: text });
+      expect(r.level).toBe("crisis");
+      expect(r.triggers).toContain("text_crisis");
+    });
+  }
+});
+
 describe("evaluateSafetySignals — robustez de entrada", () => {
   it("instruments/moodLog mal formateados no crashean", () => {
     const r = evaluateSafetySignals({ instruments: "x", moodLog: null });

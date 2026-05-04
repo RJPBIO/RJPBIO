@@ -65,4 +65,43 @@ describe("CrisisSheet", () => {
     const opt = screen.getByTestId("crisis-option-18");
     expect(parseInt(opt.style.minHeight, 10)).toBeGreaterThanOrEqual(44);
   });
+
+  // PHASE 6D SP6 Bug-35 — keydown listener cleanup verification.
+  // Anti-regression: si alguien quita el removeEventListener del cleanup
+  // del useEffect, este test detecta el leak vía addSpy/removeSpy counts.
+  it("Bug-35: ESC cierra sheet cuando open=true", () => {
+    const onClose = vi.fn();
+    render(<CrisisSheet open={true} onClose={onClose} onSelectProtocol={() => {}} />);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("Bug-35: ESC NO dispara cuando open=false (listener no montado)", () => {
+    const onClose = vi.fn();
+    render(<CrisisSheet open={false} onClose={onClose} onSelectProtocol={() => {}} />);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("Bug-35: keydown listener removido en unmount (no leak)", () => {
+    const addSpy = vi.spyOn(document, "addEventListener");
+    const removeSpy = vi.spyOn(document, "removeEventListener");
+    const { unmount } = render(<CrisisSheet open={true} onClose={() => {}} onSelectProtocol={() => {}} />);
+    const addedKeydown = addSpy.mock.calls.filter((c) => c[0] === "keydown").length;
+    expect(addedKeydown).toBeGreaterThan(0);
+    unmount();
+    const removedKeydown = removeSpy.mock.calls.filter((c) => c[0] === "keydown").length;
+    expect(removedKeydown).toBeGreaterThanOrEqual(addedKeydown);
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
+
+  it("Bug-35: keydown listener desmontado al cambiar open=true → false (no leak)", () => {
+    const removeSpy = vi.spyOn(document, "removeEventListener");
+    const { rerender } = render(<CrisisSheet open={true} onClose={() => {}} onSelectProtocol={() => {}} />);
+    rerender(<CrisisSheet open={false} onClose={() => {}} onSelectProtocol={() => {}} />);
+    const removedKeydown = removeSpy.mock.calls.filter((c) => c[0] === "keydown").length;
+    expect(removedKeydown).toBeGreaterThan(0);
+    removeSpy.mockRestore();
+  });
 });

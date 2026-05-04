@@ -7,6 +7,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 
+// Phase 6D SP4a — AppV2Root usa fetch("/api/auth/session") para wirear
+// setUserEmail (no useSession() — el repo no tiene SessionProvider). Mock
+// global.fetch para ese endpoint específico.
+const originalFetch = global.fetch;
+global.fetch = vi.fn(async (url) => {
+  if (typeof url === "string" && url.includes("/api/auth/session")) {
+    return { ok: true, json: async () => ({ user: null }) };
+  }
+  return originalFetch ? originalFetch(url) : { ok: false, json: async () => ({}) };
+});
+
 // Mock dependencias pesadas que no son objeto de este test.
 vi.mock("../../../lib/audio", () => ({
   startBinaural: vi.fn(),
@@ -111,7 +122,20 @@ beforeEach(() => {
   // queries por DOM elements del shell fallen porque solo se renderiza
   // el spinner. Tests no validan loading state — eso es responsabilidad
   // de un test e2e específico futuro.
-  useStore.setState({ _loaded: true, welcomeDone: true, onboardingComplete: true });
+  // Phase 6D SP1 — reset de slots que ColdStartView observa para
+  // decidir qué cards mostrar. Sin esto, tests dentro del mismo describe
+  // acumulan instruments/hrvLog/chronotype entre runs (logInstrument,
+  // logHRV, setChronotype) y cards previamente clickadas desaparecen,
+  // rompiendo queries por nombre de botón en tests posteriores.
+  useStore.setState({
+    _loaded: true,
+    welcomeDone: true,
+    onboardingComplete: true,
+    instruments: [],
+    hrvLog: [],
+    chronotype: null,
+    totalSessions: 0,
+  });
 });
 
 describe("AppV2Root — Phase 6 SP3 wiring", () => {

@@ -154,7 +154,7 @@ const COPY = {
     instrumentsH3: "Instrumentos psicométricos",
     instrumentsHead: { instrument: "Instrumento", range: "Rango", frequency: "Periodicidad", reference: "Referencia" },
     instruments: [
-      { instrument: "PSS-4 (estrés percibido)", range: "0–16", frequency: "Mensual", reference: "Cohen & Williamson 1988" },
+      { instrument: "PSS-4 (estrés percibido)", range: "0–16", frequency: "Mensual", reference: "Cohen 1983" },
       { instrument: "SWEMWBS (bienestar)", range: "7–35 (Rasch)", frequency: "Trimestral", reference: "Stewart-Brown et al. 2009" },
       { instrument: "PHQ-2 (screener depresión)", range: "0–6 · cutoff ≥ 3", frequency: "A demanda", reference: "Kroenke, Spitzer & Williams 2003" },
       { instrument: "NOM-035-STPS Guía II", range: "46 ítems", frequency: "Anual legal", reference: "STPS México 2018" },
@@ -409,7 +409,7 @@ const COPY = {
     instrumentsH3: "Psychometric instruments",
     instrumentsHead: { instrument: "Instrument", range: "Range", frequency: "Frequency", reference: "Reference" },
     instruments: [
-      { instrument: "PSS-4 (perceived stress)", range: "0–16", frequency: "Monthly", reference: "Cohen & Williamson 1988" },
+      { instrument: "PSS-4 (perceived stress)", range: "0–16", frequency: "Monthly", reference: "Cohen 1983" },
       { instrument: "SWEMWBS (wellbeing)", range: "7–35 (Rasch)", frequency: "Quarterly", reference: "Stewart-Brown et al. 2009" },
       { instrument: "PHQ-2 (depression screener)", range: "0–6 · cutoff ≥ 3", frequency: "On demand", reference: "Kroenke, Spitzer & Williams 2003" },
       { instrument: "NOM-035-STPS Guide II", range: "46 items", frequency: "Legally annual", reference: "STPS Mexico 2018" },
