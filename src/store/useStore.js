@@ -16,7 +16,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 15;
+const STORE_VERSION = 16;
 
 function migrate(data) {
   if (!data) {
@@ -66,6 +66,9 @@ function migrate(data) {
     // (la condición v13 arriba sólo dispara si el campo no existe).
     // Sólo si el field está totalmente ausente Y el migración previa nunca corrió,
     // el v13 lo seteaba true. Aquí no hacemos nada — preservamos preferencia.
+    // v16: persistencia local de conversaciones del coach (Phase 6C SP3).
+    if (!Array.isArray(merged.coachConversations)) merged.coachConversations = [];
+    if (typeof merged.coachActiveConversationId === "undefined") merged.coachActiveConversationId = null;
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -353,6 +356,71 @@ export const useStore = create((set, get) => ({
 
   setOrgMode: (enabled) => {
     set({ orgMode: !!enabled });
+    scheduleSave({ ...get() });
+  },
+
+  // ─── Coach conversations (v16 — Phase 6C SP3) ──────────
+  // Persistencia local IDB de conversaciones del coach LLM. Hasta SP2,
+  // useState en CoachV2 era volátil — cada reload o cambio de tab
+  // perdía todo el contexto de la conversación. Ahora vive en zustand
+  // → IDB cifrado. NO sync server (compliance NOM-035 + cross-device
+  // hydration es Phase 6D scope).
+  // Caps defensivos: 30 conversaciones FIFO + 50 mensajes/conv sliding.
+  startCoachConversation: () => {
+    const id = `conv_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    const conversation = { id, startedAt: Date.now(), lastMessageAt: Date.now(), messages: [] };
+    const st = get();
+    const coachConversations = [conversation, ...(st.coachConversations || [])].slice(0, 30);
+    set({ coachConversations, coachActiveConversationId: id });
+    scheduleSave({ ...st, coachConversations, coachActiveConversationId: id });
+    return id;
+  },
+
+  logCoachMessage: (conversationId, message) => {
+    if (!conversationId || !message || typeof message.role !== "string") return;
+    const st = get();
+    const conversations = st.coachConversations || [];
+    const idx = conversations.findIndex((c) => c.id === conversationId);
+    if (idx < 0) return;
+    const prev = conversations[idx];
+    const newMsg = {
+      role: message.role,
+      content: String(message.content || ""),
+      ts: typeof message.ts === "number" ? message.ts : Date.now(),
+      ...(message.resources ? { resources: message.resources } : {}),
+    };
+    // Sliding window: cap 50 mensajes/conv para evitar bloat IDB en
+    // conversaciones muy largas. Dropea los más antiguos.
+    const messages = [...prev.messages, newMsg].slice(-50);
+    const updated = { ...prev, messages, lastMessageAt: newMsg.ts };
+    const next = [...conversations];
+    next[idx] = updated;
+    // Mantener la conversación más recientemente activa al frente para
+    // que startCoachConversation FIFO no la dropee si tiene 30 ya.
+    next.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
+    set({ coachConversations: next });
+    scheduleSave({ ...st, coachConversations: next });
+  },
+
+  clearCoachConversation: (conversationId) => {
+    if (!conversationId) return;
+    const st = get();
+    const coachConversations = (st.coachConversations || []).filter((c) => c.id !== conversationId);
+    const coachActiveConversationId =
+      st.coachActiveConversationId === conversationId ? null : st.coachActiveConversationId;
+    set({ coachConversations, coachActiveConversationId });
+    scheduleSave({ ...st, coachConversations, coachActiveConversationId });
+  },
+
+  setCoachActiveConversation: (conversationId) => {
+    // null = "ningún activo" — el próximo mensaje del user dispara
+    // startCoachConversation desde el handler de CoachV2.
+    set({ coachActiveConversationId: conversationId || null });
+    scheduleSave({ ...get() });
+  },
+
+  clearAllCoachConversations: () => {
+    set({ coachConversations: [], coachActiveConversationId: null });
     scheduleSave({ ...get() });
   },
 

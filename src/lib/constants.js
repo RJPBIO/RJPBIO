@@ -205,6 +205,14 @@ export const DS = {
   //   { id: string, startedAt: ms, completedAt: ms, completionFraction: 0-1 }
   activeProgram: null,
   programHistory: [],
+  // v16 — Phase 6C SP3 — persistencia local de conversaciones del coach
+  // LLM. Cada conversación: { id, startedAt, lastMessageAt, messages: [
+  // {role:"user"|"coach"|"coach-crisis", content, ts, streaming?, resources?} ] }
+  // Cap: 30 conversaciones (FIFO), 50 mensajes/conv (sliding window).
+  // coachActiveConversationId: id de la conversación visible. null = el
+  // próximo mensaje del user creará una nueva.
+  coachConversations: [],
+  coachActiveConversationId: null,
 };
 
 // ─── Neural State Color Mapping ──────────────────────────

@@ -274,8 +274,22 @@ export default function AppV2Root() {
       catch (e) { console.error("[v2] abandonProgram", e); }
       return;
     }
-    // Otras acciones (export-weekly-summary, dsar-*, mfa-*, etc.) se
-    // manejan en sprints futuros con sus endpoints respectivos. Por ahora log.
+    // Phase 6C SP3 — placeholder honesto para export weekly summary.
+    // Implementación real (PDF/markdown desde cron weekly-summary.js +
+    // download endpoint) deferida a Phase 6D. Hasta entonces, alert
+    // explicit en lugar de console.log silencioso para que el user vea
+    // feedback al hacer tap.
+    if (event.action === "export-weekly-summary") {
+      try {
+        if (typeof window !== "undefined") {
+          window.alert("Export del resumen semanal estará disponible próximamente.");
+        }
+      } catch {}
+      return;
+    }
+    // Otras acciones (dsar-*, mfa-*, retest-chronotype, retest-resonance,
+    // change-email/password, etc.) se manejan en sprints futuros con sus
+    // endpoints respectivos. Por ahora log para que el dev sepa que llegó.
     console.log("[v2] navigate", event);
   }, [launchProtocol]);
 
