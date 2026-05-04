@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useStore } from "@/store/useStore";
 import { P as PROTOCOLS } from "@/lib/protocols";
 import { closeSession, adaptPlayerCompletionToSessionData } from "@/lib/sessionFlow";
+import { PSS4, WEMWBS7, PHQ2, scorePss4, scoreWemwbs7, scorePhq2 } from "@/lib/instruments";
 import { colors, typography, layout } from "./tokens";
 import HomeV2 from "./HomeV2";
 import DataV2 from "./DataV2";
@@ -17,6 +18,25 @@ import CrisisSheet from "./CrisisSheet";
 // Lazy import para preservar SSR-safety de AppV2Root y evitar bundle bloat.
 const ProtocolPlayer = dynamic(
   () => import("@/components/protocol/v2/ProtocolPlayer"),
+  { ssr: false }
+);
+
+// Phase 6B SP1 — wiring HRV/PPG/BLE + instrumentos psicométricos.
+// Modales legacy (calidad clínica, sprints ≤80) montados aquí para que
+// ColdStart cards y CalibrationView/InstrumentsView puedan dispararlos
+// desde el shell v2 sin tab-switch. Dynamic + ssr:false: HRVCameraMeasure
+// usa getUserMedia/ImageCapture y HRVMonitor usa navigator.bluetooth, ambos
+// browser-only; además mantiene initial bundle ligero.
+const HRVCameraMeasure = dynamic(
+  () => import("@/components/HRVCameraMeasure"),
+  { ssr: false }
+);
+const HRVMonitor = dynamic(
+  () => import("@/components/HRVMonitor"),
+  { ssr: false }
+);
+const InstrumentRunner = dynamic(
+  () => import("@/components/InstrumentRunner"),
   { ssr: false }
 );
 
@@ -76,10 +96,29 @@ export default function AppV2Root() {
   // playerOpen: gate del overlay full-screen.
   // sessionStartedAt: timestamp de mount, key forzado para re-mount limpio.
   const store = useStore();
+  // Phase 6B SP1 — store hydration. El legacy /app/page.jsx (eliminado en
+  // Phase 6 SP5) llamaba store.init() implícitamente. AppV2Root nunca lo
+  // hizo, así que toda lectura desde useStore quedaba en defaults (DS) en
+  // cada visita. Sin esto, hrvLog/instruments/neuralBaseline aparentan
+  // vacíos aunque el usuario tenga data persistida en IDB.
+  useEffect(() => {
+    if (!store._loaded) {
+      try { store.init?.(); } catch (e) { console.error("[v2] store.init error", e); }
+    }
+  }, [store._loaded, store.init]);
   const [selectedProtocol, setSelectedProtocol] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [sessionStartedAt, setSessionStartedAt] = useState(null);
   const [crisisSheetOpen, setCrisisSheetOpen] = useState(false);
+
+  // Phase 6B SP1 — state para modales HRV/PPG/BLE + instrumento.
+  // hrvModalMode: "camera" arranca HRVCameraMeasure (3 modos internos:
+  // torch/screen-light/ambient). El modal expone onUseBLE → swap a
+  // "ble" → mountamos HRVMonitor con quickMode=false (5 min protocolo).
+  const [hrvModalOpen, setHrvModalOpen] = useState(false);
+  const [hrvModalMode, setHrvModalMode] = useState("camera");
+  // instrumentModal: { instrument, scorer } | null — runner genérico.
+  const [instrumentModal, setInstrumentModal] = useState(null);
 
   // Helper común para mountar el player con un protocolo dado.
   const launchProtocol = useCallback((protocol) => {
@@ -87,6 +126,35 @@ export default function AppV2Root() {
     setSelectedProtocol(protocol);
     setSessionStartedAt(Date.now());
     setPlayerOpen(true);
+  }, []);
+
+  // Phase 6B SP1 — handlers HRV.
+  const handleHrvComplete = useCallback((entry) => {
+    if (entry) {
+      try { useStore.getState().logHRV(entry); } catch (e) { console.error("[v2] logHRV error", e); }
+    }
+    setHrvModalOpen(false);
+    setHrvModalMode("camera");
+  }, []);
+  const handleHrvSwapToBle = useCallback(() => {
+    // El botón "¿Tienes sensor Bluetooth?" del intro de HRVCameraMeasure
+    // llama onClose() ANTES de onUseBLE() — eso cierra el modal. Reabrimos
+    // explícitamente en modo BLE para que el swap mantenga el flow continuo.
+    setHrvModalMode("ble");
+    setHrvModalOpen(true);
+  }, []);
+  const handleHrvClose = useCallback(() => {
+    setHrvModalOpen(false);
+    setHrvModalMode("camera");
+  }, []);
+  const handleInstrumentComplete = useCallback((entry) => {
+    if (entry) {
+      try { useStore.getState().logInstrument(entry); } catch (e) { console.error("[v2] logInstrument error", e); }
+    }
+    setInstrumentModal(null);
+  }, []);
+  const handleInstrumentClose = useCallback(() => {
+    setInstrumentModal(null);
   }, []);
 
   const onNavigate = useCallback((event) => {
@@ -107,6 +175,29 @@ export default function AppV2Root() {
       const protocol = PROTOCOLS.find((p) => p.id === id);
       if (!protocol) return;
       launchProtocol(protocol);
+      return;
+    }
+    // Phase 6B SP1 — HRV (cámara o BLE) — mount directo sin tab-switch.
+    // ColdStart card "hrv" trae además event.target=/app/profile/calibration#hrv
+    // pero priorizamos el id para que el modal aparezca inmediato.
+    if (event.id === "hrv" || event.action === "new-hrv") {
+      setHrvModalMode("camera");
+      setHrvModalOpen(true);
+      return;
+    }
+    // Phase 6B SP1 — PSS-4 standalone repeatable.
+    if (event.id === "pss4" || event.action === "retake-pss4") {
+      setInstrumentModal({ instrument: PSS4, scorer: scorePss4 });
+      return;
+    }
+    // Phase 6B SP1 — SWEMWBS-7 standalone repeatable.
+    if (event.action === "retake-swemwbs") {
+      setInstrumentModal({ instrument: WEMWBS7, scorer: scoreWemwbs7 });
+      return;
+    }
+    // Phase 6B SP1 — PHQ-2 standalone repeatable.
+    if (event.action === "retake-phq2") {
+      setInstrumentModal({ instrument: PHQ2, scorer: scorePhq2 });
       return;
     }
     // SP5: targets → switch to perfil tab + initial section.
@@ -332,9 +423,10 @@ export default function AppV2Root() {
       </main>
       <BottomNavV2 active={tab} onSelect={setTab} />
 
-      {/* Phase 6 SP4 — CrisisFAB persistente (oculto mientras el player
-          o el sheet están abiertos para evitar superposición). */}
-      {!playerOpen && !crisisSheetOpen && (
+      {/* Phase 6 SP4 — CrisisFAB persistente (oculto mientras player,
+          sheet, HRV modal o instrumento están abiertos: el user está en
+          flow controlado, no necesita acceso crisis paralelo). */}
+      {!playerOpen && !crisisSheetOpen && !hrvModalOpen && !instrumentModal && (
         <CrisisFAB onOpenSheet={handleOpenCrisisSheet} />
       )}
       <CrisisSheet
@@ -357,6 +449,42 @@ export default function AppV2Root() {
           cameraEnabled={false}
           onComplete={handlePlayerComplete}
           onCancel={handlePlayerCancel}
+        />
+      )}
+
+      {/* Phase 6B SP1 — HRV camera modal (default) o BLE swap.
+          Mutuamente exclusivos: el modal se mounta según hrvModalMode
+          actual. handleHrvSwapToBle alterna sin desmount intermedio
+          desde el intro screen de HRVCameraMeasure. */}
+      {hrvModalOpen && hrvModalMode === "camera" && (
+        <HRVCameraMeasure
+          show
+          isDark
+          onClose={handleHrvClose}
+          onComplete={handleHrvComplete}
+          onUseBLE={handleHrvSwapToBle}
+        />
+      )}
+      {hrvModalOpen && hrvModalMode === "ble" && (
+        <HRVMonitor
+          show
+          isDark
+          onClose={handleHrvClose}
+          onComplete={handleHrvComplete}
+          quickMode={false}
+        />
+      )}
+
+      {/* Phase 6B SP1 — Instrument runner modal (PSS-4 / SWEMWBS-7 / PHQ-2).
+          Genérico: el shape (instrument + scorer) viene del handler. */}
+      {instrumentModal && (
+        <InstrumentRunner
+          show
+          isDark
+          instrument={instrumentModal.instrument}
+          scorer={instrumentModal.scorer}
+          onClose={handleInstrumentClose}
+          onComplete={handleInstrumentComplete}
         />
       )}
     </div>
