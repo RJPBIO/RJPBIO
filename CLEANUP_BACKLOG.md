@@ -185,6 +185,82 @@ Outcome equivalente al spec original. Mecanismo y citas peer-reviewed (Garfinkel
 
 ---
 
+## 13. HRV components shim → tokens v2 nativo
+
+**Qué**: durante Phase 6B SP2, los 4 componentes HRV/Instrument (`HRVCameraMeasure`, `HRVMonitor`, `HRVHistoryPanel`, `InstrumentRunner`) fueron refactorizados al ADN v2 vía un **shim de compatibilidad** que mapea los tokens legacy (`brand.primary`, `bioSignal.ignition`, `font.weight.black`) a los nuevos (`colors.accent.phosphorCyan`, `colors.semantic.warning`, `typography.weight.medium`). El shim vive en cada archivo (~12 LoC declarando `const brand`, `const bioSignal`, `const font` con valores derivados de tokens v2).
+
+Esto permitió 0 cambios de lógica + sweep mecánico de pesos `>500 → 500`. Disciplina de hardening Sprints 73-80 preservada.
+
+**Por qué se difirió**: el shim es funcional, idéntico visualmente, y permite migración gradual sin romper el render. Eliminarlo requeriría re-escribir cada uso de `brand.primary` → `colors.accent.phosphorCyan` inline (~250 LoC de touchups) sin ganancia funcional.
+
+**Blast radius**: bajo. Cleanup mecánico via grep+sed. Cero riesgo si tests pasan después.
+
+**Disparador de prioridad**: cuando un componente HRV requiera un cambio de estilo no-trivial y el shim agregue confusion al cambio. O bien, si Phase 7 introduce nuevos design tokens v2 que harían el shim divergir.
+
+**Detectado en**: Phase 6B SP2 reporte 2026-05-03.
+
+---
+
+## 14. HRVHistoryPanel mount strategy en shell v2
+
+**Qué**: `HRVHistoryPanel.jsx` (~530 LoC, refactorizado a ADN v2 en SP2) sigue siendo **huérfano** en shell v2 — no tiene mount path desde ColdStart, Profile/Calibración, ni ningún card. La única ruta que lo usaría era `/app/page.jsx` legacy (eliminada Phase 6 SP5).
+
+Su funcionalidad (sparkline + bucketing 7d/30d + baseline ±SD + export CSV) es valuable diferenciador post-MVP, pero requiere wiring decision:
+- Opción A: link "Ver histórico completo" en Profile > Calibración debajo del HRV card cuando `hrvLog.length >= 5`.
+- Opción B: nueva ruta `/app/history` con tabs HRV/PSS-4/sesiones.
+- Opción C: drawer desde tap en stat card "RMSSD" del Calibration view.
+
+**Por qué se difirió**: SP3 era schema + persistencia + cleanup, NO wiring nuevo. La decisión de mount strategy requiere user research (¿cuántos users quieren ver histórico extendido vs basta con baseline summary?) o decisión producto.
+
+**Blast radius**: bajo. Es agregar 1 mount + 1 ruta o link. Cero riesgo de regresión si está bien gateada.
+
+**Disparador de prioridad**: primer feedback de user que pida "ver mi histórico HRV completo" o "exportar mis mediciones". Telemetría: si `hrvLog.length` >20 en cohort, valuable agregar.
+
+**Detectado en**: Phase 6B SP2 reporte 2026-05-03.
+
+---
+
+## 15. lib/theme.js eliminación completa post-auditoría consumers
+
+**Qué**: `src/lib/theme.js` (legacy resolveTheme + brand + bioSignal + font + withAlpha) **NO fue eliminado** durante Phase 6B SP2 a pesar de que los 4 componentes HRV/Instrument migraron a tokens v2. Razón: otros consumers fuera de scope SP2 todavía dependen del archivo.
+
+Verificación pendiente:
+- `src/components/Nom35PersonalReport.jsx` — usa `resolveTheme` para PDF rendering
+- `src/app/page.jsx` (legacy 55 KB landing) — uses indirectos
+- Otros componentes no auditados aún
+
+**Por qué se difirió**: prohibición explícita SP2 ("NO eliminas lib/theme.js todavía — puede tener otros consumers fuera de scope SP2"). Una eliminación prematura rompería rendering de reportes oficiales y otros componentes.
+
+**Blast radius**: alto si no se audita primero. Cleanup completo requiere:
+1. `grep -r "from.*lib/theme"` → lista exhaustiva de consumers
+2. Migración 1-by-1 a tokens v2 (similar al patrón shim de SP2)
+3. Eliminación final de `lib/theme.js`
+
+**Disparador de prioridad**: cuando se introduzca un nuevo design token v2 que diverja del legacy y cause inconsistencia visual, o cuando un cambio de marketing requiera consolidar el sistema de tokens en una sola fuente de truth.
+
+**Detectado en**: Phase 6B SP2 reporte 2026-05-03.
+
+---
+
+## 16. Server → client hydration flow (B2B cross-device data recovery)
+
+**Qué**: Phase 6B SP1 arregló el bug crítico de `store.init()` ausente en AppV2Root (sin él, /app cargaba con state default cada vez). `init()` lee de IDB local. NO existe flow de "rehidratar desde server" cuando IDB está vacío en device nuevo.
+
+Implicación B2B: user A completa HRV en device 1 → server tiene la entry en `HrvMeasurement` (post SP3). User A login en device 2 (browser fresh sin IDB) → app NO consulta server para popular hrvLog local → user ve empty state aunque tenga datos persistidos.
+
+**Por qué se difirió**: SP3 era schema + outbox writes + cleanup, NO el reverse flow (server → client). El flow de rehidratación requiere:
+- Endpoint `/api/sync/pull` que devuelva últimas N entries por user
+- Cliente: trigger pull en `init()` cuando `hrvLog.length === 0` AND `_userId !== null` AND `lastSyncedAt > 0` (indicador de que user es returning)
+- Conflict resolution si IDB tiene entries más nuevas que server
+
+**Blast radius**: alto. Toca sync.js, useStore init, nuevo endpoint server, casos edge de offline-first reconciliation.
+
+**Disparador de prioridad**: primer reporte de B2B user que cambia de device y "perdió" sus datos. Crítico antes de cerrar deal Enterprise donde users multi-device es norma.
+
+**Detectado en**: Phase 6B SP3 reporte 2026-05-03.
+
+---
+
 ## Reglas de uso de este documento
 
 1. Cualquier item agregado debe incluir las 4 secciones: **Qué / Por qué se difirió / Blast radius / Disparador de prioridad**.

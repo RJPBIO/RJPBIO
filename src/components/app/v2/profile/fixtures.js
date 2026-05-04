@@ -1,4 +1,9 @@
 // Fixtures dev para Tab Perfil. NO mutan store.
+//
+// Phase 6B SP3 — FIXTURE_CALIBRATION + FIXTURE_INSTRUMENTS eliminados:
+// CalibrationView e InstrumentsView ahora leen del useStore real (hrvLog,
+// instruments, neuralBaseline, resonanceFreq) con empty states cuando no
+// hay data. Wiring en SP1, ADN refactor en SP2, persistencia server en SP3.
 
 export const FIXTURE_PROFILE = {
   name: "Operador Neural",
@@ -9,18 +14,6 @@ export const FIXTURE_PROFILE = {
   streak: 7,
   bestStreak: 14,
   achievementsCount: 8,
-};
-
-export const FIXTURE_CALIBRATION = {
-  chronotype: { label: "Vespertino moderado", score: 41, lastTs: Date.now() - 23 * 86400000 },
-  resonance:  { rate: 5.5, lastTs: Date.now() - 9 * 86400000 },
-  hrv:        { rmssd: 47, n: 12, lastTs: Date.now() - 3 * 86400000 },
-};
-
-export const FIXTURE_INSTRUMENTS = {
-  pss4:    { score: 7, max: 16, level: "Estrés bajo",       lastTs: Date.now() - 12 * 86400000 },
-  swemwbs: { score: 28, max: 35, level: "Bienestar funcional", lastTs: Date.now() - 14 * 86400000 },
-  phq2:    { score: 1, max: 6, level: "Sin signos",          lastTs: Date.now() - 30 * 86400000 },
 };
 
 export const FIXTURE_NOM35 = {

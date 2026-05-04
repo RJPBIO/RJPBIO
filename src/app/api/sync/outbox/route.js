@@ -36,6 +36,7 @@ import {
   validateEntry, jsonSize,
   MAX_BATCH, MAX_PAYLOAD_BYTES, MAX_NEURAL_STATE_BYTES,
 } from "../../../../lib/sync-validation";
+import { mapHrvEntry, mapInstrumentEntry } from "../../../../lib/sync-mapping";
 
 export const dynamic = "force-dynamic";
 
@@ -142,8 +143,9 @@ export async function POST(request) {
     const synced = [];
     const failed = [];
 
-    // Procesar entries — sólo "session" se promueve a NeuralSession.
-    // El resto se acumula en neuralState payload (server-side merge).
+    // Procesar entries — "session", "hrv", "instrument" se promueven a
+    // tablas dedicadas. El resto se acumula en neuralState payload
+    // (server-side merge vía mergeNeuralState).
     if (entries && entries.length) {
       for (const entry of entries) {
         const ve = validateEntry(entry);
@@ -170,8 +172,29 @@ export async function POST(request) {
               },
               update: {}, // idempotent: existing row no-op
             });
+          } else if (entry.kind === "hrv") {
+            // Phase 6B SP3 — promover HRV measurement a tabla dedicada.
+            // Upsert por id (cliente UUID estable) → idempotente contra
+            // retries de outbox. Field mapping en lib/sync-mapping para
+            // testabilidad isolation.
+            await orm.hrvMeasurement.upsert({
+              where: { id: entry.id },
+              create: mapHrvEntry(entry, { userId, orgId: personalOrg.id }),
+              update: {},
+            });
+          } else if (entry.kind === "instrument") {
+            // Phase 6B SP3 — promover PSS-4 / SWEMWBS-7 / PHQ-2 a tabla
+            // dedicada. answers se persiste como JSONB para auditoría
+            // (review humano de respuestas individuales si NOM-035 audit).
+            await orm.instrument.upsert({
+              where: { id: entry.id },
+              create: mapInstrumentEntry(entry, { userId, orgId: personalOrg.id }),
+              update: {},
+            });
           }
-          // Otros kinds (mood, hrv, etc.) se mergean implícitamente vía neuralState
+          // Otros kinds (mood, rhr, chronotype, nom035, program_*) se
+          // mergean implícitamente vía neuralState. Promotion a tablas
+          // dedicadas queda para sprints futuros si compliance lo requiere.
           synced.push(entry.id);
         } catch (e) {
           failed.push({ id: entry.id, error: e?.code || "db_error" });

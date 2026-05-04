@@ -63,6 +63,11 @@ model Org {
   dsarRequests   DsarRequest[]   @relation("DsarOrg")
   notifications  Notification[]  @relation("OrgNotifications")
   coachUsage     CoachUsage[]
+  // Phase 6B SP3 — biometría + instrumentos psicométricos persistidos.
+  // FK SetNull: si la org se borra, mantenemos las mediciones del usuario
+  // (siguen ligadas a User vía CASCADE). Patrón consistente con WearableEvent.
+  hrvMeasurements HrvMeasurement[]
+  instruments     Instrument[]
   @@index([region])
   @@index([dunningState])
   @@index([customDomainVerified])
@@ -108,6 +113,12 @@ model User {
   wearableEvents WearableEvent[]
   coachUsage     CoachUsage[]
   pushOutbox     PushOutbox[]
+  // Phase 6B SP3 — HRV (cámara/BLE direct, no 3rd-party) + instrumentos
+  // psicométricos. Cascade: Art-17 erasure borra todas las mediciones del
+  // user. WearableEvent es para 3rd-party (Whoop/Oura) — distinción
+  // clara: HrvMeasurement = mediciones first-party del PWA.
+  hrvMeasurements HrvMeasurement[]
+  instruments     Instrument[]
   // Sprint S1.3 — index `deletedAt` para que queries "active users"
   // (el patrón de filtrado más común post Art-17) no hagan full scan.
   @@index([deletedAt])
@@ -763,4 +774,67 @@ model WearableEvent {
   @@index([userId, provider, receivedAt])
   // Sprint S1.4 — admin reportes wearable por org necesitan este índice.
   @@index([orgId, provider, receivedAt])
+}
+
+// ─── Phase 6B SP3 — Biometría first-party (cámara/BLE direct) ───
+// Mediciones HRV originadas en el PWA mismo (HRVCameraMeasure +
+// HRVMonitor). NO confundir con WearableEvent que es ingest de
+// providers externos (Whoop/Oura/Garmin). Diseño separado para
+// que admin queries puedan agregar por source ("camera" vs "ble")
+// y validar SQI antes de incluir en analytics agregadas.
+model HrvMeasurement {
+  id           String   @id @default(cuid())
+  userId       String
+  orgId        String?
+
+  // Core HRV time-domain metrics (Task Force 1996 + Shaffer 2017).
+  rmssd        Float
+  lnRmssd      Float
+  sdnn         Float?
+  pnn50        Float?
+  meanHr       Float
+  rhr          Float?
+
+  // Measurement metadata + quality.
+  durationSec  Int
+  n            Int      // number of beats counted
+  source       String   // "camera" | "ble"
+  sqi          Int?     // signal quality index 0-100 (camera only)
+  sqiBand      String?  // "excellent" | "good" | "marginal" | "poor"
+
+  measuredAt   DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org          Org?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  @@index([userId, measuredAt])
+  @@index([orgId, measuredAt])
+  @@index([source])
+}
+
+// Phase 6B SP3 — Instrumentos psicométricos repeatable (PSS-4 Cohen
+// 1983, SWEMWBS-7 Stewart-Brown 2009, PHQ-2 Kroenke 2003). Standalone
+// de NeuralCalibrationV2 baseline (que vive en User.neuralState como
+// snapshot one-time del onboarding); este modelo trackea mediciones
+// repetidas a lo largo del tiempo.
+model Instrument {
+  id           String   @id @default(cuid())
+  userId       String
+  orgId        String?
+
+  instrumentId String   // "pss-4" | "swemwbs-7" | "phq-2"
+  score        Int      // raw integer score; metric transforms quedan en cliente
+  level        String   // "low" | "moderate" | "high" | "positive" | "negative" | etc
+  answers      Json     // array de respuestas individuales para auditoría
+
+  takenAt      DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org          Org?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  @@index([userId, takenAt])
+  @@index([orgId, takenAt])
+  @@index([instrumentId])
 }
