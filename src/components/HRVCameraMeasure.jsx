@@ -13,13 +13,28 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
-import { resolveTheme, withAlpha, font, brand, bioSignal } from "../lib/theme";
+import { colors, withAlpha } from "./app/v2/tokens";
 import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
 import { createCameraCapture, createStreamingAnalyzer } from "../lib/hrv-camera/capture";
 import { computeHrvInsight, buildHrvBaseline } from "../lib/hrv-camera/insight";
 import { useStore } from "../store/useStore";
 import { track } from "../lib/telemetry";
 import { useHaptic } from "../hooks/useHaptic";
+
+// Phase 6B SP2 — Shim de compatibilidad legacy → tokens v2.
+// Mantiene firma de brand/bioSignal/font para preservar los styles del
+// componente sin reescribir su estructura sensorial (Sprints 73-80).
+const brand = { primary: colors.accent.phosphorCyan };
+const bioSignal = {
+  phosphorCyan: colors.accent.phosphorCyan,
+  ignition: colors.semantic.warning,
+  plasmaPink: colors.semantic.danger,
+  // coherence se usa en chips de "above baseline" → cyan brand v2.
+  coherence: colors.accent.phosphorCyan,
+};
+const font = {
+  weight: { thin: 200, light: 200, regular: 400, medium: 500, semibold: 500, bold: 500, black: 500 },
+};
 
 const FULL_DURATION_SEC = 60;
 const SETTLING_TIMEOUT_MS = 30000; // si en 30s no detectamos dedo, abortar
@@ -64,14 +79,21 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   // flash visual de transición. En done/error volvemos a la paleta normal.
   const screenLightActive =
     mode === "screen-light" && (phase === "requesting" || phase === "settling" || phase === "measuring");
-  const { bg: bgN, card: cdN, border: bdN, t1: t1N, t2: t2N, t3: t3N } = resolveTheme(isDark);
-  const lightPalette = resolveTheme(false);
+  // Phase 6B SP2 — superficies tokens v2 (dark canon). Para screen-light
+  // forzamos paleta clara temporal (la pantalla ES la fuente de luz hacia
+  // el dedo en el modo iOS); en cualquier otro caso, dark canónico.
+  const bgN = colors.bg.base;
+  const cdN = colors.bg.raised;
+  const bdN = colors.separator;
+  const t1N = colors.text.primary;
+  const t2N = colors.text.secondary;
+  const t3N = colors.text.muted;
   const bg = screenLightActive ? "#ffffff" : bgN;
-  const cd = screenLightActive ? lightPalette.card : cdN;
-  const bd = screenLightActive ? lightPalette.border : bdN;
-  const t1 = screenLightActive ? lightPalette.t1 : t1N;
-  const t2 = screenLightActive ? lightPalette.t2 : t2N;
-  const t3 = screenLightActive ? lightPalette.t3 : t3N;
+  const cd = screenLightActive ? "rgba(0,0,0,0.04)" : cdN;
+  const bd = screenLightActive ? "rgba(0,0,0,0.08)" : bdN;
+  const t1 = screenLightActive ? "rgba(0,0,0,0.92)" : t1N;
+  const t2 = screenLightActive ? "rgba(0,0,0,0.62)" : t2N;
+  const t3 = screenLightActive ? "rgba(0,0,0,0.4)" : t3N;
 
   const captureRef = useRef(null);
   const analyzerRef = useRef(null);
@@ -431,7 +453,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               </span>
             </span>
             <h2 id={titleId} style={{
-              fontSize: 19, fontWeight: 300, color: t1,
+              fontSize: 19, fontWeight: 200, color: t1,
               letterSpacing: -0.4, lineHeight: 1.1, margin: 0,
             }}>
               HRV con cámara
@@ -498,7 +520,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 marginBlockEnd: 16,
               }}
             >
-              <p style={{ color: bioSignal.ignition, fontSize: 13, fontWeight: 700, margin: 0, marginBlockEnd: 4 }}>
+              <p style={{ color: bioSignal.ignition, fontSize: 13, fontWeight: 500, margin: 0, marginBlockEnd: 4 }}>
                 Cámara no disponible
               </p>
               <p style={{ color: t2, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
@@ -543,11 +565,11 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 minBlockSize: 48,
                 paddingBlock: 14,
                 background: cameraAvailable ? brand.primary : bd,
-                color: "#fff",
+                color: colors.bg.base,
                 border: "none",
                 borderRadius: 14,
                 fontSize: 15,
-                fontWeight: 700,
+                fontWeight: 500,
                 letterSpacing: -0.1,
                 cursor: cameraAvailable && phase !== "requesting" ? "pointer" : "not-allowed",
                 opacity: cameraAvailable && phase !== "requesting" ? 1 : 0.55,
@@ -663,7 +685,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               justifyContent: "center",
               fontFamily: MONO,
               fontSize: 40,
-              fontWeight: 600,
+              fontWeight: 500,
               color: live?.fingerOk ? brand.primary : bioSignal.ignition,
             }}
           >
@@ -672,7 +694,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
           <p
             role="status"
             aria-live="polite"
-            style={{ color: t1, fontSize: 17, lineHeight: 1.5, margin: 0, marginBlockEnd: 8, fontWeight: 600 }}
+            style={{ color: t1, fontSize: 17, lineHeight: 1.5, margin: 0, marginBlockEnd: 8, fontWeight: 500 }}
           >
             {live?.fingerOk
               ? (settlingCountdown && settlingCountdown > 0 ? `Listos en ${settlingCountdown}…` : "Detectado. Iniciando…")
@@ -705,7 +727,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 border: `1px solid ${withAlpha(bioSignal.ignition, 35)}`,
                 marginBlockEnd: 24,
                 fontSize: 12,
-                fontWeight: 600,
+                fontWeight: 500,
                 color: t1,
               }}
             >
@@ -810,7 +832,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                   border: `1px solid ${bd}`,
                   borderRadius: 8,
                   fontSize: 10,
-                  fontWeight: 700,
+                  fontWeight: 500,
                   letterSpacing: 0.6,
                   textTransform: "uppercase",
                   cursor: "pointer",
@@ -864,7 +886,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
           >
             {liveHr || "--"}
           </motion.div>
-          <div style={{ color: t3, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, textTransform: "uppercase", marginBlockEnd: 14 }}>bpm</div>
+          <div style={{ color: t3, fontSize: 11, letterSpacing: 1.2, fontWeight: 500, textTransform: "uppercase", marginBlockEnd: 14 }}>bpm</div>
 
           {/* Comparación contextual — solo si hay datos previos. Da
               motivación implícita sin distraer. Mono. */}
@@ -885,12 +907,12 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
             >
               {lastEntry && (
                 <span>
-                  Última <span style={{ color: t1, fontWeight: 700 }}>{Math.round(lastEntry.rmssd)} ms</span>
+                  Última <span style={{ color: t1, fontWeight: 500 }}>{Math.round(lastEntry.rmssd)} ms</span>
                 </span>
               )}
               {baselineRecent != null && (
                 <span>
-                  Baseline <span style={{ color: t1, fontWeight: 700 }}>{baselineRecent} ms</span>
+                  Baseline <span style={{ color: t1, fontWeight: 500 }}>{baselineRecent} ms</span>
                 </span>
               )}
             </div>
@@ -912,7 +934,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               }}
             >
               <span style={{ inlineSize: 8, blockSize: 8, borderRadius: "50%", background: bioSignal.ignition }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: t1 }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: t1 }}>
                 Pausado — apoya el dedo para continuar
               </span>
             </div>
@@ -942,7 +964,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               que el usuario sepa qué está viendo. */}
           {live?.waveform && live.waveform.length > 10 && (
             <div style={{ marginBlockEnd: 18 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 6, textAlign: "start" }}>
+              <div style={{ fontSize: 9, fontWeight: 500, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 6, textAlign: "start" }}>
                 Tu pulso · señal en vivo
               </div>
               <Waveform values={live.waveform} color={brand.primary} height={48} />
@@ -966,7 +988,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 }}
               >
                 <span style={{ inlineSize: 8, blockSize: 8, borderRadius: "50%", background: sqiColor(liveSqi.band) }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: t1, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: t1, textTransform: "uppercase", letterSpacing: 0.5 }}>
                   Calidad: {sqiLabel(liveSqi.band)}
                 </span>
               </div>
@@ -1020,7 +1042,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               border: `1px solid ${bd}`,
               borderRadius: 10,
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: 500,
               letterSpacing: 0.3,
               cursor: "pointer",
             }}
@@ -1058,7 +1080,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                 color: brand.primary,
                 fontFamily: MONO,
                 fontSize: 56,
-                fontWeight: 600,
+                fontWeight: 500,
                 lineHeight: 1,
                 letterSpacing: -1.5,
                 textShadow: `0 0 24px ${withAlpha(brand.primary, 35)}`,
@@ -1083,7 +1105,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
                   border: `1px solid ${withAlpha(comparisonColor(insight.comparison), 30)}`,
                   marginBlockEnd: 20,
                   fontSize: 11,
-                  fontWeight: 700,
+                  fontWeight: 500,
                   color: t1,
                   letterSpacing: 0.2,
                 }}
@@ -1296,11 +1318,11 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               paddingBlock: 14,
               paddingInline: 32,
               background: brand.primary,
-              color: "#fff",
+              color: colors.bg.base,
               border: "none",
               borderRadius: 14,
               fontSize: 15,
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: -0.1,
               cursor: "pointer",
             }}
@@ -1321,7 +1343,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               marginBlockEnd: 16,
             }}
           >
-            <p style={{ color: bioSignal.plasmaPink, fontSize: 13, fontWeight: 700, margin: 0, marginBlockEnd: 4 }}>
+            <p style={{ color: bioSignal.plasmaPink, fontSize: 13, fontWeight: 500, margin: 0, marginBlockEnd: 4 }}>
               Error
             </p>
             <p style={{ color: t1, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{error}</p>
@@ -1337,7 +1359,7 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               border: `1px solid ${bd}`,
               borderRadius: 12,
               fontSize: 14,
-              fontWeight: 600,
+              fontWeight: 500,
               cursor: "pointer",
             }}
           >
@@ -1495,12 +1517,12 @@ function ModeButton({ primary, recommended, disabled, onClick, title, subtitle, 
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: -0.1 }}>{title}</span>
+        <span style={{ fontSize: 15, fontWeight: 500, letterSpacing: -0.1 }}>{title}</span>
         {recommended && (
           <span
             style={{
               fontSize: 10,
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: 0.5,
               textTransform: "uppercase",
               color: brand.primary,
@@ -1556,7 +1578,7 @@ function Metric({ label, value, color }) {
         textAlign: "center",
       }}
     >
-      <div style={{ color, fontFamily: MONO, fontSize: 14, fontWeight: 600, letterSpacing: -0.2 }}>
+      <div style={{ color, fontFamily: MONO, fontSize: 14, fontWeight: 500, letterSpacing: -0.2 }}>
         {value}
       </div>
       <div style={{ color: "rgba(127,127,127,.8)", fontSize: 11, marginBlockStart: 3 }}>

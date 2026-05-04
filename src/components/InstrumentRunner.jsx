@@ -13,9 +13,23 @@
 import { useId, useState } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
-import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
-import { semantic } from "../lib/tokens";
+import { colors, withAlpha } from "./app/v2/tokens";
 import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
+
+// Phase 6B SP2 — Shim de compatibilidad con tokens.js v2.
+// Reemplaza imports legacy `lib/theme` + `lib/tokens` (brand, semantic,
+// font.weight) por equivalentes derivados de v2 sin reescribir la
+// estructura de styles del componente. Pesos tipográficos colapsan a
+// max 500 (regla ADN v2: solo 200/400/500 permitidos).
+const brand = { primary: colors.accent.phosphorCyan };
+const semantic = {
+  warning: colors.semantic.warning,
+  danger: colors.semantic.danger,
+  success: colors.semantic.success,
+};
+const font = {
+  weight: { thin: 200, light: 200, regular: 400, medium: 500, semibold: 500, bold: 500, black: 500 },
+};
 
 // Cada instrumento empieza su escala en un valor distinto. PSS-4 y
 // PHQ-2 indexan desde 0; SWEMWBS-7 desde 1. Esta tabla mantiene la
@@ -57,7 +71,14 @@ export default function InstrumentRunner({
   onClose,
 }) {
   const reduced = useReducedMotion();
-  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  // Phase 6B SP2 — superficies derivadas de tokens v2 (isDark legacy se
+  // ignora: la PWA v2 es dark-only canon). Sustituye resolveTheme(isDark).
+  const bg = colors.bg.base;
+  const cd = colors.bg.raised;
+  const bd = colors.separator;
+  const t1 = colors.text.primary;
+  const t2 = colors.text.secondary;
+  const t3 = colors.text.muted;
   const titleId = useId();
   const ref = useFocusTrap(show, onClose);
 
@@ -311,7 +332,7 @@ export default function InstrumentRunner({
               textAlign: "center",
             }}
           >
-            <div style={{ color: tone.color, fontSize: 22, fontWeight: 700, letterSpacing: -0.3 }}>
+            <div style={{ color: tone.color, fontSize: 22, fontWeight: 500, letterSpacing: "-0.005em" }}>
               {tone.label}
             </div>
             <p style={{ color: t2, fontSize: 13, marginBlockStart: 8 }}>
@@ -329,7 +350,7 @@ export default function InstrumentRunner({
                 marginBlockEnd: 16,
               }}
             >
-              <p style={{ color: semantic.danger, fontSize: 13, fontWeight: 700, marginBlockEnd: 6 }}>
+              <p style={{ color: semantic.danger, fontSize: 13, fontWeight: 500, marginBlockEnd: 6 }}>
                 Recomendación clínica
               </p>
               <p style={{ color: t1, fontSize: 13, lineHeight: 1.55, margin: 0 }}>
@@ -347,11 +368,11 @@ export default function InstrumentRunner({
               minBlockSize: 48,
               paddingBlock: 14,
               background: brand.primary,
-              color: "#fff",
+              color: colors.bg.base,
               border: "none",
               borderRadius: 14,
               fontSize: 15,
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: -0.1,
               cursor: "pointer",
             }}

@@ -21,7 +21,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
 import IllustratedEmpty from "./IllustratedEmpty";
-import { resolveTheme, withAlpha, font, brand } from "../lib/theme";
+import { colors, withAlpha } from "./app/v2/tokens";
 import { useReducedMotion, useFocusTrap } from "../lib/a11y";
 import {
   computeHrvStats,
@@ -32,12 +32,23 @@ import {
   toCSV,
 } from "../lib/hrvStats";
 
+// Phase 6B SP2 — Shim de compatibilidad legacy → tokens v2.
+const brand = { primary: colors.accent.phosphorCyan };
+const font = {
+  weight: { thin: 200, light: 200, regular: 400, medium: 500, semibold: 500, bold: 500, black: 500 },
+};
+
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 
+// Phase 6B SP2 — SQI colors alineados a tokens v2.
+// "good/high" mantiene el cyan brand (success = phosphorCyan en ADN v2).
+// "ok/medium" usa warning naranja semantic (codificación universal).
+// "poor" usa danger rojo. Verde legacy #059669 eliminado para mantener
+// el cyan como única señal positiva del sistema.
 function sqiColor(band) {
-  if (band === "good" || band === "high") return "#059669";
-  if (band === "ok" || band === "medium") return "#D97706";
-  return "#DC2626";
+  if (band === "good" || band === "high") return colors.accent.phosphorCyan;
+  if (band === "ok" || band === "medium") return colors.semantic.warning;
+  return colors.semantic.danger;
 }
 function sqiLabel(band) {
   if (band === "good" || band === "high") return "buena";
@@ -152,7 +163,13 @@ export default function HRVHistoryPanel({
 }) {
   const reduced = useReducedMotion();
   const ref = useFocusTrap(show, onClose);
-  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  // Phase 6B SP2 — superficies tokens v2 (dark-only canon).
+  const bg = colors.bg.base;
+  const cd = colors.bg.raised;
+  const bd = colors.separator;
+  const t1 = colors.text.primary;
+  const t2 = colors.text.secondary;
+  const t3 = colors.text.muted;
 
   const stats = useMemo(() => computeHrvStats(hrvLog), [hrvLog]);
   const baseline = useMemo(() => buildBaseline(hrvLog), [hrvLog]);
@@ -164,9 +181,11 @@ export default function HRVHistoryPanel({
   if (!show) return null;
 
   const hasData = stats.total > 0;
+  // Phase 6B SP2 — trend colors via tokens v2 semantic. mejora = cyan
+  // (success colapsa a phosphorCyan). baja = danger rojo. estable = muted.
   const trendColor =
-    stats.trendDir === "mejora" ? "#059669"
-    : stats.trendDir === "baja" ? "#DC2626"
+    stats.trendDir === "mejora" ? colors.accent.phosphorCyan
+    : stats.trendDir === "baja" ? colors.semantic.danger
     : t3;
   const trendArrow =
     stats.trendDir === "mejora" ? "↑"
@@ -224,7 +243,7 @@ export default function HRVHistoryPanel({
                 paddingBlock: 6,
                 paddingInline: 10,
                 fontSize: 11,
-                fontWeight: 700,
+                fontWeight: 500,
                 letterSpacing: 0.6,
                 cursor: "pointer",
                 textTransform: "uppercase",
@@ -302,10 +321,10 @@ export default function HRVHistoryPanel({
               }}
             >
               <div>
-                <div style={{ fontSize: 9, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 2 }}>
+                <div style={{ fontSize: 9, fontWeight: 500, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 2 }}>
                   Tu baseline · {baseline.days}d
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: t1, fontVariantNumeric: "tabular-nums" }}>
+                <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 500, color: t1, fontVariantNumeric: "tabular-nums" }}>
                   {Math.round(baseline.mean)} ms · ±{Math.round(baseline.sd)}
                 </div>
               </div>
@@ -319,7 +338,7 @@ export default function HRVHistoryPanel({
           {stats.sortedAsc.length >= 2 && (
             <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 14, padding: 14, marginBlockEnd: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBlockEnd: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase" }}>
+                <span style={{ fontSize: 10, fontWeight: 500, color: t3, letterSpacing: 1.2, textTransform: "uppercase" }}>
                   RMSSD · {stats.sortedAsc.length} mediciones
                 </span>
                 <span style={{ fontFamily: MONO, fontSize: 10, color: t3 }}>ms</span>
@@ -339,7 +358,7 @@ export default function HRVHistoryPanel({
 
           {/* Tabla agrupada por día */}
           <div style={{ marginBlockEnd: 30 }}>
-            <span style={{ display: "block", fontSize: 10, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 10 }}>
+            <span style={{ display: "block", fontSize: 10, fontWeight: 500, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 10 }}>
               Mediciones por día
             </span>
             {grouped.map((group) => (
@@ -381,11 +400,11 @@ export default function HRVHistoryPanel({
                   minBlockSize: 48,
                   paddingBlock: 14,
                   background: brand.primary,
-                  color: "#fff",
+                  color: colors.bg.base,
                   border: "none",
                   borderRadius: 14,
                   fontSize: 15,
-                  fontWeight: 700,
+                  fontWeight: 500,
                   letterSpacing: -0.1,
                   cursor: "pointer",
                 }}
@@ -403,10 +422,10 @@ export default function HRVHistoryPanel({
 function StatCard({ label, value, sub, color, cd, bd, t1, t3 }) {
   return (
     <div style={{ background: cd, border: `1px solid ${bd}`, borderRadius: 12, padding: "10px 12px" }}>
-      <div style={{ fontSize: 9, fontWeight: 700, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 4 }}>
+      <div style={{ fontSize: 9, fontWeight: 500, color: t3, letterSpacing: 1.2, textTransform: "uppercase", marginBlockEnd: 4 }}>
         {label}
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 800, color: color || t1, letterSpacing: -0.5, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+      <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 500, color: color || t1, letterSpacing: -0.5, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
         {value}
       </div>
       <div style={{ fontSize: 10, color: t3, marginBlockStart: 4, lineHeight: 1.3 }}>
@@ -422,7 +441,7 @@ function DayGroup({ group, history, cd, bd, t1, t2, t3 }) {
       <h3
         style={{
           fontSize: 10,
-          fontWeight: 800,
+          fontWeight: 500,
           color: t2,
           letterSpacing: 1.2,
           textTransform: "uppercase",
@@ -431,7 +450,7 @@ function DayGroup({ group, history, cd, bd, t1, t2, t3 }) {
         }}
       >
         {group.label}
-        <span style={{ marginInlineStart: 8, fontWeight: 600, color: t3 }}>
+        <span style={{ marginInlineStart: 8, fontWeight: 500, color: t3 }}>
           {group.entries.length} {group.entries.length === 1 ? "medición" : "mediciones"}
         </span>
       </h3>
@@ -470,7 +489,7 @@ function HrvRow({ entry, history, isLast, t1, t2, t3 }) {
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minInlineSize: 0 }}>
-        <span style={{ fontSize: 12, color: t1, fontWeight: 600, fontFamily: MONO, fontVariantNumeric: "tabular-nums" }}>
+        <span style={{ fontSize: 12, color: t1, fontWeight: 500, fontFamily: MONO, fontVariantNumeric: "tabular-nums" }}>
           {fmtDateTime(entry.ts)}
         </span>
         {ctx.protocol && (
@@ -478,8 +497,9 @@ function HrvRow({ entry, history, isLast, t1, t2, t3 }) {
             title={`${ctx.phase === "post" ? "post-" : "pre-"}${ctx.protocol}`}
             style={{
               fontSize: 10,
-              color: ctx.phase === "post" ? "#059669" : "#6366F1",
-              fontWeight: 700,
+              // Phase 6B SP2 — cyan = post (señal positiva ADN v2), muted = pre.
+              color: ctx.phase === "post" ? colors.accent.phosphorCyan : t2,
+              fontWeight: 500,
               letterSpacing: 0.2,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -491,7 +511,7 @@ function HrvRow({ entry, history, isLast, t1, t2, t3 }) {
         )}
       </div>
       <div style={{ textAlign: "end" }}>
-        <div style={{ fontFamily: MONO, fontSize: 13, color: t1, fontWeight: 800, fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
+        <div style={{ fontFamily: MONO, fontSize: 13, color: t1, fontWeight: 500, fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
           {entry.rmssd != null ? `${Math.round(entry.rmssd)}` : "—"}
           <span style={{ fontSize: 9, color: t3, marginInlineStart: 2 }}>ms</span>
         </div>
@@ -510,7 +530,7 @@ function HrvRow({ entry, history, isLast, t1, t2, t3 }) {
               paddingInline: 6,
               borderRadius: 4,
               fontSize: 10,
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: 0.4,
               color: sqiColor(sqiBand),
               background: withAlpha(sqiColor(sqiBand), 12),

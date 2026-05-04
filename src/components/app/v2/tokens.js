@@ -10,6 +10,9 @@ export const colors = {
   },
   accent: {
     phosphorCyan: "#22D3EE",
+    // Phase 6B SP2 — dim variant para borders/ghosts donde queremos
+    // presencia cyan menos dominante que el accent puro. RGB de #22D3EE.
+    phosphorCyanRgb: "34, 211, 238",
   },
   text: {
     primary: "rgba(245,245,247,0.92)",
@@ -18,6 +21,22 @@ export const colors = {
   },
   separator: "rgba(255,255,255,0.06)",
   focusRing: "#22D3EE",
+  // Phase 6B SP2 — semantic colors para warning/danger en componentes
+  // HRV y screening clínico (PHQ-2 positive, SQI poor, low quality).
+  // Mantenemos diferenciación visual contra phosphorCyan: warning naranja
+  // ámbar #f59e0b y danger rojo #DC2626 son codificación universal que
+  // el usuario ya entiende (no inventamos nuevos colores semánticos).
+  semantic: {
+    warning: "#f59e0b",
+    warningRgb: "245, 158, 11",
+    danger: "#DC2626",
+    dangerRgb: "220, 38, 38",
+    // En ADN v2 success NO es verde separado: el cyan es la única señal
+    // positiva del sistema. Esto evita la "cascada de colores semánticos"
+    // de productos saturados (verde/amarillo/rojo + cyan). One signal.
+    success: "#22D3EE",
+    successRgb: "34, 211, 238",
+  },
 };
 
 export const typography = {
@@ -116,5 +135,26 @@ export const layout = {
   contentPadInlineMobile: 20,
 };
 
-const tokens = { colors, typography, spacing, radii, motion, icon, layout };
+// Phase 6B SP2 — alpha helper local. Reemplaza `withAlpha` legacy de
+// lib/theme.js evitando coupling al sistema viejo de tokens. Acepta hex
+// (#RRGGBB) o triplete RGB string ("R, G, B"); devuelve rgba(..., α).
+// alphaPct: 0-100 (porcentaje, igual que el helper legacy para minimizar
+// fricción durante el sweep).
+export function withAlpha(color, alphaPct) {
+  const a = Math.max(0, Math.min(100, alphaPct)) / 100;
+  if (typeof color === "string" && color.startsWith("#")) {
+    const hex = color.slice(1);
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+  // Triplete "R, G, B" (los *Rgb tokens de arriba): wrappear directo.
+  if (typeof color === "string" && /^\d+\s*,\s*\d+\s*,\s*\d+$/.test(color)) {
+    return `rgba(${color}, ${a})`;
+  }
+  return color;
+}
+
+const tokens = { colors, typography, spacing, radii, motion, icon, layout, withAlpha };
 export default tokens;

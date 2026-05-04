@@ -25,9 +25,20 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion, useFocusTrap } from "../../../lib/a11y";
+import { useStore } from "../../../store/useStore";
+
+// Phase 6B SP2 — HRVCameraMeasure mountado dinámicamente desde el step
+// HRV. ssr:false: usa getUserMedia/ImageCapture/wakeLock que no existen
+// en SSR. Lazy también evita bundle bloat del onboarding cuando user
+// nunca toca cámara (skip path).
+const HRVCameraMeasure = dynamic(
+  () => import("../../HRVCameraMeasure"),
+  { ssr: false }
+);
 
 const ACCENT = "#22D3EE";
 const BG = "#08080A";
@@ -188,13 +199,27 @@ function scoreMAIA2(answers) {
   };
 }
 
-function deriveRecommendations({ pss4, rmeq /*, maia2 */ }) {
+function deriveRecommendations({ pss4, rmeq, /* maia2, */ hrvBaseline = null }) {
   let primaryIntent = "reset";
   if (pss4.profile === "high") primaryIntent = "calma";
   else if (pss4.profile === "low" && rmeq.chronotype.includes("morning")) primaryIntent = "enfoque";
   else if (pss4.profile === "low" && rmeq.chronotype.includes("evening")) primaryIntent = "energia";
-  const difficulty = pss4.profile === "high" ? 1 : 2;
-  const sessionGoal = rmeq.chronotype === "definitely_morning" ? 3 : 2;
+  let difficulty = pss4.profile === "high" ? 1 : 2;
+  let sessionGoal = rmeq.chronotype === "definitely_morning" ? 3 : 2;
+
+  // Phase 6B SP2 — HRV-aware adjustments (Shaffer & Ginsberg 2017
+  // ranges para adultos sanos en reposo). RMSSD <30ms sugiere stress
+  // alto / fatiga acumulada → priorizar recovery. >60ms sugiere buen
+  // tono parasimpático → tolera más volumen/dificultad.
+  if (hrvBaseline && typeof hrvBaseline.rmssd === "number") {
+    if (hrvBaseline.rmssd < 30) {
+      primaryIntent = "calma";
+      sessionGoal = Math.min(sessionGoal, 2);
+    } else if (hrvBaseline.rmssd > 60) {
+      difficulty = Math.min(difficulty + 1, 3);
+    }
+  }
+
   return { primaryIntent, sessionGoal, difficulty, bestTimeWindow: rmeq.bestTimeWindow };
 }
 
@@ -212,12 +237,23 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
   const [rmeqAnswers, setRmeqAnswers] = useState(Array(RMEQ_ITEMS.length).fill(null));
   const [maia2Answers, setMaia2Answers] = useState(Array(MAIA2_ITEMS.length).fill(null));
 
+  // Phase 6B SP2 — HRV state local. NO persiste a hrvLog hasta que el
+  // user complete Calibration full (handleAdvance step 4 final). Razón:
+  // si abandona en mid-onboarding, no contamina su histórico HRV con
+  // mediciones huérfanas que no formaron parte de su baseline real.
+  const [hrvMeasured, setHrvMeasured] = useState(null);
+  const [hrvSkipped, setHrvSkipped] = useState(false);
+
   const pss4Result = useMemo(() => scorePSS4(pss4Answers), [pss4Answers]);
   const rmeqResult = useMemo(() => scoreRMEQ(rmeqAnswers), [rmeqAnswers]);
   const maia2Result = useMemo(() => scoreMAIA2(maia2Answers), [maia2Answers]);
+  const hrvBaselineForRec = useMemo(
+    () => (hrvMeasured ? { rmssd: hrvMeasured.rmssd, lnRmssd: hrvMeasured.lnRmssd } : null),
+    [hrvMeasured],
+  );
   const recommendations = useMemo(
-    () => deriveRecommendations({ pss4: pss4Result, rmeq: rmeqResult, maia2: maia2Result }),
-    [pss4Result, rmeqResult, maia2Result],
+    () => deriveRecommendations({ pss4: pss4Result, rmeq: rmeqResult, maia2: maia2Result, hrvBaseline: hrvBaselineForRec }),
+    [pss4Result, rmeqResult, maia2Result, hrvBaselineForRec],
   );
 
   useEffect(() => {
@@ -234,7 +270,7 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
     (step === 0 && allPss4Answered) ||
     (step === 1 && allRmeqAnswered) ||
     (step === 2 && allMaia2Answered) ||
-    step === 3 || // hrv placeholder always advances
+    (step === 3 && (!!hrvMeasured || hrvSkipped)) ||
     step === 4;   // summary CTA advances out
 
   const handleAdvance = useCallback(() => {
@@ -242,12 +278,25 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
       setStep((s) => s + 1);
       return;
     }
-    // Step 4 summary → onComplete with baseline.
+    // Phase 6B SP2 — persistir HRV measurement al cierre completo de
+    // Calibration (no antes). Si user solo completó instrumentos pero
+    // saltó HRV, hrvMeasured queda null y no escribimos al store.
+    if (hrvMeasured) {
+      try { useStore.getState().logHRV(hrvMeasured); } catch (e) { console.error("[calibration] logHRV", e); }
+    }
+    const hrvBaseline = hrvMeasured
+      ? {
+          rmssd: hrvMeasured.rmssd,
+          lnRmssd: hrvMeasured.lnRmssd,
+          ts: hrvMeasured.ts,
+          source: hrvMeasured.source,
+        }
+      : null;
     const baseline = {
       pss4: pss4Result,
       rmeq: rmeqResult,
       maia2: maia2Result,
-      hrvBaseline: null,
+      hrvBaseline,
       composite: Math.round((100 - pss4Result.score * 6) * 0.4 + maia2Result.composite * 12 + 20), // 0-100 derived
       profile: pss4Result.profile === "high" ? "recuperación"
         : pss4Result.profile === "moderate" ? "funcional"
@@ -260,7 +309,7 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
       version: "v2",
     };
     if (typeof onComplete === "function") onComplete(baseline);
-  }, [step, pss4Result, rmeqResult, maia2Result, recommendations, onComplete]);
+  }, [step, pss4Result, rmeqResult, maia2Result, hrvMeasured, recommendations, onComplete]);
 
   const handleBack = useCallback(() => {
     if (step > 0) setStep((s) => s - 1);
@@ -350,12 +399,21 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
                 onAnswer={(idx, v) => setMaia2Answers((a) => { const n = [...a]; n[idx] = v; return n; })}
               />
             )}
-            {step === 3 && <HRVPlaceholder />}
+            {step === 3 && (
+              <HRVOnboardingStep
+                measured={hrvMeasured}
+                skipped={hrvSkipped}
+                onMeasured={(entry) => { setHrvMeasured(entry); setHrvSkipped(false); }}
+                onSkip={() => setHrvSkipped(true)}
+                onResetSkip={() => setHrvSkipped(false)}
+              />
+            )}
             {step === 4 && (
               <CalibSummary
                 pss4={pss4Result}
                 rmeq={rmeqResult}
                 maia2={maia2Result}
+                hrv={hrvMeasured}
                 recommendations={recommendations}
               />
             )}
@@ -821,66 +879,152 @@ function ItemNav({ active, total, onPrev, onNext }) {
   );
 }
 
-/* ──── Step 4 — HRV placeholder ────────────────────────── */
-function HRVPlaceholder() {
+/* ──── Step 4 — HRV real (Phase 6B SP2) ────────────────── */
+// Reemplaza el placeholder estático ("próximamente"). Ahora monta
+// HRVCameraMeasure desde dentro del Calibration flow. measured e ts
+// se propagan al padre vía onMeasured; el padre persiste a hrvLog SOLO
+// si la Calibration completa al final (evita huérfanos).
+function HRVOnboardingStep({ measured, skipped, onMeasured, onSkip, onResetSkip }) {
+  const [showModal, setShowModal] = useState(false);
   return (
     <>
       <InstrumentHeader
         eyebrow="CALIBRACIÓN NEURAL"
         title="Variabilidad cardíaca"
-        badge="HRV · próximamente"
+        badge="HRV · 60s · cámara o BLE strap"
       />
-      <article
-        style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "0.5px solid rgba(255,255,255,0.08)",
-          borderRadius: 8,
-          padding: "20px 22px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
-        <p
+      {measured ? (
+        <article
+          data-testid="hrv-measured-preview"
           style={{
-            margin: 0, fontFamily: FONT, fontSize: 13, fontWeight: 400,
-            color: TEXT_SECONDARY, lineHeight: 1.5,
+            background: "rgba(34,211,238,0.04)",
+            border: "0.5px solid rgba(34,211,238,0.4)",
+            borderRadius: 8,
+            padding: "20px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
           }}
         >
-          Mediremos tu HRV cuando habilites la cámara o un dispositivo BLE.
-        </p>
-        <p
+          <span
+            style={{
+              fontFamily: '"JetBrains Mono", "SF Mono", ui-monospace, monospace',
+              fontSize: 9, fontWeight: 500, letterSpacing: "0.18em",
+              textTransform: "uppercase", color: ACCENT,
+            }}
+          >
+            Medición completa
+          </span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+            <span
+              style={{
+                fontFamily: '"JetBrains Mono", "SF Mono", ui-monospace, monospace',
+                fontSize: 36, fontWeight: 200, color: TEXT_PRIMARY,
+                letterSpacing: "-0.02em", lineHeight: 1, fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {Math.round(measured.rmssd)}
+            </span>
+            <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 400, color: TEXT_MUTED }}>
+              ms RMSSD
+            </span>
+          </div>
+          <p
+            style={{
+              margin: 0, fontFamily: FONT, fontSize: 12, fontWeight: 400,
+              color: TEXT_SECONDARY, lineHeight: 1.5,
+            }}
+          >
+            ln(RMSSD) {measured.lnRmssd.toFixed(2)} · {measured.source === "ble" ? "BLE strap" : "cámara"}
+            {measured.sqiBand ? ` · señal ${measured.sqiBand}` : ""}
+          </p>
+        </article>
+      ) : (
+        <article
           style={{
-            margin: 0, fontFamily: FONT, fontSize: 12, fontWeight: 400,
-            color: TEXT_MUTED, lineHeight: 1.5,
+            background: "rgba(255,255,255,0.02)",
+            border: "0.5px solid rgba(255,255,255,0.08)",
+            borderRadius: 8,
+            padding: "20px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
           }}
         >
-          Por ahora, esta calibración queda incompleta. Puedes habilitarla después desde
-          {" "}
-          <strong style={{ fontWeight: 500, color: TEXT_SECONDARY }}>Hoy → Mide tu HRV</strong>.
-        </p>
-      </article>
-      <button
-        type="button"
-        disabled
-        data-testid="hrv-enable-camera"
-        style={{
-          appearance: "none", background: "transparent",
-          border: "0.5px solid rgba(34,211,238,0.2)",
-          borderRadius: 8, color: "rgba(34,211,238,0.4)",
-          padding: "12px 16px", cursor: "default",
-          fontFamily: FONT, fontSize: 12, fontWeight: 500,
-          letterSpacing: "0.06em", alignSelf: "flex-start",
+          <p
+            style={{
+              margin: 0, fontFamily: FONT, fontSize: 13, fontWeight: 400,
+              color: TEXT_SECONDARY, lineHeight: 1.5,
+            }}
+          >
+            Mediremos tu HRV durante 60 segundos: dedo sobre la cámara con flash, o sensor BLE compatible (Polar H10, Wahoo TICKR).
+          </p>
+          <p
+            style={{
+              margin: 0, fontFamily: FONT, fontSize: 12, fontWeight: 400,
+              color: TEXT_MUTED, lineHeight: 1.5,
+            }}
+          >
+            Esto nos da tu baseline parasimpático para personalizar protocolos. Puedes saltar y habilitar después desde Hoy → Mide tu HRV.
+          </p>
+        </article>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <button
+          type="button"
+          onClick={() => { setShowModal(true); if (skipped) onResetSkip?.(); }}
+          data-testid="hrv-enable-camera"
+          style={{
+            appearance: "none", background: "transparent",
+            border: `0.5px solid ${ACCENT}`,
+            borderRadius: 8, color: ACCENT,
+            padding: "14px 16px", minBlockSize: 48, cursor: "pointer",
+            fontFamily: FONT, fontSize: 12, fontWeight: 500,
+            letterSpacing: "0.12em", textTransform: "uppercase",
+            alignSelf: "flex-start",
+          }}
+        >
+          {measured ? "Volver a medir" : "Habilitar cámara"}
+        </button>
+        {!measured && (
+          <button
+            type="button"
+            onClick={onSkip}
+            data-testid="hrv-skip"
+            style={{
+              appearance: "none", background: "transparent", border: "none",
+              color: TEXT_MUTED, cursor: "pointer", padding: "8px 4px",
+              fontFamily: FONT, fontSize: 11, fontWeight: 400,
+              alignSelf: "flex-start",
+            }}
+          >
+            Saltar (incompleto)
+          </button>
+        )}
+      </div>
+
+      <HRVCameraMeasure
+        show={showModal}
+        isDark
+        onClose={() => setShowModal(false)}
+        onComplete={(entry) => {
+          setShowModal(false);
+          onMeasured(entry);
         }}
-      >
-        Habilitar cámara — próximamente
-      </button>
+        onUseBLE={() => {
+          // SP2: BLE swap dentro de Calibration cierra modal y deja el
+          // paso skippable. El BLE flow completo se ofrece desde Profile
+          // o ColdStart "Mide tu HRV" → mantiene Calibration ágil.
+          setShowModal(false);
+        }}
+      />
     </>
   );
 }
 
 /* ──── Step 5 — Summary ────────────────────────────────── */
-function CalibSummary({ pss4, rmeq, maia2, recommendations }) {
+function CalibSummary({ pss4, rmeq, maia2, hrv, recommendations }) {
   const intentLabel = {
     calma: "Calma",
     enfoque: "Enfoque",
@@ -928,9 +1072,11 @@ function CalibSummary({ pss4, rmeq, maia2, recommendations }) {
         <MAIA2Bars maia2={maia2} />
         <SummaryRow
           kicker="HRV"
-          value="Pendiente"
-          aux="Habilitar después con cámara o BLE"
-          dim
+          value={hrv ? `${Math.round(hrv.rmssd)}ms RMSSD` : "Pendiente"}
+          aux={hrv
+            ? `ln(RMSSD) ${hrv.lnRmssd.toFixed(2)} · ${hrv.source === "ble" ? "BLE strap" : "cámara"}`
+            : "Habilitar después con cámara o BLE"}
+          dim={!hrv}
         />
       </section>
 

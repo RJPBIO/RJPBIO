@@ -12,10 +12,22 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Icon from "./Icon";
-import { resolveTheme, withAlpha, font, brand, bioSignal } from "../lib/theme";
+import { colors, withAlpha } from "./app/v2/tokens";
 import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
 import { isBleSupported, createHrvSession } from "../lib/ble-hrv";
 import { hrvSummary } from "../lib/hrv";
+
+// Phase 6B SP2 — Shim de compatibilidad legacy → tokens v2.
+const brand = { primary: colors.accent.phosphorCyan };
+const bioSignal = {
+  phosphorCyan: colors.accent.phosphorCyan,
+  ignition: colors.semantic.warning,
+  plasmaPink: colors.semantic.danger,
+  coherence: colors.accent.phosphorCyan, // success/coherence colapsa a cyan
+};
+const font = {
+  weight: { thin: 200, light: 200, regular: 400, medium: 500, semibold: 500, bold: 500, black: 500 },
+};
 
 const FULL_DURATION_SEC = 300;
 const QUICK_DURATION_SEC = 60;
@@ -24,7 +36,13 @@ const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
 export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMode = false }) {
   const TARGET_DURATION_SEC = quickMode ? QUICK_DURATION_SEC : FULL_DURATION_SEC;
   const reduced = useReducedMotion();
-  const { bg, card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
+  // Phase 6B SP2 — superficies tokens v2 (dark-only canon).
+  const bg = colors.bg.base;
+  const cd = colors.bg.raised;
+  const bd = colors.separator;
+  const t1 = colors.text.primary;
+  const t2 = colors.text.secondary;
+  const t3 = colors.text.muted;
   const titleId = useId();
   const ref = useFocusTrap(show, onClose);
 
@@ -156,7 +174,7 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               </span>
             </span>
             <h2 id={titleId} style={{
-              fontSize: 19, fontWeight: 300, color: t1,
+              fontSize: 19, fontWeight: 200, color: t1,
               letterSpacing: -0.4, lineHeight: 1.1, margin: 0,
             }}>
               Medición HRV
@@ -213,7 +231,7 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
                 marginBlockEnd: 16,
               }}
             >
-              <p style={{ color: bioSignal.ignition, fontSize: 13, fontWeight: 700, margin: 0, marginBlockEnd: 4 }}>
+              <p style={{ color: bioSignal.ignition, fontSize: 13, fontWeight: 500, margin: 0, marginBlockEnd: 4 }}>
                 Web Bluetooth no disponible
               </p>
               <p style={{ color: t2, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
@@ -232,11 +250,11 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               minBlockSize: 48,
               paddingBlock: 14,
               background: bleAvailable ? brand.primary : bd,
-              color: "#fff",
+              color: colors.bg.base,
               border: "none",
               borderRadius: 14,
               fontSize: 15,
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: -0.1,
               cursor: bleAvailable ? "pointer" : "not-allowed",
               opacity: bleAvailable ? 1 : 0.55,
@@ -427,7 +445,7 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
                 color: brand.primary,
                 fontFamily: MONO,
                 fontSize: 56,
-                fontWeight: 600,
+                fontWeight: 500,
                 lineHeight: 1,
                 letterSpacing: -1.5,
                 textShadow: `0 0 24px ${withAlpha(brand.primary, 35)}`,
@@ -492,11 +510,11 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               minBlockSize: 48,
               paddingBlock: 14,
               background: brand.primary,
-              color: "#fff",
+              color: colors.bg.base,
               border: "none",
               borderRadius: 14,
               fontSize: 15,
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: -0.1,
               cursor: "pointer",
             }}
@@ -517,7 +535,7 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               marginBlockEnd: 16,
             }}
           >
-            <p style={{ color: bioSignal.plasmaPink, fontSize: 13, fontWeight: 700, margin: 0, marginBlockEnd: 4 }}>
+            <p style={{ color: bioSignal.plasmaPink, fontSize: 13, fontWeight: 500, margin: 0, marginBlockEnd: 4 }}>
               Error
             </p>
             <p style={{ color: t1, fontSize: 13, margin: 0, lineHeight: 1.5 }}>
@@ -535,7 +553,7 @@ export default function HRVMonitor({ show, isDark, onClose, onComplete, quickMod
               border: `1px solid ${bd}`,
               borderRadius: 12,
               fontSize: 14,
-              fontWeight: 600,
+              fontWeight: 500,
               cursor: "pointer",
             }}
           >
@@ -564,7 +582,7 @@ function Metric({ label, value, color }) {
           color,
           fontFamily: MONO,
           fontSize: 14,
-          fontWeight: 600,
+          fontWeight: 500,
           letterSpacing: -0.2,
         }}
       >
