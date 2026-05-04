@@ -4,7 +4,7 @@ import { colors, typography, spacing } from "../tokens";
 import MessageUser from "./MessageUser";
 import MessageCoach from "./MessageCoach";
 
-export default function ConversationList({ messages = [] }) {
+export default function ConversationList({ messages = [], onProtocolTap }) {
   const endRef = useRef(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "instant", block: "end" });
@@ -37,7 +37,7 @@ export default function ConversationList({ messages = [] }) {
         {messages.map((m) =>
           m.role === "user"
             ? <MessageUser key={m.id} content={m.content} ts={m.ts} />
-            : <MessageCoach key={m.id} content={m.content} ts={m.ts} streaming={!!m.streaming} />
+            : <MessageCoach key={m.id} content={m.content} ts={m.ts} streaming={!!m.streaming} onProtocolTap={onProtocolTap} />
         )}
         <div ref={endRef} aria-hidden="true" />
       </div>
