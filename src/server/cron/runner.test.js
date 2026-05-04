@@ -75,7 +75,7 @@ describe("runTask", () => {
 });
 
 describe("TASK_REGISTRY", () => {
-  it("has all 11 expected tasks", () => {
+  it("has all 13 expected tasks", () => {
     expect(Object.keys(TASK_REGISTRY).sort()).toEqual([
       "audit-export",
       "audit-prune",
@@ -84,7 +84,11 @@ describe("TASK_REGISTRY", () => {
       "dunning-check",
       "incident-broadcast",
       "maintenance-notify",
+      // Phase 6F SP-A — push reminder diario para users con programa activo
+      "program-day-reminder",
       "push-deliver",
+      // Phase 6F SP-C — digest mensual a admins B2B con link al reporte ejecutivo
+      "quarterly-org-digest",
       "trial-end-reminder",
       "webhook-retry",
       "weekly-summary",

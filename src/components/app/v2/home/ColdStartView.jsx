@@ -248,33 +248,67 @@ function EmptyColdStart({ totalSessions, onAction }) {
           {ctaCopy}
         </span>
       </div>
-      <button
-        type="button"
-        onClick={() => onAction?.({ action: "first-session" })}
-        data-testid="coldstart-empty-cta"
-        style={{
-          appearance: "none",
-          background: "transparent",
-          border: `0.5px solid ${colors.accent.phosphorCyan}`,
-          borderRadius: 8,
-          color: colors.accent.phosphorCyan,
-          cursor: "pointer",
-          paddingBlock: 14,
-          paddingInline: 20,
-          minBlockSize: 48,
-          fontFamily: typography.family,
-          fontSize: 12,
-          fontWeight: typography.weight.medium,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          alignSelf: "flex-start",
-          transitionProperty: "background, transform",
-          transitionDuration: `${motionTok.duration.tap}ms`,
-          transitionTimingFunction: motionTok.ease.out,
-        }}
-      >
-        Nueva sesión
-      </button>
+      {/* Phase 6F SP-B — dual CTA. Cuando el user agotó las gates de
+          onboarding y sigue cold-start, ofrecemos dos rutas paralelas:
+          (1) sesión libre via engine recommendation y
+          (2) entrar a un programa estructurado (4-28d con catálogo).
+          La página /app/programs aún no existe (defer Phase 6F SP-C);
+          mientras tanto el target apunta a /app/program/today que ya
+          maneja "no active program" → CTA "Ir a Hoy". */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          onClick={() => onAction?.({ action: "first-session" })}
+          data-testid="coldstart-empty-cta"
+          style={{
+            appearance: "none",
+            background: "transparent",
+            border: `0.5px solid ${colors.accent.phosphorCyan}`,
+            borderRadius: 8,
+            color: colors.accent.phosphorCyan,
+            cursor: "pointer",
+            paddingBlock: 14,
+            paddingInline: 20,
+            minBlockSize: 48,
+            fontFamily: typography.family,
+            fontSize: 12,
+            fontWeight: typography.weight.medium,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            transitionProperty: "background, transform",
+            transitionDuration: `${motionTok.duration.tap}ms`,
+            transitionTimingFunction: motionTok.ease.out,
+          }}
+        >
+          Nueva sesión
+        </button>
+        <button
+          type="button"
+          onClick={() => onAction?.({ action: "explore-programs", target: "/app/program/today" })}
+          data-testid="coldstart-empty-program-cta"
+          style={{
+            appearance: "none",
+            background: "transparent",
+            border: `0.5px solid ${colors.separator}`,
+            borderRadius: 8,
+            color: colors.text.secondary,
+            cursor: "pointer",
+            paddingBlock: 14,
+            paddingInline: 20,
+            minBlockSize: 48,
+            fontFamily: typography.family,
+            fontSize: 12,
+            fontWeight: typography.weight.medium,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            transitionProperty: "background, transform, color, border-color",
+            transitionDuration: `${motionTok.duration.tap}ms`,
+            transitionTimingFunction: motionTok.ease.out,
+          }}
+        >
+          Empezar programa
+        </button>
+      </div>
     </article>
   );
 }

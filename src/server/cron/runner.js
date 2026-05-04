@@ -111,4 +111,10 @@ export const TASK_REGISTRY = {
   "dunning-check":       () => import("./dunning-check.js").then((m) => m.runDunningCheck),
   "push-deliver":        () => import("./push-deliver.js").then((m) => m.runPushDeliver),
   "weekly-summary":      () => import("./weekly-summary.js").then((m) => m.runWeeklySummary),
+  // Phase 6F SP-A — cron diario que encola push reminder a users con
+  // programa activo + sesión agendada hoy + sin completar.
+  "program-day-reminder": () => import("./program-day-reminder.js").then((m) => m.runProgramDayReminder),
+  // Phase 6F SP-C — cron mensual día 1 que envía digest ejecutivo
+  // a admins/owners de cada org B2B con link al dashboard de reportes.
+  "quarterly-org-digest": () => import("./quarterly-org-digest.js").then((m) => m.runQuarterlyOrgDigest),
 };

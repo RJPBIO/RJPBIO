@@ -1,11 +1,26 @@
 "use client";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { useReadiness } from "@/hooks/useReadiness";
 import { useAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
+import { useActiveProgram } from "@/hooks/useActiveProgram";
 import { P as PROTOCOLS } from "@/lib/protocols";
 import { firstProtocolForIntent, DEFAULT_FIRST_PROTOCOL_ID } from "@/lib/first-protocol";
+import { csrfFetch } from "@/components/app/v2/profile/modals/ModalShell";
+import ProgramActiveCard from "../program/ProgramActiveCard";
+import ProgramReEvalPrompt from "../program/ProgramReEvalPrompt";
 import { colors, typography, spacing, radii, surfaces, motion as motionTok } from "../tokens";
+
+// Phase 6F SP-B — Decision A locked: cuando hay programa activo (server),
+// LearningView reemplaza la sección "TU PRÓXIMA SESIÓN" (engine recommendation)
+// con ProgramActiveCard. El programa es commitment explícito; el engine
+// recommendation diluiría la disciplina del arco. Si user quiere flexibilidad,
+// abandona el programa.
+//
+// Phase 6F SP-B — Decision C locked para re-eval: banner suave en day reEvalAt
+// (manejado dentro de ProgramActiveCard); auto-modal interruptivo si pasaron
+// ≥3 días desde reEvalAt sin completar (manejado en useEffect abajo).
+const REEVAL_AUTO_MODAL_DAYS_OVERDUE = 3;
 
 // Phase 6E SP-A — vista intermedia "learning" entre cold-start (0
 // sesiones) y personalized (20+ sesiones). Antes el branch 1≤N<20
@@ -49,6 +64,54 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
     if (fromEngine?.id != null) return PROTOCOLS.find((p) => p.id === fromEngine.id) || fromEngine;
     return firstProtocolForIntent(firstIntent);
   }, [recommendation, firstIntent]);
+
+  // Phase 6F SP-B — programa activo (server source of truth) + handlers.
+  const { data: activeProgram, refetch: refetchProgram } = useActiveProgram();
+  const [reEvalModalOpen, setReEvalModalOpen] = useState(false);
+
+  // Decision C: auto-modal si reEval está overdue ≥3 días sin completar.
+  // reEval.daysUntil es ≥0 (server-clamped); para "overdue" usamos el delta
+  // entre now y reEvalAt manualmente.
+  useEffect(() => {
+    if (!activeProgram?.reEvalAt) return;
+    if (activeProgram.reEvalCompletedAt) return;
+    if (!activeProgram.reEval?.isDue) return;
+    const reEvalAtMs = new Date(activeProgram.reEvalAt).getTime();
+    if (!Number.isFinite(reEvalAtMs)) return;
+    const daysOverdue = Math.floor((Date.now() - reEvalAtMs) / 86400_000);
+    if (daysOverdue >= REEVAL_AUTO_MODAL_DAYS_OVERDUE) {
+      setReEvalModalOpen(true);
+    }
+  }, [activeProgram]);
+
+  const handleProgramAction = async (item) => {
+    if (!item || typeof item !== "object") return;
+    if (item.action === "open-reeval-prompt") {
+      setReEvalModalOpen(true);
+      return;
+    }
+    if (item.action === "abandon-program") {
+      const ok = typeof window !== "undefined"
+        ? window.confirm("¿Abandonar el programa actual? Tu progreso se archiva.")
+        : true;
+      if (!ok) return;
+      try {
+        const res = await csrfFetch("/api/v1/me/program/abandon", { method: "POST" });
+        if (res.ok) refetchProgram();
+      } catch {
+        // best-effort; refetch para reconciliar estado real
+        refetchProgram();
+      }
+      return;
+    }
+    // Navigation targets (e.g. /app/program/timeline) → forward al parent.
+    if (item.target) {
+      onNavigate?.(item);
+      return;
+    }
+    // start-protocol y demás → forward al parent (HomeV2 → AppV2Root)
+    onAction?.(item);
+  };
 
   return (
     <>
@@ -145,7 +208,7 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
 
       <section
         data-v2-learning-recommendation
-        aria-label="Tu próxima sesión"
+        aria-label={activeProgram ? "Tu programa activo" : "Tu próxima sesión"}
         style={{
           paddingInline: spacing.s24,
           paddingBlockEnd: spacing.s32,
@@ -154,27 +217,47 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
           gap: 12,
         }}
       >
-        <div
-          style={{
-            fontFamily: typography.familyMono,
-            fontSize: typography.size.microCaps,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: colors.accent.phosphorCyan,
-            fontWeight: typography.weight.medium,
-          }}
-        >
-          TU PRÓXIMA SESIÓN
-        </div>
-        <RecommendationCard
-          protocol={recoProtocol}
-          source={recommendation?.primary ? "engine" : "fallback"}
-          onStart={() => {
-            const protocolId = recoProtocol?.id ?? DEFAULT_FIRST_PROTOCOL_ID;
-            onAction?.({ action: "start-protocol", protocolId });
+        {activeProgram ? (
+          <ProgramActiveCard
+            activeProgram={activeProgram}
+            onAction={handleProgramAction}
+          />
+        ) : (
+          <>
+            <div
+              style={{
+                fontFamily: typography.familyMono,
+                fontSize: typography.size.microCaps,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: colors.accent.phosphorCyan,
+                fontWeight: typography.weight.medium,
+              }}
+            >
+              TU PRÓXIMA SESIÓN
+            </div>
+            <RecommendationCard
+              protocol={recoProtocol}
+              source={recommendation?.primary ? "engine" : "fallback"}
+              onStart={() => {
+                const protocolId = recoProtocol?.id ?? DEFAULT_FIRST_PROTOCOL_ID;
+                onAction?.({ action: "start-protocol", protocolId });
+              }}
+            />
+          </>
+        )}
+      </section>
+
+      {reEvalModalOpen && activeProgram && (
+        <ProgramReEvalPrompt
+          activeProgram={activeProgram}
+          onClose={() => setReEvalModalOpen(false)}
+          onComplete={() => {
+            // Refetch para que reEvalCompletedAt persista en el state hook.
+            refetchProgram();
           }}
         />
-      </section>
+      )}
 
       <section
         data-v2-learning-stats

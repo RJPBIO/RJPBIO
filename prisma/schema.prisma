@@ -68,6 +68,11 @@ model Org {
   // (siguen ligadas a User vía CASCADE). Patrón consistente con WearableEvent.
   hrvMeasurements HrvMeasurement[]
   instruments     Instrument[]
+  // Phase 6F SP-A — programas adaptativos persistidos server-side.
+  // Mirror del activeProgram que vive en Zustand (cliente). El cliente
+  // sigue siendo offline-capable; el server es source of truth para
+  // adherence agregada B2B y nightly cron program-day-reminder.
+  programAssignments ProgramAssignment[]
   @@index([region])
   @@index([dunningState])
   @@index([customDomainVerified])
@@ -119,6 +124,8 @@ model User {
   // clara: HrvMeasurement = mediciones first-party del PWA.
   hrvMeasurements HrvMeasurement[]
   instruments     Instrument[]
+  // Phase 6F SP-A — programas adaptativos.
+  programAssignments ProgramAssignment[]
   // Sprint S1.3 — index `deletedAt` para que queries "active users"
   // (el patrón de filtrado más común post Art-17) no hagan full scan.
   @@index([deletedAt])
@@ -837,4 +844,62 @@ model Instrument {
   @@index([userId, takenAt])
   @@index([orgId, takenAt])
   @@index([instrumentId])
+}
+
+// ─── Phase 6F SP-A — Programas adaptativos persistidos ───────────────
+// Mirror server-side del `activeProgram` que vive en Zustand (cliente).
+// Razón: el cliente sigue offline-capable; el server es source of truth
+// para (a) adherence agregada B2B con k≥5 y (b) nightly cron
+// program-day-reminder que no puede leer Zustand del browser.
+//
+// Conflict resolution: server timestamp gana ante divergencia.
+// Cliente usa endpoints /api/v1/me/program/* como write-through cache.
+// Cascade: Art-17 erasure borra todas las assignments del user.
+//
+// Valores válidos de programId:
+//   "neural-baseline" | "recovery-week" | "focus-sprint"
+//   | "burnout-recovery" | "executive-presence"
+// Validación se hace en endpoint contra catálogo en src/lib/programs.js.
+//
+// reEvalAt: solo programas con reEvalEvery (Burnout Recovery 28d → día 14
+// PSS-4 mid-program). Null para programas sin re-evaluación. Cuando
+// reEvalCompletedAt se setea → no se vuelve a pedir re-eval del programa.
+model ProgramAssignment {
+  id                 String    @id @default(cuid())
+  userId             String
+  orgId              String?
+
+  programId          String
+  startedAt          DateTime  @default(now())
+  completedAt        DateTime?
+  abandonedAt        DateTime?
+
+  // Días específicos del programa que se completaron (1-based, sparse).
+  // Json array de integers — refleja completedSessionDays del Zustand.
+  completedDays      Json      @default("[]")
+
+  // Re-evaluación mid-program (solo para programas con program.reEvalEvery).
+  reEvalAt           DateTime?
+  reEvalCompletedAt  DateTime?
+
+  // Origen: cómo llegó el user al programa.
+  // "self-selected" | "suggested-burnout-alert" | "suggested-onboarding"
+  // | "suggested-cooldown" | "suggested-recovery"
+  source             String    @default("self-selected")
+
+  // Snapshot opcional del contexto al inicio (chronotype, baseline metrics
+  // como PSS-4 score, RMSSD baseline). Útil para pre/post comparativas
+  // a nivel agregado k-anon en B2B reportes (Idea 1).
+  meta               Json?
+
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org                Org?      @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startedAt])
+  @@index([orgId, programId, startedAt])
+  @@index([userId, completedAt])
+  // "active" lookup pattern: WHERE userId = ? AND completedAt IS NULL
+  // AND abandonedAt IS NULL → covered por (userId, startedAt) parcial scan,
+  // pero filter de NULLs no es indexable directamente. Aceptable: cada user
+  // tiene a lo más O(decenas) de assignments lifetime.
 }

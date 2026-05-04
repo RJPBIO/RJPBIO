@@ -150,6 +150,11 @@ export const PROGRAMS = [
     intent: "calma",
     duration: 28,
     window: "any",
+    // Phase 6F SP-A — re-evaluación PSS-4 mid-program. Sólo Burnout Recovery
+    // tiene reEvalEvery porque sólo este programa tiene duración suficiente
+    // (28d) para que PSS-4 mensual aplique mid-cycle. Programs <14d no
+    // necesitan re-eval mid-program.
+    reEvalEvery: 14,
     sb_long:
       "Programa de 4 semanas para recuperación de burnout (clasificación MBI: exhaustion + disengagement + reduced efficacy). Escalado con días de reposo. NO sustituye atención clínica — lo complementa.",
     rationale:
@@ -331,5 +336,101 @@ export function programLagStatus(activeProgram, now) {
   return {
     isLagging: daysBehind >= 2, // grace de 1 día
     daysBehind,
+  };
+}
+
+/* ─── Phase 6F SP-A — alternates + reEval helpers ───────────────────
+   Aditivos. Backward-compatible: programas sin `alternates` por día
+   funcionan igual que antes; programas sin `reEvalEvery` no agendan
+   re-evaluación. */
+
+/**
+ * Resuelve el protocolo a ejecutar en un día dado del programa.
+ *
+ * Si la entrada de sesión NO tiene `alternates`, retorna `protocolId`
+ * primario (comportamiento original).
+ *
+ * Si TIENE `alternates`, evalúa los candidatos vs `banditState` (arms
+ * indexados por protocolId) y elige el de mayor recompensa promedio.
+ * Cuando bandit está vacío o no hay arm para los candidatos, retorna
+ * el primary — fallback seguro y determinístico.
+ *
+ * NOTA: este helper es deliberadamente simple — usa "mean reward by
+ * arm" sin exploration. La razón: dentro de un programa de 4-28 días
+ * el usuario hace cada día N una vez; la exploración tiene poca
+ * tracción dentro de un sólo programa. La elección busca capitalizar
+ * el aprendizaje del bandit accumulated en sesiones libres.
+ *
+ * @param {object} program — programa del catálogo PROGRAMS
+ * @param {number} day — 1-based
+ * @param {object} [banditState] — store.banditArms (puede ser null/undefined)
+ * @returns {number|null} protocolId numérico (o null si no hay sesión ese día)
+ */
+export function resolveProtocolForDay(program, day, banditState = null) {
+  if (!program || !Array.isArray(program.sessions)) return null;
+  const session = program.sessions.find((s) => s.day === day);
+  if (!session) return null;
+  const primary = session.protocolId;
+  const alternates = Array.isArray(session.alternates) ? session.alternates : [];
+  if (alternates.length === 0) return primary;
+  if (!banditState || typeof banditState !== "object") return primary;
+
+  // Evaluar candidatos por mean reward del arm si existe.
+  // Convención: las arms del repo están keyed por "intent:bucket", no por
+  // protocolId. Aquí asumimos un map opcional adicional protocolBandit
+  // que la PWA puede mantener en neuralState.protocolBandit cuando
+  // suficientes datos. Si no existe, fallback a primary.
+  const protocolArms = banditState.protocolBandit || banditState.byProtocol || null;
+  if (!protocolArms || typeof protocolArms !== "object") return primary;
+
+  const candidates = [primary, ...alternates];
+  let best = primary;
+  let bestMean = -Infinity;
+  for (const c of candidates) {
+    const arm = protocolArms[c];
+    if (!arm || typeof arm.n !== "number" || arm.n <= 0) continue;
+    const mean = (arm.sum || 0) / arm.n;
+    if (mean > bestMean) { best = c; bestMean = mean; }
+  }
+  // Si ningún candidato tiene data, retornar primary (no random).
+  return Number.isFinite(bestMean) ? best : primary;
+}
+
+/**
+ * Calcula la próxima fecha de re-evaluación mid-program.
+ *
+ * Sólo programas con `reEvalEvery: N` tienen re-evaluación. Hoy día
+ * sólo Burnout Recovery (28d → reEvalEvery 14 → PSS-4 día 14).
+ *
+ * @param {object} assignment — row de ProgramAssignment con startedAt + reEvalCompletedAt
+ * @param {number|Date} [now=Date.now()] — referencia temporal
+ * @returns {{ dueDate: Date, isDue: boolean, daysUntil: number, completed: boolean }|null}
+ *   - null si el programa no tiene re-eval o assignment inválido
+ *   - completed:true si reEvalCompletedAt ya está set
+ *   - isDue:true cuando now ≥ dueDate y no completed
+ */
+export function nextProgramReEval(assignment, now = Date.now()) {
+  if (!assignment || typeof assignment !== "object") return null;
+  // Acepta tanto activeProgram (Zustand: id) como ProgramAssignment (programId)
+  const programId = assignment.programId || assignment.id;
+  if (!programId) return null;
+  const program = getProgramById(programId);
+  if (!program || !program.reEvalEvery || program.reEvalEvery <= 0) return null;
+
+  const startedAtMs = assignment.startedAt instanceof Date
+    ? assignment.startedAt.getTime()
+    : Number(assignment.startedAt) || Date.now();
+  const dueDateMs = startedAtMs + program.reEvalEvery * 86400_000;
+  const nowMs = now instanceof Date ? now.getTime() : Number(now) || Date.now();
+
+  const completed = !!assignment.reEvalCompletedAt;
+  const isDue = !completed && nowMs >= dueDateMs;
+  const daysUntil = completed ? 0 : Math.max(0, Math.ceil((dueDateMs - nowMs) / 86400_000));
+
+  return {
+    dueDate: new Date(dueDateMs),
+    isDue,
+    daysUntil,
+    completed,
   };
 }

@@ -35,6 +35,18 @@ function buildMemory() {
     integration: tableApi(get, nextId, "Integration"),
     account: tableApi(get, nextId, "Account"),
     session: tableApi(get, nextId, "Session"),
+    // Phase 6F SP-A — programas adaptativos persistidos.
+    programAssignment: tableApi(get, nextId, "ProgramAssignment"),
+    // Phase 6F SP-A — agregado porque endpoint /me/program/reEval crea
+    // rows en tabla Instrument (PSS-4 mid-program). Otros usos de Instrument
+    // (lectura para snapshot) ya pasan por safeFindMany resiliente.
+    instrument: tableApi(get, nextId, "Instrument"),
+    // Phase 6F SP-C — buildExecutiveReport consulta hrvMeasurement +
+    // nom35Response per-user para trends y correlation. Memory adapter
+    // expone los tableApi para que los tests puedan exercer todas las
+    // ramas sin Prisma real.
+    hrvMeasurement: tableApi(get, nextId, "HrvMeasurement"),
+    nom35Response: tableApi(get, nextId, "Nom35Response"),
   };
 }
 

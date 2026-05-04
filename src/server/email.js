@@ -299,3 +299,82 @@ ${bodyHtml}${startedAt}${components}${ctaHtml}${unsubFooter}`;
     TextBody: renderEmailText({ contentText: text, locale }),
   });
 }
+
+/**
+ * Phase 6F SP-C — Executive report digest email.
+ * Decision A locked: link only (sin data sensible inline). KPIs como
+ * highlights mínimos no-PII (counts agregados públicos por tier B2B);
+ * detalles bajo auth gate al click.
+ *
+ * @param {object} args
+ * @param {string} args.to                    - admin email
+ * @param {string} args.adminName             - nombre del recipiente
+ * @param {string} args.orgName
+ * @param {string} args.reportUrl             - URL al dashboard de reportes
+ * @param {object} [args.highlights]          - { activeMembers, sessionsTotal, programCompletionRate }
+ * @param {string} [args.locale="es"]
+ * @param {object} [args.branding]
+ * @param {boolean} [args.customDomainVerified]
+ */
+export async function sendExecutiveReportDigest({
+  to, adminName, orgName, reportUrl, highlights = {},
+  locale = DEFAULT_LOCALE, branding, customDomainVerified,
+} = {}) {
+  if (!to || !reportUrl || !orgName) return { skipped: true };
+
+  const From = resolveFrom({ branding, orgName, customDomainVerified });
+  const safeName = escapeHtml(adminName || "");
+  const safeOrg = escapeHtml(orgName);
+  const greeting = locale === "en"
+    ? `Hello${safeName ? `, ${safeName}` : ""}.`
+    : `Hola${safeName ? `, ${safeName}` : ""}.`;
+  const heading = locale === "en"
+    ? `Executive report · ${safeOrg}`
+    : `Reporte ejecutivo · ${safeOrg}`;
+  const intro = locale === "en"
+    ? `Your ${escapeHtml(String(highlights.periodDays || 90))}-day executive report for <strong>${safeOrg}</strong> is ready.`
+    : `Tu reporte ejecutivo de los últimos ${escapeHtml(String(highlights.periodDays || 90))} días para <strong>${safeOrg}</strong> está listo.`;
+  const ctaLabel = locale === "en" ? "Open the full report" : "Abrir el reporte completo";
+
+  // Highlights mínimos — counts agregados (no PII, no nivel NOM-035 details).
+  // Mantener concretos pero sin detail breakdown — fuerza al admin a hacer
+  // click (auth gate + audit log).
+  const lines = [];
+  if (typeof highlights.activeMembers === "number") {
+    lines.push(locale === "en"
+      ? `Active members: <strong>${highlights.activeMembers}</strong>`
+      : `Miembros activos: <strong>${highlights.activeMembers}</strong>`);
+  }
+  if (typeof highlights.sessionsTotal === "number") {
+    lines.push(locale === "en"
+      ? `Sessions in period: <strong>${highlights.sessionsTotal}</strong>`
+      : `Sesiones en el periodo: <strong>${highlights.sessionsTotal}</strong>`);
+  }
+  if (typeof highlights.programCompletionRate === "number") {
+    const pct = Math.round(highlights.programCompletionRate * 100);
+    lines.push(locale === "en"
+      ? `Program completion rate: <strong>${pct}%</strong>`
+      : `Tasa de completion programas: <strong>${pct}%</strong>`);
+  }
+  const highlightsBlock = lines.length
+    ? `<ul style="line-height:1.7;color:#0F172A">${lines.map((l) => `<li>${l}</li>`).join("")}</ul>`
+    : "";
+
+  const fine = locale === "en"
+    ? "Aggregated data with k≥5 anonymization. LFPDPPP / GDPR Art-89 compliant. Bio-Ignición is not a medical device."
+    : "Datos agregados con anonimización k≥5. LFPDPPP / GDPR Art-89 compliant. Bio-Ignición no es dispositivo médico.";
+  const text = `${heading}\n\n${greeting}\n\n${locale === "en" ? "Your report is ready." : "Tu reporte está listo."}\n${reportUrl}\n\n${fine}\n`;
+  const ctaHtml = renderCtaButton({ url: reportUrl, label: ctaLabel, branding });
+  const inner = `<h2>${escapeHtml(heading)}</h2><p>${escapeHtml(greeting)}</p><p>${intro}</p>${highlightsBlock}${ctaHtml}<p style="color:#64748B;font-size:12px;margin-top:24px">${escapeHtml(fine)}</p>`;
+
+  const Subject = locale === "en"
+    ? `Bio-Ignición · Executive report for ${orgName}`
+    : `Bio-Ignición · Reporte ejecutivo de ${orgName}`;
+
+  return postmark({
+    From, To: to, MessageStream: "outbound",
+    Subject,
+    HtmlBody: renderEmailHTML({ content: inner, branding, locale }),
+    TextBody: renderEmailText({ contentText: text, locale }),
+  });
+}
