@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useStore } from "@/store/useStore";
 import { P as PROTOCOLS } from "@/lib/protocols";
+import { PROGRAMS } from "@/lib/programs";
 import { closeSession, adaptPlayerCompletionToSessionData } from "@/lib/sessionFlow";
 import { PSS4, WEMWBS7, PHQ2, scorePss4, scoreWemwbs7, scorePhq2 } from "@/lib/instruments";
 import { colors, typography, layout } from "./tokens";
@@ -62,6 +63,17 @@ const FIRST_PROTOCOL_BY_INTENT = {
   reset: 3,           // Reset Ejecutivo
   recuperacion: 3,    // Reset Ejecutivo (alias welcome → engine)
 };
+
+// Phase 6B post-SP3 fix — resuelve la próxima sesión pendiente de un
+// programa según completedSessionDays. Retorna {day, protocolId} o null
+// si el user completó todas las sesiones (en cuyo caso el caller debería
+// invocar finalizeProgram en lugar de lanzar una sesión).
+function resolveNextProgramDay(program, activeProgram) {
+  if (!program?.sessions || !activeProgram) return null;
+  const completed = new Set(activeProgram.completedSessionDays || []);
+  const sessions = [...program.sessions].sort((a, b) => a.day - b.day);
+  return sessions.find((s) => !completed.has(s.day)) || null;
+}
 
 const SCREENS = {
   hoy: HomeV2,
@@ -221,8 +233,49 @@ export default function AppV2Root() {
       }
       // Otros targets (e.g. /pricing) — log para SP6 si aplica.
     }
-    // Otras acciones (tap-program, see-program-today, abandon-program,
-    // export-weekly-summary) se manejan en SPs futuros. Por ahora log.
+    // Phase 6B post-SP3 — programs handlers reales (antes caían en log).
+    // Modelo: PROGRAMS define sessions[] por día; activeProgram trackea
+    // completedSessionDays. resolveNextProgramDay calcula el siguiente
+    // día pendiente; si todas completadas, finalizeProgram cierra el
+    // programa con bonus XP en lugar de re-lanzar.
+    if (event.action === "tap-program" && typeof event.id === "string") {
+      const st = useStore.getState();
+      // Si tap es del mismo activo, simplemente "ver hoy". Si es distinto
+      // (o no hay activo), startProgram archiva el anterior + crea nuevo.
+      if (st.activeProgram?.id !== event.id) {
+        try { st.startProgram(event.id); } catch (e) { console.error("[v2] startProgram", e); }
+      }
+      const program = PROGRAMS.find((p) => p.id === event.id);
+      const fresh = useStore.getState().activeProgram;
+      const nextDay = resolveNextProgramDay(program, fresh);
+      if (nextDay) {
+        const protocol = PROTOCOLS.find((p) => p.id === nextDay.protocolId);
+        if (protocol) launchProtocol(protocol);
+      }
+      return;
+    }
+    if (event.action === "see-program-today") {
+      const st = useStore.getState();
+      const program = st.activeProgram?.id ? PROGRAMS.find((p) => p.id === st.activeProgram.id) : null;
+      if (!program) return;
+      const nextDay = resolveNextProgramDay(program, st.activeProgram);
+      if (!nextDay) {
+        // Todas las sesiones completadas → finalizar programa (bonus XP).
+        try { st.finalizeProgram({ totalRequired: program.sessions.length }); }
+        catch (e) { console.error("[v2] finalizeProgram", e); }
+        return;
+      }
+      const protocol = PROTOCOLS.find((p) => p.id === nextDay.protocolId);
+      if (protocol) launchProtocol(protocol);
+      return;
+    }
+    if (event.action === "abandon-program") {
+      try { useStore.getState().abandonProgram(); }
+      catch (e) { console.error("[v2] abandonProgram", e); }
+      return;
+    }
+    // Otras acciones (export-weekly-summary, dsar-*, mfa-*, etc.) se
+    // manejan en sprints futuros con sus endpoints respectivos. Por ahora log.
     console.log("[v2] navigate", event);
   }, [launchProtocol]);
 
@@ -341,6 +394,42 @@ export default function AppV2Root() {
         : tab === "perfil"
           ? { devOverride: profileOverride, sectionInitial: profileSection, onNavigate, onBellClick }
           : { onNavigate, onBellClick };
+
+  // Phase 6B post-SP3 — gate de hidratación. SIN esto, el primer render
+  // tiene welcomeDone:false (default DS) y muestra BioIgnitionWelcome
+  // momentáneamente. User completa welcome → setWelcomeDone(true) → ok.
+  // Pero si init() async termina DESPUÉS, set({...loaded, _loaded:true})
+  // sobrescribe TODO el state, perdiendo el welcomeDone reciente. User
+  // queda en loop "siempre te lleva a onboarding". Fix: bloquear render
+  // hasta _loaded=true. IDB en happy path (~50ms) → user ni lo nota.
+  if (!store._loaded) {
+    return (
+      <div
+        data-v2-loading
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: colors.bg.base,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          aria-hidden="true"
+          style={{
+            inlineSize: 24,
+            blockSize: 24,
+            borderRadius: "50%",
+            border: `1px solid ${colors.separator}`,
+            borderBlockStartColor: colors.accent.phosphorCyan,
+            animation: "v2spin 1s linear infinite",
+          }}
+        />
+        <style>{`@keyframes v2spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   // Phase 6 SP5 — Onboarding gates.
   // 1. BioIgnitionWelcome: cuando user nunca completó el welcome.

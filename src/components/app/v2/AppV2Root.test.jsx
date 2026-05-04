@@ -106,6 +106,12 @@ beforeEach(() => {
   if (typeof window !== "undefined") {
     window.history.pushState({}, "", "/app?onboard=skip");
   }
+  // Phase 6B post-SP3 — bypass loading gate seedando _loaded:true.
+  // En prod el spinner aparece <100ms (IDB hydrate); en tests hace que
+  // queries por DOM elements del shell fallen porque solo se renderiza
+  // el spinner. Tests no validan loading state — eso es responsabilidad
+  // de un test e2e específico futuro.
+  useStore.setState({ _loaded: true, welcomeDone: true, onboardingComplete: true });
 });
 
 describe("AppV2Root — Phase 6 SP3 wiring", () => {
