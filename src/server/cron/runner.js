@@ -117,4 +117,8 @@ export const TASK_REGISTRY = {
   // Phase 6F SP-C — cron mensual día 1 que envía digest ejecutivo
   // a admins/owners de cada org B2B con link al dashboard de reportes.
   "quarterly-org-digest": () => import("./quarterly-org-digest.js").then((m) => m.runQuarterlyOrgDigest),
+  // Phase 6F SP-E — cron diario que evalúa wellbeing trends de cada user
+  // activo, persiste BurnoutScore y envía push (warn/alert) con throttle 7d.
+  // NO es "burnout score" — early-warning detection retrospectiva.
+  "burnout-scan": () => import("./burnout-scan.js").then((m) => m.runBurnoutScan),
 };

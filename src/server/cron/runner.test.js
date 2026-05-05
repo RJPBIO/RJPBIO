@@ -75,11 +75,13 @@ describe("runTask", () => {
 });
 
 describe("TASK_REGISTRY", () => {
-  it("has all 13 expected tasks", () => {
+  it("has all 14 expected tasks", () => {
     expect(Object.keys(TASK_REGISTRY).sort()).toEqual([
       "audit-export",
       "audit-prune",
       "audit-verify",
+      // Phase 6F SP-E — diario wellbeing trends + push throttle 7d
+      "burnout-scan",
       "dsar-sweep",
       "dunning-check",
       "incident-broadcast",

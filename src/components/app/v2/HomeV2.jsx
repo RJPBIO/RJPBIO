@@ -9,6 +9,10 @@ import HeaderV2 from "./home/HeaderV2";
 import ColdStartView from "./home/ColdStartView";
 import LearningView from "./home/LearningView";
 import PersonalizedView from "./home/PersonalizedView";
+// Phase 6F SP-F — Decision A3: WellbeingBanner solo cuando totalSessions ≥ 1.
+// Decision B3: persistent banner + drawer on-demand (no auto-mount).
+// El componente internamente verifica el gate como safety net.
+import WellbeingBanner from "./wellbeing/WellbeingBanner";
 import { devLog } from "@/lib/dev-utils";
 import {
   greetingForHour,
@@ -43,6 +47,8 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
     return (
       <>
         <HeaderV2 onBellClick={onBellClick} />
+        {/* Phase 6F SP-F · Decision A3: banner solo si user tiene actividad. */}
+        <WellbeingBanner totalSessions={health.totalSessions} />
         <ColdStartView
           greeting={greeting}
           totalSessions={health.totalSessions}
@@ -61,6 +67,7 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
     return (
       <>
         <HeaderV2 onBellClick={onBellClick} />
+        <WellbeingBanner totalSessions={health.totalSessions} />
         <LearningView
           greeting={greeting}
           subtitle={null}
@@ -87,6 +94,7 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
   return (
     <>
       <HeaderV2 onBellClick={onBellClick} />
+      <WellbeingBanner totalSessions={health.totalSessions} />
       <PersonalizedView
         greeting={greeting}
         composite={composite}

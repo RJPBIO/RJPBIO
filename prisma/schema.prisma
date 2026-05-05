@@ -73,6 +73,9 @@ model Org {
   // sigue siendo offline-capable; el server es source of truth para
   // adherence agregada B2B y nightly cron program-day-reminder.
   programAssignments ProgramAssignment[]
+  // Phase 6F SP-E — wellbeing trends (early-warning detection).
+  // NO es "burnout score" ni diagnóstico médico — indicador retrospectivo.
+  burnoutScores  BurnoutScore[]
   @@index([region])
   @@index([dunningState])
   @@index([customDomainVerified])
@@ -126,6 +129,8 @@ model User {
   instruments     Instrument[]
   // Phase 6F SP-A — programas adaptativos.
   programAssignments ProgramAssignment[]
+  // Phase 6F SP-E — wellbeing trends (early-warning detection retrospectiva).
+  burnoutScores  BurnoutScore[]
   // Sprint S1.3 — index `deletedAt` para que queries "active users"
   // (el patrón de filtrado más común post Art-17) no hagan full scan.
   @@index([deletedAt])
@@ -902,4 +907,46 @@ model ProgramAssignment {
   // AND abandonedAt IS NULL → covered por (userId, startedAt) parcial scan,
   // pero filter de NULLs no es indexable directamente. Aceptable: cada user
   // tiene a lo más O(decenas) de assignments lifetime.
+}
+
+// ─── Phase 6F SP-E — Wellbeing trends (early-warning detection) ──────
+// NO es "burnout score" ni diagnóstico médico. Es un INDICADOR retrospectivo
+// computado por assessBurnoutEnhanced (5 signals heurísticas) que informa
+// al user sobre patrones consistentes con agotamiento. Marketing copy
+// REFORMULADO: "wellbeing trends" / "early-warning detection" — D8 NO
+// psicólogo consultor → disclaimers blindados obligatorios.
+//
+// Persisting cada evaluación habilita:
+//   1. Dedup throttle de push notifications (notifiedAt → 7-day window)
+//   2. Trend visualization client-side
+//   3. B2B aggregate /orgs/[orgId]/burnout/aggregate con k-anon ≥ 5
+//   4. Future Phase 6G+ ML training cuando N≥1000 con outcomes etiquetados
+//
+// Cascade Art-17: erasure borra todos los scores del user. orgId SetNull
+// para preservar agregados anonimizados org-level.
+model BurnoutScore {
+  id          String    @id @default(cuid())
+  userId      String
+  orgId       String?
+
+  // Output del assessment.
+  // level    "ok" | "watch" | "warn" | "alert"
+  // signals  ["freqDrop", "moodSlope", "effDrop", "hrvDecline", "chronoDyssynchrony"]
+  level       String
+  signals     Json      @default("[]")
+  metrics     Json      @default("{}")
+
+  computedAt  DateTime  @default(now())
+
+  // Push throttle: cuando se envió el push de wellbeing-trends para este score.
+  // Cron burnout-scan consulta el último BurnoutScore con notifiedAt en
+  // últimos 7 días para decidir si encolar push otra vez.
+  notifiedAt  DateTime?
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org         Org?      @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  @@index([userId, computedAt])
+  @@index([orgId, level, computedAt])
+  @@index([userId, notifiedAt])
 }

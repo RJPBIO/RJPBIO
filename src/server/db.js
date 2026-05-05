@@ -47,6 +47,10 @@ function buildMemory() {
     // ramas sin Prisma real.
     hrvMeasurement: tableApi(get, nextId, "HrvMeasurement"),
     nom35Response: tableApi(get, nextId, "Nom35Response"),
+    // Phase 6F SP-E — wellbeing trends (early-warning detection).
+    // Necesario para que cron burnout-scan tests + endpoints exerzan
+    // create/findFirst/findMany sin Prisma real.
+    burnoutScore: tableApi(get, nextId, "BurnoutScore"),
   };
 }
 
