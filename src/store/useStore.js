@@ -75,14 +75,27 @@ function migrate(data) {
   return merged;
 }
 
-// Si el dueño del estado persistido no coincide con el usuario actual
-// (ej. logout → nuevo login en mismo navegador), devolvemos estado fresco.
-// Null/undefined actual = sesión anónima; si el previo era de un user real,
-// también limpiamos para que invitados no hereden datos ajenos.
+// Decide si el estado persistido pertenece al usuario actual:
+//   - prev null + curr null  → sesión anónima continua, preservar
+//   - prev null + curr X     → primer login, attach (preservar local)
+//   - prev X    + curr X     → mismo user, preservar
+//   - prev X    + curr Y     → switch real de usuario, clearAll
+//   - prev X    + curr null  → AMBIGUO: token aún no resuelto / 429 en
+//                              /api/auth/session / mount de AppV2Root
+//                              ANTES que useAuthBridge propague userId.
+//                              Phase 6G Fix1 P0-1 master bug: NO clearAll
+//                              en este caso — preserva local; sync.js
+//                              valida re-attach en próximo pull con
+//                              currentUserId real. signOutAndClear()
+//                              sigue siendo el path explícito para
+//                              wipear cuando el user de verdad cierra.
 function belongsToUser(loaded, currentUserId) {
   const prev = loaded?._userId ?? null;
   const curr = currentUserId ?? null;
-  return prev === curr;
+  if (prev === curr) return true;
+  if (prev === null) return true; // first login: anon-saved se attach al user
+  if (curr === null) return true; // ambiguous: token aún no resuelto/429 — preservar
+  return false;                    // ambos definidos y distintos → switch real
 }
 
 // PHASE 6D SP6 Bug-37 — allowlist negative para persist. Antes el state
@@ -160,12 +173,23 @@ export const useStore = create((set, get) => ({
     try {
       const userId = opts.userId ?? null;
       let loaded = migrate(await loadState());
+      const prevUserId = loaded?._userId ?? null;
       if (!belongsToUser(loaded, userId)) {
         // Mismo navegador, otro usuario → reset local para no filtrar datos.
         await clearAll();
         loaded = migrate(null);
+        loaded._userId = userId;
+      } else if (prevUserId !== null && userId === null) {
+        // Phase 6G Fix1 P0-1: caso ambiguo (saved state autenticado,
+        // current call sin userId). Preservar loaded._userId — no
+        // sobrescribir con null. Razón: AppV2Root.useEffect llama
+        // store.init() sin userId; si lo overwriteamos, sync.js
+        // identity binding (line 150) interpreta wrong actor en próximo
+        // pull. Mantener _userId previo permite re-attach silencioso.
+        // (loaded._userId ya viene del migrate; no tocamos.)
+      } else {
+        loaded._userId = userId;
       }
-      loaded._userId = userId;
       const cw = getWeekNum();
       if (loaded.weekNum !== null && loaded.weekNum !== cw) {
         loaded.prevWeekData = [...loaded.weeklyData];

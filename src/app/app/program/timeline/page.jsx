@@ -13,6 +13,11 @@ const ProgramTimeline = dynamic(
   () => import("@/components/app/v2/program/ProgramTimeline"),
   { ssr: false, loading: () => <Loading /> }
 );
+// Phase 6G Fix2 P1-2 — empty state reusable hacia /app/programs.
+const EmptyProgramState = dynamic(
+  () => import("@/components/app/v2/program/EmptyProgramState"),
+  { ssr: false }
+);
 
 export default function ProgramTimelinePage() {
   const router = useRouter();
@@ -38,11 +43,7 @@ export default function ProgramTimelinePage() {
   if (!activeProgram) {
     return (
       <Shell>
-        <Block
-          eyebrow="SIN PROGRAMA ACTIVO"
-          message="Para ver una línea de tiempo, primero inicia un programa desde Hoy."
-          action={{ label: "Ir a Hoy", onClick: () => router.push("/app") }}
-        />
+        <EmptyProgramState context="timeline" />
       </Shell>
     );
   }

@@ -288,55 +288,51 @@ export async function completeWelcome(
   // CTA final "Estoy listo" — ahora habilitado tras select intent
   await clickButtonByText(page, "Estoy listo", { exact: false, within: "[data-v2-welcome]" });
   // Welcome desaparece, NeuralCalibrationV2 monta
-  await page.waitForSelector("[data-v2-onboarding-calibration]", { timeout: 8000 });
+  await page.waitForSelector("[data-v2-calibration]", { timeout: 8000 });
 }
 
 /**
- * Skip los 4 instrumentos calibration (PSS-4, rMEQ, MAIA-2, HRV).
- * Cada step tiene botón "Saltar..." (skip) o "Siguiente" si no hay skip.
+ * Skip los 4 instrumentos calibration (PSS-4, rMEQ, MAIA-2, HRV) +
+ * "Empezar" en summary. Usa data-testid attributes (canónicos en
+ * NeuralCalibrationV2) en lugar de text-matching para precisión.
  *
- * Usa clickButtonByText (DOM directo) por mismas razones que
- * completeWelcome — focus rings interfieren con Playwright .click().
+ * Steps:
+ *   0-2 PSS-4/rMEQ/MAIA-2: click [data-testid=calibration-skip-instrument]
+ *   3   HRV: click [data-testid=hrv-skip] + click [data-testid=calibration-cta]
+ *   4   Summary: click [data-testid=calibration-cta] (label "Empezar")
+ *
+ * Phase 6G Fix1: rewrite con testids — antes el text-matching encontraba
+ * "Saltar (incompleto)" en HRV step y se quedaba en loop sin invocar
+ * el CTA "Siguiente" que hace el advance real.
  */
 export async function skipAllCalibration(page: Page): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    // Hard-cap 5 iter: 4 instrumentos (PSS-4, rMEQ, MAIA-2, HRV) + safety
-    const clickedSkip = await page.evaluate(() => {
-      const root = document.querySelector("[data-v2-onboarding-calibration]");
-      if (!root) return false;
-      const btns = Array.from(root.querySelectorAll("button"));
-      // Prefiere "Saltar este instrumento" / "Saltar (incompleto)" — NO "Saltar calibración" (terminate-all top right)
-      const skipInstrument = btns.find((b) => {
-        const t = (b.textContent || "").trim().toLowerCase();
-        return /saltar/.test(t)
-          && !t.includes("calibración")
-          && !t.includes("al contenido")
-          && !t.includes("introducción");
-      });
-      if (skipInstrument) {
-        (skipInstrument as HTMLButtonElement).click();
-        return true;
-      }
-      // Si no hay skip instrumento, intentar "Siguiente"
-      const sig = btns.find((b) => /^siguiente$/i.test((b.textContent || "").trim()));
-      if (sig) {
-        (sig as HTMLButtonElement).click();
-        return true;
-      }
-      return false;
-    });
-    if (!clickedSkip) break;
-    await page.waitForTimeout(500);
-    // Si llegamos al step 5 (resumen "Calibración completa"), salir
-    const isFinalStep = await page.evaluate(() => {
-      const root = document.querySelector("[data-v2-onboarding-calibration]");
-      if (!root) return false;
-      return /05\s*\/\s*05/.test(root.textContent || "");
-    });
-    if (isFinalStep) break;
+  for (let safety = 0; safety < 6; safety++) {
+    const counter = await page
+      .getByTestId("calibration-step-counter")
+      .textContent({ timeout: 2000 })
+      .catch(() => "");
+    const stepMatch = counter?.match(/(\d{2})\s*\/\s*(\d{2})/);
+    const step = stepMatch ? parseInt(stepMatch[1], 10) : null; // 1-indexed
+    if (!step) break;
+
+    if (step <= 3) {
+      // PSS-4 / rMEQ / MAIA-2 → "Saltar este instrumento"
+      await page
+        .getByTestId("calibration-skip-instrument")
+        .click({ timeout: 3000 })
+        .catch(() => {});
+    } else if (step === 4) {
+      // HRV: skip + advance CTA
+      await page.getByTestId("hrv-skip").click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(150);
+      await page.getByTestId("calibration-cta").click({ timeout: 3000 }).catch(() => {});
+    } else if (step === 5) {
+      // Summary → "Empezar"
+      await page.getByTestId("calibration-cta").click({ timeout: 3000 }).catch(() => {});
+      break;
+    }
+    await page.waitForTimeout(350);
   }
-  // Step 5: resumen "Calibración completa" → "Empezar"
-  await clickButtonByText(page, "Empezar", { exact: true });
   await page.waitForSelector("[data-v2-root]", { timeout: 8000 });
 }
 

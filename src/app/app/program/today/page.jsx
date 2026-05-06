@@ -18,6 +18,11 @@ const ProgramReEvalPrompt = dynamic(
   () => import("@/components/app/v2/program/ProgramReEvalPrompt"),
   { ssr: false }
 );
+// Phase 6G Fix2 P1-2 — empty state reusable hacia /app/programs.
+const EmptyProgramState = dynamic(
+  () => import("@/components/app/v2/program/EmptyProgramState"),
+  { ssr: false }
+);
 
 import { useState } from "react";
 import { csrfFetch } from "@/components/app/v2/profile/modals/ModalShell";
@@ -50,7 +55,7 @@ export default function ProgramTodayPage() {
   if (!activeProgram) {
     return (
       <Shell>
-        <NoActiveBlock onGoHome={() => router.push("/app")} />
+        <EmptyProgramState context="today" />
       </Shell>
     );
   }
@@ -176,70 +181,6 @@ function Loading() {
         Cargando…
       </span>
     </main>
-  );
-}
-
-function NoActiveBlock({ onGoHome }) {
-  return (
-    <article
-      data-v2-program-no-active
-      style={{
-        background: colors.bg.raised,
-        border: `0.5px solid ${colors.separator}`,
-        borderRadius: 16,
-        padding: spacing.s24,
-        display: "flex",
-        flexDirection: "column",
-        gap: spacing.s16,
-      }}
-    >
-      <span
-        style={{
-          fontFamily: typography.familyMono,
-          fontSize: typography.size.microCaps,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: colors.text.muted,
-          fontWeight: typography.weight.medium,
-        }}
-      >
-        SIN PROGRAMA ACTIVO
-      </span>
-      <p
-        style={{
-          margin: 0,
-          fontFamily: typography.family,
-          fontSize: typography.size.body,
-          color: colors.text.secondary,
-          lineHeight: 1.5,
-        }}
-      >
-        No tienes un programa en curso ahora. Vuelve a Hoy y elige uno cuando estés listo.
-      </p>
-      <button
-        type="button"
-        onClick={onGoHome}
-        style={{
-          appearance: "none",
-          background: "transparent",
-          border: `0.5px solid ${colors.accent.phosphorCyan}`,
-          borderRadius: 12,
-          color: colors.accent.phosphorCyan,
-          cursor: "pointer",
-          paddingBlock: 14,
-          paddingInline: 20,
-          minBlockSize: 48,
-          fontFamily: typography.family,
-          fontSize: 12,
-          fontWeight: typography.weight.medium,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          alignSelf: "flex-start",
-        }}
-      >
-        Ir a Hoy
-      </button>
-    </article>
   );
 }
 

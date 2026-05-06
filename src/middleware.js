@@ -9,7 +9,15 @@ import { effectivePolicy, ipPassesAllChecks, parseIpv4 } from "@/lib/org-securit
    ═══════════════════════════════════════════════════════════════ */
 
 const RATE_LIMIT = { windowMs: 60_000, max: 120 };
-const AUTH_RATE = { windowMs: 60_000, max: 10 };
+// AUTH_RATE cubre signin/signout/callback (mutations sensibles a brute-force).
+// Bump 10→30/min Phase 6G Fix1: 10 era agresivo — useSession poll + multiple
+// tabs + audit suites lo agotaban → 429 cascading + state-loss en
+// useStore.init via sync.js identity binding.
+const AUTH_RATE = { windowMs: 60_000, max: 30 };
+// SESSION_READ_RATE: GET /api/auth/session es read-only y NextAuth lo
+// llama on-mount + on-focus + refetchInterval. No es brute-forceable
+// (no acepta credentials) así que tiene budget separado más generoso.
+const SESSION_READ_RATE = { windowMs: 60_000, max: 120 };
 const buckets = new Map();
 
 function hitLocal(key, cfg) {
@@ -52,14 +60,27 @@ async function hit(key, cfg) {
 }
 
 function buildCSP(nonce) {
+  // Phase 6G Fix2 P1-3 — style-src env-conditional.
+  // PROD: strict 'self' + nonce. Cualquier <style> debe llevar nonce.
+  // DEV: relax con 'unsafe-inline' SOLO porque Next.js Turbopack HMR
+  // inyecta <style> tags sin nonce desde su runtime (~700+ violations
+  // capturadas en audits previos sobre /app, /app/programs, /app/wellbeing).
+  // NO afecta seguridad de producción — la build SSR no usa HMR ni
+  // inyecta inline styles ad-hoc; todos los <style> nuestros pasan nonce
+  // explícitamente (layout.js, loading.jsx, admin/loading.jsx, demo).
+  // CLAUDE.md prohibe unsafe-inline EN PROD; este branch es dev-only.
+  const isProd = process.env.NODE_ENV === "production";
+  const styleSrc = isProd
+    ? ["'self'", `'nonce-${nonce}'`]
+    : ["'self'", "'unsafe-inline'"];
   const d = {
     "default-src": ["'self'"],
     "script-src": ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"],
     "script-src-attr": ["'none'"],
     // `style-src-attr 'unsafe-hashes'` permite `style="..."` inline que
-    // Framer Motion inyecta; mantenemos style-src sin unsafe-inline para
-    // que no se puedan cargar <style> arbitrarios de atacantes.
-    "style-src": ["'self'", `'nonce-${nonce}'`],
+    // Framer Motion inyecta; en prod style-src sigue strict para que no
+    // se puedan cargar <style> arbitrarios de atacantes.
+    "style-src": styleSrc,
     "style-src-attr": ["'unsafe-hashes'", "'unsafe-inline'"],
     "img-src": ["'self'", "data:", "blob:", "https:"],
     "font-src": ["'self'", "data:"],
@@ -111,8 +132,16 @@ export async function middleware(request) {
   const path = url.pathname;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
 
-  const cfg = path.startsWith("/api/auth") || path === "/signin" ? AUTH_RATE : RATE_LIMIT;
-  const r = await hit(`${ip}:${cfg === AUTH_RATE ? "auth" : "gen"}`, cfg);
+  // Phase 6G Fix1: GET /api/auth/session tiene bucket separado read-only
+  // más generoso. Mutations auth (signin/signout/callback/etc.) usan AUTH_RATE.
+  const isSessionRead = path === "/api/auth/session" && request.method === "GET";
+  const cfg = isSessionRead
+    ? SESSION_READ_RATE
+    : path.startsWith("/api/auth") || path === "/signin"
+    ? AUTH_RATE
+    : RATE_LIMIT;
+  const bucketKey = cfg === SESSION_READ_RATE ? "auth-read" : cfg === AUTH_RATE ? "auth" : "gen";
+  const r = await hit(`${ip}:${bucketKey}`, cfg);
   if (!r.ok) {
     return new NextResponse("Rate limit exceeded", {
       status: 429,
