@@ -15,6 +15,11 @@ import {
 // sesión" desde el mismo mapeo que el handler real (antes la card
 // hardcodeaba "Pulse Shift" mientras el handler lanzaba el correcto).
 import { FIRST_PROTOCOL_BY_INTENT, DEFAULT_FIRST_PROTOCOL_ID } from "@/lib/first-protocol";
+// Phase 6F bug-fix — handler `first-session` debe consultar el engine
+// adaptativo cuando totalSessions ≥ 1, sino siempre lanza el mismo
+// protocolo per-intent (Reinicio Parasimpático para calma, Pulse Shift
+// para energia, etc) — UX-killer reportado en validation visual.
+import { computeAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
 import { devLog } from "@/lib/dev-utils";
 import { colors, typography, layout } from "./tokens";
 import HomeV2 from "./HomeV2";
@@ -371,6 +376,45 @@ export default function AppV2Root() {
       event.id === "primera"
     ) {
       const st = useStore.getState();
+      const totalSessions = (st.history?.length || st.totalSessions || 0);
+
+      // Phase 6F bug-fix — post-onboarding (totalSessions ≥ 1), preferir
+      // el engine adaptativo + diversidad contra last-3 protocols. Antes
+      // este handler siempre lanzaba FIRST_PROTOCOL_BY_INTENT[firstIntent]
+      // → user con firstIntent='calma' veía SIEMPRE Reinicio Parasimpático
+      // aunque ya hubiera completado N sesiones distintas. Bug raíz:
+      // EmptyColdStart "Nueva sesión" CTA (Phase 6E SP-A Bug-48) reusó
+      // este handler que estaba diseñado para genuine first session.
+      if (totalSessions >= 1) {
+        const last3Names = (st.history || []).slice(-3).map((h) => h.p);
+        const reco = computeAdaptiveRecommendation(st);
+        const recoId = reco?.primary?.id;
+        if (Number.isFinite(recoId)) {
+          const recoProto = PROTOCOLS.find((p) => p.id === recoId);
+          // Solo aceptar engine reco si NO repite los últimos 3 (forza variedad).
+          if (recoProto && !last3Names.includes(recoProto.n)) {
+            launchProtocol(recoProto);
+            return;
+          }
+        }
+        // Engine sin reco útil → rotar entre protocolos del firstIntent
+        // que NO estén en last-3, evitando repeats. Default fallback queda
+        // al final (genuine first-session sin actividad previa).
+        const intentId = FIRST_PROTOCOL_BY_INTENT[st.firstIntent] || DEFAULT_FIRST_PROTOCOL_ID;
+        const intentProto = PROTOCOLS.find((p) => p.id === intentId);
+        const intentPool = PROTOCOLS.filter(
+          (p) => p.int === (intentProto?.int || st.firstIntent) && !last3Names.includes(p.n)
+        );
+        const rotated = intentPool[0] || intentProto;
+        if (rotated) {
+          launchProtocol(rotated);
+          return;
+        }
+      }
+
+      // Genuine first session (totalSessions === 0): protocolo seguro
+      // per-intent. Default Reinicio Parasimpático (id 1) — el más
+      // universal y seguro sin baseline.
       const id = FIRST_PROTOCOL_BY_INTENT[st.firstIntent] || DEFAULT_FIRST_PROTOCOL_ID;
       const protocol = PROTOCOLS.find((p) => p.id === id);
       if (!protocol) return;

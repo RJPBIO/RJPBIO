@@ -53,17 +53,36 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
   const store = useStore();
 
   const totalSessions = Array.isArray(history) ? history.length : 0;
-  const sessionsToBaseline = Math.max(0, 5 - totalSessions);
+  // Phase 6F bug-fix — threshold REAL para "personalized" branch es 20
+  // sesiones (NEURAL_CONFIG.health.learningSessions), NO 5. Antes la copy
+  // "Sesión X de 5 hasta tu trayectoria personalizada" engañaba al user:
+  // completaba 5 sesiones, NO veía cambio (sigue en LearningView hasta
+  // N=20) y reportaba "no hace nada después de 5 primeras". Alinear copy
+  // con threshold real evita el mismatch.
+  const PERSONALIZED_THRESHOLD = 20;
+  const sessionsToPersonalized = Math.max(0, PERSONALIZED_THRESHOLD - totalSessions);
 
   // Engine puede retornar null si k<minSamples (cold-start del propio
-  // engine, no del UI). Fallback al protocolo del firstIntent del user.
+  // engine, no del UI). Fallback al protocolo del firstIntent del user
+  // PERO con diversidad contra los últimos 3 protocols — sin esto
+  // siempre recomienda el mismo per-intent cuando bandit está vacío.
   const readiness = useReadiness(store);
   const recommendation = useAdaptiveRecommendation(store, { readiness });
   const recoProtocol = useMemo(() => {
     const fromEngine = recommendation?.primary;
     if (fromEngine?.id != null) return PROTOCOLS.find((p) => p.id === fromEngine.id) || fromEngine;
-    return firstProtocolForIntent(firstIntent);
-  }, [recommendation, firstIntent]);
+    // Engine sin reco útil → rotar protocolos del firstIntent evitando last-3.
+    // Bug raíz: antes retornaba `firstProtocolForIntent(firstIntent)` que es
+    // FIJO per-intent → user veía siempre Reinicio Parasimpático para calma,
+    // siempre Pulse Shift para energia, etc.
+    const last3Names = Array.isArray(history) ? history.slice(-3).map((h) => h.p) : [];
+    const intentPool = PROTOCOLS.filter((p) => p.int === firstIntent && !last3Names.includes(p.n));
+    return intentPool[0] || firstProtocolForIntent(firstIntent);
+  }, [recommendation, firstIntent, history]);
+  // Phase 6F bug-fix — recoSource correcto (engine vs fallback). Antes el
+  // attr decía "engine" cuando recommendation.primary era truthy aunque
+  // recoProtocol viniera del fallback (mismatch entre check L171 y L62-65).
+  const recoFromEngine = recommendation?.primary?.id != null;
 
   // Phase 6F SP-B — programa activo (server source of truth) + handlers.
   const { data: activeProgram, refetch: refetchProgram } = useActiveProgram();
@@ -187,9 +206,9 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
             lineHeight: 1.3,
           }}
         >
-          Sesión {totalSessions} de 5 hasta tu trayectoria personalizada
+          Sesión {totalSessions} de {PERSONALIZED_THRESHOLD} hasta tu trayectoria personalizada
         </h2>
-        <ProgressBar value={totalSessions} max={5} />
+        <ProgressBar value={totalSessions} max={PERSONALIZED_THRESHOLD} />
         <p
           style={{
             margin: 0,
@@ -200,9 +219,9 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
             lineHeight: 1.5,
           }}
         >
-          {sessionsToBaseline > 0
-            ? `${sessionsToBaseline} ${sessionsToBaseline === 1 ? "sesión" : "sesiones"} más para empezar a personalizar tu coach.`
-            : "Tu próxima sesión empieza tu trayectoria personalizada."}
+          {sessionsToPersonalized > 0
+            ? `${sessionsToPersonalized} ${sessionsToPersonalized === 1 ? "sesión" : "sesiones"} más para tu trayectoria personalizada.`
+            : "Tu próxima sesión cierra tu calibración. Pronto verás tu trayectoria completa."}
         </p>
       </section>
 
@@ -238,7 +257,7 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
             </div>
             <RecommendationCard
               protocol={recoProtocol}
-              source={recommendation?.primary ? "engine" : "fallback"}
+              source={recoFromEngine ? "engine" : "fallback"}
               onStart={() => {
                 const protocolId = recoProtocol?.id ?? DEFAULT_FIRST_PROTOCOL_ID;
                 onAction?.({ action: "start-protocol", protocolId });
