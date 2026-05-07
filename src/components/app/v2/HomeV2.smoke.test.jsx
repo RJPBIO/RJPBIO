@@ -110,7 +110,16 @@ describe("HomeV2 — Phase 6E SP-A NEVER empty viewport (Bug-48 anti-regression)
       expectedSelector: "[data-v2-learning-progress]",
     },
     {
-      name: "post-20-sessions (boundary personalized)",
+      // Phase 6F bug-fix runtime — threshold para "personalized" bajado
+      // de 20 a 14 (alineado con engine interno neural.js:1012). N=14 es
+      // el primer caso que entra a personalized branch.
+      name: "post-14-sessions (boundary personalized — engine-aligned threshold)",
+      state: { totalSessions: 14, history: Array.from({ length: 14 }, (_, i) => ({ c: 60 + i, ts: Date.now() - i * 86400000 })), instruments: [{ instrumentId: "pss-4" }], chronotype: { type: "intermediate" }, hrvLog: [{ rmssd: 45 }], firstIntent: "calma" },
+      expectedBranch: "personalized",
+      expectedSelector: "[data-v2-hero]",
+    },
+    {
+      name: "post-20-sessions (well into personalized)",
       state: { totalSessions: 20, history: Array.from({ length: 20 }, (_, i) => ({ c: 60 + i, ts: Date.now() - i * 86400000 })), instruments: [{ instrumentId: "pss-4" }], chronotype: { type: "intermediate" }, hrvLog: [{ rmssd: 45 }], firstIntent: "calma" },
       expectedBranch: "personalized",
       expectedSelector: "[data-v2-hero]",

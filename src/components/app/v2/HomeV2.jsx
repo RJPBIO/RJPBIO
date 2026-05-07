@@ -58,11 +58,13 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
     );
   }
 
-  // Phase 6E SP-A — branch "learning" (1 ≤ totalSessions < 20). Antes
-  // este rango caía al default personalized + PersonalizedView con data
-  // ausente (composite 0%, recommendation null, dimensions defaults 50)
-  // → UX engañoso. LearningView muestra progress hacia baseline + next
-  // recommendation con fallback + mini-stats acumulados (Bug-48).
+  // Phase 6E SP-A — branch "learning" (5 ≤ totalSessions < 14).
+  // Phase 6F bug-fix runtime — threshold para "personalized" bajado
+  // de 20 a 14 (alineado con engine interno neural.js:1012). Antes
+  // 20 era arbitrario y NO sustentado por config — solo conservador.
+  // 14 = 2 semanas uso diario, 3/5 personalization signals activos.
+  // LearningView muestra progress hacia baseline + next recommendation
+  // con fallback + mini-stats acumulados (Bug-48).
   if (health.dataMaturity === "learning") {
     return (
       <>

@@ -76,30 +76,32 @@ describe("LearningView — Bug #4 copy threshold real (20, no 5)", () => {
     setHistory(["Reinicio Parasimpático", "Pulse Shift", "Reset Ejecutivo"]);
     recommendationMock.mockReturnValue(null);
     render(<LearningView greeting="Hola." subtitle={null} onAction={vi.fn()} />);
+    // Threshold real para personalized = 14 (alineado con engine interno
+    // neural.js:1012). Antes UI requería 20 — misalignment con engine.
     expect(
-      screen.getByText(/Sesión 3 de 20 hasta tu trayectoria personalizada/i)
+      screen.getByText(/Sesión 3 de 14 hasta tu trayectoria personalizada/i)
     ).toBeInTheDocument();
   });
 
-  it("body text usa '20 sesiones' threshold, NO '5'", () => {
+  it("body text usa '14 sesiones' threshold (alineado con engine, no 5 ni 20)", () => {
     setHistory(["Reinicio Parasimpático", "Pulse Shift"]);
     recommendationMock.mockReturnValue(null);
     render(<LearningView greeting="Hola." subtitle={null} onAction={vi.fn()} />);
-    // Con N=2 → 18 sesiones más para personalized
-    expect(screen.getByText(/18 sesiones más para tu trayectoria personalizada/i)).toBeInTheDocument();
+    // Con N=2 → 12 sesiones más para personalized (14 - 2)
+    expect(screen.getByText(/12 sesiones más para tu trayectoria personalizada/i)).toBeInTheDocument();
   });
 
-  it("ProgressBar max=20 (no 5)", () => {
+  it("ProgressBar max=14 (alineado con engine threshold)", () => {
     setHistory(["Reinicio Parasimpático"]);
     recommendationMock.mockReturnValue(null);
     render(<LearningView greeting="Hola." subtitle={null} onAction={vi.fn()} />);
     const pb = screen.getByRole("progressbar");
-    expect(pb.getAttribute("aria-valuemax")).toBe("20");
+    expect(pb.getAttribute("aria-valuemax")).toBe("14");
     expect(pb.getAttribute("aria-valuenow")).toBe("1");
   });
 
-  it("totalSessions=20 muestra cierre de calibración (NO 'Tu próxima sesión empieza tu trayectoria')", () => {
-    setHistory(Array.from({ length: 20 }, (_, i) => `Protocolo ${i}`));
+  it("totalSessions=14 muestra cierre de calibración (no 'X sesiones más')", () => {
+    setHistory(Array.from({ length: 14 }, (_, i) => `Protocolo ${i}`));
     recommendationMock.mockReturnValue(null);
     render(<LearningView greeting="Hola." subtitle={null} onAction={vi.fn()} />);
     expect(screen.getByText(/Tu próxima sesión cierra tu calibración/i)).toBeInTheDocument();

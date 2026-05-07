@@ -415,9 +415,15 @@ export const NEURAL_CONFIG = FREEZE({
     // Una predicción es "stale" si no se evaluó vs outcome real
     // dentro de este número de horas. Si nunca, queda en "uncertain".
     staleHoursThreshold: 24 * 14, // 14 días
-    // Cold-start: <5 sesiones; learning: 5-19; personalized: ≥20.
+    // Cold-start: <5 sesiones; learning: 5-13; personalized: ≥14.
+    // Phase 6F bug-fix runtime — N=14 alineado con threshold REAL del
+    // motor interno (`personalized: hist.length >= 14` en neural.js:1012).
+    // Antes UI requería N=20 — misalignment con engine + "valle muerto"
+    // 14-19 donde user no veía cambio. N=14 = 2 semanas uso diario · 3 de
+    // 5 personalization signals activos (peakWindow ≥8, weeklyDensity ≥14,
+    // residualCalibration ≥5 pre-mood pairs).
     coldStartSessions: 5,
-    learningSessions: 20,
+    learningSessions: 14,
     // Tolerancia para considerar una predicción "acertada":
     // |predicted - observed| < tolerance → hit.
     predictionHitTolerance: 0.75, // ±0.75 puntos de mood

@@ -6,6 +6,7 @@ import { useAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
 import { useActiveProgram } from "@/hooks/useActiveProgram";
 import { P as PROTOCOLS } from "@/lib/protocols";
 import { firstProtocolForIntent, DEFAULT_FIRST_PROTOCOL_ID } from "@/lib/first-protocol";
+import { NEURAL_CONFIG } from "@/lib/neural/config";
 import { csrfFetch } from "@/components/app/v2/profile/modals/ModalShell";
 import ProgramActiveCard from "../program/ProgramActiveCard";
 import ProgramReEvalPrompt from "../program/ProgramReEvalPrompt";
@@ -53,13 +54,12 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
   const store = useStore();
 
   const totalSessions = Array.isArray(history) ? history.length : 0;
-  // Phase 6F bug-fix — threshold REAL para "personalized" branch es 20
-  // sesiones (NEURAL_CONFIG.health.learningSessions), NO 5. Antes la copy
-  // "Sesión X de 5 hasta tu trayectoria personalizada" engañaba al user:
-  // completaba 5 sesiones, NO veía cambio (sigue en LearningView hasta
-  // N=20) y reportaba "no hace nada después de 5 primeras". Alinear copy
-  // con threshold real evita el mismatch.
-  const PERSONALIZED_THRESHOLD = 20;
+  // Phase 6F bug-fix runtime — threshold para "personalized" branch
+  // alineado con NEURAL_CONFIG.health.learningSessions (14, antes 20).
+  // El motor interno declara "personalized" con hist.length >= 14
+  // (neural.js:1012) — el UI ahora coincide. Si el config cambia, este
+  // valor debe leerse de ahí en lugar de hardcodearlo.
+  const PERSONALIZED_THRESHOLD = NEURAL_CONFIG.health.learningSessions;
   const sessionsToPersonalized = Math.max(0, PERSONALIZED_THRESHOLD - totalSessions);
 
   // Engine puede retornar null si k<minSamples (cold-start del propio

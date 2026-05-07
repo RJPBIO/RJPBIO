@@ -47,13 +47,16 @@ describe("computeOrgNeuralHealth", () => {
 
   describe("maturity distribution", () => {
     it("clasifica por sessions count", () => {
+      // Phase 6F bug-fix runtime — thresholds: cold-start <5, learning 5-13,
+      // personalized ≥14 (alineado con engine interno neural.js:1012).
+      // Antes learning era 5-19, personalized ≥20 — misalignment.
       const r = computeOrgNeuralHealth([
-        user("a", 3, 1),    // cold-start
-        user("b", 4, 2),    // cold-start
-        user("c", 10, 3),   // learning
-        user("d", 15, 4),   // learning
-        user("e", 25, 5),   // personalized
-        user("f", 30, 6),   // personalized
+        user("a", 3, 1),    // cold-start (<5)
+        user("b", 4, 2),    // cold-start (<5)
+        user("c", 10, 3),   // learning (5 ≤ N < 14)
+        user("d", 13, 4),   // learning (5 ≤ N < 14)
+        user("e", 14, 5),   // personalized (≥14, boundary)
+        user("f", 30, 6),   // personalized (≥14)
       ]);
       expect(r.maturity.coldStart).toBe(2);
       expect(r.maturity.learning).toBe(2);
