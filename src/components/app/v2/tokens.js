@@ -80,6 +80,7 @@ export const typography = {
 };
 
 export const spacing = {
+  // Aliases legacy (no remover — usados por todo el shell v2).
   s8: 8,
   s16: 16,
   s24: 24,
@@ -87,6 +88,56 @@ export const spacing = {
   s48: 48,
   s64: 64,
   s96: 96,
+
+  // Phase 6H Polish-2 — scale base 4px (Apple HIG / Material / Tailwind
+  // compatible). Llamamos los pasos por número (s4, s12, s20, etc.)
+  // matching la convención `s{px}` ya en uso en este archivo. Code nuevo
+  // debe preferir esta scale; los `s8/s16/...` quedan por compat.
+  s2: 2,
+  s4: 4,
+  s6: 6,
+  s10: 10,
+  s12: 12,
+  s14: 14,
+  s20: 20,
+  s28: 28,
+  s40: 40,
+  s56: 56,
+  s80: 80,
+};
+
+// Phase 6H Polish-2 — touch target minimums (Decision B1).
+// 44px Apple HIG (iOS), 48px Material (Android default), 56px primary
+// CTAs. Components con visual < 44px (ej: Switch 20px, chip 32px)
+// deben extender touch area via padding o ::before invisible.
+export const touchTarget = {
+  min: 44,
+  preferred: 48,
+  large: 56,
+};
+
+// Phase 6H Polish-2 — easing curves consistentes (Decision D).
+// motion.ease.out/inOut existing siguen siendo canon para fadeUp/enter
+// del shell v2. easing.* es vocabulario tokens-shape estándar industry
+// para code nuevo (state changes / mounts / progress).
+export const easing = {
+  standard: "cubic-bezier(0.4, 0, 0.2, 1)",        // Material default — state changes
+  spring: "cubic-bezier(0.32, 0.72, 0, 1)",         // Apple Magic — mount/dismiss
+  decelerate: "cubic-bezier(0, 0, 0.2, 1)",         // entry / fade-in
+  accelerate: "cubic-bezier(0.4, 0, 1, 1)",         // exit / fade-out
+  linear: "linear",                                  // progress bars / spinners
+};
+
+// Phase 6H Polish-2 — animation durations en ms (numbers, no strings)
+// para alineación con motion.duration.{tap,fadeUp,enter,exit} existing.
+// motion.duration sigue siendo canon del shell v2; duration.* es
+// vocabulario complementario para code nuevo.
+export const duration = {
+  instant: 50,
+  fast: 150,
+  base: 200,
+  slow: 300,
+  slower: 500,
 };
 
 export const radii = {
@@ -166,5 +217,9 @@ export function withAlpha(color, alphaPct) {
   return color;
 }
 
-const tokens = { colors, typography, spacing, radii, motion, icon, layout, withAlpha };
+const tokens = {
+  colors, typography, spacing, radii, motion, icon, layout, withAlpha,
+  // Phase 6H Polish-2 — exponer en default export para imports {} simples.
+  touchTarget, easing, duration,
+};
 export default tokens;

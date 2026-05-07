@@ -18,8 +18,16 @@ export default function CrisisFAB({ onOpenSheet }) {
       aria-label="Acceso rápido a protocolo de crisis"
       style={{
         position: "fixed",
-        right: 16,
-        bottom: layout.bottomNavHeight + 16 + 0,
+        // Phase 6H Polish-1 — safe-area-inset-right para landscape con
+        // notch. max(16px, ...) preserva separación mínima en devices
+        // sin notch. fallback 0 cuando env() no soportado.
+        right: `max(16px, env(safe-area-inset-right, 0px))`,
+        // Phase 6H Polish-1 — safe-area-inset-bottom matchea el patrón
+        // canon del shell v2 (ver AppV2Root.jsx:895, CoachV2.jsx:477).
+        // BottomNavV2 extiende su altura visual debajo del home indicator
+        // sumando safe-area-inset-bottom; FAB se posiciona 16px arriba
+        // del nav visual real para no chocar con tabs/labels.
+        bottom: `calc(${layout.bottomNavHeight}px + 16px + env(safe-area-inset-bottom, 0px))`,
         zIndex: 55,
         appearance: "none",
         cursor: "pointer",

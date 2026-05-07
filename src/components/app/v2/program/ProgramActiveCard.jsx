@@ -502,13 +502,23 @@ function ProgressBar({ value, max, label, sub }) {
         }}
       >
         <div
+          data-progress-indicator
           style={{
             position: "absolute",
-            inset: 0,
-            width: `${pct}%`,
+            insetBlock: 0,
+            insetInlineStart: 0,
+            // Phase 6H Polish-2 — width:100% + scaleX para animar en
+            // compositor (60fps GPU). Antes animaba `width: %` que
+            // triggea layout en cada frame. transformOrigin: left así
+            // la barra crece desde el inicio de la pista. inline-size
+            // con logical property para RTL.
+            inlineSize: "100%",
+            transform: `scaleX(${Math.max(0, Math.min(1, pct / 100))})`,
+            transformOrigin: "left center",
             background: colors.accent.phosphorCyan,
             borderRadius: 999,
-            transition: `width ${motionTok.duration.enter}ms ${motionTok.ease.out}`,
+            transition: `transform ${motionTok.duration.enter}ms ${motionTok.ease.out}`,
+            willChange: "transform",
           }}
         />
       </div>

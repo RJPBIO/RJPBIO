@@ -29,7 +29,11 @@ export default function HeaderV2({ onBellClick }) {
         alignItems: "center",
         justifyContent: "space-between",
         paddingInline: spacing.s24,
-        paddingBlockStart: spacing.s24,
+        // Phase 6H Polish-1 — safe-area-inset-top para notch iOS PWA
+        // instalada. max() preserva el respiro mínimo de spacing.s24
+        // en devices sin notch. paddingInline también respeta lateral
+        // safe-area por si hay dynamic island en orientation landscape.
+        paddingBlockStart: `max(${spacing.s24}, env(safe-area-inset-top))`,
         paddingBlockEnd: spacing.s24,
       }}
     >
@@ -63,6 +67,10 @@ export default function HeaderV2({ onBellClick }) {
         type="button"
         aria-label="Notificaciones"
         onClick={onBellClick}
+        // Phase 6H Polish-2 — icon button visual 36×36 (20 icon + 8*2
+        // padding). data-v2-icon-button aplica ::before safety net
+        // que extiende touch area a ≥44px sin alterar layout.
+        data-v2-icon-button
         style={{
           appearance: "none",
           background: "transparent",

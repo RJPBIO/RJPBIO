@@ -15,6 +15,7 @@ export default function MessageUser({ content, ts }) {
     >
       <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
         <div
+          data-select-text
           style={{
             background: "rgba(255,255,255,0.06)",
             borderRadius: 16,

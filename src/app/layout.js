@@ -77,12 +77,18 @@ export const metadata = {
   },
 };
 
+// Phase 6H Polish-1 — Decision C1: native PWA shell.
+// strict no-zoom (user-scalable=no, maximum-scale=1) para que la PWA se
+// sienta como app nativa (Apple Health / Linear / Things 3) en lugar
+// de página web. Users con vision limitations pueden usar OS-level
+// zoom (system accessibility). viewport-fit=cover habilita safe-area
+// insets (notch + home indicator) en iOS PWAs instaladas.
 export const viewport = {
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ECFDF5" },
@@ -192,7 +198,7 @@ export default async function RootLayout({ children }) {
           nonce={nonce}
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `try{var d=document.documentElement;var p=location.pathname||'/';var isApp=p==='/app'||p.indexOf('/app/')===0||p==='/account'||p.indexOf('/account/')===0;if(isApp){var m=localStorage.getItem('bio-theme');if(m==='dim'||m==='dark')d.classList.add('theme-dim');else if(m==='light')d.classList.add('theme-light');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)d.classList.add('theme-dim');}else{d.classList.add('theme-light');}var l=localStorage.getItem('bio-locale');if(l){d.lang=l;d.dir=['ar','he','fa','ur'].indexOf(l)>-1?'rtl':'ltr';if(!document.cookie.match(/(?:^|; )bio-locale=/))document.cookie='bio-locale='+l+'; Path=/; Max-Age=31536000; SameSite=Lax';}}catch(e){}`,
+            __html: `try{var d=document.documentElement;var p=location.pathname||'/';var isApp=p==='/app'||p.indexOf('/app/')===0||p==='/account'||p.indexOf('/account/')===0;if(isApp){d.classList.add('pwa-shell');var m=localStorage.getItem('bio-theme');if(m==='dim'||m==='dark')d.classList.add('theme-dim');else if(m==='light')d.classList.add('theme-light');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)d.classList.add('theme-dim');}else{d.classList.add('theme-light');}var l=localStorage.getItem('bio-locale');if(l){d.lang=l;d.dir=['ar','he','fa','ur'].indexOf(l)>-1?'rtl':'ltr';if(!document.cookie.match(/(?:^|; )bio-locale=/))document.cookie='bio-locale='+l+'; Path=/; Max-Age=31536000; SameSite=Lax';}}catch(e){}`,
           }}
         />
       </head>

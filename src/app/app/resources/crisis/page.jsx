@@ -115,6 +115,7 @@ export default function CrisisResourcesPage() {
           Líneas profesionales de salud mental
         </h1>
         <p
+          data-select-text
           style={{
             margin: 0,
             fontFamily: typography.family,
@@ -144,6 +145,7 @@ export default function CrisisResourcesPage() {
 
       <section
         data-v2-medical-disclaimer
+        data-select-text
         aria-label="Recordatorio importante"
         style={{
           marginBlockStart: spacing.s16,
@@ -198,6 +200,7 @@ function ResourceCard({ resource }) {
   return (
     <article
       data-v2-resource-card
+      data-select-text
       data-primary={primary || undefined}
       style={{
         background: accent,

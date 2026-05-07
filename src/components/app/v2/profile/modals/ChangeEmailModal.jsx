@@ -146,7 +146,11 @@ export default function ChangeEmailModal({ currentEmail, onClose, onComplete }) 
             borderRadius: radii.panel,
             color: colors.text.strong,
             fontFamily: typography.family,
-            fontSize: typography.size.body,
+            // Phase 6H Polish-3 — fontSize 16 (no body=15) para evitar
+            // iOS Safari auto-zoom al focusear el email input. iOS
+            // detecta < 16 y zoomea ~10% horizontalmente, rompiendo
+            // layout del modal. 16 es el threshold exacto Apple.
+            fontSize: 16,
             fontWeight: typography.weight.regular,
             padding: "12px 14px",
             outline: "none",

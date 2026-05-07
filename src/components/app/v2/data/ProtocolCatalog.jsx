@@ -225,6 +225,12 @@ function FilterRow({ kicker, options, selected, onChange }) {
               role="radio"
               aria-checked={active}
               data-testid={`filter-${kicker.toLowerCase()}-${opt.id}`}
+              // data-v2-icon-button habilita ::before invisible safety
+              // net (Polish-2) que extiende el touch area a ≥44px sin
+              // forzar visual. data-v2-chip-compact opta out del
+              // min-inline-size 44 — chips compactos en línea visual.
+              data-v2-icon-button
+              data-v2-chip-compact
               style={{
                 appearance: "none",
                 cursor: "pointer",
@@ -238,6 +244,10 @@ function FilterRow({ kicker, options, selected, onChange }) {
                 fontSize: 12,
                 fontWeight: typography.weight.medium,
                 letterSpacing: "0.02em",
+                // Phase 6H Polish-2 — visual 32 (chip compacto), touch
+                // area ≥44 vía ::before extension. minHeight queda
+                // explícito porque ::before es invisible (no afecta
+                // bounding box del button).
                 minHeight: 32,
               }}
             >

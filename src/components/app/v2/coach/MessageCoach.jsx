@@ -75,6 +75,7 @@ export default function MessageCoach({ content, ts, streaming = false, onProtoco
           COACH{ts != null ? ` · ${relativeTime(ts)}` : ""}
         </span>
         <div
+          data-select-text
           style={{
             fontFamily: typography.family,
             fontSize: typography.size.body,

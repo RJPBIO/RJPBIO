@@ -94,7 +94,12 @@ export default function InputBar({ disabled = false, onSend, valueExternal, onCh
             outline: "none",
             padding: "10px 12px",
             fontFamily: typography.family,
-            fontSize: typography.size.body,
+            // Phase 6H Polish-3 — fontSize 16 para evitar iOS Safari
+            // auto-zoom al focusear el textarea. typography.size.body=15
+            // sería rendered ~14.5 efectivos (line-height 1.4) → iOS
+            // detecta < 16 y zoomea. 16 es threshold exacto de Apple.
+            // Visual diff body→16 es +6.7%, imperceptible en composición.
+            fontSize: 16,
             fontWeight: typography.weight.regular,
             color: "rgba(255,255,255,0.96)",
             lineHeight: 1.4,

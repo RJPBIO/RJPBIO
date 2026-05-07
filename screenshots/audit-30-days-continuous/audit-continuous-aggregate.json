@@ -1,5 +1,12 @@
 {
-  "bugs": [],
+  "bugs": [
+    {
+      "severity": "P1",
+      "day": 20,
+      "description": "[data-v2-learning-progress] NO visible con totalSessions=16 (5≤N<20)",
+      "repro": "Learning branch debe seguir activo hasta 20 sesiones"
+    }
+  ],
   "captures": [
     "audit-continuous-d00-01-fresh.png",
     "audit-continuous-d00-02-post-welcome.png",
@@ -166,10 +173,6 @@
     },
     {
       "test": "continuous",
-      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
-    },
-    {
-      "test": "continuous",
       "text": "eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for various debugging features like reconstructing callstacks from a different environment.\nReact will never use eval() in production mode"
     },
     {
@@ -321,11 +324,6 @@
     {
       "status": 401,
       "url": "http://localhost:3000/api/v1/me/burnout?days=28",
-      "method": "GET"
-    },
-    {
-      "status": 401,
-      "url": "http://localhost:3000/api/v1/me/program/active",
       "method": "GET"
     },
     {

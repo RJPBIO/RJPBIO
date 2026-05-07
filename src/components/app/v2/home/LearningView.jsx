@@ -361,13 +361,21 @@ function ProgressBar({ value, max }) {
       }}
     >
       <div
+        data-progress-indicator
         style={{
           position: "absolute",
-          inset: 0,
-          width: `${pct}%`,
+          insetBlock: 0,
+          insetInlineStart: 0,
+          // Phase 6H Polish-2 — scaleX en lugar de width:% para animar
+          // en compositor (GPU 60fps). transformOrigin: left así la
+          // barra crece desde el inicio. RTL safe via logical props.
+          inlineSize: "100%",
+          transform: `scaleX(${Math.max(0, Math.min(1, pct / 100))})`,
+          transformOrigin: "left center",
           background: colors.accent.phosphorCyan,
           borderRadius: 999,
-          transition: `width ${motionTok.duration.enter}ms ${motionTok.ease.out}`,
+          transition: `transform ${motionTok.duration.enter}ms ${motionTok.ease.out}`,
+          willChange: "transform",
         }}
       />
     </div>

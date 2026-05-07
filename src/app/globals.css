@@ -14579,3 +14579,439 @@ a.bi-learn-trail-link,
   margin-inline-end: 6px;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 6H POLISH-1 — NATIVE PWA SHELL BEHAVIORS
+   ═══════════════════════════════════════════════════════════════
+   Producto debe sentirse como app nativa (Linear / Apple Health /
+   Things 3) cuando el user está en /app y /account. Públicas y
+   marketing (theme-light) preservan behavior web estándar (text
+   selection para legal/docs, scrollbars discretas, etc.).
+
+   Decisiones lockeadas en sub-prompt Polish-1:
+   · A1 — text-select default none, opt-in via [data-select-text]
+   · B1 — scrollbars hidden globally en PWA chrome
+   · C1 — strict no-zoom (viewport ya configurado en layout.js)
+   · D2 — body aplica safe-area, components específicos override
+
+   Scope: html.pwa-shell (init script en layout.js solo lo aplica a
+   /app y /account). Marketing/public siguen 100% intactas.
+
+   NO se aplica position:fixed/overflow:hidden a body — memoria
+   [overflow-x:clip] documenta que rompe trackpad two-finger
+   scroll en Windows. body ya tiene overflow-x:clip (línea 233).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* HTML root — touch behavior universal (safe en marketing también).
+   touch-action:manipulation desactiva double-tap zoom en mobile.
+   overscroll-behavior:none evita que pull-to-refresh del browser
+   refresque la app (= pierde state local). text-size-adjust:100%
+   evita que iOS Safari escale font-size en orientation change. */
+html {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* PWA chrome — html.pwa-shell aplica solo a /app y /account.
+   user-select:none default + opt-in via [data-select-text] (ver
+   abajo). long-press en buttons NO triggea menu copy/paste iOS.
+   Tap highlight transparent ya está en globals.css * {} línea 227. */
+html.pwa-shell body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+/* PWA scrollbars — hidden globally. Discovery via momentum/touch.
+   Apple Mobile Safari ya hides por default; igualamos cross-browser. */
+html.pwa-shell,
+html.pwa-shell * {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+html.pwa-shell ::-webkit-scrollbar,
+html.pwa-shell *::-webkit-scrollbar {
+  display: none;
+  inline-size: 0;
+  block-size: 0;
+}
+
+/* PWA anchors — touch-callout:none. globals.css comment línea 407
+   exempt anchors universalmente porque marketing pages necesitan
+   "Copy link"/"Open in new tab" del OS menu (long-press en links
+   de contenido). En PWA, los links son acciones de navegación de
+   app — NO contenido a compartir. Override scoped a theme-dim. */
+html.pwa-shell a {
+  -webkit-touch-callout: none;
+}
+
+/* Opt-in selectable areas (Decision A1). Aplica en PWA + marketing
+   (idempotente en marketing porque allí default ya es selectable).
+   Anchor children dentro de [data-select-text] heredan callout
+   default OS para "Copy link" en numeros tel: + recursos crisis. */
+[data-select-text],
+[data-select-text] * {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* Form inputs siempre selectables. globals.css ya fuerza font-size
+   16px en inputs para evitar iOS auto-zoom; aquí sumamos select. */
+html.pwa-shell input,
+html.pwa-shell textarea,
+html.pwa-shell [contenteditable="true"],
+html.pwa-shell [contenteditable=""] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* PWA interactive elements — refuerza no-select aún sin theme-dim
+   (cuando markup tiene data-* hooks v2). globals.css línea 408 ya
+   tiene esto en buttons + role=button + role=tab + role=menuitem;
+   aquí extendemos a los data hooks específicos del shell v2 sin
+   tocar marketing buttons (que están en line 408 también).        */
+[data-v2-tab],
+[data-v2-onboarding-row],
+[data-v2-program-card],
+[data-v2-protocol-tap],
+[data-v2-crisis-fab],
+[data-v2-bottom-nav],
+[data-v2-header],
+[data-v2-resource-cta],
+[data-v2-msg-action] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 6H POLISH-2 — TOUCH TARGETS + INTERACTIONS + 60FPS
+   ═══════════════════════════════════════════════════════════════
+   Decisiones lockeadas en sub-prompt Polish-2:
+   · A1 — base 4px spacing (tokens.js extension)
+   · B1 — min 44×44 touch target (Apple HIG), safety net via ::before
+   · C2 — CSS transitions para state changes; framer-motion ya cargado
+   · D  — easing.standard/spring/decelerate/accelerate/linear
+
+   Scope: html.pwa-shell (PWA chrome /app + /account). Marketing
+   pages preservan sus dimensiones y reglas de hover existing.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Min touch target en interactive elements del shell v2.
+   Aplica a buttons sin minHeight explícito en JSX. NO impone
+   min-width/height a `a` tags marketing (scope theme-light) ni
+   a inputs de formulario (que tienen sus propias reglas en línea
+   398-401 de globals.css).
+
+   Algunos chips visualmente compactos (ej: ProtocolCatalog filter)
+   tienen `minHeight: 32` inline; raise a 44 mantiene visual via
+   paddingBlock pero asegura touch area. Override puntual marcado
+   con [data-v2-chip-compact] cuando la compresión visual sea
+   realmente necesaria. */
+html.pwa-shell button,
+html.pwa-shell [role="button"],
+html.pwa-shell [data-v2-onboarding-row],
+html.pwa-shell [data-v2-program-card],
+html.pwa-shell [data-v2-tab],
+html.pwa-shell [data-v2-action-row] {
+  min-block-size: 44px;
+}
+
+html.pwa-shell button:not([data-v2-icon-button]):not([data-v2-chip-compact]),
+html.pwa-shell [role="button"]:not([data-v2-icon-button]):not([data-v2-chip-compact]) {
+  min-inline-size: 44px;
+}
+
+/* Safety net invisible ::before para elementos visuales < 44px.
+   Componentes con visual icon (Switch 20px, bell 20px, X close
+   chip etc.) opt-in via data-v2-icon-button. El ::before no
+   altera layout (position absolute) y extiende el área touch. */
+html.pwa-shell [data-v2-icon-button] {
+  position: relative;
+}
+html.pwa-shell [data-v2-icon-button]::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  pointer-events: auto;
+  z-index: 0;
+}
+html.pwa-shell [data-v2-icon-button] > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Active states — touch devices solamente.
+   scale(0.97) + opacity(0.85) replicating Apple/Linear/Things 3.
+   Aplica a cualquier interactive del shell v2; CSS transitions
+   son 60fps porque solo animamos transform + opacity (compositor-
+   only properties). Los componentes con onPointerDown manual
+   (BottomNavV2, CrisisFAB) overridean este transform — está OK,
+   son micro-tweaks específicos del componente. */
+@media (hover: none) and (pointer: coarse) {
+  html.pwa-shell button:active,
+  html.pwa-shell a:active,
+  html.pwa-shell [role="button"]:active,
+  html.pwa-shell [data-v2-onboarding-row]:active,
+  html.pwa-shell [data-v2-program-card]:active,
+  html.pwa-shell [data-v2-action-row]:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+    transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Hover states — SOLO en mouse devices (Decision: @media hover hover).
+   Touch devices ven hover-on-tap "stuck" si aplicamos hover sin
+   guard; Linear/Apple Music desactivan hover en touch. Marketing
+   pages no se tocan (scope html.pwa-shell). */
+@media (hover: hover) and (pointer: fine) {
+  html.pwa-shell button:hover:not(:disabled):not([aria-disabled="true"]),
+  html.pwa-shell a:hover,
+  html.pwa-shell [role="button"]:hover:not([aria-disabled="true"]) {
+    opacity: 0.92;
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Focus visible solo con keyboard (no en click).
+   globals.css línea 346 ya tiene :focus { outline: none } global +
+   :focus-visible { box-shadow: var(--focus-ring) }. Aquí reforzamos
+   en PWA chrome con outline cyan estándar — más legible sobre el
+   black background del shell v2 que el box-shadow tinted. */
+html.pwa-shell button:focus,
+html.pwa-shell a:focus,
+html.pwa-shell [role="button"]:focus {
+  outline: none;
+}
+
+html.pwa-shell button:focus-visible,
+html.pwa-shell a:focus-visible,
+html.pwa-shell [role="button"]:focus-visible,
+html.pwa-shell input:focus-visible,
+html.pwa-shell textarea:focus-visible,
+html.pwa-shell [tabindex]:focus-visible {
+  outline: 2px solid #22D3EE;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Disabled state visual unificado en PWA shell.
+   Marketing tiene su propio sistema (.bi-auth-btn[disabled] etc.). */
+html.pwa-shell button:disabled,
+html.pwa-shell a[aria-disabled="true"],
+html.pwa-shell [role="button"][aria-disabled="true"],
+html.pwa-shell [role="button"][disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* GPU compositor hints opt-in. Aplicar will-change en TODOS los
+   elementos animados es anti-pattern (memoria, layer thrashing).
+   Use [data-animate] en components que sabes que se animan
+   constantemente (orbs, cometas, pulses). */
+html.pwa-shell [data-animate] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 6H POLISH-2 — REDUCED MOTION REINFORCEMENT
+   ═══════════════════════════════════════════════════════════════
+   globals.css línea 299-308 ya tiene un global motion-safe gate
+   universal (anim/transition durations a 0.01ms). Aquí solo añadimos
+   carve-out para indicadores de progreso — necesitan animar para
+   comunicar "running" vs "stuck", incluso con reduced-motion.
+   Threshold 200ms es brevísimo pero perceptible.
+   ═══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  html.pwa-shell [data-progress-indicator],
+  html.pwa-shell [data-progress-indicator]::before,
+  html.pwa-shell [data-progress-indicator]::after {
+    animation-duration: 200ms !important;
+    transition-duration: 200ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 6H POLISH-3 — TYPOGRAPHY + RENDERING + iOS QUIRKS
+   ═══════════════════════════════════════════════════════════════
+   Fonts: next/font/google (Manrope + JetBrains_Mono + Instrument_Serif)
+   ya entrega self-host + font-display: swap + preload optimizado por
+   build pipeline (ver layout.js). NO se necesita @font-face manual ni
+   <link rel=preload>. Esta sección solo agrega:
+     · cyan ::selection en PWA shell (marketing mantiene emerald línea 545)
+     · iOS input quirks (number spinners, search cancel, autocorrect opt)
+     · img defaults (display block, drag-prevent, decode hint via CSS)
+     · font-optical-sizing + font-kerning explicit (cosmetic crisp)
+     · prefers-reduced-data carve-out para imágenes decorativas
+
+   globals.css preexistente ya cubre:
+     · -webkit-font-smoothing: antialiased (línea 234)
+     · text-rendering: optimizeLegibility (línea 239)
+     · font-feature-settings kern/liga/calt (línea 247)
+     · input font-size: max(16px, 1em) anti iOS-zoom (línea 400)
+     · ::selection emerald marketing (línea 545)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Crisp text rendering refuerzo cosmético — opt en font shaping
+   features que algunos engines no activan por default. Aditivo a
+   la regla de la línea 234-249 (no override). */
+html {
+  font-kerning: normal;
+  font-optical-sizing: auto;
+  font-variant-numeric: oldstyle-nums;
+}
+
+/* Mono numerics override — JetBrains Mono ya tiene tnum activo
+   (línea 257); aquí solo aseguramos que numbers en clase font-mono
+   o data-tabular conserven tabular alignment. */
+.tabular-nums,
+[data-tabular],
+[data-tabular] * {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "kern" 1;
+}
+
+/* PWA cyan selection — sub-prompt Polish-3 Decision visual.
+   Marketing mantiene emerald (línea 545). En PWA chrome el accent
+   es phosphorCyan #22D3EE — la selección debe matchear identidad. */
+html.pwa-shell ::selection {
+  background: rgba(34, 211, 238, 0.25);
+  color: inherit;
+}
+html.pwa-shell [data-select-text]::selection,
+html.pwa-shell [data-select-text] *::selection {
+  background: rgba(34, 211, 238, 0.30);
+  color: inherit;
+}
+
+/* iOS form quirks — additive a las reglas globals.css 398-401
+   (font-size: max(16px,1em)). globals.css 408-411 ya elimina el
+   delay 300ms touch + callout en buttons; aquí extendemos a inputs. */
+html.pwa-shell input,
+html.pwa-shell textarea,
+html.pwa-shell select {
+  /* Preserve native font-size rule + agregar shadow/glow elimination.
+     -webkit-appearance: none rompe radio/checkbox visual nativo iOS;
+     scopeamos a text-likes para evitar regresión. */
+  -webkit-appearance: none;
+  appearance: none;
+  /* Elimina box-shadow blue glow iOS focus (lo reemplaza el focus-visible
+     cyan outline de Polish-2). */
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  /* Border-radius normalizado: iOS aplica radius por default a inputs
+     que conflictúa con design tokens. Reset to 0; cada componente lo
+     reasigna explícito si lo necesita. */
+  border-radius: 0;
+}
+
+/* Type-specific exclusions — radio/checkbox necesitan native rendering.
+   Override la regla appearance:none de arriba para esos types. */
+html.pwa-shell input[type="checkbox"],
+html.pwa-shell input[type="radio"],
+html.pwa-shell input[type="range"] {
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+/* Number inputs — remove spinners (toda PWA, también marketing
+   porque los spinners feel no-nativos en cualquier contexto). */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Search inputs — remove webkit cancel + decoration (X button feo
+   sobre dark bg de PWA chrome). */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+
+/* data-no-autocorrect helper — los componentes que NO quieren
+   autocorrect/autocomplete declarativamente pueden marcarlo. La
+   propiedad CSS `autocomplete` no existe; estos atributos JSX se
+   declaran en HTML. La regla CSS aquí solo refuerza spellcheck=false
+   y desactiva la línea ondulada del browser. */
+html.pwa-shell [data-no-autocorrect] {
+  -webkit-spellcheck: false;
+  spellcheck: false;
+}
+
+/* Image rendering — defaults sanos en toda la PWA shell.
+   Marketing pages no se tocan (puede tener hero images decorativas
+   que necesitan drag para guardar). */
+html.pwa-shell img {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+  -webkit-user-drag: none;
+  user-select: none;
+  /* Evita el outline azul iOS al long-press save image en PWA chrome */
+  -webkit-touch-callout: none;
+}
+
+/* Decorative images opt-in lazy + reduced-data hide.
+   Componentes de marketing/visual que no son contenido crítico
+   marcan data-decorative-image para que prefers-reduced-data los
+   oculte en mobile networks limitadas. */
+[data-decorative-image] {
+  /* Reduced data carve-out: oculta decorativas en redes limitadas
+     (data saver, slow connection). El contenido core sigue visible. */
+}
+@media (prefers-reduced-data: reduce) {
+  [data-decorative-image] {
+    display: none !important;
+  }
+}
+
+/* SVG defaults — display:block evita gap inline misterioso debajo
+   de SVGs en flex/grid layouts. flex-shrink:0 evita que iconos
+   colapsen cuando el contenedor flex está apretado. */
+html.pwa-shell svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Print styles — extiende lo que ya hay para la PWA shell. Marketing
+   tiene su propio print stylesheet en docs legales (.bi-legal-*). */
+@media print {
+  html.pwa-shell {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  html.pwa-shell [data-v2-bottom-nav],
+  html.pwa-shell [data-v2-crisis-fab],
+  html.pwa-shell [data-v2-header],
+  html.pwa-shell button:not([data-print-keep]) {
+    display: none !important;
+  }
+  html.pwa-shell [data-progress-indicator] {
+    border: 1px solid #000 !important;
+    background: #FFF !important;
+  }
+}
+
