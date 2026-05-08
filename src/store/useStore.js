@@ -24,7 +24,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 16;
+const STORE_VERSION = 18;
 
 // Phase 6H Premium-Fix3 — cohort thresholds.
 // MUST stay aligned con NEURAL_CONFIG.health.coldStartSessions/learningSessions
@@ -199,6 +199,28 @@ function migrate(data) {
     // v16: persistencia local de conversaciones del coach (Phase 6C SP3).
     if (!Array.isArray(merged.coachConversations)) merged.coachConversations = [];
     if (typeof merged.coachActiveConversationId === "undefined") merged.coachActiveConversationId = null;
+    // v17: Phase Polish-Tier-3 — monthly digest dedup timestamp.
+    // Defaults a 0 (epoch) → primer trigger ocurrirá cuando totalSessions ≥ 30
+    // y daysSinceLastDigest >= 28 (epoch ts == 0 → days ~= 56 años, OK).
+    if (typeof merged.lastMonthlyDigestShown !== "number") merged.lastMonthlyDigestShown = 0;
+    // v18: Phase Polish-Tier-4 — backfill defensive del campo dimensions
+    // en entries de history previos. Lazy compute on read principle: NO
+    // computamos synthetic dimensions; entries pre-v18 quedan con
+    // dimensions: null, sparklines + per-month averages auto-skip via
+    // filter null defensive. Nuevos entries (post-v18) populan dimensions
+    // via _buildHistoryEntry. Idempotente: si ya tenían dimensions, se
+    // preserva (?? null mantiene el valor existente).
+    if (Array.isArray(merged.history)) {
+      let mutated = false;
+      const next = merged.history.map((entry) => {
+        if (entry && typeof entry === "object" && !("dimensions" in entry)) {
+          mutated = true;
+          return { ...entry, dimensions: null };
+        }
+        return entry;
+      });
+      if (mutated) merged.history = next;
+    }
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
   }
@@ -936,6 +958,16 @@ export const useStore = create((set, get) => ({
     if (st.pendingStreakMilestoneCelebration === null) return;
     set({ pendingStreakMilestoneCelebration: null });
     scheduleSave({ ...st, pendingStreakMilestoneCelebration: null });
+  },
+
+  // Phase Polish-Tier-3 — registra timestamp del monthly digest mostrado.
+  // AppV2Root invoca esta action al primer render del MonthlyDigestSheet
+  // para dedup (próximo trigger requiere daysSinceLastDigest >= 28).
+  markMonthlyDigestShown: () => {
+    const st = get();
+    const update = { lastMonthlyDigestShown: Date.now() };
+    set(update);
+    scheduleSave({ ...st, ...update });
   },
 
   /**

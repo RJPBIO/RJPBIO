@@ -8,6 +8,11 @@ import ActiveProgramCard from "./ActiveProgramCard";
 // del engine bajo el ActionCard primary cuando recommendationRaw provee
 // shape engine real. Sin recommendationRaw o sin alternatives → no renderea.
 import RecommendationAlternativesCard from "./RecommendationAlternativesCard";
+import RecommendationTransitionWrapper from "./RecommendationTransitionWrapper";
+// Phase Polish-Tier-2 Gap-4 — bio sparkline data agregator.
+import useHeroSparklineData from "@/hooks/useHeroSparklineData";
+// Phase Polish-Tier-4 Capa-2 — per-dimension sparkline aggregator.
+import useDimensionsSparklineData from "@/hooks/useDimensionsSparklineData";
 // Phase 6J-2 HIGH-4 + HIGH-5 — engine context surface en mobile.
 // Hasta ahora context.fatigue / context.recalibration / context.momentum /
 // context.burnoutRisk se computaban pero no se renderean en PersonalizedView.
@@ -72,6 +77,13 @@ export default function PersonalizedView({
   const momentum = engineContext.momentum;
   const momentumDir = engineContext.momentumDir || null;
   const burnoutRisk = engineContext.burnoutRisk || null;
+  // Phase Polish-Tier-2 Gap-4 — bio sparkline data (último 14 entries).
+  // Auto-hide vía HeroComposite cuando length < 2.
+  const sparklineData = useHeroSparklineData();
+  // Phase Polish-Tier-4 Capa-2 — per-dimension sparkline data.
+  // Reads h.dimensions del history (populated post v18). Auto-emerge cuando
+  // user acumula >= 2 entries con dimensions populated.
+  const dimensionsSparklineData = useDimensionsSparklineData();
   return (
     <>
       <section
@@ -119,6 +131,7 @@ export default function PersonalizedView({
         readiness={readiness}
         onActivateHRV={onActivateHRV}
         onCalibrate={onCalibrate}
+        sparklineData={sparklineData}
       />
 
       {/* Phase 6J-2 HIGH-5 — sub-card lectura del sistema.
@@ -136,6 +149,7 @@ export default function PersonalizedView({
         energy={energy}
         sources={dimensionSources}
         onSelect={onDimensionSelect}
+        sparklineData={dimensionsSparklineData}
       />
 
       {/* Phase 6J-2 HIGH-4 — banners contextuales engine.
@@ -152,12 +166,17 @@ export default function PersonalizedView({
       />
 
       {recommendation && (
-        <ActionCard
-          title={recommendation.title}
-          description={recommendation.description}
-          reason={recommendation.reason}
-          onStart={onStartRecommended}
-        />
+        <RecommendationTransitionWrapper
+          transitionKey={recommendation.title || recommendation.protocolId || "reco"}
+          testid="personalized-recommendation-transition"
+        >
+          <ActionCard
+            title={recommendation.title}
+            description={recommendation.description}
+            reason={recommendation.reason}
+            onStart={onStartRecommended}
+          />
+        </RecommendationTransitionWrapper>
       )}
 
       {/* Phase 6I-3 — alternatives card (H-3). Solo cuando recommendationRaw

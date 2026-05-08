@@ -1555,13 +1555,29 @@ function _computeAchievements(currentAch, ctx) {
 }
 
 /** Construye el entry del history append. */
+// Phase Polish-Tier-4 — additive: snapshot dimensions {foco, calma, energia}
+// con los newCoherence / newResilience / newCapacity post-session. Esto
+// desbloquea per-session sparklines y per-month dimension averages
+// (DimensionsChip mini-sparklines + MonthlyDigest enhancement). Defensive:
+// dimensions = null cuando alguna dimension no es numérica (edge case).
+// Consumers deben checkear `entry.dimensions != null` antes de leer fields.
 function _buildHistoryEntry(args) {
   const { protocol, durMult, sessionData, nfcCtx, circadian, eVC, newCoherence,
-          newResilience, bioQ, burnoutIdx, bioSignalScore, isPartial, completeness } = args;
+          newResilience, newCapacity, bioQ, burnoutIdx, bioSignalScore, isPartial, completeness } = args;
   const coh = sessionData?.coherenceLive;
   const coherenceLive = coh && typeof coh.score === "number"
     ? { score: coh.score, amplitude: coh.amplitude, phaseLock: coh.phaseLock, n: coh.n }
     : undefined;
+  const dimensions =
+    typeof newCoherence === "number" &&
+    typeof newResilience === "number" &&
+    typeof newCapacity === "number"
+      ? {
+          foco: Math.round(newCoherence),
+          calma: Math.round(newResilience),
+          energia: Math.round(newCapacity),
+        }
+      : null;
   return {
     p: protocol.n, ts: Date.now(), vc: eVC, c: newCoherence, r: newResilience,
     dur: Math.round(protocol.d * durMult), ctx: nfcCtx?.type || "manual",
@@ -1575,6 +1591,7 @@ function _buildHistoryEntry(args) {
     partial: !!isPartial,
     hiddenSec: Math.round(sessionData?.hiddenSec || 0),
     completeness: Math.round(completeness * 100) / 100,
+    dimensions,
     ...(coherenceLive ? { coherenceLive } : {}),
   };
 }
@@ -1666,7 +1683,7 @@ export function calcSessionCompletion(st, sessionCtx) {
   // config no se propagaba.
   const newHist = [...hist, _buildHistoryEntry({
     protocol, durMult, sessionData, nfcCtx, circadian,
-    eVC, newCoherence, newResilience, bioQ,
+    eVC, newCoherence, newResilience, newCapacity, bioQ,
     burnoutIdx: burnout.index, bioSignalScore: bioSignal.score,
     isPartial, completeness,
   })].slice(-NC.sessionGain.historyMaxLength);

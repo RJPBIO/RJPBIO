@@ -110,6 +110,14 @@ export function energyDescriptor(v) {
   return "Recuperando";
 }
 
+// Phase Polish-Tier-1 Gap-1 — long-press tooltip detail per dimension.
+// Mantiene language natural (memoria operativa: sin "circadiano/prior/blend/scope").
+export const DIMENSION_DETAIL = {
+  foco:    "Tu capacidad de sostener la atención cuando importa.",
+  calma:   "Tu sistema parasimpático bajo control, no en alerta.",
+  energia: "Tu reserva para arrancar lo siguiente con vigor.",
+};
+
 // Programa id -> tag de 2 letras (badge cuadrado).
 export const PROGRAM_TAG = {
   "neural-baseline": "NB",

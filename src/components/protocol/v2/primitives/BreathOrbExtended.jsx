@@ -70,11 +70,13 @@ export default function BreathOrbExtended({
             if (next === 0) {
               setCycle((c) => {
                 const nc = c + 1;
-                const cb = onCycleCompleteRef.current;
-                if (typeof cb === "function") cb(nc);
-                const target = cycleTargetRef.current;
-                const done = onCompleteRef.current;
-                if (target > 0 && nc >= target && typeof done === "function") done();
+                queueMicrotask(() => {
+                  const cb = onCycleCompleteRef.current;
+                  if (typeof cb === "function") cb(nc);
+                  const target = cycleTargetRef.current;
+                  const done = onCompleteRef.current;
+                  if (target > 0 && nc >= target && typeof done === "function") done();
+                });
                 return nc;
               });
             }

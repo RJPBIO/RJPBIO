@@ -32,6 +32,9 @@ import CohortCelebrationSheet from "./celebrations/CohortCelebrationSheet";
 import ProgramCompletionSheet from "./celebrations/ProgramCompletionSheet";
 // Phase 6I-2 — sheet de celebración streak milestones (H-2 — config consumer).
 import StreakMilestoneSheet from "./celebrations/StreakMilestoneSheet";
+// Phase Polish-Tier-3 — monthly digest sheet + data hook.
+import MonthlyDigestSheet from "./celebrations/MonthlyDigestSheet";
+import useMonthlyDigestData from "@/hooks/useMonthlyDigestData";
 import { devLog } from "@/lib/dev-utils";
 import {
   greetingForHour,
@@ -187,6 +190,37 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
     />
   ) : null;
 
+  // Phase Polish-Tier-3 — monthly digest detection.
+  // Trigger: totalSessions ≥ 30 AND daysSinceLastDigest ≥ 28. Una vez mostrado,
+  // markMonthlyDigestShown() persiste lastMonthlyDigestShown en store, gating
+  // el próximo trigger por 28 días. devOverride suprime para previews.
+  const totalSessionsCount = realState?.history?.length || 0;
+  const lastMonthlyDigestShown = realState?.lastMonthlyDigestShown || 0;
+  const markMonthlyDigestShown = useStore((s) => s.markMonthlyDigestShown);
+  const monthlyDigest = useMonthlyDigestData(0);
+  const [monthlyDigestOpen, setMonthlyDigestOpen] = useState(false);
+  useEffect(() => {
+    if (devOverride) return;
+    if (totalSessionsCount < 30) return;
+    if (!monthlyDigest) return;
+    const daysSince = (Date.now() - lastMonthlyDigestShown) / 86_400_000;
+    if (daysSince >= 28) {
+      setMonthlyDigestOpen(true);
+    }
+  }, [devOverride, totalSessionsCount, monthlyDigest, lastMonthlyDigestShown]);
+  const handleMonthlyDigestDismiss = () => {
+    setMonthlyDigestOpen(false);
+    markMonthlyDigestShown();
+  };
+  const monthlyDigestSheet = (
+    <MonthlyDigestSheet
+      isOpen={monthlyDigestOpen}
+      digest={monthlyDigest}
+      onContinue={() => devLog("[v2] monthly digest continue")}
+      onDismiss={handleMonthlyDigestDismiss}
+    />
+  );
+
   const now = new Date();
   const hour = now.getHours();
   const greeting = greetingForHour(hour);
@@ -227,6 +261,7 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
         {celebrationSheet}
         {programCompletionSheet}
         {streakMilestoneSheet}
+        {monthlyDigestSheet}
       </>
     );
   }
@@ -260,6 +295,7 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
         {celebrationSheet}
         {programCompletionSheet}
         {streakMilestoneSheet}
+        {monthlyDigestSheet}
       </>
     );
   }
@@ -337,6 +373,7 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
       {celebrationSheet}
       {programCompletionSheet}
       {streakMilestoneSheet}
+        {monthlyDigestSheet}
     </>
   );
 }

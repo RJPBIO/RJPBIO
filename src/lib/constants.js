@@ -213,6 +213,11 @@ export const DS = {
   // próximo mensaje del user creará una nueva.
   coachConversations: [],
   coachActiveConversationId: null,
+  // Phase Polish-Tier-3 (v17) — monthly digest dedup timestamp.
+  // ts del último monthly digest mostrado al user (epoch ms). 0 = jamás.
+  // useMonthlyDigestData lee + AppV2Root computa daysSinceLastDigest.
+  // Trigger gate: totalSessions >= 30 && daysSinceLastDigest >= 28.
+  lastMonthlyDigestShown: 0,
   // Phase 6D SP3 — email del user autenticado, cacheado localmente para
   // que ProfileV2/AccountView lo muestren sin requerir useSession en cada
   // mount. setUserEmail (action en useStore) lo hidrata desde el sign-in

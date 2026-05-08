@@ -1,4 +1,4 @@
-/* HeroComposite.test — Phase 6H Premium-Fix1.
+/* HeroComposite.test — Phase 6H Premium-Fix1 + Polish-Tier-2 Gap-4 sparkline coverage.
    Cubre 3 modos: legacy (value+lines), partial (readiness con coherence-only),
    y empty-state (readiness sin signals + sin elegibilidad).
    Anti-regression: tests previos asumen [data-v2-hero] selector + composite
@@ -185,5 +185,86 @@ describe("HeroComposite — anti-regression devOverride='personalized' compat", 
     expect(document.querySelector("[data-v2-hero]")).toBeTruthy();
     act(() => { vi.advanceTimersByTime(700); });
     expect(document.body.innerHTML).toMatch(/62/);
+  });
+});
+
+describe("HeroComposite — Polish-Tier-2 Gap-4 sparkline aditivo", () => {
+  it("sparklineData ausente → no renderea sparkline (legacy preservado)", () => {
+    render(<HeroComposite value={62} primaryLine="x" />);
+    act(() => { vi.advanceTimersByTime(700); });
+    expect(document.querySelector("[data-v2-hero-sparkline]")).toBeNull();
+    expect(document.querySelector('[data-testid="hero-sparkline"]')).toBeNull();
+  });
+
+  it("sparklineData con bio.length<2 → no renderea sparkline (defensive)", () => {
+    render(<HeroComposite value={62} primaryLine="x" sparklineData={{ bio: [{ value: 50, ts: 1 }] }} />);
+    act(() => { vi.advanceTimersByTime(700); });
+    expect(document.querySelector("[data-v2-hero-sparkline]")).toBeNull();
+  });
+
+  it("sparklineData con bio.length>=2 → renderea sparkline visible", () => {
+    render(
+      <HeroComposite
+        value={62}
+        primaryLine="x"
+        sparklineData={{ bio: [
+          { value: 50, ts: 1 },
+          { value: 65, ts: 2 },
+          { value: 70, ts: 3 },
+        ] }}
+      />
+    );
+    act(() => { vi.advanceTimersByTime(700); });
+    expect(document.querySelector("[data-v2-hero-sparkline]")).toBeTruthy();
+    expect(document.querySelector('[data-testid="hero-sparkline"]')).toBeTruthy();
+  });
+
+  it("sparkline aria-label refleja count del data", () => {
+    render(
+      <HeroComposite
+        value={62}
+        primaryLine="x"
+        sparklineData={{ bio: [
+          { value: 50, ts: 1 },
+          { value: 60, ts: 2 },
+          { value: 70, ts: 3 },
+        ] }}
+      />
+    );
+    act(() => { vi.advanceTimersByTime(700); });
+    const svg = document.querySelector('[data-testid="hero-sparkline"]');
+    expect(svg.getAttribute("aria-label")).toMatch(/3 días/);
+  });
+
+  it("sparkline coexiste con partial mode + descriptor + CTA", () => {
+    render(
+      <HeroComposite
+        value={66}
+        primaryLine="x"
+        readiness={{ score: 66, partial: true, source: "coherence-only" }}
+        onActivateHRV={() => {}}
+        sparklineData={{ bio: [
+          { value: 50, ts: 1 },
+          { value: 65, ts: 2 },
+        ] }}
+      />
+    );
+    act(() => { vi.advanceTimersByTime(700); });
+    expect(document.querySelector("[data-v2-hero-partial-descriptor]")).toBeTruthy();
+    expect(document.querySelector('[data-testid="hero-activate-hrv"]')).toBeTruthy();
+    expect(document.querySelector("[data-v2-hero-sparkline]")).toBeTruthy();
+  });
+
+  it("empty-state mode → sparkline omitido (Phase 6H Fix1 contract preservado)", () => {
+    render(
+      <HeroComposite
+        readiness={{ score: null, eligibleForFallback: false }}
+        onActivateHRV={() => {}}
+        onCalibrate={() => {}}
+        sparklineData={{ bio: [{ value: 50, ts: 1 }, { value: 60, ts: 2 }] }}
+      />
+    );
+    expect(document.querySelector('[data-empty-state="true"]')).toBeTruthy();
+    expect(document.querySelector("[data-v2-hero-sparkline]")).toBeNull();
   });
 });

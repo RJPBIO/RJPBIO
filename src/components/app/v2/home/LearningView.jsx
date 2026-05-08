@@ -19,6 +19,7 @@ import ProgressBar from "./ProgressBar";
 // Phase 6I-3 — alternatives card (H-3): expone recommendation.alternatives
 // del engine bajo el primary recommendation card cuando recoFromEngine=true.
 import RecommendationAlternativesCard from "./RecommendationAlternativesCard";
+import RecommendationTransitionWrapper from "./RecommendationTransitionWrapper";
 import { colors, typography, spacing, radii, surfaces, motion as motionTok } from "../tokens";
 
 // Phase 6F SP-B — Decision A locked: cuando hay programa activo (server),
@@ -286,15 +287,20 @@ export default function LearningView({
             >
               TU PRÓXIMA SESIÓN
             </div>
-            <RecommendationCard
-              protocol={recoProtocol}
-              source={recoFromEngine ? "engine" : "fallback"}
-              reason={recoFromEngine ? extractPrimaryReason(recommendation) : null}
-              onStart={() => {
-                const protocolId = recoProtocol?.id ?? DEFAULT_FIRST_PROTOCOL_ID;
-                onAction?.({ action: "start-protocol", protocolId });
-              }}
-            />
+            <RecommendationTransitionWrapper
+              transitionKey={recoProtocol?.id ?? "fallback"}
+              testid="learning-recommendation-transition"
+            >
+              <RecommendationCard
+                protocol={recoProtocol}
+                source={recoFromEngine ? "engine" : "fallback"}
+                reason={recoFromEngine ? extractPrimaryReason(recommendation) : null}
+                onStart={() => {
+                  const protocolId = recoProtocol?.id ?? DEFAULT_FIRST_PROTOCOL_ID;
+                  onAction?.({ action: "start-protocol", protocolId });
+                }}
+              />
+            </RecommendationTransitionWrapper>
             {/* Phase 6I-3 — alternatives card (H-3). Solo cuando recoFromEngine
                 (engine real produjo recommendation con shape primary.protocol).
                 En fallback path (firstProtocolForIntent rotation), el shape NO

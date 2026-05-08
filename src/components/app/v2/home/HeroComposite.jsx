@@ -2,6 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Activity, Sparkles } from "lucide-react";
 import { colors, typography, spacing, radii, motion as motionTok } from "../tokens";
+// Phase Polish-Tier-2 Gap-4 — sparkline aditivo bajo el big number cuando
+// hay >= 2 puntos de history. Preserva contract Phase 6H Fix1 (sparklineData
+// es prop opcional, render condicional, no afecta selectors data-v2-hero*).
+import Sparkline from "./Sparkline";
 
 // Hero composite: kicker + numero gigante + linea coach.
 // Count-up 0->valor en 650ms ease-out solo en mount.
@@ -49,6 +53,9 @@ export default function HeroComposite({
   readiness = null,
   onActivateHRV,
   onCalibrate,
+  // Phase Polish-Tier-2 Gap-4 — sparkline data opcional (último 14 entries).
+  // Shape: { bio: [{ value, ts }, ...] }. Sparkline auto-hide cuando bio.length<2.
+  sparklineData = null,
 }) {
   // Hook precede returns condicionales (Rules of Hooks). El `0` para empty-state
   // es benigno — el componente retorna empty card antes de usar `display`.
@@ -106,6 +113,25 @@ export default function HeroComposite({
       >
         {display}
       </div>
+      {sparklineData?.bio && sparklineData.bio.length >= 2 && (
+        <div
+          data-v2-hero-sparkline
+          style={{
+            marginBlockStart: 12,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Sparkline
+            data={sparklineData.bio}
+            width={140}
+            height={24}
+            ariaLabel={`Tendencia bio últimos ${sparklineData.bio.length} días`}
+            testid="hero-sparkline"
+          />
+        </div>
+      )}
       {partial && (
         <div
           data-v2-hero-partial-descriptor
