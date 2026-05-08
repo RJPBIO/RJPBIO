@@ -15,6 +15,10 @@ import SessionsAllView from "./data/SessionsAllView";
 import AchievementsAllView from "./data/AchievementsAllView";
 import { devLog } from "@/lib/dev-utils";
 import { colors, typography, spacing, radii, motion as motionTok } from "./tokens";
+// Phase Polish-Sub-Screens-Motion Capa 2 — mount fade-in.
+import SubScreenMountWrapper from "./SubScreenMountWrapper";
+// Phase Polish-Sub-Screens-Motion Capa 3 — section stagger emerge.
+import SectionEmergeWrapper from "./SectionEmergeWrapper";
 
 // Tab Datos v2 — archivo histórico del usuario.
 //
@@ -85,7 +89,7 @@ export default function DataV2({
 
   if (data.isEmpty) {
     return (
-      <>
+      <SubScreenMountWrapper testid="datav2-empty-mount">
         <HeaderV2 onBellClick={onBellClick} />
         <DataEmpty
           onStart={() => onNavigate && onNavigate({ action: "first-session" })}
@@ -96,41 +100,55 @@ export default function DataV2({
         <ProtocolCatalog
           onSelectProtocol={(p) => onNavigate && onNavigate({ action: "start-protocol", protocolId: p.id })}
         />
-      </>
+      </SubScreenMountWrapper>
     );
   }
 
   return (
-    <>
+    <SubScreenMountWrapper testid="datav2-mount">
       <HeaderV2 onBellClick={onBellClick} />
       <DataIntro />
-      <TrajectoryHero data={data.composite28d} />
-      <DimensionsTrends
-        data={data.dimensions28d}
-        onSelect={(id) => onNavigate && onNavigate({ target: `/app/profile/engine-health#${id}` })}
-      />
-      <div data-anchor="programs">
-        <ProgramsSection
-          activeProgram={data.activeProgram}
-          onProgramTap={(p) => onNavigate && onNavigate({ action: "tap-program", id: p.id, hasActive: !!data.activeProgram })}
-          onSeeToday={() => onNavigate && onNavigate({ action: "see-program-today" })}
-          onAbandon={() => onNavigate && onNavigate({ action: "abandon-program" })}
+      <SectionEmergeWrapper staggerIndex={0} testid="datav2-section-trajectory">
+        <TrajectoryHero data={data.composite28d} />
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={1} testid="datav2-section-dimensions">
+        <DimensionsTrends
+          data={data.dimensions28d}
+          onSelect={(id) => onNavigate && onNavigate({ target: `/app/profile/engine-health#${id}` })}
         />
-      </div>
-      <ProtocolCatalog
-        onSelectProtocol={(p) => onNavigate && onNavigate({ action: "start-protocol", protocolId: p.id })}
-      />
-      <SessionsRecent
-        sessions={data.sessions}
-        onSeeAll={() => onNavigate && onNavigate({ target: "/app/data/sessions/all" })}
-      />
-      <ProgressStats {...data.progress} />
-      <AchievementsRecent
-        ids={data.achievementsRecent}
-        total={data.progress.achievementsCount}
-        onSeeAll={() => onNavigate && onNavigate({ target: "/app/data/achievements/all" })}
-      />
-    </>
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={2} testid="datav2-section-programs">
+        <div data-anchor="programs">
+          <ProgramsSection
+            activeProgram={data.activeProgram}
+            onProgramTap={(p) => onNavigate && onNavigate({ action: "tap-program", id: p.id, hasActive: !!data.activeProgram })}
+            onSeeToday={() => onNavigate && onNavigate({ action: "see-program-today" })}
+            onAbandon={() => onNavigate && onNavigate({ action: "abandon-program" })}
+          />
+        </div>
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-catalog">
+        <ProtocolCatalog
+          onSelectProtocol={(p) => onNavigate && onNavigate({ action: "start-protocol", protocolId: p.id })}
+        />
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={4} testid="datav2-section-sessions">
+        <SessionsRecent
+          sessions={data.sessions}
+          onSeeAll={() => onNavigate && onNavigate({ target: "/app/data/sessions/all" })}
+        />
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={5} testid="datav2-section-progress">
+        <ProgressStats {...data.progress} />
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={6} testid="datav2-section-achievements">
+        <AchievementsRecent
+          ids={data.achievementsRecent}
+          total={data.progress.achievementsCount}
+          onSeeAll={() => onNavigate && onNavigate({ target: "/app/data/achievements/all" })}
+        />
+      </SectionEmergeWrapper>
+    </SubScreenMountWrapper>
   );
 }
 

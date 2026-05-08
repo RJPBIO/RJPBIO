@@ -16,6 +16,8 @@ import PrivacyView from "./profile/privacy/PrivacyView";
 import DataRequestsView from "./profile/data-requests/DataRequestsView";
 import AccountView from "./profile/account/AccountView";
 import { devLog } from "@/lib/dev-utils";
+// Phase Polish-Sub-Screens-Motion Capa 2 — mount fade-in.
+import SubScreenMountWrapper from "./SubScreenMountWrapper";
 
 const SECTION_VIEWS = {
   calibration:    CalibrationView,
@@ -91,11 +93,15 @@ export default function ProfileV2({
   if (SubView) {
     const subProps = { onBack: () => setSection(null), onNavigate, subAnchor };
     if (section === "privacy") subProps.b2b = b2b;
-    return <SubView {...subProps} />;
+    return (
+      <SubScreenMountWrapper testid={`profile-subview-mount-${section}`} delay={50}>
+        <SubView {...subProps} />
+      </SubScreenMountWrapper>
+    );
   }
 
   return (
-    <>
+    <SubScreenMountWrapper testid="profilev2-mount">
       <HeaderV2 onBellClick={onBellClick} />
       <IdentityHeader
         displayName={profile.displayName}
@@ -111,7 +117,7 @@ export default function ProfileV2({
         />
       )}
       <SubRoutesList rows={buildRows(profile, b2b)} onPick={(id) => setSection(id)} />
-    </>
+    </SubScreenMountWrapper>
   );
 }
 

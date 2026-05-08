@@ -27,6 +27,8 @@ import { colors, typography, layout } from "./tokens";
 import HomeV2 from "./HomeV2";
 import DataV2 from "./DataV2";
 import CoachV2 from "./CoachV2";
+// Phase Polish-Sub-Screens-Motion Capa 1 — fade transition entre tabs.
+import TabTransitionWrapper from "./TabTransitionWrapper";
 import ProfileV2 from "./ProfileV2";
 import BottomNavV2 from "./BottomNavV2";
 import CrisisFAB from "./CrisisFAB";
@@ -1019,7 +1021,9 @@ export default function AppV2Root() {
           marginInline: "auto",
         }}
       >
-        <Screen {...screenProps} />
+        <TabTransitionWrapper activeTab={tab} testid="appv2-tab-transition">
+          <Screen {...screenProps} />
+        </TabTransitionWrapper>
       </main>
       <BottomNavV2 active={tab} onSelect={setTab} />
 

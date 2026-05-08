@@ -16,6 +16,8 @@ import { useActiveProgram } from "@/hooks/useActiveProgram";
 import { PROGRAMS, getProgramById } from "@/lib/programs";
 import { csrfFetch } from "@/components/app/v2/profile/modals/ModalShell";
 import { colors, typography, spacing, layout, radii } from "@/components/app/v2/tokens";
+// Phase Polish-Sub-Screens-Motion Capa 2 — mount fade-in.
+import SubScreenMountWrapper from "@/components/app/v2/SubScreenMountWrapper";
 
 export default function ProgramsListPage() {
   const router = useRouter();
@@ -67,6 +69,7 @@ export default function ProgramsListPage() {
   };
 
   return (
+    <SubScreenMountWrapper testid="programs-page-mount">
     <main
       data-v2-programs-list-page
       style={{
@@ -380,6 +383,7 @@ export default function ProgramsListPage() {
         })}
       </section>
     </main>
+    </SubScreenMountWrapper>
   );
 }
 
