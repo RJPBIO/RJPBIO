@@ -236,6 +236,11 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
   const reduced = useReducedMotion();
   const dialogRef = useFocusTrap(true);
   const liveRef = useRef(null);
+  // Phase 6H Premium-Fix4 M-3 — primary CTA ref. Forwarded a CalibFooter →
+  // botón "Siguiente"/"Empezar". Tras cada cambio de step, useEffect re-enfoca
+  // para flujo keyboard-first natural (sin esto, useFocusTrap auto-enfoca el
+  // primer focusable del DOM = "calibration-skip-all" del Header).
+  const primaryRef = useRef(null);
 
   const [step, setStep] = useState(0);
   const [pss4Answers, setPss4Answers] = useState(Array(PSS4_ITEMS_RENDER.length).fill(null));
@@ -265,6 +270,19 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
     if (liveRef.current) {
       liveRef.current.textContent = `Paso ${step + 1} de ${STEPS.length}`;
     }
+  }, [step]);
+
+  // Phase 6H Premium-Fix4 M-3 — re-focus primary CTA on step change.
+  // setTimeout 50ms evita race con motion.div mount transition que puede
+  // robar focus al keyframe inicial. Cleanup unmount-safe.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const el = primaryRef.current;
+      if (el && typeof el.focus === "function") {
+        el.focus({ preventScroll: true });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [step]);
 
   const allPss4Answered = pss4Answers.every((v) => typeof v === "number");
@@ -485,6 +503,7 @@ export default function NeuralCalibrationV2({ onComplete, onSkip }) {
         canAdvance={canAdvance}
         onAdvance={handleAdvance}
         onSkipInstrument={step >= 0 && step <= 2 ? handleSkipInstrument : null}
+        primaryRef={primaryRef}
       />
     </div>
   );
@@ -537,6 +556,7 @@ function CalibHeader({ step, onBack, onSkip }) {
             type="button"
             onClick={onSkip}
             data-testid="calibration-skip-all"
+            data-v2-skip-ghost
             style={{
               appearance: "none", background: "transparent", border: "none",
               color: TEXT_MUTED, cursor: "pointer", minHeight: 44, padding: "0 4px",
@@ -551,7 +571,9 @@ function CalibHeader({ step, onBack, onSkip }) {
   );
 }
 
-function CalibFooter({ step, canAdvance, onAdvance, onSkipInstrument }) {
+// Phase 6H Premium-Fix4 M-3 — primaryRef forwarded del root, attached al CTA
+// principal "Siguiente"/"Empezar". Permite focus on step change.
+function CalibFooter({ step, canAdvance, onAdvance, onSkipInstrument, primaryRef = null }) {
   const isLast = step === STEPS.length - 1;
   const filled = isLast || step === 3;
   const ctaLabel = isLast ? "Empezar" : "Siguiente";
@@ -569,6 +591,7 @@ function CalibFooter({ step, canAdvance, onAdvance, onSkipInstrument }) {
     >
       <CalibProgressDots active={step} total={STEPS.length} />
       <button
+        ref={primaryRef}
         type="button"
         onClick={onAdvance}
         disabled={!canAdvance}
@@ -595,6 +618,7 @@ function CalibFooter({ step, canAdvance, onAdvance, onSkipInstrument }) {
           type="button"
           onClick={onSkipInstrument}
           data-testid="calibration-skip-instrument"
+          data-v2-skip-ghost
           style={{
             appearance: "none", background: "transparent", border: "none",
             color: TEXT_MUTED, cursor: "pointer", padding: "8px 4px",
@@ -1051,6 +1075,7 @@ function HRVOnboardingStep({ measured, skipped, onMeasured, onSkip, onResetSkip 
             type="button"
             onClick={onSkip}
             data-testid="hrv-skip"
+            data-v2-skip-ghost
             style={{
               appearance: "none", background: "transparent", border: "none",
               color: TEXT_MUTED, cursor: "pointer", padding: "8px 4px",

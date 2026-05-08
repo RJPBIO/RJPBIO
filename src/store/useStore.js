@@ -7,6 +7,14 @@
 import { create } from "zustand";
 import { DS } from "../lib/constants";
 import { getWeekNum } from "../lib/neural";
+// Phase 6I-1 — getProgramById usado para resolver programName + totalDays
+// del catálogo cuando finalizeProgram dispara celebration. lib/programs.js
+// solo importa lib/protocols (puro) — no introduce circular dep con store.
+import { getProgramById } from "../lib/programs";
+// Phase 6I-2 — NEURAL_CONFIG.coaching.streakMilestones consumed para detectar
+// streak threshold cross en completeSession. lib/neural/config.js es puro
+// (zero imports) — no circular dep risk.
+import { NEURAL_CONFIG } from "../lib/neural/config";
 import { loadState, saveState, clearAll, outboxAdd, getSyncChannel } from "../lib/storage";
 // Nota: outboxAdd ahora dispatcha "bio-outbox-changed" event al
 // completar el IndexedDB write; sync.js (vía wireBackgroundSync)
@@ -17,6 +25,128 @@ import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/ba
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
 const STORE_VERSION = 16;
+
+// Phase 6H Premium-Fix3 — cohort thresholds.
+// MUST stay aligned con NEURAL_CONFIG.health.coldStartSessions/learningSessions
+// (src/lib/neural/config.js:425-426). NO importar config aquí para evitar
+// circular dep store→neural→store. Si cambian thresholds, bump ambos.
+const COHORT_THRESHOLD_LEARNING = 5;
+const COHORT_THRESHOLD_PERSONALIZED = 14;
+
+/**
+ * Phase 6I-2 — pure helper: detecta cuándo el streak cruzó uno de los
+ * milestones configurados (NEURAL_CONFIG.coaching.streakMilestones) y
+ * construye el celebration payload. Exportado para reuse en tests sin
+ * mountar el store entero.
+ *
+ * Reglas:
+ *   - newStreak debe ser STRICTAMENTE mayor que prevStreak. Excluye:
+ *     · Segunda sesión del mismo día (engine retorna mismo streak)
+ *     · Streak break (engine retorna 1 < prevStreak)
+ *   - Solo dispara cuando exactamente UN milestone se cruzó: prev<m && new>=m
+ *     El primer match de la lista milestones gana (pequeños primero).
+ *   - Si doneAt[milestone] truthy → null (dedup persistente).
+ *
+ * @param {number} prevStreak - state.streak antes del set()
+ * @param {number} newStreak - r.nsk del payload de completeSession
+ * @param {number[]} milestones - default fallback [7, 14, 30] si null/empty
+ * @param {object} doneAt - streakMilestoneDoneAt actual { [milestone]: ts }
+ * @returns {object|null} { milestone, currentStreak, timestamp } | null
+ */
+export function detectStreakMilestone(prevStreak, newStreak, milestones, doneAt = {}) {
+  const safePrev = Number.isFinite(prevStreak) ? prevStreak : 0;
+  const safeNew = Number.isFinite(newStreak) ? newStreak : 0;
+  if (safeNew <= safePrev) return null;
+  const list = Array.isArray(milestones) && milestones.length > 0
+    ? milestones
+    : [7, 14, 30];
+  const safeDone = doneAt || {};
+  // Find first milestone crossed by this transition que no esté en doneAt.
+  // Sort ascending defensive (config debería ya estar ascending, pero no asumimos).
+  // Edge case relevante: user salta prev=0 → new=14 con doneAt[7] ya truthy.
+  // El loop continúa más allá del 7 (skipped por dedup) y dispara 14 — que
+  // ES el milestone uncelebrated cruzado válido.
+  const sorted = [...list].sort((a, b) => a - b);
+  for (const m of sorted) {
+    if (typeof m !== "number" || !Number.isFinite(m)) continue;
+    if (safePrev < m && safeNew >= m) {
+      if (safeDone[m]) continue; // dedup — try next milestone in this transition
+      return {
+        milestone: m,
+        currentStreak: safeNew,
+        timestamp: Date.now(),
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Phase 6I-1 — pure helper: builds program completion celebration payload
+ * cuando finalizeProgram detecta completion. Exportado para reuse en tests
+ * sin mountar el store entero.
+ *
+ * @param {object|null} activeProgramSnapshot - state.activeProgram justo antes
+ *   del set() que limpia (id, startedAt, completedSessionDays)
+ * @param {object} doneAt - programCompletionCelebrationDoneAt actual
+ * @param {object} catalogEntry - PROGRAMS catalog entry para resolver
+ *   programName + totalDays. Pasado como param (NO import aquí) para evitar
+ *   circular dep store→programs→store.
+ * @returns {object|null} celebration payload o null si ya done o data inválida
+ */
+export function detectProgramCompletionCelebration(activeProgramSnapshot, doneAt = {}, catalogEntry = null) {
+  if (!activeProgramSnapshot || typeof activeProgramSnapshot !== "object") return null;
+  const programId = activeProgramSnapshot.id;
+  if (typeof programId !== "string" || !programId) return null;
+  const safeDone = doneAt || {};
+  if (safeDone[programId]) return null; // dedup: ya celebrado este program
+  return {
+    programId,
+    programName: catalogEntry?.n || programId,
+    totalDays: catalogEntry?.duration || 0,
+    completedAt: Date.now(),
+    timestamp: Date.now(),
+  };
+}
+
+/**
+ * Pure helper: detecta cohort transition cross al cerrar una sesión.
+ * Exportada para reuse en tests sin mountar el store entero.
+ *
+ * @param {number} prevSessions - history.length antes del set()
+ * @param {number} newSessions - history.length después del set()
+ * @param {object} doneAt - cohortCelebrationDoneAt actual { learning?, personalized? }
+ * @returns {object|null} { from, to, totalSessions, timestamp } | null si no cross o ya done
+ */
+export function detectCohortCelebration(prevSessions, newSessions, doneAt = {}) {
+  const safeDone = doneAt || {};
+  const prevCohort = cohortFor(prevSessions);
+  const newCohort = cohortFor(newSessions);
+  if (prevCohort === newCohort) return null;
+  if (newCohort === "learning" && !safeDone.learning) {
+    return {
+      from: prevCohort,
+      to: "learning",
+      totalSessions: newSessions,
+      timestamp: Date.now(),
+    };
+  }
+  if (newCohort === "personalized" && !safeDone.personalized) {
+    return {
+      from: prevCohort,
+      to: "personalized",
+      totalSessions: newSessions,
+      timestamp: Date.now(),
+    };
+  }
+  return null;
+}
+
+function cohortFor(n) {
+  if (n < COHORT_THRESHOLD_LEARNING) return "cold-start";
+  if (n < COHORT_THRESHOLD_PERSONALIZED) return "learning";
+  return "personalized";
+}
 
 function migrate(data) {
   if (!data) {
@@ -239,9 +369,71 @@ export const useStore = create((set, get) => ({
       // ActiveProgramCard + programSuggestion.js. Campo se conserva en
       // saves antiguos por backcompat pero ya no avanza.
     };
+    // Phase 6H Premium-Fix3 — detectar cohort threshold cross (5/14).
+    // Se computa contra newHist.length (post-session) vs prev hist.length.
+    // Si user cruzó cold-start→learning o learning→personalized Y no había
+    // visto la celebración antes (cohortCelebrationDoneAt[cohort] ausente),
+    // setea pendingCelebration. HomeV2 mounta <CohortCelebrationSheet/>.
+    const prevSessions = Array.isArray(st.history) ? st.history.length : 0;
+    const newSessions = Array.isArray(newHist) ? newHist.length : 0;
+    const celebration = detectCohortCelebration(
+      prevSessions,
+      newSessions,
+      st.cohortCelebrationDoneAt || {},
+    );
+    if (celebration) {
+      update.pendingCelebration = celebration;
+    }
+    // Phase 6I-2 — detectar streak milestone cross (config 7/14/30).
+    // Engine ya pre-computó nsk (newStreak) en lib/neural.js _computeStreakUpdate.
+    // Solo dispara cuando newStreak > prevStreak (segunda sesión del día +
+    // streak break excluidos automáticamente). Coverage complementario al
+    // engine pre-existing achievements "streak7"/"streak30" (engine los
+    // persiste en state.achievements; nuestro sheet añade UI feedback premium).
+    const prevStreak = Number.isFinite(st.streak) ? st.streak : 0;
+    const newStreak = Number.isFinite(nsk) ? nsk : 0;
+    const streakCelebration = detectStreakMilestone(
+      prevStreak,
+      newStreak,
+      NEURAL_CONFIG?.coaching?.streakMilestones,
+      st.streakMilestoneDoneAt || {},
+    );
+    if (streakCelebration) {
+      update.pendingStreakMilestoneCelebration = streakCelebration;
+    }
     set(update);
     scheduleSave({ ...st, ...update });
     outboxAdd({ kind: "session", payload: r, userId: st._userId ?? null }).catch(() => {});
+  },
+
+  // Phase 6H Premium-Fix3 — marca celebración mostrada (dedup persistente).
+  // HomeV2 lo invoca on-mount del CohortCelebrationSheet para que reload
+  // o subsequent sesiones del mismo cohort NO re-disparen el sheet.
+  markCelebrationShown: (cohort) => {
+    if (!cohort || !["learning", "personalized"].includes(cohort)) return;
+    const st = get();
+    const update = {
+      pendingCelebration: null,
+      cohortCelebrationDoneAt: {
+        ...(st.cohortCelebrationDoneAt || {}),
+        [cohort]: Date.now(),
+      },
+    };
+    set(update);
+    scheduleSave({ ...st, ...update });
+  },
+
+  // Phase 6H Premium-Fix3 — limpia pendingCelebration sin marcar done.
+  // Caso edge: user dismiss accidentalmente y debería poder re-trigger
+  // (ej. reload). Decision A2-locked: NO se usa este path en el flow normal
+  // — markCelebrationShown se invoca on-mount del sheet, así que dismiss
+  // ya viene con doneAt seteado. Este action existe para tests + edge case
+  // de cleanup defensivo (ej. test reset).
+  dismissPendingCelebration: () => {
+    const st = get();
+    if (st.pendingCelebration === null) return;
+    set({ pendingCelebration: null });
+    scheduleSave({ ...st, pendingCelebration: null });
   },
 
   logMood: (moodEntry) => {
@@ -631,6 +823,11 @@ export const useStore = create((set, get) => ({
     if (typeof totalRequired !== "number" || totalRequired <= 0) return false;
     if (completed < totalRequired) return false;
     const now = Date.now();
+    // Phase 6I-1 — snapshot del activeProgram ANTES de limpiar (set
+    // activeProgram:null abajo). Pasado a detectProgramCompletionCelebration
+    // junto con catalogEntry para resolver programName + totalDays sin
+    // depender del state post-update.
+    const completedSnapshot = { ...st.activeProgram };
     const programHistory = [
       ...(st.programHistory || []),
       {
@@ -645,14 +842,96 @@ export const useStore = create((set, get) => ({
     if (!ach.includes("program_complete")) ach.push("program_complete");
     // Bonus XP: +20 vCores por programa completado
     const vCores = (st.vCores || 0) + 20;
-    set({ activeProgram: null, programHistory, achievements: ach, vCores });
-    scheduleSave({ ...st, activeProgram: null, programHistory, achievements: ach, vCores });
+    // Phase 6I-1 — detection celebration ANTES de set(). Si user ya celebró
+    // este programId previamente (caso edge: re-completion del mismo program
+    // tras restart), NO re-fire. Catalog entry resolved via getProgramById
+    // para programName + totalDays — fallback al programId si no encontrado.
+    const celebration = detectProgramCompletionCelebration(
+      completedSnapshot,
+      st.programCompletionCelebrationDoneAt || {},
+      getProgramById(completedSnapshot.id),
+    );
+    const update = {
+      activeProgram: null,
+      programHistory,
+      achievements: ach,
+      vCores,
+    };
+    if (celebration) {
+      update.pendingProgramCompletionCelebration = celebration;
+    }
+    set(update);
+    scheduleSave({ ...st, ...update });
     outboxAdd({
       kind: "program_complete",
-      payload: { id: st.activeProgram.id, startedAt: st.activeProgram.startedAt, completedAt: now },
+      payload: { id: completedSnapshot.id, startedAt: completedSnapshot.startedAt, completedAt: now },
       userId: st._userId ?? null,
     }).catch(() => {});
     return true;
+  },
+
+  // Phase 6I-1 — marca celebración mostrada (dedup persistente per programId).
+  // HomeV2 invoca on-mount del ProgramCompletionSheet para que reload o
+  // re-completion del mismo programa no re-disparen el sheet. Whitelist
+  // contra catálogo PROGRAMS para evitar pollution con IDs inválidos.
+  markProgramCompletionCelebrationShown: (programId) => {
+    if (typeof programId !== "string" || !programId) return;
+    // Whitelist defensive: solo IDs reales del catalog. Si futuro programa
+    // se agrega al catalog, automáticamente está cubierto. Si llega un ID
+    // bogus (test, race, mutation), no contamina doneAt.
+    if (!getProgramById(programId)) return;
+    const st = get();
+    const update = {
+      pendingProgramCompletionCelebration: null,
+      programCompletionCelebrationDoneAt: {
+        ...(st.programCompletionCelebrationDoneAt || {}),
+        [programId]: Date.now(),
+      },
+    };
+    set(update);
+    scheduleSave({ ...st, ...update });
+  },
+
+  // Phase 6I-1 — limpia pendingProgramCompletionCelebration sin marcar done.
+  // Defensive cleanup edge — markProgramCompletionCelebrationShown se invoca
+  // on-mount del sheet (mismo pattern Fix3 dismissPendingCelebration).
+  dismissPendingProgramCompletionCelebration: () => {
+    const st = get();
+    if (st.pendingProgramCompletionCelebration === null) return;
+    set({ pendingProgramCompletionCelebration: null });
+    scheduleSave({ ...st, pendingProgramCompletionCelebration: null });
+  },
+
+  // Phase 6I-2 — marca streak milestone celebrado (dedup persistente per-milestone).
+  // HomeV2 invoca on-mount del StreakMilestoneSheet para que reload o
+  // reconstrucción del streak (post-break) NO re-disparen el sheet del mismo
+  // milestone. Whitelist contra NEURAL_CONFIG.coaching.streakMilestones para
+  // evitar pollution con valores no canónicos. Si futura iteración añade
+  // milestone 60 al config, automáticamente queda cubierto.
+  markStreakMilestoneShown: (milestone) => {
+    if (typeof milestone !== "number" || !Number.isFinite(milestone)) return;
+    const milestonesConfig = NEURAL_CONFIG?.coaching?.streakMilestones || [7, 14, 30];
+    if (!milestonesConfig.includes(milestone)) return;
+    const st = get();
+    const update = {
+      pendingStreakMilestoneCelebration: null,
+      streakMilestoneDoneAt: {
+        ...(st.streakMilestoneDoneAt || {}),
+        [milestone]: Date.now(),
+      },
+    };
+    set(update);
+    scheduleSave({ ...st, ...update });
+  },
+
+  // Phase 6I-2 — limpia pendingStreakMilestoneCelebration sin marcar done.
+  // Defensive cleanup edge — markStreakMilestoneShown se invoca on-mount del
+  // sheet (mismo pattern Fix3 + Phase6I-1).
+  dismissPendingStreakMilestoneCelebration: () => {
+    const st = get();
+    if (st.pendingStreakMilestoneCelebration === null) return;
+    set({ pendingStreakMilestoneCelebration: null });
+    scheduleSave({ ...st, pendingStreakMilestoneCelebration: null });
   },
 
   /**

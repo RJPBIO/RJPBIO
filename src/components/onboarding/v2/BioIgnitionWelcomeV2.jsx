@@ -44,12 +44,32 @@ export default function BioIgnitionWelcomeV2({ onComplete, onSkip }) {
   const [step, setStep] = useState(0);
   const [selectedIntent, setSelectedIntent] = useState(null);
   const liveRef = useRef(null);
+  // Phase 6H Premium-Fix4 M-3 — primary CTA ref. Forwarded al Footer →
+  // botón "Continuar"/"Estoy listo". Tras cada cambio de step, el useEffect
+  // abajo enfoca el primary para que el flujo keyboard-first avance natural.
+  // Sin esto, useFocusTrap(true) auto-enfocaba el primer focusable del DOM
+  // (Header Skip / Back), lo cual sentía wrong para el user que avanza
+  // secuencial con Enter/Space.
+  const primaryRef = useRef(null);
 
   // Announce step changes via aria-live.
   useEffect(() => {
     if (liveRef.current) {
       liveRef.current.textContent = `Paso ${step + 1} de ${TOTAL_SCREENS}`;
     }
+  }, [step]);
+
+  // Phase 6H Premium-Fix4 M-3 — re-focus primary CTA on step change.
+  // setTimeout 50ms evita race con motion.div mount transition (que puede
+  // momentáneamente robar focus al keyframe inicial). Cleanup unmount-safe.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const el = primaryRef.current;
+      if (el && typeof el.focus === "function") {
+        el.focus({ preventScroll: true });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [step]);
 
   const advance = useCallback(() => {
@@ -163,6 +183,7 @@ export default function BioIgnitionWelcomeV2({ onComplete, onSkip }) {
         step={step}
         canAdvance={step < TOTAL_SCREENS - 1 || !!selectedIntent}
         onAdvance={advance}
+        primaryRef={primaryRef}
       />
     </div>
   );
@@ -228,12 +249,13 @@ function Header({ step, onBack, onSkip }) {
             type="button"
             onClick={onSkip}
             data-testid="welcome-skip"
-            // Phase 6D SP1 — focus ring custom sutil. Antes el browser
-            // default outline cyan (~3px) competía visualmente con el
-            // accent del CTA principal cuando el usuario hacía tab al
-            // botón. Ahora outline 1px dashed con la misma opacidad
-            // del color del texto: visible para keyboard-nav, sin
-            // robar atención del flow.
+            // Phase 6H Premium-Fix4 M-4 — opt-in al override CSS global
+            // [data-v2-skip-ghost]:focus-visible que neutraliza el 3-layer
+            // green+cyan glow del :focus-visible default. Phase 6D SP1
+            // onFocus handler abajo set inline outline 1px dashed; con el
+            // override CSS, ya no es estrictamente necesario, pero se
+            // preserva para defensa extra.
+            data-v2-skip-ghost
             style={{
               appearance: "none",
               background: "transparent",
@@ -265,7 +287,10 @@ function Header({ step, onBack, onSkip }) {
 }
 
 /* ──── Footer (CTA + dots) ─────────────────────────────── */
-function Footer({ step, canAdvance, onAdvance }) {
+// Phase 6H Premium-Fix4 M-3 — `primaryRef` forwarded del root, attached al
+// CTA principal para que el useEffect on step change pueda enfocarlo. Antes
+// el focus aterrizaba en Skip por orden DOM.
+function Footer({ step, canAdvance, onAdvance, primaryRef = null }) {
   const isLast = step === TOTAL_SCREENS - 1;
   const isCommitmentOrLast = step >= 3;
   const filled = isCommitmentOrLast;
@@ -284,6 +309,7 @@ function Footer({ step, canAdvance, onAdvance }) {
     >
       <ProgressDots active={step} total={TOTAL_SCREENS} />
       <button
+        ref={primaryRef}
         type="button"
         onClick={onAdvance}
         disabled={!canAdvance}

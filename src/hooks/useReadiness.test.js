@@ -137,3 +137,109 @@ describe("computeReadiness", () => {
     expect(r.score).toBeLessThanOrEqual(100);
   });
 });
+
+// Phase 6H Premium-Fix1 — fallback coherence-only.
+describe("computeReadiness — Phase 6H Premium-Fix1 fallback coherence-only", () => {
+  it("full signals → partial=false, source='full'", () => {
+    const now = Date.now();
+    const hrvLog = Array.from({ length: 10 }, (_, i) => ({
+      ts: now - (10 - i) * 86400000,
+      lnRmssd: 4.0 + (i % 3) * 0.1,
+    }));
+    const st = {
+      hrvLog,
+      lastSleepHours: 7,
+      sleepTargetHours: 7.5,
+      moodLog: [{ ts: now - 3600000, mood: 4, energy: 2 }],
+      history: [],
+    };
+    const r = computeReadiness(st);
+    expect(r.partial).toBe(false);
+    expect(r.source).toBe("full");
+    expect(r.reason).toBeNull();
+    expect(r.eligibleForFallback).toBe(false);
+    expect(typeof r.score).toBe("number");
+  });
+
+  it("N≥5 sin HRV con coherence per-sesión → partial=true, source='coherence-only'", () => {
+    const now = Date.now();
+    const history = Array.from({ length: 7 }, (_, i) => ({
+      ts: now - (7 - i) * 86400000,
+      c: 60 + i * 2, // 60, 62, 64, 66, 68, 70, 72 → avg 66
+      p: "Reinicio Parasimpático",
+    }));
+    const st = { hrvLog: [], rhrLog: [], moodLog: [], history };
+    const r = computeReadiness(st);
+    expect(r.partial).toBe(true);
+    expect(r.source).toBe("coherence-only");
+    expect(r.eligibleForFallback).toBe(true);
+    expect(typeof r.score).toBe("number");
+    expect(r.score).toBe(66);
+    expect(r.reason).toMatch(/parcial/i);
+    expect(r.fallbackSamples).toBe(7);
+  });
+
+  it("N<5 → score=null, partial=false, source=null, reason informativo", () => {
+    const now = Date.now();
+    const history = Array.from({ length: 3 }, (_, i) => ({
+      ts: now - (3 - i) * 86400000,
+      c: 60,
+    }));
+    const st = { history };
+    const r = computeReadiness(st);
+    expect(r.score).toBeNull();
+    expect(r.partial).toBe(false);
+    expect(r.source).toBeNull();
+    expect(r.eligibleForFallback).toBe(false);
+    expect(r.reason).toMatch(/insuficientes|sesiones/i);
+  });
+
+  it("N≥5 pero <3 entradas con h.c numérico → no fallback, score=null", () => {
+    const now = Date.now();
+    const history = Array.from({ length: 6 }, (_, i) => ({
+      ts: now - (6 - i) * 86400000,
+      // sólo 2 entradas con c válido (insuficiente para fallback)
+      c: i < 2 ? 60 : null,
+    }));
+    const st = { history };
+    const r = computeReadiness(st);
+    expect(r.score).toBeNull();
+    expect(r.eligibleForFallback).toBe(false);
+  });
+
+  it("history vacío → reason 'sin datos'", () => {
+    const r = computeReadiness({ history: [] });
+    expect(r.score).toBeNull();
+    expect(r.reason).toMatch(/sin datos|primera sesión/i);
+  });
+
+  it("fallback usa últimas 14 sesiones (no las primeras)", () => {
+    const now = Date.now();
+    const history = [
+      // 5 viejas con c=20 (no deben contar — fuera de ventana)
+      ...Array.from({ length: 5 }, (_, i) => ({ ts: now - (50 - i) * 86400000, c: 20 })),
+      // 14 recientes con c=80 → avg=80 esperado
+      ...Array.from({ length: 14 }, (_, i) => ({ ts: now - (14 - i) * 86400000, c: 80 })),
+    ];
+    const st = { history };
+    const r = computeReadiness(st);
+    expect(r.partial).toBe(true);
+    expect(r.score).toBe(80);
+    expect(r.fallbackSamples).toBe(14);
+  });
+
+  it("clamp 0-100 cuando coherence promedia >100 o <0 (defensivo)", () => {
+    const now = Date.now();
+    const historyHigh = Array.from({ length: 5 }, (_, i) => ({
+      ts: now - (5 - i) * 86400000, c: 150,
+    }));
+    const r1 = computeReadiness({ history: historyHigh });
+    expect(r1.score).toBe(100);
+
+    const historyLow = Array.from({ length: 5 }, (_, i) => ({
+      ts: now - (5 - i) * 86400000, c: -20,
+    }));
+    const r2 = computeReadiness({ history: historyLow });
+    expect(r2.score).toBe(0);
+  });
+});

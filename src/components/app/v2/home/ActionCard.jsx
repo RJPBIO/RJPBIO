@@ -4,8 +4,20 @@ import { colors, typography, spacing, radii, surfaces, motion as motionTok } fro
 // Tarjeta accion contextual cuando hay recomendacion del motor.
 // Border accent cyan sutil 0.15 alpha — indicador accionable.
 // Pill cyan ancho completo: "Iniciar".
+//
+// Phase 6H Premium-Fix4 M-1 — `reason` prop opcional. Cuando engine
+// adaptive devuelve recommendation.primary.reason (texto contextual
+// como "Tu historial muestra +1.2 puntos con este protocolo"), se
+// renderea como caption italic small bajo el description. Cuando null/
+// undefined, el caption se omite — comportamiento legacy preservado.
 
-export default function ActionCard({ kicker = "RECOMENDADO AHORA", title, description, onStart }) {
+export default function ActionCard({
+  kicker = "RECOMENDADO AHORA",
+  title,
+  description,
+  reason = null,
+  onStart,
+}) {
   return (
     <section
       data-v2-action
@@ -60,6 +72,23 @@ export default function ActionCard({ kicker = "RECOMENDADO AHORA", title, descri
             }}
           >
             {description}
+          </p>
+        )}
+        {reason && (
+          <p
+            data-v2-action-reason
+            style={{
+              marginBlockStart: 8,
+              marginBlockEnd: 0,
+              fontFamily: typography.family,
+              fontSize: typography.size.caption,
+              fontStyle: "italic",
+              fontWeight: typography.weight.regular,
+              color: colors.text.muted,
+              lineHeight: 1.45,
+            }}
+          >
+            {reason}
           </p>
         )}
       </div>

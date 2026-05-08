@@ -220,6 +220,43 @@ export const DS = {
   // null, las superficies que lo consumen muestran empty state honesto en
   // lugar del antiguo fixture "operador@bio-ignicion.local".
   _userEmail: null,
+  // Phase 6H Premium-Fix3 — cohort transition celebrations.
+  // pendingCelebration: when completeSession detects threshold cross
+  //   (cold-start→learning at N=5, learning→personalized at N=14), the
+  //   action sets this to { from, to, totalSessions, timestamp }. HomeV2
+  //   mounts <CohortCelebrationSheet /> when truthy.
+  // cohortCelebrationDoneAt: dedup persistente. Once user has seen the
+  //   celebration for a given cohort (markCelebrationShown), the entry
+  //   is timestamped and detection skips for that cohort forever — no
+  //   re-trigger on reload, on session 6/7/15/16, etc.
+  pendingCelebration: null,
+  cohortCelebrationDoneAt: {},
+  // Phase 6I-1 — program completion celebration (H-1).
+  // pendingProgramCompletionCelebration: when finalizeProgram returns
+  //   true (programa entero completado), action sets this to
+  //   { programId, programName, totalDays, completedAt, timestamp }.
+  //   HomeV2 mounts <ProgramCompletionSheet /> análogo a Fix3.
+  // programCompletionCelebrationDoneAt: dedup per-programId. Si user
+  //   completa "burnout-recovery", se guarda { "burnout-recovery": ts }.
+  //   Si más tarde completa "focus-sprint", su key es independiente y
+  //   también se celebra UNA sola vez. Re-completion del mismo program
+  //   (caso edge: user reinicia y vuelve a completar) NO re-dispara.
+  pendingProgramCompletionCelebration: null,
+  programCompletionCelebrationDoneAt: {},
+  // Phase 6I-2 — streak milestone celebration (H-2).
+  // pendingStreakMilestoneCelebration: cuando completeSession detecta
+  //   que `state.streak` cruzó uno de los milestones definidos en
+  //   NEURAL_CONFIG.coaching.streakMilestones (default [7, 14, 30]),
+  //   action sets this to { milestone, currentStreak, timestamp }.
+  //   HomeV2 mounts <StreakMilestoneSheet /> análogo a Fix3 + Phase6I-1.
+  // streakMilestoneDoneAt: dedup per-milestone. Si user llega a 7 días,
+  //   se guarda { 7: ts }. Si más adelante alcanza 14, se añade { 14: ts }.
+  //   Si user rompe streak después de celebrar 7 y reconstruye a 7 de nuevo,
+  //   NO re-celebra — el momento "primera vez" es premium único. Coverage
+  //   correcta del achievement "streak7"/"streak30" engine pre-existing —
+  //   éste es el UI feedback complementario al state.achievements.
+  pendingStreakMilestoneCelebration: null,
+  streakMilestoneDoneAt: {},
 };
 
 // ─── Neural State Color Mapping ──────────────────────────

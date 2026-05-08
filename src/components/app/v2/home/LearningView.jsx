@@ -6,10 +6,19 @@ import { useAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
 import { useActiveProgram } from "@/hooks/useActiveProgram";
 import { P as PROTOCOLS } from "@/lib/protocols";
 import { firstProtocolForIntent, DEFAULT_FIRST_PROTOCOL_ID } from "@/lib/first-protocol";
+import {
+  extractPrimaryProtocol,
+  extractPrimaryReason,
+  isEngineRecommendation,
+} from "@/lib/recommendationExtract";
 import { NEURAL_CONFIG } from "@/lib/neural/config";
 import { csrfFetch } from "@/components/app/v2/profile/modals/ModalShell";
 import ProgramActiveCard from "../program/ProgramActiveCard";
 import ProgramReEvalPrompt from "../program/ProgramReEvalPrompt";
+import ProgressBar from "./ProgressBar";
+// Phase 6I-3 — alternatives card (H-3): expone recommendation.alternatives
+// del engine bajo el primary recommendation card cuando recoFromEngine=true.
+import RecommendationAlternativesCard from "./RecommendationAlternativesCard";
 import { colors, typography, spacing, radii, surfaces, motion as motionTok } from "../tokens";
 
 // Phase 6F SP-B — Decision A locked: cuando hay programa activo (server),
@@ -69,20 +78,28 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
   const readiness = useReadiness(store);
   const recommendation = useAdaptiveRecommendation(store, { readiness });
   const recoProtocol = useMemo(() => {
-    const fromEngine = recommendation?.primary;
-    if (fromEngine?.id != null) return PROTOCOLS.find((p) => p.id === fromEngine.id) || fromEngine;
+    // Phase 6H Fix-A1 — extraction defensive via helper centralizado.
+    // ANTES (Phase 6F): `fromEngine?.id != null` siempre falso porque shape
+    // real engine es `primary.protocol.id`, NO `primary.id` flat. Resultado:
+    // siempre caía a la rotación intent-pool fallback, perdiendo engine
+    // recommendations personalizadas. AHORA: helper retorna engine Protocol
+    // cuando shape válido, fallback rotation preservado en branch else.
+    const protoFromEngine = extractPrimaryProtocol(recommendation);
+    if (protoFromEngine) {
+      return PROTOCOLS.find((p) => p.id === protoFromEngine.id) || protoFromEngine;
+    }
     // Engine sin reco útil → rotar protocolos del firstIntent evitando last-3.
-    // Bug raíz: antes retornaba `firstProtocolForIntent(firstIntent)` que es
-    // FIJO per-intent → user veía siempre Reinicio Parasimpático para calma,
-    // siempre Pulse Shift para energia, etc.
+    // Bug raíz histórico (pre-Fix-A1): antes retornaba `firstProtocolForIntent(firstIntent)`
+    // que es FIJO per-intent → user veía siempre Reinicio Parasimpático para
+    // calma, siempre Pulse Shift para energia, etc.
     const last3Names = Array.isArray(history) ? history.slice(-3).map((h) => h.p) : [];
     const intentPool = PROTOCOLS.filter((p) => p.int === firstIntent && !last3Names.includes(p.n));
     return intentPool[0] || firstProtocolForIntent(firstIntent);
   }, [recommendation, firstIntent, history]);
-  // Phase 6F bug-fix — recoSource correcto (engine vs fallback). Antes el
-  // attr decía "engine" cuando recommendation.primary era truthy aunque
-  // recoProtocol viniera del fallback (mismatch entre check L171 y L62-65).
-  const recoFromEngine = recommendation?.primary?.id != null;
+  // Phase 6H Fix-A1 — recoSource correcto via helper. Engine real shape es
+  // `primary.protocol`; legacy/mock con `primary.id` flat retorna false aquí
+  // (correctamente — no es engine recommendation).
+  const recoFromEngine = isEngineRecommendation(recommendation);
 
   // Phase 6F SP-B — programa activo (server source of truth) + handlers.
   const { data: activeProgram, refetch: refetchProgram } = useActiveProgram();
@@ -258,11 +275,25 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
             <RecommendationCard
               protocol={recoProtocol}
               source={recoFromEngine ? "engine" : "fallback"}
+              reason={recoFromEngine ? extractPrimaryReason(recommendation) : null}
               onStart={() => {
                 const protocolId = recoProtocol?.id ?? DEFAULT_FIRST_PROTOCOL_ID;
                 onAction?.({ action: "start-protocol", protocolId });
               }}
             />
+            {/* Phase 6I-3 — alternatives card (H-3). Solo cuando recoFromEngine
+                (engine real produjo recommendation con shape primary.protocol).
+                En fallback path (firstProtocolForIntent rotation), el shape NO
+                tiene `alternatives` válidas — extractAlternatives retorna [] y
+                el component se auto-oculta defensive. Aceptamos `recommendation`
+                completo para que el helper pueda leer `alternatives`. */}
+            {recoFromEngine && (
+              <RecommendationAlternativesCard
+                recommendation={recommendation}
+                onAction={onAction}
+                testid="learning-recommendation-alternatives"
+              />
+            )}
           </>
         )}
       </section>
@@ -343,44 +374,11 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
   );
 }
 
-function ProgressBar({ value, max }) {
-  const pct = Math.min(100, Math.max(0, (value / max) * 100));
-  return (
-    <div
-      data-v2-learning-progressbar
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={max}
-      aria-valuenow={value}
-      style={{
-        position: "relative",
-        height: 4,
-        background: surfaces.iconBox,
-        borderRadius: 999,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        data-progress-indicator
-        style={{
-          position: "absolute",
-          insetBlock: 0,
-          insetInlineStart: 0,
-          // Phase 6H Polish-2 — scaleX en lugar de width:% para animar
-          // en compositor (GPU 60fps). transformOrigin: left así la
-          // barra crece desde el inicio. RTL safe via logical props.
-          inlineSize: "100%",
-          transform: `scaleX(${Math.max(0, Math.min(1, pct / 100))})`,
-          transformOrigin: "left center",
-          background: colors.accent.phosphorCyan,
-          borderRadius: 999,
-          transition: `transform ${motionTok.duration.enter}ms ${motionTok.ease.out}`,
-          willChange: "transform",
-        }}
-      />
-    </div>
-  );
-}
+// Phase 6H Premium-Fix2 — ProgressBar extraído a ./ProgressBar.jsx para
+// reuse en ColdStartView phase=active. La definición inline original vivía
+// aquí con animation scaleX GPU 60fps (Phase 6H Polish-2). Selector
+// `data-v2-learning-progressbar` + role=progressbar + aria preservados en
+// el componente compartido.
 
 function StatCard({ label, value }) {
   return (
@@ -422,7 +420,12 @@ function StatCard({ label, value }) {
   );
 }
 
-function RecommendationCard({ protocol, source, onStart }) {
+// Phase 6H Premium-Fix4 M-1 — `reason` opcional. Engine adaptive devuelve
+// recommendation.primary.reason con copy contextual ("Tu historial muestra
+// +1.2 puntos con este protocolo", "Readiness elevado: ventana óptima").
+// LearningView solo lo pasa cuando recoFromEngine === true (no en fallback
+// firstProtocolForIntent), evitando reasons inválidas.
+function RecommendationCard({ protocol, source, reason = null, onStart }) {
   const name = protocol?.n || "Sesión recomendada";
   const duration = protocol?.d || 120;
   const intent = protocol?.int || "calma";
@@ -464,6 +467,22 @@ function RecommendationCard({ protocol, source, onStart }) {
         >
           {duration}s · {humanIntent(intent)}
         </span>
+        {reason && (
+          <span
+            data-v2-recommendation-reason
+            style={{
+              marginBlockStart: 4,
+              fontFamily: typography.family,
+              fontSize: typography.size.caption,
+              fontStyle: "italic",
+              fontWeight: typography.weight.regular,
+              color: colors.text.muted,
+              lineHeight: 1.45,
+            }}
+          >
+            {reason}
+          </span>
+        )}
       </div>
       <button
         type="button"

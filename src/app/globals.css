@@ -352,6 +352,17 @@ body {
 }
 html.theme-dim :focus-visible { box-shadow: var(--focus-ring-inverse); }
 
+/* Phase 6H Premium-Fix4 M-4 — Skip CTAs (Welcome / Calibration / HRV step)
+   son ghost text-only en text.muted; el global :focus-visible de arriba
+   (3-layer green+cyan glow) los hacía competir visualmente con el primary
+   CTA en estado focus. Esta regla los devuelve a una banda gris dashed
+   tenue, manteniendo accesibilidad keyboard sin robar atención. */
+[data-v2-skip-ghost]:focus-visible {
+  outline: 1px dashed rgba(255,255,255,0.4);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
 /* Session runner — focus ring uses phase accent color so it lives in the cinematic palette */
 .bi-runner-btn:focus-visible {
   box-shadow: 0 0 0 2px rgba(0,0,0,0.65), 0 0 0 4px var(--bi-focus-accent, #22D3EE), 0 0 12px var(--bi-focus-accent, #22D3EE);

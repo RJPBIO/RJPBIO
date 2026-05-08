@@ -20,6 +20,8 @@ import { FIRST_PROTOCOL_BY_INTENT, DEFAULT_FIRST_PROTOCOL_ID } from "@/lib/first
 // protocolo per-intent (Reinicio Parasimpático para calma, Pulse Shift
 // para energia, etc) — UX-killer reportado en validation visual.
 import { computeAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
+// Phase 6H Fix-A1 — extraction defensive desde shape REAL del engine.
+import { extractPrimaryProtocolId } from "@/lib/recommendationExtract";
 import { devLog } from "@/lib/dev-utils";
 import { colors, typography, layout } from "./tokens";
 import HomeV2 from "./HomeV2";
@@ -388,7 +390,12 @@ export default function AppV2Root() {
       if (totalSessions >= 1) {
         const last3Names = (st.history || []).slice(-3).map((h) => h.p);
         const reco = computeAdaptiveRecommendation(st);
-        const recoId = reco?.primary?.id;
+        // Phase 6H Fix-A1 — antes `reco?.primary?.id` siempre undefined porque
+        // shape real del engine es `primary.protocol.id` (neural.js:809).
+        // Resultado: el handler nunca aceptaba la engine recommendation y
+        // siempre caía al fallback rotation pool. Helper centraliza el
+        // extraction defensive (engine real → legacy → null).
+        const recoId = extractPrimaryProtocolId(reco);
         if (Number.isFinite(recoId)) {
           const recoProto = PROTOCOLS.find((p) => p.id === recoId);
           // Solo aceptar engine reco si NO repite los últimos 3 (forza variedad).

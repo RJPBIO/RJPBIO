@@ -305,3 +305,258 @@ describe("ColdStartView empty state — Phase 6E SP-A Bug-48", () => {
     expect(container.textContent).not.toMatch(/Sesión 99/);
   });
 });
+
+// ============================================================================
+// Phase 6H Premium-Fix2 — phase=fresh|active intermediate state (H-2 finding)
+// ============================================================================
+describe("ColdStartView phase — Phase 6H Premium-Fix2", () => {
+  beforeEach(() => { setStore({}); });
+  afterEach(() => { cleanup(); });
+
+  it("phase=fresh (totalSessions=0) → data-phase='fresh', no progress ni mini-stats", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 0,
+      history: [],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const { container } = render(
+      <ColdStartView greeting="Buenas noches." totalSessions={0} onAction={() => {}} />,
+    );
+    expect(container.querySelector("[data-v2-coldstart][data-phase='fresh']")).toBeTruthy();
+    expect(container.querySelector('[data-testid="coldstart-active-progress"]')).toBeNull();
+    expect(container.querySelector("[data-v2-mini-stats-row]")).toBeNull();
+    // Eyebrow legacy preservado
+    expect(container.textContent).toMatch(/EMPEZAR POR AQUÍ/);
+    // Subtitle legacy preservado
+    expect(container.textContent).toMatch(/Vamos a conocerte/);
+  });
+
+  it("phase=active+actions (totalSessions=3 con HRV pendiente) → progress + mini-stats + copy adapter", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 3,
+      history: [{ ts: Date.now() - 86400000, c: 60 }, { ts: Date.now() - 3600000, c: 65 }, { ts: Date.now(), c: 68 }],
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [], // ← gap: HRV pendiente
+      streak: 2,
+    });
+    const { container } = render(
+      <ColdStartView
+        greeting="Buenas noches."
+        totalSessions={3}
+        onAction={() => {}}
+        recommendation={null}
+        streak={2}
+        nextWindow="22:00"
+      />,
+    );
+    expect(container.querySelector("[data-v2-coldstart][data-phase='active']")).toBeTruthy();
+    expect(container.querySelector('[data-testid="coldstart-active-progress"]')).toBeTruthy();
+    expect(container.querySelector("[data-v2-mini-stats-row]")).toBeTruthy();
+    // ProgressBar value=3 max=5
+    const bar = container.querySelector("[data-v2-learning-progressbar]");
+    expect(bar.getAttribute("aria-valuenow")).toBe("3");
+    expect(bar.getAttribute("aria-valuemax")).toBe("5");
+    // Copy adapter activo
+    expect(container.textContent).toMatch(/TU PRÓXIMO PASO/);
+    expect(container.textContent).toMatch(/Tu trayectoria está tomando forma/);
+    expect(container.textContent).not.toMatch(/EMPEZAR POR AQUÍ/);
+    // Mini-stats valores
+    expect(container.querySelector('[data-testid="mini-stat-sessions"]').textContent).toContain("3");
+    expect(container.querySelector('[data-testid="mini-stat-streak"]').textContent).toContain("2d");
+    expect(container.querySelector('[data-testid="mini-stat-window"]').textContent).toContain("22:00");
+  });
+
+  it("phase=active+actions con recommendation engine → reco card prepended", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 2,
+      history: [{}, {}],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const recommendation = { primary: { id: "reinicio-parasimpatico", n: "Reinicio Parasimpático", d: 120 } };
+    const { container } = render(
+      <ColdStartView
+        greeting="Buenas tardes."
+        totalSessions={2}
+        onAction={() => {}}
+        recommendation={recommendation}
+        streak={1}
+        nextWindow="09:30"
+      />,
+    );
+    const recoCard = container.querySelector('[data-testid="coldstart-active-recommendation"]');
+    expect(recoCard).toBeTruthy();
+    expect(recoCard.textContent).toMatch(/RECOMENDADO/);
+    expect(recoCard.textContent).toMatch(/Reinicio Parasimpático/);
+  });
+
+  it("phase=active+actions sin recommendation → fallback firstProtocolForIntent", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 2,
+      history: [{}, {}],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const { container } = render(
+      <ColdStartView
+        greeting="Hola."
+        totalSessions={2}
+        onAction={() => {}}
+        recommendation={null}
+        streak={0}
+        nextWindow={null}
+      />,
+    );
+    // Fallback firstProtocolForIntent("calma") devuelve un protocol válido
+    const recoCard = container.querySelector('[data-testid="coldstart-active-recommendation"]');
+    expect(recoCard).toBeTruthy();
+    expect(recoCard.textContent).toMatch(/RECOMENDADO/);
+    // Streak=0 → muestra "—"
+    expect(container.querySelector('[data-testid="mini-stat-streak"]').textContent).toContain("—");
+    // nextWindow=null → muestra "—"
+    expect(container.querySelector('[data-testid="mini-stat-window"]').textContent).toContain("—");
+  });
+
+  it("phase=active+empty (gates done) → NO progress ni mini-stats (preserva EmptyColdStart legacy)", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 1,
+      history: [{}],
+      instruments: [{ instrumentId: "pss-4" }],
+      chronotype: { type: "intermediate" },
+      hrvLog: [{ rmssd: 45 }],
+    });
+    const { container } = render(
+      <ColdStartView
+        greeting="Hola."
+        totalSessions={1}
+        onAction={() => {}}
+        recommendation={null}
+        streak={1}
+        nextWindow="22:00"
+      />,
+    );
+    expect(container.querySelector("[data-v2-coldstart][data-phase='active']")).toBeTruthy();
+    // EmptyColdStart card preservada
+    expect(container.querySelector("[data-v2-coldstart-empty]")).toBeTruthy();
+    // No progress ni mini-stats (no aplica al empty case)
+    expect(container.querySelector('[data-testid="coldstart-active-progress"]')).toBeNull();
+    expect(container.querySelector("[data-v2-mini-stats-row]")).toBeNull();
+    // Reco persistente NO se muestra cuando hasActions=false
+    expect(container.querySelector('[data-testid="coldstart-active-recommendation"]')).toBeNull();
+    // Copy legacy empty
+    expect(container.textContent).toMatch(/Listo para tu próxima sesión/);
+    expect(container.textContent).toMatch(/TU PRÓXIMA ACCIÓN/);
+  });
+
+  it("phase=active+actions sin protocol resoluble (intent inválido) → no reco card pero progress/mini-stats sí", () => {
+    setStore({
+      firstIntent: null, // sin intent → firstProtocolForIntent devuelve fallback default
+      totalSessions: 2,
+      history: [{}, {}],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const { container } = render(
+      <ColdStartView
+        greeting="Hola."
+        totalSessions={2}
+        onAction={() => {}}
+        recommendation={null}
+        streak={0}
+        nextWindow={null}
+      />,
+    );
+    // Progress y mini-stats SÍ visibles (independientes de reco)
+    expect(container.querySelector('[data-testid="coldstart-active-progress"]')).toBeTruthy();
+    expect(container.querySelector("[data-v2-mini-stats-row]")).toBeTruthy();
+  });
+
+  it("anti-regression: phase=fresh + recommendation prop ignorada (no reco card en fresh)", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 0,
+      history: [],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const recommendation = { primary: { id: "reinicio-parasimpatico", n: "Reinicio", d: 120 } };
+    const { container } = render(
+      <ColdStartView
+        greeting="Buenas noches."
+        totalSessions={0}
+        onAction={() => {}}
+        recommendation={recommendation}
+        streak={0}
+        nextWindow="22:00"
+      />,
+    );
+    // Phase=fresh → NO reco persistent
+    expect(container.querySelector('[data-testid="coldstart-active-recommendation"]')).toBeNull();
+    // Y todas las cards legacy visibles
+    expect(container.querySelectorAll("[data-v2-onboarding-row]").length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("threshold: totalSessions=4 sigue en cold-start phase=active; threshold N=5 elevation es responsabilidad de HomeV2", () => {
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 4,
+      history: [{}, {}, {}, {}],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const { container } = render(
+      <ColdStartView
+        greeting="Hola."
+        totalSessions={4}
+        onAction={() => {}}
+        recommendation={null}
+        streak={4}
+        nextWindow="22:00"
+      />,
+    );
+    expect(container.querySelector("[data-v2-coldstart][data-phase='active']")).toBeTruthy();
+    const bar = container.querySelector("[data-v2-learning-progressbar]");
+    expect(bar.getAttribute("aria-valuenow")).toBe("4");
+    expect(bar.getAttribute("aria-valuemax")).toBe("5");
+  });
+
+  it("acción tap en reco card invoca onAction con item shape correcto", () => {
+    const onAction = vi.fn();
+    setStore({
+      firstIntent: "calma",
+      totalSessions: 2,
+      history: [{}, {}],
+      instruments: [],
+      chronotype: null,
+      hrvLog: [],
+    });
+    const { getByTestId } = render(
+      <ColdStartView
+        greeting="Hola."
+        totalSessions={2}
+        onAction={onAction}
+        recommendation={{ primary: { id: "reinicio-parasimpatico", n: "Reinicio", d: 120 } }}
+        streak={0}
+        nextWindow={null}
+      />,
+    );
+    fireEvent.click(getByTestId("coldstart-active-recommendation"));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    const arg = onAction.mock.calls[0][0];
+    expect(arg.action).toBe("start-protocol");
+    expect(arg.protocolId).toBe("reinicio-parasimpatico");
+  });
+});

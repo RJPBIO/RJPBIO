@@ -142,10 +142,20 @@ describe("LearningView — Bug #2 fallback diversity contra last-3", () => {
 });
 
 describe("LearningView — Bug #3 data-source attr engine vs fallback correcto", () => {
-  it("engine con primary.id válido → data-source='engine'", () => {
+  it("engine con primary.protocol válido → data-source='engine'", () => {
     setHistory(["Reinicio Parasimpático"]);
+    // Phase 6H Fix-A1 — mock actualizado al shape REAL del engine adaptive
+    // (neural.js:809). Antes el mock asumía primary flat `{id, n, int}` —
+    // que era exactamente la shape mal-interpretada por los callers (bug A1).
+    // El nuevo helper isEngineRecommendation distingue correctamente: solo
+    // marca "engine" cuando primary.protocol existe + id válido. Mock realista
+    // refleja lo que el engine REAL produce.
     recommendationMock.mockReturnValue({
-      primary: { id: 4, n: "Pulse Shift", int: "energia" },
+      primary: {
+        protocol: { id: 4, n: "Pulse Shift", int: "energia" },
+        score: 65.2,
+        reason: "Ciclo circadiano favorable para activación",
+      },
     });
     render(<LearningView greeting="Hola." subtitle={null} onAction={vi.fn()} />);
     const recoCard = document.querySelector("[data-v2-recommendation]");

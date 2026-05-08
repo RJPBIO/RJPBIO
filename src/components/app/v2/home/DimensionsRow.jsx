@@ -4,13 +4,34 @@ import { focusDescriptor, calmDescriptor, energyDescriptor } from "./copy";
 
 // 3 dimensiones equidistantes con separadores verticales 0.5px.
 // Sin cards. Hover opacity boost 0.05. Tap scale 0.98 120ms.
+//
+// Phase 6H Premium-Fix1 — B4 logic con prop opcional `sources`:
+//   { foco: 'measured' | 'partial' | 'fallback',
+//     calma: 'measured' | 'partial' | 'fallback',
+//     energia: 'measured' | 'partial' | 'fallback' }
+// · 'measured' → render normal sin descriptor extra
+// · 'partial'  → render con eyebrow ESTIMADO debajo del valor
+// · 'fallback' → dimension oculta (no participa del grid)
+// Si todas son 'fallback' → componente entero retorna null (no row vacío).
+//
+// Cuando `sources` no se pasa, comportamiento legacy preservado: las 3
+// dimensiones siempre visibles sin descriptor source. Esto evita romper
+// callers existentes (PersonalizedView legacy api focus/calm/energy).
 
-export default function DimensionsRow({ focus = 0, calm = 0, energy = 0, onSelect }) {
-  const items = [
-    { id: "foco",    label: "FOCO",    value: focus,  desc: focusDescriptor(focus)  },
-    { id: "calma",   label: "CALMA",   value: calm,   desc: calmDescriptor(calm)    },
-    { id: "energia", label: "ENERGÍA", value: energy, desc: energyDescriptor(energy) },
+export default function DimensionsRow({ focus = 0, calm = 0, energy = 0, sources = null, onSelect }) {
+  const baseItems = [
+    { id: "foco",    label: "FOCO",    value: focus,  desc: focusDescriptor(focus),  source: sources?.foco    || "measured" },
+    { id: "calma",   label: "CALMA",   value: calm,   desc: calmDescriptor(calm),    source: sources?.calma   || "measured" },
+    { id: "energia", label: "ENERGÍA", value: energy, desc: energyDescriptor(energy), source: sources?.energia || "measured" },
   ];
+  // B4: filter out 100% fallback dimensions (no signal real disponible).
+  const items = baseItems.filter((it) => it.source !== "fallback");
+  if (items.length === 0) return null;
+
+  // Phase 6H Premium-Fix1 — gridTemplateColumns dinámico para que columnas
+  // restantes ocupen ancho equitativamente cuando alguna se oculta.
+  const gridTemplate = `repeat(${items.length}, 1fr)`;
+
   return (
     <section
       data-v2-dimensions
@@ -19,7 +40,7 @@ export default function DimensionsRow({ focus = 0, calm = 0, energy = 0, onSelec
         paddingBlockStart: 0,
         paddingBlockEnd: spacing.s64,
         display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
+        gridTemplateColumns: gridTemplate,
       }}
     >
       {items.map((it, i) => (
@@ -28,6 +49,7 @@ export default function DimensionsRow({ focus = 0, calm = 0, energy = 0, onSelec
           type="button"
           onClick={() => onSelect && onSelect(it.id)}
           data-v2-dim={it.id}
+          data-source={it.source}
           style={{
             appearance: "none",
             background: "transparent",
@@ -77,6 +99,23 @@ export default function DimensionsRow({ focus = 0, calm = 0, energy = 0, onSelec
           >
             {Math.round(it.value)}%
           </span>
+          {it.source === "partial" && (
+            <span
+              data-v2-dim-source-tag
+              style={{
+                fontFamily: typography.familyMono,
+                fontSize: 9,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: colors.accent.phosphorCyan,
+                opacity: 0.55,
+                fontWeight: typography.weight.medium,
+                marginBlockEnd: 4,
+              }}
+            >
+              ESTIMADO
+            </span>
+          )}
           <span
             style={{
               fontFamily: typography.family,

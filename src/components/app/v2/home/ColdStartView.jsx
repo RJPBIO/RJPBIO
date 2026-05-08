@@ -3,7 +3,10 @@ import { useMemo } from "react";
 import { Compass, Play, Activity, ClipboardList, ChevronRight } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { firstProtocolForIntent } from "@/lib/first-protocol";
+import { extractPrimaryProtocol, extractPrimaryReason } from "@/lib/recommendationExtract";
 import { colors, typography, spacing, radii, surfaces, icon, motion as motionTok } from "../tokens";
+import ProgressBar from "./ProgressBar";
+import MiniStatsRow from "./MiniStatsRow";
 
 // Estado A — cold-start (menos de 5 sesiones).
 // Saludo + cards de accion lista-row dinamicamente filtradas:
@@ -24,8 +27,30 @@ import { colors, typography, spacing, radii, surfaces, icon, motion as motionTok
 // vacío. Ahora: EmptyColdStart card con progress hacia baseline + CTA
 // "Nueva sesión". Greeting copy también cambia ("Listo para tu próxima
 // sesión." en lugar del "Vamos a conocerte." onboarding-vibe).
+//
+// Phase 6H Premium-Fix2 — phase logic adaptado al H-2 finding (sim 90 días):
+//   · phase 'fresh' (totalSessions === 0): comportamiento existing
+//   · phase 'active' (1 ≤ totalSessions < 5):
+//     - actions=[]    → EmptyColdStart card (existing, sin cambios)
+//     - actions.len>0 → NUEVO: copy adapter ("Tu trayectoria está
+//       tomando forma" / "TU PRÓXIMO PASO") + ProgressBar visible +
+//       MiniStatsRow (sesiones · racha · ventana) + recommendation
+//       persistente prepended a las gates pendientes.
+// Threshold N=5 alineado con NEURAL_CONFIG.health.learningSessions —
+// al cruzar, HomeV2 cambia a LearningView branch (no en este componente).
 
-export default function ColdStartView({ greeting, subtitle = "Vamos a conocerte.", totalSessions: totalSessionsProp, onAction }) {
+const COLDSTART_LEARNING_THRESHOLD = 5;
+
+export default function ColdStartView({
+  greeting,
+  subtitle = "Vamos a conocerte.",
+  totalSessions: totalSessionsProp,
+  onAction,
+  // Phase 6H Premium-Fix2 — props nuevos opcionales (aditivos).
+  recommendation = null,
+  streak = 0,
+  nextWindow = null,
+}) {
   // Selectores granulares para evitar re-render en cambios irrelevantes.
   const firstIntent = useStore((s) => s.firstIntent);
   const chronotype = useStore((s) => s.chronotype);
@@ -41,18 +66,88 @@ export default function ColdStartView({ greeting, subtitle = "Vamos a conocerte.
   );
 
   const hasActions = actions.length > 0;
-  const headlineCopy = hasActions ? greeting : "Listo para tu próxima sesión.";
-  const subtitleCopy = hasActions ? subtitle : "Sigues construyendo tu trayectoria.";
-  const eyebrowCopy = hasActions ? "EMPEZAR POR AQUÍ" : "TU PRÓXIMA ACCIÓN";
+  // Phase 6H Premium-Fix2 — phase derivation. fresh = sin sesiones reales;
+  // active = post-1ra sesión pero pre-baseline (1-4 sesiones).
+  const phase = totalSessions === 0 ? "fresh" : "active";
+  const isActiveWithActions = phase === "active" && hasActions;
+
+  // Copy resolution. Reglas:
+  //   1. fresh + hasActions → greeting + subtitle prop + EMPEZAR POR AQUÍ (legacy)
+  //   2. active + hasActions → greeting + "Tu trayectoria está tomando forma" + TU PRÓXIMO PASO (NEW)
+  //   3. fresh|active + !hasActions → "Listo para tu próxima sesión." + "Sigues construyendo tu trayectoria." + TU PRÓXIMA ACCIÓN (legacy empty)
+  let headlineCopy;
+  let subtitleCopy;
+  let eyebrowCopy;
+  if (!hasActions) {
+    headlineCopy = "Listo para tu próxima sesión.";
+    subtitleCopy = "Sigues construyendo tu trayectoria.";
+    eyebrowCopy = "TU PRÓXIMA ACCIÓN";
+  } else if (isActiveWithActions) {
+    headlineCopy = greeting;
+    subtitleCopy = "Tu trayectoria está tomando forma.";
+    eyebrowCopy = "TU PRÓXIMO PASO";
+  } else {
+    // fresh + hasActions (legacy default)
+    headlineCopy = greeting;
+    subtitleCopy = subtitle;
+    eyebrowCopy = "EMPEZAR POR AQUÍ";
+  }
+
+  // Phase 6H Premium-Fix2 — mini-stats data (Decision D1).
+  // Solo en phase=active+hasActions. Valores formateados para display compacto.
+  const miniStats = useMemo(() => {
+    if (!isActiveWithActions) return null;
+    const safeStreak = Number.isFinite(streak) ? streak : 0;
+    return [
+      { id: "sessions", label: "SESIONES", value: String(totalSessions), testid: "mini-stat-sessions" },
+      { id: "streak",   label: "RACHA",    value: safeStreak > 0 ? `${safeStreak}d` : "—", testid: "mini-stat-streak" },
+      { id: "window",   label: "VENTANA",  value: nextWindow || "—", testid: "mini-stat-window" },
+    ];
+  }, [isActiveWithActions, totalSessions, streak, nextWindow]);
+
+  // Phase 6H Premium-Fix2 — recommendation persistent action (Decision C2).
+  // Construye una "action card" con el shape que ActionRow espera, prepended
+  // a la lista de gates pendientes. Engine puede retornar null en cohort=cold-start
+  // (k<minSamples) — degradamos a firstProtocolForIntent (mismo fallback que
+  // LearningView). NULL si no hay protocol resoluble.
+  const recoAction = useMemo(() => {
+    if (!isActiveWithActions) return null;
+    // Phase 6H Fix-A1 — extraction defensive via helper centralizado.
+    // ANTES (Premium-Fix2 + Fix4): `fromEngine.id != null` siempre falso porque
+    // shape real engine es `primary.protocol.id`, NO `primary.id`. Resultado:
+    // siempre caía a `firstProtocolForIntent(firstIntent)` → user veía siempre
+    // el mismo protocolo per-intent (e.g. "Reinicio Parasimpático" para calma).
+    // AHORA: helper retorna engine Protocol cuando shape válido, fallback
+    // legacy automático preservado.
+    const protoFromEngine = extractPrimaryProtocol(recommendation);
+    const proto = protoFromEngine || firstProtocolForIntent(firstIntent);
+    if (!proto || !proto.n) return null;
+    const minutes = Math.max(1, Math.round((proto.d || 120) / 60));
+    // Engine reason opcional: ActionRow renderea caption italic bajo el
+    // description. Solo presente cuando recommendation viene del engine real
+    // (helper retorna null para fallback firstProtocolForIntent).
+    const engineReason = extractPrimaryReason(recommendation);
+    return {
+      id: "reco-active",
+      Icon: Play,
+      title: proto.n,
+      description: `Recomendado · ${minutes} min · sesión guiada`,
+      reason: engineReason,
+      action: "start-protocol",
+      protocolId: proto.id,
+    };
+  }, [isActiveWithActions, recommendation, firstIntent]);
 
   return (
-    <>
+    <section data-v2-coldstart data-phase={phase}>
       <section
         data-v2-greeting
         style={{
           paddingInline: spacing.s24,
           paddingBlockStart: spacing.s8,
-          paddingBlockEnd: spacing.s64,
+          // Phase 6H Premium-Fix2 — padding-bottom reducido en active+actions
+          // para acomodar progress + mini-stats sin push exagerado.
+          paddingBlockEnd: isActiveWithActions ? spacing.s24 : spacing.s64,
         }}
       >
         <h1
@@ -83,6 +178,46 @@ export default function ColdStartView({ greeting, subtitle = "Vamos a conocerte.
         </p>
       </section>
 
+      {/* Phase 6H Premium-Fix2 — progress bar + mini-stats (active+actions only) */}
+      {isActiveWithActions && (
+        <section
+          data-v2-coldstart-progress
+          aria-label="Progreso hacia tu trayectoria personalizada"
+          style={{
+            paddingInline: spacing.s24,
+            paddingBlockEnd: spacing.s8,
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <ProgressBar
+            value={totalSessions}
+            max={COLDSTART_LEARNING_THRESHOLD}
+            label="HASTA TU TRAYECTORIA PERSONALIZADA"
+            testid="coldstart-active-progress"
+          />
+          <p
+            style={{
+              margin: 0,
+              fontFamily: typography.family,
+              fontSize: typography.size.bodyMin,
+              fontWeight: typography.weight.regular,
+              color: colors.text.secondary,
+              lineHeight: 1.4,
+            }}
+          >
+            {`Sesión ${totalSessions} de ${COLDSTART_LEARNING_THRESHOLD} · cierra tu calibración inicial.`}
+          </p>
+        </section>
+      )}
+
+      {miniStats && (
+        <div style={{ paddingInline: spacing.s24, paddingBlockEnd: spacing.s24 }}>
+          <MiniStatsRow stats={miniStats} />
+        </div>
+      )}
+
       <section
         data-v2-onboarding
         aria-label={hasActions ? "Empezar por aquí" : "Tu próxima acción"}
@@ -109,9 +244,22 @@ export default function ColdStartView({ greeting, subtitle = "Vamos a conocerte.
         </div>
 
         {hasActions ? (
-          actions.map((a) => (
-            <ActionRow key={a.id} item={a} onAction={onAction} />
-          ))
+          <>
+            {/* Phase 6H Premium-Fix2 — recommendation persistent (Decision C2),
+                prepended a las gates pendientes. Solo en active+hasActions. */}
+            {recoAction && (
+              <ActionRow
+                key="reco-active"
+                item={recoAction}
+                onAction={onAction}
+                eyebrow="RECOMENDADO"
+                testid="coldstart-active-recommendation"
+              />
+            )}
+            {actions.map((a) => (
+              <ActionRow key={a.id} item={a} onAction={onAction} />
+            ))}
+          </>
         ) : (
           <EmptyColdStart
             totalSessions={totalSessions}
@@ -119,7 +267,7 @@ export default function ColdStartView({ greeting, subtitle = "Vamos a conocerte.
           />
         )}
       </section>
-    </>
+    </section>
   );
 }
 
@@ -313,18 +461,26 @@ function EmptyColdStart({ totalSessions, onAction }) {
   );
 }
 
-function ActionRow({ item, onAction }) {
-  const { Icon, title, description } = item;
+// Phase 6H Premium-Fix2 — extendido con `eyebrow` y `testid` opcionales.
+// eyebrow: micro caps cyan label sobre el title (ej. "RECOMENDADO" para el
+// reco-active card). testid: forwarded a button para selectors E2E.
+// Cuando ausentes, comportamiento legacy preservado.
+function ActionRow({ item, onAction, eyebrow = null, testid = null }) {
+  // Phase 6H Premium-Fix4 M-1 — `reason` opcional desde item (engine adaptive
+  // recommendation.primary.reason). Si presente, render como caption italic
+  // bajo la description. Si null/undefined, omitir.
+  const { Icon, title, description, reason } = item;
   return (
     <button
       type="button"
       onClick={() => onAction && onAction(item)}
       data-v2-onboarding-row={item.id}
+      data-testid={testid || undefined}
       style={{
         appearance: "none",
         textAlign: "start",
         background: colors.bg.raised,
-        border: `0.5px solid ${colors.separator}`,
+        border: `0.5px solid ${eyebrow ? colors.accent.phosphorCyan : colors.separator}`,
         borderRadius: radii.panel,
         padding: "18px 20px",
         display: "flex",
@@ -360,6 +516,21 @@ function ActionRow({ item, onAction }) {
         <Icon size={icon.size} strokeWidth={icon.strokeWidth} />
       </span>
       <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+        {eyebrow && (
+          <span
+            style={{
+              fontFamily: typography.familyMono,
+              fontSize: 9,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: colors.accent.phosphorCyan,
+              fontWeight: typography.weight.medium,
+              marginBlockEnd: 2,
+            }}
+          >
+            {eyebrow}
+          </span>
+        )}
         <span
           style={{
             fontFamily: typography.family,
@@ -383,6 +554,22 @@ function ActionRow({ item, onAction }) {
         >
           {description}
         </span>
+        {reason && (
+          <span
+            data-v2-action-reason
+            style={{
+              marginBlockStart: 4,
+              fontFamily: typography.family,
+              fontSize: typography.size.caption,
+              fontStyle: "italic",
+              fontWeight: typography.weight.regular,
+              color: colors.text.muted,
+              lineHeight: 1.45,
+            }}
+          >
+            {reason}
+          </span>
+        )}
       </span>
       <ChevronRight
         size={18}

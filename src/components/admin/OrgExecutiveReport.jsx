@@ -26,6 +26,10 @@ import HrvTrendsPanel from "./reports/HrvTrendsPanel";
 import ProgramsCohortPanel from "./reports/ProgramsCohortPanel";
 import CorrelationPanel from "./reports/CorrelationPanel";
 import TopProtocolsPanel from "./reports/TopProtocolsPanel";
+// Phase 6I-4 — engine output exposure admin (H-4 cierre repo audit).
+// Backend executiveReport.js computa report.engagement (DAU/WAU/sessions/
+// activation) pero ningún panel consumer lo exponía → invisible.
+import EngagementPanel from "./reports/EngagementPanel";
 import PrintButton from "./reports/PrintButton";
 
 export default function OrgExecutiveReport({ report, isPrintMode = false }) {
@@ -118,6 +122,11 @@ export default function OrgExecutiveReport({ report, isPrintMode = false }) {
       <CorrelationPanel correlation={report.correlation} />
 
       <TopProtocolsPanel topProtocols={report.topProtocols} />
+
+      <EngagementPanel
+        engagement={report.engagement}
+        totalActiveMembers={report.org?.activeMembers ?? report.kpis?.activeMembers}
+      />
 
       <ComplianceFooter snapshot={report.snapshot} />
 

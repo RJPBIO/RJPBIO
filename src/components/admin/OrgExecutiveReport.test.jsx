@@ -50,7 +50,14 @@ function makeReport(overrides = {}) {
     sessions: { total: 128 },
     topProtocols: [],
     programs: { suppressed: true, n: 2 },
-    engagement: {},
+    engagement: {
+      suppressed: false,
+      sessionsLast7d: 28,
+      sessionsLast30d: 96,
+      activeUsersLast7d: 5,
+      activeUsersLast30d: 9,
+      activationRate: 0.75,
+    },
     correlation: { suppressed: true, n: 2 },
     snapshot: baseSnapshot,
     ...overrides,
@@ -152,5 +159,73 @@ describe("OrgExecutiveReport — Phase 6F SP-D", () => {
   it("Correlation suppressed muestra mensaje sin-muestra", () => {
     render(<OrgExecutiveReport report={makeReport()} />);
     expect(screen.getByText(/Mínimo 5 personas con ambas mediciones/i)).toBeInTheDocument();
+  });
+
+  /* Phase 6I-4 — EngagementPanel mount integration (cierre H-4 repo audit) */
+
+  it("Engagement panel visible cuando report.engagement provee data", () => {
+    render(<OrgExecutiveReport report={makeReport()} />);
+    const panel = screen.getByTestId("engagement-panel");
+    expect(panel).toBeInTheDocument();
+    expect(panel).toHaveAttribute("data-state", "active");
+    expect(screen.getByTestId("engagement-stat-dau")).toBeInTheDocument();
+    expect(screen.getByTestId("engagement-stat-wau")).toBeInTheDocument();
+    expect(screen.getByTestId("engagement-stat-sessions-per-day")).toBeInTheDocument();
+    expect(screen.getByTestId("engagement-stat-activation")).toBeInTheDocument();
+  });
+
+  it("Engagement panel renderea suppressed branch cuando engagement.suppressed=true", () => {
+    render(
+      <OrgExecutiveReport
+        report={makeReport({ engagement: { suppressed: true, n: 3 } })}
+      />
+    );
+    const panel = screen.getByTestId("engagement-panel");
+    expect(panel).toHaveAttribute("data-state", "suppressed");
+    expect(screen.getByText(/Métricas no disponibles/i)).toBeInTheDocument();
+  });
+
+  it("Engagement panel renderea empty state cuando activeUsersLast7d=0", () => {
+    render(
+      <OrgExecutiveReport
+        report={makeReport({
+          engagement: {
+            suppressed: false,
+            sessionsLast7d: 0,
+            sessionsLast30d: 0,
+            activeUsersLast7d: 0,
+            activeUsersLast30d: 0,
+            activationRate: 0,
+          },
+        })}
+      />
+    );
+    const panel = screen.getByTestId("engagement-panel");
+    expect(panel).toHaveAttribute("data-state", "empty");
+    expect(screen.getByText(/Sin actividad en últimos 7 días/i)).toBeInTheDocument();
+  });
+
+  it("Engagement panel usa report.org.activeMembers como totalActiveMembers para ratio", () => {
+    render(<OrgExecutiveReport report={makeReport()} />);
+    // baseReport tiene org.activeMembers=12 + activeUsersLast7d=5 → "5/12"
+    expect(screen.getByText(/5\/12 miembros del equipo/i)).toBeInTheDocument();
+  });
+
+  it("Engagement panel se monta DESPUÉS de TopProtocols y ANTES de ComplianceFooter", () => {
+    render(<OrgExecutiveReport report={makeReport()} />);
+    const panels = Array.from(
+      document.querySelectorAll(
+        "[data-v2-kpi-hero], [data-v2-nom35-trends], [data-v2-hrv-trends], [data-v2-programs-cohort], [data-v2-programs-cohort-empty], [data-v2-correlation], [data-v2-top-protocols], [data-v2-engagement], [data-v2-report-footer]"
+      )
+    );
+    const engagementIdx = panels.findIndex((el) => el.matches("[data-v2-engagement]"));
+    const footerIdx = panels.findIndex((el) => el.matches("[data-v2-report-footer]"));
+    expect(engagementIdx).toBeGreaterThanOrEqual(0);
+    expect(footerIdx).toBeGreaterThan(engagementIdx);
+  });
+
+  it("Engagement panel NO renderea cuando report.engagement es null/undefined", () => {
+    render(<OrgExecutiveReport report={makeReport({ engagement: null })} />);
+    expect(screen.queryByTestId("engagement-panel")).toBeNull();
   });
 });
