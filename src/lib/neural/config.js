@@ -59,6 +59,27 @@ export const NEURAL_CONFIG = FREEZE({
 
     // Risk thresholds del índice agregado.
     riskThresholds: FREEZE({ critical: 70, high: 50, moderate: 30 }),
+
+    // Phase 6J-3 M-5 — efficacy thresholds externalized.
+    // Antes hardcoded en _burnoutReducedEfficacy (neural.js): qR<40 → 30,
+    // qR<55 → 15, else 0. Sin link a literatura ni a config — magic numbers
+    // que dificultaban tuning. Ahora config-driven: tweak sin tocar lógica.
+    //
+    // Racional thresholds:
+    //   - lowQualThreshold (40): bioQ < 40 = "baja calidad" (bands.baja=20
+    //     en bioQuality.bands; entre 20-40 = baja-media degradada)
+    //   - midQualThreshold (55): bioQ < 55 = entre baja y media (bands.media=45)
+    //   - lowQualBase (30): peso fuerte cuando calidad sostenida es baja
+    //     (señal directa de reducción de eficacia per MBI)
+    //   - midQualBase (15): peso moderado en zona intermedia
+    //   - dropPenaltyCap (40): cap del penalty por caída relativa qP-qR
+    efficacy: FREEZE({
+      lowQualThreshold: 40,
+      midQualThreshold: 55,
+      lowQualBase: 30,
+      midQualBase: 15,
+      dropPenaltyCap: 40,
+    }),
   }),
 
   // ── BioQuality (calidad de la sesión) ─────────────────────────
@@ -92,6 +113,14 @@ export const NEURAL_CONFIG = FREEZE({
       sessionsBonus: 10,
     }),
     diversityPenalty: -15,        // penaliza protocolos repetidos en últimas 3 sesiones
+    // Phase 6J-3 M-3 — intent layer doble check.
+    // Antes: solo penalty por nombre de protocolo. Pero alternar dos
+    // protocolos del mismo intent (e.g. "Reinicio Parasimpático" + "4-7-8
+    // Breathing", ambos calma) escapaba el penalty aunque la habituación
+    // funcional es similar. Penalty intent (-7) es menos estricto que name
+    // (-15) — refleja "mismo gradiente, distinta forma" en lugar de
+    // "mismo protocolo".
+    diversityPenaltyIntent: -7,
     levelMatch: FREEZE({
       withinReach: 5,             // dificultad ≤ levelIdx+1 → bonus
       tooHigh: -10,               // dificultad > levelIdx+2 → penalty
@@ -284,6 +313,27 @@ export const NEURAL_CONFIG = FREEZE({
     minDecayFactor: 0.10,
   }),
 
+  // ── Bandit composite reward weights (Phase 6J-4 LOW-3) ─────────
+  // Antes hardcoded en `compositeReward` (bandit.js). Externalizados aquí
+  // para tuning sin tocar lógica + literature reference explícito.
+  //
+  // Pesos defendibles per Sprint S4 design:
+  //   - mood    : 1.0 (primario, escala Likert ±4 → reward dominante)
+  //   - energy  : 0.3 (escala 1-3 → ±2, así que aporta ≤ ±0.6)
+  //   - HRV     : 1.5 sobre Δ lnRMSSD (~±0.3 típico post-respiración
+  //               lenta → reward ±0.45 moderado)
+  //
+  // Completion factor: ratio 1.0 → 1.0; 0.5 → 0.75; 0.0 → 0.5.
+  // No anula reward (sesión partial todavía aporta señal), solo
+  // descuenta para penalizar abandono.
+  banditReward: FREEZE({
+    moodWeight: 1.0,
+    energyWeight: 0.3,
+    hrvWeight: 1.5,
+    completionMin: 0.5,
+    completionRange: 0.5,
+  }),
+
   // ── Anti-gaming v2 (Sprint 45) ────────────────────────────────
   // Detector multi-signal con scoring [0..100]. Thresholds:
   //   <30 = clean, 30-59 = suspicious, ≥60 = likely-gaming.
@@ -361,7 +411,13 @@ export const NEURAL_CONFIG = FREEZE({
   // ── Session completion gain ───────────────────────────────────
   // vCores y métricas que se actualizan al cerrar una sesión.
   sessionGain: FREEZE({
-    historyMaxLength: 200,        // anillo: solo guardamos últimas 200
+    // Phase 6J-3 M-4 — bump 200 → 500. Power user 1 sesión/día retiene
+    // ~16 meses (vs ~6 meses pre-bump). Storage impact: ~150 bytes/entry
+    // × 500 = 75 KB << localStorage/IDB quota (5+ MB típica). Funciones
+    // analytics (analyzeNeuralRhythm, analyzeStreakChain, calcBurnoutIndex)
+    // se benefician de window más amplio. Funciones con sliding window
+    // explícito (slice -10, -5) no afectadas — solo el cap del ring.
+    historyMaxLength: 500,
     cohBoostMin: 0,
     cohBoostMax: 8,
     cohBoostBase: 2,
@@ -432,6 +488,33 @@ export const NEURAL_CONFIG = FREEZE({
     // Personalización: si la recomendación coincide con la del baseline
     // circadiano-only ≥ X% del tiempo, la personalización es débil.
     personalizationWeakThreshold: 0.85,
+  }),
+
+  // ── Calibration interpretation (Phase 6J-4 LOW-3 → LOW-4) ──────
+  // Antes hardcoded en `interpretCalibration` (neural.js). Externalizados
+  // para tuning sin tocar lógica + documentación de cada dimensión.
+  //
+  // Cada dimensión (rt/bh/focusAcc/stress) tiene 2 thresholds:
+  //   - strengthMin: ≥ → entra en lista "fortalezas"
+  //   - areaMax:    < → entra en lista "áreas de mejora"
+  //
+  // Brecha intencional entre los thresholds (e.g. 40-70 para rt) deja
+  // una zona neutra donde el resultado no se categoriza fuerte ni débil
+  // — refleja que la calibración baseline no exige clasificación binaria.
+  calibration: FREEZE({
+    interpretation: FREEZE({
+      // Reaction Time score (0-100, derivado de rt_ms invertido).
+      rt: FREEZE({ strengthMin: 70, areaMax: 40 }),
+      // Breath Hold score (0-100, capacidad respiratoria).
+      bh: FREEZE({ strengthMin: 60, areaMax: 30 }),
+      // Focus Accuracy score (0-100, accuracy task atencional).
+      focusAccuracy: FREEZE({ strengthMin: 70, areaMax: 40 }),
+      // Stress Score (0-100, regulación emocional inversa — alto = mejor).
+      stress: FREEZE({ strengthMin: 60, areaMax: 40 }),
+    }),
+    // Cuántas fortalezas activan cada categoría de summary.
+    summaryStrengthsHigh: 3,    // ≥3 strengths → "alta capacidad"
+    summaryStrengthsMid: 2,     // ≥2 strengths → "buen punto de partida"
   }),
 
   // ── Staleness detection + recalibration (Sprint 42) ───────────

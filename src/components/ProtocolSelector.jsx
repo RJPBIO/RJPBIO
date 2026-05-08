@@ -269,7 +269,11 @@ export default function ProtocolSelector({
                 const isFav = favs.includes(p.n);
                 const isSmart = smartPick?.id === p.id;
                 const isCurrent = pr.id === p.id;
-                const pred = predictSessionImpact(st, p);
+                // Phase 6J-3 M-1 — chronotype passthrough.
+                // Antes: predictSessionImpact(st, p) sin chronotype → engine
+                // cae a fallback global en cold-start (skip prior cronobiológico).
+                // Ahora: chronotype propaga → prior cronobiológico activo.
+                const pred = predictSessionImpact(st, p, { chronotype: st?.chronotype || null });
                 const diffLabel = DIF_LABELS[(p.dif || 1) - 1];
                 const sens = protoSens[p.n];
                 const ariaDescription = [

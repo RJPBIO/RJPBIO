@@ -166,6 +166,31 @@ export default function NeuralSettingsClient() {
             : "neutral"
           }
         />
+        {/* Phase 6J-2 HIGH-6 — Fatigue tile dedicado.
+            ANTES: fatigue solo aparecía como action item (mild/severe).
+            AHORA: KPI tile primer-class — el operador del sistema ve
+            de un vistazo si el motor está priorizando regulación. */}
+        {health.fatigue && (
+          <KPITile
+            label="Fatiga del sistema"
+            value={
+              health.fatigue.level === "none" ? "Estable"
+              : health.fatigue.level === "mild" ? "Leve"
+              : "Severa"
+            }
+            sub={
+              health.fatigue.level === "none"
+                ? "Sin patrón anómalo"
+                : `${(health.fatigue.partialRatio * 100).toFixed(0)}% sesiones parciales · ${health.fatigue.avgPauses?.toFixed?.(1) ?? 0} pausas/sesión`
+            }
+            tone={
+              health.fatigue.level === "severe" ? "warn"
+              : health.fatigue.level === "mild" ? "signal"
+              : "neutral"
+            }
+            data-testid="neural-settings-fatigue-tile"
+          />
+        )}
       </section>
 
       {/* Personalization checklist */}

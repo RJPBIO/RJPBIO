@@ -31,6 +31,8 @@ import ProfileV2 from "./ProfileV2";
 import BottomNavV2 from "./BottomNavV2";
 import CrisisFAB from "./CrisisFAB";
 import CrisisSheet from "./CrisisSheet";
+// Phase 6J-1 Group A — mood capture post-session.
+import MoodPostSessionSheet from "./mood/MoodPostSessionSheet";
 
 // Phase 6 SP3 — ProtocolPlayer overlay desde AppV2Root.
 // Lazy import para preservar SSR-safety de AppV2Root y evitar bundle bloat.
@@ -224,6 +226,20 @@ export default function AppV2Root() {
   const [sessionStartedAt, setSessionStartedAt] = useState(null);
   const [crisisSheetOpen, setCrisisSheetOpen] = useState(false);
 
+  // Phase 6J-1 Group A — Mood capture post-session.
+  // playerPreMood: capturado por MoodPrePicker (Group C) antes de iniciar
+  //   protocolo. Llega via onNavigate({preMood}). null cuando user no
+  //   tapeó el picker — outcome.deltaMood quedará null (compatible con
+  //   bandit pre-Phase 6J-1 behavior).
+  // moodPostContext: snapshot {protocol, predictedDelta, completionRatio,
+  //   hrvDelta} del session-complete que MoodPostSessionSheet necesita
+  //   cuando user submitea o skipea mood post.
+  // moodPostSheetOpen: gate del sheet — set on player complete, cleared
+  //   on submit/skip.
+  const [playerPreMood, setPlayerPreMood] = useState(null);
+  const [moodPostContext, setMoodPostContext] = useState(null);
+  const [moodPostSheetOpen, setMoodPostSheetOpen] = useState(false);
+
   // Phase 6B SP1 — state para modales HRV/PPG/BLE + instrumento.
   // hrvModalMode: "camera" arranca HRVCameraMeasure (3 modos internos:
   // torch/screen-light/ambient). El modal expone onUseBLE → swap a
@@ -305,8 +321,16 @@ export default function AppV2Root() {
   }, []);
 
   // Helper común para mountar el player con un protocolo dado.
-  const launchProtocol = useCallback((protocol) => {
+  // Phase 6J-1 Group A — acepta preMood opcional (1-5 desde MoodPrePicker
+  // en Group C). Llega via onNavigate({preMood}). Se cachea en state local
+  // para que handlePlayerComplete pueda computar deltaMood = post - pre
+  // cuando user submitea mood post.
+  const launchProtocol = useCallback((protocol, preMood = null) => {
     if (!protocol) return;
+    const validPre = (typeof preMood === "number" && preMood >= 1 && preMood <= 5)
+      ? preMood
+      : null;
+    setPlayerPreMood(validPre);
     setSelectedProtocol(protocol);
     setSessionStartedAt(Date.now());
     setPlayerOpen(true);
@@ -356,12 +380,14 @@ export default function AppV2Root() {
   const onNavigate = useCallback((event) => {
     if (!event || typeof event !== "object") return;
     // SP3: start-recommended (HomeV2 ActionCard) + SP4: start-protocol (catálogo).
+    // Phase 6J-1 Group C — acepta event.preMood (1-5) cuando viene del
+    // MoodPrePicker en HomeV2/LearningView; null cuando user no tapeó.
     if (event.action === "start-recommended" || event.action === "start-protocol") {
       const id = Number(event.protocolId);
       if (!Number.isFinite(id)) return;
       const protocol = PROTOCOLS.find((p) => p.id === id);
       if (!protocol) return;
-      launchProtocol(protocol);
+      launchProtocol(protocol, event.preMood ?? null);
       return;
     }
     // Phase 6D SP1 — ColdStart "Tu primera sesión". Acepta:
@@ -730,38 +756,122 @@ export default function AppV2Root() {
           console.error("[v2] programAdvance error", e);
         }
       }
-      // 3. Auto-record bandit (Phase 6 SP4).
-      // Crisis NO entra al bandit (acceso explícito, no spontaneous recommendation).
-      // banditWeight viene del playerCompletion Phase 4 (penalty=0.5 en partial).
-      if (selectedProtocol.useCase !== "crisis" && selectedProtocol.int) {
-        try {
-          store.recordSessionOutcome({
-            intent: selectedProtocol.int,
-            protocol: selectedProtocol.n,
-            deltaMood: null, // sin checkin manual MVP
-            predictedDelta: null,
-            completionRatio: typeof playerSessionData?.banditWeight === "number"
-              ? playerSessionData.banditWeight
-              : 1,
-            energyDelta: null,
-            hrvDelta: null, // sin biometría real todavía (Phase 6B)
-          });
-        } catch (e) {
-          console.error("[v2] recordSessionOutcome error", e);
-        }
+      // 3. Phase 6J-1 Group A — abrir MoodPostSessionSheet en lugar de
+      //    llamar recordSessionOutcome con deltaMood:null. El sheet
+      //    captura mood 1-5 + delega a handleMoodPost{Submit|Skip} que
+      //    aplica logMood y recordSessionOutcome con datos reales.
+      //    Crisis NO entra al bandit (acceso explícito) y NO abre sheet.
+      const skipsSheet = selectedProtocol.useCase === "crisis" || !selectedProtocol.int;
+      if (!skipsSheet) {
+        const completionRatio = typeof playerSessionData?.banditWeight === "number"
+          ? playerSessionData.banditWeight
+          : 1;
+        const predictedDelta = result.predictedDelta ?? null;
+        const hrvDelta = (result.postDelta?.hrv?.delta ?? null);
+        setMoodPostContext({
+          protocol: selectedProtocol,
+          completionRatio,
+          predictedDelta,
+          hrvDelta,
+        });
+        setMoodPostSheetOpen(true);
       }
     }
-    // 4. Cerrar overlay.
+    // 4. Cerrar overlay player.
+    //    Si el sheet va a abrir (sheet path), mantén selectedProtocol
+    //    montado para que el sheet pueda referenciar el protocol en su
+    //    context — handleMoodPost{Submit|Skip} lo limpia cuando user
+    //    cierra el sheet. Si NO abre (crisis / closeSession threw),
+    //    limpia ahora para no dejar el player en estado intermedio.
     setPlayerOpen(false);
-    setSelectedProtocol(null);
     setSessionStartedAt(null);
+    if (!result || selectedProtocol.useCase === "crisis" || !selectedProtocol.int) {
+      setPlayerPreMood(null);
+      setSelectedProtocol(null);
+    }
   }, [selectedProtocol, sessionStartedAt, store]);
+
+  // Phase 6J-1 Group A — handlers del MoodPostSessionSheet.
+  // Submit: logMood (state.moodLog) + recordSessionOutcome con deltaMood real.
+  // Cierra el sheet + limpia context. CRITICAL-1 + CRITICAL-2 fix.
+  const handleMoodPostSubmit = useCallback((mood) => {
+    if (!moodPostContext) {
+      setMoodPostSheetOpen(false);
+      setSelectedProtocol(null);
+      return;
+    }
+    const { protocol, completionRatio, predictedDelta, hrvDelta } = moodPostContext;
+    if (typeof mood === "number" && mood >= 1 && mood <= 5) {
+      // 1. logMood — alimenta state.moodLog (la fuente de verdad para
+      //    burnout, sensitivity, predictions, recovery, correlations).
+      try {
+        useStore.getState().logMood({
+          mood,
+          ts: Date.now(),
+          proto: protocol?.n ?? null,
+          pre: typeof playerPreMood === "number" ? playerPreMood : 0,
+          energy: 2,
+        });
+      } catch (e) { console.error("[v2] logMood error", e); }
+      // 2. recordSessionOutcome con deltaMood real cuando hay preMood;
+      //    null cuando no — comportamiento defensivo conservador.
+      const deltaMood = (typeof playerPreMood === "number" && playerPreMood >= 1)
+        ? mood - playerPreMood
+        : null;
+      try {
+        useStore.getState().recordSessionOutcome({
+          intent: protocol?.int ?? null,
+          protocol: protocol?.n ?? null,
+          deltaMood,
+          predictedDelta,
+          completionRatio,
+          energyDelta: null,
+          hrvDelta,
+        });
+      } catch (e) { console.error("[v2] recordSessionOutcome (submit) error", e); }
+    }
+    setMoodPostSheetOpen(false);
+    setMoodPostContext(null);
+    setPlayerPreMood(null);
+    setSelectedProtocol(null);
+  }, [moodPostContext, playerPreMood]);
+
+  // Skip: recordSessionOutcome con deltaMood:null (legacy behavior).
+  // Bandit recibe reward solo cuando hay HRV (Sprint S4.2 fallback);
+  // si no hay HRV ni mood, compositeReward retorna null y el bandit
+  // no actualiza — exact same path que antes de Phase 6J-1.
+  const handleMoodPostSkip = useCallback(() => {
+    if (!moodPostContext) {
+      setMoodPostSheetOpen(false);
+      setSelectedProtocol(null);
+      return;
+    }
+    const { protocol, completionRatio, predictedDelta, hrvDelta } = moodPostContext;
+    try {
+      useStore.getState().recordSessionOutcome({
+        intent: protocol?.int ?? null,
+        protocol: protocol?.n ?? null,
+        deltaMood: null,
+        predictedDelta,
+        completionRatio,
+        energyDelta: null,
+        hrvDelta,
+      });
+    } catch (e) { console.error("[v2] recordSessionOutcome (skip) error", e); }
+    setMoodPostSheetOpen(false);
+    setMoodPostContext(null);
+    setPlayerPreMood(null);
+    setSelectedProtocol(null);
+  }, [moodPostContext]);
 
   const handlePlayerCancel = useCallback(() => {
     // Cancel: no persiste sesión, no actualiza bandit.
+    // Phase 6J-1 Group A — limpia también playerPreMood para que un
+    // posterior launchProtocol arranque limpio sin pre-mood stale.
     setPlayerOpen(false);
     setSelectedProtocol(null);
     setSessionStartedAt(null);
+    setPlayerPreMood(null);
   }, []);
 
   // Phase 6D SP4c — onBellClickReal abre NotificationDrawerV2 (Bug-10
@@ -921,7 +1031,7 @@ export default function AppV2Root() {
       {!playerOpen && !crisisSheetOpen && !hrvModalOpen && !instrumentModal &&
        !dsarModal && !accountModal && !mfaModal &&
        !sessionRevokeModal && !trustedDeviceRemoveModal &&
-       !notificationDrawerOpen && (
+       !notificationDrawerOpen && !moodPostSheetOpen && (
         <CrisisFAB onOpenSheet={handleOpenCrisisSheet} />
       )}
       <CrisisSheet
@@ -946,6 +1056,20 @@ export default function AppV2Root() {
           onCancel={handlePlayerCancel}
         />
       )}
+
+      {/* Phase 6J-1 Group A — MoodPostSessionSheet.
+          Se monta cuando handlePlayerComplete cierra el player y
+          activa moodPostSheetOpen. Captura mood 1-5 + delega a
+          handleMoodPost{Submit|Skip} que aplica logMood (state.moodLog)
+          y recordSessionOutcome (bandit reward).
+          Closes Engine Audit CRITICAL-1 + CRITICAL-2. */}
+      <MoodPostSessionSheet
+        isOpen={moodPostSheetOpen}
+        onSubmit={handleMoodPostSubmit}
+        onSkip={handleMoodPostSkip}
+        proto={moodPostContext?.protocol || null}
+      />
+
 
       {/* Phase 6B SP1 — HRV camera modal (default) o BLE swap.
           Mutuamente exclusivos: el modal se mounta según hrvModalMode

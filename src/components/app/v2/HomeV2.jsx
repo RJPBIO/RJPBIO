@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { useReadiness } from "@/hooks/useReadiness";
 import { useAdaptiveRecommendation } from "@/hooks/useAdaptiveRecommendation";
@@ -14,6 +14,14 @@ import HeaderV2 from "./home/HeaderV2";
 import ColdStartView from "./home/ColdStartView";
 import LearningView from "./home/LearningView";
 import PersonalizedView from "./home/PersonalizedView";
+// Phase 6J-1 Group C — pre-session mood picker (chip-row inline).
+// Closes Engine Audit CRITICAL-4 (`currentMood` engine input sin UI).
+import MoodPrePicker from "./mood/MoodPrePicker";
+// Phase 6J-2 HIGH-2 — NOM-35 profile hook personal.
+// Closes Engine Audit HIGH-2: nom35Bias dead runtime — el hook lee el
+// resultado más reciente de state.nom035Results y lo propaga al engine
+// como nom35Dominios → activa _generateReason rama "Tu perfil NOM-035".
+import { useNom35Profile } from "@/hooks/useNom35Profile";
 // Phase 6F SP-F — Decision A3: WellbeingBanner solo cuando totalSessions ≥ 1.
 // Decision B3: persistent banner + drawer on-demand (no auto-mount).
 // El componente internamente verifica el gate como safety net.
@@ -41,10 +49,28 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
   const store = useStore();
   useEffect(() => { devLog("[v2] HomeV2 active", { devOverride }); }, [devOverride]);
 
+  // Phase 6J-1 Group C — currentMood (1-5 | null) capturado por
+  // MoodPrePicker. Local state ephemeral: NO persiste en store, se
+  // resetea al cambiar branch o tab. Cuando user inicia protocolo,
+  // se propaga a onNavigate({preMood: currentMood}) → AppV2Root
+  // launchProtocol → handlePlayerComplete usa para deltaMood.
+  // Engine input: useAdaptiveRecommendation({currentMood}) activa el
+  // branch moodIsExplicit en adaptiveProtocolEngine (override del
+  // primaryNeed según mood declarado).
+  const [currentMood, setCurrentMood] = useState(null);
+
   const realState = store;
   const realHealth = useMemo(() => evaluateEngineHealth(realState), [realState]);
   const realReadiness = useReadiness(realState);
-  const realRecommendation = useAdaptiveRecommendation(realState, { readiness: realReadiness });
+  // Phase 6J-2 HIGH-2 — NOM-35 dominios from latest state.nom035Results.
+  // Cuando user sin nom035 history → nom35Dominios=null → engine
+  // ignora silenciosamente (back-compat: protocolBiasFromDomain returns null).
+  const { nom35Dominios } = useNom35Profile();
+  const realRecommendation = useAdaptiveRecommendation(realState, {
+    readiness: realReadiness,
+    currentMood,
+    nom35Dominios,
+  });
   const optimalWindow = useMemo(() => safeOptimal(realState, devOverride), [realState, devOverride]);
 
   const { health, readiness, recommendation, activeProgram, focusVal, calmVal, energyVal } =
@@ -176,15 +202,24 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
     const coldStartNextWindow = optimalWindow?.hour != null
       ? `${String(optimalWindow.hour).padStart(2, "0")}:00`
       : null;
+    // Phase 6J-1 Group C — MoodPrePicker visible solo en cold-start active
+    // (totalSessions ≥ 1). En cold-start fresh (N=0) NO mostramos: el user
+    // está en su primera sesión genuina, agregar UI extra incrementa
+    // friction sin payoff (engine ignora currentMood en cold-start fresh
+    // porque no tiene historial para contextualizar).
+    const showPrePicker = (health.totalSessions || 0) >= 1;
     return (
       <>
         <HeaderV2 onBellClick={onBellClick} />
         {/* Phase 6F SP-F · Decision A3: banner solo si user tiene actividad. */}
         <WellbeingBanner totalSessions={health.totalSessions} />
+        {showPrePicker && (
+          <MoodPrePicker value={currentMood} onChange={setCurrentMood} testid="home-mood-pre-picker" />
+        )}
         <ColdStartView
           greeting={greeting}
           totalSessions={health.totalSessions}
-          onAction={(item) => onNavigate && onNavigate(item)}
+          onAction={(item) => onNavigate && onNavigate({ ...item, preMood: currentMood })}
           recommendation={recommendation}
           streak={Number.isFinite(realState?.streak) ? realState.streak : 0}
           nextWindow={coldStartNextWindow}
@@ -208,10 +243,14 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
       <>
         <HeaderV2 onBellClick={onBellClick} />
         <WellbeingBanner totalSessions={health.totalSessions} />
+        {/* Phase 6J-1 Group C — pre-picker. En learning siempre visible:
+            el user ya tiene baseline y el engine puede explotar el
+            currentMood signal para override del primaryNeed. */}
+        <MoodPrePicker value={currentMood} onChange={setCurrentMood} testid="home-mood-pre-picker" />
         <LearningView
           greeting={greeting}
           subtitle={null}
-          onAction={(item) => onNavigate && onNavigate(item)}
+          onAction={(item) => onNavigate && onNavigate({ ...item, preMood: currentMood })}
           onNavigate={onNavigate}
         />
         {celebrationSheet}
@@ -259,6 +298,10 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
     <>
       <HeaderV2 onBellClick={onBellClick} />
       <WellbeingBanner totalSessions={health.totalSessions} />
+      {/* Phase 6J-1 Group C — pre-picker en personalized branch. El
+          engine usa currentMood para override del primaryNeed cuando es
+          explícito (mood=1 → calma, mood=5 → energia). */}
+      <MoodPrePicker value={currentMood} onChange={setCurrentMood} testid="home-mood-pre-picker" />
       <PersonalizedView
         greeting={greeting}
         composite={composite}
@@ -274,10 +317,18 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
         onActivateHRV={handleActivateHRV}
         onCalibrate={handleCalibrate}
         onDimensionSelect={(id) => onNavigate && onNavigate({ target: `/app/data?dimension=${id}` })}
-        onStartRecommended={() => onNavigate && onNavigate({ action: "start-recommended", protocolId: extractPrimaryProtocolId(recommendation) || recommendation?.id })}
+        onStartRecommended={() => onNavigate && onNavigate({
+          action: "start-recommended",
+          protocolId: extractPrimaryProtocolId(recommendation) || recommendation?.id,
+          preMood: currentMood, // Phase 6J-1 Group C — propaga mood pre-sesión
+        })}
         onOpenProgram={() => onNavigate && onNavigate({ target: "/app/data#programs" })}
         recommendationRaw={devOverride ? null : recommendation}
-        onStartAlternative={(protocolId) => onNavigate && onNavigate({ action: "start-recommended", protocolId })}
+        onStartAlternative={(protocolId) => onNavigate && onNavigate({
+          action: "start-recommended",
+          protocolId,
+          preMood: currentMood, // Phase 6J-1 Group C
+        })}
       />
       {celebrationSheet}
       {programCompletionSheet}

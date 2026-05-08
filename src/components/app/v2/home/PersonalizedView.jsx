@@ -8,6 +8,12 @@ import ActiveProgramCard from "./ActiveProgramCard";
 // del engine bajo el ActionCard primary cuando recommendationRaw provee
 // shape engine real. Sin recommendationRaw o sin alternatives → no renderea.
 import RecommendationAlternativesCard from "./RecommendationAlternativesCard";
+// Phase 6J-2 HIGH-4 + HIGH-5 — engine context surface en mobile.
+// Hasta ahora context.fatigue / context.recalibration / context.momentum /
+// context.burnoutRisk se computaban pero no se renderean en PersonalizedView.
+import SystemReadingSubCard from "./SystemReadingSubCard";
+import FatigueBanner from "../banners/FatigueBanner";
+import RecalibrationBanner from "../banners/RecalibrationBanner";
 
 // Estado B — personalized (5+ sesiones).
 // Saludo + hero composite + 3 dimensiones + accion contextual + programa.
@@ -49,7 +55,23 @@ export default function PersonalizedView({
   // Phase 6I-3
   recommendationRaw = null,
   onStartAlternative,
+  // Phase 6J-2 HIGH-4 — opcional CTA handlers para banners (engine
+  // recomienda acción pero el navigation target lo decide el caller).
+  onFatigueCta,
+  onRecalibrationCta,
 }) {
+  // Phase 6J-2 HIGH-4 + HIGH-5 — extract engine context.
+  // recommendationRaw es el raw output del engine (shape:
+  // {primary, alternatives, need, context: {...}}). Defensive: cuando
+  // null (devOverride sin readiness, fallback path), todos los signals
+  // quedan null → banners/sub-card auto-hide via internal gates.
+  const engineContext = recommendationRaw?.context || {};
+  const fatigue = engineContext.fatigue || null;
+  const fatigueGuidance = engineContext.fatigueGuidance || null;
+  const recalibration = engineContext.recalibration || null;
+  const momentum = engineContext.momentum;
+  const momentumDir = engineContext.momentumDir || null;
+  const burnoutRisk = engineContext.burnoutRisk || null;
   return (
     <>
       <section
@@ -99,12 +121,34 @@ export default function PersonalizedView({
         onCalibrate={onCalibrate}
       />
 
+      {/* Phase 6J-2 HIGH-5 — sub-card lectura del sistema.
+          Auto-hide cuando momentum/burnout sin data significativa
+          (gate interno via momentumDir validity + burnoutRisk !== "sin datos"). */}
+      <SystemReadingSubCard
+        momentum={momentum}
+        momentumDir={momentumDir}
+        burnoutRisk={burnoutRisk}
+      />
+
       <DimensionsRow
         focus={focus}
         calm={calm}
         energy={energy}
         sources={dimensionSources}
         onSelect={onDimensionSelect}
+      />
+
+      {/* Phase 6J-2 HIGH-4 — banners contextuales engine.
+          FatigueBanner: auto-hide cuando level === "none".
+          RecalibrationBanner: auto-hide cuando context.recalibration === null. */}
+      <FatigueBanner
+        fatigue={fatigue}
+        guidance={fatigueGuidance}
+        onCta={onFatigueCta}
+      />
+      <RecalibrationBanner
+        recalibration={recalibration}
+        onCta={onRecalibrationCta}
       />
 
       {recommendation && (

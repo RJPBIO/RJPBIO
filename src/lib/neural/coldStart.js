@@ -26,6 +26,7 @@
 
 import { subjectiveHour } from "./chronoCircadian";
 import { P } from "../protocols";
+import { NEURAL_CONFIG } from "./config";
 
 const FREEZE = (x) => Object.freeze(x);
 
@@ -51,12 +52,25 @@ export const BASELINE_BY_BUCKET = FREEZE({
 });
 
 /**
- * Cuánto pesa el prior vs los datos personales. Decae linealmente
- * con sesiones acumuladas. A las 0 sesiones el prior es 100% del
- * input; a las 5+ ya pesan los datos personales.
+ * Cuánto pesa el prior vs los datos personales. Decae linealmente con
+ * sesiones acumuladas. A las 0 sesiones el prior es 100% del input;
+ * a las `learningSessions` (14) ya pesan los datos personales.
+ *
+ * Phase 6J-3 M-2 — antes el corte era /5 (cold-start threshold), pero
+ * `health.coldStartSessions=5` solo marca salida de cold-start; el
+ * "valle" 5-13 (learning phase) merece prior con peso decreciente —
+ * sin él, justo al cruzar 5 sesiones el motor pierde el prior aunque
+ * faltan ~9 sesiones para personalización completa.
+ *
+ * Backbones: alineado con `health.learningSessions=14` (Phase 6F bug
+ * runtime fix), que matchea el threshold `personalized: hist.length>=14`
+ * del engine adaptive (3/5 personalization signals típicamente activos
+ * a esa altura: peakWindow ≥8 + weeklyDensity ≥14 + residualCalibration
+ * ≥5 pre-mood pairs).
  */
 export function priorWeight(sessionsCount = 0) {
-  const w = 1 - (sessionsCount || 0) / 5;
+  const learningSessions = NEURAL_CONFIG?.health?.learningSessions || 14;
+  const w = 1 - (sessionsCount || 0) / learningSessions;
   return Math.max(0, Math.min(1, w));
 }
 

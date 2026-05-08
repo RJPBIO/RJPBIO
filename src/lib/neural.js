@@ -18,6 +18,10 @@ import {
   fatigueOverridePrimaryNeed,
   fatigueGuidance,
 } from "./neural/pauseFatigue";
+// Phase 6J-1 Group B — detectGamingV2 (Sprint 45 multi-signal). Reemplaza
+// detectGamingPattern v1 (3 reglas binarias) en calcSessionCompletion.
+// v1 sigue exportado para back-compat (consumers legacy + tests).
+import { detectGamingV2 } from "./neural/antiGaming";
 
 // Re-export para que consumers puedan importar desde @/lib/neural
 export { NEURAL_CONFIG } from "./neural/config";
@@ -98,6 +102,36 @@ export function defaultRecommendationPool() {
 }
 
 // ─── Daily Ignición ───────────────────────────────────────
+/**
+ * "Sugerencia del día" — protocolo + frase determinísticos por fecha
+ * calendárica (year + month + date). Independiente del adaptive engine.
+ *
+ * Phase 6J-4 LOW-2 — racional intencional documentado:
+ *
+ * **Por qué NO usa context dinámico (momentum/burnout/staleness):**
+ * Esta función produce un *ritual estable* — la "frase del día" es una
+ * práctica habitual donde el usuario puede VOLVER al mismo prompt si
+ * cierra y reabre la app durante el mismo día. Si dependiera de momentum
+ * o burnout actuales (que cambian con cada session), el ritual perdería
+ * su anclaje cognitivo.
+ *
+ * **Trade-off conocido:**
+ * Sí ignora factores como descenso de momentum o entrada a burnout
+ * crítico — para esos casos, el adaptive engine (`adaptiveProtocolEngine`
+ * + banners HIGH-4 Phase 6J-2) cubre la respuesta dinámica. Las dos UX
+ * coexisten: este getDailyIgn es ritual matutino, el engine es
+ * recommendation contextual.
+ *
+ * **Únicas señales que respeta:**
+ * - Hora del día (filtra pool por intent circadiano)
+ * - lastMood ≤2 (filtra pool a dificultad ≤2 — defensa contra
+ *   protocolos exigentes en estado vulnerable)
+ *
+ * Formula del seed: `year × 1000 + month × 50 + date`. Garantiza unicidad
+ * dentro del rango año (12 meses × ~31 días = ~372 < 1000) y monotonicidad
+ * temporal. NO criptográfico, NO necesita serlo — su único propósito es
+ * "mismo seed = misma sugerencia ese día".
+ */
 export function getDailyIgn(st) {
   const d = new Date();
   const seed = d.getFullYear() * 1000 + d.getMonth() * 50 + d.getDate();
@@ -209,8 +243,14 @@ function _burnoutReducedEfficacy(hist) {
   const qR = last5.reduce((a, h) => a + h.bioQ, 0) / last5.length;
   const qP = prev5.reduce((a, h) => a + h.bioQ, 0) / prev5.length;
   const drop = qP - qR; // positivo = cayendo la calidad
-  const baseFromLow = qR < 40 ? 30 : qR < 55 ? 15 : 0;
-  const dropPenalty = Math.max(0, Math.min(40, drop));
+  // Phase 6J-3 M-5 — config-driven thresholds (antes hardcoded magic).
+  const eff = NC.burnout.efficacy;
+  const baseFromLow = qR < eff.lowQualThreshold
+    ? eff.lowQualBase
+    : qR < eff.midQualThreshold
+      ? eff.midQualBase
+      : 0;
+  const dropPenalty = Math.max(0, Math.min(eff.dropPenaltyCap, drop));
   return {
     value: Math.max(0, Math.min(100, Math.round(baseFromLow + dropPenalty))),
     qualityRecent: Math.round(qR),
@@ -365,15 +405,38 @@ export function calcRecoveryIndex(moodLog) {
 
 // ─── Insights Generator (LEGACY) ─────────────────────────
 /**
- * @deprecated desde Sprint 44 — usar `generateCoachingInsights(st)` para
- * insights más ricos y priorizados (10+ tipos de señal vs los ~6 de aquí).
- * Se mantiene por backwards compat con consumers existentes.
+ * @deprecated desde Sprint 44 — usar `generateCoachingInsights(st)` en su
+ * lugar. Audit Phase 6J-4 (LOW-1) confirma: 0 consumers en producción
+ * (verificado vía grep — solo aparece en su propia definición y tests).
+ *
+ * STATUS: dead-code-with-tests. Mantenido por backwards compat por si
+ * algún caller externo (e.g. extension futura) lo invoca. Si después de
+ * Phase 7 sigue sin consumers, candidate para removal en major bump.
  *
  * Migration path: reemplazar `genIns(st)` con `generateCoachingInsights(st)`
  * y mapear el shape — el nuevo retorna {type, priority, icon, color, title,
- * message, action?} en lugar de {t, x}.
+ * message, action?} (10+ tipos de señal priorizados) en lugar de {t, x}
+ * (~6 tipos sin priority order).
  */
+let _genInsWarnedOnce = false;
 export function genIns(st) {
+  // Phase 6J-4 LOW-1 — dev-only one-shot warning. NO se imprime en
+  // producción (gate por process.env.NODE_ENV) ni en tests (gate por
+  // import.meta.env.VITEST en Vite). Idempotent: solo first call avisa.
+  if (
+    !_genInsWarnedOnce &&
+    typeof process !== "undefined" &&
+    process.env?.NODE_ENV !== "production" &&
+    typeof globalThis !== "undefined" && !globalThis.__VITEST__
+  ) {
+    _genInsWarnedOnce = true;
+    try {
+      console.warn(
+        "[neural] genIns() is @deprecated — use generateCoachingInsights(st). " +
+        "Audit Phase 6J-4 confirms 0 production consumers."
+      );
+    } catch {}
+  }
   const r = [];
   if (st.totalSessions > 0) {
     const cG = st.coherencia - 64;
@@ -712,8 +775,16 @@ export function adaptiveProtocolEngine(st, options = {}) {
     ? Object.values(banditArms).reduce((a, arm) => a + (arm?.n || 0), 0)
     : 0;
 
-  // Puntuar cada candidato multidimensionalmente
+  // Puntuar cada candidato multidimensionalmente.
   const sCfg = NC.scoring;
+  // Phase 6J-3 M-3 — last3 names + intents pre-computed UNA vez fuera
+  // del candidate loop (antes se recomputaba per-candidate, O(P×3)).
+  // History entries tienen `p` (name) pero NO `int` — lookup via P.find.
+  const last3 = hist.slice(-3);
+  const last3Names = last3.map((x) => x.p);
+  const last3Intents = last3
+    .map((x) => P.find((proto) => proto.n === x.p)?.int)
+    .filter(Boolean);
   const scored = candidates.map((p) => {
     let score = sCfg.baseScore;
 
@@ -727,9 +798,15 @@ export function adaptiveProtocolEngine(st, options = {}) {
       }
     }
 
-    // Diversidad: evitar repetir últimos 3 protocolos
-    const last3 = hist.slice(-3).map((x) => x.p);
-    if (last3.includes(p.n)) score += sCfg.diversityPenalty;
+    // Phase 6J-3 M-3 — Diversidad: doble layer.
+    //   Layer 1: penalty fuerte (-15) por mismo nombre en últimas 3 sesiones.
+    //   Layer 2: penalty moderado (-7) por mismo intent (else-if no stack —
+    //     name match ya implica intent match, evitar doble penalty).
+    if (last3Names.includes(p.n)) {
+      score += sCfg.diversityPenalty;
+    } else if (last3Intents.includes(p.int)) {
+      score += sCfg.diversityPenaltyIntent;
+    }
 
     // Match de dificultad con nivel del usuario
     const level = getLevel(st.totalSessions);
@@ -1353,24 +1430,38 @@ export function suggestOptimalTime(st) {
 }
 
 // ─── Calibration Baseline Scoring ───────────────────────
-// Interpreta resultados de calibración y genera recomendaciones
+// Interpreta resultados de calibración y genera recomendaciones.
+// Phase 6J-4 LOW-4 — thresholds config-driven (antes hardcoded magic
+// numbers 70/40/60/30 sin link a literatura). Ver NEURAL_CONFIG.calibration.
 export function interpretCalibration(baseline) {
   if (!baseline) return null;
+  const cfg = NC.calibration?.interpretation;
+  // Defensive: fallback al shape legacy si por algún motivo el config no
+  // expone interpretation (tests con dynamic imports edge case).
+  const t = cfg || {
+    rt: { strengthMin: 70, areaMax: 40 },
+    bh: { strengthMin: 60, areaMax: 30 },
+    focusAccuracy: { strengthMin: 70, areaMax: 40 },
+    stress: { strengthMin: 60, areaMax: 40 },
+  };
 
   const strengths = [];
   const areas = [];
 
-  if (baseline.rtScore >= 70) strengths.push("Velocidad de procesamiento alta");
-  else if (baseline.rtScore < 40) areas.push("Velocidad de reacción — protocolos de enfoque ayudarán");
+  if (baseline.rtScore >= t.rt.strengthMin) strengths.push("Velocidad de procesamiento alta");
+  else if (baseline.rtScore < t.rt.areaMax) areas.push("Velocidad de reacción — protocolos de enfoque ayudarán");
 
-  if (baseline.bhScore >= 60) strengths.push("Buena capacidad respiratoria");
-  else if (baseline.bhScore < 30) areas.push("Capacidad respiratoria — practica retención progresiva");
+  if (baseline.bhScore >= t.bh.strengthMin) strengths.push("Buena capacidad respiratoria");
+  else if (baseline.bhScore < t.bh.areaMax) areas.push("Capacidad respiratoria — practica retención progresiva");
 
-  if (baseline.focusAccuracy >= 70) strengths.push("Foco atencional fuerte");
-  else if (baseline.focusAccuracy < 40) areas.push("Estabilidad atencional — entrena con Lightning Focus");
+  if (baseline.focusAccuracy >= t.focusAccuracy.strengthMin) strengths.push("Foco atencional fuerte");
+  else if (baseline.focusAccuracy < t.focusAccuracy.areaMax) areas.push("Estabilidad atencional — entrena con Lightning Focus");
 
-  if (baseline.stressScore >= 60) strengths.push("Estado emocional equilibrado");
-  else if (baseline.stressScore < 40) areas.push("Regulación emocional — prioriza protocolos de calma");
+  if (baseline.stressScore >= t.stress.strengthMin) strengths.push("Estado emocional equilibrado");
+  else if (baseline.stressScore < t.stress.areaMax) areas.push("Regulación emocional — prioriza protocolos de calma");
+
+  const summaryHigh = NC.calibration?.summaryStrengthsHigh ?? 3;
+  const summaryMid = NC.calibration?.summaryStrengthsMid ?? 2;
 
   return {
     strengths,
@@ -1382,9 +1473,9 @@ export function interpretCalibration(baseline) {
         ? "Activación Cognitiva"
         : "Pulse Shift",
     summary:
-      strengths.length >= 3
+      strengths.length >= summaryHigh
         ? "Tu baseline indica alta capacidad cognitiva. Enfócate en protocolos avanzados."
-        : strengths.length >= 2
+        : strengths.length >= summaryMid
         ? "Buen punto de partida. Los protocolos intermedios maximizarán tu progreso."
         : "Excelente momento para empezar. Los protocolos básicos construirán tu fundación neural.",
   };
@@ -1523,15 +1614,36 @@ export function calcSessionCompletion(st, sessionCtx) {
 
   const newSessionsTotal = st.totalSessions + 1;
   const bioQ = calcBioQuality(sessionData);
-  const gamingCheck = detectGamingPattern(hist);
-  if (gamingCheck.gaming) { bioQ.score = Math.min(bioQ.score, 20); bioQ.quality = "inválida"; }
+  // Phase 6J-1 Group B — Engine Audit CRITICAL-3: swap a detectGamingV2
+  // (Sprint 45 multi-signal). Inputs defensivos: si la sessión actual no
+  // trae reactionTimes/touchHolds (típico Phase 4 player que no los
+  // captura), v2 cae a `insufficient-data` por signal y combina solo los
+  // signals con datos (timeOfDay + bioQ + duration sobre history).
+  // Verdict thresholds: <30 clean / 30-59 suspicious / ≥60 likely-gaming.
+  const gamingCheck = detectGamingV2(
+    { history: hist },
+    {
+      reactionTimes: Array.isArray(sessionData?.reactionTimes) ? sessionData.reactionTimes : [],
+      touchHolds: Array.isArray(sessionData?.touchHolds) ? sessionData.touchHolds : [],
+    }
+  );
+  if (gamingCheck.verdict === "likely-gaming") {
+    bioQ.score = Math.min(bioQ.score, 20);
+    bioQ.quality = "inválida";
+  }
 
   const { isPartial, completeness } = _classifyPartialSession(bioQ, sessionData, protocol, durMult);
 
   const qualityMult = _qualityMultiplier(bioQ.quality);
-  const eVC = Math.max(3, Math.round(
+  let eVC = Math.max(3, Math.round(
     (5 + (cohBoost * 1.5) + (consistencyScore * 5) + (uniqueProtos * 0.5)) * qualityMult
   ));
+  // Phase 6J-1 Group B — suspicious tier (30-59 score): reduce eVC al 50%
+  // sin marcar inválida. Patrón anómalo pero no concluyente — el motor
+  // baja confianza sin penalizar como cheating duro.
+  if (gamingCheck.verdict === "suspicious") {
+    eVC = Math.max(3, Math.floor(eVC * 0.5));
+  }
   if (bioQ.quality === "ligera") newStreak = st.streak; // no extiende racha
   const vc = (st.vCores || 0) + eVC;
 
@@ -1549,12 +1661,15 @@ export function calcSessionCompletion(st, sessionCtx) {
   const burnout = calcBurnoutIndex(ml, hist);
   const bioSignal = calcBioSignal(st);
 
+  // Phase 6J-3 M-4 — read from config (antes hardcoded -200 ignoraba
+  // NC.sessionGain.historyMaxLength). Bug latente cerrado: cambio en
+  // config no se propagaba.
   const newHist = [...hist, _buildHistoryEntry({
     protocol, durMult, sessionData, nfcCtx, circadian,
     eVC, newCoherence, newResilience, bioQ,
     burnoutIdx: burnout.index, bioSignalScore: bioSignal.score,
     isPartial, completeness,
-  })].slice(-200);
+  })].slice(-NC.sessionGain.historyMaxLength);
 
   return {
     eVC,

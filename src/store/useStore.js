@@ -721,10 +721,14 @@ export const useStore = create((set, get) => ({
     // El global da fallback cuando el bucket actual no tiene datos.
     const keyCtx = armKey(intent, bucket);
     const keyGlb = armKey(intent);
+    // Engine Audit HIGH-1 — pasar `now` para que updateArm setee
+    // lastUpdatedAt en cada arm. Sin esto, Sprint 47 time-decay queda
+    // muerto (timeDecayFactor retorna 1 cuando lastUpdatedAt undefined).
+    const nowMs = (at instanceof Date ? at.getTime() : (typeof at === "number" ? at : Date.now()));
     const nextArms = {
       ...arms,
-      [keyCtx]: updateArm(arms[keyCtx], reward),
-      [keyGlb]: updateArm(arms[keyGlb], reward),
+      [keyCtx]: updateArm(arms[keyCtx], reward, { now: nowMs }),
+      [keyGlb]: updateArm(arms[keyGlb], reward, { now: nowMs }),
     };
     // Residuales solo se loggean si tenemos mood real (calibran contra
     // predicción de mood, no contra HRV inferido). Fallback HRV-only no

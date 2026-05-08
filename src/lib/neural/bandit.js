@@ -1,3 +1,5 @@
+import { NEURAL_CONFIG } from "./config";
+
 /* ═══════════════════════════════════════════════════════════════
    BIO-IGNICIÓN — Protocol bandit (UCB1-Normal, contextual)
    Selección online de protocolo con exploración/explotación.
@@ -267,8 +269,15 @@ export function compositeReward({
   hrvDeltaLnRmssd = null,
   completionRatio = 1,
 } = {}) {
+  // Phase 6J-4 LOW-3 — weights config-driven (antes hardcoded 0.3/1.5).
+  // Defensive fallback para el caso edge donde NEURAL_CONFIG no esté
+  // disponible (e.g. tests con dynamic imports rotos).
+  const cfg = NEURAL_CONFIG?.banditReward || {
+    moodWeight: 1.0, energyWeight: 0.3, hrvWeight: 1.5,
+    completionMin: 0.5, completionRange: 0.5,
+  };
   const ratio = Math.max(0, Math.min(1, Number.isFinite(completionRatio) ? completionRatio : 1));
-  const completionFactor = 0.5 + 0.5 * ratio;
+  const completionFactor = cfg.completionMin + cfg.completionRange * ratio;
 
   // Type-strict: rechaza null/undefined/string/NaN (Number(null)=0 sería bug).
   const moodValid = typeof moodDelta === "number" && Number.isFinite(moodDelta);
@@ -276,17 +285,17 @@ export function compositeReward({
   const enValid = typeof energyDelta === "number" && Number.isFinite(energyDelta);
 
   if (moodValid) {
-    let r = moodDelta;
-    if (enValid) r += 0.3 * energyDelta;
-    if (hrvValid) r += 1.5 * hrvDeltaLnRmssd;
+    let r = moodDelta * cfg.moodWeight;
+    if (enValid) r += cfg.energyWeight * energyDelta;
+    if (hrvValid) r += cfg.hrvWeight * hrvDeltaLnRmssd;
     return +(r * completionFactor).toFixed(3);
   }
 
   // Sprint S4.2 — Mood ausente. Inferir reward si hay HRV (señal robusta).
-  // 1.5 × hrvDelta — típico ±0.3 → reward ±0.45 moderado.
+  // hrvWeight × hrvDelta — típico ±0.3 → reward ±0.45 moderado.
   if (hrvValid) {
-    let r = 1.5 * hrvDeltaLnRmssd;
-    if (enValid) r += 0.3 * energyDelta;
+    let r = cfg.hrvWeight * hrvDeltaLnRmssd;
+    if (enValid) r += cfg.energyWeight * energyDelta;
     return +(r * completionFactor).toFixed(3);
   }
 

@@ -40,18 +40,20 @@ describe("BASELINE_BY_BUCKET", () => {
 });
 
 describe("priorWeight", () => {
+  // Phase 6J-3 M-2 — denominator alineado con NEURAL_CONFIG.health.learningSessions=14.
+  // Antes /5 (cold-start threshold). Ahora /14 — prior decae a través de toda
+  // la learning phase en lugar de cortarse al salir de cold-start.
   it("100% peso a las 0 sesiones", () => {
     expect(priorWeight(0)).toBe(1);
   });
-  it("decae linealmente", () => {
-    expect(priorWeight(1)).toBeCloseTo(0.8, 5);
-    expect(priorWeight(2)).toBeCloseTo(0.6, 5);
-    expect(priorWeight(3)).toBeCloseTo(0.4, 5);
-    expect(priorWeight(4)).toBeCloseTo(0.2, 5);
+  it("decae linealmente sobre learningSessions=14", () => {
+    expect(priorWeight(1)).toBeCloseTo(13 / 14, 5);
+    expect(priorWeight(7)).toBeCloseTo(0.5, 5);
+    expect(priorWeight(10)).toBeCloseTo(4 / 14, 5);
   });
-  it("0 peso a las 5+ sesiones", () => {
-    expect(priorWeight(5)).toBe(0);
-    expect(priorWeight(10)).toBe(0);
+  it("0 peso a las 14+ sesiones", () => {
+    expect(priorWeight(14)).toBe(0);
+    expect(priorWeight(20)).toBe(0);
     expect(priorWeight(100)).toBe(0);
   });
   it("clamps en límites", () => {
@@ -100,13 +102,13 @@ describe("getColdStartPrior", () => {
     expect(r.delta).toBe(0.5);
   });
 
-  it("retorna weight según sessionsCount", () => {
+  it("retorna weight según sessionsCount (M-2: denom=14)", () => {
     const r0 = getColdStartPrior({ intent: "calma", now: new Date(), sessionsCount: 0 });
-    const r3 = getColdStartPrior({ intent: "calma", now: new Date(), sessionsCount: 3 });
-    const r5 = getColdStartPrior({ intent: "calma", now: new Date(), sessionsCount: 5 });
+    const r7 = getColdStartPrior({ intent: "calma", now: new Date(), sessionsCount: 7 });
+    const r14 = getColdStartPrior({ intent: "calma", now: new Date(), sessionsCount: 14 });
     expect(r0.weight).toBe(1);
-    expect(r3.weight).toBeCloseTo(0.4, 5);
-    expect(r5.weight).toBe(0);
+    expect(r7.weight).toBeCloseTo(0.5, 5);
+    expect(r14.weight).toBe(0);
   });
 
   it("subjectiveHour expone hora calculada", () => {

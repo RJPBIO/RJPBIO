@@ -53,7 +53,13 @@ export default function ProtocolDetail({ protocol, st, isDark, onStart, onClose,
   const { card: cd, border: bd, t1, t2, t3 } = resolveTheme(isDark);
   const titleId = useId();
 
-  const prediction = useMemo(() => predictSessionImpact(st, protocol), [st, protocol]);
+  // Phase 6J-3 M-1 — chronotype passthrough.
+  // Antes: predictSessionImpact(st, protocol) sin chronotype. Ahora propaga
+  // st.chronotype para activar prior cronobiológico cuando hay MEQ-SA.
+  const prediction = useMemo(
+    () => predictSessionImpact(st, protocol, { chronotype: st?.chronotype || null }),
+    [st, protocol]
+  );
   const sensitivity = useMemo(() => {
     const s = calcProtoSensitivity(st.moodLog);
     return s[protocol.n] || null;
