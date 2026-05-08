@@ -252,6 +252,10 @@ export default function HomeV2({ devOverride = null, onNavigate, onBellClick }) 
           subtitle={null}
           onAction={(item) => onNavigate && onNavigate({ ...item, preMood: currentMood })}
           onNavigate={onNavigate}
+          // Phase 6J-5 — propaga currentMood al hook interno de
+          // LearningView. Sin esto, mood pre-picker no afecta recommendation
+          // durante cohort learning (5-13 sesiones).
+          currentMood={currentMood}
         />
         {celebrationSheet}
         {programCompletionSheet}

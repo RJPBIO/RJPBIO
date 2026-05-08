@@ -54,7 +54,19 @@ const REEVAL_AUTO_MODAL_DAYS_OVERDUE = 3;
 // LearningView es bridge intencional con copy "en aprendizaje" — no
 // pretende ser una versión incompleta de PersonalizedView.
 
-export default function LearningView({ greeting, subtitle, onAction, onNavigate }) {
+export default function LearningView({
+  greeting,
+  subtitle,
+  onAction,
+  onNavigate,
+  // Phase 6J-5 — currentMood prop desde HomeV2 (donde MoodPrePicker vive).
+  // Cierra finding emergente del live validation (Motor 98% report CP3):
+  // pre-Phase 6J-5 LearningView llamaba useAdaptiveRecommendation sin
+  // currentMood → mood pre-picker NO afectaba recommendation en cohort
+  // learning (5-13 sesiones). Default null preserva back-compat con
+  // tests existentes que no pasan el prop.
+  currentMood = null,
+}) {
   // Selectores granulares.
   const history = useStore((s) => s.history);
   const streak = useStore((s) => s.streak);
@@ -75,8 +87,10 @@ export default function LearningView({ greeting, subtitle, onAction, onNavigate 
   // engine, no del UI). Fallback al protocolo del firstIntent del user
   // PERO con diversidad contra los últimos 3 protocols — sin esto
   // siempre recomienda el mismo per-intent cuando bandit está vacío.
+  // Phase 6J-5 — currentMood propagado para activar engine moodIsExplicit
+  // branch (override primaryNeed según mood declarado en pre-picker).
   const readiness = useReadiness(store);
-  const recommendation = useAdaptiveRecommendation(store, { readiness });
+  const recommendation = useAdaptiveRecommendation(store, { readiness, currentMood });
   const recoProtocol = useMemo(() => {
     // Phase 6H Fix-A1 — extraction defensive via helper centralizado.
     // ANTES (Phase 6F): `fromEngine?.id != null` siempre falso porque shape
