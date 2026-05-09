@@ -1561,6 +1561,15 @@ function _computeAchievements(currentAch, ctx) {
 // (DimensionsChip mini-sparklines + MonthlyDigest enhancement). Defensive:
 // dimensions = null cuando alguna dimension no es numérica (edge case).
 // Consumers deben checkear `entry.dimensions != null` antes de leer fields.
+//
+// Phase 7 F0-2 — additive: per-act granular telemetry persisted con cada
+// entry. `actsLog` se propaga vía sessionData (player → adapter → engine).
+// Engine consumers DEFER (F0-1 + flagship #15 consume después). Defensive:
+// actsLog = null cuando el player legacy o un caller manual omite el field
+// (no synthetic backfill — preserva data trust principle). Aggregates
+// (actsCompleted/actsSkipped/actsFailed) se computan si actsLog presente,
+// null otherwise. Consumers deben checkear `entry.actsLog != null` antes de
+// iterar; misma guardia que dimensions field.
 function _buildHistoryEntry(args) {
   const { protocol, durMult, sessionData, nfcCtx, circadian, eVC, newCoherence,
           newResilience, newCapacity, bioQ, burnoutIdx, bioSignalScore, isPartial, completeness } = args;
@@ -1578,6 +1587,19 @@ function _buildHistoryEntry(args) {
           energia: Math.round(newCapacity),
         }
       : null;
+  // Phase 7 F0-2 per-act aggregates. Defensive: si actsLog no es array
+  // válido, los 4 fields quedan en null (mismo patrón que dimensions).
+  const actsLogRaw = sessionData?.actsLog;
+  const actsLog = Array.isArray(actsLogRaw) ? actsLogRaw : null;
+  const actsCompleted = actsLog
+    ? actsLog.filter((a) => a && a.status === "completed").length
+    : null;
+  const actsSkipped = actsLog
+    ? actsLog.filter((a) => a && a.status === "skipped").length
+    : null;
+  const actsFailed = actsLog
+    ? actsLog.filter((a) => a && a.validationOutcome === "failed").length
+    : null;
   return {
     p: protocol.n, ts: Date.now(), vc: eVC, c: newCoherence, r: newResilience,
     dur: Math.round(protocol.d * durMult), ctx: nfcCtx?.type || "manual",
@@ -1592,6 +1614,11 @@ function _buildHistoryEntry(args) {
     hiddenSec: Math.round(sessionData?.hiddenSec || 0),
     completeness: Math.round(completeness * 100) / 100,
     dimensions,
+    // Phase 7 F0-2 additive (always present; null when actsLog missing):
+    actsLog,
+    actsCompleted,
+    actsSkipped,
+    actsFailed,
     ...(coherenceLive ? { coherenceLive } : {}),
   };
 }

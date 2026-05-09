@@ -140,6 +140,13 @@ export function adaptPlayerCompletionToSessionData(playerCompletion, protocol, s
   const durationMs = playerCompletion?.durationMs || 0;
   const actualSec = Math.round(durationMs / 1000);
   const expectedSec = Math.round((protocol?.d || 0));
+  // Phase 7 F0-2 additive: per-act granular log.
+  // Defensive: null cuando playerCompletion no lo trae (shape pre-F0-2 o
+  // edge cases). Engine consumers deben checkear `actsLog != null` antes
+  // de leer. Lazy compute on read principle (sin synthetic backfill).
+  const actsLog = Array.isArray(playerCompletion?.actsLog)
+    ? playerCompletion.actsLog
+    : null;
   return {
     interactions: playerCompletion?.completedActs || 0,
     actualSec,
@@ -163,6 +170,7 @@ export function adaptPlayerCompletionToSessionData(playerCompletion, protocol, s
       banditWeight: playerCompletion?.banditWeight,
       useCase: playerCompletion?.useCase,
     }],
+    actsLog,
     playerCompletion,
   };
 }

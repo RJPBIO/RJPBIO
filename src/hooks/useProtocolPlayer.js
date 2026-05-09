@@ -41,6 +41,17 @@ const TICK_MS = 100;
  * @property {boolean} passed
  * @property {boolean} forced
  * @property {number} elapsedMs
+ *
+ * Phase 7 F0-2 extension (additive): granular per-act telemetry.
+ * Fields below NEVER missing on results emitted post-F0-2 player.
+ * @property {string} actId — `${phaseIndex}-${actIndex}`
+ * @property {string} type — act.type (breath / motor_bilateral / etc), 'unknown' fallback
+ * @property {"completed"|"skipped"} status — completed (organic pass) | skipped (forced or imOK)
+ * @property {number} durationMs — alias of elapsedMs for engine consumers (F0-1+)
+ * @property {number} targetMs — act.duration?.target_ms || 0
+ * @property {"passed"|"failed"|"no_validation"} validationOutcome
+ * @property {string} validationKind — act.validate?.kind || 'no_validation'
+ * @property {number} pausedDurationMs — paused accumulator at the moment of advance
  */
 
 const initialState = {
@@ -347,12 +358,33 @@ export function useProtocolPlayer(protocol, opts = {}) {
   const advanceInternal = useCallback((forced = false) => {
     if (!currentEntry) return;
     const passed = !forced && validation.canAdvance;
+    // Phase 7 F0-2: granular per-act telemetry (additive). Capture
+    // pausedAccum BEFORE dispatch — advance_act resets it. status
+    // mapping: forced → 'skipped' (user pressed forceAdvance/imOK or
+    // acreditación no orgánica); else → 'completed'. validationOutcome
+    // distingue 'no_validation' (kind=no_validation, e.g. crisis o filler)
+    // de 'passed'/'failed' (validación real cumplida o saltada).
+    const validationKind = currentEntry?.act?.validate?.kind || "no_validation";
+    const targetMs = currentEntry?.act?.duration?.target_ms || 0;
+    const actType = currentEntry?.act?.type || "unknown";
+    const validationOutcome = validationKind === "no_validation"
+      ? "no_validation"
+      : (passed ? "passed" : "failed");
     const result = {
       actIndex: flatIndex,
       phaseIndex: state.currentPhaseIndex,
       passed,
       forced,
       elapsedMs: state.internalElapsedMs,
+      // Phase 7 F0-2 additive fields:
+      actId: `${state.currentPhaseIndex}-${state.currentActIndex}`,
+      type: actType,
+      status: forced ? "skipped" : "completed",
+      durationMs: state.internalElapsedMs,
+      targetMs,
+      validationOutcome,
+      validationKind,
+      pausedDurationMs: state.pausedAccum,
     };
     const isLast = flatIndex >= flat.length - 1;
     if (isLast) {
@@ -363,8 +395,12 @@ export function useProtocolPlayer(protocol, opts = {}) {
       if (hapticOn) {
         try { hapticSignature("ignition"); } catch { /* noop */ }
       }
-      dispatch({ type: "complete", payload: { ...completion, lastResult: result } });
-      if (typeof onComplete === "function") onComplete(completion);
+      // Phase 7 F0-2 additive: actsLog en completion permite que el
+      // adapter (sessionFlow.adaptPlayerCompletionToSessionData)
+      // propague per-act data al engine via sessionData.actsLog.
+      const completionWithLog = { ...completion, actsLog: allResults };
+      dispatch({ type: "complete", payload: { ...completionWithLog, lastResult: result } });
+      if (typeof onComplete === "function") onComplete(completionWithLog);
       return;
     }
     const nextEntry = flat[flatIndex + 1];
@@ -377,8 +413,10 @@ export function useProtocolPlayer(protocol, opts = {}) {
       },
     });
   }, [
-    currentEntry, validation.canAdvance, flatIndex, flat, state.currentPhaseIndex,
-    state.internalElapsedMs, state.results, protocol, hapticOn, teardownAudio, onComplete,
+    currentEntry, validation.canAdvance, flatIndex, flat,
+    state.currentPhaseIndex, state.currentActIndex,
+    state.internalElapsedMs, state.pausedAccum,
+    state.results, protocol, hapticOn, teardownAudio, onComplete,
   ]);
 
   const advance = useCallback(() => {
@@ -397,15 +435,38 @@ export function useProtocolPlayer(protocol, opts = {}) {
   const imOK = useCallback(() => {
     if (useCase !== "crisis") return;
     const remaining = flat.slice(flatIndex);
+    // Phase 7 F0-2: synthesize remaining acts with granular shape.
+    // Crisis "Estoy bien" = user marca crisis resuelta sin completar
+    // los actos restantes. Mapeamos status='skipped' + validationOutcome
+    // alineado al validate.kind del act sintetizado (no_validation
+    // domina en crisis por inferActDefaults).
     const allResults = [
       ...state.results,
-      ...remaining.map((r, i) => ({
-        actIndex: flatIndex + i,
-        phaseIndex: r.phaseIdx,
-        passed: true,
-        forced: false,
-        elapsedMs: i === 0 ? state.internalElapsedMs : 0,
-      })),
+      ...remaining.map((r, i) => {
+        const validationKind = r?.act?.validate?.kind || "no_validation";
+        const targetMs = r?.act?.duration?.target_ms || 0;
+        const actType = r?.act?.type || "unknown";
+        const validationOutcome = validationKind === "no_validation"
+          ? "no_validation"
+          : "passed"; // imOK acredita organicamente desde el caller
+        const elapsedMs = i === 0 ? state.internalElapsedMs : 0;
+        return {
+          actIndex: flatIndex + i,
+          phaseIndex: r.phaseIdx,
+          passed: true,
+          forced: false,
+          elapsedMs,
+          // Phase 7 F0-2 additive fields:
+          actId: `${r.phaseIdx}-${r.actIdx}`,
+          type: actType,
+          status: i === 0 ? "completed" : "skipped",
+          durationMs: elapsedMs,
+          targetMs,
+          validationOutcome,
+          validationKind,
+          pausedDurationMs: i === 0 ? state.pausedAccum : 0,
+        };
+      }),
     ];
     const durationMs = Date.now() - sessionStartRef.current;
     const completion = computeSessionCompletion(protocol, allResults, durationMs);
@@ -413,15 +474,20 @@ export function useProtocolPlayer(protocol, opts = {}) {
     if (hapticOn) {
       try { hapticSignature("ignition"); } catch { /* noop */ }
     }
+    const completionWithLog = { ...completion, actsLog: allResults };
     dispatch({
       type: "complete",
       payload: {
-        ...completion,
+        ...completionWithLog,
         lastResult: allResults[allResults.length - 1],
       },
     });
-    if (typeof onComplete === "function") onComplete(completion);
-  }, [useCase, flat, flatIndex, state.results, state.internalElapsedMs, protocol, hapticOn, teardownAudio, onComplete]);
+    if (typeof onComplete === "function") onComplete(completionWithLog);
+  }, [
+    useCase, flat, flatIndex,
+    state.results, state.internalElapsedMs, state.pausedAccum,
+    protocol, hapticOn, teardownAudio, onComplete,
+  ]);
 
   const updateActSignal = useCallback((payload) => {
     dispatch({ type: "set_signal", payload });

@@ -314,3 +314,153 @@ describe("useProtocolPlayer — imOK crisis", () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 });
+
+describe("useProtocolPlayer — Phase 7 F0-2 per-act tracking", () => {
+  // Protocolo con validation min_duration para poder satisfacerla bajo fake timers.
+  const TYPED_PROTO = {
+    id: 99, n: "T-typed", int: "calma", d: 30, useCase: undefined,
+    ph: [
+      {
+        l: "F1", s: 0, e: 15, k: "k1", i: "i1", sc: "s", ic: "mind", br: null,
+        iExec: [{
+          from: 0, to: 15, text: "act 1 mind",
+          type: "cognitive_anchor",
+          duration: { min_ms: 0, target_ms: 5000, max_ms: 8000 },
+          validate: { kind: "min_duration", min_ms: 0 },
+          ui: { primitive: "text_emphasis_voice" },
+          media: {},
+        }],
+      },
+      {
+        l: "F2", s: 15, e: 30, k: "k2", i: "i2", sc: "s", ic: "mind", br: null,
+        iExec: [{
+          from: 0, to: 15, text: "act 2 mind",
+          type: "cognitive_filter",
+          duration: { min_ms: 0, target_ms: 7000, max_ms: 10000 },
+          validate: { kind: "min_duration", min_ms: 0 },
+          ui: { primitive: "text_emphasis_voice" },
+          media: {},
+        }],
+      },
+    ],
+  };
+
+  it("forceAdvance produce result con shape granular F0-2 (status/type/targetMs/validationKind)", () => {
+    const onComplete = vi.fn();
+    const { result } = renderHook(() => useProtocolPlayer(TYPED_PROTO, { onComplete }));
+    act(() => result.current.start());
+    act(() => result.current.forceAdvance()); // act 1 forzado
+    act(() => result.current.forceAdvance()); // act 2 forzado → completion
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    const data = onComplete.mock.calls[0][0];
+    expect(Array.isArray(data.actsLog)).toBe(true);
+    expect(data.actsLog).toHaveLength(2);
+    const a0 = data.actsLog[0];
+    expect(a0.actId).toBe("0-0");
+    expect(a0.type).toBe("cognitive_anchor");
+    expect(a0.status).toBe("skipped");
+    expect(a0.targetMs).toBe(5000);
+    expect(a0.validationKind).toBe("min_duration");
+    // forced + min_duration kind con elapsedMs=0 → valid 'failed' (no llegó a min_ms)
+    // En este test min_ms=0 y elapsedMs=0 → canAdvance=true en evaluate, pero
+    // forced override fija passed=false y status=skipped. validationOutcome
+    // se computa contra `passed` (forced→false) → 'failed'.
+    expect(a0.validationOutcome).toBe("failed");
+    expect(typeof a0.durationMs).toBe("number");
+    expect(typeof a0.pausedDurationMs).toBe("number");
+  });
+
+  it("advance organic (validation passed) emite status='completed' + validationOutcome='passed'", () => {
+    const onComplete = vi.fn();
+    const { result } = renderHook(() => useProtocolPlayer(TYPED_PROTO, { onComplete }));
+    act(() => result.current.start());
+    // min_duration min_ms=0 → canAdvance siempre true desde elapsedMs=0
+    act(() => result.current.advance());
+    act(() => result.current.advance());
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    const data = onComplete.mock.calls[0][0];
+    expect(data.actsLog).toHaveLength(2);
+    expect(data.actsLog[0].status).toBe("completed");
+    expect(data.actsLog[0].validationOutcome).toBe("passed");
+    expect(data.actsLog[1].status).toBe("completed");
+    expect(data.actsLog[1].validationOutcome).toBe("passed");
+  });
+
+  it("crisis no_validation kind → validationOutcome='no_validation' independiente de status", () => {
+    const onComplete = vi.fn();
+    const CRISIS_TYPED = {
+      ...TYPED_PROTO, id: 18, useCase: "crisis",
+      ph: TYPED_PROTO.ph.map((p) => ({
+        ...p,
+        iExec: p.iExec.map((a) => ({
+          ...a,
+          validate: { kind: "no_validation", reason: "crisis_no_pressure" },
+        })),
+      })),
+    };
+    const { result } = renderHook(() => useProtocolPlayer(CRISIS_TYPED, { onComplete }));
+    act(() => result.current.start());
+    act(() => result.current.imOK());
+    expect(onComplete).toHaveBeenCalled();
+    const data = onComplete.mock.calls[0][0];
+    expect(Array.isArray(data.actsLog)).toBe(true);
+    data.actsLog.forEach((a) => {
+      expect(a.validationKind).toBe("no_validation");
+      expect(a.validationOutcome).toBe("no_validation");
+    });
+  });
+
+  it("imOK synth: primer act remaining 'completed', resto 'skipped'", () => {
+    const onComplete = vi.fn();
+    const CRISIS_TYPED = { ...TYPED_PROTO, id: 18, useCase: "crisis" };
+    const { result } = renderHook(() => useProtocolPlayer(CRISIS_TYPED, { onComplete }));
+    act(() => result.current.start());
+    act(() => result.current.imOK());
+    const data = onComplete.mock.calls[0][0];
+    expect(data.actsLog).toHaveLength(2);
+    expect(data.actsLog[0].status).toBe("completed");
+    expect(data.actsLog[1].status).toBe("skipped");
+  });
+
+  it("anti-regression: result fields legacy preservados (actIndex, phaseIndex, passed, forced, elapsedMs)", () => {
+    const onComplete = vi.fn();
+    const { result } = renderHook(() => useProtocolPlayer(TYPED_PROTO, { onComplete }));
+    act(() => result.current.start());
+    act(() => result.current.advance());
+    act(() => result.current.advance());
+    const data = onComplete.mock.calls[0][0];
+    const a0 = data.actsLog[0];
+    expect(typeof a0.actIndex).toBe("number");
+    expect(typeof a0.phaseIndex).toBe("number");
+    expect(typeof a0.passed).toBe("boolean");
+    expect(typeof a0.forced).toBe("boolean");
+    expect(typeof a0.elapsedMs).toBe("number");
+  });
+
+  it("durationMs es alias de elapsedMs (engine consumers F0-1 ready)", () => {
+    const onComplete = vi.fn();
+    const { result } = renderHook(() => useProtocolPlayer(TYPED_PROTO, { onComplete }));
+    act(() => result.current.start());
+    act(() => result.current.advance());
+    act(() => result.current.advance());
+    const data = onComplete.mock.calls[0][0];
+    data.actsLog.forEach((a) => {
+      expect(a.durationMs).toBe(a.elapsedMs);
+    });
+  });
+
+  it("actsLog presente en payload onComplete; ausente NO rompe completion", () => {
+    const onComplete = vi.fn();
+    const { result } = renderHook(() => useProtocolPlayer(TYPED_PROTO, { onComplete }));
+    act(() => result.current.start());
+    act(() => result.current.advance());
+    act(() => result.current.advance());
+    const data = onComplete.mock.calls[0][0];
+    expect("actsLog" in data).toBe(true);
+    expect(Array.isArray(data.actsLog)).toBe(true);
+    // Anti-regression: existing completion fields intact
+    expect(data.status).toBe("complete");
+    expect(data.banditWeight).toBe(1.0);
+    expect(data.streakIncrement).toBe(true);
+  });
+});

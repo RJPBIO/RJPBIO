@@ -24,7 +24,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 18;
+const STORE_VERSION = 19;
 
 // Phase 6H Premium-Fix3 — cohort thresholds.
 // MUST stay aligned con NEURAL_CONFIG.health.coldStartSessions/learningSessions
@@ -210,12 +210,31 @@ function migrate(data) {
     // filter null defensive. Nuevos entries (post-v18) populan dimensions
     // via _buildHistoryEntry. Idempotente: si ya tenían dimensions, se
     // preserva (?? null mantiene el valor existente).
+    //
+    // v19: Phase 7 F0-2 — backfill defensive de los 4 fields de telemetría
+    // granular per-act (actsLog/actsCompleted/actsSkipped/actsFailed).
+    // Mismo principio que v18: NO computamos synthetic backfill (preserva
+    // data trust). Entries pre-v19 quedan con los 4 fields en null;
+    // engine consumers F0-1+ deben filter null defensive antes de iterar.
+    // Idempotente: si ya tenían los fields (post-v19 hot path), se preservan.
+    // Combina ambos backfills en un solo pass para evitar mutar history dos veces.
     if (Array.isArray(merged.history)) {
       let mutated = false;
       const next = merged.history.map((entry) => {
-        if (entry && typeof entry === "object" && !("dimensions" in entry)) {
+        if (!entry || typeof entry !== "object") return entry;
+        const patch = {};
+        if (!("dimensions" in entry)) {
+          patch.dimensions = null;
+        }
+        if (!("actsLog" in entry)) {
+          patch.actsLog = null;
+          patch.actsCompleted = null;
+          patch.actsSkipped = null;
+          patch.actsFailed = null;
+        }
+        if (Object.keys(patch).length > 0) {
           mutated = true;
-          return { ...entry, dimensions: null };
+          return { ...entry, ...patch };
         }
         return entry;
       });
