@@ -35,6 +35,7 @@ import CrisisFAB from "./CrisisFAB";
 import CrisisSheet from "./CrisisSheet";
 // Phase 6J-1 Group A — mood capture post-session.
 import MoodPostSessionSheet from "./mood/MoodPostSessionSheet";
+import Sigh15CompletionCard from "../../protocol/v2/sigh15/Sigh15CompletionCard";
 
 // Phase 6 SP3 — ProtocolPlayer overlay desde AppV2Root.
 // Lazy import para preservar SSR-safety de AppV2Root y evitar bundle bloat.
@@ -241,6 +242,13 @@ export default function AppV2Root() {
   const [playerPreMood, setPlayerPreMood] = useState(null);
   const [moodPostContext, setMoodPostContext] = useState(null);
   const [moodPostSheetOpen, setMoodPostSheetOpen] = useState(false);
+  // Phase 7 F1 Flagship #15 — Sigh15CompletionCard mounta DESPUÉS del flow
+  // completo de MoodPostSessionSheet (mood + F0-3) sólo cuando el protocolo
+  // completado es #15. Decisión arquitectónica: post-flow (no mid-flow) preserva
+  // F0-3 5 questions intactas. State carga el snapshot HRV+classification para
+  // el card desde moodPostContext heredado al cerrar el sheet.
+  const [sigh15CardOpen, setSigh15CardOpen] = useState(false);
+  const [sigh15Context, setSigh15Context] = useState(null);
 
   // Phase 6B SP1 — state para modales HRV/PPG/BLE + instrumento.
   // hrvModalMode: "camera" arranca HRVCameraMeasure (3 modos internos:
@@ -844,10 +852,33 @@ export default function AppV2Root() {
         useStore.getState().attachSessionFeedback(feedback);
       } catch (e) { console.error("[v2] attachSessionFeedback error", e); }
     }
+    // 4. Phase 7 F1 Flagship #15 — mount Sigh15CompletionCard si el
+    //    protocolo completado es #15. Captura hrvDelta + classification
+    //    desde moodPostContext heredado (computed en closeSession via
+    //    buildSessionDelta). Preserva selectedProtocol DURANTE el card
+    //    para que el flow de cleanup ocurra al onContinue del card.
+    const isFlagship = protocol?.id === 15;
     setMoodPostSheetOpen(false);
     setMoodPostContext(null);
-    setPlayerPreMood(null);
-    setSelectedProtocol(null);
+    if (isFlagship) {
+      // hrvClassification no está en moodPostContext; lookup from last entry o null.
+      // Defensive: si no hay history o no hay coherenceLive/postDelta, fallback.
+      const lastEntry = (() => {
+        try {
+          const h = useStore.getState().history;
+          return Array.isArray(h) && h.length > 0 ? h[h.length - 1] : null;
+        } catch { return null; }
+      })();
+      setSigh15Context({
+        hrvDelta,
+        hrvClassification: lastEntry?.coherenceLive?.classification ?? null,
+      });
+      setSigh15CardOpen(true);
+      // selectedProtocol + playerPreMood se limpian al onContinue del Sigh15 card.
+    } else {
+      setPlayerPreMood(null);
+      setSelectedProtocol(null);
+    }
   }, [moodPostContext, playerPreMood]);
 
   // Skip: recordSessionOutcome con deltaMood:null (legacy behavior).
@@ -872,11 +903,36 @@ export default function AppV2Root() {
         hrvDelta,
       });
     } catch (e) { console.error("[v2] recordSessionOutcome (skip) error", e); }
+    // Phase 7 F1 Flagship #15 — same gate que submit handler.
+    const isFlagship = protocol?.id === 15;
     setMoodPostSheetOpen(false);
     setMoodPostContext(null);
+    if (isFlagship) {
+      const lastEntry = (() => {
+        try {
+          const h = useStore.getState().history;
+          return Array.isArray(h) && h.length > 0 ? h[h.length - 1] : null;
+        } catch { return null; }
+      })();
+      setSigh15Context({
+        hrvDelta,
+        hrvClassification: lastEntry?.coherenceLive?.classification ?? null,
+      });
+      setSigh15CardOpen(true);
+    } else {
+      setPlayerPreMood(null);
+      setSelectedProtocol(null);
+    }
+  }, [moodPostContext]);
+
+  // Phase 7 F1 — handler de cierre Sigh15CompletionCard.
+  // Limpia el card state + finaliza cleanup pendiente (selectedProtocol + preMood).
+  const handleSigh15Continue = useCallback(() => {
+    setSigh15CardOpen(false);
+    setSigh15Context(null);
     setPlayerPreMood(null);
     setSelectedProtocol(null);
-  }, [moodPostContext]);
+  }, []);
 
   const handlePlayerCancel = useCallback(() => {
     // Cancel: no persiste sesión, no actualiza bandit.
@@ -1084,6 +1140,17 @@ export default function AppV2Root() {
         onSubmit={handleMoodPostSubmit}
         onSkip={handleMoodPostSkip}
         proto={moodPostContext?.protocol || null}
+      />
+
+      {/* Phase 7 F1 Flagship #15 — Sigh15CompletionCard.
+          Mounta DESPUÉS del MoodPostSessionSheet flow completo (mood + F0-3),
+          únicamente cuando el protocolo completado es #15 Suspiro Fisiológico.
+          Captura hrvDelta + classification para framing científico. */}
+      <Sigh15CompletionCard
+        isOpen={sigh15CardOpen}
+        hrvDelta={sigh15Context?.hrvDelta ?? null}
+        hrvClassification={sigh15Context?.hrvClassification ?? null}
+        onContinue={handleSigh15Continue}
       />
 
 

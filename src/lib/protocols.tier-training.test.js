@@ -23,6 +23,8 @@ const VALID_PRIMITIVES = new Set([
   "facial_cold_prompt", "shake_hands_prompt", "chip_selector",
   "hold_press_button", "text_emphasis_voice", "silence_cyan_minimal",
   "object_anchor_prompt", "vocal_with_haptic", "transition_dots",
+  // Phase 7 F1 Flagship #15 — primitive dedicated para Suspiro Fisiológico.
+  "physiological_sigh_orb",
 ]);
 
 function flatActs(p) {

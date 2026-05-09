@@ -1356,7 +1356,13 @@ export const P = [
   /* ═══ #15 SUSPIRO FISIOLÓGICO · Balban et al. 2023 ═══
      Phase 4 SP7 — coreografía multi-acto migrada (Active extra).
      useCase: "active" EXPLÍCITO (Calma Express 90s).
-     3 actos: 1 breath (doble inhalación) + 1 interocepción + 1 commitment_motor. */
+     3 actos: 1 breath (doble inhalación) + 1 interocepción + 1 commitment_motor.
+
+     Phase 7 F1 FLAGSHIP — primitive dedicated `physiological_sigh_orb`
+     (RAF visualization doble-inhalación + hold + exhale + afterwave) wired
+     a haptic signature F0-4 #15 + voice TTS minimal opt-in. Eyebrow
+     "STANFORD 2023" inline pre-session dentro del primitive (NO toca
+     ProtocolPlayer shell). */
   {id:15,n:"Suspiro Fisiológico",ct:"Calma Express",d:90,sb:"Reset rápido respiratorio",tg:"SF",cl:"#22D3EE",int:"calma",dif:1,useCase:"active",
   ph:[
     {
@@ -1371,11 +1377,12 @@ export const P = [
           mechanism:"Doble inhalación + exhalación prolongada activa parasimpático en <30s (Balban et al. 2023, Stanford)",
           duration:{min_ms:25000,target_ms:30000,max_ms:35000},
           validate:{kind:"breath_cycles",min_cycles:5,cycle_min_ms:5000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:2,h1:1,ex:5,h2:0},double_inhale:true}},
+          ui:{primitive:"physiological_sigh_orb",props:{showEyebrow:true,size:200}},
           media:{
-            voice:{enabled_default:false},
-            breath_ticks:{enabled:true,auto_sync:true},
+            voice:{enabled_default:false,cues:["uno","dos","exhala"]},
+            breath_ticks:{enabled:false,auto_sync:false},
             binaural:{action:"start",type:"calma"},
+            haptic:{phase:"physiological_sigh_15"},
             signature:{kind:"phaseShift",fire_at:"start"}
           }
         }

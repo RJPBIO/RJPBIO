@@ -27,6 +27,7 @@ import VocalResonanceVisual from "./primitives/VocalResonanceVisual";
 import PowerPoseVisual from "./primitives/PowerPoseVisual";
 import WalkingPaceIndicator from "./primitives/WalkingPaceIndicator";
 import PulseMatchVisual from "./primitives/PulseMatchVisual";
+import PhysiologicalSighOrb from "./primitives/PhysiologicalSighOrb";
 
 const FALLBACK = "text_emphasis_voice";
 
@@ -255,6 +256,18 @@ export default function PrimitiveSwitcher({
           haptic_enabled={hapticOn}
           {...props}
           onComplete={onLocalComplete}
+        />
+      );
+    case "physiological_sigh_orb":
+      return (
+        <PhysiologicalSighOrb
+          cycleCountTarget={act.validate?.kind === "breath_cycles" ? (act.validate.min_cycles || 5) : 5}
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onCycleComplete={(n) => onSignal({ breathCyclesCompleted: n })}
+          onComplete={onLocalComplete}
+          {...props}
         />
       );
     case "text_emphasis_voice":
