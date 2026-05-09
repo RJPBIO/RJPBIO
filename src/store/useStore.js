@@ -24,7 +24,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 20;
+const STORE_VERSION = 21;
 
 // Phase 6H Premium-Fix3 — cohort thresholds.
 // MUST stay aligned con NEURAL_CONFIG.health.coldStartSessions/learningSessions
@@ -225,8 +225,16 @@ function migrate(data) {
     // internos (helpedRating, willDoAgain, bodySensations, sideEffects,
     // timeToEffect, capturedAt).
     //
+    // v21: Phase 7 F3.5-A — añade `preferences` field defensive empty
+    // object. Used para skip preference de Reset1IntroCard (flagship #1)
+    // y futuros toggles UI per-feature. Defensive: si user pref not set,
+    // empty object → consumers default behavior. Backfill empty {} para
+    // estados pre-v21 sin field. Cero migration de history (este field
+    // vive en root state, no en entries).
+    //
     // Combina los 3 backfills (v18 dims + v19 actsLog + v20 feedback) en un
-    // solo pass para evitar mutar history múltiples veces.
+    // solo pass para evitar mutar history múltiples veces. v21 preferences
+    // se aplica fuera del loop history.
     if (Array.isArray(merged.history)) {
       let mutated = false;
       const next = merged.history.map((entry) => {
@@ -251,6 +259,10 @@ function migrate(data) {
         return entry;
       });
       if (mutated) merged.history = next;
+    }
+    // v21 preferences backfill: defensive empty object si missing.
+    if (!merged.preferences || typeof merged.preferences !== "object" || Array.isArray(merged.preferences)) {
+      merged.preferences = {};
     }
     merged._v = STORE_VERSION;
     merged._migrated = Date.now();
@@ -625,6 +637,21 @@ export const useStore = create((set, get) => ({
     const next = typeof email === "string" && email.length > 0 ? email : null;
     set({ _userEmail: next });
     scheduleSave({ ...get() });
+  },
+
+  // Phase 7 F3.5-A — set per-feature UI preference (e.g. dontShowAgainX).
+  // Defensive: key debe ser string non-empty. Value puede ser cualquier
+  // primitive serializable (boolean/number/string/null). Anti-regression:
+  // preserves existing preferences via spread.
+  setPreference: (key, value) => {
+    if (typeof key !== "string" || key.length === 0) return;
+    const st = get();
+    const prefs = (st.preferences && typeof st.preferences === "object" && !Array.isArray(st.preferences))
+      ? st.preferences
+      : {};
+    const nextPrefs = { ...prefs, [key]: value };
+    set({ preferences: nextPrefs });
+    scheduleSave({ ...st, preferences: nextPrefs });
   },
 
   setResonanceFreq: (bpm) => {

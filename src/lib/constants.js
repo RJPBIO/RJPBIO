@@ -218,6 +218,12 @@ export const DS = {
   // useMonthlyDigestData lee + AppV2Root computa daysSinceLastDigest.
   // Trigger gate: totalSessions >= 30 && daysSinceLastDigest >= 28.
   lastMonthlyDigestShown: 0,
+  // Phase 7 F3.5-A (v21) — preferences object para toggles UI per-feature.
+  // Currently used: dontShowAgainReset1Intro (skip pre-session intro card
+  // del flagship #1 Reinicio Parasimpático). Defensive: empty object por
+  // default; consumers leen `state.preferences?.<key>` con fallback.
+  // Migration v21 garantiza shape válido (no array, no null, no string).
+  preferences: {},
   // Phase 6D SP3 — email del user autenticado, cacheado localmente para
   // que ProfileV2/AccountView lo muestren sin requerir useSession en cada
   // mount. setUserEmail (action en useStore) lo hidrata desde el sign-in

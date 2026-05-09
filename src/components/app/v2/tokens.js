@@ -13,6 +13,15 @@ export const colors = {
     // Phase 6B SP2 — dim variant para borders/ghosts donde queremos
     // presencia cyan menos dominante que el accent puro. RGB de #22D3EE.
     phosphorCyanRgb: "34, 211, 238",
+    // Phase 7 SP-B-1 Capa 2 — Color Palette Evolution.
+    // Cyan progression per-phase para hero flagship redesigns Opción B.
+    // Foundation reusable F1.5 + F2.5 + F4-F23 deep upgrades posteriores.
+    // Existing phosphorCyan #22D3EE preserved — additive zero-breaking.
+    phosphorCyanByPhase: {
+      phase1: "#0E7490", // cyan-deep · Phase 1 vagal entrada
+      phase2: "#67E8F9", // cyan-cool · Phase 2 cognitive
+      phase3: "#06B6D4", // cyan-warm · Phase 3 commitment
+    },
   },
   text: {
     primary: "rgba(245,245,247,0.92)",
@@ -217,9 +226,33 @@ export function withAlpha(color, alphaPct) {
   return color;
 }
 
+/**
+ * Phase 7 SP-B-1 Capa 2 — Color Palette Evolution helper.
+ * Returns cyan hex per phase index (0/1/2). Defensive: out of range,
+ * undefined, NaN, non-number → fallback to base phosphorCyan.
+ *
+ * Foundation reusable: hero flagships Opción B + Phase 2 scaling.
+ *
+ * @param {number} phaseIdx — 0=Phase1 vagal, 1=Phase2 cognitive, 2=Phase3 commitment
+ * @returns {string} hex cyan color
+ */
+export function getCyanForPhase(phaseIdx) {
+  const map = {
+    0: colors.accent.phosphorCyanByPhase.phase1,
+    1: colors.accent.phosphorCyanByPhase.phase2,
+    2: colors.accent.phosphorCyanByPhase.phase3,
+  };
+  if (typeof phaseIdx !== "number" || !Number.isFinite(phaseIdx)) {
+    return colors.accent.phosphorCyan;
+  }
+  return map[phaseIdx] || colors.accent.phosphorCyan;
+}
+
 const tokens = {
   colors, typography, spacing, radii, motion, icon, layout, withAlpha,
   // Phase 6H Polish-2 — exponer en default export para imports {} simples.
   touchTarget, easing, duration,
+  // Phase 7 SP-B-1 Capa 2 — Color Palette Evolution helper.
+  getCyanForPhase,
 };
 export default tokens;

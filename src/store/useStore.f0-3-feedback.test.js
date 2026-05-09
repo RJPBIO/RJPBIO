@@ -219,7 +219,7 @@ describe("F0-3 Capa-2 — store v19→v20 migration backfill", () => {
     expect(hist[1].postSessionFeedback).toBeNull();
   });
 
-  it("STORE_VERSION post-migration es 20 (Phase 7 F0-3 bumped)", async () => {
+  it("STORE_VERSION post-migration es 21 (Phase 7 F3.5-A bumped, latest)", async () => {
     mockSavedState = {
       _userId: null,
       _v: 19,
@@ -227,7 +227,7 @@ describe("F0-3 Capa-2 — store v19→v20 migration backfill", () => {
       totalSessions: 1,
     };
     await useStore.getState().init({});
-    expect(useStore.getState()._v).toBe(20);
+    expect(useStore.getState()._v).toBe(21);
   });
 
   it("entries pre-Tier-4 (v17 sin nada) reciben los 3 backfills en pass único", async () => {

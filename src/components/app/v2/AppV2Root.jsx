@@ -37,6 +37,8 @@ import CrisisSheet from "./CrisisSheet";
 import MoodPostSessionSheet from "./mood/MoodPostSessionSheet";
 import Sigh15CompletionCard from "../../protocol/v2/sigh15/Sigh15CompletionCard";
 import Pulse25CompletionCard from "../../protocol/v2/pulse25/Pulse25CompletionCard";
+import Reset1CompletionCard, { buildReset1SparklineData } from "../../protocol/v2/reset1/Reset1CompletionCard";
+import Reset1IntroCard from "../../protocol/v2/reset1/Reset1IntroCard";
 
 // Phase 6 SP3 — ProtocolPlayer overlay desde AppV2Root.
 // Lazy import para preservar SSR-safety de AppV2Root y evitar bundle bloat.
@@ -257,6 +259,19 @@ export default function AppV2Root() {
   // moodPostContext + lastEntry.coherenceLive.score (Lehrer 2014 threshold).
   const [pulse25CardOpen, setPulse25CardOpen] = useState(false);
   const [pulse25Context, setPulse25Context] = useState(null);
+  // Phase 7 F3 Flagship #1 — Reset1CompletionCard mounta DESPUÉS del flow
+  // completo del MoodPostSessionSheet, sólo cuando protocolo === 1.
+  // Daily anchor cohort cold-start: streak emphasis + Polyvagal framing.
+  // Mutually exclusive con F1 (id===15) y F2 (id===25).
+  const [reset1CardOpen, setReset1CardOpen] = useState(false);
+  const [reset1Context, setReset1Context] = useState(null);
+  // Phase 7 F3.5-A — Reset1IntroCard pre-session card (gate protocol.id===1).
+  // Mounta ANTES Phase 1 cuando user lanza protocolo #1 y NO tiene
+  // preferences.dontShowAgainReset1Intro=true. Boost D1+D4 (autoridad
+  // científica + inmersión narrativa antes empezar). Preserva pendingLaunch
+  // para resume tras "Empezar" o "No mostrar de nuevo".
+  const [reset1IntroOpen, setReset1IntroOpen] = useState(false);
+  const [pendingProtocolLaunch, setPendingProtocolLaunch] = useState(null);
 
   // Phase 6B SP1 — state para modales HRV/PPG/BLE + instrumento.
   // hrvModalMode: "camera" arranca HRVCameraMeasure (3 modos internos:
@@ -343,7 +358,7 @@ export default function AppV2Root() {
   // en Group C). Llega via onNavigate({preMood}). Se cachea en state local
   // para que handlePlayerComplete pueda computar deltaMood = post - pre
   // cuando user submitea mood post.
-  const launchProtocol = useCallback((protocol, preMood = null) => {
+  const _doLaunchProtocol = useCallback((protocol, preMood = null) => {
     if (!protocol) return;
     const validPre = (typeof preMood === "number" && preMood >= 1 && preMood <= 5)
       ? preMood
@@ -353,6 +368,50 @@ export default function AppV2Root() {
     setSessionStartedAt(Date.now());
     setPlayerOpen(true);
   }, []);
+
+  const launchProtocol = useCallback((protocol, preMood = null) => {
+    if (!protocol) return;
+    // Phase 7 F3.5-A: gate Reset1IntroCard pre-session SOLO para protocolo
+    // #1 cuando el user NO ha optado opt-out (preferences.dontShowAgainReset1Intro).
+    // Defensive: lookup state directo, fallback false.
+    if (protocol?.id === 1) {
+      let skipPref = false;
+      try {
+        const prefs = useStore.getState().preferences;
+        if (prefs && typeof prefs === "object" && !Array.isArray(prefs)) {
+          skipPref = prefs.dontShowAgainReset1Intro === true;
+        }
+      } catch { /* defensive: skipPref stays false */ }
+      if (!skipPref) {
+        setPendingProtocolLaunch({ protocol, preMood });
+        setReset1IntroOpen(true);
+        return;
+      }
+    }
+    _doLaunchProtocol(protocol, preMood);
+  }, [_doLaunchProtocol]);
+
+  // Phase 7 F3.5-A — handlers Reset1IntroCard.
+  const handleReset1IntroStart = useCallback(() => {
+    setReset1IntroOpen(false);
+    const pending = pendingProtocolLaunch;
+    setPendingProtocolLaunch(null);
+    if (pending?.protocol) {
+      _doLaunchProtocol(pending.protocol, pending.preMood);
+    }
+  }, [pendingProtocolLaunch, _doLaunchProtocol]);
+
+  const handleReset1IntroSkipForever = useCallback(() => {
+    try {
+      useStore.getState().setPreference("dontShowAgainReset1Intro", true);
+    } catch (e) { /* defensive */ }
+    setReset1IntroOpen(false);
+    const pending = pendingProtocolLaunch;
+    setPendingProtocolLaunch(null);
+    if (pending?.protocol) {
+      _doLaunchProtocol(pending.protocol, pending.preMood);
+    }
+  }, [pendingProtocolLaunch, _doLaunchProtocol]);
 
   // Phase 6B SP1 — handlers HRV.
   const handleHrvComplete = useCallback((entry) => {
@@ -869,30 +928,41 @@ export default function AppV2Root() {
     //    ocurra al onContinue del card.
     const isF1 = protocol?.id === 15;
     const isF2 = protocol?.id === 25;
+    const isF3 = protocol?.id === 1;
     setMoodPostSheetOpen(false);
     setMoodPostContext(null);
-    if (isF1 || isF2) {
-      const lastEntry = (() => {
-        try {
-          const h = useStore.getState().history;
-          return Array.isArray(h) && h.length > 0 ? h[h.length - 1] : null;
-        } catch { return null; }
+    if (isF1 || isF2 || isF3) {
+      const storeSnap = (() => {
+        try { return useStore.getState(); } catch { return null; }
       })();
+      const lastEntry = storeSnap && Array.isArray(storeSnap.history) && storeSnap.history.length > 0
+        ? storeSnap.history[storeSnap.history.length - 1]
+        : null;
       const hrvClassification = lastEntry?.coherenceLive?.classification ?? null;
+      const coherenceScore = typeof lastEntry?.coherenceLive?.score === "number"
+        ? lastEntry.coherenceLive.score
+        : null;
       if (isF1) {
         setSigh15Context({ hrvDelta, hrvClassification });
         setSigh15CardOpen(true);
-      } else {
-        // F2: añade coherenceScore desde lastEntry.coherenceLive.score
-        // (Lehrer-Vaschillo threshold ≥0.50 = vagal coupling achieved).
-        setPulse25Context({
-          hrvDelta,
-          hrvClassification,
-          coherenceScore: typeof lastEntry?.coherenceLive?.score === "number"
-            ? lastEntry.coherenceLive.score
-            : null,
-        });
+      } else if (isF2) {
+        setPulse25Context({ hrvDelta, hrvClassification, coherenceScore });
         setPulse25CardOpen(true);
+      } else {
+        // F3: streakDays desde state.streak. F3.5-A: sparklineData desde history.
+        const streakDays = typeof storeSnap?.streak === "number" ? storeSnap.streak : null;
+        // Lazy import to avoid circular concerns; helper exported from Reset1CompletionCard.
+        let sparklineData = null;
+        try {
+          // protocol.n is "Reinicio Parasimpático" (string, not id)
+          const protocolName = protocol?.n || null;
+          const currentCalma = lastEntry?.dimensions?.calma ?? null;
+          if (protocolName && Array.isArray(storeSnap?.history)) {
+            sparklineData = buildReset1SparklineData(storeSnap.history, protocolName, currentCalma);
+          }
+        } catch (e) { /* defensive */ }
+        setReset1Context({ hrvDelta, hrvClassification, coherenceScore, streakDays, sparklineData });
+        setReset1CardOpen(true);
       }
       // selectedProtocol + playerPreMood se limpian al onContinue del card.
     } else {
@@ -968,6 +1038,14 @@ export default function AppV2Root() {
   const handlePulse25Continue = useCallback(() => {
     setPulse25CardOpen(false);
     setPulse25Context(null);
+    setPlayerPreMood(null);
+    setSelectedProtocol(null);
+  }, []);
+
+  // Phase 7 F3 — handler de cierre Reset1CompletionCard. Mismo pattern F1+F2.
+  const handleReset1Continue = useCallback(() => {
+    setReset1CardOpen(false);
+    setReset1Context(null);
     setPlayerPreMood(null);
     setSelectedProtocol(null);
   }, []);
@@ -1202,6 +1280,31 @@ export default function AppV2Root() {
         hrvClassification={pulse25Context?.hrvClassification ?? null}
         coherenceScore={pulse25Context?.coherenceScore ?? null}
         onContinue={handlePulse25Continue}
+      />
+
+      {/* Phase 7 F3 Flagship #1 — Reset1CompletionCard.
+          Mounta DESPUÉS del flow MoodPostSessionSheet completo, sólo cuando
+          protocolo === 1. Daily anchor cohort cold-start: streak emphasis
+          + Polyvagal/Box framing. Mutually exclusive con F1+F2 cards. */}
+      <Reset1CompletionCard
+        isOpen={reset1CardOpen}
+        hrvDelta={reset1Context?.hrvDelta ?? null}
+        hrvClassification={reset1Context?.hrvClassification ?? null}
+        coherenceScore={reset1Context?.coherenceScore ?? null}
+        streakDays={reset1Context?.streakDays ?? null}
+        sparklineData={reset1Context?.sparklineData ?? null}
+        onContinue={handleReset1Continue}
+      />
+
+      {/* Phase 7 F3.5-A — Reset1IntroCard pre-session.
+          Mounta ANTES Phase 1 cuando user lanza protocolo #1 y NO tiene
+          preferences.dontShowAgainReset1Intro=true. Establece autoridad
+          científica + 4 mecanismos antes de empezar. Skip forever via
+          setPreference action. */}
+      <Reset1IntroCard
+        isOpen={reset1IntroOpen}
+        onStart={handleReset1IntroStart}
+        onSkipForever={handleReset1IntroSkipForever}
       />
 
 

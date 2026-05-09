@@ -14,12 +14,19 @@
    - Footer: botón Continuar (cuando validation.canAdvance)
    ═══════════════════════════════════════════════════════════════ */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProtocolPlayer } from "../../../hooks/useProtocolPlayer";
 import { getUseCase } from "../../../lib/protocols";
 import { colors, typography, spacing, layout } from "../../app/v2/tokens";
 import PrimitiveSwitcher from "./PrimitiveSwitcher";
 import TransitionDots from "./primitives/TransitionDots";
+// Phase 7 SP-B-1 Capa 4 — Cinematic phase transitions framework.
+// Overlay strategy: PrimitiveSwitcher mantiene su `key` original (key
+// remount lifecycle preservado para primitives existing F1/F2/F3+); el
+// TransitionContainer renderea overlay particle burst + opacity envelope
+// POR ENCIMA del swap natural cuando phase change detected. Cero breaking
+// para primitives existing.
+import TransitionContainer from "./shared/TransitionContainer";
 
 const ACCENT = colors.accent.phosphorCyan;
 
@@ -378,6 +385,10 @@ export default function ProtocolPlayer({
   });
 
   const [confirmingExit, setConfirmingExit] = useState(false);
+  // Phase 7 SP-B-1 Capa 4 — track previous phase index para detect transitions.
+  // useRef no triggers re-render; se actualiza en onTransitionComplete del
+  // TransitionContainer (cuando termina el envelope de 600ms).
+  const previousPhaseIdxRef = useRef(player.currentPhaseIndex);
   // Phase 4 SP8 — safety disclaimer pre-mount para protocolos con safety field.
   // Phase 5 quick-fix: gate ampliado de "crisis-only" a "cualquier safety field"
   // para cubrir disclaimers no-crisis (e.g. #21 Threshold Crossing — epilepsia
@@ -533,21 +544,35 @@ export default function ProtocolPlayer({
       >
         <div style={{ inlineSize: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
           {!isDone && player.currentAct && (
-            <PrimitiveSwitcher
-              key={`p${player.currentPhaseIndex}-a${player.currentActIndex}`}
-              act={player.currentAct}
-              phase={player.currentActPhase}
-              audioOn={hapticOn}
-              hapticOn={hapticOn}
-              voiceOn={player.effectiveVoiceOn}
-              intent={protocol.int || "calma"}
-              onSignal={player.updateActSignal}
-              onLocalComplete={() => {
-                /* La primitiva avisó que terminó su lifecycle interno;
-                   el player evalúa validation y avanza sólo si pasa. */
-                if (player.validation.canAdvance) player.advance();
+            <TransitionContainer
+              protocolId={protocol?.id}
+              fromPhaseIdx={previousPhaseIdxRef.current}
+              toPhaseIdx={player.currentPhaseIndex}
+              onTransitionComplete={() => {
+                previousPhaseIdxRef.current = player.currentPhaseIndex;
               }}
-            />
+              onAudioCrossfadeRequest={() => {
+                /* Capa 5 audio crossfade hooks aquí en SP-B-2+. F0-1 + F1.5
+                   consumirán este callback para fadeOut prev binaural +
+                   fadeIn next binaural. SP-B-1 deja el wire listo. */
+              }}
+            >
+              <PrimitiveSwitcher
+                key={`p${player.currentPhaseIndex}-a${player.currentActIndex}`}
+                act={player.currentAct}
+                phase={player.currentActPhase}
+                audioOn={hapticOn}
+                hapticOn={hapticOn}
+                voiceOn={player.effectiveVoiceOn}
+                intent={protocol.int || "calma"}
+                onSignal={player.updateActSignal}
+                onLocalComplete={() => {
+                  /* La primitiva avisó que terminó su lifecycle interno;
+                     el player evalúa validation y avanza sólo si pasa. */
+                  if (player.validation.canAdvance) player.advance();
+                }}
+              />
+            </TransitionContainer>
           )}
           {isDone && (
             <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: spacing.s24 }}>

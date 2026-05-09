@@ -206,7 +206,15 @@ export function inferActDefaults(act, phase, protocol) {
 export const P = [
   /* ═══ #1 REINICIO PARASIMPÁTICO ═══
      Phase 4 SP4 — coreografía multi-acto migrada.
-     5 actos: 1 breath + 3 cognitivos sub-divididos + 1 commitment_motor. */
+     5 actos: 1 breath + 3 cognitivos sub-divididos + 1 commitment_motor.
+
+     Phase 7 F3 FLAGSHIP — primitive dedicated `parasympathic_reset_orb`
+     (RAF visualization box 4-4-4-4 con halo expansion durante hold +
+     vacío sustained) wired a haptic signature F0-4 #1 (calma soft) +
+     voice TTS minimal opt-in. Eyebrow "PORGES POLYVAGAL · BOX 4-4-4-4"
+     inline pre-session dentro del primitive. Daily anchor cohort
+     cold-start onboarding. Phases 2 + 3 NO se modifican (cognitive
+     descarga + commitment motor preservados). */
   {id:1,n:"Reinicio Parasimpático",ct:"Reset",d:120,sb:"Restaura función ejecutiva",tg:"R1",cl:"#059669",int:"calma",dif:1,
   ph:[
     {
@@ -221,11 +229,12 @@ export const P = [
           mechanism:"Box 4-4-4-4 activa complejo vagal ventral en <20s (Porges 2011)",
           duration:{min_ms:28000,target_ms:32000,max_ms:38000},
           validate:{kind:"breath_cycles",min_cycles:2,cycle_min_ms:14000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:4,h1:4,ex:4,h2:4}}},
+          ui:{primitive:"parasympathic_reset_orb",props:{showEyebrow:true}},
           media:{
-            voice:{enabled_default:false},
-            breath_ticks:{enabled:true,auto_sync:true},
+            voice:{enabled_default:false,cues:["inhala","mantén","exhala"]},
+            breath_ticks:{enabled:false,auto_sync:false},
             binaural:{action:"start",type:"calma"},
+            haptic:{phase:"parasympathic_reset_1"},
             signature:{kind:"phaseShift",fire_at:"start"}
           }
         }
@@ -2609,7 +2618,7 @@ export const P = [
 ];
 
 export const SCIENCE_DEEP = {
-  1: "La respiración box (4-4-4-4) activa el complejo vagal ventral, la rama del nervio vago responsable de la conexión social y la calma. Cuando inhalas y sostienes, aumentas la presión intratorácica que estimula los barorreceptores aórticos, enviando señales de 'seguridad' al tronco cerebral. La fase de desplazamiento de carga usa principios de terapia cognitiva: externalizar el pensamiento reduce la rumiación del córtex cingulado anterior.",
+  1: "Box breathing 4-4-4-4 (3.75 brpm) opera dentro del rango óptimo documentado para vagal coupling y enhanced HRV (Russo et al. 2017, Breathe ERS, doi:10.1183/20734735.009817). La práctica activa el complejo vagal ventral (VVC) regulado por el núcleo ambiguus, generando neuroception of safety (Porges 2022, Frontiers in Integrative Neuroscience 16:871227, doi:10.3389/fnint.2022.871227). Mecanismos físicos: respiratory sinus arrhythmia (RSA) ↑ + cardiorespiratory coupling ↑ + baroreflex sensitivity ↑ + sympathovagal balance shift parasympathic-dominant. Evidencia RCT: Ma et al. 2017 (Frontiers in Psychology 8:874, N=40, 8 semanas, 4 brpm) demostró cortisol salival ↓ + sustained attention ↑ + negative affect ↓; Lemaitre et al. 2025 (Advances in Respiratory Medicine, RCT box 4-4-4-4 6 semanas) reportó HRV (HF component) ↑ + perceived stress ↓. La phase 2 (descarga cognitiva) usa terapia cognitiva: externalizar el pensamiento reduce rumiación del córtex cingulado anterior (Lieberman 2007 affect labeling).",
   2: "La respiración 6-2-8 genera coherencia cardíaca — un estado donde el corazón, la respiración y el sistema nervioso sincronizan sus ritmos. El etiquetado emocional (affect labeling) tiene respaldo en neuroimagen: nombrar una emoción reduce la activación amigdalar hasta un 40% y activa la corteza prefrontal ventrolateral, que regula las emociones.",
   3: "Las exhalaciones largas (ratio 1:3) activan directamente el sistema parasimpático. El triángulo de prioridad aplica la matriz de Eisenhower de forma embodied — al conectar la decisión con el cuerpo (cerrar el puño), se activa la memoria procedimental, que tiene mayor tasa de ejecución que la decisión puramente mental.",
   4: "El movimiento rítmico bilateral (marcha estática) cruza la línea media del cuerpo, activando ambos hemisferios. La apertura torácica revierte la postura de estrés (hombros cerrados, respiración superficial) y la contracción-liberación usa relajación muscular progresiva de Jacobson.",

@@ -21,6 +21,9 @@ const VALID_PRIMITIVES = new Set([
   "facial_cold_prompt", "shake_hands_prompt", "chip_selector",
   "hold_press_button", "text_emphasis_voice", "silence_cyan_minimal",
   "object_anchor_prompt", "vocal_with_haptic", "transition_dots",
+  // Phase 7 F3 Flagship #1 — primitive dedicated para Reinicio
+  // Parasimpático Phase 1 "Entrada Vagal" (BOX 4-4-4-4).
+  "parasympathic_reset_orb",
 ]);
 
 function flatActs(p) {
@@ -104,8 +107,12 @@ describe("Tier 1A migration — protocolos #1, #2, #3", () => {
         });
       });
 
-      it("Fase 1 acto usa primitive breath_orb", () => {
-        expect(proto.ph[0].iExec[0].ui.primitive).toBe("breath_orb");
+      it("Fase 1 acto usa primitive breath_orb (excepto #1 con parasympathic_reset_orb F3 flagship)", () => {
+        // Phase 7 F3 shape change verificado: protocolo #1 Phase 1
+        // upgraded a parasympathic_reset_orb dedicated primitive.
+        // Resto tier 1A (#2, #3) sigue con breath_orb.
+        const expected = id === 1 ? "parasympathic_reset_orb" : "breath_orb";
+        expect(proto.ph[0].iExec[0].ui.primitive).toBe(expected);
       });
 
       it("Fase 3 acto usa primitive hold_press_button", () => {

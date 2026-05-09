@@ -1698,6 +1698,108 @@ export function stopVoice() {
   } catch (e) {}
 }
 
+// ─── Phase 7 SP-B-1 Capa 5 — Audio Crossfade utilities ─────
+//
+// Foundation reusable para hero flagship redesigns Opción B.
+// Permite smooth audio transitions entre phases (fade out current
+// binaural + fade in next binaural via TransitionContainer Capa 4).
+//
+// Pattern: exponential gain ramp (Web Audio API native), 600ms default
+// alineado a TRANSITION_DURATION_MS del cinematic transitions framework.
+//
+// Anti-regression: NO breaking changes a existing audio API. Cero
+// modificación a hapticBreath/hapticPhase/hapticSignature/hapticCountdown/
+// hapticProtocolSignature (F0-4)/binaural/musicBed/ambient/voice infra.
+//
+// Defensive contracts: cualquier audio node sin gain property → returns
+// null. Cualquier durationMs ≤0 o non-finite → fallback 600ms.
+
+const _CROSSFADE_DEFAULT_MS = 600;
+const _CROSSFADE_MIN_MS = 50;
+const _CROSSFADE_MAX_MS = 5000;
+const _CROSSFADE_NEAR_ZERO = 0.0001; // exponential never reaches 0
+
+function _clampDuration(ms) {
+  const n = typeof ms === "number" && Number.isFinite(ms) ? ms : _CROSSFADE_DEFAULT_MS;
+  return Math.max(_CROSSFADE_MIN_MS, Math.min(_CROSSFADE_MAX_MS, n));
+}
+
+function _hasGainParam(node) {
+  return !!(node && node.gain && typeof node.gain.exponentialRampToValueAtTime === "function"
+    && typeof node.gain.setValueAtTime === "function"
+    && typeof node.gain.cancelScheduledValues === "function");
+}
+
+/**
+ * Fade out gain node exponentially to ~0 over durationMs.
+ * @param {AudioNode} audioNode — node con .gain (GainNode o similar)
+ * @param {number} [durationMs=600]
+ * @returns {number|null} endTime (audioCtx seconds) o null si invalid
+ */
+export function fadeOutNode(audioNode, durationMs = _CROSSFADE_DEFAULT_MS) {
+  if (!_hasGainParam(audioNode)) return null;
+  const ctx = gAC();
+  if (!ctx) return null;
+  try {
+    const dur = _clampDuration(durationMs);
+    const now = ctx.currentTime;
+    const endTime = now + dur / 1000;
+    const startGain = Math.max(_CROSSFADE_NEAR_ZERO, Number(audioNode.gain.value) || _CROSSFADE_NEAR_ZERO);
+    audioNode.gain.cancelScheduledValues(now);
+    audioNode.gain.setValueAtTime(startGain, now);
+    audioNode.gain.exponentialRampToValueAtTime(_CROSSFADE_NEAR_ZERO, endTime);
+    return endTime;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Fade in gain node exponentially to targetGain over durationMs.
+ * @param {AudioNode} audioNode
+ * @param {number} [targetGain=0.5]
+ * @param {number} [durationMs=600]
+ * @returns {number|null} endTime o null
+ */
+export function fadeInNode(audioNode, targetGain = 0.5, durationMs = _CROSSFADE_DEFAULT_MS) {
+  if (!_hasGainParam(audioNode)) return null;
+  const ctx = gAC();
+  if (!ctx) return null;
+  try {
+    const dur = _clampDuration(durationMs);
+    const now = ctx.currentTime;
+    const endTime = now + dur / 1000;
+    const target = Math.max(_CROSSFADE_NEAR_ZERO, Number(targetGain) || _CROSSFADE_NEAR_ZERO);
+    audioNode.gain.cancelScheduledValues(now);
+    audioNode.gain.setValueAtTime(_CROSSFADE_NEAR_ZERO, now);
+    audioNode.gain.exponentialRampToValueAtTime(target, endTime);
+    return endTime;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Orchestrate fade out + fade in simultaneous (crossfade).
+ * @param {AudioNode|null} outNode
+ * @param {AudioNode|null} inNode
+ * @param {number} [durationMs=600]
+ * @param {number} [inTargetGain=0.5]
+ * @returns {{ outEnd: number|null, inEnd: number|null }}
+ */
+export function crossfadeNodes(outNode, inNode, durationMs = _CROSSFADE_DEFAULT_MS, inTargetGain = 0.5) {
+  const outEnd = outNode ? fadeOutNode(outNode, durationMs) : null;
+  const inEnd = inNode ? fadeInNode(inNode, inTargetGain, durationMs) : null;
+  return { outEnd, inEnd };
+}
+
+export const __crossfadeInternals = {
+  DEFAULT_MS: _CROSSFADE_DEFAULT_MS,
+  MIN_MS: _CROSSFADE_MIN_MS,
+  MAX_MS: _CROSSFADE_MAX_MS,
+  NEAR_ZERO: _CROSSFADE_NEAR_ZERO,
+};
+
 // ─── Persistence (DEPRECATED: use Zustand store) ─────────
 // ldS and svS removed in v5 unification — all state flows through useStore
 
