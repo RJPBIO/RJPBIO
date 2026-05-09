@@ -25,6 +25,9 @@ const VALID_PRIMITIVES = new Set([
   "vocal_with_haptic", "transition_dots",
   "doorway_visualizer", "vocal_resonance_visual", "power_pose_visual",
   "walking_pace_indicator", "pulse_match_visual",
+  // Phase 7 F2 Flagship #25 — primitive dedicated para Sincronía Cardíaca
+  // (Phase 3 del protocolo #25). Phase 2 sigue con pulse_match_visual.
+  "cardiac_pulse_match_visual",
 ]);
 
 function flatActs(p) {
@@ -196,11 +199,15 @@ describe("#25 Cardiac Pulse Match — migración Phase 5 SP5", () => {
     expect(a.type).toBe("cardiac_interoception");
   });
 
-  it("acto 3 usa pulse_match_visual mode='match_breathing' con target_breaths=5", () => {
+  it("acto 3 usa cardiac_pulse_match_visual con cycleCountTarget=5 (Phase 7 F2 flagship)", () => {
+    // Phase 7 F2 shape change verificado: Phase 3 ("Sincronía Cardíaca")
+    // upgraded de pulse_match_visual a cardiac_pulse_match_visual primitive
+    // dedicated. Cycles target preserva semántica del 5.5rpm × 5 ciclos.
+    // Phase 2 (count_only heartbeat detection) sigue con pulse_match_visual.
     const a = p.ph[2].iExec[0];
-    expect(a.ui.primitive).toBe("pulse_match_visual");
-    expect(a.ui.props.mode).toBe("match_breathing");
-    expect(a.ui.props.target_breaths).toBe(5);
+    expect(a.ui.primitive).toBe("cardiac_pulse_match_visual");
+    expect(a.ui.props.cycleCountTarget).toBe(5);
+    expect(a.ui.props.showEyebrow).toBe(true);
     expect(a.type).toBe("breath");
   });
 

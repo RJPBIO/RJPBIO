@@ -36,6 +36,7 @@ import CrisisSheet from "./CrisisSheet";
 // Phase 6J-1 Group A — mood capture post-session.
 import MoodPostSessionSheet from "./mood/MoodPostSessionSheet";
 import Sigh15CompletionCard from "../../protocol/v2/sigh15/Sigh15CompletionCard";
+import Pulse25CompletionCard from "../../protocol/v2/pulse25/Pulse25CompletionCard";
 
 // Phase 6 SP3 — ProtocolPlayer overlay desde AppV2Root.
 // Lazy import para preservar SSR-safety de AppV2Root y evitar bundle bloat.
@@ -249,6 +250,13 @@ export default function AppV2Root() {
   // el card desde moodPostContext heredado al cerrar el sheet.
   const [sigh15CardOpen, setSigh15CardOpen] = useState(false);
   const [sigh15Context, setSigh15Context] = useState(null);
+  // Phase 7 F2 Flagship #25 — Pulse25CompletionCard mounta DESPUÉS del flow
+  // completo de MoodPostSessionSheet sólo cuando protocolo === 25.
+  // Mutually exclusive con sigh15CardOpen (gate por protocol.id en handlers).
+  // Carga snapshot {hrvDelta, hrvClassification, coherenceScore} desde
+  // moodPostContext + lastEntry.coherenceLive.score (Lehrer 2014 threshold).
+  const [pulse25CardOpen, setPulse25CardOpen] = useState(false);
+  const [pulse25Context, setPulse25Context] = useState(null);
 
   // Phase 6B SP1 — state para modales HRV/PPG/BLE + instrumento.
   // hrvModalMode: "camera" arranca HRVCameraMeasure (3 modos internos:
@@ -852,29 +860,41 @@ export default function AppV2Root() {
         useStore.getState().attachSessionFeedback(feedback);
       } catch (e) { console.error("[v2] attachSessionFeedback error", e); }
     }
-    // 4. Phase 7 F1 Flagship #15 — mount Sigh15CompletionCard si el
-    //    protocolo completado es #15. Captura hrvDelta + classification
-    //    desde moodPostContext heredado (computed en closeSession via
-    //    buildSessionDelta). Preserva selectedProtocol DURANTE el card
-    //    para que el flow de cleanup ocurra al onContinue del card.
-    const isFlagship = protocol?.id === 15;
+    // 4. Phase 7 F1 + F2 — mount completion card si protocolo es flagship.
+    //    F1: id===15 → Sigh15CompletionCard
+    //    F2: id===25 → Pulse25CompletionCard
+    //    Mutually exclusive (un protocolo es uno O el otro).
+    //    Captura hrvDelta + classification desde moodPostContext heredado.
+    //    Preserva selectedProtocol DURANTE el card para que el cleanup
+    //    ocurra al onContinue del card.
+    const isF1 = protocol?.id === 15;
+    const isF2 = protocol?.id === 25;
     setMoodPostSheetOpen(false);
     setMoodPostContext(null);
-    if (isFlagship) {
-      // hrvClassification no está en moodPostContext; lookup from last entry o null.
-      // Defensive: si no hay history o no hay coherenceLive/postDelta, fallback.
+    if (isF1 || isF2) {
       const lastEntry = (() => {
         try {
           const h = useStore.getState().history;
           return Array.isArray(h) && h.length > 0 ? h[h.length - 1] : null;
         } catch { return null; }
       })();
-      setSigh15Context({
-        hrvDelta,
-        hrvClassification: lastEntry?.coherenceLive?.classification ?? null,
-      });
-      setSigh15CardOpen(true);
-      // selectedProtocol + playerPreMood se limpian al onContinue del Sigh15 card.
+      const hrvClassification = lastEntry?.coherenceLive?.classification ?? null;
+      if (isF1) {
+        setSigh15Context({ hrvDelta, hrvClassification });
+        setSigh15CardOpen(true);
+      } else {
+        // F2: añade coherenceScore desde lastEntry.coherenceLive.score
+        // (Lehrer-Vaschillo threshold ≥0.50 = vagal coupling achieved).
+        setPulse25Context({
+          hrvDelta,
+          hrvClassification,
+          coherenceScore: typeof lastEntry?.coherenceLive?.score === "number"
+            ? lastEntry.coherenceLive.score
+            : null,
+        });
+        setPulse25CardOpen(true);
+      }
+      // selectedProtocol + playerPreMood se limpian al onContinue del card.
     } else {
       setPlayerPreMood(null);
       setSelectedProtocol(null);
@@ -903,22 +923,32 @@ export default function AppV2Root() {
         hrvDelta,
       });
     } catch (e) { console.error("[v2] recordSessionOutcome (skip) error", e); }
-    // Phase 7 F1 Flagship #15 — same gate que submit handler.
-    const isFlagship = protocol?.id === 15;
+    // Phase 7 F1 + F2 — same gate que submit handler.
+    const isF1 = protocol?.id === 15;
+    const isF2 = protocol?.id === 25;
     setMoodPostSheetOpen(false);
     setMoodPostContext(null);
-    if (isFlagship) {
+    if (isF1 || isF2) {
       const lastEntry = (() => {
         try {
           const h = useStore.getState().history;
           return Array.isArray(h) && h.length > 0 ? h[h.length - 1] : null;
         } catch { return null; }
       })();
-      setSigh15Context({
-        hrvDelta,
-        hrvClassification: lastEntry?.coherenceLive?.classification ?? null,
-      });
-      setSigh15CardOpen(true);
+      const hrvClassification = lastEntry?.coherenceLive?.classification ?? null;
+      if (isF1) {
+        setSigh15Context({ hrvDelta, hrvClassification });
+        setSigh15CardOpen(true);
+      } else {
+        setPulse25Context({
+          hrvDelta,
+          hrvClassification,
+          coherenceScore: typeof lastEntry?.coherenceLive?.score === "number"
+            ? lastEntry.coherenceLive.score
+            : null,
+        });
+        setPulse25CardOpen(true);
+      }
     } else {
       setPlayerPreMood(null);
       setSelectedProtocol(null);
@@ -930,6 +960,14 @@ export default function AppV2Root() {
   const handleSigh15Continue = useCallback(() => {
     setSigh15CardOpen(false);
     setSigh15Context(null);
+    setPlayerPreMood(null);
+    setSelectedProtocol(null);
+  }, []);
+
+  // Phase 7 F2 — handler de cierre Pulse25CompletionCard. Mismo pattern F1.
+  const handlePulse25Continue = useCallback(() => {
+    setPulse25CardOpen(false);
+    setPulse25Context(null);
     setPlayerPreMood(null);
     setSelectedProtocol(null);
   }, []);
@@ -1151,6 +1189,19 @@ export default function AppV2Root() {
         hrvDelta={sigh15Context?.hrvDelta ?? null}
         hrvClassification={sigh15Context?.hrvClassification ?? null}
         onContinue={handleSigh15Continue}
+      />
+
+      {/* Phase 7 F2 Flagship #25 — Pulse25CompletionCard.
+          Mounta DESPUÉS del flow completo del MoodPostSessionSheet, sólo
+          cuando protocolo === 25. Captura hrvDelta + classification +
+          coherenceScore para dual-metric framing científico Lehrer 2014.
+          Mutually exclusive con Sigh15 card (gate por id). */}
+      <Pulse25CompletionCard
+        isOpen={pulse25CardOpen}
+        hrvDelta={pulse25Context?.hrvDelta ?? null}
+        hrvClassification={pulse25Context?.hrvClassification ?? null}
+        coherenceScore={pulse25Context?.coherenceScore ?? null}
+        onContinue={handlePulse25Continue}
       />
 
 

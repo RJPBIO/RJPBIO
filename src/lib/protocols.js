@@ -2557,16 +2557,22 @@ export const P = [
           mechanism:"Respiración a frecuencia de resonancia 5.5rpm + interocepción cardíaca explícita maximiza HRV vía resonancia barorrefleja (Lehrer 2014; Khalsa 2018)",
           duration:{min_ms:50000,target_ms:60000,max_ms:72000},
           validate:{kind:"min_duration",min_ms:50000},
+          // Phase 7 F2 FLAGSHIP — primitive dedicated cardiac_pulse_match_visual
+          // (RAF visualization 5.5rpm + heartbeat orb + resonance ring + variant
+          // radial/carotid). Wired a haptic signature F0-4 #25 + voice TTS opt-in.
+          // Eyebrow Schandry/Garfinkel/Lehrer-Vaschillo inline (NO toca shell).
+          // Phase 2 (count_only heartbeat detection) sigue usando pulse_match_visual.
           ui:{
-            primitive:"pulse_match_visual",
+            primitive:"cardiac_pulse_match_visual",
             props:{
-              mode:"match_breathing",
-              target_breaths:5,
-              interval_ms:11000
+              cycleCountTarget:5,
+              showEyebrow:true
             }
           },
           media:{
-            breath_ticks:{enabled:true,auto_sync:true},
+            voice:{enabled_default:false,cues:["siente","exhala"]},
+            breath_ticks:{enabled:false,auto_sync:false},
+            haptic:{phase:"cardiac_pulse_match_25"},
             binaural:{action:"continue"}
           }
         }
