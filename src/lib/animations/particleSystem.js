@@ -65,7 +65,14 @@ export function createParticleSystem({ canvas, reducedMotion = false } = {}) {
   if (!canvas || typeof canvas.getContext !== "function") {
     return null;
   }
-  const ctx = canvas.getContext("2d");
+  // Defensive try-catch: jsdom throws "Not implemented" on getContext.
+  // Real browsers return CanvasRenderingContext2D normally.
+  let ctx = null;
+  try {
+    ctx = canvas.getContext("2d");
+  } catch (e) {
+    return null;
+  }
   if (!ctx) return null;
 
   const particleCount = reducedMotion ? 0 : detectParticleCount();

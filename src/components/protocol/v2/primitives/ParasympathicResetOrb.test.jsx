@@ -55,15 +55,13 @@ describe("ParasympathicResetOrb — F3 Capa-1 render", () => {
     expect(document.querySelector('[data-testid="parasympathic-reset-phase-label"]')).toBeTruthy();
   });
 
-  it("eyebrow POLYVAGAL · 3.75 BRPM · RCT-VALIDATED (Phase 7 F3.5-A precise)", () => {
-    // Phase 7 F3.5-A: eyebrow updated a precise framing con BRPM rate
-    // Russo 2017 + RCT-validated marker (Ma 2017 + Lemaitre 2025).
+  it("eyebrow muestra phase label 'Entrada Vagal' (post user-feedback simplification)", () => {
+    // Post-feedback: science citation removida del top (causa fatiga
+    // textual). Replaced con phase name simple. NO POLYVAGAL/BRPM/RCT.
     render(<ParasympathicResetOrb />);
     const eyebrow = document.querySelector('[data-testid="parasympathic-reset-eyebrow"]');
-    expect(eyebrow.textContent).toMatch(/POLYVAGAL/);
-    expect(eyebrow.textContent).toMatch(/3\.75 BRPM/);
-    expect(eyebrow.textContent).toMatch(/RCT-VALIDATED/);
-    expect(eyebrow.textContent).not.toMatch(/4-7-8|WEIL/);
+    expect(eyebrow.textContent).toMatch(/Entrada Vagal/i);
+    expect(eyebrow.textContent).not.toMatch(/POLYVAGAL|BRPM|RCT-VALIDATED|4-7-8|WEIL/);
   });
 
   it("showEyebrow=false: NO renderiza eyebrow", () => {

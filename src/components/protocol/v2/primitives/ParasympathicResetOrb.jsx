@@ -42,7 +42,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/lib/a11y";
 import { hapticProtocolSignature, speak } from "../../../../lib/audio";
-import { colors, typography, spacing } from "../../../app/v2/tokens";
+import { colors, typography, spacing, getCyanForPhase } from "../../../app/v2/tokens";
+// Phase 7 SP-B-2 Capa 1 — particle system bio-synced overlay (subtle).
+// Foundation reusable from SP-B-1. 12/6/0 particles per device tier.
+import { createParticleSystem } from "../../../../lib/animations/particleSystem";
+// Phase 7 fix: phase label simple en lugar de scientific eyebrow morph
+// (user feedback — ciencia arriba causa fatiga textual, solo phase name).
 
 const INHALE_MS = 4000;
 const HOLD_MS = 4000;
@@ -84,6 +89,55 @@ export default function ParasympathicResetOrb({
 
   const [cyclePhase, setCyclePhase] = useState("inhale");
   const [cycleIdx, setCycleIdx] = useState(0);
+
+  // Phase 7 SP-B-2 Capa 1 — particle system bio-synced overlay.
+  // Subtle background field. Mismas 4 phase behaviors que ParticleSystem
+  // foundation pero mapeadas: inhale→inhale (centripetal), hold→hold
+  // (orbital), exhale→exhale (centrifugal), empty→empty (damping).
+  const particleCanvasRef = useRef(null);
+  const particleSysRef = useRef(null);
+  useEffect(() => {
+    const canvas = particleCanvasRef.current;
+    if (!canvas) return undefined;
+    // Use logical size matched to viewport orb area; high-DPI not required for subtle bg.
+    canvas.width = 300;
+    canvas.height = 300;
+    try {
+      particleSysRef.current = createParticleSystem({ canvas, reducedMotion: reduceMotion });
+      if (particleSysRef.current) {
+        particleSysRef.current.setPhase("inhale", 0);
+        particleSysRef.current.start();
+      }
+    } catch (e) { /* noop */ }
+    return () => {
+      if (particleSysRef.current) {
+        try { particleSysRef.current.stop(); } catch { /* noop */ }
+        particleSysRef.current = null;
+      }
+    };
+  }, [reduceMotion]);
+
+  // Sync particles con cyclePhase del breath cycle.
+  useEffect(() => {
+    if (particleSysRef.current) {
+      try { particleSysRef.current.setPhase(cyclePhase, 0.5); } catch { /* noop */ }
+    }
+  }, [cyclePhase]);
+
+  // Phase 7 SP-B-2 Capa 3 — somatic body scan secondary overlay.
+  // Multi-task: usuario respira (primary) + lee body cue (secondary).
+  // Cycling instructions cada cycle, alineado al constraint user oficina+
+  // sentado+sin volumen+una mano (read-only, no extra interaction).
+  // Honest: NO añade interaction, sí añade cognitive layer somatic.
+  // Body cues passive — válidos durante todo el ciclo box (16s). Evitamos
+  // verbos activos como "expande" que solo aplican al inhale (4s).
+  const SOMATIC_CUES = [
+    "Hombros sueltos",
+    "Mandíbula relajada",
+    "Vientre suave",
+    "Pecho abierto",
+  ];
+  const somaticCue = SOMATIC_CUES[cycleIdx % SOMATIC_CUES.length];
 
   useEffect(() => {
     if (reduceMotion) {
@@ -239,49 +293,63 @@ export default function ParasympathicResetOrb({
         <span
           data-testid="parasympathic-reset-eyebrow"
           style={{
-            fontFamily: typography.familyMono,
-            fontSize: typography.size.microCaps,
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            color: colors.accent.phosphorCyan,
+            fontFamily: typography.family,
+            fontSize: 11,
             fontWeight: typography.weight.medium,
-            opacity: 0.85,
-            textAlign: "center",
-            maxWidth: 320,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: getCyanForPhase(0),
+            opacity: 0.7,
           }}
         >
-          POLYVAGAL · 3.75 BRPM · RCT-VALIDATED
+          Entrada Vagal
         </span>
       )}
 
-      {/* Orb central + halo expansion durante hold */}
+      {/* Orb central + halo expansion durante hold + particle field (SP-B-2 Capa 1) */}
       <div
         style={{
           position: "relative",
-          width: 240,
-          height: 240,
+          width: 300,
+          height: 300,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
+        {/* Particle system bio-synced (SP-B-2 Capa 1). Subtle background. */}
+        <canvas
+          ref={particleCanvasRef}
+          data-testid="parasympathic-reset-particles"
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            opacity: reduceMotion ? 0 : 0.6,
+            transition: "opacity 200ms ease-out",
+          }}
+        />
+        {/* Halo expansion durante hold */}
         <div
           ref={haloRef}
           data-testid="parasympathic-reset-halo"
           aria-hidden="true"
           style={{
             position: "absolute",
-            top: 0, left: 0,
             width: 240,
             height: 240,
             borderRadius: "50%",
-            border: `1px solid ${colors.accent.phosphorCyan}`,
+            border: `1px solid ${getCyanForPhase(0)}`,
             opacity: 0,
             transition: "none",
             willChange: "transform, opacity",
             transform: "scale(1.0)",
           }}
         />
+        {/* Orb central */}
         <div
           ref={orbRef}
           data-testid="parasympathic-reset-orb-disc"
@@ -291,8 +359,8 @@ export default function ParasympathicResetOrb({
             height: 160,
             borderRadius: "50%",
             background:
-              "radial-gradient(circle, rgba(34,211,238,0.45) 0%, rgba(21,94,117,0.20) 60%, rgba(21,94,117,0) 100%)",
-            border: `1px solid ${colors.accent.phosphorCyan}`,
+              "radial-gradient(circle, rgba(14,116,144,0.50) 0%, rgba(14,116,144,0.22) 60%, rgba(14,116,144,0) 100%)",
+            border: `1px solid ${getCyanForPhase(0)}`,
             transition: "none",
             willChange: "transform",
             transform: "scale(1.0)",
@@ -314,6 +382,27 @@ export default function ParasympathicResetOrb({
         }}
       >
         {phaseLabel}
+      </span>
+
+      {/* Phase 7 SP-B-2 Capa 3 — Somatic body scan secondary cue.
+          Multi-task: usuario respira (primary) + lee body cue (secondary).
+          Cycling cada cycle. Read-only, sin extra interaction.
+          Constraint compliant (oficina + 1mano + sin volumen + sentado). */}
+      <span
+        data-testid="parasympathic-reset-somatic-cue"
+        aria-live="polite"
+        style={{
+          fontFamily: typography.family,
+          fontSize: typography.size.body,
+          fontWeight: typography.weight.light,
+          letterSpacing: "-0.01em",
+          color: colors.text.secondary,
+          opacity: 0.7,
+          minHeight: 18,
+          textAlign: "center",
+        }}
+      >
+        {somaticCue}
       </span>
 
       <span

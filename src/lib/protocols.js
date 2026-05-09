@@ -254,7 +254,7 @@ export const P = [
           mechanism:"Externalizar pensamiento dominante reduce rumiación (córtex cingulado anterior)",
           duration:{min_ms:12000,target_ms:15000,max_ms:20000},
           validate:{kind:"min_duration",min_ms:12000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"Identifica el peso.",subtext:"El pensamiento que más pesa ahora."}},
+          ui:{primitive:"cognitive_descarga",props:{subActIdx:0}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -269,9 +269,9 @@ export const P = [
           duration:{min_ms:18000,target_ms:22000,max_ms:28000},
           validate:{kind:"chip_selection",required:true},
           ui:{
-            primitive:"chip_selector",
+            primitive:"cognitive_descarga",
             props:{
-              question:"¿Depende de ti?",
+              subActIdx:1,
               chips:[{id:"yes",label:"Sí depende"},{id:"no",label:"No depende"}],
               min_thinking_ms:5000
             }
@@ -288,7 +288,7 @@ export const P = [
           mechanism:"Compromiso o liberación cognitiva consolida la decisión binaria",
           duration:{min_ms:15000,target_ms:18000,max_ms:25000},
           validate:{kind:"min_duration",min_ms:15000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"Una acción para 30 minutos. O suéltalo 24 horas.",subtext:"Confía en tu primera respuesta."}},
+          ui:{primitive:"cognitive_descarga",props:{subActIdx:2}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -311,7 +311,7 @@ export const P = [
           mechanism:"Visualización + anclaje motor activa memoria procedimental + dopamina direccional (Bryan, Adams, Monin 2013)",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:5000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Esa es la acción."}},
+          ui:{primitive:"commitment_motor",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Esa es la acción."}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -342,7 +342,7 @@ export const P = [
           mechanism:"Ratio 1:1.3 inhalación:exhalación maximiza HRV en 20-30s (HeartMath)",
           duration:{min_ms:28000,target_ms:32000,max_ms:36000},
           validate:{kind:"breath_cycles",min_cycles:2,cycle_min_ms:15000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:6,h1:2,ex:8,h2:0}}},
+          ui:{primitive:"cardiac_coherence_orb",props:{cadence:{in:6,h1:2,ex:8,h2:0}}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -367,8 +367,9 @@ export const P = [
           duration:{min_ms:20000,target_ms:25000,max_ms:30000},
           validate:{kind:"min_duration",min_ms:20000},
           ui:{
-            primitive:"body_silhouette_highlight",
+            primitive:"emotional_labeling",
             props:{
+              subActIdx:0,
               highlight_progression:["chest","shoulders","stomach","head","neck"],
               transition_ms:4000
             }
@@ -387,9 +388,9 @@ export const P = [
           duration:{min_ms:18000,target_ms:22000,max_ms:28000},
           validate:{kind:"chip_selection",required:true},
           ui:{
-            primitive:"chip_selector",
+            primitive:"emotional_labeling",
             props:{
-              question:"¿Qué sientes exactamente?",
+              subActIdx:1,
               chips:[
                 {id:"frustration",label:"Frustración"},
                 {id:"exhaustion",label:"Agotamiento"},
@@ -413,7 +414,7 @@ export const P = [
           mechanism:"Sostener nombramiento consolida reducción amigdalar",
           duration:{min_ms:8000,target_ms:10000,max_ms:14000},
           validate:{kind:"min_duration",min_ms:8000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Sostén."}},
+          ui:{primitive:"emotional_labeling",props:{subActIdx:2}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true},
             binaural:{action:"continue"}
@@ -435,7 +436,7 @@ export const P = [
           mechanism:"Visualización prospectiva + anclaje táctil activa dopamina orientada a objetivos",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Hoy avanzas, paso a paso."}},
+          ui:{primitive:"visualization_commitment",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Hoy avanzas, paso a paso."}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -444,7 +445,7 @@ export const P = [
           }
         }
       ],
-      sc:"Visualización + anclaje táctil activa dopamina direccional",
+      sc:"Visualización + integración bilateral (saccades) + commitment motor + sello vagal (humming) — multi-exercise neural biohacking layered",
       ic:"body",br:{in:6,h1:2,ex:8,h2:0}
     }
   ]},
@@ -466,7 +467,7 @@ export const P = [
           mechanism:"Ratio 1:3 inhalación:exhalación activa tono vagal parasimpático en <20s",
           duration:{min_ms:24000,target_ms:28000,max_ms:32000},
           validate:{kind:"breath_cycles",min_cycles:3,cycle_min_ms:7000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:2,h1:0,ex:6,h2:0}}},
+          ui:{primitive:"descarga_rapida_orb",props:{cadence:{in:2,h1:0,ex:6,h2:0}}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -475,7 +476,7 @@ export const P = [
           }
         }
       ],
-      sc:"Exhalación prolongada 1:3 activa parasimpático (<20s)",
+      sc:"Exhalación prolongada 1:3 activa parasimpático (<20s) + cycling release cues físicos (Hombros/Mandíbula/Pecho)",
       ic:"breath",br:{in:2,h1:0,ex:6,h2:0}
     },
     {
@@ -490,7 +491,7 @@ export const P = [
           mechanism:"Identificación de candidatos prepara filtro ejecutivo (corteza prefrontal dorsolateral)",
           duration:{min_ms:15000,target_ms:18000,max_ms:22000},
           validate:{kind:"min_duration",min_ms:15000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"Tres tareas urgentes.",subtext:"Las que más pesan."}},
+          ui:{primitive:"priority_filter",props:{subActIdx:0}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -504,7 +505,7 @@ export const P = [
           mechanism:"Matriz Eisenhower reduce carga cognitiva ejecutiva",
           duration:{min_ms:20000,target_ms:24000,max_ms:30000},
           validate:{kind:"min_duration",min_ms:20000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"¿Importante o urgente?",subtext:"Eliminar. Delegar. Hacer."}},
+          ui:{primitive:"priority_filter",props:{subActIdx:1}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true}
@@ -517,7 +518,7 @@ export const P = [
           mechanism:"Convergencia ejecutiva en single task",
           duration:{min_ms:12000,target_ms:15000,max_ms:20000},
           validate:{kind:"min_duration",min_ms:12000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"Queda una.",subtext:"Solo una."}},
+          ui:{primitive:"priority_filter",props:{subActIdx:2}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true},
             binaural:{action:"continue"}
@@ -539,7 +540,7 @@ export const P = [
           mechanism:"Compromiso motor + verbalización mental ancla decisión en memoria procedimental (Bryan, Adams, Monin 2013); duplica probabilidad de ejecución",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:5000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"60 minutos para esto."}},
+          ui:{primitive:"executive_commitment",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"60 minutos para esto."}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -549,7 +550,7 @@ export const P = [
           }
         }
       ],
-      sc:"Compromiso motor + verbalización (Bryan, Adams, Monin 2013, JPSP)",
+      sc:"Triple-seal: motor (hold-press) + somatic (puño libre cerrado) + respiratorio (exhale sync) + 60-min commitment anchor (Bryan, Adams, Monin 2013, JPSP)",
       ic:"body",br:{in:2,h1:0,ex:6,h2:0}
     }
   ]},

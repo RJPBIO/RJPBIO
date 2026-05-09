@@ -30,6 +30,16 @@ import VocalResonanceVisual from "./primitives/VocalResonanceVisual";
 import PowerPoseVisual from "./primitives/PowerPoseVisual";
 import WalkingPaceIndicator from "./primitives/WalkingPaceIndicator";
 import PulseMatchVisual from "./primitives/PulseMatchVisual";
+import CognitiveDescargaPrimitive from "./primitives/CognitiveDescargaPrimitive";
+import CommitmentMotorPrimitive from "./primitives/CommitmentMotorPrimitive";
+import ParasympathicResetOrb from "./primitives/ParasympathicResetOrb";
+import VagalCouplingReveal from "./reset1/VagalCouplingReveal";
+import CardiacCoherencePrimitive from "./primitives/CardiacCoherencePrimitive";
+import EmotionalLabelingPrimitive from "./primitives/EmotionalLabelingPrimitive";
+import VisualizationCommitmentPrimitive from "./primitives/VisualizationCommitmentPrimitive";
+import DescargaRapidaPrimitive from "./primitives/DescargaRapidaPrimitive";
+import PriorityFilterPrimitive from "./primitives/PriorityFilterPrimitive";
+import ExecutiveCommitmentPrimitive from "./primitives/ExecutiveCommitmentPrimitive";
 
 const PRIMITIVES = [
   { id: "BreathOrbExtended", render: (k) => <BreathOrbExtended key={k} cadence={{in:4,h1:0,ex:6,h2:0}} intent="calma" enabled cycleCountTarget={3} audioEnabled={false} hapticEnabled={false} /> },
@@ -57,6 +67,31 @@ const PRIMITIVES = [
   { id: "PowerPoseVisual", render: (k) => <PowerPoseVisual key={k} target_holds={3} hold_duration_ms={6000} release_duration_ms={3000} audio_enabled={false} haptic_enabled={false} /> },
   { id: "WalkingPaceIndicator", render: (k) => <WalkingPaceIndicator key={k} target_steps={16} pattern="alternate" pace_bpm={60} audio_enabled={false} haptic_enabled={false} /> },
   { id: "PulseMatchVisual", render: (k) => <PulseMatchVisual key={k} mode="match_breathing" target_breaths={5} interval_ms={30000} audio_enabled={false} haptic_enabled={false} /> },
+  // Phase 7 SP-B-3 — primitive #1 Phase 2 multi-task. 3 variantes per subActIdx.
+  { id: "CognitiveDescarga · subAct 0 (texto)", render: (k) => <CognitiveDescargaPrimitive key={k} subActIdx={0} hapticEnabled={false} /> },
+  { id: "CognitiveDescarga · subAct 1 (chip)",  render: (k) => <CognitiveDescargaPrimitive key={k} subActIdx={1} min_thinking_ms={500} hapticEnabled={false} /> },
+  { id: "CognitiveDescarga · subAct 2 (cierre)", render: (k) => <CognitiveDescargaPrimitive key={k} subActIdx={2} min_duration_ms={15000} hapticEnabled={false} /> },
+  // Phase 7 SP-B-4 — primitive #1 Phase 3 multi-task (hold-press + viz + orb + particles centrifugal + anchor + eyebrow).
+  { id: "CommitmentMotor · hold-press 5s", render: (k) => <CommitmentMotorPrimitive key={k} label="MANTÉN" min_hold_ms={5000} release_message="Esa es la acción." hapticEnabled={false} /> },
+  { id: "ParasympathicResetOrb · phase 1", render: (k) => <ParasympathicResetOrb key={k} cycleCountTarget={2} audioEnabled={false} hapticEnabled={false} voiceEnabled={false} /> },
+  // Phase 7 SP-B-5 — Vagal Coupling Reveal cinematic hero (post-session).
+  { id: "VagalCouplingReveal · cinematic", render: (k) => <VagalCouplingReveal key={k} hrvDelta={4.2} /> },
+  // Phase 7 SP-C-1 — primitive #2 Phase 1 HeartMath 6-2-8-0.
+  { id: "CardiacCoherence · phase 1 (6-2-8)", render: (k) => <CardiacCoherencePrimitive key={k} cycleCountTarget={2} audioEnabled={false} hapticEnabled={false} voiceEnabled={false} /> },
+  // Phase 7 SP-C-2 — primitive #2 Phase 2 multi-task etiquetado emocional 3 sub-acts.
+  { id: "EmotionalLabeling · subAct 0 (interocepción)", render: (k) => <EmotionalLabelingPrimitive key={k} subActIdx={0} hapticEnabled={false} /> },
+  { id: "EmotionalLabeling · subAct 1 (chip emociones)", render: (k) => <EmotionalLabelingPrimitive key={k} subActIdx={1} min_thinking_ms={500} hapticEnabled={false} /> },
+  { id: "EmotionalLabeling · subAct 2 (silencio)", render: (k) => <EmotionalLabelingPrimitive key={k} subActIdx={2} min_duration_ms={8000} hapticEnabled={false} /> },
+  // Phase 7 SP-C-3 — primitive #2 Phase 3 multi-exercise layered (saccades + hold + humming).
+  { id: "VisualizationCommitment · multi-exercise", render: (k) => <VisualizationCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={6000} release_message="Hoy avanzas, paso a paso." hapticEnabled={false} /> },
+  // Phase 7 SP-D-1 — primitive #3 Phase 1 ratio 1:3 (2-0-6-0) + cycling release cues.
+  { id: "DescargaRapida · phase 1 (2-0-6-0)", render: (k) => <DescargaRapidaPrimitive key={k} cycleCountTarget={3} audioEnabled={false} hapticEnabled={false} voiceEnabled={false} /> },
+  // Phase 7 SP-D-2 — primitive #3 Phase 2 multi-exercise filtro Eisenhower.
+  { id: "PriorityFilter · subAct 0 (3 slots)", render: (k) => <PriorityFilterPrimitive key={k} subActIdx={0} /> },
+  { id: "PriorityFilter · subAct 1 (Eisenhower)", render: (k) => <PriorityFilterPrimitive key={k} subActIdx={1} /> },
+  { id: "PriorityFilter · subAct 2 (convergencia)", render: (k) => <PriorityFilterPrimitive key={k} subActIdx={2} /> },
+  // Phase 7 SP-D-3 — primitive #3 Phase 3 multi-exercise compromiso ejecutivo.
+  { id: "ExecutiveCommitment · triple-seal", render: (k) => <ExecutiveCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={5000} release_message="60 minutos para esto." hapticEnabled={false} /> },
 ];
 
 export default function PrimitivePreview() {

@@ -31,6 +31,7 @@ import {
   motion as motionTok,
   touchTarget,
 } from "../../../app/v2/tokens";
+import VagalCouplingReveal from "./VagalCouplingReveal";
 
 /**
  * Build HRV delta display (mismo patrón F1+F2, ms framing).
@@ -303,6 +304,11 @@ export default function Reset1CompletionCard({
               marginBlockEnd: spacing.s24,
             }}
           />
+
+          {/* Phase 7 SP-B-5 — Vagal Coupling Reveal hero cinematic.
+              Plays independently from stage cascade — visual proof
+              of post-session vagal coherence. */}
+          <VagalCouplingReveal hrvDelta={hrvDelta} />
 
           {/* Stage 1: Eyebrow + Title */}
           <div

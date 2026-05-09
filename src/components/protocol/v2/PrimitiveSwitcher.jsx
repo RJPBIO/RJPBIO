@@ -30,6 +30,14 @@ import PulseMatchVisual from "./primitives/PulseMatchVisual";
 import PhysiologicalSighOrb from "./primitives/PhysiologicalSighOrb";
 import CardiacPulseMatchVisual from "./primitives/CardiacPulseMatchVisual";
 import ParasympathicResetOrb from "./primitives/ParasympathicResetOrb";
+import CognitiveDescargaPrimitive from "./primitives/CognitiveDescargaPrimitive";
+import CommitmentMotorPrimitive from "./primitives/CommitmentMotorPrimitive";
+import CardiacCoherencePrimitive from "./primitives/CardiacCoherencePrimitive";
+import EmotionalLabelingPrimitive from "./primitives/EmotionalLabelingPrimitive";
+import VisualizationCommitmentPrimitive from "./primitives/VisualizationCommitmentPrimitive";
+import DescargaRapidaPrimitive from "./primitives/DescargaRapidaPrimitive";
+import PriorityFilterPrimitive from "./primitives/PriorityFilterPrimitive";
+import ExecutiveCommitmentPrimitive from "./primitives/ExecutiveCommitmentPrimitive";
 
 const FALLBACK = "text_emphasis_voice";
 
@@ -302,6 +310,131 @@ export default function PrimitiveSwitcher({
           onCycleComplete={(n) => onSignal({ breathCyclesCompleted: n })}
           onComplete={onLocalComplete}
           {...props}
+        />
+      );
+    case "cognitive_descarga":
+      return (
+        <CognitiveDescargaPrimitive
+          subActIdx={props.subActIdx ?? 0}
+          chips={props.chips}
+          min_thinking_ms={props.min_thinking_ms ?? 5000}
+          min_duration_ms={
+            act.duration?.min_ms ?? props.min_duration_ms ?? 12000
+          }
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onSignal={onSignal}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "commitment_motor":
+      return (
+        <CommitmentMotorPrimitive
+          label={props.label || "MANTÉN"}
+          min_hold_ms={
+            act.validate?.min_hold_ms || props.min_hold_ms || 5000
+          }
+          release_message={props.release_message || "Esa es la acción."}
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onSignal={onSignal}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "cardiac_coherence_orb":
+      return (
+        <CardiacCoherencePrimitive
+          cycleCountTarget={
+            act.validate?.kind === "breath_cycles"
+              ? (act.validate.min_cycles || 2)
+              : (props.cycleCountTarget || 2)
+          }
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onCycleComplete={(n) => onSignal({ breathCyclesCompleted: n })}
+          onComplete={onLocalComplete}
+          {...props}
+        />
+      );
+    case "emotional_labeling":
+      return (
+        <EmotionalLabelingPrimitive
+          subActIdx={props.subActIdx ?? 0}
+          chips={props.chips}
+          highlight_progression={props.highlight_progression}
+          transition_ms={props.transition_ms}
+          min_thinking_ms={props.min_thinking_ms ?? 6000}
+          min_duration_ms={
+            act.duration?.min_ms ?? props.min_duration_ms
+          }
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onSignal={onSignal}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "visualization_commitment":
+      return (
+        <VisualizationCommitmentPrimitive
+          label={props.label || "MANTÉN"}
+          min_hold_ms={
+            act.validate?.min_hold_ms || props.min_hold_ms || 6000
+          }
+          release_message={props.release_message || "Hoy avanzas, paso a paso."}
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onSignal={onSignal}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "descarga_rapida_orb":
+      return (
+        <DescargaRapidaPrimitive
+          cycleCountTarget={
+            act.validate?.kind === "breath_cycles"
+              ? (act.validate.min_cycles || 3)
+              : (props.cycleCountTarget || 3)
+          }
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onCycleComplete={(n) => onSignal({ breathCyclesCompleted: n })}
+          onComplete={onLocalComplete}
+          {...props}
+        />
+      );
+    case "priority_filter":
+      return (
+        <PriorityFilterPrimitive
+          subActIdx={props.subActIdx ?? 0}
+          min_duration_ms={
+            act.duration?.min_ms ?? props.min_duration_ms
+          }
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onSignal={onSignal}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "executive_commitment":
+      return (
+        <ExecutiveCommitmentPrimitive
+          label={props.label || "MANTÉN"}
+          min_hold_ms={
+            act.validate?.min_hold_ms || props.min_hold_ms || 5000
+          }
+          release_message={props.release_message || "60 minutos para esto."}
+          audioEnabled={audioOn}
+          hapticEnabled={hapticOn}
+          voiceEnabled={voiceOn}
+          onSignal={onSignal}
+          onComplete={onLocalComplete}
         />
       );
     case "text_emphasis_voice":

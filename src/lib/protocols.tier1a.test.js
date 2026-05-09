@@ -24,6 +24,37 @@ const VALID_PRIMITIVES = new Set([
   // Phase 7 F3 Flagship #1 — primitive dedicated para Reinicio
   // Parasimpático Phase 1 "Entrada Vagal" (BOX 4-4-4-4).
   "parasympathic_reset_orb",
+  // Phase 7 SP-B-3 — primitive dedicated para #1 Phase 2 "Descarga
+  // Cognitiva" (multi-task wrapper text+chip+text con subActIdx 0/1/2).
+  "cognitive_descarga",
+  // Phase 7 SP-B-4 — primitive dedicated para #1 Phase 3 "Dirección
+  // y Cierre" (multi-task wrapper hold-press + visualization + orb +
+  // particles centrifugal + body anchor + scientific eyebrow morph).
+  "commitment_motor",
+  // Phase 7 SP-C-1 — primitive dedicated para #2 Phase 1 "Coherencia
+  // Cardíaca" (HeartMath 6-2-8-0 con inner cardiac pulse + body anchor
+  // mano sobre corazón + particles bio-synced).
+  "cardiac_coherence_orb",
+  // Phase 7 SP-C-2 — primitive dedicated para #2 Phase 2 "Etiquetado
+  // Emocional" (multi-task wrapper interocepción + chip emociones +
+  // silence sostén con subActIdx 0/1/2).
+  "emotional_labeling",
+  // Phase 7 SP-C-3 — primitive dedicated para #2 Phase 3 "Visualización
+  // Dirigida" (multi-exercise layered: visualización + bilateral eye
+  // saccades + hold-press 6s + humming exhale cue + body anchor evolutivo).
+  "visualization_commitment",
+  // Phase 7 SP-D-1 — primitive dedicated para #3 Phase 1 "Descarga
+  // Rápida" (ratio 1:3 inhale:exhale 2-0-6-0 + dramatic deflate orb
+  // + cycling release cues físicos rotativos per cycle).
+  "descarga_rapida_orb",
+  // Phase 7 SP-D-2 — primitive dedicated para #3 Phase 2 "Filtro de
+  // Prioridad" (multi-exercise wrapper: text + Eisenhower 2×2 matrix
+  // + slots tracker + tongue palate body anchor con subActIdx 0/1/2).
+  "priority_filter",
+  // Phase 7 SP-D-3 — primitive dedicated para #3 Phase 3 "Compromiso
+  // Motor" (multi-exercise: hold-press + free fist body anchor +
+  // exhale sync respiratorio + 60-min commitment statement).
+  "executive_commitment",
 ]);
 
 function flatActs(p) {
@@ -107,16 +138,30 @@ describe("Tier 1A migration — protocolos #1, #2, #3", () => {
         });
       });
 
-      it("Fase 1 acto usa primitive breath_orb (excepto #1 con parasympathic_reset_orb F3 flagship)", () => {
-        // Phase 7 F3 shape change verificado: protocolo #1 Phase 1
-        // upgraded a parasympathic_reset_orb dedicated primitive.
-        // Resto tier 1A (#2, #3) sigue con breath_orb.
-        const expected = id === 1 ? "parasympathic_reset_orb" : "breath_orb";
+      it("Fase 1 acto usa primitive dedicated per protocolo (Tier 1A redesign chain SP-B/C/D)", () => {
+        // Phase 7 shape changes verificados Phase 1:
+        // - #1 → parasympathic_reset_orb (F3 flagship, BOX 4-4-4-4)
+        // - #2 → cardiac_coherence_orb (SP-C-1, HeartMath 6-2-8-0)
+        // - #3 → descarga_rapida_orb (SP-D-1, ratio 1:3 2-0-6-0 + deflate)
+        const expected = id === 1 ? "parasympathic_reset_orb"
+          : id === 2 ? "cardiac_coherence_orb"
+          : id === 3 ? "descarga_rapida_orb"
+          : "breath_orb";
         expect(proto.ph[0].iExec[0].ui.primitive).toBe(expected);
       });
 
-      it("Fase 3 acto usa primitive hold_press_button", () => {
-        expect(proto.ph[2].iExec[0].ui.primitive).toBe("hold_press_button");
+      it("Fase 3 acto usa primitive dedicated per protocolo (Tier 1A redesign chain SP-B/C/D Phase 3 COMPLETO)", () => {
+        // Phase 7 shape changes verificados Phase 3 — Tier 1A 3/3 protocolos:
+        // - #1 → commitment_motor (SP-B-4 multi-task hold + viz + orb + anchor)
+        // - #2 → visualization_commitment (SP-C-3 multi-exercise: bilateral
+        //   saccades + hold + humming + body anchor evolutivo)
+        // - #3 → executive_commitment (SP-D-3 multi-exercise: hold + free
+        //   fist + exhale sync + 60-min commitment anchor)
+        const expected = id === 1 ? "commitment_motor"
+          : id === 2 ? "visualization_commitment"
+          : id === 3 ? "executive_commitment"
+          : "hold_press_button";
+        expect(proto.ph[2].iExec[0].ui.primitive).toBe(expected);
       });
 
       it("primer acto inicia binaural con type === protocol.int", () => {
