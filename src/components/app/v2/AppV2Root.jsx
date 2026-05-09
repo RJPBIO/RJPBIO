@@ -796,7 +796,13 @@ export default function AppV2Root() {
   // Phase 6J-1 Group A — handlers del MoodPostSessionSheet.
   // Submit: logMood (state.moodLog) + recordSessionOutcome con deltaMood real.
   // Cierra el sheet + limpia context. CRITICAL-1 + CRITICAL-2 fix.
-  const handleMoodPostSubmit = useCallback((mood) => {
+  //
+  // Phase 7 F0-3 (additive): segundo arg `feedback` (object|null) con las
+  // 5 dimensiones subjetivas opcionales. Si no-null, llama a
+  // store.attachSessionFeedback() para patchear el último history entry.
+  // Anti-regression: callers que no lo pasen (legacy) reciben undefined →
+  // condicional ramp safe.
+  const handleMoodPostSubmit = useCallback((mood, feedback = null) => {
     if (!moodPostContext) {
       setMoodPostSheetOpen(false);
       setSelectedProtocol(null);
@@ -831,6 +837,12 @@ export default function AppV2Root() {
           hrvDelta,
         });
       } catch (e) { console.error("[v2] recordSessionOutcome (submit) error", e); }
+    }
+    // 3. Phase 7 F0-3 — attach feedback subjetivo si user respondió ≥1 step.
+    if (feedback && typeof feedback === "object" && !Array.isArray(feedback)) {
+      try {
+        useStore.getState().attachSessionFeedback(feedback);
+      } catch (e) { console.error("[v2] attachSessionFeedback error", e); }
     }
     setMoodPostSheetOpen(false);
     setMoodPostContext(null);

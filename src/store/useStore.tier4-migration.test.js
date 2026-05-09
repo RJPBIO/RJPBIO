@@ -92,7 +92,7 @@ describe("Tier-4 Capa-1 — store v17→v18 migration backfill", () => {
     expect(h === null || Array.isArray(h)).toBe(true);
   });
 
-  it("STORE_VERSION post-migration es 19 (Phase 7 F0-2 bumped 18→19)", async () => {
+  it("STORE_VERSION post-migration es 20 (Phase 7 F0-3 bumped, latest)", async () => {
     mockSavedState = {
       _userId: null,
       _v: 17,
@@ -100,7 +100,7 @@ describe("Tier-4 Capa-1 — store v17→v18 migration backfill", () => {
       totalSessions: 1,
     };
     await useStore.getState().init({});
-    expect(useStore.getState()._v).toBe(19);
+    expect(useStore.getState()._v).toBe(20);
   });
 
   it("idempotent: re-init con state ya v18 NO modifica entries", async () => {

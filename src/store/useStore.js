@@ -24,7 +24,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 19;
+const STORE_VERSION = 20;
 
 // Phase 6H Premium-Fix3 — cohort thresholds.
 // MUST stay aligned con NEURAL_CONFIG.health.coldStartSessions/learningSessions
@@ -217,7 +217,16 @@ function migrate(data) {
     // data trust). Entries pre-v19 quedan con los 4 fields en null;
     // engine consumers F0-1+ deben filter null defensive antes de iterar.
     // Idempotente: si ya tenían los fields (post-v19 hot path), se preservan.
-    // Combina ambos backfills en un solo pass para evitar mutar history dos veces.
+    //
+    // v20: Phase 7 F0-3 — backfill defensive del field postSessionFeedback
+    // (las 5 preguntas subjetivas opcionales). Misma semántica que v18+v19:
+    // null backfill, no synthetic compute. Engine consumers F0-1+ deben
+    // checkear `entry.postSessionFeedback != null` antes de leer fields
+    // internos (helpedRating, willDoAgain, bodySensations, sideEffects,
+    // timeToEffect, capturedAt).
+    //
+    // Combina los 3 backfills (v18 dims + v19 actsLog + v20 feedback) en un
+    // solo pass para evitar mutar history múltiples veces.
     if (Array.isArray(merged.history)) {
       let mutated = false;
       const next = merged.history.map((entry) => {
@@ -231,6 +240,9 @@ function migrate(data) {
           patch.actsCompleted = null;
           patch.actsSkipped = null;
           patch.actsFailed = null;
+        }
+        if (!("postSessionFeedback" in entry)) {
+          patch.postSessionFeedback = null;
         }
         if (Object.keys(patch).length > 0) {
           mutated = true;
@@ -785,6 +797,66 @@ export const useStore = create((set, get) => ({
     const update = { banditArms: nextArms, predictionResiduals: nextResiduals };
     set(update);
     scheduleSave({ ...st, ...update });
+  },
+
+  // ─── Phase 7 F0-3 — Five post-session questions ────────────
+  // attachSessionFeedback patches el ÚLTIMO history entry con feedback
+  // subjetivo capturado por MoodPostSessionSheet (5 dimensiones opcionales).
+  //
+  // Razón post-hoc en lugar de calcSessionCompletion arg: el sheet aparece
+  // DESPUÉS de que completeSession ya persistió la entry. Patchear el
+  // último entry es la forma menos invasiva de añadir feedback al historial
+  // sin reordenar el flujo de completion.
+  //
+  // Defensive contract:
+  //   - feedback null o no-object → no-op (preserva entry)
+  //   - history vacío → no-op (no hay último entry a patchear)
+  //   - feedback.capturedAt sobrescrito a Date.now() (server-side trust,
+  //     ignoramos el del UI por temporal drift)
+  //   - whitelist de fields conocidos: defensive contra payloads malformed
+  //     desde llamadas externas (bug futuro, fuzzing test, etc).
+  //   - idempotente: re-call reemplaza la feedback completa.
+  //
+  // Engine consumers DEFER F0-1: la feedback NO actualiza banditArms ni
+  // residuals en este SP. Solo persiste para futuro uso por el motor.
+  attachSessionFeedback: (feedback) => {
+    if (!feedback || typeof feedback !== "object" || Array.isArray(feedback)) return;
+    const st = get();
+    if (!Array.isArray(st.history) || st.history.length === 0) return;
+    const lastIdx = st.history.length - 1;
+    const lastEntry = st.history[lastIdx];
+    if (!lastEntry || typeof lastEntry !== "object") return;
+    const sanitized = {
+      helpedRating: typeof feedback.helpedRating === "number" &&
+        feedback.helpedRating >= 1 && feedback.helpedRating <= 5
+        ? feedback.helpedRating : null,
+      willDoAgain: typeof feedback.willDoAgain === "number" &&
+        feedback.willDoAgain >= 1 && feedback.willDoAgain <= 5
+        ? feedback.willDoAgain : null,
+      bodySensations: Array.isArray(feedback.bodySensations) && feedback.bodySensations.length > 0
+        ? feedback.bodySensations.filter((v) => typeof v === "string")
+        : null,
+      sideEffects: Array.isArray(feedback.sideEffects) && feedback.sideEffects.length > 0
+        ? feedback.sideEffects.filter((v) => typeof v === "string")
+        : null,
+      timeToEffect: typeof feedback.timeToEffect === "string"
+        ? feedback.timeToEffect : null,
+      capturedAt: Date.now(),
+    };
+    // No-op si todos los fields quedan null (defensive: respeta semántica
+    // "skip-all → null feedback" que MoodPostSessionSheet ya garantiza,
+    // pero también filtra payloads malformed desde otros llamadores).
+    const hasAnyAnswer =
+      sanitized.helpedRating != null ||
+      sanitized.willDoAgain != null ||
+      sanitized.bodySensations != null ||
+      sanitized.sideEffects != null ||
+      sanitized.timeToEffect != null;
+    if (!hasAnyAnswer) return;
+    const nextHistory = st.history.slice();
+    nextHistory[lastIdx] = { ...lastEntry, postSessionFeedback: sanitized };
+    set({ history: nextHistory });
+    scheduleSave({ ...st, history: nextHistory });
   },
 
   // ─── Programs (v12) ───────────────────────────────────────

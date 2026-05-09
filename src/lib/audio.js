@@ -3,6 +3,12 @@
    Binaural, ambient, soundscapes, haptic, voice
    ═══════════════════════════════════════════════════════════════ */
 
+// Phase 7 F0-4 — per-protocol haptic signatures catalog (23 entries).
+// `hapticProtocolSignature` consume este catalog; existing hapticBreath/
+// hapticPhase/hapticSignature siguen activas para 22 protocolos no-flagship.
+// Player wiring DEFER F1 + Phase 2 scaling.
+import { getHapticSignature } from "./hapticSignatures";
+
 let _aC = null;
 let _audioUnlocked = false;
 export function gAC() {
@@ -1264,6 +1270,65 @@ export function hapticCountdown(step) {
   if (step === 3) vibrate([30, 30, 35]);
   else if (step === 2) vibrate([30, 20, 35, 15, 40]);
   else if (step === 1) vibrate([30, 25, 35, 20, 40, 60, 45, 25, 55]);
+}
+
+// ─── Phase 7 F0-4 — Per-protocol haptic signature ────────────
+//
+// API aditiva: NO reemplaza hapticBreath/hapticPhase/hapticSignature
+// (existing 22 protocolos siguen consumiendo esos durante Phase 2 scaling).
+// F1 Flagship #15 + redesign cohort consumirá hapticProtocolSignature.
+//
+// Reuses internal vibrate() wrapper → hereda gratis:
+//   - _hapticEnabled (user toggle off)
+//   - _hapticIntensity (light 0.6 / medium 1.0 / strong 1.4 user pref)
+//   - 30ms floor (Sprint 72 — pulsos <30ms invisibles físicamente)
+//   - iOS Safari fallback visual via _hapticFallback callback
+//
+// Scaling chain final per pulse i:
+//   pattern[i] × signature.intensity_modifier × options.intensity × _hapticIntensity
+//
+// @param {number} protocolId — id del catálogo P[]; non-numeric → DEFAULT_SIGNATURE
+// @param {string} phaseKind — 'breath_inhale' | 'breath_hold' | 'breath_exhale' | 'phase_shift' | 'completion'
+// @param {object} [options]
+//   - intensity {number=1.0}: caller-side multiplier (e.g., 0.5 para soft cue)
+//   - reducedMotion {boolean=false}: si true, no vibra; dispara fallback visual con kind 'phase-shift'
+// @returns {void}
+export function hapticProtocolSignature(protocolId, phaseKind, options = {}) {
+  const opts = options && typeof options === "object" ? options : {};
+  const reducedMotion = !!opts.reducedMotion;
+  const callerIntensity = typeof opts.intensity === "number" && Number.isFinite(opts.intensity)
+    ? opts.intensity
+    : 1.0;
+
+  // Reduced motion respect: skip vibrate, dispatch visual fallback if registered.
+  if (reducedMotion) {
+    if (_hapticFallback) {
+      try { _hapticFallback("phase-shift"); } catch (e) { /* noop */ }
+    }
+    return;
+  }
+
+  if (typeof phaseKind !== "string") return;
+
+  const signature = getHapticSignature(protocolId);
+  const pattern = signature[phaseKind];
+  if (!Array.isArray(pattern) || pattern.length === 0) return;
+
+  // Pre-scale por signature.intensity_modifier × callerIntensity. El wrapper
+  // vibrate() aplicará después _hapticIntensity (user pref) y el 30ms floor.
+  // Clamp final scaling factor a [0.5, 1.5] para evitar pulsos absurdos por
+  // intensity arg malformado (defensive: sin clamp, intensity=1000 destruiría
+  // patterns).
+  const sigMod = typeof signature.intensity_modifier === "number" && Number.isFinite(signature.intensity_modifier)
+    ? signature.intensity_modifier
+    : 1.0;
+  const factor = Math.min(Math.max(sigMod * callerIntensity, 0.5), 1.5);
+  const scaled = pattern.map((d, i) => i % 2 === 0
+    ? Math.round(d * factor)        // pulse durations scaled
+    : d                              // gaps preservan ritmo del patrón
+  );
+
+  vibrate(scaled);
 }
 
 // Tick auditivo del countdown — nota de cristal breve, sine pura,

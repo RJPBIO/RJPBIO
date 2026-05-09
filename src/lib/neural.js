@@ -1600,6 +1600,15 @@ function _buildHistoryEntry(args) {
   const actsFailed = actsLog
     ? actsLog.filter((a) => a && a.validationOutcome === "failed").length
     : null;
+  // Phase 7 F0-3 — el field `postSessionFeedback` se inicializa en null
+  // siempre. La data real (5 dimensiones subjetivas) llega POST-hoc via
+  // la action `attachSessionFeedback` que mutates el último entry tras
+  // user interacción con MoodPostSessionSheet. Razón: el sheet aparece
+  // DESPUÉS de que completeSession ya persistió la entry, así que un
+  // sessionData arg upstream no aplicaría. Mantener el field en el shape
+  // del entry desde el inicio garantiza que consumers (F0-1+, calibration)
+  // tienen guard consistente: `entry.postSessionFeedback != null` antes
+  // de leer dimensiones internas. Defensive equal a dimensions/actsLog.
   return {
     p: protocol.n, ts: Date.now(), vc: eVC, c: newCoherence, r: newResilience,
     dur: Math.round(protocol.d * durMult), ctx: nfcCtx?.type || "manual",
@@ -1619,6 +1628,9 @@ function _buildHistoryEntry(args) {
     actsCompleted,
     actsSkipped,
     actsFailed,
+    // Phase 7 F0-3 additive (siempre null al construir; populated post-hoc
+    // por store.attachSessionFeedback tras MoodPostSessionSheet completion):
+    postSessionFeedback: null,
     ...(coherenceLive ? { coherenceLive } : {}),
   };
 }
