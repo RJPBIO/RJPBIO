@@ -573,7 +573,7 @@ export const P = [
           mechanism:"Movimiento bilateral activa coordinación interhemisférica + coherencia atencional sostenida",
           duration:{min_ms:25000,target_ms:30000,max_ms:38000},
           validate:{kind:"tap_count",min_taps:24,bilateral:true},
-          ui:{primitive:"bilateral_tap_targets",props:{pattern:"alternate",bpm:60,target_taps:30}},
+          ui:{primitive:"bilateral_pulse_activation",props:{pattern:"alternate",bpm:60,target_taps:30}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -583,7 +583,7 @@ export const P = [
           }
         }
       ],
-      sc:"Activación bilateral coordinación interhemisférica + atención focal sostenida",
+      sc:"Activación bilateral coordinación interhemisférica + bpm pacer ring + postura erguida sustained anchor",
       ic:"body",br:null
     },
     {
@@ -598,7 +598,7 @@ export const P = [
           mechanism:"Respiración 3:3 simétrica activa simpático moderado + oxigenación rápida",
           duration:{min_ms:30000,target_ms:35000,max_ms:42000},
           validate:{kind:"breath_cycles",min_cycles:5,cycle_min_ms:5000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:3,h1:0,ex:3,h2:0}}},
+          ui:{primitive:"energizing_breath_release",props:{subActIdx:0}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -612,7 +612,7 @@ export const P = [
           mechanism:"Movimiento periférico vigoroso libera tensión muscular + activa flujo sanguíneo distal",
           duration:{min_ms:8000,target_ms:10000,max_ms:14000},
           validate:{kind:"min_duration",min_ms:8000},
-          ui:{primitive:"shake_hands_prompt",props:{duration_ms:10000}},
+          ui:{primitive:"energizing_breath_release",props:{subActIdx:1,duration_ms:10000}},
           media:{
             breath_ticks:{enabled:false},
             haptic:{custom:"shake_pattern"}
@@ -634,7 +634,7 @@ export const P = [
           mechanism:"Postura erguida + commitment motor consolida estado activado (Carney, Cuddy, Yap 2010)",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Listo para el siguiente bloque."}},
+          ui:{primitive:"energy_anchor_commitment",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Listo para el siguiente bloque."}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -643,7 +643,7 @@ export const P = [
           }
         }
       ],
-      sc:"Postura erguida + commitment motor (Carney, Cuddy, Yap 2010, 'Power posing')",
+      sc:"Postura erguida activa + viz siguiente bloque + palmas presionadas + hold-press commitment seal (Carney, Cuddy, Yap 2010, 'Power posing')",
       ic:"body",br:null
     }
   ]},
@@ -666,7 +666,7 @@ export const P = [
           mechanism:"Visión panorámica reduce activación cortical focal + relaja músculos extraoculares (Huberman 2021)",
           duration:{min_ms:25000,target_ms:30000,max_ms:35000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"visual_panoramic_prompt",props:{duration_ms:30000}},
+          ui:{primitive:"panoramic_vision",props:{duration_ms:30000}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -675,7 +675,7 @@ export const P = [
           }
         }
       ],
-      sc:"Visión panorámica activa modo desfocalizado + relaja músculos extraoculares (Huberman 2021)",
+      sc:"Visión panorámica activa modo desfocalizado + relaja músculos extraoculares + paradox UI atenuado (Huberman 2021)",
       ic:"focus",br:null
     },
     {
@@ -690,7 +690,7 @@ export const P = [
           mechanism:"Alternancia foco cercano-lejano entrena músculos ciliares + flexibilidad atencional visual",
           duration:{min_ms:25000,target_ms:30000,max_ms:36000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"dual_focus_targets",props:{near_duration_ms:5000,far_duration_ms:5000,cycles:3}},
+          ui:{primitive:"dual_focus_refocus",props:{subActIdx:0,cycles:3}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -704,7 +704,7 @@ export const P = [
           mechanism:"Respiración 4-4 simétrica con mirada relajada estabiliza atención focal",
           duration:{min_ms:22000,target_ms:25000,max_ms:30000},
           validate:{kind:"breath_cycles",min_cycles:3,cycle_min_ms:7000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:4,h1:0,ex:4,h2:0}}},
+          ui:{primitive:"dual_focus_refocus",props:{subActIdx:1,cycles:3}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true},
             binaural:{action:"continue"}
@@ -717,7 +717,7 @@ export const P = [
           mechanism:"Single-task identification reduce attentional residue (Sophie Leroy 2009)",
           duration:{min_ms:5000,target_ms:8000,max_ms:12000},
           validate:{kind:"min_duration",min_ms:5000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"¿Qué necesita tu atención completa ahora?",subtext:"Una sola cosa."}},
+          ui:{primitive:"dual_focus_refocus",props:{subActIdx:2}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true}
           }
@@ -738,7 +738,7 @@ export const P = [
           mechanism:"Visual anchor + commitment motor refuerza intención de single-task",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:5000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Una hora de foco."}},
+          ui:{primitive:"focus_commitment",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Una hora de foco."}},
           media:{
             voice:{enabled_default:false},
             binaural:{action:"stop"},
@@ -746,7 +746,7 @@ export const P = [
           }
         }
       ],
-      sc:"Visual anchor + commitment motor refuerza single-task intent",
+      sc:"Visual anchor (mirada firme al frente sustained) + commitment motor + 60-min focus block ultradian rhythm anchor (Bryan Adams Monin 2013 + Kleitman BRAC)",
       ic:"body",br:null
     }
   ]},
@@ -768,7 +768,7 @@ export const P = [
           mechanism:"Body scan secuencial activa propiocepción + ínsula posterior; aterriza atención (Khalsa 2018)",
           duration:{min_ms:35000,target_ms:40000,max_ms:48000},
           validate:{kind:"min_duration",min_ms:35000},
-          ui:{primitive:"body_silhouette_highlight",props:{highlight_progression:["feet","glutes","back","hands","jaw"],transition_ms:8000}},
+          ui:{primitive:"grounding_body_scan",props:{duration_ms:40000}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -777,7 +777,7 @@ export const P = [
           }
         }
       ],
-      sc:"Body scan secuencial activa propiocepción + ínsula (Khalsa 2018, Mehling 2009 MAIA)",
+      sc:"Body scan secuencial 5 puntos activa propiocepción + ínsula posterior + grounding executive presence (Khalsa 2018, Mehling 2009 MAIA)",
       ic:"body",br:null
     },
     {
@@ -792,7 +792,7 @@ export const P = [
           mechanism:"Exhalación prolongada 5:7 + interocepción de peso activa parasimpático + grounding propioceptivo",
           duration:{min_ms:35000,target_ms:40000,max_ms:48000},
           validate:{kind:"breath_cycles",min_cycles:4,cycle_min_ms:10000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:5,h1:0,ex:7,h2:0}}},
+          ui:{primitive:"deep_breath_settle",props:{subActIdx:0}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true},
             binaural:{action:"continue"}
@@ -805,7 +805,7 @@ export const P = [
           mechanism:"Sostén interocéptivo consolida estado parasimpático + reduce mente errante",
           duration:{min_ms:8000,target_ms:10000,max_ms:14000},
           validate:{kind:"min_duration",min_ms:8000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"El peso. Sostén."}},
+          ui:{primitive:"deep_breath_settle",props:{subActIdx:1}},
           media:{
             breath_ticks:{enabled:false},
             binaural:{action:"continue"}
@@ -827,7 +827,7 @@ export const P = [
           mechanism:"Anclaje motor + verbalización mental consolida estado calmado (Bryan, Adams, Monin 2013)",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Aquí. Firme."}},
+          ui:{primitive:"stable_close_commitment",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Aquí. Firme."}},
           media:{
             voice:{enabled_default:false},
             binaural:{action:"stop"},
@@ -835,7 +835,7 @@ export const P = [
           }
         }
       ],
-      sc:"Anclaje motor + verbalización (Bryan, Adams, Monin 2013)",
+      sc:"Anclaje motor + palma libre firme contra muslo + verbalización 'Estoy aquí. Sigo firme.' consolidación presencia ejecutiva (Bryan, Adams, Monin 2013)",
       ic:"body",br:null
     }
   ]},

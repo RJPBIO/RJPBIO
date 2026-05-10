@@ -29,6 +29,43 @@ const VALID_PRIMITIVES = new Set([
   "facial_cold_prompt", "shake_hands_prompt", "chip_selector",
   "hold_press_button", "text_emphasis_voice", "silence_cyan_minimal",
   "object_anchor_prompt", "vocal_with_haptic", "transition_dots",
+  // Phase 7 SP-E-1 — primitive dedicated para #4 Phase 1
+  // "Activación Bilateral" (wraps bilateral_tap_targets shared
+  // con multi-task overlays + bpm pacer + postura erguida anchor).
+  "bilateral_pulse_activation",
+  // Phase 7 SP-E-2 — primitive dedicated para #4 Phase 2
+  // "Respiración Energizante" (wrapper subActIdx 0/1: breath 3-3
+  // simétrico energizing + cycling activación cues + shake hands
+  // motor release + countdown timer).
+  "energizing_breath_release",
+  // Phase 7 SP-E-3 — primitive dedicated para #4 Phase 3
+  // "Anclaje Energético" (multi-exercise: postura erguida activa
+  // + viz siguiente bloque + palmas presionadas + hold-press 6s).
+  "energy_anchor_commitment",
+  // Phase 7 SP-F-1 — primitive dedicated para #5 Phase 1
+  // "Visión Periférica" (paradox UI atenuado + mira-lejos prompt
+  // + minimal dot anchor + countdown ring + body anchor).
+  "panoramic_vision",
+  // Phase 7 SP-F-2 — primitive dedicated para #5 Phase 2
+  // "Enfoque Dual" (wrapper subActIdx 0/1/2: dual focus near-far +
+  // breath 4-4 simétrico + cognitive anchor single-task).
+  "dual_focus_refocus",
+  // Phase 7 SP-F-3 — primitive dedicated para #5 Phase 3 "Compromiso
+  // de Enfoque" (visual-anchor-driven: mirada firme + hold-press 5s
+  // + viz "próxima hora de foco"; sin manos extras conflict).
+  "focus_commitment",
+  // Phase 7 SP-G-1 — primitive dedicated para #6 Phase 1 "Aterrizaje
+  // Sensorial" (proprioceptivo body scan secuencial 5 zonas × 8s con
+  // SVG silhouette + dynamic active zone + zone progress chips).
+  "grounding_body_scan",
+  // Phase 7 SP-G-2 — primitive dedicated para #6 Phase 2 "Respiración
+  // Profunda" (wrapper subActIdx 0/1: breath 5-7 asimétrico + sink
+  // animation + interocepción peso + silence sostén).
+  "deep_breath_settle",
+  // Phase 7 SP-G-3 — primitive dedicated para #6 Phase 3 "Cierre
+  // Estable" (stable-presence-driven: hold-press 6s + palma libre
+  // firme en muslo + mantra "Estoy aquí. Sigo firme.").
+  "stable_close_commitment",
 ]);
 
 function flatActs(p) {
@@ -111,49 +148,92 @@ describe("Tier 1B migration — protocolos #4, #5, #6", () => {
         expect(lastAct.media.binaural?.action).toBe("stop");
       });
 
-      it("último acto usa primitive hold_press_button (commitment cierre)", () => {
+      it("último acto usa primitive dedicated per protocolo (Tier 1B Phase 3 redesign chain COMPLETO SP-E-3 + SP-F-3 + SP-G-3)", () => {
+        // Phase 7 Tier 1B Phase 3 redesign chain COMPLETO 3/3:
+        // - #4 → energy_anchor_commitment (SP-E-3)
+        // - #5 → focus_commitment (SP-F-3)
+        // - #6 → stable_close_commitment (SP-G-3)
         const lastPhase = proto.ph[proto.ph.length - 1];
         const lastAct = lastPhase.iExec[lastPhase.iExec.length - 1];
-        expect(lastAct.ui.primitive).toBe("hold_press_button");
+        const expected = id === 4 ? "energy_anchor_commitment"
+          : id === 5 ? "focus_commitment"
+          : id === 6 ? "stable_close_commitment"
+          : "hold_press_button";
+        expect(lastAct.ui.primitive).toBe(expected);
       });
     });
   });
 });
 
 describe("Tier 1B — primitivas nuevas usadas", () => {
-  it("#4 Pulse Shift usa bilateral_tap_targets", () => {
+  it("#4 Pulse Shift usa bilateral_tap_targets o bilateral_pulse_activation (SP-E-1 wraps shared)", () => {
+    // Phase 7 SP-E-1: #4 Phase 1 acto[0] migrated a bilateral_pulse_activation
+    // dedicated primitive que wraps BilateralTapTargets shared internamente.
+    // Acepta cualquiera de los dos para preservar contract evolutivo.
     const p4 = P.find((p) => p.id === 4);
-    const usesBilateral = flatActs(p4).some((a) => a.ui?.primitive === "bilateral_tap_targets");
+    const usesBilateral = flatActs(p4).some(
+      (a) => a.ui?.primitive === "bilateral_tap_targets"
+        || a.ui?.primitive === "bilateral_pulse_activation"
+    );
     expect(usesBilateral).toBe(true);
   });
 
-  it("#4 Pulse Shift usa shake_hands_prompt", () => {
+  it("#4 Pulse Shift usa shake_hands_prompt o energizing_breath_release (SP-E-2 wraps shared)", () => {
+    // Phase 7 SP-E-2: #4 Phase 2 acto[1] (shake) migrated a
+    // energizing_breath_release subActIdx=1 dedicated primitive.
+    // Acepta cualquiera de los dos para preservar contract evolutivo.
     const p4 = P.find((p) => p.id === 4);
-    const usesShake = flatActs(p4).some((a) => a.ui?.primitive === "shake_hands_prompt");
+    const usesShake = flatActs(p4).some(
+      (a) => a.ui?.primitive === "shake_hands_prompt"
+        || a.ui?.primitive === "energizing_breath_release"
+    );
     expect(usesShake).toBe(true);
   });
 
-  it("#5 Skyline Focus usa visual_panoramic_prompt", () => {
+  it("#5 Skyline Focus usa visual_panoramic_prompt o panoramic_vision (SP-F-1 wraps shared)", () => {
+    // Phase 7 SP-F-1: #5 Phase 1 acto[0] migrated a panoramic_vision
+    // dedicated primitive (paradox UI atenuado). OR-acceptance.
     const p5 = P.find((p) => p.id === 5);
-    const usesPan = flatActs(p5).some((a) => a.ui?.primitive === "visual_panoramic_prompt");
+    const usesPan = flatActs(p5).some(
+      (a) => a.ui?.primitive === "visual_panoramic_prompt"
+        || a.ui?.primitive === "panoramic_vision"
+    );
     expect(usesPan).toBe(true);
   });
 
-  it("#5 Skyline Focus usa dual_focus_targets", () => {
+  it("#5 Skyline Focus usa dual_focus_targets o dual_focus_refocus (SP-F-2 wraps shared)", () => {
+    // Phase 7 SP-F-2: #5 Phase 2 acto[0] migrated a dual_focus_refocus
+    // dedicated primitive (multi-exercise wrapper subActIdx 0/1/2).
+    // Acepta cualquiera para preservar contract evolutivo.
     const p5 = P.find((p) => p.id === 5);
-    const usesDual = flatActs(p5).some((a) => a.ui?.primitive === "dual_focus_targets");
+    const usesDual = flatActs(p5).some(
+      (a) => a.ui?.primitive === "dual_focus_targets"
+        || a.ui?.primitive === "dual_focus_refocus"
+    );
     expect(usesDual).toBe(true);
   });
 
-  it("#6 Grounded Steel usa body_silhouette_highlight", () => {
+  it("#6 Grounded Steel usa body_silhouette_highlight o grounding_body_scan (SP-G-1 wraps shared)", () => {
+    // Phase 7 SP-G-1: #6 Phase 1 acto[0] migrated a grounding_body_scan
+    // dedicated primitive (multi-task wrapper SVG silhouette + zones).
+    // Acepta cualquiera para preservar contract evolutivo.
     const p6 = P.find((p) => p.id === 6);
-    const usesBody = flatActs(p6).some((a) => a.ui?.primitive === "body_silhouette_highlight");
+    const usesBody = flatActs(p6).some(
+      (a) => a.ui?.primitive === "body_silhouette_highlight"
+        || a.ui?.primitive === "grounding_body_scan"
+    );
     expect(usesBody).toBe(true);
   });
 
-  it("#6 Grounded Steel usa silence_cyan_minimal", () => {
+  it("#6 Grounded Steel usa silence_cyan_minimal o deep_breath_settle (SP-G-2 wraps)", () => {
+    // Phase 7 SP-G-2: #6 Phase 2 acto[1] (silence) migrated a
+    // deep_breath_settle subActIdx=1 dedicated primitive.
+    // Acepta cualquiera para preservar contract evolutivo.
     const p6 = P.find((p) => p.id === 6);
-    const usesSilence = flatActs(p6).some((a) => a.ui?.primitive === "silence_cyan_minimal");
+    const usesSilence = flatActs(p6).some(
+      (a) => a.ui?.primitive === "silence_cyan_minimal"
+        || a.ui?.primitive === "deep_breath_settle"
+    );
     expect(usesSilence).toBe(true);
   });
 });

@@ -40,6 +40,15 @@ import VisualizationCommitmentPrimitive from "./primitives/VisualizationCommitme
 import DescargaRapidaPrimitive from "./primitives/DescargaRapidaPrimitive";
 import PriorityFilterPrimitive from "./primitives/PriorityFilterPrimitive";
 import ExecutiveCommitmentPrimitive from "./primitives/ExecutiveCommitmentPrimitive";
+import BilateralPulseActivationPrimitive from "./primitives/BilateralPulseActivationPrimitive";
+import EnergizingBreathReleasePrimitive from "./primitives/EnergizingBreathReleasePrimitive";
+import EnergyAnchorCommitmentPrimitive from "./primitives/EnergyAnchorCommitmentPrimitive";
+import PanoramicVisionPrimitive from "./primitives/PanoramicVisionPrimitive";
+import DualFocusReFocusPrimitive from "./primitives/DualFocusReFocusPrimitive";
+import FocusCommitmentPrimitive from "./primitives/FocusCommitmentPrimitive";
+import GroundingBodyScanPrimitive from "./primitives/GroundingBodyScanPrimitive";
+import DeepBreathSettlePrimitive from "./primitives/DeepBreathSettlePrimitive";
+import StableCloseCommitmentPrimitive from "./primitives/StableCloseCommitmentPrimitive";
 
 const PRIMITIVES = [
   { id: "BreathOrbExtended", render: (k) => <BreathOrbExtended key={k} cadence={{in:4,h1:0,ex:6,h2:0}} intent="calma" enabled cycleCountTarget={3} audioEnabled={false} hapticEnabled={false} /> },
@@ -92,6 +101,28 @@ const PRIMITIVES = [
   { id: "PriorityFilter · subAct 2 (convergencia)", render: (k) => <PriorityFilterPrimitive key={k} subActIdx={2} /> },
   // Phase 7 SP-D-3 — primitive #3 Phase 3 multi-exercise compromiso ejecutivo.
   { id: "ExecutiveCommitment · triple-seal", render: (k) => <ExecutiveCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={5000} release_message="60 minutos para esto." hapticEnabled={false} /> },
+  // Phase 7 SP-E-1 — primitive #4 Phase 1 bilateral motor + pacer + postura erguida.
+  { id: "BilateralPulseActivation · #4 Phase 1", render: (k) => <BilateralPulseActivationPrimitive key={k} pattern="alternate" bpm={60} target_taps={6} haptic_enabled={false} /> },
+  // Phase 7 SP-E-2 — primitive #4 Phase 2 multi-exercise (breath 3-3 + shake hands).
+  { id: "EnergizingBreathRelease · subAct 0 (breath 3-3)", render: (k) => <EnergizingBreathReleasePrimitive key={k} subActIdx={0} cycleCountTarget={5} hapticEnabled={false} /> },
+  { id: "EnergizingBreathRelease · subAct 1 (shake)", render: (k) => <EnergizingBreathReleasePrimitive key={k} subActIdx={1} duration_ms={10000} hapticEnabled={false} /> },
+  // Phase 7 SP-E-3 — primitive #4 Phase 3 anclaje energético.
+  { id: "EnergyAnchorCommitment · #4 Phase 3", render: (k) => <EnergyAnchorCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={6000} release_message="Listo para el siguiente bloque." hapticEnabled={false} /> },
+  // Phase 7 SP-F-1 — primitive #5 Phase 1 paradox visual periférica.
+  { id: "PanoramicVision · #5 Phase 1", render: (k) => <PanoramicVisionPrimitive key={k} duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-F-2 — primitive #5 Phase 2 dual focus + breath + cognitive.
+  { id: "DualFocusRefocus · subAct 0 (cerca-lejos)", render: (k) => <DualFocusReFocusPrimitive key={k} subActIdx={0} cycles={3} hapticEnabled={false} /> },
+  { id: "DualFocusRefocus · subAct 1 (breath 4-4)", render: (k) => <DualFocusReFocusPrimitive key={k} subActIdx={1} cycles={3} hapticEnabled={false} /> },
+  { id: "DualFocusRefocus · subAct 2 (cognitive)", render: (k) => <DualFocusReFocusPrimitive key={k} subActIdx={2} min_duration_ms={5000} hapticEnabled={false} /> },
+  // Phase 7 SP-F-3 — primitive #5 Phase 3 visual-anchor-driven focus commitment.
+  { id: "FocusCommitment · #5 Phase 3", render: (k) => <FocusCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={5000} release_message="Una hora de foco." hapticEnabled={false} /> },
+  // Phase 7 SP-G-1 — primitive #6 Phase 1 grounding body scan secuencial.
+  { id: "GroundingBodyScan · #6 Phase 1", render: (k) => <GroundingBodyScanPrimitive key={k} duration_ms={40000} hapticEnabled={false} /> },
+  // Phase 7 SP-G-2 — primitive #6 Phase 2 deep breath 5-7 + sink + silence sostén.
+  { id: "DeepBreathSettle · subAct 0 (breath 5-7)", render: (k) => <DeepBreathSettlePrimitive key={k} subActIdx={0} cycleCountTarget={4} hapticEnabled={false} /> },
+  { id: "DeepBreathSettle · subAct 1 (silence)", render: (k) => <DeepBreathSettlePrimitive key={k} subActIdx={1} min_duration_ms={8000} hapticEnabled={false} /> },
+  // Phase 7 SP-G-3 — primitive #6 Phase 3 stable close commitment.
+  { id: "StableCloseCommitment · #6 Phase 3", render: (k) => <StableCloseCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={6000} release_message="Aquí. Firme." hapticEnabled={false} /> },
 ];
 
 export default function PrimitivePreview() {
