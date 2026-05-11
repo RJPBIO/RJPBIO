@@ -1040,7 +1040,7 @@ export default function PrimitiveSwitcher({
           minHoldMs={props.min_hold_ms || props.minHoldMs || 3000}
           releaseMessage={props.release_message || props.releaseMessage}
           hapticEnabled={hapticOn}
-          onComplete={onLocalComplete}
+          onComplete={() => { onSignal({ holdMs: act.validate?.min_hold_ms || props.min_hold_ms || 3000 }); onLocalComplete(); }}
         />
       );
     case "kinetic_release":
@@ -1067,7 +1067,7 @@ export default function PrimitiveSwitcher({
           chips={props.chips}
           minThinkingMs={props.min_thinking_ms || props.minThinkingMs || 4000}
           hapticEnabled={hapticOn}
-          onSelect={(c) => onSignal({ selectedChip: c.id })}
+          onSelect={(c) => onSignal({ selectedChipId: c.id })}
           onComplete={onLocalComplete}
         />
       );
@@ -1077,7 +1077,7 @@ export default function PrimitiveSwitcher({
           minHoldMs={props.min_hold_ms || props.minHoldMs || 3000}
           releaseMessage={props.release_message || props.releaseMessage}
           hapticEnabled={hapticOn}
-          onComplete={onLocalComplete}
+          onComplete={() => { onSignal({ holdMs: act.validate?.min_hold_ms || props.min_hold_ms || 3000 }); onLocalComplete(); }}
         />
       );
     case "load_identification":
@@ -1086,7 +1086,7 @@ export default function PrimitiveSwitcher({
           question={props.question}
           chips={props.chips}
           hapticEnabled={hapticOn}
-          onSelect={(c) => onSignal({ selectedChip: c.id })}
+          onSelect={(c) => onSignal({ selectedChipId: c.id })}
           onComplete={onLocalComplete}
         />
       );
@@ -1106,7 +1106,7 @@ export default function PrimitiveSwitcher({
           minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
           releaseMessage={props.release_message || props.releaseMessage}
           hapticEnabled={hapticOn}
-          onComplete={onLocalComplete}
+          onComplete={() => { onSignal({ holdMs: act.validate?.min_hold_ms || props.min_hold_ms || 5000 }); onLocalComplete(); }}
         />
       );
     case "humming_preparation":
@@ -1142,7 +1142,7 @@ export default function PrimitiveSwitcher({
           minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
           releaseMessage={props.release_message || props.releaseMessage}
           hapticEnabled={hapticOn}
-          onComplete={onLocalComplete}
+          onComplete={() => { onSignal({ holdMs: act.validate?.min_hold_ms || props.min_hold_ms || 5000 }); onLocalComplete(); }}
         />
       );
     case "power_posture_alignment":
@@ -1178,7 +1178,7 @@ export default function PrimitiveSwitcher({
           minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
           releaseMessage={props.release_message || props.releaseMessage}
           hapticEnabled={hapticOn}
-          onComplete={onLocalComplete}
+          onComplete={() => { onSignal({ holdMs: act.validate?.min_hold_ms || props.min_hold_ms || 5000 }); onLocalComplete(); }}
         />
       );
     case "preambulatory_prep":
@@ -1206,7 +1206,7 @@ export default function PrimitiveSwitcher({
           minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
           releaseMessage={props.release_message || props.releaseMessage}
           hapticEnabled={hapticOn}
-          onComplete={onLocalComplete}
+          onComplete={() => { onSignal({ holdMs: act.validate?.min_hold_ms || props.min_hold_ms || 5000 }); onLocalComplete(); }}
         />
       );
     case "pulse_location":
@@ -1232,7 +1232,7 @@ export default function PrimitiveSwitcher({
           minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
           releaseMessage={props.release_message || props.releaseMessage}
           hapticEnabled={hapticOn}
-          onComplete={onLocalComplete}
+          onComplete={() => { onSignal({ holdMs: act.validate?.min_hold_ms || props.min_hold_ms || 5000 }); onLocalComplete(); }}
         />
       );
     case "text_emphasis_voice":
