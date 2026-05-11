@@ -15,6 +15,10 @@ const VALID_VALIDATION_KINDS = new Set([
 ]);
 
 const VALID_PRIMITIVES = new Set([
+  // Phase 7 SP-W — primitives dedicated #24 Bilateral Walking Meditation (4 phases).
+  "preambulatory_prep", "walking_unilateral", "stable_closing_commitment",
+  // Phase 7 SP-X — primitives dedicated #25 Cardiac Pulse Match (Phases 1, 2, 4; P3 flagship F2).
+  "pulse_location", "heartbeat_count", "coherent_closing_commitment",
   "breath_orb", "bilateral_tap_targets", "ocular_dots",
   "ocular_horizontal_metronome", "visual_panoramic_prompt",
   "dual_focus_targets", "body_silhouette_highlight", "posture_visual",
@@ -70,15 +74,17 @@ describe("#24 Bilateral Walking Meditation — migración Phase 5 SP5", () => {
     expect(p.ph[p.ph.length - 1].e).toBe(p.d);
   });
 
-  it("acto 1 usa text_emphasis_voice (preparación)", () => {
+  it("acto 1 usa text_emphasis_voice o preambulatory_prep (preparación)", () => {
+    // Phase 7 SP-W-1: #24 P1 migrated a preambulatory_prep dedicated.
     const a = p.ph[0].iExec[0];
-    expect(a.ui.primitive).toBe("text_emphasis_voice");
+    expect(["text_emphasis_voice", "preambulatory_prep"]).toContain(a.ui.primitive);
     expect(a.type).toBe("transition");
   });
 
-  it("acto 2 usa walking_pace_indicator pattern='left_only' con target_steps=8", () => {
+  it("acto 2 usa walking_pace_indicator o walking_unilateral pattern='left_only' con target_steps=8", () => {
+    // Phase 7 SP-W-2: #24 P2 migrated a walking_unilateral dual-mode dedicated.
     const a = p.ph[1].iExec[0];
-    expect(a.ui.primitive).toBe("walking_pace_indicator");
+    expect(["walking_pace_indicator", "walking_unilateral"]).toContain(a.ui.primitive);
     expect(a.ui.props.pattern).toBe("left_only");
     expect(a.ui.props.target_steps).toBe(8);
     expect(a.type).toBe("walking_meditation");
@@ -86,17 +92,19 @@ describe("#24 Bilateral Walking Meditation — migración Phase 5 SP5", () => {
     expect(a.validate.min_taps).toBe(8);
   });
 
-  it("acto 3 usa walking_pace_indicator pattern='right_only' con target_steps=8", () => {
+  it("acto 3 usa walking_pace_indicator o walking_unilateral pattern='right_only' con target_steps=8", () => {
+    // Phase 7 SP-W-3: #24 P3 migrated a walking_unilateral (mode=right) dedicated.
     const a = p.ph[2].iExec[0];
-    expect(a.ui.primitive).toBe("walking_pace_indicator");
+    expect(["walking_pace_indicator", "walking_unilateral"]).toContain(a.ui.primitive);
     expect(a.ui.props.pattern).toBe("right_only");
     expect(a.ui.props.target_steps).toBe(8);
     expect(a.type).toBe("walking_meditation");
   });
 
-  it("acto 4 usa hold_press_button con release='Aquí. Reset.'", () => {
+  it("acto 4 usa hold_press_button o stable_closing_commitment con release='Aquí. Reset.'", () => {
+    // Phase 7 SP-W-4: #24 P4 migrated a stable_closing_commitment dedicated.
     const a = p.ph[3].iExec[0];
-    expect(a.ui.primitive).toBe("hold_press_button");
+    expect(["hold_press_button", "stable_closing_commitment"]).toContain(a.ui.primitive);
     expect(a.ui.props.min_hold_ms).toBe(5000);
     expect(a.ui.props.release_message).toBe("Aquí. Reset.");
     expect(a.type).toBe("commitment_motor");
@@ -185,15 +193,17 @@ describe("#25 Cardiac Pulse Match — migración Phase 5 SP5", () => {
     expect(p.ph[p.ph.length - 1].e).toBe(p.d);
   });
 
-  it("acto 1 usa text_emphasis_voice (encontrar pulso)", () => {
+  it("acto 1 usa text_emphasis_voice o pulse_location (encontrar pulso)", () => {
+    // Phase 7 SP-X-1: #25 P1 migrated a pulse_location dedicated.
     const a = p.ph[0].iExec[0];
-    expect(a.ui.primitive).toBe("text_emphasis_voice");
+    expect(["text_emphasis_voice", "pulse_location"]).toContain(a.ui.primitive);
     expect(a.type).toBe("cardiac_interoception");
   });
 
-  it("acto 2 usa pulse_match_visual mode='count_only' con interval_ms=30000", () => {
+  it("acto 2 usa pulse_match_visual o heartbeat_count con interval_ms=30000", () => {
+    // Phase 7 SP-X-2: #25 P2 migrated a heartbeat_count dedicated.
     const a = p.ph[1].iExec[0];
-    expect(a.ui.primitive).toBe("pulse_match_visual");
+    expect(["pulse_match_visual", "heartbeat_count"]).toContain(a.ui.primitive);
     expect(a.ui.props.mode).toBe("count_only");
     expect(a.ui.props.interval_ms).toBe(30000);
     expect(a.type).toBe("cardiac_interoception");
@@ -219,9 +229,10 @@ describe("#25 Cardiac Pulse Match — migración Phase 5 SP5", () => {
     expect(cycleMs).toBeLessThanOrEqual(12000);
   });
 
-  it("acto 4 usa hold_press_button con release='Coherencia. Sigo.'", () => {
+  it("acto 4 usa hold_press_button o coherent_closing_commitment con release='Coherencia. Sigo.'", () => {
+    // Phase 7 SP-X-4: #25 P4 migrated a coherent_closing_commitment dedicated.
     const a = p.ph[3].iExec[0];
-    expect(a.ui.primitive).toBe("hold_press_button");
+    expect(["hold_press_button", "coherent_closing_commitment"]).toContain(a.ui.primitive);
     expect(a.ui.props.min_hold_ms).toBe(5000);
     expect(a.ui.props.release_message).toBe("Coherencia. Sigo.");
     expect(a.type).toBe("commitment_motor");

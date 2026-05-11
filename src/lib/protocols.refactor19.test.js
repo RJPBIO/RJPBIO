@@ -41,22 +41,28 @@ describe("#19 Panic Interrupt — refactor sin agua (Phase 5 SP1)", () => {
     expect(p.ph.length).toBe(3);
   });
 
-  it("acto 1 usa primitive vocal_with_haptic (no facial_cold_prompt)", () => {
+  it("acto 1 usa vocal_with_haptic o vagal_vocalization (SP-R-1, no facial_cold_prompt)", () => {
+    // Phase 7 SP-R-1: #19 Phase 1 migrated a vagal_vocalization dedicated.
+    // Acepta cualquiera por contract evolutivo. NO facial_cold_prompt (refactor SP1).
     const act1 = p.ph[0].iExec[0];
-    expect(act1.ui.primitive).toBe("vocal_with_haptic");
+    expect(["vocal_with_haptic", "vagal_vocalization"]).toContain(act1.ui.primitive);
     expect(act1.type).toBe("vocalization");
   });
 
-  it("acto 2 usa primitive breath_orb con cadence apnea {in:3,h1:5,ex:6,h2:0}", () => {
+  it("acto 2 usa breath_orb o apnea_frontal_press con cadence apnea {in:3,h1:5,ex:6,h2:0}", () => {
+    // Phase 7 SP-R-2: #19 Phase 2 migrated a apnea_frontal_press dedicated.
+    // Acepta cualquiera por contract evolutivo.
     const act2 = p.ph[1].iExec[0];
-    expect(act2.ui.primitive).toBe("breath_orb");
+    expect(["breath_orb", "apnea_frontal_press"]).toContain(act2.ui.primitive);
     expect(act2.type).toBe("breath");
     expect(act2.ui.props?.cadence).toEqual({ in: 3, h1: 5, ex: 6, h2: 0 });
   });
 
-  it("acto 3 usa primitive hold_press_button (commitment cierre)", () => {
+  it("acto 3 usa hold_press_button o panic_anchor_closure (commitment cierre)", () => {
+    // Phase 7 SP-R-3: #19 Phase 3 migrated a panic_anchor_closure dedicated.
+    // Acepta cualquiera por contract evolutivo.
     const act3 = p.ph[2].iExec[0];
-    expect(act3.ui.primitive).toBe("hold_press_button");
+    expect(["hold_press_button", "panic_anchor_closure"]).toContain(act3.ui.primitive);
     expect(act3.type).toBe("commitment_motor");
     expect(act3.ui.props?.min_hold_ms).toBeLessThanOrEqual(3000);
   });

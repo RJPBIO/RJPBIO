@@ -115,6 +115,8 @@ export default function PresenceAnchorCommitmentPrimitive({
   const [wordsRevealed, setWordsRevealed] = useState(0);
   const [centerPulse, setCenterPulse] = useState(0);
   const [ringTick, setRingTick] = useState(0);
+  const [snapFlash, setSnapFlash] = useState(0);
+  const [idleBreath, setIdleBreath] = useState(0);
   const startRef = useRef(0);
   const rafRef = useRef(null);
   const ambientRafRef = useRef(null);
@@ -129,6 +131,22 @@ export default function PresenceAnchorCommitmentPrimitive({
     stopAnim();
     if (ambientRafRef.current) cancelAnimationFrame(ambientRafRef.current);
   }, []);
+
+  // Idle breathing pulse (pre-press) — invites interaction
+  useEffect(() => {
+    if (reduceMotion || pressing || completed) return undefined;
+    let stopped = false;
+    let raf;
+    const startTime = performance.now();
+    const breathTick = (now) => {
+      if (stopped) return;
+      const elapsed = now - startTime;
+      setIdleBreath((Math.sin(elapsed / 700) + 1) * 0.5);
+      raf = requestAnimationFrame(breathTick);
+    };
+    raf = requestAnimationFrame(breathTick);
+    return () => { stopped = true; if (raf) cancelAnimationFrame(raf); };
+  }, [reduceMotion, pressing, completed]);
 
   // Ambient ticker (slow breath rhythm ~6s + ring ticker ~10s continuous)
   useEffect(() => {
@@ -173,10 +191,18 @@ export default function PresenceAnchorCommitmentPrimitive({
       setCompleted(true);
       setPressing(false);
       setWordsRevealed(MANTRA_WORDS.length);
+      setSnapFlash(1);
       if (hapticEnabled) {
         try { hapticSignature("award"); } catch {}
       }
       setShowRelease(true);
+      const decayStart = performance.now();
+      const decay = (n) => {
+        const t = Math.min(1, (n - decayStart) / 320);
+        setSnapFlash(1 - t);
+        if (t < 1) requestAnimationFrame(decay);
+      };
+      requestAnimationFrame(decay);
       try {
         if (typeof onSignalRef.current === "function") {
           onSignalRef.current({ holdMs: min_hold_ms });
@@ -382,14 +408,24 @@ export default function PresenceAnchorCommitmentPrimitive({
           <circle
             cx="160" cy="160" r="46"
             fill={`url(#${auraId})`}
-            opacity={completed ? 0.95 : (macroPhase === "B" ? 0.55 + progress * 0.35 : 0.45)}
+            opacity={(completed ? 0.95 : (macroPhase === "B" ? 0.55 + progress * 0.35 : 0.45)) + snapFlash * 0.40}
             filter={reduceMotion ? undefined : `url(#${haloId})`}
             style={{
-              transform: `scale(${centerScale.toFixed(3)})`,
+              transform: `scale(${(centerScale + snapFlash * 0.20).toFixed(3)})`,
               transformOrigin: "160px 160px",
               transition: reduceMotion ? "none" : "transform 200ms linear, opacity 600ms ease-out",
             }}
           />
+          {snapFlash > 0.05 && (
+            <circle
+              cx="160" cy="160" r="50"
+              fill="none"
+              stroke={phaseColor}
+              strokeWidth={(2.0 + snapFlash * 2.8).toFixed(2)}
+              opacity={snapFlash.toFixed(3)}
+              style={{ pointerEvents: "none" }}
+            />
+          )}
 
           {/* Central presence dot */}
           <circle
@@ -473,7 +509,8 @@ export default function PresenceAnchorCommitmentPrimitive({
               textTransform: "uppercase",
               cursor: completed ? "default" : "pointer",
               touchAction: "none",
-              transition: "background 120ms linear, border-color 120ms linear",
+              transform: pressing || completed || reduceMotion ? "scale(1)" : `scale(${(1 + idleBreath * 0.025).toFixed(3)})`,
+              transition: "background 120ms linear, border-color 120ms linear, transform 220ms ease-out",
               zIndex: 2,
               padding: 0,
             }}

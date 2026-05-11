@@ -1831,18 +1831,18 @@ export const P = [
   safety:"AVISO: Si la angustia es severa o persistente, contacta inmediatamente a un profesional de salud mental o servicio de emergencias (911 en México y EEUU; números locales en otros países).",
   ph:[
     {
-      l:"Vocalización Grave",r:"0–40s",s:0,e:40,
-      k:"Exhala con sonido grave: aaaaah. Sostén.",
-      i:"Inhala normal. Exhala lentamente con sonido grave 'aaaaah'. Sostén la vocalización lo más largo posible. Tres veces.",
+      l:"Exhalación Vagal Silenciosa",r:"0–40s",s:0,e:40,
+      k:"Inhala suave. Exhala largo en silencio. Lengua al paladar.",
+      i:"Inhala suave por la nariz con la lengua presionada al paladar. Exhala largo y silencioso por la boca, lengua sigue firme arriba. Tres veces.",
       iExec:[
         {
           from:0,to:40,
-          text:"Exhala con sonido grave: aaaaah. Que vibre en pecho y garganta. Tres veces.",
+          text:"Inhala suave. Exhala largo en silencio, lengua firme al paladar. Tres veces.",
           type:"vocalization",
-          mechanism:"Vocalización grave sostenida activa nervio laríngeo recurrente (rama vagal) + extensión exhalatoria parasimpática (Porges 2009)",
+          mechanism:"Exhalación prolongada activa reflejo baroreceptor vagal (Porges 2009) + compresión lingual al paladar estimula rama trigeminal-vagal sin sonido (Lemaitre 2008)",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"vocal_with_haptic",props:{target_vocalizations:3,vocalization_duration_ms:10000}},
+          ui:{primitive:"vagal_vocalization",props:{cycleCountTarget:3}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1851,7 +1851,7 @@ export const P = [
           }
         }
       ],
-      sc:"Vocalización grave sostenida activa nervio laríngeo recurrente (Porges 2009, polyvagal theory)",
+      sc:"Exhalación prolongada + compresión lingual silenciosa activan vago (Porges 2009 + Lemaitre 2008)",
       ic:"breath",br:null
     },
     {
@@ -1866,7 +1866,7 @@ export const P = [
           mechanism:"Apnea voluntaria breve aumenta tono vagal (Lemaitre 2008) + presión frontal estimula nervio trigémino (Russo 2017 extensión exhalatoria)",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"breath_orb",props:{cadence:{in:3,h1:5,ex:6,h2:0}}},
+          ui:{primitive:"apnea_frontal_press",props:{cycleCountTarget:3,cadence:{in:3,h1:5,ex:6,h2:0}}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -1880,16 +1880,16 @@ export const P = [
     {
       l:"Estás Aquí",r:"80–120s",s:80,e:120,
       k:"Estás aquí. Estás a salvo.",
-      i:"Mantén las palmas firmes contra tu pecho. 'Estoy aquí. Estoy a salvo.'",
+      i:"Apoya la mano libre contra el pecho. Mantén el pulgar firme en el botón. 'Estoy aquí. Estoy a salvo.'",
       iExec:[
         {
           from:0,to:40,
-          text:"Mantén las palmas firmes contra el pecho. 'Estoy aquí. Estoy a salvo.'",
+          text:"Mano libre al pecho. Pulgar firme en el botón. 'Estoy aquí. Estoy a salvo.'",
           type:"commitment_motor",
-          mechanism:"Anclaje propioceptivo central + afirmación de seguridad consolida estado calmo",
+          mechanism:"Anclaje propioceptivo (palma libre al pecho) + pulgar firme en botón + afirmación verbal de seguridad → córtex prefrontal re-engaged (Bryan/Adams/Monin 2013 implementation intentions)",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:3000,release_message:"Estás aquí. A salvo."}},
+          ui:{primitive:"panic_anchor_closure",props:{label:"MANTÉN",min_hold_ms:3000,release_message:"Estás aquí. A salvo."}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1898,7 +1898,7 @@ export const P = [
           }
         }
       ],
-      sc:"Anclaje propioceptivo + afirmación seguridad",
+      sc:"Anclaje propioceptivo + afirmación seguridad (single-hand phone-friendly)",
       ic:"body",br:null
     }
   ]},
@@ -1912,17 +1912,17 @@ export const P = [
   ph:[
     {
       l:"Sacudida Física",r:"0–30s",s:0,e:30,
-      k:"Sacude las manos vigorosamente. Romper la inercia.",
-      i:"Levántate si puedes. Sacude las manos vigorosamente como si tuvieras agua y la tiraras. Sigue 20 segundos.",
+      k:"Sacude vigorosamente. Romper la inercia.",
+      i:"Sacude la mano libre vigorosamente, como si tiraras agua. Si puedes, levántate y sacude ambos brazos. Sigue 25 segundos.",
       iExec:[
         {
           from:0,to:30,
-          text:"Sacude las manos vigorosamente. Como si tuvieras agua y la tiraras.",
+          text:"Sacude vigorosamente la mano libre. Como si tiraras agua.",
           type:"motor_release",
           mechanism:"Sacudida vigorosa interrumpe estado de paralysis cognitiva + aumenta circulación cerebral inmediata",
           duration:{min_ms:20000,target_ms:25000,max_ms:35000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"shake_hands_prompt",props:{duration_ms:25000}},
+          ui:{primitive:"kinetic_release",props:{duration_ms:25000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1936,17 +1936,17 @@ export const P = [
     },
     {
       l:"Descarga Isométrica",r:"30–55s",s:30,e:55,
-      k:"Aprieta puños 10s. Suelta.",
-      i:"Aprieta los puños con todas tus fuerzas durante 10 segundos. Suelta completamente. Siente la diferencia.",
+      k:"Aprieta el puño 10s. Suelta.",
+      i:"Aprieta el puño de la mano libre con todas tus fuerzas durante 10 segundos. Suelta completamente. Siente la diferencia.",
       iExec:[
         {
           from:0,to:25,
-          text:"Aprieta los puños 10 segundos. Suelta. Siente la diferencia.",
+          text:"Aprieta el puño de la mano libre 10 segundos. Suelta. Siente la diferencia.",
           type:"motor_isometric",
           mechanism:"Tensión isométrica máxima + relajación crea contraste somático que descarga frustración acumulada (Jacobson 1938 PMR)",
           duration:{min_ms:18000,target_ms:22000,max_ms:30000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"isometric_grip_prompt",props:{target_holds:1,hold_duration_ms:10000,release_duration_ms:10000}},
+          ui:{primitive:"isometric_release",props:{target_holds:1,hold_duration_ms:10000,release_duration_ms:10000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1970,7 +1970,7 @@ export const P = [
           duration:{min_ms:22000,target_ms:28000,max_ms:36000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
           ui:{
-            primitive:"chip_selector",
+            primitive:"reencuadre_choice",
             props:{
               question:"¿Qué necesito ahora?",
               chips:[
@@ -1993,16 +1993,16 @@ export const P = [
     {
       l:"Acción Micro",r:"85–120s",s:85,e:120,
       k:"5 minutos. Una acción concreta.",
-      i:"Mantén las palmas presionadas. Identifica UNA acción concreta de 5 minutos que harás al volver.",
+      i:"Apoya la mano libre contra el pecho. Mantén el pulgar firme en el botón. Identifica UNA acción concreta de 5 minutos que harás al volver.",
       iExec:[
         {
           from:0,to:35,
-          text:"Mantén las palmas presionadas. UNA acción de 5 minutos al volver.",
+          text:"Mano libre al pecho. Pulgar firme en el botón. UNA acción de 5 minutos al volver.",
           type:"commitment_motor",
-          mechanism:"Commitment motor a micro-acción rompe parálisis y crea momentum (Bryan, Adams, Monin 2013)",
+          mechanism:"Commitment motor (pulgar sostenido) + identificación verbal de UNA acción concreta de 5 min crea momentum y rompe parálisis (Bryan/Adams/Monin 2013)",
           duration:{min_ms:25000,target_ms:30000,max_ms:40000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:3000,release_message:"5 minutos. Concreto."}},
+          ui:{primitive:"micro_action_momentum",props:{label:"MANTÉN",min_hold_ms:3000,release_message:"5 minutos. Concreto."}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -2011,7 +2011,7 @@ export const P = [
           }
         }
       ],
-      sc:"Commitment a micro-acción crea momentum (Bryan, Adams, Monin 2013)",
+      sc:"Commitment a micro-acción crea momentum (Bryan, Adams, Monin 2013; single-hand phone-friendly)",
       ic:"body",br:null
     }
   ]},
@@ -2036,7 +2036,7 @@ export const P = [
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"chip_selection",required:true},
           ui:{
-            primitive:"chip_selector",
+            primitive:"load_identification",
             props:{
               question:"¿Qué cargas ahora?",
               chips:[
@@ -2073,7 +2073,7 @@ export const P = [
           duration:{min_ms:35000,target_ms:40000,max_ms:48000},
           validate:{kind:"min_duration",min_ms:24000},
           ui:{
-            primitive:"doorway_visualizer",
+            primitive:"threshold_gateway",
             props:{
               phase:"approach",
               duration_ms:40000,
@@ -2103,7 +2103,7 @@ export const P = [
           duration:{min_ms:15000,target_ms:18000,max_ms:22000},
           validate:{kind:"min_duration",min_ms:15000},
           ui:{
-            primitive:"doorway_visualizer",
+            primitive:"threshold_gateway",
             props:{
               phase:"cross",
               duration_ms:18000,
@@ -2124,17 +2124,17 @@ export const P = [
     {
       l:"Del Otro Lado",r:"90–120s",s:90,e:120,
       k:"Lo que hago ahora es distinto.",
-      i:"Mantén las palmas presionadas mientras visualizas la siguiente tarea. 'Lo que hago ahora es distinto.'",
+      i:"Apoya la mano libre contra el pecho. Mantén el pulgar firme en el botón mientras visualizas la siguiente tarea. 'Lo que hago ahora es distinto.'",
       iExec:[
         {
           from:0,to:30,
-          text:"Mantén las palmas presionadas. 'Lo que hago ahora es distinto.'",
+          text:"Mano libre al pecho. Pulgar firme en el botón. 'Lo que hago ahora es distinto.'",
           type:"commitment_motor",
-          mechanism:"Commitment motor + verbalización de cambio consolida event boundary cognitivo (Bryan, Adams, Monin 2013)",
+          mechanism:"Commitment motor (pulgar sostenido) + verbalización de cambio consolida event boundary cognitivo (Bryan/Adams/Monin 2013)",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:5000},
           ui:{
-            primitive:"hold_press_button",
+            primitive:"threshold_commitment",
             props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Distinto."}
           },
           media:{
@@ -2169,7 +2169,7 @@ export const P = [
           mechanism:"Preparación postural + respiración nasal estabiliza estado pre-vocalización",
           duration:{min_ms:25000,target_ms:30000,max_ms:35000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:4,h1:0,ex:4,h2:0}}},
+          ui:{primitive:"humming_preparation",props:{cadence:{in:4,h1:0,ex:4,h2:0},duration_ms:30000}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -2194,7 +2194,7 @@ export const P = [
           duration:{min_ms:42000,target_ms:50000,max_ms:60000},
           validate:{kind:"tap_count",min_taps:4,bilateral:false},
           ui:{
-            primitive:"vocal_resonance_visual",
+            primitive:"vagal_humming_resonance",
             props:{target_hums:4,hum_duration_ms:10000}
           },
           media:{
@@ -2219,7 +2219,7 @@ export const P = [
           mechanism:"Interocepción post-vocalización consolida cambio fisiológico vía ínsula anterior (Khalsa 2018)",
           duration:{min_ms:28000,target_ms:35000,max_ms:42000},
           validate:{kind:"min_duration",min_ms:28000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Vibración residual."}},
+          ui:{primitive:"residual_vibration",props:{text:"Vibración residual.",duration_ms:35000}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -2233,17 +2233,17 @@ export const P = [
     {
       l:"Cierre Calmo",r:"115–150s",s:115,e:150,
       k:"Calma sostenida. Sigo.",
-      i:"Mantén las palmas firmes contra pecho. 'Calma sostenida. Sigo.'",
+      i:"Apoya la mano libre contra el pecho. Mantén el pulgar firme en el botón. 'Calma sostenida. Sigo.'",
       iExec:[
         {
           from:0,to:35,
-          text:"Mantén las palmas firmes contra el pecho. 'Calma sostenida. Sigo.'",
+          text:"Mano libre al pecho. Pulgar firme en el botón. 'Calma sostenida. Sigo.'",
           type:"commitment_motor",
-          mechanism:"Anclaje propioceptivo + verbalización consolida estado calmo (Bryan, Adams, Monin 2013)",
+          mechanism:"Anclaje propioceptivo (palma libre al pecho) + pulgar firme + verbalización consolida estado calmo post-humming (Bryan/Adams/Monin 2013)",
           duration:{min_ms:28000,target_ms:32000,max_ms:40000},
           validate:{kind:"hold_press",min_hold_ms:5000},
           ui:{
-            primitive:"hold_press_button",
+            primitive:"calm_commitment",
             props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Calma. Sigo."}
           },
           media:{
@@ -2280,8 +2280,8 @@ export const P = [
           duration:{min_ms:25000,target_ms:30000,max_ms:36000},
           validate:{kind:"min_duration",min_ms:25000},
           ui:{
-            primitive:"power_pose_visual",
-            props:{phase:"posture_alignment",target_holds:0}
+            primitive:"power_posture_alignment",
+            props:{phase:"posture_alignment",target_holds:0,duration_ms:30000}
           },
           media:{
             voice:{enabled_default:false},
@@ -2306,7 +2306,7 @@ export const P = [
           mechanism:"Respiración 4:4 simétrica con postura erguida activa simpático moderado + oxigenación",
           duration:{min_ms:28000,target_ms:35000,max_ms:42000},
           validate:{kind:"breath_cycles",min_cycles:4,cycle_min_ms:7000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:4,h1:0,ex:4,h2:0}}},
+          ui:{primitive:"energizing_breath",props:{cadence:{in:4,h1:0,ex:4,h2:0},target_cycles:4}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true},
             binaural:{action:"continue"}
@@ -2329,7 +2329,7 @@ export const P = [
           duration:{min_ms:25000,target_ms:30000,max_ms:38000},
           validate:{kind:"min_duration",min_ms:25000},
           ui:{
-            primitive:"power_pose_visual",
+            primitive:"core_isometric",
             props:{phase:"isometric_holds",target_holds:3,hold_duration_ms:10000,release_duration_ms:5000}
           },
           media:{
@@ -2344,17 +2344,17 @@ export const P = [
     {
       l:"Anclaje Energético",r:"95–120s",s:95,e:120,
       k:"Postura sostenida. Próxima hora activa.",
-      i:"Mantén postura erguida + palmas presionadas. 'Próxima hora activa.'",
+      i:"Apoya la mano libre contra el pecho. Mantén el pulgar firme en el botón + postura erguida. 'Próxima hora activa.'",
       iExec:[
         {
           from:0,to:25,
-          text:"Mantén postura + palmas presionadas. 'Próxima hora activa.'",
+          text:"Mano libre al pecho. Pulgar firme. Postura erguida. 'Próxima hora activa.'",
           type:"commitment_motor",
-          mechanism:"Postura sostenida + commitment motor consolida estado activado (Bryan, Adams, Monin 2013)",
+          mechanism:"Postura sostenida + commitment motor (pulgar firme) consolida estado activado (Bryan/Adams/Monin 2013)",
           duration:{min_ms:18000,target_ms:22000,max_ms:30000},
           validate:{kind:"hold_press",min_hold_ms:5000},
           ui:{
-            primitive:"hold_press_button",
+            primitive:"posture_energy_commitment",
             props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Próxima hora activa."}
           },
           media:{
@@ -2389,10 +2389,11 @@ export const P = [
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"min_duration",min_ms:22000},
           ui:{
-            primitive:"text_emphasis_voice",
+            primitive:"preambulatory_prep",
             props:{
               text:"Levántate. Espacio para 8 pasos.",
-              subtext:"Sin espacio: marcha en el lugar."
+              subtext:"Sin espacio: marcha en el lugar.",
+              duration_ms:30000
             }
           },
           media:{
@@ -2419,7 +2420,7 @@ export const P = [
           duration:{min_ms:30000,target_ms:40000,max_ms:50000},
           validate:{kind:"tap_count",min_taps:8,bilateral:false},
           ui:{
-            primitive:"walking_pace_indicator",
+            primitive:"walking_unilateral",
             props:{target_steps:8,pattern:"left_only",pace_bpm:60}
           },
           media:{
@@ -2444,7 +2445,7 @@ export const P = [
           duration:{min_ms:30000,target_ms:40000,max_ms:50000},
           validate:{kind:"tap_count",min_taps:8,bilateral:false},
           ui:{
-            primitive:"walking_pace_indicator",
+            primitive:"walking_unilateral",
             props:{target_steps:8,pattern:"right_only",pace_bpm:60}
           },
           media:{
@@ -2459,17 +2460,17 @@ export const P = [
     {
       l:"Cierre Estable",r:"110–150s",s:110,e:150,
       k:"Detente. Pies firmes. Aquí.",
-      i:"Detente donde estés. Pies firmes en el suelo. Mantén las palmas presionadas: 'Aquí. Reset.'",
+      i:"Detente donde estés. Pies firmes en el suelo. Apoya la mano libre contra el pecho. Mantén el pulgar firme en el botón: 'Aquí. Reset.'",
       iExec:[
         {
           from:0,to:40,
-          text:"Detente. Pies firmes. Mantén las palmas presionadas. 'Aquí. Reset.'",
+          text:"Detente. Pies firmes. Mano libre al pecho. Pulgar firme en el botón. 'Aquí. Reset.'",
           type:"commitment_motor",
-          mechanism:"Detención + anclaje propioceptivo cierra ciclo ambulatorio (Bryan, Adams, Monin 2013)",
+          mechanism:"Detención + anclaje propioceptivo (palma libre al pecho + pulgar firme) cierra ciclo ambulatorio (Bryan/Adams/Monin 2013)",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"hold_press",min_hold_ms:5000},
           ui:{
-            primitive:"hold_press_button",
+            primitive:"stable_closing_commitment",
             props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Aquí. Reset."}
           },
           media:{
@@ -2508,10 +2509,11 @@ export const P = [
           duration:{min_ms:18000,target_ms:22000,max_ms:30000},
           validate:{kind:"min_duration",min_ms:18000},
           ui:{
-            primitive:"text_emphasis_voice",
+            primitive:"pulse_location",
             props:{
               text:"Encuentra el pulso radial.",
-              subtext:"Dedos en muñeca opuesta."
+              subtext:"Dedos en muñeca opuesta.",
+              duration_ms:22000
             }
           },
           media:{
@@ -2538,7 +2540,7 @@ export const P = [
           duration:{min_ms:32000,target_ms:35000,max_ms:45000},
           validate:{kind:"min_duration",min_ms:30000},
           ui:{
-            primitive:"pulse_match_visual",
+            primitive:"heartbeat_count",
             props:{
               mode:"count_only",
               interval_ms:30000,
@@ -2593,17 +2595,17 @@ export const P = [
     {
       l:"Cierre Coherente",r:"125–150s",s:125,e:150,
       k:"Coherencia sostenida. Sigo.",
-      i:"Suelta el pulso. Mantén las palmas firmes contra el pecho. 'Coherencia. Sigo.'",
+      i:"Suelta el pulso. Apoya la mano libre contra el pecho. Mantén el pulgar firme en el botón. 'Coherencia. Sigo.'",
       iExec:[
         {
           from:0,to:25,
-          text:"Suelta el pulso. Mantén las palmas firmes contra el pecho. 'Coherencia. Sigo.'",
+          text:"Suelta el pulso. Mano libre al pecho. Pulgar firme en el botón. 'Coherencia. Sigo.'",
           type:"commitment_motor",
-          mechanism:"Anclaje cardíaco + commitment motor consolida estado coherente (Bryan, Adams, Monin 2013)",
+          mechanism:"Anclaje cardíaco (palma al pecho) + commitment motor (pulgar firme) consolida estado coherente (Bryan/Adams/Monin 2013)",
           duration:{min_ms:18000,target_ms:22000,max_ms:30000},
           validate:{kind:"hold_press",min_hold_ms:5000},
           ui:{
-            primitive:"hold_press_button",
+            primitive:"coherent_closing_commitment",
             props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Coherencia. Sigo."}
           },
           media:{
@@ -2635,7 +2637,7 @@ export const SCIENCE_DEEP = {
   16: "La respiración a frecuencia de resonancia (~5.5 rpm para la mayoría de adultos) induce un estado donde el barorreflejo entra en resonancia con el ritmo respiratorio. Vaschillo et al. 2006 documentaron que en este estado la amplitud de HRV se multiplica por 2-3x. Lehrer & Gevirtz 2014 muestran que 4 semanas de práctica (20 min/día) mejoran la ganancia baroreflex de forma sostenida. El meta-análisis de Goessl et al. 2017 (N=1868) reporta d=0.83 en reducción de ansiedad-estrés, uno de los efectos más grandes documentados para una intervención no-farmacológica.",
   17: "NSDR (Non-Sleep Deep Rest) y Yoga Nidra están entre las pocas prácticas con evidencia directa en neuroimagen. Kjaer et al. 2002 (Cognitive Brain Research) usando PET [11C]raclopride documentaron un incremento del 65% en dopamina endógena durante el estado hipnagógico de yoga nidra. Datta et al. 2017 muestran mejora en calidad de sueño en insomnio crónico. El barrido corporal activa la ínsula (centro de interocepción) sin inducir la inercia de sueño que sí produce una siesta >30 min.",
   18: "Emergency Reset es activación motora bilateral acelerada — el inverso de la respiración consciente. En crisis aguda, el sistema simpático bloquea el control respiratorio voluntario; pedir 'respira lento' a alguien en pánico es contraproducente. Berceli (TRE 2008) y la línea Somatic Experiencing de Levine usan vibración muscular voluntaria para liberar tensión almacenada en psoas y diafragma. La vocalización audible activa la rama vagal ventral por estimulación del nervio laríngeo recurrente (Porges 2011). El cierre con anclaje sensorial (nominar un objeto, decir frases firmes) reactiva la corteza prefrontal por compromiso verbal, reduciendo la activación amigdalar.",
-  19: "Panic Interrupt combina tres mecanismos vagales ejecutables en cualquier contexto sin infraestructura externa. Vocalización grave sostenida activa el nervio laríngeo recurrente (rama vagal) por estimulación laríngea + extensión exhalatoria parasimpática (Porges 2009, polyvagal theory). Apnea voluntaria breve de 4–6 s incrementa el tono vagal por reflejo barorreceptor durante la pausa inspiratoria (Lemaitre 2008 documentó el patrón en breath-hold divers; en no-divers la magnitud es menor pero medible en HRV). La presión frontal con los dedos durante la apnea estimula el nervio trigémino indirectamente sin estrés térmico. El cierre con palmas al pecho + afirmación verbal ancla propiocepción central + reactiva córtex prefrontal por compromiso verbal. Diseñado para pánico agudo donde respirar lento ya no es opción y donde el user no puede desplazarse a buscar herramientas externas: sinergia de tres mecanismos vagales en serie con disponibilidad universal.",
+  19: "Panic Interrupt combina tres mecanismos vagales ejecutables en cualquier contexto sin infraestructura externa y sin emitir sonido audible (apto para crisis en espacios públicos con teléfono en mano). Exhalación prolongada silenciosa con lengua firmemente presionada al paladar activa el reflejo baroreceptor vagal (extensión exhalatoria parasimpática, Porges 2009 polyvagal theory) + rama trigémino-vagal por compresión lingual sin necesidad de fonación (Lemaitre 2008). Apnea voluntaria breve de 4–6 s incrementa el tono vagal por reflejo barorreceptor durante la pausa inspiratoria (Lemaitre 2008 documentó el patrón en breath-hold divers; en no-divers la magnitud es menor pero medible en HRV). La presión frontal con los dedos durante la apnea estimula el nervio trigémino indirectamente sin estrés térmico. El cierre con palmas al pecho + afirmación verbal ancla propiocepción central + reactiva córtex prefrontal por compromiso verbal. Diseñado para pánico agudo donde respirar lento ya no es opción y donde el user no puede desplazarse a buscar herramientas externas: sinergia de tres mecanismos vagales en serie con disponibilidad universal y sin llamar la atención.",
   20: "Block Break combina power pose (Carney et al. 2010, efecto subjetivo robusto en réplicas), activación motora bilateral de alta intensidad (Knab & Lightfoot 2010 — eleva BDNF y dopamina central), y descarga isométrica máxima por contracción-liberación. La descarga isométrica activa el reflejo miotático inverso (Golgi tendon organ): tras 10 segundos de contracción al 100%, el órgano de Golgi inhibe la motoneurona y produce una caída brusca del tono muscular acompañada de activación parasimpática post-isometric. Es el patrón usado en PRT (Progressive Resistance Training) clínico para desbloqueo somatomotor en estados de inercia cognitiva.",
   21: "Threshold Crossing instrumenta el doorway effect documentado por Radvansky (2006 Memory & Cognition; 2010 Cognition; 2011 QJEP) dentro del marco de event segmentation theory (Zacks 2007 Psychological Bulletin). Cruzar un umbral físico o mental marca un boundary que reorganiza working memory: en laboratorio, los sujetos olvidan más rápido la información del cuarto anterior tras cruzar una puerta. La aplicación es de instrumentación, no descubrimiento de mecanismo nuevo: identificar el estado cargado, visualizar el cruce y consolidar con commitment motor (Bryan, Adams, Monin 2013) explota el efecto de forma intencional para limpiar carga cognitiva entre tareas. Limitaciones honestas: el efecto es robusto en laboratorio pero magnitudes ecológicas varían (Pettijohn 2016); umbrales mentales visualizados tienen menos data directa que físicos. NO se reclama boost de productividad — solo transición cognitiva limpia. Disclaimer fotosensible obligatorio porque la fase 3 incluye un flash visual breve (<250 ms) que cumple WCAG 2.1 SC 2.3.1.",
   22: "Vagal Hum Reset combina tres mecanismos vagales documentados que se activan simultáneamente con humming sostenido. Primero: el humming activa el nervio laríngeo recurrente (rama del vago) por estimulación laríngea + extensión exhalatoria parasimpática (Porges 2009, polyvagal theory). Segundo: la vibración facial durante el humming estimula el nervio trigémino. Tercero: Maniscalco 2003 (European Respiratory Journal) documentó que el humming aumenta la producción de óxido nítrico nasal aproximadamente 15× vs respiración normal — efecto fisiológico medible inmediato. La práctica de Bhramari pranayama del yoga tradicional usa este mecanismo; la innovación de Bio-Ignición es la instrumentación timed con counter (4 humming sostenidos × 10s) + interocepción post-vocalización para consolidar el cambio fisiológico vía ínsula anterior (Khalsa 2018 Roadmap interoception). Limitación honesta: efectos downstream del NO (broncodilatación) requieren uso sostenido para ser clínicamente relevantes; en una sesión de 150s lo principal es activación parasimpática vía vagal. NO se reclama boost inmunológico ni efectos sistémicos no replicados.",

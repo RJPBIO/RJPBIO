@@ -15,6 +15,10 @@ const VALID_VALIDATION_KINDS = new Set([
 ]);
 
 const VALID_PRIMITIVES = new Set([
+  // Phase 7 SP-U — primitives dedicated #22 Vagal Hum Reset (4 phases).
+  "humming_preparation", "vagal_humming_resonance", "residual_vibration", "calm_commitment",
+  // Phase 7 SP-V — primitives dedicated #23 Power Pose Activation (4 phases).
+  "power_posture_alignment", "energizing_breath", "core_isometric", "posture_energy_commitment",
   "breath_orb", "bilateral_tap_targets", "ocular_dots",
   "ocular_horizontal_metronome", "visual_panoramic_prompt",
   "dual_focus_targets", "body_silhouette_highlight", "posture_visual",
@@ -70,16 +74,18 @@ describe("#22 Vagal Hum Reset — migración Phase 5 SP4", () => {
     expect(p.ph[p.ph.length - 1].e).toBe(p.d);
   });
 
-  it("acto 1 usa breath_orb con cadence 4-0-4-0", () => {
+  it("acto 1 usa breath_orb o humming_preparation con cadence 4-0-4-0", () => {
+    // Phase 7 SP-U-1: #22 P1 migrated a humming_preparation dedicated.
     const a = p.ph[0].iExec[0];
-    expect(a.ui.primitive).toBe("breath_orb");
+    expect(["breath_orb", "humming_preparation"]).toContain(a.ui.primitive);
     expect(a.ui.props.cadence).toEqual({ in: 4, h1: 0, ex: 4, h2: 0 });
     expect(a.validate.kind).toBe("min_duration");
   });
 
-  it("acto 2 usa vocal_resonance_visual con target_hums=4 y validate tap_count=4", () => {
+  it("acto 2 usa vocal_resonance_visual o vagal_humming_resonance con target_hums=4 y validate tap_count=4", () => {
+    // Phase 7 SP-U-2: #22 P2 migrated a vagal_humming_resonance dedicated.
     const a = p.ph[1].iExec[0];
-    expect(a.ui.primitive).toBe("vocal_resonance_visual");
+    expect(["vocal_resonance_visual", "vagal_humming_resonance"]).toContain(a.ui.primitive);
     expect(a.ui.props.target_hums).toBe(4);
     expect(a.ui.props.hum_duration_ms).toBe(10000);
     expect(a.validate.kind).toBe("tap_count");
@@ -93,16 +99,18 @@ describe("#22 Vagal Hum Reset — migración Phase 5 SP4", () => {
     expect(a.mechanism).toMatch(/Maniscalco/i);
   });
 
-  it("acto 3 usa silence_cyan_minimal y type interoception", () => {
+  it("acto 3 usa silence_cyan_minimal o residual_vibration y type interoception", () => {
+    // Phase 7 SP-U-3: #22 P3 migrated a residual_vibration dedicated.
     const a = p.ph[2].iExec[0];
-    expect(a.ui.primitive).toBe("silence_cyan_minimal");
+    expect(["silence_cyan_minimal", "residual_vibration"]).toContain(a.ui.primitive);
     expect(a.type).toBe("interoception");
     expect(a.mechanism).toMatch(/Khalsa/i);
   });
 
-  it("acto 4 usa hold_press_button con min_hold_ms=5000 y release_message correcto", () => {
+  it("acto 4 usa hold_press_button o calm_commitment con min_hold_ms=5000 y release_message correcto", () => {
+    // Phase 7 SP-U-4: #22 P4 migrated a calm_commitment dedicated.
     const a = p.ph[3].iExec[0];
-    expect(a.ui.primitive).toBe("hold_press_button");
+    expect(["hold_press_button", "calm_commitment"]).toContain(a.ui.primitive);
     expect(a.ui.props.min_hold_ms).toBe(5000);
     expect(a.ui.props.release_message).toBe("Calma. Sigo.");
     expect(a.type).toBe("commitment_motor");
@@ -199,25 +207,28 @@ describe("#23 Power Pose Activation — migración Phase 5 SP4", () => {
     expect(p.ph[p.ph.length - 1].e).toBe(p.d);
   });
 
-  it("acto 1 usa power_pose_visual con phase='posture_alignment' y target_holds=0", () => {
+  it("acto 1 usa power_pose_visual o power_posture_alignment con phase='posture_alignment'", () => {
+    // Phase 7 SP-V-1: #23 P1 migrated a power_posture_alignment dedicated.
     const a = p.ph[0].iExec[0];
-    expect(a.ui.primitive).toBe("power_pose_visual");
+    expect(["power_pose_visual", "power_posture_alignment"]).toContain(a.ui.primitive);
     expect(a.ui.props.phase).toBe("posture_alignment");
     expect(a.ui.props.target_holds).toBe(0);
     expect(a.type).toBe("power_posture");
   });
 
-  it("acto 2 usa breath_orb con cadence 4-0-4-0 y validate breath_cycles=4", () => {
+  it("acto 2 usa breath_orb o energizing_breath con cadence 4-0-4-0 y validate breath_cycles=4", () => {
+    // Phase 7 SP-V-2: #23 P2 migrated a energizing_breath dedicated.
     const a = p.ph[1].iExec[0];
-    expect(a.ui.primitive).toBe("breath_orb");
+    expect(["breath_orb", "energizing_breath"]).toContain(a.ui.primitive);
     expect(a.ui.props.cadence).toEqual({ in: 4, h1: 0, ex: 4, h2: 0 });
     expect(a.validate.kind).toBe("breath_cycles");
     expect(a.validate.min_cycles).toBe(4);
   });
 
-  it("acto 3 usa power_pose_visual con phase='isometric_holds' y 3 ciclos", () => {
+  it("acto 3 usa power_pose_visual o core_isometric con phase='isometric_holds' y 3 ciclos", () => {
+    // Phase 7 SP-V-3: #23 P3 migrated a core_isometric dedicated.
     const a = p.ph[2].iExec[0];
-    expect(a.ui.primitive).toBe("power_pose_visual");
+    expect(["power_pose_visual", "core_isometric"]).toContain(a.ui.primitive);
     expect(a.ui.props.phase).toBe("isometric_holds");
     expect(a.ui.props.target_holds).toBe(3);
     expect(a.ui.props.hold_duration_ms).toBe(10000);
@@ -225,9 +236,10 @@ describe("#23 Power Pose Activation — migración Phase 5 SP4", () => {
     expect(a.type).toBe("motor_isometric");
   });
 
-  it("acto 4 usa hold_press_button con release_message='Próxima hora activa.'", () => {
+  it("acto 4 usa hold_press_button o posture_energy_commitment con release_message='Próxima hora activa.'", () => {
+    // Phase 7 SP-V-4: #23 P4 migrated a posture_energy_commitment dedicated.
     const a = p.ph[3].iExec[0];
-    expect(a.ui.primitive).toBe("hold_press_button");
+    expect(["hold_press_button", "posture_energy_commitment"]).toContain(a.ui.primitive);
     expect(a.ui.props.min_hold_ms).toBe(5000);
     expect(a.ui.props.release_message).toBe("Próxima hora activa.");
     expect(a.type).toBe("commitment_motor");

@@ -77,6 +77,30 @@ import NSDRPassiveBreathPrimitive from "./primitives/NSDRPassiveBreathPrimitive"
 import NSDRReturnPrimitive from "./primitives/NSDRReturnPrimitive";
 import CrisisSensoryAnchorPrimitive from "./primitives/CrisisSensoryAnchorPrimitive";
 import PresenceAnchorCommitmentPrimitive from "./primitives/PresenceAnchorCommitmentPrimitive";
+import VagalVocalizationPrimitive from "./primitives/VagalVocalizationPrimitive";
+import ApneaFrontalPressPrimitive from "./primitives/ApneaFrontalPressPrimitive";
+import PanicAnchorClosurePrimitive from "./primitives/PanicAnchorClosurePrimitive";
+import KineticReleasePrimitive from "./primitives/KineticReleasePrimitive";
+import IsometricReleasePrimitive from "./primitives/IsometricReleasePrimitive";
+import ReencuadreChoicePrimitive from "./primitives/ReencuadreChoicePrimitive";
+import MicroActionMomentumPrimitive from "./primitives/MicroActionMomentumPrimitive";
+import LoadIdentificationPrimitive from "./primitives/LoadIdentificationPrimitive";
+import ThresholdGatewayPrimitive from "./primitives/ThresholdGatewayPrimitive";
+import ThresholdCommitmentPrimitive from "./primitives/ThresholdCommitmentPrimitive";
+import HummingPreparationPrimitive from "./primitives/HummingPreparationPrimitive";
+import VagalHummingResonancePrimitive from "./primitives/VagalHummingResonancePrimitive";
+import ResidualVibrationPrimitive from "./primitives/ResidualVibrationPrimitive";
+import CalmCommitmentPrimitive from "./primitives/CalmCommitmentPrimitive";
+import PowerPostureAlignmentPrimitive from "./primitives/PowerPostureAlignmentPrimitive";
+import EnergizingBreathPrimitive from "./primitives/EnergizingBreathPrimitive";
+import CoreIsometricPrimitive from "./primitives/CoreIsometricPrimitive";
+import PostureEnergyCommitmentPrimitive from "./primitives/PostureEnergyCommitmentPrimitive";
+import PreambulatoryPrepPrimitive from "./primitives/PreambulatoryPrepPrimitive";
+import WalkingUnilateralPrimitive from "./primitives/WalkingUnilateralPrimitive";
+import StableClosingCommitmentPrimitive from "./primitives/StableClosingCommitmentPrimitive";
+import PulseLocationPrimitive from "./primitives/PulseLocationPrimitive";
+import HeartbeatCountPrimitive from "./primitives/HeartbeatCountPrimitive";
+import CoherentClosingCommitmentPrimitive from "./primitives/CoherentClosingCommitmentPrimitive";
 
 const FALLBACK = "text_emphasis_voice";
 
@@ -989,6 +1013,225 @@ export default function PrimitiveSwitcher({
           hapticEnabled={hapticOn}
           voiceEnabled={voiceOn}
           onSignal={onSignal}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "vagal_vocalization":
+      return (
+        <VagalVocalizationPrimitive
+          cycleCountTarget={props.target_vocalizations || props.cycleCountTarget || 3}
+          hapticEnabled={hapticOn}
+          onCycleComplete={(n) => onSignal({ tapsCompleted: n })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "apnea_frontal_press":
+      return (
+        <ApneaFrontalPressPrimitive
+          cycleCountTarget={props.cycleCountTarget || 3}
+          hapticEnabled={hapticOn}
+          onCycleComplete={(n) => onSignal({ tapsCompleted: n })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "panic_anchor_closure":
+      return (
+        <PanicAnchorClosurePrimitive
+          minHoldMs={props.min_hold_ms || props.minHoldMs || 3000}
+          releaseMessage={props.release_message || props.releaseMessage}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "kinetic_release":
+      return (
+        <KineticReleasePrimitive
+          durationMs={props.duration_ms || props.durationMs || 25000}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "isometric_release":
+      return (
+        <IsometricReleasePrimitive
+          holdDurationMs={props.hold_duration_ms || props.holdDurationMs || 10000}
+          releaseDurationMs={props.release_duration_ms || props.releaseDurationMs || 10000}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "reencuadre_choice":
+      return (
+        <ReencuadreChoicePrimitive
+          question={props.question}
+          chips={props.chips}
+          minThinkingMs={props.min_thinking_ms || props.minThinkingMs || 4000}
+          hapticEnabled={hapticOn}
+          onSelect={(c) => onSignal({ selectedChip: c.id })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "micro_action_momentum":
+      return (
+        <MicroActionMomentumPrimitive
+          minHoldMs={props.min_hold_ms || props.minHoldMs || 3000}
+          releaseMessage={props.release_message || props.releaseMessage}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "load_identification":
+      return (
+        <LoadIdentificationPrimitive
+          question={props.question}
+          chips={props.chips}
+          hapticEnabled={hapticOn}
+          onSelect={(c) => onSignal({ selectedChip: c.id })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "threshold_gateway":
+      return (
+        <ThresholdGatewayPrimitive
+          mode={props.phase || props.mode || "approach"}
+          durationMs={props.duration_ms || props.durationMs}
+          flashEnabled={props.flash_enabled !== false}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "threshold_commitment":
+      return (
+        <ThresholdCommitmentPrimitive
+          minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
+          releaseMessage={props.release_message || props.releaseMessage}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "humming_preparation":
+      return (
+        <HummingPreparationPrimitive
+          durationMs={props.duration_ms || props.durationMs || 30000}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "vagal_humming_resonance":
+      return (
+        <VagalHummingResonancePrimitive
+          targetHums={props.target_hums || props.targetHums || 4}
+          humDurationMs={props.hum_duration_ms || props.humDurationMs || 10000}
+          hapticEnabled={hapticOn}
+          onHumComplete={(n) => onSignal({ tapsCompleted: n })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "residual_vibration":
+      return (
+        <ResidualVibrationPrimitive
+          durationMs={props.duration_ms || props.durationMs || 35000}
+          text={props.text}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "calm_commitment":
+      return (
+        <CalmCommitmentPrimitive
+          minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
+          releaseMessage={props.release_message || props.releaseMessage}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "power_posture_alignment":
+      return (
+        <PowerPostureAlignmentPrimitive
+          durationMs={props.duration_ms || props.durationMs || 30000}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "energizing_breath":
+      return (
+        <EnergizingBreathPrimitive
+          targetCycles={props.target_cycles || props.targetCycles || 4}
+          hapticEnabled={hapticOn}
+          onCycleComplete={(n) => onSignal({ breathCyclesCompleted: n })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "core_isometric":
+      return (
+        <CoreIsometricPrimitive
+          targetHolds={props.target_holds || props.targetHolds || 3}
+          holdDurationMs={props.hold_duration_ms || props.holdDurationMs || 10000}
+          releaseDurationMs={props.release_duration_ms || props.releaseDurationMs || 5000}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "posture_energy_commitment":
+      return (
+        <PostureEnergyCommitmentPrimitive
+          minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
+          releaseMessage={props.release_message || props.releaseMessage}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "preambulatory_prep":
+      return (
+        <PreambulatoryPrepPrimitive
+          durationMs={props.duration_ms || props.durationMs || 30000}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "walking_unilateral":
+      return (
+        <WalkingUnilateralPrimitive
+          mode={props.pattern === "right_only" ? "right" : "left"}
+          targetSteps={props.target_steps || props.targetSteps || 8}
+          paceBpm={props.pace_bpm || props.paceBpm || 60}
+          hapticEnabled={hapticOn}
+          onStepTap={(n) => onSignal({ tapsCompleted: n })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "stable_closing_commitment":
+      return (
+        <StableClosingCommitmentPrimitive
+          minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
+          releaseMessage={props.release_message || props.releaseMessage}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "pulse_location":
+      return (
+        <PulseLocationPrimitive
+          durationMs={props.duration_ms || props.durationMs || 22000}
+          hapticEnabled={hapticOn}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "heartbeat_count":
+      return (
+        <HeartbeatCountPrimitive
+          intervalMs={props.interval_ms || props.intervalMs || 30000}
+          hapticEnabled={hapticOn}
+          onTap={(n) => onSignal({ tapsCompleted: n })}
+          onComplete={onLocalComplete}
+        />
+      );
+    case "coherent_closing_commitment":
+      return (
+        <CoherentClosingCommitmentPrimitive
+          minHoldMs={props.min_hold_ms || props.minHoldMs || 5000}
+          releaseMessage={props.release_message || props.releaseMessage}
+          hapticEnabled={hapticOn}
           onComplete={onLocalComplete}
         />
       );

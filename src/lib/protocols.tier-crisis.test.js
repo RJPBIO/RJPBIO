@@ -35,6 +35,37 @@ const VALID_PRIMITIVES = new Set([
   //  word-by-word "Estoy aquí. En este momento." + hold-press 3s +
   //  palmas conflict prevention 8ª vez consecutiva).
   "presence_anchor_commitment",
+  // Phase 7 SP-R-1 — primitive dedicated #19 Phase 1 "Exhalación
+  //  Vagal Silenciosa" (exhalación larga + lengua al paladar × 3 +
+  //  resonance orb + anillos emanando + cycle counter, SIN sonido).
+  "vagal_vocalization",
+  // Phase 7 SP-R-2 — primitive dedicated #19 Phase 2 "Apnea +
+  //  Frente" (in:3 / hold:5 frontal press / ex:6 × 3 + 3 satélites
+  //  trigeminales pulsando durante apnea + cycle counter).
+  "apnea_frontal_press",
+  // Phase 7 SP-R-3 — primitive dedicated #19 Phase 3 "Estás Aquí"
+  //  (mantra word-by-word "Estoy aquí. Estoy a salvo." + safety
+  //  halo 4 arcos cardinales + hold-press 3s + palmas conflict
+  //  prevention 9ª vez: mano libre al pecho, pulgar en botón).
+  "panic_anchor_closure",
+  // Phase 7 SP-S-1 — primitive dedicated #20 Phase 1 "Sacudida
+  //  Física" (energy core con jitter + bursting particles radiales
+  //  + 8 radial lines pulsing + countdown 25s; phone-conflict
+  //  resolution: sacude mano libre).
+  "kinetic_release",
+  // Phase 7 SP-S-2 — primitive dedicated #20 Phase 2 "Descarga
+  //  Isométrica" (tense 10s orb compresses + density rings →
+  //  release 10s burst particles + orb expands + step dots).
+  "isometric_release",
+  // Phase 7 SP-S-3 — primitive dedicated #20 Phase 3 "Re-encuadre"
+  //  (central focal point + 3 branching paths to chips verticales
+  //  + thinking window 4s + selected-path highlight).
+  "reencuadre_choice",
+  // Phase 7 SP-S-4 — primitive dedicated #20 Phase 4 "Acción Micro"
+  //  (pill-shape hold button + 5 momentum chevrons advancing +
+  //  5 MIN label mono + palmas conflict resolution 10ª vez:
+  //  mano libre al pecho, pulgar en botón).
+  "micro_action_momentum",
 ]);
 
 function flatActs(p) {
@@ -121,12 +152,15 @@ describe("Tier crisis migration — protocolos #18, #19, #20", () => {
       });
 
       it("último acto usa primitive hold_press_button o dedicated commitment (cierre crisis)", () => {
-        // Phase 7 SP-Q-5: #18 Phase 5 last acto migrated a presence_anchor_commitment
-        // dedicated. Otros crisis tier (#19, #20) siguen hold_press_button shared.
+        // Phase 7 SP-Q-5 / SP-R-3 / SP-S-4: #18 P5 → presence_anchor_commitment;
+        //   #19 P3 → panic_anchor_closure; #20 P4 → micro_action_momentum
+        //   dedicated. Otros crisis tier siguen hold_press_button shared.
         const lastPhase = proto.ph[proto.ph.length - 1];
         const lastAct = lastPhase.iExec[lastPhase.iExec.length - 1];
         const expectedMap = {
           18: "presence_anchor_commitment",
+          19: "panic_anchor_closure",
+          20: "micro_action_momentum",
         };
         const expected = expectedMap[id] || "hold_press_button";
         expect(lastAct.ui.primitive).toBe(expected);
@@ -182,29 +216,49 @@ describe("Tier crisis — primitivas crisis-específicas usadas", () => {
     expect(flatActs(p).some((a) => a.ui?.primitive === "facial_cold_prompt")).toBe(false);
   });
 
-  it("#19 Panic Interrupt usa vocal_with_haptic (vagal vocalization)", () => {
+  it("#19 Panic Interrupt usa vocal_with_haptic o vagal_vocalization (SP-R-1 wraps)", () => {
+    // Phase 7 SP-R-1: #19 Phase 1 migrated a vagal_vocalization dedicated.
     const p = P.find((x) => x.id === 19);
-    expect(flatActs(p).some((a) => a.ui?.primitive === "vocal_with_haptic")).toBe(true);
+    expect(flatActs(p).some((a) =>
+      a.ui?.primitive === "vocal_with_haptic"
+      || a.ui?.primitive === "vagal_vocalization"
+    )).toBe(true);
   });
 
-  it("#19 Panic Interrupt usa breath_orb (apnea voluntaria + presión trigeminal)", () => {
+  it("#19 Panic Interrupt usa breath_orb o apnea_frontal_press (apnea voluntaria + presión trigeminal)", () => {
+    // Phase 7 SP-R-2: Phase 2 migrated a apnea_frontal_press dedicated.
     const p = P.find((x) => x.id === 19);
-    expect(flatActs(p).some((a) => a.ui?.primitive === "breath_orb")).toBe(true);
+    expect(flatActs(p).some((a) =>
+      a.ui?.primitive === "breath_orb"
+      || a.ui?.primitive === "apnea_frontal_press"
+    )).toBe(true);
   });
 
-  it("#20 Block Break usa shake_hands_prompt", () => {
+  it("#20 Block Break usa shake_hands_prompt o kinetic_release (SP-S-1 wraps shared)", () => {
+    // Phase 7 SP-S-1: #20 Phase 1 migrated a kinetic_release dedicated.
     const p = P.find((x) => x.id === 20);
-    expect(flatActs(p).some((a) => a.ui?.primitive === "shake_hands_prompt")).toBe(true);
+    expect(flatActs(p).some((a) =>
+      a.ui?.primitive === "shake_hands_prompt"
+      || a.ui?.primitive === "kinetic_release"
+    )).toBe(true);
   });
 
-  it("#20 Block Break usa isometric_grip_prompt", () => {
+  it("#20 Block Break usa isometric_grip_prompt o isometric_release (SP-S-2 wraps shared)", () => {
+    // Phase 7 SP-S-2: #20 Phase 2 migrated a isometric_release dedicated.
     const p = P.find((x) => x.id === 20);
-    expect(flatActs(p).some((a) => a.ui?.primitive === "isometric_grip_prompt")).toBe(true);
+    expect(flatActs(p).some((a) =>
+      a.ui?.primitive === "isometric_grip_prompt"
+      || a.ui?.primitive === "isometric_release"
+    )).toBe(true);
   });
 
-  it("#20 Block Break usa chip_selector (re-encuadre)", () => {
+  it("#20 Block Break usa chip_selector o reencuadre_choice (SP-S-3 wraps shared)", () => {
+    // Phase 7 SP-S-3: #20 Phase 3 migrated a reencuadre_choice dedicated.
     const p = P.find((x) => x.id === 20);
-    expect(flatActs(p).some((a) => a.ui?.primitive === "chip_selector")).toBe(true);
+    expect(flatActs(p).some((a) =>
+      a.ui?.primitive === "chip_selector"
+      || a.ui?.primitive === "reencuadre_choice"
+    )).toBe(true);
   });
 });
 

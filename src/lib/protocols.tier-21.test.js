@@ -26,6 +26,16 @@ const VALID_PRIMITIVES = new Set([
   // Phase 5 SP2
   "doorway_visualizer", "vocal_resonance_visual", "power_pose_visual",
   "walking_pace_indicator", "pulse_match_visual",
+  // Phase 7 SP-T-1 — primitive dedicated #21 Phase 1 "Estado Actual"
+  //  (5 chips load identification con weight glyph + focal pulse).
+  "load_identification",
+  // Phase 7 SP-T-2/3 — primitive dedicated #21 Phases 2/3 (dual mode
+  //  approach/cross con doorway frame + perspective lines + flash WCAG).
+  "threshold_gateway",
+  // Phase 7 SP-T-4 — primitive dedicated #21 Phase 4 "Del Otro Lado"
+  //  (commitment con mantra "Lo que hago ahora es distinto." +
+  //  3 horizontal lanes + palmas 11ª resolution).
+  "threshold_commitment",
 ]);
 
 const PROTO_ID = 21;
@@ -88,9 +98,10 @@ describe("#21 Threshold Crossing — migración Phase 5 SP3", () => {
     expect(p.ph[p.ph.length - 1].e).toBe(p.d);
   });
 
-  it("acto 1 usa chip_selector con exactamente 5 chips + min_thinking_ms=5000", () => {
+  it("acto 1 usa chip_selector o load_identification con 5 chips + min_thinking_ms=5000", () => {
+    // Phase 7 SP-T-1: #21 Phase 1 migrated a load_identification dedicated.
     const act1 = p.ph[0].iExec[0];
-    expect(act1.ui.primitive).toBe("chip_selector");
+    expect(["chip_selector", "load_identification"]).toContain(act1.ui.primitive);
     expect(act1.ui.props.chips.length).toBe(5);
     expect(act1.ui.props.min_thinking_ms).toBe(5000);
     expect(act1.validate.kind).toBe("chip_selection");
@@ -104,9 +115,10 @@ describe("#21 Threshold Crossing — migración Phase 5 SP3", () => {
     ]);
   });
 
-  it("acto 2 usa doorway_visualizer phase='approach'", () => {
+  it("acto 2 usa doorway_visualizer o threshold_gateway phase='approach'", () => {
+    // Phase 7 SP-T-2: #21 Phase 2 migrated a threshold_gateway dedicated.
     const act2 = p.ph[1].iExec[0];
-    expect(act2.ui.primitive).toBe("doorway_visualizer");
+    expect(["doorway_visualizer", "threshold_gateway"]).toContain(act2.ui.primitive);
     expect(act2.ui.props.phase).toBe("approach");
     expect(act2.ui.props.duration_ms).toBe(40000);
     expect(act2.ui.props.flash_enabled).toBe(true);
@@ -121,16 +133,18 @@ describe("#21 Threshold Crossing — migración Phase 5 SP3", () => {
     expect(act2.validate.min_ms).toBe(24000);
   });
 
-  it("acto 3 usa doorway_visualizer phase='cross' con flash_enabled=true", () => {
+  it("acto 3 usa doorway_visualizer o threshold_gateway phase='cross' con flash_enabled=true", () => {
+    // Phase 7 SP-T-3: #21 Phase 3 migrated a threshold_gateway dedicated.
     const act3 = p.ph[2].iExec[0];
-    expect(act3.ui.primitive).toBe("doorway_visualizer");
+    expect(["doorway_visualizer", "threshold_gateway"]).toContain(act3.ui.primitive);
     expect(act3.ui.props.phase).toBe("cross");
     expect(act3.ui.props.flash_enabled).toBe(true);
   });
 
-  it("acto 4 usa hold_press_button con min_hold_ms=5000 y release_message='Distinto.'", () => {
+  it("acto 4 usa hold_press_button o threshold_commitment con min_hold_ms=5000", () => {
+    // Phase 7 SP-T-4: #21 Phase 4 migrated a threshold_commitment dedicated.
     const act4 = p.ph[3].iExec[0];
-    expect(act4.ui.primitive).toBe("hold_press_button");
+    expect(["hold_press_button", "threshold_commitment"]).toContain(act4.ui.primitive);
     expect(act4.ui.props.min_hold_ms).toBe(5000);
     expect(act4.ui.props.release_message).toBe("Distinto.");
     expect(act4.validate.kind).toBe("hold_press");

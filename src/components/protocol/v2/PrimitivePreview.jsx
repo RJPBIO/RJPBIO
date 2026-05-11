@@ -79,6 +79,30 @@ import NSDRPassiveBreathPrimitive from "./primitives/NSDRPassiveBreathPrimitive"
 import NSDRReturnPrimitive from "./primitives/NSDRReturnPrimitive";
 import CrisisSensoryAnchorPrimitive from "./primitives/CrisisSensoryAnchorPrimitive";
 import PresenceAnchorCommitmentPrimitive from "./primitives/PresenceAnchorCommitmentPrimitive";
+import VagalVocalizationPrimitive from "./primitives/VagalVocalizationPrimitive";
+import ApneaFrontalPressPrimitive from "./primitives/ApneaFrontalPressPrimitive";
+import PanicAnchorClosurePrimitive from "./primitives/PanicAnchorClosurePrimitive";
+import KineticReleasePrimitive from "./primitives/KineticReleasePrimitive";
+import IsometricReleasePrimitive from "./primitives/IsometricReleasePrimitive";
+import ReencuadreChoicePrimitive from "./primitives/ReencuadreChoicePrimitive";
+import MicroActionMomentumPrimitive from "./primitives/MicroActionMomentumPrimitive";
+import LoadIdentificationPrimitive from "./primitives/LoadIdentificationPrimitive";
+import ThresholdGatewayPrimitive from "./primitives/ThresholdGatewayPrimitive";
+import ThresholdCommitmentPrimitive from "./primitives/ThresholdCommitmentPrimitive";
+import HummingPreparationPrimitive from "./primitives/HummingPreparationPrimitive";
+import VagalHummingResonancePrimitive from "./primitives/VagalHummingResonancePrimitive";
+import ResidualVibrationPrimitive from "./primitives/ResidualVibrationPrimitive";
+import CalmCommitmentPrimitive from "./primitives/CalmCommitmentPrimitive";
+import PowerPostureAlignmentPrimitive from "./primitives/PowerPostureAlignmentPrimitive";
+import EnergizingBreathPrimitive from "./primitives/EnergizingBreathPrimitive";
+import CoreIsometricPrimitive from "./primitives/CoreIsometricPrimitive";
+import PostureEnergyCommitmentPrimitive from "./primitives/PostureEnergyCommitmentPrimitive";
+import PreambulatoryPrepPrimitive from "./primitives/PreambulatoryPrepPrimitive";
+import WalkingUnilateralPrimitive from "./primitives/WalkingUnilateralPrimitive";
+import StableClosingCommitmentPrimitive from "./primitives/StableClosingCommitmentPrimitive";
+import PulseLocationPrimitive from "./primitives/PulseLocationPrimitive";
+import HeartbeatCountPrimitive from "./primitives/HeartbeatCountPrimitive";
+import CoherentClosingCommitmentPrimitive from "./primitives/CoherentClosingCommitmentPrimitive";
 
 const PRIMITIVES = [
   { id: "BreathOrbExtended", render: (k) => <BreathOrbExtended key={k} cadence={{in:4,h1:0,ex:6,h2:0}} intent="calma" enabled cycleCountTarget={3} audioEnabled={false} hapticEnabled={false} /> },
@@ -221,6 +245,33 @@ const PRIMITIVES = [
   { id: "CrisisSensoryAnchor · #18 P3 tactile", render: (k) => <CrisisSensoryAnchorPrimitive key={k} mode="tactile" hapticEnabled={false} /> },
   // Phase 7 SP-Q-5 — primitive #18 Phase 5 presence anchor (rings + crosshair + mantra)
   { id: "PresenceAnchorCommitment · #18 P5", render: (k) => <PresenceAnchorCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={3000} release_message="Estás aquí · Ahora" hapticEnabled={false} /> },
+  // Phase 7 SP-R-1 — primitive #19 Phase 1 vagal vocalization (aaaaah resonance)
+  { id: "VagalVocalization · #19 P1", render: (k) => <VagalVocalizationPrimitive key={k} cycleCountTarget={3} hapticEnabled={false} /> },
+  { id: "ApneaFrontalPress · #19 P2", render: (k) => <ApneaFrontalPressPrimitive key={k} cycleCountTarget={3} hapticEnabled={false} /> },
+  { id: "PanicAnchorClosure · #19 P3", render: (k) => <PanicAnchorClosurePrimitive key={k} minHoldMs={3000} releaseMessage="Estás aquí. A salvo." hapticEnabled={false} /> },
+  { id: "KineticRelease · #20 P1", render: (k) => <KineticReleasePrimitive key={k} durationMs={25000} hapticEnabled={false} /> },
+  { id: "IsometricRelease · #20 P2", render: (k) => <IsometricReleasePrimitive key={k} holdDurationMs={10000} releaseDurationMs={10000} hapticEnabled={false} /> },
+  { id: "ReencuadreChoice · #20 P3", render: (k) => <ReencuadreChoicePrimitive key={k} hapticEnabled={false} /> },
+  { id: "MicroActionMomentum · #20 P4", render: (k) => <MicroActionMomentumPrimitive key={k} minHoldMs={3000} releaseMessage="5 minutos. Concreto." hapticEnabled={false} /> },
+  { id: "LoadIdentification · #21 P1", render: (k) => <LoadIdentificationPrimitive key={k} hapticEnabled={false} /> },
+  { id: "ThresholdGateway · #21 P2 approach", render: (k) => <ThresholdGatewayPrimitive key={k} mode="approach" durationMs={40000} flashEnabled hapticEnabled={false} /> },
+  { id: "ThresholdGateway · #21 P3 cross", render: (k) => <ThresholdGatewayPrimitive key={k} mode="cross" durationMs={18000} flashEnabled hapticEnabled={false} /> },
+  { id: "ThresholdCommitment · #21 P4", render: (k) => <ThresholdCommitmentPrimitive key={k} minHoldMs={5000} releaseMessage="Distinto." hapticEnabled={false} /> },
+  { id: "HummingPreparation · #22 P1", render: (k) => <HummingPreparationPrimitive key={k} durationMs={30000} hapticEnabled={false} /> },
+  { id: "VagalHummingResonance · #22 P2", render: (k) => <VagalHummingResonancePrimitive key={k} targetHums={4} humDurationMs={10000} hapticEnabled={false} /> },
+  { id: "ResidualVibration · #22 P3", render: (k) => <ResidualVibrationPrimitive key={k} durationMs={35000} hapticEnabled={false} /> },
+  { id: "CalmCommitment · #22 P4", render: (k) => <CalmCommitmentPrimitive key={k} minHoldMs={5000} releaseMessage="Calma. Sigo." hapticEnabled={false} /> },
+  { id: "PowerPostureAlignment · #23 P1", render: (k) => <PowerPostureAlignmentPrimitive key={k} durationMs={30000} hapticEnabled={false} /> },
+  { id: "EnergizingBreath · #23 P2", render: (k) => <EnergizingBreathPrimitive key={k} targetCycles={4} hapticEnabled={false} /> },
+  { id: "CoreIsometric · #23 P3", render: (k) => <CoreIsometricPrimitive key={k} targetHolds={3} holdDurationMs={10000} releaseDurationMs={5000} hapticEnabled={false} /> },
+  { id: "PostureEnergyCommitment · #23 P4", render: (k) => <PostureEnergyCommitmentPrimitive key={k} minHoldMs={5000} releaseMessage="Próxima hora activa." hapticEnabled={false} /> },
+  { id: "PreambulatoryPrep · #24 P1", render: (k) => <PreambulatoryPrepPrimitive key={k} durationMs={30000} hapticEnabled={false} /> },
+  { id: "WalkingUnilateral · #24 P2 left", render: (k) => <WalkingUnilateralPrimitive key={k} mode="left" targetSteps={8} paceBpm={60} hapticEnabled={false} /> },
+  { id: "WalkingUnilateral · #24 P3 right", render: (k) => <WalkingUnilateralPrimitive key={k} mode="right" targetSteps={8} paceBpm={60} hapticEnabled={false} /> },
+  { id: "StableClosingCommitment · #24 P4", render: (k) => <StableClosingCommitmentPrimitive key={k} minHoldMs={5000} releaseMessage="Aquí. Reset." hapticEnabled={false} /> },
+  { id: "PulseLocation · #25 P1", render: (k) => <PulseLocationPrimitive key={k} durationMs={22000} hapticEnabled={false} /> },
+  { id: "HeartbeatCount · #25 P2", render: (k) => <HeartbeatCountPrimitive key={k} intervalMs={30000} hapticEnabled={false} /> },
+  { id: "CoherentClosingCommitment · #25 P4", render: (k) => <CoherentClosingCommitmentPrimitive key={k} minHoldMs={5000} releaseMessage="Coherencia. Sigo." hapticEnabled={false} /> },
 ];
 
 export default function PrimitivePreview() {
