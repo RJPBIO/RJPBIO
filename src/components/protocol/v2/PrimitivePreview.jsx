@@ -49,6 +49,36 @@ import FocusCommitmentPrimitive from "./primitives/FocusCommitmentPrimitive";
 import GroundingBodyScanPrimitive from "./primitives/GroundingBodyScanPrimitive";
 import DeepBreathSettlePrimitive from "./primitives/DeepBreathSettlePrimitive";
 import StableCloseCommitmentPrimitive from "./primitives/StableCloseCommitmentPrimitive";
+import EmotionalDischargePercussionPrimitive from "./primitives/EmotionalDischargePercussionPrimitive";
+import IsometricDischargePrimitive from "./primitives/IsometricDischargePrimitive";
+import CognitiveResetCommitmentPrimitive from "./primitives/CognitiveResetCommitmentPrimitive";
+import OcularResetMetronomePrimitive from "./primitives/OcularResetMetronomePrimitive";
+import FocalAnchorMantraPrimitive from "./primitives/FocalAnchorMantraPrimitive";
+import LockInCommitmentPrimitive from "./primitives/LockInCommitmentPrimitive";
+import VagalBurstExhalePrimitive from "./primitives/VagalBurstExhalePrimitive";
+import SteelCoreActivationPrimitive from "./primitives/SteelCoreActivationPrimitive";
+import SteelCoreColumnCommitmentPrimitive from "./primitives/SteelCoreColumnCommitmentPrimitive";
+import RespiratoryPulseTrainPrimitive from "./primitives/RespiratoryPulseTrainPrimitive";
+import SensoryAwakePrimitive from "./primitives/SensoryAwakePrimitive";
+import DirectionalActivationCommitmentPrimitive from "./primitives/DirectionalActivationCommitmentPrimitive";
+import DiaphragmaticAnchorPrimitive from "./primitives/DiaphragmaticAnchorPrimitive";
+import RelaxationDescentPrimitive from "./primitives/RelaxationDescentPrimitive";
+import GroundingAnchorCommitmentPrimitive from "./primitives/GroundingAnchorCommitmentPrimitive";
+import VerticalBreathAscensionPrimitive from "./primitives/VerticalBreathAscensionPrimitive";
+import PosturalAlignmentPrimitive from "./primitives/PosturalAlignmentPrimitive";
+import CognitiveOpeningPrimitive from "./primitives/CognitiveOpeningPrimitive";
+import NeuralAscensionCommitmentPrimitive from "./primitives/NeuralAscensionCommitmentPrimitive";
+import InteroceptionSettlePrimitive from "./primitives/InteroceptionSettlePrimitive";
+import CalmaExpressClosurePrimitive from "./primitives/CalmaExpressClosurePrimitive";
+import VagalResonanceCalibrationPrimitive from "./primitives/VagalResonanceCalibrationPrimitive";
+import VagalResonanceSustainmentPrimitive from "./primitives/VagalResonanceSustainmentPrimitive";
+import VagalResonanceClosingPrimitive from "./primitives/VagalResonanceClosingPrimitive";
+import NSDRConfigurationPrimitive from "./primitives/NSDRConfigurationPrimitive";
+import NSDRBodyScanPrimitive from "./primitives/NSDRBodyScanPrimitive";
+import NSDRPassiveBreathPrimitive from "./primitives/NSDRPassiveBreathPrimitive";
+import NSDRReturnPrimitive from "./primitives/NSDRReturnPrimitive";
+import CrisisSensoryAnchorPrimitive from "./primitives/CrisisSensoryAnchorPrimitive";
+import PresenceAnchorCommitmentPrimitive from "./primitives/PresenceAnchorCommitmentPrimitive";
 
 const PRIMITIVES = [
   { id: "BreathOrbExtended", render: (k) => <BreathOrbExtended key={k} cadence={{in:4,h1:0,ex:6,h2:0}} intent="calma" enabled cycleCountTarget={3} audioEnabled={false} hapticEnabled={false} /> },
@@ -123,6 +153,74 @@ const PRIMITIVES = [
   { id: "DeepBreathSettle · subAct 1 (silence)", render: (k) => <DeepBreathSettlePrimitive key={k} subActIdx={1} min_duration_ms={8000} hapticEnabled={false} /> },
   // Phase 7 SP-G-3 — primitive #6 Phase 3 stable close commitment.
   { id: "StableCloseCommitment · #6 Phase 3", render: (k) => <StableCloseCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={6000} release_message="Aquí. Firme." hapticEnabled={false} /> },
+  // Phase 7 SP-H-1 — primitive #7 Phase 1 percusión + breath compound.
+  { id: "EmotionalDischargePercussion · #7 Phase 1", render: (k) => <EmotionalDischargePercussionPrimitive key={k} bpm={150} duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-H-2 — primitive #7 Phase 2 isometric grip discharge.
+  { id: "IsometricDischarge · #7 Phase 2", render: (k) => <IsometricDischargePrimitive key={k} target_holds={3} hold_duration_ms={10000} release_duration_ms={5000} hapticEnabled={false} /> },
+  // Phase 7 SP-H-3 — primitive #7 Phase 3 cognitive reset commitment.
+  { id: "CognitiveResetCommitment · #7 Phase 3", render: (k) => <CognitiveResetCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={6000} release_message="Algo cambia ahora." hapticEnabled={false} /> },
+  // Phase 7 SP-I-1 — primitive #8 Phase 1 ocular metronome 0.5Hz oculomotor.
+  { id: "OcularResetMetronome · #8 Phase 1", render: (k) => <OcularResetMetronomePrimitive key={k} frequency_hz={0.5} total_cycles={15} hapticEnabled={false} /> },
+  // Phase 7 SP-I-2 — primitive #8 Phase 2 dual-mode (fixation + mantra)
+  { id: "FocalAnchorMantra · #8 Phase 2 fixation", render: (k) => <FocalAnchorMantraPrimitive key={k} mode="fixation" duration_ms={30000} hapticEnabled={false} /> },
+  { id: "FocalAnchorMantra · #8 Phase 2 mantra", render: (k) => <FocalAnchorMantraPrimitive key={k} mode="mantra" mantra="Ahora." duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-I-3 — primitive #8 Phase 3 Lock-in (60-min badge + segmented arcs + hold-press 6s)
+  { id: "LockInCommitment · #8 Phase 3", render: (k) => <LockInCommitmentPrimitive key={k} label="BLOQUEAR" min_hold_ms={3000} release_message="Bloqueado · 60 min" hapticEnabled={false} /> },
+  // Phase 7 SP-J-1 — primitive #9 Phase 1 Exhale Explosivo (core burst + sound bars + cadence 4-0-6-0)
+  { id: "VagalBurstExhale · #9 Phase 1", render: (k) => <VagalBurstExhalePrimitive key={k} cycleCountTarget={3} cadence={{in:4,h1:0,ex:6,h2:0}} hapticEnabled={false} /> },
+  // Phase 7 SP-J-2 — primitive #9 Phase 2 dual-mode (activation + lateral_breath)
+  { id: "SteelCoreActivation · #9 P2 activation", render: (k) => <SteelCoreActivationPrimitive key={k} mode="activation" duration_ms={25000} hapticEnabled={false} /> },
+  { id: "SteelCoreActivation · #9 P2 lateral", render: (k) => <SteelCoreActivationPrimitive key={k} mode="lateral_breath" duration_ms={20000} hapticEnabled={false} /> },
+  // Phase 7 SP-J-3 — primitive #9 Phase 3 columna commitment (body silhouette + mantra word-by-word)
+  { id: "SteelCoreColumnCommitment · #9 P3", render: (k) => <SteelCoreColumnCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={3500} release_message="Eje. Vertical. Estable." hapticEnabled={false} /> },
+  // Phase 7 SP-K-1 — primitive #10 Phase 1 Pulso Respiratorio (4 pulsos staccato exhale)
+  { id: "RespiratoryPulseTrain · #10 P1", render: (k) => <RespiratoryPulseTrainPrimitive key={k} cycleCountTarget={3} cadence={{in:1,h1:0,ex:2,h2:0}} hapticEnabled={false} /> },
+  // Phase 7 SP-K-2 — primitive #10 Phase 2 dual-mode (body_scan 6-zone + attention_global)
+  { id: "SensoryAwake · #10 P2 body_scan", render: (k) => <SensoryAwakePrimitive key={k} mode="body_scan" duration_ms={30000} hapticEnabled={false} /> },
+  { id: "SensoryAwake · #10 P2 global", render: (k) => <SensoryAwakePrimitive key={k} mode="attention_global" duration_ms={10000} hapticEnabled={false} /> },
+  // Phase 7 SP-K-3 — primitive #10 Phase 3 directional activation (body + arrow forward + comets)
+  { id: "DirectionalActivationCommitment · #10 P3", render: (k) => <DirectionalActivationCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={3500} release_message="Cuerpo activo · Próxima acción" hapticEnabled={false} /> },
+  // Phase 7 SP-L-1 — primitive #11 Phase 1 anclaje diafragmático (mano abdomen + descent)
+  { id: "DiaphragmaticAnchor · #11 P1", render: (k) => <DiaphragmaticAnchorPrimitive key={k} cycleCountTarget={2} cadence={{in:4,h1:0,ex:8,h2:0}} hapticEnabled={false} /> },
+  // Phase 7 SP-L-2 — primitive #11 Phase 2 dual-mode (body_scan_descent + descent_hold)
+  { id: "RelaxationDescent · #11 P2 scan", render: (k) => <RelaxationDescentPrimitive key={k} mode="body_scan_descent" duration_ms={49000} hapticEnabled={false} /> },
+  { id: "RelaxationDescent · #11 P2 hold", render: (k) => <RelaxationDescentPrimitive key={k} mode="descent_hold" duration_ms={10000} hapticEnabled={false} /> },
+  // Phase 7 SP-L-3 — primitive #11 Phase 3 grounding anchor (roots + horizon)
+  { id: "GroundingAnchorCommitment · #11 P3", render: (k) => <GroundingAnchorCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={3500} release_message="Aquí. Anclado." hapticEnabled={false} /> },
+  // Phase 7 SP-M-1 — primitive #12 Phase 1 vertical breath (beam ascending/descending)
+  { id: "VerticalBreathAscension · #12 P1", render: (k) => <VerticalBreathAscensionPrimitive key={k} cycleCountTarget={2} cadence={{in:4,h1:2,ex:6,h2:0}} hapticEnabled={false} /> },
+  // Phase 7 SP-M-2 — primitive #12 Phase 2 alignment 5 zones (feet→head + axis builds)
+  { id: "PosturalAlignment · #12 P2", render: (k) => <PosturalAlignmentPrimitive key={k} duration_ms={35000} hapticEnabled={false} /> },
+  // Phase 7 SP-M-3 — primitive #12 Phase 3 cognitive opening (focal + thought waves + 3-stage)
+  { id: "CognitiveOpening · #12 P3", render: (k) => <CognitiveOpeningPrimitive key={k} duration_ms={25000} hapticEnabled={false} /> },
+  // Phase 7 SP-M-4 — primitive #12 Phase 4 commitment (3 checkmarks + ascension beam)
+  { id: "NeuralAscensionCommitment · #12 P4", render: (k) => <NeuralAscensionCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={3500} release_message="Esta es la decisión." hapticEnabled={false} /> },
+  // Phase 7 SP-N-1 — primitive #15 Phase 2 interoception settle (3-stage inquiry)
+  { id: "InteroceptionSettle · #15 P2", render: (k) => <InteroceptionSettlePrimitive key={k} duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-N-2 — primitive #15 Phase 3 calma express (2-word mantra + calm waves)
+  { id: "CalmaExpressClosure · #15 P3", render: (k) => <CalmaExpressClosurePrimitive key={k} label="MANTÉN" min_hold_ms={3500} release_message="Calmo. Sigo." hapticEnabled={false} /> },
+  // Phase 7 SP-O-1 — primitive #16 Phase 1 vagal resonance calibration (5.5 rpm + coherence wave)
+  { id: "VagalResonanceCalibration · #16 P1", render: (k) => <VagalResonanceCalibrationPrimitive key={k} cycleCountTarget={2} cadence={{in:5.5,h1:0,ex:5.5,h2:0}} hapticEnabled={false} /> },
+  // Phase 7 SP-O-2 — primitive #16 Phase 2 Sostenimiento (4 bloques × 10 cycles each)
+  { id: "VagalResonanceSustainment · #16 P2 b1", render: (k) => <VagalResonanceSustainmentPrimitive key={k} subActIdx={0} cycleCountTarget={3} cadence={{in:5.5,h1:0,ex:5.5,h2:0}} hapticEnabled={false} /> },
+  { id: "VagalResonanceSustainment · #16 P2 b3", render: (k) => <VagalResonanceSustainmentPrimitive key={k} subActIdx={2} cycleCountTarget={3} cadence={{in:5.5,h1:0,ex:5.5,h2:0}} hapticEnabled={false} /> },
+  // Phase 7 SP-O-3 — primitive #16 Phase 3 closing reflection (point + progress ring)
+  { id: "VagalResonanceClosing · #16 P3", render: (k) => <VagalResonanceClosingPrimitive key={k} duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-P-1 — primitive #17 Phase 1 NSDR config (sleep aesthetic)
+  { id: "NSDRConfiguration · #17 P1", render: (k) => <NSDRConfigurationPrimitive key={k} duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-P-2 — primitive #17 Phase 2 body scan (4 zones × 75s)
+  { id: "NSDRBodyScan · #17 P2 z1", render: (k) => <NSDRBodyScanPrimitive key={k} subActIdx={0} duration_ms={15000} hapticEnabled={false} /> },
+  { id: "NSDRBodyScan · #17 P2 z3", render: (k) => <NSDRBodyScanPrimitive key={k} subActIdx={2} duration_ms={15000} hapticEnabled={false} /> },
+  // Phase 7 SP-P-3 — primitive #17 Phase 3 passive breath (deepest state)
+  { id: "NSDRPassiveBreath · #17 P3", render: (k) => <NSDRPassiveBreathPrimitive key={k} duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-P-4 — primitive #17 Phase 4 return gradual (progressive brightness)
+  { id: "NSDRReturn · #17 P4", render: (k) => <NSDRReturnPrimitive key={k} duration_ms={30000} hapticEnabled={false} /> },
+  // Phase 7 SP-Q-1 — primitive #18 crisis sensory anchor (visual/auditory/tactile)
+  { id: "CrisisSensoryAnchor · #18 P1 visual", render: (k) => <CrisisSensoryAnchorPrimitive key={k} mode="visual" hapticEnabled={false} /> },
+  { id: "CrisisSensoryAnchor · #18 P2 auditory", render: (k) => <CrisisSensoryAnchorPrimitive key={k} mode="auditory" hapticEnabled={false} /> },
+  { id: "CrisisSensoryAnchor · #18 P3 tactile", render: (k) => <CrisisSensoryAnchorPrimitive key={k} mode="tactile" hapticEnabled={false} /> },
+  // Phase 7 SP-Q-5 — primitive #18 Phase 5 presence anchor (rings + crosshair + mantra)
+  { id: "PresenceAnchorCommitment · #18 P5", render: (k) => <PresenceAnchorCommitmentPrimitive key={k} label="MANTÉN" min_hold_ms={3000} release_message="Estás aquí · Ahora" hapticEnabled={false} /> },
 ];
 
 export default function PrimitivePreview() {

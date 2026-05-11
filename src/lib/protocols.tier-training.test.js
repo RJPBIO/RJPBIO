@@ -25,6 +25,40 @@ const VALID_PRIMITIVES = new Set([
   "object_anchor_prompt", "vocal_with_haptic", "transition_dots",
   // Phase 7 F1 Flagship #15 — primitive dedicated para Suspiro Fisiológico.
   "physiological_sigh_orb",
+  // Phase 7 SP-N-1 — primitive dedicated #15 Phase 2 "Sostén"
+  // (interocepción post-suspiro + 3-stage inquiry attention→change→settle).
+  "interoception_settle",
+  // Phase 7 SP-N-2 — primitive dedicated #15 Phase 3 "Cierre Express"
+  // (body silhouette + 2-word mantra "Calmo. Sigo." emerging + 2 calm
+  //  waves emanating + hold-press 5s + palmas conflict prevention 7ª).
+  "calma_express_closure",
+  // Phase 7 SP-O-1 — primitive dedicated #16 Phase 1 "Calibración"
+  // (single canonical orb 220px + countdown 56px centered + cycle counter).
+  "vagal_resonance_calibration",
+  // Phase 7 SP-O-2 — primitive dedicated #16 Phase 2 "Sostenimiento"
+  // (4 sub-actos × 120s; block message arriba + same orb + cycle counter
+  //  per bloque + 4 block indicator dots progressive).
+  "vagal_resonance_sustainment",
+  // Phase 7 SP-O-3 — primitive dedicated #16 Phase 3 "Cierre Reflexivo"
+  // (60s closing reflection: central pulsing point + outer 60s progress
+  //  ring + 3-stage settling messages natural→savor→settled).
+  "vagal_resonance_closing",
+  // Phase 7 SP-P-1 — primitive dedicated #17 Phase 1 "Configuración"
+  // (NSDR sleep/twilight aesthetic: ambient point pulse + 3-stage
+  //  postura→respira→cerrar ojos + voice cues TTS auto-on).
+  "nsdr_configuration",
+  // Phase 7 SP-P-2 — primitive dedicated #17 Phase 2 "Body Scan
+  //  Descendente" (4 sub-actos × 75s; sleep-mode minimal con zone
+  //  primary + ambient pulse + 4 zone progression dots + voice-led).
+  "nsdr_body_scan",
+  // Phase 7 SP-P-3 — primitive dedicated #17 Phase 3 "Respiración
+  //  Pasiva" (150s deepest state, ultra-minimal: 2-stage observa→
+  //  cuenta + smaller ambient point + NO countdown chip + voice-led).
+  "nsdr_passive_breath",
+  // Phase 7 SP-P-4 — primitive dedicated #17 Phase 4 "Retorno
+  //  Gradual" (90s last NSDR phase: 3-stage atención→mueve→ojos +
+  //  progressive brightness sleep→awake + countdown only last stage).
+  "nsdr_return",
 ]);
 
 function flatActs(p) {

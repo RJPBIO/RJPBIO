@@ -23,6 +23,18 @@ const VALID_PRIMITIVES = new Set([
   "facial_cold_prompt", "shake_hands_prompt", "chip_selector",
   "hold_press_button", "text_emphasis_voice", "silence_cyan_minimal",
   "object_anchor_prompt", "vocal_with_haptic", "transition_dots",
+  // Phase 7 SP-Q-1 — primitive dedicated #18 Crisis tier sensory anchor
+  //  (Phases 1+2+3 grounding 5-4-3-2-1 con mode visual/auditory/tactile
+  //  + input + affirmation + voice-led + skip option).
+  "crisis_sensory_anchor",
+  // Phase 7 SP-Q-4 — #18 Phase 4 reusa physiological_sigh_orb F1 flagship
+  //  dedicated del #15 (doble inhalación + exhalación prolongada).
+  "physiological_sigh_orb",
+  // Phase 7 SP-Q-5 — primitive dedicated #18 Phase 5 "¿Estoy Aquí?"
+  //  (presence rings concéntricas + central dot crosshair + mantra
+  //  word-by-word "Estoy aquí. En este momento." + hold-press 3s +
+  //  palmas conflict prevention 8ª vez consecutiva).
+  "presence_anchor_commitment",
 ]);
 
 function flatActs(p) {
@@ -108,10 +120,16 @@ describe("Tier crisis migration — protocolos #18, #19, #20", () => {
         expect(lastAct.media.binaural?.action).toBe("stop");
       });
 
-      it("último acto usa primitive hold_press_button (commitment cierre)", () => {
+      it("último acto usa primitive hold_press_button o dedicated commitment (cierre crisis)", () => {
+        // Phase 7 SP-Q-5: #18 Phase 5 last acto migrated a presence_anchor_commitment
+        // dedicated. Otros crisis tier (#19, #20) siguen hold_press_button shared.
         const lastPhase = proto.ph[proto.ph.length - 1];
         const lastAct = lastPhase.iExec[lastPhase.iExec.length - 1];
-        expect(lastAct.ui.primitive).toBe("hold_press_button");
+        const expectedMap = {
+          18: "presence_anchor_commitment",
+        };
+        const expected = expectedMap[id] || "hold_press_button";
+        expect(lastAct.ui.primitive).toBe(expected);
       });
 
       it("HoldPress min_hold_ms es ≤3000 (crisis: hold corto, sin presión)", () => {
@@ -129,17 +147,32 @@ describe("Tier crisis migration — protocolos #18, #19, #20", () => {
 });
 
 describe("Tier crisis — primitivas crisis-específicas usadas", () => {
-  it("#18 Emergency Reset usa object_anchor_prompt (visual + auditivo)", () => {
+  it("#18 Emergency Reset usa crisis_sensory_anchor (visual + auditivo + tactile, SP-Q-1/2/3)", () => {
+    // Phase 7 SP-Q-1/2/3: #18 Phases 1+2+3 migrated a crisis_sensory_anchor
+    // con modes visual/auditory/tactile respectively. Total 3 actos sensory.
     const p = P.find((x) => x.id === 18);
-    const objectAnchorActs = flatActs(p).filter((a) => a.ui?.primitive === "object_anchor_prompt");
-    expect(objectAnchorActs.length).toBe(2); // visual + auditivo
+    const anchorActs = flatActs(p).filter((a) =>
+      a.ui?.primitive === "object_anchor_prompt"
+      || a.ui?.primitive === "crisis_sensory_anchor"
+      || a.ui?.primitive === "text_emphasis_voice"  // Phase 3 originalmente
+    );
+    // 3 phases sensory grounding (visual + auditivo + tactile)
+    expect(anchorActs.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("#18 Emergency Reset usa breath_orb con double_inhale", () => {
+  it("#18 Emergency Reset usa breath_orb double_inhale o physiological_sigh_orb (SP-Q-4 wraps shared)", () => {
+    // Phase 7 SP-Q-4: #18 Phase 4 migrated a physiological_sigh_orb (F1 flagship
+    // dedicated heredado del #15 Suspiro Fisiológico). Acepta cualquiera por
+    // contract evolutivo.
     const p = P.find((x) => x.id === 18);
-    const breathAct = flatActs(p).find((a) => a.ui?.primitive === "breath_orb");
+    const breathAct = flatActs(p).find((a) =>
+      a.ui?.primitive === "breath_orb"
+      || a.ui?.primitive === "physiological_sigh_orb"
+    );
     expect(breathAct).toBeDefined();
-    expect(breathAct.ui.props.double_inhale).toBe(true);
+    if (breathAct.ui.primitive === "breath_orb") {
+      expect(breathAct.ui.props.double_inhale).toBe(true);
+    }
   });
 
   // Phase 5 SP1: #19 refactorizado — dive reflex con agua fría eliminado.

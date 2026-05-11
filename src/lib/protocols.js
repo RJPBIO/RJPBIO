@@ -857,7 +857,7 @@ export const P = [
           mechanism:"Percusión esternal rítmica funciona como anclaje atencional somático; exhalación prolongada activa parasimpático",
           duration:{min_ms:25000,target_ms:30000,max_ms:36000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"chest_percussion_prompt",props:{bpm:150,duration_ms:30000,haptic_enabled:true}},
+          ui:{primitive:"emotional_discharge_percussion",props:{bpm:150,duration_ms:30000}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -881,7 +881,7 @@ export const P = [
           mechanism:"Contracción isométrica al 10% activa propioceptores sin gasto energético (Levine, Somatic Experiencing 2010)",
           duration:{min_ms:40000,target_ms:45000,max_ms:52000},
           validate:{kind:"min_duration",min_ms:40000},
-          ui:{primitive:"isometric_grip_prompt",props:{target_holds:3,hold_duration_ms:10000,release_duration_ms:5000}},
+          ui:{primitive:"isometric_discharge",props:{target_holds:3,hold_duration_ms:10000,release_duration_ms:5000}},
           media:{
             breath_ticks:{enabled:false},
             binaural:{action:"continue"}
@@ -903,7 +903,7 @@ export const P = [
           mechanism:"Reset cognitivo + commitment motor cierra el ciclo de cambio (Bryan, Adams, Monin 2013)",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Algo cambia ahora."}},
+          ui:{primitive:"cognitive_reset_commitment",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Algo cambia ahora."}},
           media:{
             voice:{enabled_default:false},
             binaural:{action:"stop"},
@@ -911,7 +911,7 @@ export const P = [
           }
         }
       ],
-      sc:"Commitment motor + reset cognitivo (Bryan, Adams, Monin 2013)",
+      sc:"Commitment motor + reset cognitivo identification single-task different (Bryan, Adams, Monin 2013)",
       ic:"body",br:null
     }
   ]},
@@ -933,7 +933,7 @@ export const P = [
           mechanism:"Movimientos oculares horizontales rápidos producen reset atencional vía cambio de fijación visual (atentional capture)",
           duration:{min_ms:25000,target_ms:30000,max_ms:35000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"ocular_horizontal_metronome",props:{frequency_hz:0.5,total_cycles:15}},
+          ui:{primitive:"ocular_reset_metronome",props:{frequency_hz:0.5,total_cycles:15}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -957,7 +957,7 @@ export const P = [
           mechanism:"Fijación visual sostenida activa corteza prefrontal dorsolateral (atención top-down)",
           duration:{min_ms:25000,target_ms:30000,max_ms:36000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"visual_panoramic_prompt",props:{duration_ms:30000}},
+          ui:{primitive:"focal_anchor_mantra",props:{mode:"fixation",duration_ms:30000}},
           media:{
             breath_ticks:{enabled:false},
             binaural:{action:"continue"}
@@ -970,7 +970,7 @@ export const P = [
           mechanism:"Mantra repetitivo elimina multitarea neural + sostiene atención focal",
           duration:{min_ms:25000,target_ms:30000,max_ms:35000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"Ahora.",subtext:"Una vez por exhalación."}},
+          ui:{primitive:"focal_anchor_mantra",props:{mode:"mantra",mantra:"Ahora.",duration_ms:30000}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true}
           }
@@ -981,17 +981,17 @@ export const P = [
     },
     {
       l:"Lock-in",r:"90–120s",s:90,e:120,
-      k:"Tu única tarea de la próxima hora. Mantén.",
-      i:"Mantén las palmas presionadas mientras visualizas tu única tarea de la próxima hora.",
+      k:"Tu única tarea de la próxima hora. Bloquéala.",
+      i:"Visualiza tu única tarea de la próxima hora. Mantén el botón presionado para bloquearla.",
       iExec:[
         {
           from:0,to:30,
-          text:"Mantén las palmas presionadas. Tu única tarea de la próxima hora.",
+          text:"Visualiza esa única tarea. Mantén presionado para bloquearla.",
           type:"commitment_motor",
           mechanism:"Commitment motor + visual focus consolida intent de single-task",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Una tarea. Una hora."}},
+          ui:{primitive:"lock_in_commitment",props:{label:"BLOQUEAR",min_hold_ms:6000,release_message:"Bloqueado · 60 min"}},
           media:{
             binaural:{action:"stop"},
             cue:{type:"ok",fire_at:"end"}
@@ -1011,16 +1011,16 @@ export const P = [
     {
       l:"Exhale Explosivo",r:"0–30s",s:0,e:30,
       k:"Inhala 4. Exhala fuerte 6. El cuerpo se expulsa.",
-      i:"Inhala 4 segundos por nariz. Exhala 6 segundos por boca con sonido fuerte. Tres ciclos.",
+      i:"Inhala 4 segundos por nariz. Exhala 6 segundos por boca con fuerza. Tres ciclos.",
       iExec:[
         {
           from:0,to:30,
-          text:"Inhala 4 nariz. Exhala 6 boca con sonido fuerte. Tres ciclos.",
+          text:"Inhala 4 nariz. Exhala 6 boca con fuerza. Tres ciclos.",
           type:"vagal_breath_extended",
           mechanism:"Exhale explosivo activa cambio de presión torácica que estimula barorreceptores (mecanismo vagal real)",
           duration:{min_ms:25000,target_ms:30000,max_ms:36000},
           validate:{kind:"breath_cycles",min_cycles:3,cycle_min_ms:8000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:4,h1:0,ex:6,h2:0}}},
+          ui:{primitive:"vagal_burst_exhale",props:{cadence:{in:4,h1:0,ex:6,h2:0},cycleCountTarget:3}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -1044,7 +1044,7 @@ export const P = [
           mechanism:"Activación isométrica transverso abdominal mejora estabilidad postural vía propiocepción central",
           duration:{min_ms:20000,target_ms:25000,max_ms:30000},
           validate:{kind:"min_duration",min_ms:20000},
-          ui:{primitive:"posture_visual",props:{points:["feet","core","spine","shoulders","head"],transition_ms:5000}},
+          ui:{primitive:"steel_core_activation",props:{mode:"activation",duration_ms:25000}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true},
             binaural:{action:"continue"}
@@ -1057,7 +1057,7 @@ export const P = [
           mechanism:"Respiración lateral con core activado consolida estabilidad postural",
           duration:{min_ms:18000,target_ms:20000,max_ms:25000},
           validate:{kind:"min_duration",min_ms:18000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Eje. Estable."}},
+          ui:{primitive:"steel_core_activation",props:{mode:"lateral_breath",duration_ms:20000}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true}
           }
@@ -1069,16 +1069,16 @@ export const P = [
     {
       l:"Cierre con Estructura",r:"75–120s",s:75,e:120,
       k:"Eres una columna vertical estable. Sigue.",
-      i:"Mantén la postura mientras presionas las palmas: 'Soy una columna vertical estable.'",
+      i:"Mantén el botón. Repite mentalmente: 'Soy una columna vertical estable.'",
       iExec:[
         {
           from:0,to:45,
-          text:"Mantén postura y palmas presionadas. 'Soy una columna vertical estable.'",
+          text:"Mantén el botón. Repite mentalmente: 'Soy una columna vertical estable.'",
           type:"commitment_motor",
           mechanism:"Commitment motor + verbalización ancla estructura postural en memoria procedimental",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Eje. Vertical. Estable."}},
+          ui:{primitive:"steel_core_column_commitment",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Eje. Vertical. Estable."}},
           media:{
             binaural:{action:"stop"},
             cue:{type:"ok",fire_at:"end"}
@@ -1097,17 +1097,17 @@ export const P = [
   ph:[
     {
       l:"Pulso Respiratorio",r:"0–30s",s:0,e:30,
-      k:"Inhala 1s. Exhala 2s en pulsos cortos: 'sh-sh-sh'.",
-      i:"Inhala 1 segundo. Exhala 2 segundos en 4 pulsos cortos. Diez ciclos.",
+      k:"Inhala 1s. Exhala 2s en 4 pulsos cortos de aire.",
+      i:"Inhala 1 segundo por nariz. Exhala 2 segundos en 4 pulsos cortos de aire. Diez ciclos.",
       iExec:[
         {
           from:0,to:30,
-          text:"Inhala 1s. Exhala 2s en cuatro pulsos: sh-sh-sh-sh. Diez ciclos.",
+          text:"Inhala 1s. Exhala 2s en 4 pulsos cortos de aire. Diez ciclos.",
           type:"breath",
           mechanism:"Micro-pulsos espiratorios activan coordinación neuromotora del diafragma e intercostales",
           duration:{min_ms:25000,target_ms:30000,max_ms:35000},
           validate:{kind:"breath_cycles",min_cycles:8,cycle_min_ms:2500},
-          ui:{primitive:"breath_orb",props:{cadence:{in:1,h1:0,ex:2,h2:0}}},
+          ui:{primitive:"respiratory_pulse_train",props:{cadence:{in:1,h1:0,ex:2,h2:0},cycleCountTarget:10}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -1131,7 +1131,7 @@ export const P = [
           mechanism:"Body scan ascendente activa ínsula anterior; pulsación táctil rítmica activa cortex S1/S2 (Khalsa 2018, Critchley 2013)",
           duration:{min_ms:30000,target_ms:35000,max_ms:42000},
           validate:{kind:"min_duration",min_ms:30000},
-          ui:{primitive:"body_silhouette_highlight",props:{highlight_progression:["feet","legs","abdomen","chest","arms","head"],transition_ms:5000}},
+          ui:{primitive:"sensory_awake",props:{mode:"body_scan",duration_ms:30000}},
           media:{
             breath_ticks:{enabled:false},
             binaural:{action:"continue"}
@@ -1144,7 +1144,7 @@ export const P = [
           mechanism:"Pulsación táctil sostenida sostiene atención focalizada en input propioceptivo",
           duration:{min_ms:8000,target_ms:10000,max_ms:14000},
           validate:{kind:"min_duration",min_ms:8000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Cuerpo despierto."}},
+          ui:{primitive:"sensory_awake",props:{mode:"attention_global",duration_ms:10000}},
           media:{
             breath_ticks:{enabled:false}
           }
@@ -1156,16 +1156,16 @@ export const P = [
     {
       l:"Activación Direccional",r:"75–120s",s:75,e:120,
       k:"Cuerpo despierto. Próxima acción.",
-      i:"Mantén las palmas presionadas mientras visualizas tu próxima acción con energía.",
+      i:"Mantén el botón. Visualiza tu próxima acción con energía direccional.",
       iExec:[
         {
           from:0,to:45,
-          text:"Mantén las palmas presionadas. Visualiza tu próxima acción con energía.",
+          text:"Mantén el botón. Visualiza tu próxima acción con energía direccional.",
           type:"commitment_motor",
           mechanism:"Commitment motor + visualización direccional cierra el ciclo de activación",
           duration:{min_ms:30000,target_ms:35000,max_ms:45000},
           validate:{kind:"hold_press",min_hold_ms:5000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Cuerpo activo. Próxima acción."}},
+          ui:{primitive:"directional_activation_commitment",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Cuerpo activo · Próxima acción"}},
           media:{
             binaural:{action:"stop"},
             cue:{type:"ok",fire_at:"end"}
@@ -1194,7 +1194,7 @@ export const P = [
           mechanism:"Exhalación 1:2 con mano en abdomen + descenso pélvico activa parasimpático profundo + propiocepción central",
           duration:{min_ms:25000,target_ms:30000,max_ms:36000},
           validate:{kind:"breath_cycles",min_cycles:2,cycle_min_ms:11000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:4,h1:0,ex:8,h2:0}}},
+          ui:{primitive:"diaphragmatic_anchor",props:{cadence:{in:4,h1:0,ex:8,h2:0},cycleCountTarget:2}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -1218,7 +1218,7 @@ export const P = [
           mechanism:"Body scan descendente con relajación progresiva activa parasimpático global; sigue patrón natural de descarga",
           duration:{min_ms:45000,target_ms:50000,max_ms:56000},
           validate:{kind:"min_duration",min_ms:45000},
-          ui:{primitive:"body_silhouette_highlight",props:{highlight_progression:["head","neck","shoulders","arms","abdomen","legs","feet"],transition_ms:7000}},
+          ui:{primitive:"relaxation_descent",props:{mode:"body_scan_descent",duration_ms:49000}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true},
             binaural:{action:"continue"}
@@ -1231,7 +1231,7 @@ export const P = [
           mechanism:"Sostén interocéptivo consolida estado de relajación profunda",
           duration:{min_ms:8000,target_ms:10000,max_ms:14000},
           validate:{kind:"min_duration",min_ms:8000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Descenso. Sostén."}},
+          ui:{primitive:"relaxation_descent",props:{mode:"descent_hold",duration_ms:10000}},
           media:{
             breath_ticks:{enabled:true,auto_sync:true}
           }
@@ -1243,16 +1243,16 @@ export const P = [
     {
       l:"Anclaje Final",r:"90–120s",s:90,e:120,
       k:"Pies firmes. Aquí. Suelo.",
-      i:"Mantén las palmas firmes contra los muslos. 'Estoy aquí. Anclado.'",
+      i:"Mantén el botón. Repite mentalmente: 'Aquí. Anclado.'",
       iExec:[
         {
           from:0,to:30,
-          text:"Mantén palmas firmes contra muslos. 'Estoy aquí. Anclado.'",
+          text:"Mantén el botón. Repite mentalmente: 'Aquí. Anclado.'",
           type:"commitment_motor",
           mechanism:"Commitment motor + verbalización ancla estado calmo en memoria procedimental",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Aquí. Anclado."}},
+          ui:{primitive:"grounding_anchor_commitment",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Aquí. Anclado."}},
           media:{
             binaural:{action:"stop"},
             cue:{type:"ok",fire_at:"end"}
@@ -1283,7 +1283,7 @@ export const P = [
           mechanism:"Respiración 4-2-6 con dirección somática reduce activación simpática (Zaccaro et al. 2018, Frontiers in Human Neuroscience)",
           duration:{min_ms:25000,target_ms:30000,max_ms:36000},
           validate:{kind:"breath_cycles",min_cycles:2,cycle_min_ms:11000},
-          ui:{primitive:"breath_orb",props:{cadence:{in:4,h1:2,ex:6,h2:0}}},
+          ui:{primitive:"vertical_breath_ascension",props:{cadence:{in:4,h1:2,ex:6,h2:0},cycleCountTarget:2}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -1307,7 +1307,7 @@ export const P = [
           mechanism:"Body scan postural secuencial activa propiocepción + ínsula anterior (Khalsa 2018, Mehling 2009 MAIA)",
           duration:{min_ms:35000,target_ms:40000,max_ms:48000},
           validate:{kind:"min_duration",min_ms:35000},
-          ui:{primitive:"posture_visual",props:{points:["feet","glutes","spine","shoulders","head"],transition_ms:7000}},
+          ui:{primitive:"postural_alignment",props:{duration_ms:35000}},
           media:{
             breath_ticks:{enabled:false},
             binaural:{action:"continue"}
@@ -1329,7 +1329,7 @@ export const P = [
           mechanism:"Atención focalizada single-task reduce decision fatigue (Baumeister 2008)",
           duration:{min_ms:20000,target_ms:25000,max_ms:30000},
           validate:{kind:"min_duration",min_ms:20000},
-          ui:{primitive:"text_emphasis_voice",props:{text:"¿Qué decisión necesito tomar con claridad?",subtext:"Una sola."}},
+          ui:{primitive:"cognitive_opening",props:{duration_ms:25000}},
           media:{
             breath_ticks:{enabled:false}
           }
@@ -1340,17 +1340,17 @@ export const P = [
     },
     {
       l:"Commitment Motor",r:"95–120s",s:95,e:120,
-      k:"Visualiza la decisión. Presiona palmas. 'Esta es.'",
-      i:"Visualiza la decisión mientras presionas las palmas contra los muslos. 'Esta es la decisión.' Tres veces.",
+      k:"Visualiza la decisión. Mantén. 'Esta es.'",
+      i:"Mantén el botón. Repite mentalmente: 'Esta es la decisión.' Tres veces.",
       iExec:[
         {
           from:0,to:25,
-          text:"Visualiza la decisión. Presiona palmas. 'Esta es la decisión.' Tres veces mentalmente.",
+          text:"Mantén el botón. Repite mentalmente: 'Esta es la decisión.' Tres veces.",
           type:"commitment_motor",
           mechanism:"Compromiso motor + verbalización mental ancla intención en memoria procedimental (Bryan, Adams, Monin 2013, JPSP)",
           duration:{min_ms:18000,target_ms:22000,max_ms:28000},
           validate:{kind:"hold_press",min_hold_ms:6000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Esta es la decisión."}},
+          ui:{primitive:"neural_ascension_commitment",props:{label:"MANTÉN",min_hold_ms:6000,release_message:"Esta es la decisión."}},
           media:{
             binaural:{action:"stop"},
             cue:{type:"ok",fire_at:"end"},
@@ -1412,7 +1412,7 @@ export const P = [
           mechanism:"Interocepción post-intervención consolida cambio fisiológico via ínsula anterior",
           duration:{min_ms:25000,target_ms:30000,max_ms:35000},
           validate:{kind:"min_duration",min_ms:25000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Atención al cuerpo."}},
+          ui:{primitive:"interoception_settle",props:{duration_ms:30000}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -1426,16 +1426,16 @@ export const P = [
     {
       l:"Cierre Express",r:"60–90s",s:60,e:90,
       k:"Listo. Sigue.",
-      i:"Mantén las palmas presionadas: 'Calmo. Sigo.'",
+      i:"Mantén el botón. Repite mentalmente: 'Calmo. Sigo.'",
       iExec:[
         {
           from:0,to:30,
-          text:"Mantén palmas presionadas. 'Calmo. Sigo.'",
+          text:"Mantén el botón. Repite mentalmente: 'Calmo. Sigo.'",
           type:"commitment_motor",
           mechanism:"Commitment motor cierra ciclo de calma express",
           duration:{min_ms:22000,target_ms:28000,max_ms:35000},
           validate:{kind:"hold_press",min_hold_ms:5000},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Calmo. Sigo."}},
+          ui:{primitive:"calma_express_closure",props:{label:"MANTÉN",min_hold_ms:5000,release_message:"Calmo. Sigo."}},
           media:{
             binaural:{action:"stop"},
             cue:{type:"ok",fire_at:"end"}
@@ -1464,7 +1464,7 @@ export const P = [
           mechanism:"Respiración a 5.5rpm maximiza variabilidad cardíaca (HRV) por resonancia barorrefleja (Lehrer 2014)",
           duration:{min_ms:50000,target_ms:60000,max_ms:72000},
           validate:{kind:"breath_cycles",min_cycles:5,cycle_min_ms:9500},
-          ui:{primitive:"breath_orb",props:{cadence:{in:5.5,h1:0,ex:5.5,h2:0}}},
+          ui:{primitive:"vagal_resonance_calibration",props:{cadence:{in:5.5,h1:0,ex:5.5,h2:0},cycleCountTarget:5}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -1488,7 +1488,7 @@ export const P = [
           mechanism:"Sostenimiento de 5.5rpm sostiene activación barorrefleja (Lehrer 2014)",
           duration:{min_ms:100000,target_ms:120000,max_ms:144000},
           validate:{kind:"breath_cycles",min_cycles:10,cycle_min_ms:9500},
-          ui:{primitive:"breath_orb",props:{cadence:{in:5.5,h1:0,ex:5.5,h2:0}}},
+          ui:{primitive:"vagal_resonance_sustainment",props:{subActIdx:0,cadence:{in:5.5,h1:0,ex:5.5,h2:0},cycleCountTarget:10}},
           media:{breath_ticks:{enabled:true,auto_sync:true},binaural:{action:"continue"}}
         },
         {
@@ -1498,7 +1498,7 @@ export const P = [
           mechanism:"Sostenimiento prolongado profundiza efecto vagal-barorrefleja",
           duration:{min_ms:100000,target_ms:120000,max_ms:144000},
           validate:{kind:"breath_cycles",min_cycles:10,cycle_min_ms:9500},
-          ui:{primitive:"breath_orb",props:{cadence:{in:5.5,h1:0,ex:5.5,h2:0}}},
+          ui:{primitive:"vagal_resonance_sustainment",props:{subActIdx:1,cadence:{in:5.5,h1:0,ex:5.5,h2:0},cycleCountTarget:10}},
           media:{breath_ticks:{enabled:true,auto_sync:true},binaural:{action:"continue"}}
         },
         {
@@ -1508,7 +1508,7 @@ export const P = [
           mechanism:"Entrenamiento autonómico crónico aumenta HRV de baseline (Lehrer 2014)",
           duration:{min_ms:100000,target_ms:120000,max_ms:144000},
           validate:{kind:"breath_cycles",min_cycles:10,cycle_min_ms:9500},
-          ui:{primitive:"breath_orb",props:{cadence:{in:5.5,h1:0,ex:5.5,h2:0}}},
+          ui:{primitive:"vagal_resonance_sustainment",props:{subActIdx:2,cadence:{in:5.5,h1:0,ex:5.5,h2:0},cycleCountTarget:10}},
           media:{breath_ticks:{enabled:true,auto_sync:true},binaural:{action:"continue"}}
         },
         {
@@ -1518,7 +1518,7 @@ export const P = [
           mechanism:"Coherencia HRV sustained reduces stress reactivity baseline",
           duration:{min_ms:100000,target_ms:120000,max_ms:144000},
           validate:{kind:"breath_cycles",min_cycles:10,cycle_min_ms:9500},
-          ui:{primitive:"breath_orb",props:{cadence:{in:5.5,h1:0,ex:5.5,h2:0}}},
+          ui:{primitive:"vagal_resonance_sustainment",props:{subActIdx:3,cadence:{in:5.5,h1:0,ex:5.5,h2:0},cycleCountTarget:10}},
           media:{breath_ticks:{enabled:true,auto_sync:true},binaural:{action:"continue"}}
         }
       ],
@@ -1537,7 +1537,7 @@ export const P = [
           mechanism:"Cierre reflexivo consolida estado entrenado",
           duration:{min_ms:50000,target_ms:60000,max_ms:72000},
           validate:{kind:"min_duration",min_ms:50000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Calma sostenida."}},
+          ui:{primitive:"vagal_resonance_closing",props:{duration_ms:60000}},
           media:{
             voice:{enabled_default:false},
             breath_ticks:{enabled:false},
@@ -1559,17 +1559,17 @@ export const P = [
   ph:[
     {
       l:"Configuración",r:"0–60s",s:0,e:60,
-      k:"Acuéstate o siéntate cómodo. Cierra los ojos.",
-      i:"Encuentra postura cómoda. Acuéstate o siéntate. Cierra los ojos. Respira normal.",
+      k:"Acuéstate o siéntate cómodo. Respira natural.",
+      i:"Encuentra postura cómoda. Acuéstate o siéntate. Respira normal. Deja que la atención se calme.",
       iExec:[
         {
           from:0,to:60,
-          text:"Encuentra postura cómoda. Cierra los ojos. Respira natural.",
+          text:"Encuentra postura cómoda. Respira natural. Deja que la atención se calme.",
           type:"transition",
           mechanism:"Postura supina + ojos cerrados activa default mode network preparado para body scan profundo (Huberman protocol)",
           duration:{min_ms:50000,target_ms:60000,max_ms:72000},
           validate:{kind:"min_duration",min_ms:50000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Cómodo. Ojos cerrados."}},
+          ui:{primitive:"nsdr_configuration",props:{duration_ms:60000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1593,7 +1593,7 @@ export const P = [
           mechanism:"Body scan descendente activa propiocepción + reduce activación cortical (Yoga Nidra Saraswati 1976, validated Huberman 2021)",
           duration:{min_ms:65000,target_ms:75000,max_ms:85000},
           validate:{kind:"min_duration",min_ms:65000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Cabeza. Cuello. Hombros."}},
+          ui:{primitive:"nsdr_body_scan",props:{subActIdx:0,duration_ms:75000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1607,7 +1607,7 @@ export const P = [
           mechanism:"Body scan extremidades superiores",
           duration:{min_ms:65000,target_ms:75000,max_ms:85000},
           validate:{kind:"min_duration",min_ms:65000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Brazos. Manos. Dedos."}},
+          ui:{primitive:"nsdr_body_scan",props:{subActIdx:1,duration_ms:75000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1621,7 +1621,7 @@ export const P = [
           mechanism:"Body scan torso central",
           duration:{min_ms:65000,target_ms:75000,max_ms:85000},
           validate:{kind:"min_duration",min_ms:65000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Pecho. Abdomen. Caderas."}},
+          ui:{primitive:"nsdr_body_scan",props:{subActIdx:2,duration_ms:75000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1635,7 +1635,7 @@ export const P = [
           mechanism:"Body scan extremidades inferiores cierra patrón descendente",
           duration:{min_ms:65000,target_ms:75000,max_ms:85000},
           validate:{kind:"min_duration",min_ms:65000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Piernas. Pies. Dedos."}},
+          ui:{primitive:"nsdr_body_scan",props:{subActIdx:3,duration_ms:75000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1658,7 +1658,7 @@ export const P = [
           mechanism:"Observación pasiva de respiración profundiza estado parasimpático sin control voluntario (mindfulness protocol)",
           duration:{min_ms:130000,target_ms:150000,max_ms:175000},
           validate:{kind:"min_duration",min_ms:130000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Observa. Cuenta exhalaciones."}},
+          ui:{primitive:"nsdr_passive_breath",props:{duration_ms:150000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1671,17 +1671,17 @@ export const P = [
     },
     {
       l:"Retorno Gradual",r:"510–600s",s:510,e:600,
-      k:"Atención vuelve. Mueve dedos suavemente. Abre los ojos.",
-      i:"Atención vuelve a la habitación. Mueve dedos de manos y pies. Estírate suavemente. Abre los ojos cuando estés listo.",
+      k:"Atención vuelve. Mueve dedos suavemente. Estírate.",
+      i:"Atención vuelve a la habitación. Mueve dedos de manos y pies. Estírate suavemente. Toma tu tiempo.",
       iExec:[
         {
           from:0,to:90,
-          text:"Atención vuelve. Mueve dedos. Estírate. Abre los ojos cuando estés listo.",
+          text:"Atención vuelve. Mueve dedos. Estírate. Toma tu tiempo.",
           type:"transition",
           mechanism:"Retorno gradual evita disociación post-NSDR + reactiva atención exterocéptiva",
           duration:{min_ms:75000,target_ms:90000,max_ms:108000},
           validate:{kind:"min_duration",min_ms:75000},
-          ui:{primitive:"silence_cyan_minimal",props:{text:"Mueve dedos. Estírate. Abre ojos."}},
+          ui:{primitive:"nsdr_return",props:{duration_ms:90000}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1714,7 +1714,7 @@ export const P = [
           mechanism:"Grounding visual interrumpe rumiación y reactiva córtex visual exterocéptivo (5-4-3-2-1 protocol, Najavits 2002)",
           duration:{min_ms:15000,target_ms:25000,max_ms:40000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"object_anchor_prompt",props:{prompt:"Un objeto que ves",min_chars:2,affirmation_template:"{value} es lo que ves."}},
+          ui:{primitive:"crisis_sensory_anchor",props:{mode:"visual",min_chars:2}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1738,7 +1738,7 @@ export const P = [
           mechanism:"Grounding auditivo activa córtex auditivo + redirige atención exterior",
           duration:{min_ms:12000,target_ms:20000,max_ms:30000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"object_anchor_prompt",props:{prompt:"Un sonido que escuchas",min_chars:2,affirmation_template:"{value} es lo que escuchas."}},
+          ui:{primitive:"crisis_sensory_anchor",props:{mode:"auditory",min_chars:2}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1761,7 +1761,7 @@ export const P = [
           mechanism:"Grounding táctil activa cortex S1/S2 + propiocepción inmediata",
           duration:{min_ms:18000,target_ms:25000,max_ms:35000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"text_emphasis_voice",props:{text:"Toca una superficie.",subtext:"Describe la textura: rugosa, lisa, fría, tibia."}},
+          ui:{primitive:"crisis_sensory_anchor",props:{mode:"tactile",min_chars:2}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
@@ -1784,7 +1784,7 @@ export const P = [
           mechanism:"Doble inhalación + exhalación prolongada activa parasimpático en <30s (Balban 2023)",
           duration:{min_ms:22000,target_ms:28000,max_ms:36000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"breath_orb",props:{cadence:{in:2,h1:1,ex:5,h2:0},double_inhale:true}},
+          ui:{primitive:"physiological_sigh_orb",props:{cycleCountTarget:3,showEyebrow:false,size:180}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:true,auto_sync:true},
@@ -1798,16 +1798,16 @@ export const P = [
     {
       l:"¿Estoy Aquí?",r:"115–150s",s:115,e:150,
       k:"Estoy aquí. En este momento.",
-      i:"Mantén las palmas firmes contra tu cuerpo. Repite: 'Estoy aquí. En este momento.'",
+      i:"Mantén el botón. Repite mentalmente: 'Estoy aquí. En este momento.'",
       iExec:[
         {
           from:0,to:35,
-          text:"Mantén las palmas firmes. 'Estoy aquí. En este momento.'",
+          text:"Mantén el botón. Repite mentalmente: 'Estoy aquí. En este momento.'",
           type:"commitment_motor",
           mechanism:"Anclaje propioceptivo + verbalización presente cierra ciclo de grounding",
           duration:{min_ms:25000,target_ms:30000,max_ms:40000},
           validate:{kind:"no_validation",reason:"crisis_no_pressure"},
-          ui:{primitive:"hold_press_button",props:{label:"MANTÉN",min_hold_ms:3000,release_message:"Estás aquí."}},
+          ui:{primitive:"presence_anchor_commitment",props:{label:"MANTÉN",min_hold_ms:3000,release_message:"Estás aquí · Ahora"}},
           media:{
             voice:{enabled_default:true},
             breath_ticks:{enabled:false},
