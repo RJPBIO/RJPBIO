@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 41; // Coach fix — CoachV2 ahora envía x-csrf-token header (Sprint 92 agregó CSRF al server, UI no lo mandaba → 403 silencioso "no pude responder"). Bump para invalidar bundle viejo en PWA. Mantiene skipWaiting + force-reload de v39.
+const CACHE_VERSION = 42; // Coach diagnostic — logging exhaustivo en /api/coach + nuevo /api/health/coach endpoint para debug. Bump por consistencia aunque no cambia client bundle del coach.
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

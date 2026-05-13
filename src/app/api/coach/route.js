@@ -22,10 +22,19 @@ export async function POST(req) {
   // lo que el browser ya bloquea cross-origin POST, pero CSRF protege
   // contra XSS o subdomain takeover.
   const csrf = requireCsrf(req);
-  if (csrf) return csrf;
+  if (csrf) {
+    console.error("[coach][403] csrf validation failed", {
+      hasHeader: !!req.headers.get("x-csrf-token"),
+      hasCookie: !!(req.cookies?.get?.("bio-csrf")?.value),
+    });
+    return csrf;
+  }
 
   const session = await auth();
-  if (!session?.user) return new Response("unauthorized", { status: 401 });
+  if (!session?.user) {
+    console.error("[coach][401] no session");
+    return new Response("unauthorized", { status: 401 });
+  }
 
   // Sprint S3.1 — MFA policy enforcement. Coach LLM expone contexto
   // sensible (mood trajectory, instruments scores) — gate igual que sync.
@@ -54,7 +63,10 @@ export async function POST(req) {
   if (!rl.ok) return new Response("rate_limited", { status: 429 });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return new Response("coach_unavailable", { status: 503 });
+  if (!apiKey) {
+    console.error("[coach][503] ANTHROPIC_API_KEY missing in env");
+    return new Response("coach_unavailable", { status: 503 });
+  }
 
   // Sprint S5.1 — quota mensual por plan. Pre-check: 429 si el user
   // alcanzó su cap. FREE 5/mes, PRO 100/mes, STARTER 500/mes,
@@ -114,6 +126,16 @@ export async function POST(req) {
   });
 
   if (!upstream.ok || !upstream.body) {
+    // Capturar el body de error de Anthropic para diagnóstico — sin body el
+    // 502 era ciego. Truncamos a 500 chars para evitar log spam.
+    let errBody = "";
+    try { errBody = (await upstream.text()).slice(0, 500); } catch {}
+    console.error("[coach][502] Anthropic upstream error", {
+      status: upstream.status,
+      model,
+      bodyLen: errBody.length,
+      body: errBody,
+    });
     return new Response("upstream_error", { status: 502 });
   }
 
