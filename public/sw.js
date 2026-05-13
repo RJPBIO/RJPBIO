@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 39; // Auth fix 426bcae + trustHost fix — invalidar bundle viejo de SignInClient. v39 además hace skipWaiting + force-reload clients para que el fix llegue a PWA users sin pasos manuales (auth es crítico, no aplica la regla "user decides when to update").
+const CACHE_VERSION = 40; // Auth hardening v3 — Prisma serverless config (pgbouncer flag), adapter Proxy logging, callbacks bulletproof, cookies explicit. Mantenemos skipWaiting + force-reload de v39 para que llegue a PWA users sin pasos manuales.
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

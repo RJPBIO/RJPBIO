@@ -176,7 +176,42 @@ async function ensurePersonalOrg(userId, email) {
 //
 // Tradeoff aceptado: "logout from all devices" requiere lógica custom
 // (signout-all route ya existe). Vale el costo a cambio de robustez.
-const dbAdapter = await adapter().catch(() => undefined);
+// Wrap el PrismaAdapter con logging por método. Sin esto, cuando una
+// operación del adapter (createUser, linkAccount, getUserByAccount, etc.)
+// throw en producción, Auth.js solo redirige a ?error=Configuration sin
+// dejar pista en logs. Con el Proxy, cada método que falla imprime
+// "[auth][adapter.<methodName>]" con el error code (Prisma P-codes) y
+// el stack — diagnóstico instantáneo.
+function wrapAdapterWithLogging(a) {
+  if (!a) return a;
+  return new Proxy(a, {
+    get(target, prop) {
+      const original = target[prop];
+      if (typeof original !== "function") return original;
+      return async (...args) => {
+        try {
+          return await original.apply(target, args);
+        } catch (e) {
+          console.error(
+            `[auth][adapter.${String(prop)}]`,
+            e?.name || "Error",
+            e?.code ? `[${e.code}]` : "",
+            e?.message || e,
+            e?.stack ? "\n" + e.stack.split("\n").slice(0, 6).join("\n") : ""
+          );
+          throw e;
+        }
+      };
+    },
+  });
+}
+
+const dbAdapter = wrapAdapterWithLogging(
+  await adapter().catch((e) => {
+    console.error("[auth][adapter-init]", e?.message || e);
+    return undefined;
+  })
+);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: dbAdapter,
@@ -190,6 +225,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       console.error("[auth][error]", error?.name || "Error", error?.message || error, error?.stack);
     },
     warn(code) { console.warn("[auth][warn]", code); },
+  },
+  // Cookie config explícito. Por default Auth.js v5 usa __Secure- prefix
+  // en prod (correcto), pero algunos PWA standalone (iOS) tienen issues
+  // con cookies sin sameSite explícito. Lo declaramos para evitar surprises.
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.session-token"
+        : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   // trustHost: Auth.js v5 valida el `host` header contra AUTH_URL salvo
   // que trustHost sea true. En serverless/Vercel el request llega tras un
@@ -237,149 +288,167 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return `${baseUrl}/app`;
     },
     async signIn({ user, account }) {
-      // Best-effort: si la DB no está disponible, permitimos signin igual
-      // (especialmente en JWT mode). El audit log fallido no debe bloquear
-      // el login, solo perdería esa traza.
+      // Bulletproof: callback wrap top-level. Cualquier throw inesperado
+      // aquí causa que Auth.js redirija a ?error=Configuration. Auth ya
+      // sucedió con el IdP — bloquear por un fallo en housekeeping (audit
+      // log, org provisioning) sería peor UX que permitir entrar sin la
+      // traza. Best-effort para todo lo que toca DB.
       try {
-        const orm = await db();
-        await orm.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});
-      } catch {
-        // sin DB → no hay lastLoginAt update; signin sigue válido
+        try {
+          const orm = await db();
+          await orm.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});
+        } catch {
+          // sin DB → no hay lastLoginAt update; signin sigue válido
+        }
+        // Personal-org provisioning — idempotente, cubre signups nuevos y
+        // legacy users sin org. Failure no bloquea signin.
+        ensurePersonalOrg(user.id, user.email).catch((e) => {
+          console.error("[auth][ensurePersonalOrg]", e?.message || e);
+        });
+        await auditLog({ action: "auth.signin", actorId: user.id, payload: { provider: account?.provider } })
+          .catch((e) => {
+            console.error("[auth][auditLog signin]", e?.message || e);
+          });
+      } catch (e) {
+        console.error("[auth][signIn-callback]", e?.message || e, e?.stack);
+        // Aun así dejar entrar — autenticación con el IdP sí ocurrió.
       }
-      // Personal-org provisioning — idempotente, cubre signups nuevos y
-      // legacy users sin org. Failure no bloquea signin.
-      ensurePersonalOrg(user.id, user.email).catch(() => {});
-      await auditLog({ action: "auth.signin", actorId: user.id, payload: { provider: account?.provider } })
-        .catch(() => {});
       return true;
     },
     async jwt({ token, user, trigger }) {
-      // Al signin, persistir id/locale/timezone en el token JWT para que
-      // session() los pueda leer sin DB.
-      if (user) {
-        token.sub = user.id;
-        token.locale = user.locale;
-        token.timezone = user.timezone;
-      }
-      // Sprint 8 — al signin, crear UserSession row + embebir jti + epoch.
-      // El jti permite revoke per-device; el epoch invalida-todos al bump.
-      if (user) {
-        try {
-          const h = await headers();
-          const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
-          const userAgent = h.get("user-agent") || null;
-          const jti = await createSession({ userId: user.id, ip, userAgent });
-          if (jti) token.jti = jti;
-          token.epoch = await getCurrentEpoch(user.id);
-          token.lastValidatedAt = Date.now();
-          delete token.invalid;
-        } catch {
-          // headers() no disponible en este contexto — sin tracking, signin igual.
+      // Bulletproof: wrap top-level. Cualquier throw aquí causa
+      // ?error=Configuration. JWT debe poder construirse incluso si DB
+      // está caída — el JWT mínimo válido (sub, locale, timezone) basta
+      // para que el user entre; security policies y session tracking se
+      // recuperan en el próximo refresh.
+      try {
+        // Al signin, persistir id/locale/timezone en el token JWT para que
+        // session() los pueda leer sin DB.
+        if (user) {
+          token.sub = user.id;
+          token.locale = user.locale;
+          token.timezone = user.timezone;
         }
-      }
-      // Sprint 8 polish — lazy revoke validation. Re-valida contra DB cada
-      // SESSION_VALIDATION_INTERVAL_MS (60s) o al trigger="update". Si la
-      // sesión fue revocada o el epoch cambió → marca token.invalid;
-      // session() callback retorna user:null → admin layout redirige a signin.
-      else if (shouldRevalidate(token) || trigger === "update") {
-        const valid = await isSessionValid({
-          jti: token.jti,
-          userId: token.sub,
-          tokenEpoch: token.epoch ?? 0,
-        });
-        if (!valid) {
-          token.invalid = true;
-        } else {
-          token.lastValidatedAt = Date.now();
-          delete token.invalid;
-          // Touch lastSeenAt async — no bloquear el callback por esto.
-          touchSession(token.jti).catch(() => {});
-        }
-      }
-      // Embed org security policies en el token para que el middleware
-      // (edge) los pueda leer vía getToken sin tocar DB.
-      // Refresh: al signin (user presente) o cuando el cliente fuerza
-      // un update via session().update(). Stale-OK por hasta 8h (TTL JWT)
-      // — cambios de policy se aplican al siguiente refresh natural.
-      if (user || trigger === "update") {
-        try {
-          const orm = await db();
-          const userId = token.sub || user?.id;
-          if (userId) {
-            const memberships = await orm.membership.findMany({
-              where: { userId },
-              select: { orgId: true, org: {
-                select: {
-                  requireMfa: true,
-                  sessionMaxAgeMinutes: true,
-                  ipAllowlist: true,
-                  ipAllowlistEnabled: true,
-                },
-              }},
-            });
-            token.securityPolicies = memberships.map((m) => ({
-              orgId: m.orgId,
-              requireMfa: !!m.org?.requireMfa,
-              sessionMaxAgeMinutes: m.org?.sessionMaxAgeMinutes ?? null,
-              ipAllowlist: m.org?.ipAllowlist || [],
-              ipAllowlistEnabled: !!m.org?.ipAllowlistEnabled,
-            }));
+        // Sprint 8 — al signin, crear UserSession row + embebir jti + epoch.
+        // El jti permite revoke per-device; el epoch invalida-todos al bump.
+        if (user) {
+          try {
+            const h = await headers();
+            const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+            const userAgent = h.get("user-agent") || null;
+            const jti = await createSession({ userId: user.id, ip, userAgent });
+            if (jti) token.jti = jti;
+            token.epoch = await getCurrentEpoch(user.id);
+            token.lastValidatedAt = Date.now();
+            delete token.invalid;
+          } catch (e) {
+            console.error("[auth][jwt-session-tracking]", e?.message || e);
+            // headers()/createSession fallaron — signin sigue válido sin tracking.
           }
-        } catch {
-          // DB sin disponibilidad — no bloquear signin, dejar policies vacío.
-          token.securityPolicies = token.securityPolicies || [];
         }
+        // Sprint 8 polish — lazy revoke validation. Re-valida contra DB cada
+        // SESSION_VALIDATION_INTERVAL_MS (60s) o al trigger="update". Si la
+        // sesión fue revocada o el epoch cambió → marca token.invalid;
+        // session() callback retorna user:null → admin layout redirige a signin.
+        else if (shouldRevalidate(token) || trigger === "update") {
+          try {
+            const valid = await isSessionValid({
+              jti: token.jti,
+              userId: token.sub,
+              tokenEpoch: token.epoch ?? 0,
+            });
+            if (!valid) {
+              token.invalid = true;
+            } else {
+              token.lastValidatedAt = Date.now();
+              delete token.invalid;
+              // Touch lastSeenAt async — no bloquear el callback por esto.
+              touchSession(token.jti).catch(() => {});
+            }
+          } catch (e) {
+            console.error("[auth][jwt-revalidation]", e?.message || e);
+            // DB fallo durante revalidación — preservar token actual (fail-open).
+          }
+        }
+        // Embed org security policies en el token.
+        if (user || trigger === "update") {
+          try {
+            const orm = await db();
+            const userId = token.sub || user?.id;
+            if (userId) {
+              const memberships = await orm.membership.findMany({
+                where: { userId },
+                select: { orgId: true, org: {
+                  select: {
+                    requireMfa: true,
+                    sessionMaxAgeMinutes: true,
+                    ipAllowlist: true,
+                    ipAllowlistEnabled: true,
+                  },
+                }},
+              });
+              token.securityPolicies = memberships.map((m) => ({
+                orgId: m.orgId,
+                requireMfa: !!m.org?.requireMfa,
+                sessionMaxAgeMinutes: m.org?.sessionMaxAgeMinutes ?? null,
+                ipAllowlist: m.org?.ipAllowlist || [],
+                ipAllowlistEnabled: !!m.org?.ipAllowlistEnabled,
+              }));
+            }
+          } catch (e) {
+            console.error("[auth][jwt-security-policies]", e?.message || e);
+            token.securityPolicies = token.securityPolicies || [];
+          }
+        }
+      } catch (e) {
+        console.error("[auth][jwt-callback]", e?.message || e, e?.stack);
+        // Return token aunque haya throw inesperado — JWT mínimo es preferible
+        // a redirect a /signin?error=Configuration.
       }
       return token;
     },
     async session({ session, user, token }) {
-      // Sprint 8 polish — token.invalid (revoked/epoch-mismatch) → user:null.
-      // Layouts/handlers que hacen `if (!session?.user)` redirigen a signin
-      // o devuelven 401, efectivamente cerrando la sesión revocada.
-      if (token?.invalid) {
-        return { ...session, user: null, expires: new Date().toISOString() };
-      }
-      // En strategy="jwt" no hay `user`; toda la info viene del token.
-      // En strategy="database" sí hay `user` y la DB está disponible.
-      const u = user || (token ? { id: token.sub, locale: token.locale, timezone: token.timezone } : null);
-      if (!u || !session?.user) return session;
-      session.user.id = u.id;
-      session.user.locale = u.locale || "es";
-      session.user.timezone = u.timezone || "America/Mexico_City";
-      // Memberships sólo si tenemos DB conectada — un fallo aquí NO
-      // debe romper el endpoint completo (hace que retorne 500 a todo
-      // visitor del sitio, no sólo a los autenticados).
-      if (dbAdapter) {
-        try {
-          const orm = await db();
-          // Sprint 9 polish — include org scalars para que las pages que
-          // filtran "no-personal" o necesitan org.name/plan no rompan.
-          // Bug previo: m.org era undefined → /admin/sso, /admin/security/*
-          // siempre mostraban "no disponible" silenciosamente.
-          session.memberships = await orm.membership.findMany({
-            where: { userId: u.id },
-            include: {
-              org: {
-                select: { id: true, name: true, slug: true, personal: true, plan: true },
+      // Bulletproof: wrap top-level. Si esto throw, /api/auth/session
+      // devuelve 500 a TODO visitor del site (también unauth), rompiendo
+      // toda navegación. Devolvemos session mínimamente válida en error.
+      try {
+        // Sprint 8 polish — token.invalid (revoked/epoch-mismatch) → user:null.
+        if (token?.invalid) {
+          return { ...session, user: null, expires: new Date().toISOString() };
+        }
+        // En strategy="jwt" no hay `user`; toda la info viene del token.
+        const u = user || (token ? { id: token.sub, locale: token.locale, timezone: token.timezone } : null);
+        if (!u || !session?.user) return session;
+        session.user.id = u.id;
+        session.user.locale = u.locale || "es";
+        session.user.timezone = u.timezone || "America/Mexico_City";
+        if (dbAdapter) {
+          try {
+            const orm = await db();
+            session.memberships = await orm.membership.findMany({
+              where: { userId: u.id },
+              include: {
+                org: {
+                  select: { id: true, name: true, slug: true, personal: true, plan: true },
+                },
               },
-            },
-          });
-        } catch {
+            });
+          } catch (e) {
+            console.error("[auth][session-memberships]", e?.message || e);
+            session.memberships = [];
+          }
+        } else {
           session.memberships = [];
         }
-      } else {
-        session.memberships = [];
+        session.securityPolicies = Array.isArray(token?.securityPolicies)
+          ? token.securityPolicies
+          : [];
+        session.jti = token?.jti || null;
+        return session;
+      } catch (e) {
+        console.error("[auth][session-callback]", e?.message || e, e?.stack);
+        return session;
       }
-      // Expose security policies (embebidas en el JWT) para que el cliente
-      // pueda mostrar banners (e.g. "este org requiere MFA"). Backend
-      // sigue siendo source-of-truth — no confiar en este campo para gating.
-      session.securityPolicies = Array.isArray(token?.securityPolicies)
-        ? token.securityPolicies
-        : [];
-      // Sprint 8 — expose jti para que UI pueda marcar la sesión actual
-      // como "this device" en /account.
-      session.jti = token?.jti || null;
-      return session;
     },
   },
   events: {

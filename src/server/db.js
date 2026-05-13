@@ -11,7 +11,22 @@ let clientPromise;
 async function buildPrisma() {
   const { PrismaClient } = await import("@prisma/client");
   const g = globalThis;
-  if (!g.__prisma) g.__prisma = new PrismaClient({ log: ["error", "warn"] });
+  if (!g.__prisma) {
+    // Serverless-friendly URL: agrega pgbouncer=true + connection_limit=1
+    // si no están presentes. Necesario cuando DATABASE_URL apunta a un
+    // transaction-mode pooler (Supabase, Neon, PgBouncer) — sin estos
+    // flags, Prisma usa prepared statements que conflictúan con el pooler
+    // y throw "prepared statement \"s0\" already exists" en cold starts.
+    // Innocuo si la DB es conexión directa.
+    let url = process.env.DATABASE_URL;
+    if (url && !/[?&]pgbouncer=/.test(url)) {
+      url += (url.includes("?") ? "&" : "?") + "pgbouncer=true&connection_limit=1";
+    }
+    g.__prisma = new PrismaClient({
+      log: ["error", "warn"],
+      ...(url ? { datasourceUrl: url } : {}),
+    });
+  }
   return g.__prisma;
 }
 
