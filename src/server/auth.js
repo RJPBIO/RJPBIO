@@ -182,6 +182,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: dbAdapter,
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/signin", error: "/signin" },
+  // Logger explícito — sin esto, el catch-all `?error=Configuration` no deja
+  // pista en Vercel logs. Con esto, cualquier throw del adapter/callback se
+  // imprime con stack trace identificable (grep "[auth][error]").
+  logger: {
+    error(error) {
+      console.error("[auth][error]", error?.name || "Error", error?.message || error, error?.stack);
+    },
+    warn(code) { console.warn("[auth][warn]", code); },
+  },
   // trustHost: Auth.js v5 valida el `host` header contra AUTH_URL salvo
   // que trustHost sea true. En serverless/Vercel el request llega tras un
   // proxy → host real viene en X-Forwarded-Host → trustHost debe ser true.
