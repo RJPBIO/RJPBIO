@@ -462,21 +462,39 @@ export default function ProtocolPlayer({
           paddingBlock: spacing.s16,
           paddingInline: spacing.s16,
           borderBlockEnd: `0.5px solid ${colors.separator}`,
+          gap: 8,
         }}
       >
-        <ExitButton
-          onClick={handleExitTap}
-          ariaLabel={confirmingExit ? "Confirmar salida sin acreditar" : "Salir"}
-        />
+        <div style={{ flexShrink: 0 }}>
+          <ExitButton
+            onClick={handleExitTap}
+            ariaLabel={confirmingExit ? "Confirmar salida sin acreditar" : "Salir"}
+          />
+        </div>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <div
+          style={{
+            flex: "1 1 auto",
+            minInlineSize: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
           <span
+            title={protocol.n}
             style={{
-              fontSize: 11,
+              fontSize: protocol.n.length > 22 ? 10 : 11,
               fontWeight: typography.weight.medium,
-              letterSpacing: "0.12em",
+              letterSpacing: protocol.n.length > 22 ? "0.08em" : "0.12em",
               textTransform: "uppercase",
               color: colors.text.muted,
+              maxInlineSize: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              textAlign: "center",
             }}
           >
             {protocol.n}
@@ -488,14 +506,16 @@ export default function ProtocolPlayer({
         </div>
 
         {/* Pause button (training only) o spacer (otros) */}
-        {useCase === "training" ? (
-          <PauseButton
-            paused={player.status === "paused"}
-            onClick={() => (player.status === "paused" ? player.resume() : player.pause())}
-          />
-        ) : (
-          <span style={{ inlineSize: 36 }} aria-hidden="true" />
-        )}
+        <div style={{ flexShrink: 0 }}>
+          {useCase === "training" ? (
+            <PauseButton
+              paused={player.status === "paused"}
+              onClick={() => (player.status === "paused" ? player.resume() : player.pause())}
+            />
+          ) : (
+            <span style={{ inlineSize: 36, display: "inline-block" }} aria-hidden="true" />
+          )}
+        </div>
 
         <ProgressIndicator progress={player.validation.progress} />
       </header>

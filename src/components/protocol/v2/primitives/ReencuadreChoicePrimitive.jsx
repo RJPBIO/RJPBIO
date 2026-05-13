@@ -153,7 +153,10 @@ export default function ReencuadreChoicePrimitive({
   }, [minThinkingMs, hapticEnabled, reduceMotion]);
 
   const handleSelect = (idx) => {
-    if (!enabled || selectedIdx !== -1) return;
+    // Click siempre permitido: el "Piensa Ns" counter es solo nudge informacional,
+    // NO bloquea selección. Esto previene confusión "no funciona" del user (que
+    // tapeaba durante el thinking window sin feedback). El user decide cuándo.
+    if (selectedIdx !== -1) return;
     setSelectedIdx(idx);
     const chip = chips[idx];
     if (hapticEnabled) {
@@ -370,10 +373,10 @@ export default function ReencuadreChoicePrimitive({
                 type="button"
                 data-testid={`reencuadre-chip-${c.id}`}
                 onClick={() => handleSelect(i)}
-                onMouseEnter={() => enabled && setHoverIdx(i)}
+                onMouseEnter={() => setHoverIdx(i)}
                 onMouseLeave={() => setHoverIdx(-1)}
-                onTouchStart={() => enabled && setHoverIdx(i)}
-                disabled={!enabled || selectedIdx !== -1}
+                onTouchStart={() => setHoverIdx(i)}
+                disabled={selectedIdx !== -1}
                 aria-pressed={isSelected}
                 style={{
                   width: "100%",
@@ -389,8 +392,8 @@ export default function ReencuadreChoicePrimitive({
                   fontWeight: typography.weight.medium,
                   letterSpacing: "-0.01em",
                   whiteSpace: "nowrap",
-                  cursor: !enabled || selectedIdx !== -1 ? "default" : "pointer",
-                  opacity: !enabled ? 0.40 : isFaded ? 0.45 : 1,
+                  cursor: selectedIdx !== -1 ? "default" : "pointer",
+                  opacity: isFaded ? 0.45 : 1,
                   transform: isSelected ? "scale(1.02)" : "scale(1)",
                   transition: reduceMotion ? "none" : "opacity 320ms ease-out, background 280ms ease-out, border-color 280ms ease-out, transform 220ms ease-out",
                   outline: "none",
