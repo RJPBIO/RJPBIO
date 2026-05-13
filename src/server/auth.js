@@ -272,14 +272,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.APPLE_CLIENT_ID,
       clientSecret: process.env.APPLE_CLIENT_SECRET,
     })] : []),
-    Email({
+    // Email magic-link SOLO si tenemos adapter funcional. NextAuth v5
+    // throw "MissingAdapter" en init si Email existe sin adapter — eso
+    // mapea a ?error=Configuration y rompe TODOS los providers, no solo
+    // Email. Si la DB está caída en prod, OAuth (Google) sigue funcionando
+    // vía JWT en vez de fallar todo. Si user habilita Email mas tarde, se
+    // re-incluye automaticamente al detectar adapter.
+    ...(dbAdapter ? [Email({
       // Dummy server satisfies NextAuth's init-time validation when
       // EMAIL_SERVER is unset — it's never actually used because our
       // sendMagicLink override handles both real-send and console paths.
       server: process.env.EMAIL_SERVER || "smtp://noop:noop@localhost:25",
       from: process.env.EMAIL_FROM || "no-reply@bio-ignicion.app",
       sendVerificationRequest: sendMagicLink,
-    }),
+    })] : []),
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
