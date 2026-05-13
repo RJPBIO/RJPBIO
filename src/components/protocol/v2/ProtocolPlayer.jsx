@@ -385,6 +385,21 @@ export default function ProtocolPlayer({
   });
 
   const [confirmingExit, setConfirmingExit] = useState(false);
+
+  // Body scroll lock mientras el ProtocolPlayer está mounted (previene
+  // rubber-band scroll en iOS Safari + scroll accidental Android debajo
+  // del modal full-screen).
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    const prevOverflow = document.body.style.overflow;
+    const prevOverscroll = document.body.style.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.overscrollBehavior = prevOverscroll;
+    };
+  }, []);
   // Phase 7 SP-B-1 Capa 4 — track previous phase index para detect transitions.
   // useRef no triggers re-render; se actualiza en onTransitionComplete del
   // TransitionContainer (cuando termina el envelope de 600ms).
@@ -459,7 +474,8 @@ export default function ProtocolPlayer({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          paddingBlock: spacing.s16,
+          paddingBlockStart: `calc(${spacing.s16}px + env(safe-area-inset-top, 0px))`,
+          paddingBlockEnd: spacing.s16,
           paddingInline: spacing.s16,
           borderBlockEnd: `0.5px solid ${colors.separator}`,
           gap: 8,
@@ -641,7 +657,8 @@ export default function ProtocolPlayer({
           alignItems: "center",
           justifyContent: "center",
           gap: spacing.s16,
-          paddingBlock: spacing.s24,
+          paddingBlockStart: spacing.s24,
+          paddingBlockEnd: `calc(${spacing.s24}px + env(safe-area-inset-bottom, 0px))`,
           paddingInline: spacing.s16,
           borderBlockStart: `0.5px solid ${colors.separator}`,
           flexWrap: "wrap",
