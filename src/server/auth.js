@@ -182,7 +182,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: dbAdapter,
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   pages: { signIn: "/signin", error: "/signin" },
-  trustHost: process.env.AUTH_TRUST_HOST === "1" || process.env.NODE_ENV !== "production",
+  // trustHost: Auth.js v5 valida el `host` header contra AUTH_URL salvo
+  // que trustHost sea true. En serverless/Vercel el request llega tras un
+  // proxy → host real viene en X-Forwarded-Host → trustHost debe ser true.
+  // Auto-detectamos Vercel (env VERCEL=1) y aceptamos AUTH_TRUST_HOST en
+  // sus formas comunes ("true" per docs Auth.js, "1" legacy). Sin esto,
+  // signin desde el dominio prod devuelve ?error=Configuration.
+  trustHost:
+    !!process.env.VERCEL ||
+    process.env.AUTH_TRUST_HOST === "1" ||
+    process.env.AUTH_TRUST_HOST === "true" ||
+    process.env.NODE_ENV !== "production",
   providers: [
     ...(process.env.OKTA_CLIENT_ID && process.env.OKTA_CLIENT_SECRET && process.env.OKTA_ISSUER ? [Okta({
       clientId: process.env.OKTA_CLIENT_ID,

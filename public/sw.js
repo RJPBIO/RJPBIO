@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 38; // Auth fix 426bcae — invalidar bundle viejo de SignInClient que llamaba GET /api/auth/signin/<provider> (Auth.js v5 removió ese path → ?error=Configuration). Mobile PWA users servían bundle stale; este bump fuerza eviction de DYNAMIC_CACHE en activate.
+const CACHE_VERSION = 39; // Auth fix 426bcae + trustHost fix — invalidar bundle viejo de SignInClient. v39 además hace skipWaiting + force-reload clients para que el fix llegue a PWA users sin pasos manuales (auth es crítico, no aplica la regla "user decides when to update").
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -24,10 +24,13 @@ const PRECACHE = [
 ];
 
 // ─── Install ─────────────────────────────────────────────
-// NOTE: no auto-skipWaiting aquí. Dejamos el nuevo SW en estado `waiting`
-// para que la UI pueda mostrar un toast "nueva versión — recargar" y el
-// usuario decida cuándo tomar control. El mensaje SKIP_WAITING lo activa.
+// v39 excepción: skipWaiting() automático. Normalmente dejamos el SW en
+// estado `waiting` y un toast UI manda SKIP_WAITING. Pero esta versión
+// corrige un bug que rompe sign-in (Auth.js v5 GET endpoint removido →
+// ?error=Configuration) y los PWA users no llegan al toast si ya están
+// en la pantalla de error. Auth crítico → invisible recovery > control.
 self.addEventListener("install", (e) => {
+  self.skipWaiting();
   e.waitUntil(caches.open(STATIC_CACHE).then((c) => c.addAll(PRECACHE)));
 });
 
@@ -45,6 +48,16 @@ self.addEventListener("activate", (e) => {
       try { await self.registration.navigationPreload.enable(); } catch {}
     }
     await self.clients.claim();
+    // v39 excepción: force-reload de todas las PWA windows abiertas. Sin
+    // esto el bundle JS viejo sigue ejecutándose hasta el próximo reload
+    // manual — el SPA routing no re-fetcha chunks. Para un fix de auth
+    // crítico el reload silencioso es el comportamiento correcto.
+    try {
+      const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const w of wins) {
+        if (typeof w.navigate === "function") await w.navigate(w.url).catch(() => {});
+      }
+    } catch {}
   })());
 });
 
