@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 40; // Auth hardening v3 — Prisma serverless config (pgbouncer flag), adapter Proxy logging, callbacks bulletproof, cookies explicit. Mantenemos skipWaiting + force-reload de v39 para que llegue a PWA users sin pasos manuales.
+const CACHE_VERSION = 41; // Coach fix — CoachV2 ahora envía x-csrf-token header (Sprint 92 agregó CSRF al server, UI no lo mandaba → 403 silencioso "no pude responder"). Bump para invalidar bundle viejo en PWA. Mantiene skipWaiting + force-reload de v39.
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";

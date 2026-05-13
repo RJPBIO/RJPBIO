@@ -50,6 +50,18 @@ function compactUserContext(ctx) {
 // Reemplazada por valor real ~50ms después.
 const DEFAULT_QUOTA = { used: 0, max: 100, plan: "PRO" };
 
+// CSRF double-submit: /api/coach POST (Sprint 92) requiere x-csrf-token
+// header que matchea cookie bio-csrf emitida por middleware. Sin esto la
+// request muere con 403 antes de llegar al handler y el user ve
+// "No pude responder ahora" sin contexto. Mismo patrón que src/lib/push.js.
+const CSRF_COOKIE = "bio-csrf";
+const CSRF_HEADER = "x-csrf-token";
+function readCsrfCookie() {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${CSRF_COOKIE}=([^;]+)`));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 export default function CoachV2({ onNavigate, onBellClick, devOverride = null }) {
   const store = useStore();
   useEffect(() => { devLog("[v2] CoachV2 active", { devOverride }); }, [devOverride]);
@@ -158,9 +170,13 @@ export default function CoachV2({ onNavigate, onBellClick, devOverride = null })
       const apiMessages = (freshConv?.messages || [])
         .filter((m) => m.role === "user" || m.role === "coach")
         .map((m) => ({ role: m.role === "coach" ? "assistant" : "user", content: m.content }));
+      const headers = { "content-type": "application/json" };
+      const csrf = readCsrfCookie();
+      if (csrf) headers[CSRF_HEADER] = csrf;
       const resp = await fetch("/api/coach", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers,
+        credentials: "same-origin",
         body: JSON.stringify({
           messages: apiMessages,
           userContext,
