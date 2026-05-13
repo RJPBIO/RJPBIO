@@ -22,6 +22,18 @@ export default defineConfig({
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
     { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
     { name: "mobile-safari", use: { ...devices["iPhone 14"] } },
+    // SP-1.5 — proyecto additive para capture-pwa-mockups.mjs (TASK 3).
+    // iPhone 15 Pro device emulation con reducedMotion forced para evitar
+    // timeout en framer-motion infinite loops detectado en SP-1 baseline
+    // captures (marketing landing fullpage timeout-eó).
+    // NO se ejecuta en CI default; activar con --project=mockup-capture-iphone-15-pro.
+    {
+      name: "mockup-capture-iphone-15-pro",
+      use: {
+        ...devices["iPhone 15 Pro"],
+        contextOptions: { reducedMotion: "reduce" },
+      },
+    },
   ],
   webServer: process.env.CI
     ? { command: "npm run build && npm start", url: "http://localhost:3000", reuseExistingServer: false, timeout: 180_000 }

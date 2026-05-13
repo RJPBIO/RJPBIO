@@ -57,3 +57,8 @@ next-env.d.ts
 /FRONTEND_UI_UX_AUDIT.md
 /RECON.md
 /SYSTEM_OVERVIEW.md
+
+# SP-1.5 — capturas regenerables via `node scripts/capture-pwa-mockups.mjs`.
+# Output del Playwright batch capture; no commitear (regenerable, machine-local).
+/public/screenshots/why/
+/screenshots/sp-marketing-pwa-analysis/

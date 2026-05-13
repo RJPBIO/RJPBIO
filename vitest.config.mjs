@@ -32,7 +32,7 @@ export default defineConfig({
       ],
       thresholds: { lines: 70, functions: 70, branches: 60, statements: 70 },
     },
-    include: ["src/**/*.test.{js,jsx}"],
+    include: ["src/**/*.test.{js,jsx}", "scripts/**/*.test.mjs"],
     alias: {
       "server-only": new URL("./test-stubs/server-only.js", import.meta.url).pathname,
       "@/": new URL("./src/", import.meta.url).pathname,
