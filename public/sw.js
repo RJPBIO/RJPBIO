@@ -3,7 +3,7 @@
    Offline-first · Push · Background Sync · Periodic Sync
    ═══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 37; // Sprint 105 — más undefined-token bugs: space[9]/space[3.5] (26 sitios padding 0), radius.pill (corners cuadrados), font.weight.regular (default weight), --bi-ok (NOM-035 risk colors invisibles)
+const CACHE_VERSION = 38; // Auth fix 426bcae — invalidar bundle viejo de SignInClient que llamaba GET /api/auth/signin/<provider> (Auth.js v5 removió ese path → ?error=Configuration). Mobile PWA users servían bundle stale; este bump fuerza eviction de DYNAMIC_CACHE en activate.
 const STATIC_CACHE = `bio-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bio-dynamic-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
