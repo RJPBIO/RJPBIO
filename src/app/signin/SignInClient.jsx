@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AuthShell } from "@/components/ui/AuthShell";
 import { Field } from "@/components/ui/Field";
@@ -269,11 +270,20 @@ export default function SignInClient({ locale = "es" }) {
     return () => { cancelled = true; conditionalAbortRef.current?.abort(); };
   }, [callbackUrl]);
 
-  function startIdp(provider, url) {
-    setSsoLoading(provider);
+  // Auth.js v5 removió el GET /api/auth/signin/<provider>; ahora requiere
+  // POST + CSRF. signIn() de next-auth/react lo hace internamente y luego
+  // navega. stateKey separa el spinner del providerId real (caso SSO discovery
+  // donde "sso" es el spinner pero el provider real es okta/azure-ad/etc).
+  async function startIdp(stateKey, providerId = stateKey, authParams = undefined) {
+    setSsoLoading(stateKey);
     setErr("");
-    try { localStorage.setItem("bio-last-signin", provider); } catch {}
-    location.href = url;
+    try { localStorage.setItem("bio-last-signin", stateKey); } catch {}
+    try {
+      await signIn(providerId, { callbackUrl }, authParams);
+    } catch {
+      setErr(T.errGeneric);
+      setSsoLoading(null);
+    }
   }
 
   async function onEmailSubmit(e) {
@@ -441,7 +451,7 @@ export default function SignInClient({ locale = "es" }) {
           <Button
             type="button" block
             className="bi-oauth bi-oauth-google"
-            onClick={() => startIdp("google", `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
+            onClick={() => startIdp("google")}
             disabled={anyBusy}
             loading={ssoLoading === "google"}
             loadingLabel={T.ssoLoading}
@@ -454,7 +464,7 @@ export default function SignInClient({ locale = "es" }) {
           <Button
             type="button" block
             className="bi-oauth bi-oauth-microsoft"
-            onClick={() => startIdp("azure-ad", `/api/auth/signin/azure-ad?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
+            onClick={() => startIdp("azure-ad")}
             disabled={anyBusy}
             loading={ssoLoading === "azure-ad"}
             loadingLabel={T.ssoLoading}
@@ -467,7 +477,7 @@ export default function SignInClient({ locale = "es" }) {
           <Button
             type="button" block
             className="bi-oauth bi-oauth-apple"
-            onClick={() => startIdp("apple", `/api/auth/signin/apple?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
+            onClick={() => startIdp("apple")}
             disabled={anyBusy}
             loading={ssoLoading === "apple"}
             loadingLabel={T.ssoLoading}
@@ -524,7 +534,7 @@ export default function SignInClient({ locale = "es" }) {
         {sso && (
           <Button
             type="button" block
-            onClick={() => startIdp("sso", `/api/auth/signin/${sso.provider}?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`)}
+            onClick={() => startIdp("sso", sso.provider, { login_hint: email })}
             loading={ssoLoading === "sso"}
             loadingLabel={T.ssoLoading}
             disabled={anyBusy && ssoLoading !== "sso"}
@@ -680,7 +690,7 @@ export default function SignInClient({ locale = "es" }) {
                       <Button
                         type="button" variant="secondary" block
                         className="bi-refined"
-                        onClick={() => startIdp("okta", `/api/auth/signin/okta?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
+                        onClick={() => startIdp("okta")}
                         disabled={anyBusy}
                         loading={ssoLoading === "okta"}
                         loadingLabel={T.ssoLoading}
