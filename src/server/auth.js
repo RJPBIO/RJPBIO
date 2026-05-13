@@ -226,9 +226,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     warn(code) { console.warn("[auth][warn]", code); },
   },
-  // Cookie config explícito. Por default Auth.js v5 usa __Secure- prefix
-  // en prod (correcto), pero algunos PWA standalone (iOS) tienen issues
-  // con cookies sin sameSite explícito. Lo declaramos para evitar surprises.
+  // Cookie config explícito. Crítico: maxAge explícito para que el cookie
+  // sobreviva al "browser close" — sin esto Auth.js v5 emite session
+  // cookies (sin Max-Age header) y PWA standalone (iOS/Android) los borra
+  // al backgroundear la app, deslogueando al user al reabrir. Con maxAge
+  // el cookie persiste cross-restart de PWA y matches el JWT exp del server.
   cookies: {
     sessionToken: {
       name: process.env.NODE_ENV === "production"
@@ -239,6 +241,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
+        maxAge: 8 * 60 * 60, // 8h — match session.maxAge
       },
     },
   },

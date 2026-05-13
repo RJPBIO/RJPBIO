@@ -39,9 +39,14 @@ export async function createSession({ userId, ip, userAgent, ttlHours }) {
       data: { userId, jti, ip: ip || null, userAgent: userAgent || null, label, expiresAt },
     });
   } catch (e) {
-    // DB error: devolvemos jti igual — el JWT seguirá funcionando, sólo
-    // no aparece en /account. Mejor que bloquear signin.
-    return jti;
+    // DB error en INSERT — antes devolvíamos jti igual ("mejor que bloquear
+    // signin"), pero eso creaba JWTs con jti huérfano: la próxima lazy
+    // revalidación buscaba la row, no la encontraba, kickeaba al user.
+    // Ahora retornamos null → jwt callback omite token.jti → shouldRevalidate
+    // retorna false → no revalidación → no kick. Trade-off: la sesión no
+    // aparece en /account/sessions, pero el user sigue logueado.
+    console.error("[createSession] failed to persist UserSession row:", e?.code, e?.message || e);
+    return null;
   }
   return jti;
 }
@@ -70,7 +75,17 @@ export async function isSessionValid({ jti, userId, tokenEpoch }) {
         select: { sessionEpoch: true },
       }),
     ]);
-    if (!sess) return false;
+    // Sin row encontrada → fail-open. Antes retornaba false → kickeaba al
+    // user. Pero "no row" puede significar: (a) bug previo donde createSession
+    // creó jti huérfano sin INSERT, (b) row hard-deleted por cron, (c) atacante
+    // con jti forjado. Caso (c) requiere conocer AUTH_SECRET (entonces el
+    // sistema está comprometido de raíz), y (a)+(b) son bugs nuestros que no
+    // deben penalizar al user. Revokes explícitos (revokedAt) y expiry siguen
+    // siendo respetados abajo.
+    if (!sess) {
+      console.warn("[isSessionValid] no UserSession row for jti — fail-open (likely orphan from createSession DB error)");
+      return true;
+    }
     if (sess.userId !== userId) return false; // jti ↔ user mismatch
     if (sess.revokedAt) return false;
     if (sess.expiresAt.getTime() <= Date.now()) return false;
