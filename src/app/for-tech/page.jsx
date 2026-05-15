@@ -52,7 +52,7 @@ const COPY = {
       "La alert fatigue, el MTTR degradado y el churn del SRE senior viven en el mismo eslabón fisiológico. Se mide en HRV, no en engagement survey.",
     intro:
       "BIO-IGNICIÓN se instrumenta en los 3 minutos post-incident, pre-handoff o en el sprint retro abierto. SOC 2 CC7.3-aligned, ISO/IEC 27035-ready, panel operativo visible al VP Eng / Head of SRE — no al analista de RRHH.",
-    metaSoc: "SOC 2 Type I · activo",
+    metaSoc: "SOC 2 · auditoría activa",
     metaCc73: "SOC 2 CC7.3 · incident response",
     metaIso: "ISO/IEC 27035 · ready",
     metaShift: "3 min post-incident",
@@ -108,7 +108,7 @@ const COPY = {
     fitL3: "Reportes individuales permanecen privados para el ingeniero · cumple expectativa de confidencialidad equivalente a EAP regulado · evita discrimination claim bajo ADA y permite compatibilidad con GDPR Art. 9 data minimization.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible con IdP enterprise (Okta, Ping, Azure AD, Google Workspace) · provisioning automático y logging SOC-2-ready.",
     fitL5: "IR-program evidence pack · artifacts de wellbeing dentro del incident response program · descargables bajo NDA para auditor SOC 2 / ISO 27001.",
-    fitL6: "Exports bajo NDA: SOC 2 Type I, DPA, ISO 27001 gap analysis, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix.",
+    fitL6: "Exports bajo NDA: SOC 2 posture document, DPA, ISO 27001 gap analysis, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix.",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU ORG",
     peerH: "Contra lo que ya tienes instalado.",
@@ -157,8 +157,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · TECH",
     entH: "Lo que tu equipo security, legal y procurement va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (SOC 2 Type I, DPA, ISO 27001 gap, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix) entregados bajo NDA vía Trust Center.",
-    entSoc2: "SOC 2 Type I · postura activa",
+      "Postura documentada para cada control. Artefactos formales (SOC 2 posture document, DPA, ISO 27001 gap, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix) entregados bajo NDA vía Trust Center.",
+    entSoc2: "SOC 2 · auditoría activa",
     entCc73: "SOC 2 CC7.3 · IR-aligned",
     entIso27001: "ISO 27001 · gap analysis",
     entIso27035: "ISO/IEC 27035 · IR-ready",
@@ -204,7 +204,7 @@ const COPY = {
       "Alert fatigue, degraded MTTR and senior-SRE churn live on the same physiological link. It's measured in HRV, not in engagement survey.",
     intro:
       "BIO-IGNICIÓN instruments the 3 minutes that already exist post-incident, pre-handoff or in the open sprint retro. SOC 2 CC7.3-aligned, ISO/IEC 27035-ready, operating dashboard visible to VP Eng / Head of SRE — not to the HR analyst.",
-    metaSoc: "SOC 2 Type I · active",
+    metaSoc: "SOC 2 · audit active",
     metaCc73: "SOC 2 CC7.3 · incident response",
     metaIso: "ISO/IEC 27035 · ready",
     metaShift: "3 min post-incident",
@@ -260,7 +260,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the engineer · matches regulated-EAP confidentiality expectation · avoids ADA discrimination claims and supports GDPR Art. 9 data minimization.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible with enterprise IdPs (Okta, Ping, Azure AD, Google Workspace) · automated provisioning and SOC-2-ready logging.",
     fitL5: "IR-program evidence pack · wellbeing artifacts inside the incident response program · downloadable under NDA for SOC 2 / ISO 27001 auditor.",
-    fitL6: "Under-NDA exports: SOC 2 Type I, DPA, ISO 27001 gap analysis, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix.",
+    fitL6: "Under-NDA exports: SOC 2 posture document, DPA, ISO 27001 gap analysis, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix.",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your org already has.",
@@ -309,8 +309,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · TECH",
     entH: "Everything your security, legal and procurement team will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (SOC 2 Type I, DPA, ISO 27001 gap, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix) delivered under NDA via Trust Center.",
-    entSoc2: "SOC 2 Type I · active posture",
+      "Documented posture for each control. Formal artifacts (SOC 2 posture document, DPA, ISO 27001 gap, ISO/IEC 27035 mapping, NIST SP 800-61 alignment matrix) delivered under NDA via Trust Center.",
+    entSoc2: "SOC 2 · audit active",
     entCc73: "SOC 2 CC7.3 · IR-aligned",
     entIso27001: "ISO 27001 · gap analysis",
     entIso27035: "ISO/IEC 27035 · IR-ready",

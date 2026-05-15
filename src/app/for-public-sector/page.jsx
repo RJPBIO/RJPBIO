@@ -54,7 +54,7 @@ const COPY = {
       "El call center PSAP, el incident commander en shift 18-sobre-24, el analyst con clearance y el corrections officer en rotación viven en el mismo eslabón fisiológico. Se mide en HRV, no en engagement score FEVS.",
     intro:
       "BIO-IGNICIÓN se instrumenta en los 3 minutos pre-shift, en briefing de incident command o en turno PSAP. NIST 800-53-aligned, FedRAMP moderate-ready, panel operativo visible al Chief Human Capital Officer / Safety & Occupational Health Manager — no al analista de encuesta anual.",
-    metaSoc: "SOC 2 Type I · activo",
+    metaSoc: "SOC 2 · auditoría activa",
     metaFed: "FedRAMP · moderate-ready",
     metaNist: "NIST 800-53 · aligned",
     metaShift: "3 min pre-shift",
@@ -110,7 +110,7 @@ const COPY = {
     fitL3: "Reportes individuales permanecen privados para el servidor · cumple expectativa de confidencialidad equivalente a EAP federal (FEAP) · evita retaliation claim bajo Whistleblower Protection Act (5 U.S.C. § 2302) y bajo NIST SP 800-53 AC-22 public-access-controlled information.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible con Login.gov / PIV / CAC / IdP enterprise · provisioning automático y logging NIST AU-family-ready.",
     fitL5: "NIST 800-53 evidence pack · artifacts de operational-readiness + fatigue risk register + personnel-reliability training-compliance · descargables bajo NDA para IG auditor o 3PAO assessor.",
-    fitL6: "Exports bajo NDA: SOC 2 Type I, DPA, ISO 27001 gap analysis, NIST 800-53 mapping, FedRAMP moderate readiness assessment (status: ready, no ATO).",
+    fitL6: "Exports bajo NDA: SOC 2 posture document, DPA, ISO 27001 gap analysis, NIST 800-53 mapping, FedRAMP moderate readiness assessment (status: ready, no ATO).",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU AGENCIA",
     peerH: "Contra lo que ya tienes instalado.",
@@ -159,8 +159,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · PUBLIC SECTOR",
     entH: "Lo que tu Contracting Officer, IG y Chief Security Officer va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (SOC 2 Type I, DPA, ISO 27001 gap, NIST 800-53 mapping, FedRAMP moderate readiness, NFPA 1582 compatibility note) entregados bajo NDA vía Trust Center.",
-    entSoc2: "SOC 2 Type I · postura activa",
+      "Postura documentada para cada control. Artefactos formales (SOC 2 posture document, DPA, ISO 27001 gap, NIST 800-53 mapping, FedRAMP moderate readiness, NFPA 1582 compatibility note) entregados bajo NDA vía Trust Center.",
+    entSoc2: "SOC 2 · auditoría activa",
     entFedramp: "FedRAMP · moderate-ready (no ATO)",
     entNist: "NIST 800-53 · Rev. 5 aligned",
     entErhms: "NIOSH ERHMS · compatible",
@@ -206,7 +206,7 @@ const COPY = {
       "The PSAP dispatcher, the incident commander on an 18-of-24 shift, the cleared analyst and the corrections officer on rotation live on the same physiological link. It's measured in HRV, not FEVS engagement score.",
     intro:
       "BIO-IGNICIÓN instruments the 3 minutes that already exist pre-shift, at incident-command briefing or at PSAP check-in. NIST 800-53-aligned, FedRAMP moderate-ready, operating dashboard visible to the Chief Human Capital Officer / Safety & Occupational Health Manager — not to the annual-survey analyst.",
-    metaSoc: "SOC 2 Type I · active",
+    metaSoc: "SOC 2 · audit active",
     metaFed: "FedRAMP · moderate-ready",
     metaNist: "NIST 800-53 · aligned",
     metaShift: "3 min pre-shift",
@@ -262,7 +262,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the servant · matches federal EAP (FEAP) confidentiality expectation · avoids retaliation claims under the Whistleblower Protection Act (5 U.S.C. § 2302) and NIST SP 800-53 AC-22 public-access-controlled information.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible with Login.gov / PIV / CAC / enterprise IdPs · automated provisioning and NIST AU-family-ready logging.",
     fitL5: "NIST 800-53 evidence pack · operational-readiness + fatigue risk register + personnel-reliability training-compliance artifacts · downloadable under NDA for IG auditor or 3PAO assessor.",
-    fitL6: "Under-NDA exports: SOC 2 Type I, DPA, ISO 27001 gap analysis, NIST 800-53 mapping, FedRAMP moderate readiness assessment (status: ready, no ATO).",
+    fitL6: "Under-NDA exports: SOC 2 posture document, DPA, ISO 27001 gap analysis, NIST 800-53 mapping, FedRAMP moderate readiness assessment (status: ready, no ATO).",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your agency already has.",
@@ -311,8 +311,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · PUBLIC SECTOR",
     entH: "Everything your Contracting Officer, IG and Chief Security Officer will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (SOC 2 Type I, DPA, ISO 27001 gap, NIST 800-53 mapping, FedRAMP moderate readiness, NFPA 1582 compatibility note) delivered under NDA via Trust Center.",
-    entSoc2: "SOC 2 Type I · active posture",
+      "Documented posture for each control. Formal artifacts (SOC 2 posture document, DPA, ISO 27001 gap, NIST 800-53 mapping, FedRAMP moderate readiness, NFPA 1582 compatibility note) delivered under NDA via Trust Center.",
+    entSoc2: "SOC 2 · audit active",
     entFedramp: "FedRAMP · moderate-ready (no ATO)",
     entNist: "NIST 800-53 · Rev. 5 aligned",
     entErhms: "NIOSH ERHMS · compatible",

@@ -106,7 +106,7 @@ const COPY = {
     fitL3: "Individual reports permanecen privados para el clínico · cumple expectativa de confidencialidad equivalente a EAP.",
     fitL4: "Integración SSO SAML 2.0 · compatible con IdP hospitalarios (Okta, Ping, Azure AD) · sin cuentas paralelas.",
     fitL5: "NOM-035 SALUD dashboard · evidencia descargable para STPS y auditores terceros · incluida en plan Growth.",
-    fitL6: "Exports bajo NDA: SOC 2 Type I posture, HIPAA BAA, DPA, ISO 27001 gap analysis.",
+    fitL6: "Exports bajo NDA: SOC 2 posture document, HIPAA BAA, DPA, ISO 27001 gap analysis.",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU HOSPITAL",
     peerH: "Contra lo que ya tienes instalado.",
@@ -151,9 +151,9 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · CLÍNICO",
     entH: "Lo que tu equipo legal y procurement va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (HIPAA BAA, SOC 2 Type I, DPA, ISO 27001 gap) entregados bajo NDA vía Trust Center.",
+      "Postura documentada para cada control. Artefactos formales (HIPAA BAA, SOC 2 posture document, DPA, ISO 27001 gap) entregados bajo NDA vía Trust Center.",
     entHipaa: "HIPAA · BAA-ready",
-    entSoc2: "SOC 2 Type I · postura activa",
+    entSoc2: "SOC 2 · auditoría activa",
     entNom: "NOM-035 SALUD · dashboard + evidencia",
     entIso: "ISO 27001 · gap analysis",
     entDpa: "DPA · GDPR Recital 26",
@@ -251,7 +251,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the clinician · matches EAP-equivalent confidentiality expectation.",
     fitL4: "SSO SAML 2.0 integration · compatible with hospital IdPs (Okta, Ping, Azure AD) · no parallel accounts.",
     fitL5: "NOM-035 SALUD dashboard · downloadable evidence for STPS and third-party auditors · included in Growth plan.",
-    fitL6: "Under-NDA exports: SOC 2 Type I posture, HIPAA BAA, DPA, ISO 27001 gap analysis.",
+    fitL6: "Under-NDA exports: SOC 2 posture document, HIPAA BAA, DPA, ISO 27001 gap analysis.",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your hospital already has.",
@@ -296,9 +296,9 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · CLINICAL",
     entH: "Everything your legal and procurement team will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (HIPAA BAA, SOC 2 Type I, DPA, ISO 27001 gap) delivered under NDA via Trust Center.",
+      "Documented posture for each control. Formal artifacts (HIPAA BAA, SOC 2 posture document, DPA, ISO 27001 gap) delivered under NDA via Trust Center.",
     entHipaa: "HIPAA · BAA-ready",
-    entSoc2: "SOC 2 Type I · active posture",
+    entSoc2: "SOC 2 · audit active",
     entNom: "NOM-035 SALUD · dashboard + evidence",
     entIso: "ISO 27001 · gap analysis",
     entDpa: "DPA · GDPR Recital 26",

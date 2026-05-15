@@ -133,7 +133,7 @@ const COPY = {
       kicker: "POR QUÉ FÍSICO · CUANDO TODO ES DIGITAL",
       h: "Porque el adoption rate sube cuando el punto de activación es un objeto en su escritorio.",
       bullets: [
-        { t: "Onboarding observado", d: "Activación física presencial sube 3× la tasa de onboarding vs link por email, medido en pilotos 2025." },
+        { t: "Onboarding tangible", d: "La hipótesis es que activación física presencial sube la tasa de onboarding vs link por email — basado en literatura de adopción NFC/QR en lobbies (no en pilotos propios todavía; Q2 2026 generará el primer dato propio)." },
         { t: "Trazabilidad fleet", d: "Cada tarjeta lleva un ID único. Sabes qué operador, qué equipo y qué sede activaron. Exportable a tu HRIS." },
         { t: "Seguridad NFC", d: "El chip NTAG 424 DNA firma cada tap con autenticación criptográfica. No es una URL pegada, es un handshake." },
         { t: "Marca tangible", d: "Un objeto de oficina con el trademark BIO-IGNICIÓN. Recordatorio diario del compromiso con el equipo." },
@@ -270,7 +270,7 @@ const COPY = {
       kicker: "WHY PHYSICAL · WHEN EVERYTHING IS DIGITAL",
       h: "Because adoption rate rises when the activation point is an object on the desk.",
       bullets: [
-        { t: "Observed onboarding", d: "In-person physical activation lifts onboarding 3× vs email-link, measured across 2025 pilots." },
+        { t: "Tangible onboarding", d: "Working hypothesis: in-person physical activation raises onboarding vs email-link — grounded in NFC/QR lobby adoption literature (not our own pilots yet; Q2 2026 will generate the first proprietary data)." },
         { t: "Fleet traceability", d: "Each card has a unique ID. You know which operator, team and site activated. Exportable to your HRIS." },
         { t: "NFC security", d: "NTAG 424 DNA cryptographically signs every tap. Not a stuck URL — a handshake." },
         { t: "Tangible brand", d: "An office object bearing the BIO-IGNICIÓN trademark. A daily reminder of the commitment to the team." },

@@ -52,7 +52,7 @@ const COPY = {
       "El incident bajo fatiga, la decisión táctica deteriorada y el churn de first-officer type-rated viven en el mismo eslabón fisiológico. Se mide en HRV, no en duty-time log.",
     intro:
       "BIO-IGNICIÓN se instrumenta en los 3 minutos pre-vuelo, en turnaround o en briefing de ATC. FAA Part 117 y EASA FTL-aligned, ICAO FRMS-ready, panel operativo visible al VP Flight Ops / FRMS Manager — no al analista de RRHH.",
-    metaSoc: "SOC 2 Type I · activo",
+    metaSoc: "SOC 2 · auditoría activa",
     metaPart117: "FAA Part 117 · FTL-aligned",
     metaFrms: "ICAO FRMS · Appendix 7-ready",
     metaShift: "3 min pre-vuelo",
@@ -108,7 +108,7 @@ const COPY = {
     fitL3: "Reportes individuales permanecen privados para el crew member · cumple expectativa de confidencialidad compatible con ASAP / non-punitive reporting · evita retaliation claim bajo Whistleblower Protection Program (AIR21) y FRMS just-culture.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible con IdP enterprise y con airline crew-management systems (Jeppesen, Sabre) · provisioning automático y logging FRMS-ready.",
     fitL5: "FRMS evidence pack · artifacts del programa compatibles con ICAO Annex 6 Appendix 7 · descargables bajo NDA para FAA Part 117 inspector o EASA FTL auditor.",
-    fitL6: "Exports bajo NDA: SOC 2 Type I, DPA, ISO 27001 gap analysis, FRMS indicator mapping, NOM-035 STPS reporte anual (si aplica México).",
+    fitL6: "Exports bajo NDA: SOC 2 posture document, DPA, ISO 27001 gap analysis, FRMS indicator mapping, NOM-035 STPS reporte anual (si aplica México).",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU OPERACIÓN",
     peerH: "Contra lo que ya tienes instalado.",
@@ -155,8 +155,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · AVIATION",
     entH: "Lo que tu equipo safety, legal y procurement va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (SOC 2 Type I, DPA, ISO 27001 gap, FRMS indicator mapping, FAA Part 117 / EASA FTL alignment matrix) entregados bajo NDA vía Trust Center.",
-    entSoc2: "SOC 2 Type I · postura activa",
+      "Postura documentada para cada control. Artefactos formales (SOC 2 posture document, DPA, ISO 27001 gap, FRMS indicator mapping, FAA Part 117 / EASA FTL alignment matrix) entregados bajo NDA vía Trust Center.",
+    entSoc2: "SOC 2 · auditoría activa",
     entFaa: "FAA Part 117 · FTL-aligned",
     entEasa: "EASA FTL · Reg 83/2014",
     entIcao: "ICAO FRMS · Appendix 7-ready",
@@ -200,7 +200,7 @@ const COPY = {
       "The fatigued incident, the degraded tactical decision and type-rated first-officer churn live on the same physiological link. It's measured in HRV, not in a duty-time log.",
     intro:
       "BIO-IGNICIÓN instruments the 3 minutes that already exist pre-flight, at turnaround or at ATC briefing. FAA Part 117 and EASA FTL-aligned, ICAO FRMS-ready, operating dashboard visible to VP Flight Ops / FRMS Manager — not to the HR analyst.",
-    metaSoc: "SOC 2 Type I · active",
+    metaSoc: "SOC 2 · audit active",
     metaPart117: "FAA Part 117 · FTL-aligned",
     metaFrms: "ICAO FRMS · Appendix 7-ready",
     metaShift: "3 min pre-flight",
@@ -256,7 +256,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the crew member · matches ASAP / non-punitive reporting confidentiality expectation · avoids retaliation claims under Whistleblower Protection Program (AIR21) and FRMS just-culture.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible with enterprise IdPs and airline crew-management systems (Jeppesen, Sabre) · automated provisioning and FRMS-ready logging.",
     fitL5: "FRMS evidence pack · program artifacts compatible with ICAO Annex 6 Appendix 7 · downloadable under NDA for FAA Part 117 inspector or EASA FTL auditor.",
-    fitL6: "Under-NDA exports: SOC 2 Type I, DPA, ISO 27001 gap analysis, FRMS indicator mapping, STPS NOM-035 annual report (if Mexico applies).",
+    fitL6: "Under-NDA exports: SOC 2 posture document, DPA, ISO 27001 gap analysis, FRMS indicator mapping, STPS NOM-035 annual report (if Mexico applies).",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your operation already has.",
@@ -303,8 +303,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · AVIATION",
     entH: "Everything your safety, legal and procurement team will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (SOC 2 Type I, DPA, ISO 27001 gap, FRMS indicator mapping, FAA Part 117 / EASA FTL alignment matrix) delivered under NDA via Trust Center.",
-    entSoc2: "SOC 2 Type I · active posture",
+      "Documented posture for each control. Formal artifacts (SOC 2 posture document, DPA, ISO 27001 gap, FRMS indicator mapping, FAA Part 117 / EASA FTL alignment matrix) delivered under NDA via Trust Center.",
+    entSoc2: "SOC 2 · audit active",
     entFaa: "FAA Part 117 · FTL-aligned",
     entEasa: "EASA FTL · Reg 83/2014",
     entIcao: "ICAO FRMS · Appendix 7-ready",

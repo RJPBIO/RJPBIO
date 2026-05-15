@@ -51,7 +51,7 @@ const COPY = {
       "El fat-finger, la decisión de riesgo deteriorada y el churn de analistas viven en el mismo eslabón fisiológico. Se mide en HRV, no en P&L.",
     intro:
       "BIO-IGNICIÓN se instrumenta en los 3 minutos pre-market, entre deals o en el post-close huddle. SOX audit-trail-ready, FINRA supervision-aligned, panel operativo visible al CRO/COO — no al analista de RRHH.",
-    metaSoc: "SOC 2 Type I · activo",
+    metaSoc: "SOC 2 · auditoría activa",
     metaSox: "SOX · audit-trail-ready",
     metaFinra: "FINRA supervision-aligned",
     metaShift: "3 min pre-market",
@@ -107,7 +107,7 @@ const COPY = {
     fitL3: "Reportes individuales permanecen privados para el trader/analista · cumple expectativa de confidencialidad equivalente a EAP regulado.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible con IdP enterprise (Okta, Ping, Azure AD) · provisioning automático y logging SOX-ready.",
     fitL5: "SOX 404 evidence pack · artifacts de control environment (people-risk) descargables bajo NDA para auditor externo.",
-    fitL6: "Exports bajo NDA: SOC 2 Type I, DPA, ISO 27001 gap analysis, FINRA supervision mapping.",
+    fitL6: "Exports bajo NDA: SOC 2 posture document, DPA, ISO 27001 gap analysis, FINRA supervision mapping.",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU FIRMA",
     peerH: "Contra lo que ya tienes instalado.",
@@ -156,8 +156,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · FINANCIERO",
     entH: "Lo que tu equipo legal, compliance y procurement va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (SOC 2 Type I, DPA, ISO 27001 gap, SOX 404 people-risk mapping, FINRA Rule 3110 alignment) entregados bajo NDA vía Trust Center.",
-    entSoc2: "SOC 2 Type I · postura activa",
+      "Postura documentada para cada control. Artefactos formales (SOC 2 posture document, DPA, ISO 27001 gap, SOX 404 people-risk mapping, FINRA Rule 3110 alignment) entregados bajo NDA vía Trust Center.",
+    entSoc2: "SOC 2 · auditoría activa",
     entSox: "SOX 404 · audit-trail-ready",
     entFinra: "FINRA Rule 3110 · supervision-aligned",
     entIso: "ISO 27001 · gap analysis",
@@ -201,7 +201,7 @@ const COPY = {
       "The fat-finger, the degraded risk decision and analyst churn live on the same physiological link. It's measured in HRV, not P&L.",
     intro:
       "BIO-IGNICIÓN instruments the 3 minutes that already exist pre-market, between deals or in the post-close huddle. SOX audit-trail-ready, FINRA supervision-aligned, operating dashboard visible to the CRO/COO — not to the HR analyst.",
-    metaSoc: "SOC 2 Type I · active",
+    metaSoc: "SOC 2 · audit active",
     metaSox: "SOX · audit-trail-ready",
     metaFinra: "FINRA supervision-aligned",
     metaShift: "3 min pre-market",
@@ -257,7 +257,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the trader/analyst · matches regulated-EAP confidentiality expectation.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible with enterprise IdPs (Okta, Ping, Azure AD) · automated provisioning and SOX-ready logging.",
     fitL5: "SOX 404 evidence pack · control-environment artifacts (people-risk) downloadable under NDA for external auditor.",
-    fitL6: "Under-NDA exports: SOC 2 Type I, DPA, ISO 27001 gap analysis, FINRA supervision mapping.",
+    fitL6: "Under-NDA exports: SOC 2 posture document, DPA, ISO 27001 gap analysis, FINRA supervision mapping.",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your firm already has.",
@@ -306,8 +306,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · FINANCIAL",
     entH: "Everything your legal, compliance and procurement team will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (SOC 2 Type I, DPA, ISO 27001 gap, SOX 404 people-risk mapping, FINRA Rule 3110 alignment) delivered under NDA via Trust Center.",
-    entSoc2: "SOC 2 Type I · active posture",
+      "Documented posture for each control. Formal artifacts (SOC 2 posture document, DPA, ISO 27001 gap, SOX 404 people-risk mapping, FINRA Rule 3110 alignment) delivered under NDA via Trust Center.",
+    entSoc2: "SOC 2 · audit active",
     entSox: "SOX 404 · audit-trail-ready",
     entFinra: "FINRA Rule 3110 · supervision-aligned",
     entIso: "ISO 27001 · gap analysis",

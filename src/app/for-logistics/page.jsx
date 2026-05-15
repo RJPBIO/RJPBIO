@@ -51,7 +51,7 @@ const COPY = {
       "El crash del driver, el pick error del warehouse y la rotación del CDL viven en el mismo eslabón fisiológico. Se mide en HRV, no en lagging-indicator de OSHA log.",
     intro:
       "BIO-IGNICIÓN se instrumenta en los 3 minutos pre-ruta, en dock-in o en el shift-change huddle. FMCSA HOS-aligned, OSHA recordkeeping-ready, STPS NOM-035 — panel operativo visible al VP Safety / Fleet Director, no a RRHH.",
-    metaSoc: "SOC 2 Type I · activo",
+    metaSoc: "SOC 2 · auditoría activa",
     metaFmcsa: "FMCSA Part 395 · HOS-aligned",
     metaOsha: "OSHA 1910 · recordkeeping-ready",
     metaShift: "3 min pre-ruta",
@@ -107,7 +107,7 @@ const COPY = {
     fitL3: "Reportes individuales permanecen privados para el driver/operador · cumple expectativa de confidencialidad equivalente a EAP regulado y evita discrimination claim bajo ADA / USMCA labor chapter.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible con IdP enterprise (Okta, Azure AD) y TMS corporativo · provisioning automático y logging DOT-ready.",
     fitL5: "FMCSA / DOT evidence pack · artifacts de fatigue-management program compatibles con FMCSA Safety Management Cycle y NHTSA Behavioral Safety Program review.",
-    fitL6: "Exports bajo NDA: SOC 2 Type I, DPA, ISO 27001 gap analysis, OSHA 300/301 recordkeeping mapping, STPS NOM-035 reporte anual.",
+    fitL6: "Exports bajo NDA: SOC 2 posture document, DPA, ISO 27001 gap analysis, OSHA 300/301 recordkeeping mapping, STPS NOM-035 reporte anual.",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU FLOTA",
     peerH: "Contra lo que ya tienes instalado.",
@@ -154,8 +154,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · LOGÍSTICA",
     entH: "Lo que tu equipo safety, legal y procurement va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (SOC 2 Type I, DPA, ISO 27001 gap, FMCSA fatigue-management mapping, OSHA recordkeeping mapping, STPS NOM-035 reporte) entregados bajo NDA vía Trust Center.",
-    entSoc2: "SOC 2 Type I · postura activa",
+      "Postura documentada para cada control. Artefactos formales (SOC 2 posture document, DPA, ISO 27001 gap, FMCSA fatigue-management mapping, OSHA recordkeeping mapping, STPS NOM-035 reporte) entregados bajo NDA vía Trust Center.",
+    entSoc2: "SOC 2 · auditoría activa",
     entFmcsa: "FMCSA Part 395 · HOS-aligned",
     entOsha: "OSHA 1910 · recordkeeping-ready",
     entNom: "NOM-035 STPS · reporte anual",
@@ -199,7 +199,7 @@ const COPY = {
       "The driver crash, the warehouse pick error and the CDL turnover live on the same physiological link. It's measured in HRV, not in OSHA-log lagging indicators.",
     intro:
       "BIO-IGNICIÓN instruments the 3 minutes that already exist pre-route, at dock-in or in the shift-change huddle. FMCSA HOS-aligned, OSHA recordkeeping-ready, STPS NOM-035 — operating dashboard visible to VP Safety / Fleet Director, not to HR.",
-    metaSoc: "SOC 2 Type I · active",
+    metaSoc: "SOC 2 · audit active",
     metaFmcsa: "FMCSA Part 395 · HOS-aligned",
     metaOsha: "OSHA 1910 · recordkeeping-ready",
     metaShift: "3 min pre-route",
@@ -255,7 +255,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the driver/operator · matches regulated-EAP confidentiality expectation and avoids ADA / USMCA labor-chapter discrimination claims.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible with enterprise IdPs (Okta, Azure AD) and corporate TMS · automated provisioning and DOT-ready logging.",
     fitL5: "FMCSA / DOT evidence pack · fatigue-management program artifacts compatible with FMCSA Safety Management Cycle and NHTSA Behavioral Safety Program review.",
-    fitL6: "Under-NDA exports: SOC 2 Type I, DPA, ISO 27001 gap analysis, OSHA 300/301 recordkeeping mapping, STPS NOM-035 annual report.",
+    fitL6: "Under-NDA exports: SOC 2 posture document, DPA, ISO 27001 gap analysis, OSHA 300/301 recordkeeping mapping, STPS NOM-035 annual report.",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your fleet already has.",
@@ -302,8 +302,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · LOGISTICS",
     entH: "Everything your safety, legal and procurement team will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (SOC 2 Type I, DPA, ISO 27001 gap, FMCSA fatigue-management mapping, OSHA recordkeeping mapping, STPS NOM-035 report) delivered under NDA via Trust Center.",
-    entSoc2: "SOC 2 Type I · active posture",
+      "Documented posture for each control. Formal artifacts (SOC 2 posture document, DPA, ISO 27001 gap, FMCSA fatigue-management mapping, OSHA recordkeeping mapping, STPS NOM-035 report) delivered under NDA via Trust Center.",
+    entSoc2: "SOC 2 · audit active",
     entFmcsa: "FMCSA Part 395 · HOS-aligned",
     entOsha: "OSHA 1910 · recordkeeping-ready",
     entNom: "NOM-035 STPS · annual report",

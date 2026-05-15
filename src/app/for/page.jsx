@@ -63,7 +63,7 @@ const COPY = {
     railH: "Lo que soportamos en todas las verticales, de base.",
     railBody:
       "Controles transversales presentes en las 8 verticales. Los exports específicos por sector (API RP 755 evidence pack, NIST 800-53 mapping, DOT HOS report, FAA FRMS pack, etc.) se encuentran en cada vertical individual.",
-    railSoc: "SOC 2 Type I · postura activa",
+    railSoc: "SOC 2 · auditoría activa",
     railIso27001: "ISO 27001 · gap analysis documentado",
     railIso45001: "ISO 45001 · mapping occupational",
     railDpa: "DPA · GDPR Recital 26",
@@ -82,7 +82,7 @@ const COPY = {
     disclaimer4:
       "Los términos 'X-aligned' y 'X-ready' significan que los exports y la postura están estructurados compatibles con el framework referido. NO implican endorsement del organismo emisor ni sustituyen la evaluación formal por 3PAO, auditor externo, competent authority o regulador aplicable.",
 
-    voiceLine: "Construimos un vertical por sector porque "enterprise wellness" es un campo demasiado plano. Cada operación tiene su riesgo, su turno, su compliance, su ventana — y el protocolo cambia. Si tu sector no está aquí todavía, escribe a hello@bio-ignicion.app y lo mapeamos contigo.",
+    voiceLine: "Construimos un vertical por sector porque \"enterprise wellness\" es un campo demasiado plano. Cada operación tiene su riesgo, su turno, su compliance, su ventana — y el protocolo cambia. Si tu sector no está aquí todavía, escribe a hello@bio-ignicion.app y lo mapeamos contigo.",
     voiceAttribution: "— Equipo Bio-Ignición",
 
     closingKicker: "PRÓXIMO PASO",
@@ -117,7 +117,7 @@ const COPY = {
     railH: "What we support across all verticals, by default.",
     railBody:
       "Transversal controls present in the 8 verticals. Sector-specific exports (API RP 755 evidence pack, NIST 800-53 mapping, DOT HOS report, FAA FRMS pack, etc.) are available on each vertical page.",
-    railSoc: "SOC 2 Type I · active posture",
+    railSoc: "SOC 2 · audit active",
     railIso27001: "ISO 27001 · documented gap analysis",
     railIso45001: "ISO 45001 · occupational mapping",
     railDpa: "DPA · GDPR Recital 26",
@@ -136,7 +136,7 @@ const COPY = {
     disclaimer4:
       "The terms 'X-aligned' and 'X-ready' mean exports and posture are structured compatible with the referenced framework. They do NOT imply endorsement by the issuing body nor replace the formal assessment by 3PAO, external auditor, competent authority or applicable regulator.",
 
-    voiceLine: "We built one vertical per sector because "enterprise wellness" is too flat a field. Each operation has its own risk, shift, compliance, window — and the protocol changes. If your sector isn't here yet, write to hello@bio-ignicion.app and we'll map it with you.",
+    voiceLine: "We built one vertical per sector because \"enterprise wellness\" is too flat a field. Each operation has its own risk, shift, compliance, window — and the protocol changes. If your sector isn't here yet, write to hello@bio-ignicion.app and we'll map it with you.",
     voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP",

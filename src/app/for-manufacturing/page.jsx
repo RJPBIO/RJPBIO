@@ -106,7 +106,7 @@ const COPY = {
     fitL3: "Reportes individuales permanecen privados para el operador · cumple expectativa de confidencialidad equivalente a EAP industrial.",
     fitL4: "SSO SAML 2.0 + SCIM · compatible con IdP enterprise (Okta, Ping, Azure AD) · provisioning automático para plantas >5k headcount.",
     fitL5: "NOM-035 STPS dashboard · evidencia descargable para auditor STPS · incluida en plan Growth.",
-    fitL6: "Exports bajo NDA: OSHA recordkeeping-ready format, SOC 2 Type I posture, DPA, ISO 27001 gap analysis.",
+    fitL6: "Exports bajo NDA: OSHA recordkeeping-ready format, SOC 2 posture document, DPA, ISO 27001 gap analysis.",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU PLANTA",
     peerH: "Contra lo que ya tienes instalado.",
@@ -151,9 +151,9 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · INDUSTRIAL",
     entH: "Lo que tu equipo legal y procurement va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (OSHA recordkeeping mapping, SOC 2 Type I, DPA, ISO 27001 gap) entregados bajo NDA vía Trust Center.",
+      "Postura documentada para cada control. Artefactos formales (OSHA recordkeeping mapping, SOC 2 posture document, DPA, ISO 27001 gap) entregados bajo NDA vía Trust Center.",
     entOsha: "OSHA · recordkeeping-ready",
-    entSoc2: "SOC 2 Type I · postura activa",
+    entSoc2: "SOC 2 · auditoría activa",
     entNom: "NOM-035 STPS · dashboard + evidencia",
     entIso: "ISO 27001 · gap analysis",
     entDpa: "DPA · GDPR Recital 26",
@@ -251,7 +251,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the operator · matches industrial-EAP confidentiality expectation.",
     fitL4: "SSO SAML 2.0 + SCIM · compatible with enterprise IdPs (Okta, Ping, Azure AD) · automated provisioning for >5k-headcount plants.",
     fitL5: "NOM-035 STPS dashboard · downloadable evidence for STPS auditors · included in Growth plan.",
-    fitL6: "Under-NDA exports: OSHA recordkeeping-ready format, SOC 2 Type I posture, DPA, ISO 27001 gap analysis.",
+    fitL6: "Under-NDA exports: OSHA recordkeeping-ready format, SOC 2 posture document, DPA, ISO 27001 gap analysis.",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your plant already has.",
@@ -296,9 +296,9 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · INDUSTRIAL",
     entH: "Everything your legal and procurement team will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (OSHA recordkeeping mapping, SOC 2 Type I, DPA, ISO 27001 gap) delivered under NDA via Trust Center.",
+      "Documented posture for each control. Formal artifacts (OSHA recordkeeping mapping, SOC 2 posture document, DPA, ISO 27001 gap) delivered under NDA via Trust Center.",
     entOsha: "OSHA · recordkeeping-ready",
-    entSoc2: "SOC 2 Type I · active posture",
+    entSoc2: "SOC 2 · audit active",
     entNom: "NOM-035 STPS · dashboard + evidence",
     entIso: "ISO 27001 · gap analysis",
     entDpa: "DPA · GDPR Recital 26",

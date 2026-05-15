@@ -53,7 +53,7 @@ const COPY = {
       "El override de alarmas, el error en lineup de turnaround y la rotación del panel-operator certificado viven en el mismo eslabón fisiológico. Se mide en HRV, no en Tier 3/4 leading indicator.",
     intro:
       "BIO-IGNICIÓN se instrumenta en los 3 minutos pre-shift, en tour handoff o en turnaround lineup. API RP 755-aligned, OSHA PSM-ready, panel operativo visible al HSE Director / PSM Coordinator — no al analista de RRHH.",
-    metaSoc: "SOC 2 Type I · activo",
+    metaSoc: "SOC 2 · auditoría activa",
     metaApi: "API RP 755 · FRMS-aligned",
     metaPsm: "OSHA PSM · 1910.119-ready",
     metaShift: "3 min pre-shift",
@@ -109,7 +109,7 @@ const COPY = {
     fitL3: "Reportes individuales permanecen privados para el operator · cumple expectativa de confidencialidad equivalente a EAP regulado · evita retaliation claim bajo Whistleblower Protection bajo OSHA 11(c) y bajo programas de near-miss reporting.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible con IdP enterprise y con plant access control · provisioning automático y logging PSM-ready.",
     fitL5: "API RP 755 evidence pack · artifacts de FRMS + fatigue risk register + training compliance · descargables bajo NDA para PSM auditor o OSHA inspector.",
-    fitL6: "Exports bajo NDA: SOC 2 Type I, DPA, ISO 45001 mapping, ISO 27001 gap analysis, NOM-035 STPS reporte anual (si aplica México).",
+    fitL6: "Exports bajo NDA: SOC 2 posture document, DPA, ISO 45001 mapping, ISO 27001 gap analysis, NOM-035 STPS reporte anual (si aplica México).",
 
     peerKicker: "COMPARATIVO · QUÉ HAY HOY EN TU PLANT",
     peerH: "Contra lo que ya tienes instalado.",
@@ -158,8 +158,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · ENERGY",
     entH: "Lo que tu equipo HSE, legal y procurement va a pedir — ya está respondido.",
     entBody:
-      "Postura documentada para cada control. Artefactos formales (SOC 2 Type I, DPA, ISO 27001 gap, API RP 755 FRMS mapping, OSHA PSM alignment, NOM-035 STPS reporte) entregados bajo NDA vía Trust Center.",
-    entSoc2: "SOC 2 Type I · postura activa",
+      "Postura documentada para cada control. Artefactos formales (SOC 2 posture document, DPA, ISO 27001 gap, API RP 755 FRMS mapping, OSHA PSM alignment, NOM-035 STPS reporte) entregados bajo NDA vía Trust Center.",
+    entSoc2: "SOC 2 · auditoría activa",
     entApi: "API RP 755 · FRMS-aligned",
     entOshaPsm: "OSHA PSM 1910.119 · ready",
     entNom: "NOM-035 STPS · reporte anual",
@@ -203,7 +203,7 @@ const COPY = {
       "Alarm override, turnaround-lineup error and board-qualified operator churn live on the same physiological link. It's measured in HRV, not in Tier 3/4 leading indicators.",
     intro:
       "BIO-IGNICIÓN instruments the 3 minutes that already exist pre-shift, at tour handoff or at turnaround lineup. API RP 755-aligned, OSHA PSM-ready, operating dashboard visible to the HSE Director / PSM Coordinator — not to the HR analyst.",
-    metaSoc: "SOC 2 Type I · active",
+    metaSoc: "SOC 2 · audit active",
     metaApi: "API RP 755 · FRMS-aligned",
     metaPsm: "OSHA PSM · 1910.119-ready",
     metaShift: "3 min pre-shift",
@@ -259,7 +259,7 @@ const COPY = {
     fitL3: "Individual reports stay private to the operator · matches regulated-EAP confidentiality expectation · avoids retaliation claims under OSHA 11(c) Whistleblower Protection and near-miss reporting programs.",
     fitL4: "SSO SAML 2.0 + SCIM + audit trail · compatible with enterprise IdPs and plant access control · automated provisioning and PSM-ready logging.",
     fitL5: "API RP 755 evidence pack · FRMS + fatigue risk register + training-compliance artifacts · downloadable under NDA for PSM auditor or OSHA inspector.",
-    fitL6: "Under-NDA exports: SOC 2 Type I, DPA, ISO 45001 mapping, ISO 27001 gap analysis, STPS NOM-035 annual report (if Mexico applies).",
+    fitL6: "Under-NDA exports: SOC 2 posture document, DPA, ISO 45001 mapping, ISO 27001 gap analysis, STPS NOM-035 annual report (if Mexico applies).",
 
     peerKicker: "COMPARISON · WHAT'S ALREADY INSTALLED",
     peerH: "Against what your plant already has.",
@@ -308,8 +308,8 @@ const COPY = {
     entKicker: "COMPLIANCE & PROCUREMENT · ENERGY",
     entH: "Everything your HSE, legal and procurement team will ask — already answered.",
     entBody:
-      "Documented posture for each control. Formal artifacts (SOC 2 Type I, DPA, ISO 27001 gap, API RP 755 FRMS mapping, OSHA PSM alignment, STPS NOM-035 report) delivered under NDA via Trust Center.",
-    entSoc2: "SOC 2 Type I · active posture",
+      "Documented posture for each control. Formal artifacts (SOC 2 posture document, DPA, ISO 27001 gap, API RP 755 FRMS mapping, OSHA PSM alignment, STPS NOM-035 report) delivered under NDA via Trust Center.",
+    entSoc2: "SOC 2 · audit active",
     entApi: "API RP 755 · FRMS-aligned",
     entOshaPsm: "OSHA PSM 1910.119 · ready",
     entNom: "NOM-035 STPS · annual report",
