@@ -615,7 +615,7 @@ export default async function DocsPage() {
             background: cssVar.accentSoft,
           }}
         >
-          <div style={{ ...kickerStyle, marginBlockEnd: space[2] }}>{c.quickstartKicker}</div>
+          <div style={{ marginBlockEnd: space[2]  }}><SectionKicker>{c.quickstartKicker}</SectionKicker></div>
           <h2
             id="quickstart"
             style={{
@@ -700,7 +700,7 @@ export default async function DocsPage() {
                 <span className="bi-demo-closing-mark-ring" />
               </div>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+              <div style={{ marginBottom: space[4]  }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="docs-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}

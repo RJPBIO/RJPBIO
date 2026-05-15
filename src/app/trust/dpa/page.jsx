@@ -263,7 +263,7 @@ export default async function DPA() {
               <Link href="/trust" className="bi-trust-crumb">
                 <span aria-hidden>←</span> {c.crumbBack}
               </Link>
-              <div style={{ ...kickerStyle, marginBlockStart: space[3] }}>{c.eyebrow}</div>
+              <div style={{ marginBlockStart: space[3]  }}><SectionKicker>{c.eyebrow}</SectionKicker></div>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,

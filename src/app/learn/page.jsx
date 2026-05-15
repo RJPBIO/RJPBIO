@@ -161,6 +161,9 @@ const COPY = {
     levelModerate: "Moderada",
     levelLimited: "Limitada",
 
+    voiceLine: "Lo que aquí leas debería poderse verificar en una revista indexada. Si una afirmación nuestra no se sostiene con la literatura — degradamos públicamente y citamos la fuente que nos contradice. Si encuentras un dato mal calibrado, abre un issue: la educación honesta no es un branding, es un compromiso.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "SIGUIENTE PASO",
     closingHLead: "Terminaste de leer.",
     closingHBody: "Ve cómo se aplica.",
@@ -223,6 +226,9 @@ const COPY = {
     levelHigh: "High",
     levelModerate: "Moderate",
     levelLimited: "Limited",
+
+    voiceLine: "What you read here should be verifiable in an indexed journal. If a claim of ours doesn't hold up against the literature — we publicly downgrade and cite the source that contradicts us. If you find miscalibrated data, open an issue: honest education isn't branding, it's a commitment.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP",
     closingHLead: "You finished reading.",
@@ -432,8 +438,40 @@ export default async function LearnHubPage() {
                 <span className="bi-demo-closing-mark-core" />
                 <span className="bi-demo-closing-mark-ring" />
               </div>
+      {/* SP-MKT 9.5 — Voz editorial. */}
+      <section aria-label="voice" style={{ paddingBlock: "clamp(48px, 6vw, 80px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: ,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+
+
+              <div style={{ marginBottom: space[4] }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="learn-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}

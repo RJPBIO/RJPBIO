@@ -393,8 +393,8 @@ export default async function RoiPage() {
       {/* ═══ Benchmark strip (public figures) ═══ */}
       <section aria-label={c.benchmarkKicker} style={{ marginBlockStart: space[6] }}>
         <Container size="xl" style={{ paddingInline: 0 }}>
-          <div style={{ ...kickerStyle, textAlign: "center", marginBlockEnd: space[4] }}>
-            {c.benchmarkKicker}
+          <div style={{ textAlign: "center", marginBlockEnd: space[4] }}>
+            <SectionKicker>{c.benchmarkKicker}</SectionKicker>
           </div>
           <div className="bi-roi-benchmark-strip">
             <div className="bi-roi-benchmark-cell">
@@ -575,7 +575,7 @@ export default async function RoiPage() {
                 <span className="bi-demo-closing-mark-ring" />
               </div>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+              <div style={{ marginBottom: space[4]  }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="roi-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}

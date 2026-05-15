@@ -178,6 +178,9 @@ const COPY = {
     relatedTitle: "HRV 101 — qué es y por qué importa",
     relatedBlurb: "La métrica que te dice cuándo tu cronotipo está bajo carga. 6 min.",
 
+    voiceLine: "Lo que aquí leas debería poderse verificar en una revista indexada. Si una afirmación nuestra no se sostiene con la literatura — degradamos públicamente y citamos la fuente que nos contradice. Si encuentras un dato mal calibrado, abre un issue: la educación honesta no es un branding, es un compromiso.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "SIGUIENTE PASO",
     closingHLead: "Ya conoces tu curva.",
     closingHBody: "Vela trabajar sobre tu agenda.",
@@ -336,6 +339,9 @@ const COPY = {
     relatedTitle: "HRV 101 — what it is and why it matters",
     relatedBlurb: "The metric that tells you when your chronotype is under load. 6 min.",
 
+    voiceLine: "What you read here should be verifiable in an indexed journal. If a claim of ours doesn't hold up against the literature — we publicly downgrade and cite the source that contradicts us. If you find miscalibrated data, open an issue: honest education isn't branding, it's a commitment.",
+    voiceAttribution: "— The Bio-Ignición team",
+
     closingKicker: "NEXT STEP",
     closingHLead: "You know your curve.",
     closingHBody: "See it run against your calendar.",
@@ -370,7 +376,7 @@ export default async function CronotipoPage() {
           <span aria-hidden className="bi-evid-hero-aura" style={{ background: `radial-gradient(closest-side, color-mix(in srgb, ${ACCENT} 16%, transparent), transparent 70%)` }} />
           <div style={{ position: "relative", zIndex: 1 }}>
             <IgnitionReveal sparkOrigin="12% 30%">
-              <div style={kickerStyle} className="bi-learn-trail">
+              <div className="bi-learn-trail">
                 <Link href="/learn" className="bi-learn-trail-link" aria-label={L === "en" ? "Back to Learn" : "Volver a Aprende"}>
                   <svg aria-hidden width="10" height="10" viewBox="0 0 10 10" className="bi-learn-trail-arrow">
                     <path d="M6.5 2L3 5l3.5 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
@@ -509,8 +515,40 @@ export default async function CronotipoPage() {
                 <span className="bi-demo-closing-mark-core" />
                 <span className="bi-demo-closing-mark-ring" />
               </div>
+      {/* SP-MKT 9.5 — Voz editorial. */}
+      <section aria-label="voice" style={{ paddingBlock: "clamp(48px, 6vw, 80px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: ,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+
+
+              <div style={{ marginBottom: space[4] }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="crono-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}

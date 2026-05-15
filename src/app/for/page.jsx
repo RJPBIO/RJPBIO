@@ -82,6 +82,9 @@ const COPY = {
     disclaimer4:
       "Los términos 'X-aligned' y 'X-ready' significan que los exports y la postura están estructurados compatibles con el framework referido. NO implican endorsement del organismo emisor ni sustituyen la evaluación formal por 3PAO, auditor externo, competent authority o regulador aplicable.",
 
+    voiceLine: "Construimos un vertical por sector porque "enterprise wellness" es un campo demasiado plano. Cada operación tiene su riesgo, su turno, su compliance, su ventana — y el protocolo cambia. Si tu sector no está aquí todavía, escribe a hello@bio-ignicion.app y lo mapeamos contigo.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "PRÓXIMO PASO",
     closingHLead: "No sabes cuál aplica primero.",
     closingHBody: "Agenda 45 min y lo mapeamos a tu operación real.",
@@ -132,6 +135,9 @@ const COPY = {
       "The 'grade' suffixes (clinical-grade, process-grade, flight-grade, mission-grade, infra-grade, fleet-grade) refer to HRV measurement quality and operational/auditable robustness. They do NOT imply regulatory medical-device clearance nor sector-specific ATO/certifications (FedRAMP ATO, ATEX/IECEx, DO-178C, etc.) except where explicitly declared in each vertical.",
     disclaimer4:
       "The terms 'X-aligned' and 'X-ready' mean exports and posture are structured compatible with the referenced framework. They do NOT imply endorsement by the issuing body nor replace the formal assessment by 3PAO, external auditor, competent authority or applicable regulator.",
+
+    voiceLine: "We built one vertical per sector because "enterprise wellness" is too flat a field. Each operation has its own risk, shift, compliance, window — and the protocol changes. If your sector isn't here yet, write to hello@bio-ignicion.app and we'll map it with you.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP",
     closingHLead: "Not sure which applies first.",
@@ -252,8 +258,8 @@ export default async function ForIndexPage() {
       {/* ═══ Vertical cards grid ═══ */}
       <section aria-labelledby="cards-heading" style={{ marginBlockStart: space[6] }}>
         <Container size="xl">
-          <div style={{ ...kickerStyle, textAlign: "center", marginBlockEnd: space[3] }}>
-            {c.cardsKicker}
+          <div style={{ textAlign: "center", marginBlockEnd: space[3] }}>
+            <SectionKicker>{c.cardsKicker}</SectionKicker>
           </div>
           <h2 id="cards-heading" style={{ ...sectionHeading, textAlign: "center", marginBlockEnd: space[3] }}>
             {c.title}
@@ -410,8 +416,40 @@ export default async function ForIndexPage() {
                 <span className="bi-demo-closing-mark-core" />
                 <span className="bi-demo-closing-mark-ring" />
               </div>
+      {/* SP-MKT 9.5 — Voz editorial. */}
+      <section aria-label="voice" style={{ paddingBlock: "clamp(48px, 6vw, 80px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: ,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+
+
+              <div style={{ marginBottom: space[4] }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="for-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}
