@@ -9,6 +9,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -20,15 +21,7 @@ export const metadata = {
 const LAST_UPDATED = "2026-04-20";
 const VERSION = "1.1";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -192,7 +185,7 @@ export default async function CookiesPage() {
           <span aria-hidden className="bi-legal-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -269,7 +262,7 @@ export default async function CookiesPage() {
         </nav>
 
         <section id="inventario" className="bi-legal-section">
-          <div style={kickerStyle}>{c.tableKicker}</div>
+          <SectionKicker>{c.tableKicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.tableH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "62ch" }}>
             {c.tableBody}
@@ -301,13 +294,13 @@ export default async function CookiesPage() {
         </section>
 
         <section id="gestion" className="bi-legal-section">
-          <div style={kickerStyle}>{c.manageKicker}</div>
+          <SectionKicker>{c.manageKicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.manageH}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.manageBody}</p>
         </section>
 
         <section id="no-tracking" className="bi-legal-section">
-          <div style={kickerStyle}>{c.noTrackKicker}</div>
+          <SectionKicker>{c.noTrackKicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.noTrackH}</h2>
           <ul className="bi-legal-list">
             <li>{c.noTrack1}</li>
@@ -323,7 +316,7 @@ export default async function CookiesPage() {
       {/* ═══ Related legal docs ═══ */}
       <Container size="lg" className="bi-prose">
         <section aria-labelledby="cookies-related" className="bi-legal-related">
-          <div style={kickerStyle}>{c.relatedKicker}</div>
+          <SectionKicker>{c.relatedKicker}</SectionKicker>
           <h2 id="cookies-related" style={sectionHeading}>{c.relatedH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "58ch" }}>{c.relatedBody}</p>
           <ul className="bi-legal-related-grid">

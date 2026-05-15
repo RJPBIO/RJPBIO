@@ -5,6 +5,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -18,14 +19,7 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontSize: font.size.xs,
-  fontFamily: cssVar.fontMono,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.28em",
-  fontWeight: font.weight.bold,
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -330,7 +324,7 @@ export default async function Subprocessors() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[5] }}>
-              <div style={kickerStyle}>{c.breakdownKicker}</div>
+              <SectionKicker>{c.breakdownKicker}</SectionKicker>
               <h2 id="subs-breakdown" style={{ ...sectionHeading, fontSize: "clamp(22px, 2.6vw, 28px)" }}>{c.breakdownH}</h2>
             </div>
             <ul className="bi-trust-breakdown" role="list">
@@ -383,7 +377,7 @@ export default async function Subprocessors() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.tableKicker}</div>
+              <SectionKicker>{c.tableKicker}</SectionKicker>
               <h2 id="subs-table" style={sectionHeading}>{c.tableH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -447,7 +441,7 @@ export default async function Subprocessors() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[5] }}>
-              <div style={kickerStyle}>{c.changelogKicker}</div>
+              <SectionKicker>{c.changelogKicker}</SectionKicker>
               <h2 id="subs-changelog" style={{ ...sectionHeading, fontSize: "clamp(22px, 2.6vw, 28px)" }}>{c.changelogH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -478,7 +472,7 @@ export default async function Subprocessors() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center" }}>
-              <div style={kickerStyle}>{c.changesKicker}</div>
+              <SectionKicker>{c.changesKicker}</SectionKicker>
               <h2 id="subs-changes" style={sectionHeading}>{c.changesH}</h2>
               <p style={{
                 marginBlockStart: space[3],

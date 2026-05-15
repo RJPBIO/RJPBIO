@@ -12,6 +12,7 @@ import { cssVar, space, font, bioSignal, radius } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -29,21 +30,7 @@ export const metadata = {
 
 const LAST_REVIEWED = "2026-04-22";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.26em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
-
-const kickerStyleMuted = {
-  ...kickerStyle,
-  color: cssVar.textMuted,
-  letterSpacing: "0.24em",
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const h1Style = {
   margin: 0,
@@ -522,7 +509,7 @@ export default async function VsCalmPage() {
           </div>
           <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="22% 30%">
-              <p style={kickerStyle}>{t.eyebrow}</p>
+              <SectionKicker>{t.eyebrow}</SectionKicker>
               <h1 style={h1Style}>{t.title}</h1>
               <p style={editorialStyle}>{t.editorial}</p>
               <div style={{ marginBlockStart: space[8], display: "flex", flexWrap: "wrap", gap: space[3] }}>
@@ -538,7 +525,7 @@ export default async function VsCalmPage() {
         {/* ═══ TL;DR ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.tldrKicker}</p>
+            <SectionKicker>{t.tldrKicker}</SectionKicker>
             <div className="bi-roi-peer-table-wrap" style={{ marginBlockStart: space[6] }}>
               <table className="bi-roi-peer-table">
                 <thead>
@@ -573,7 +560,7 @@ export default async function VsCalmPage() {
         {/* ═══ WHEN CALM ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.whenHsKicker}</p>
+            <SectionKicker>{t.whenHsKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.whenHsH}</h2>
             <p style={sectionSub}>{t.whenHsBody}</p>
             <div
@@ -603,7 +590,7 @@ export default async function VsCalmPage() {
         {/* ═══ WHEN BIO-IGNICIÓN ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.whenBiKicker}</p>
+            <SectionKicker>{t.whenBiKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.whenBiH}</h2>
             <p style={sectionSub}>{t.whenBiBody}</p>
             <div
@@ -633,7 +620,7 @@ export default async function VsCalmPage() {
         {/* ═══ ARCHITECTURE ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.archKicker}</p>
+            <SectionKicker>{t.archKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.archH}</h2>
             <p style={sectionSub}>{t.archBody}</p>
             <div
@@ -676,7 +663,7 @@ export default async function VsCalmPage() {
         {/* ═══ CAPABILITY TABLE ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.tableKicker}</p>
+            <SectionKicker>{t.tableKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.tableH}</h2>
             <p style={sectionSub}>{t.tableBody}</p>
             <div className="bi-roi-peer-table-wrap" style={{ marginBlockStart: space[8] }}>
@@ -724,7 +711,7 @@ export default async function VsCalmPage() {
         {/* ═══ PHILOSOPHY SIDE BY SIDE ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.philoKicker}</p>
+            <SectionKicker>{t.philoKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.philoH}</h2>
             <p style={sectionSub}>{t.philoBody}</p>
             <div
@@ -807,7 +794,7 @@ export default async function VsCalmPage() {
         {/* ═══ FAQ ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.faqKicker}</p>
+            <SectionKicker>{t.faqKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.faqH}</h2>
             <div
               style={{
@@ -868,7 +855,7 @@ export default async function VsCalmPage() {
         {/* ═══ CLOSING ═══ */}
         <section style={{ paddingBlock: `${space[12]}px ${space[16]}px` }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.closingKicker}</p>
+            <SectionKicker>{t.closingKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, fontSize: "clamp(28px, 4.4vw, 48px)" }}>
               {t.closingHLead}
               <br />
@@ -897,7 +884,7 @@ export default async function VsCalmPage() {
         {/* ═══ SOURCES ═══ */}
         <section style={{ paddingBlockEnd: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.sourcesKicker}</p>
+            <SectionKicker>{t.sourcesKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, fontSize: "clamp(20px, 2.4vw, 26px)" }}>{t.sourcesH}</h2>
             <p style={sectionSub}>{t.sourcesBody}</p>
             <ul

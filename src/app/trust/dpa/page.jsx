@@ -5,6 +5,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -18,14 +19,7 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontSize: font.size.xs,
-  fontFamily: cssVar.fontMono,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.28em",
-  fontWeight: font.weight.bold,
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -358,7 +352,7 @@ export default async function DPA() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.highlightsKicker}</div>
+              <SectionKicker>{c.highlightsKicker}</SectionKicker>
               <h2 style={sectionHeading}>{c.highlightsH}</h2>
             </div>
             <ul className="bi-trust-highlights" role="list">
@@ -380,7 +374,7 @@ export default async function DPA() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.clausesKicker}</div>
+              <SectionKicker>{c.clausesKicker}</SectionKicker>
               <h2 id="dpa-clauses" style={sectionHeading}>{c.clausesH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -428,7 +422,7 @@ export default async function DPA() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.auditKicker}</div>
+              <SectionKicker>{c.auditKicker}</SectionKicker>
               <h2 id="dpa-audit-h" style={sectionHeading}>{c.auditH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -462,7 +456,7 @@ export default async function DPA() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center" }}>
-              <div style={kickerStyle}>{c.ctaKicker}</div>
+              <SectionKicker>{c.ctaKicker}</SectionKicker>
               <h2 id="dpa-cta" style={sectionHeading}>{c.ctaH}</h2>
               <p style={{
                 marginBlockStart: space[3],

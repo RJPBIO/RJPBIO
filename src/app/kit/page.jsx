@@ -12,6 +12,7 @@ import { getServerLocale } from "@/lib/locale-server";
 import { DESIGN_PARTNER } from "@/lib/pricing";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 import ActivationKit from "@/components/brand/ActivationKit";
 
@@ -307,15 +308,7 @@ const COPY = {
   },
 };
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -340,7 +333,7 @@ export default async function KitPage() {
           <span aria-hidden className="bi-roi-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.hero.kicker}</div>
+              <SectionKicker>{c.hero.kicker}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px auto ${space[4]}px`,
@@ -405,7 +398,7 @@ export default async function KitPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.how.kicker}</div>
+              <SectionKicker>{c.how.kicker}</SectionKicker>
               <h3 id="kit-how" style={sectionHeading}>{c.how.h}</h3>
             </div>
             <ol className="bi-kit-flow">
@@ -429,7 +422,7 @@ export default async function KitPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.why.kicker}</div>
+              <SectionKicker>{c.why.kicker}</SectionKicker>
               <h3 id="kit-why" style={sectionHeading}>{c.why.h}</h3>
             </div>
             <ul className="bi-kit-why">
@@ -450,7 +443,7 @@ export default async function KitPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.faq.kicker}</div>
+              <SectionKicker>{c.faq.kicker}</SectionKicker>
               <h3 id="kit-faq" style={sectionHeading}>{c.faq.h}</h3>
             </div>
             <dl className="bi-kit-faq">
@@ -471,7 +464,7 @@ export default async function KitPage() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div className="bi-kit-close">
-              <div style={kickerStyle}>{c.closing.kicker}</div>
+              <SectionKicker>{c.closing.kicker}</SectionKicker>
               <h3 id="kit-close" style={{ ...sectionHeading, marginBlockEnd: space[4] }}>{c.closing.h}</h3>
               <p style={{ color: cssVar.textDim, lineHeight: 1.65, marginBlockEnd: space[6] }}>
                 {c.closing.p}

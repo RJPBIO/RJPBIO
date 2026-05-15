@@ -24,6 +24,7 @@ import { cssVar, space, font, bioSignal, radius } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -39,14 +40,7 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontSize: font.size.xs,
-  fontFamily: cssVar.fontMono,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.28em",
-  fontWeight: font.weight.bold,
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -358,7 +352,7 @@ export default async function EnterpriseSSOPage() {
           </div>
           <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="22% 30%">
-              <p style={kickerStyle}>{t.eyebrow}</p>
+              <SectionKicker>{t.eyebrow}</SectionKicker>
               <h1 style={{ margin: 0, marginBlockStart: space[3], fontSize: "clamp(40px, 8vw, 110px)", letterSpacing: "-0.045em", lineHeight: 1.02, fontWeight: font.weight.black, color: cssVar.text }}>
                 {t.h1}
               </h1>
@@ -366,7 +360,7 @@ export default async function EnterpriseSSOPage() {
                 {t.editorial}
               </p>
               <div style={{ marginBlockStart: space[6], display: "flex", flexWrap: "wrap", gap: space[3], alignItems: "baseline" }}>
-                <span style={kickerStyle}>{t.contactLabel}</span>
+                <SectionKicker>{t.contactLabel}</SectionKicker>
                 <a href={`mailto:${t.contactEmail}`} style={{ color: bioSignal.phosphorCyanInk, fontFamily: cssVar.fontMono, fontSize: font.size.sm, fontWeight: font.weight.bold }}>
                   {t.contactEmail}
                 </a>
@@ -380,7 +374,7 @@ export default async function EnterpriseSSOPage() {
         {/* ═══ FEATURE SCAN ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.featureScanKicker}</p>
+            <SectionKicker>{t.featureScanKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, marginBlockStart: space[3] }}>{t.featureScanH}</h2>
             <div style={{ marginBlockStart: space[8], border: `1px solid ${cssVar.border}`, borderRadius: radius.lg, overflow: "hidden" }}>
               {t.featureScanRows.map((row, i) => (
@@ -409,7 +403,7 @@ export default async function EnterpriseSSOPage() {
         {/* ═══ SETUP GUIDES ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.setupKicker}</p>
+            <SectionKicker>{t.setupKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, marginBlockStart: space[3] }}>{t.setupH}</h2>
             <p style={{ ...bodyStyle, marginBlockStart: space[3], maxWidth: "60ch" }}>{t.setupSub}</p>
             <div style={{ marginBlockStart: space[8], display: "grid", gap: space[3] }}>
@@ -451,7 +445,7 @@ export default async function EnterpriseSSOPage() {
         {/* ═══ SCIM ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.scimKicker}</p>
+            <SectionKicker>{t.scimKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, marginBlockStart: space[3] }}>{t.scimH}</h2>
             <p style={{ ...bodyStyle, marginBlockStart: space[3], maxWidth: "60ch" }}>{t.scimSub}</p>
             <div style={{ marginBlockStart: space[8], border: `1px solid ${cssVar.border}`, borderRadius: radius.lg, overflow: "hidden" }}>
@@ -493,7 +487,7 @@ export default async function EnterpriseSSOPage() {
         {/* ═══ FAQ ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.faqKicker}</p>
+            <SectionKicker>{t.faqKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, marginBlockStart: space[3] }}>{t.faqH}</h2>
             <div style={{ marginBlockStart: space[8], display: "grid", gap: space[3] }}>
               {t.faq.map((f, i) => (
@@ -532,7 +526,7 @@ export default async function EnterpriseSSOPage() {
         {/* ═══ DEPLOY NOTE ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.deployKicker}</p>
+            <SectionKicker>{t.deployKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, marginBlockStart: space[3] }}>{t.deployH}</h2>
             <p style={{ ...bodyStyle, marginBlockStart: space[3], maxWidth: "60ch" }}>{t.deployBody}</p>
           </Container>

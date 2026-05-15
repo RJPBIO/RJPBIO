@@ -18,6 +18,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -92,15 +93,7 @@ const ARTICLES = [
   },
 ];
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -277,7 +270,7 @@ export default async function LearnHubPage() {
           <span aria-hidden className="bi-evid-hero-aura" />
           <div style={{ position: "relative", zIndex: 1 }}>
             <IgnitionReveal sparkOrigin="12% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -345,7 +338,7 @@ export default async function LearnHubPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 20%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.principlesKicker}</div>
+              <SectionKicker>{c.principlesKicker}</SectionKicker>
               <h2 id="learn-principles" style={sectionHeading}>{c.principlesH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -378,7 +371,7 @@ export default async function LearnHubPage() {
       {/* ═══ Article index ═══ */}
       <Container size="lg" className="bi-prose">
         <div style={{ marginBlockEnd: space[6] }}>
-          <div style={kickerStyle}>{c.indexKicker}</div>
+          <SectionKicker>{c.indexKicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.indexH}</h2>
         </div>
 

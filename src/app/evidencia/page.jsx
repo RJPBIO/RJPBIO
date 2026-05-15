@@ -19,6 +19,7 @@ import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
+import SectionKicker from "@/components/brand/SectionKicker";
 
 export const metadata = {
   title: "Evidencia científica · BIO-IGNICIÓN",
@@ -32,15 +33,8 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker
+   compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -244,7 +238,7 @@ export default async function EvidenciaPage() {
           <span aria-hidden className="bi-evid-hero-aura" />
           <div style={{ position: "relative", zIndex: 1 }}>
             <IgnitionReveal sparkOrigin="12% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -312,7 +306,7 @@ export default async function EvidenciaPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 20%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.methodKicker}</div>
+              <SectionKicker>{c.methodKicker}</SectionKicker>
               <h2 id="evid-method" style={sectionHeading}>{c.methodH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -489,7 +483,7 @@ export default async function EvidenciaPage() {
                 <span className="bi-demo-closing-mark-ring" />
               </div>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+              <div style={{ marginBottom: space[4] }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="evid-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}

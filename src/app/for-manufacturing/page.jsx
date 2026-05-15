@@ -13,6 +13,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -30,15 +31,7 @@ export const metadata = {
 
 const LAST_REVIEWED = "2026-04-20";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -359,7 +352,7 @@ export default async function ForManufacturingPage() {
           <span aria-hidden className="bi-roi-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -434,9 +427,7 @@ export default async function ForManufacturingPage() {
       {/* ═══ Benchmark strip (cited public data) ═══ */}
       <section aria-label={c.benchmarkKicker} style={{ marginBlockStart: space[6] }}>
         <Container size="xl" style={{ paddingInline: 0 }}>
-          <div style={{ ...kickerStyle, textAlign: "center", marginBlockEnd: space[4] }}>
-            {c.benchmarkKicker}
-          </div>
+          <div style={{ textAlign: "center", marginBlockEnd: space[4] }}><SectionKicker>{c.benchmarkKicker}</SectionKicker></div>
           <div className="bi-roi-benchmark-strip">
             <div className="bi-roi-benchmark-cell">
               <div className="src">{c.benchmarkBlsSrc}</div>
@@ -467,7 +458,7 @@ export default async function ForManufacturingPage() {
       <Container size="lg" className="bi-prose">
         {/* ═══ Pain / thesis section ═══ */}
         <section aria-labelledby="pain-heading" className="bi-roi-peer" style={{ marginBlock: space[6] }}>
-          <div style={kickerStyle}>{c.painKicker}</div>
+          <SectionKicker>{c.painKicker}</SectionKicker>
           <h2 id="pain-heading" style={sectionHeading}>{c.painH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.painBody}
@@ -491,7 +482,7 @@ export default async function ForManufacturingPage() {
 
         {/* ═══ How it fits operationally ═══ */}
         <section aria-labelledby="fit-heading" className="bi-roi-peer">
-          <div style={kickerStyle}>{c.fitKicker}</div>
+          <SectionKicker>{c.fitKicker}</SectionKicker>
           <h2 id="fit-heading" style={sectionHeading}>{c.fitH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.fitBody}
@@ -510,7 +501,7 @@ export default async function ForManufacturingPage() {
 
         {/* ═══ Peer comparison ═══ */}
         <section aria-labelledby="peer-heading" className="bi-roi-peer">
-          <div style={kickerStyle}>{c.peerKicker}</div>
+          <SectionKicker>{c.peerKicker}</SectionKicker>
           <h2 id="peer-heading" style={sectionHeading}>{c.peerH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.peerBody}
@@ -555,7 +546,7 @@ export default async function ForManufacturingPage() {
 
         {/* ═══ Sources ═══ */}
         <section aria-labelledby="sources-heading" className="bi-roi-sources">
-          <div style={kickerStyle}>{c.sourcesKicker}</div>
+          <SectionKicker>{c.sourcesKicker}</SectionKicker>
           <h2 id="sources-heading" style={sectionHeading}>{c.sourcesH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.sourcesBody}
@@ -573,7 +564,7 @@ export default async function ForManufacturingPage() {
 
         {/* ═══ Enterprise / Compliance rail ═══ */}
         <section aria-labelledby="ent-heading" className="bi-roi-ent">
-          <div style={kickerStyle}>{c.entKicker}</div>
+          <SectionKicker>{c.entKicker}</SectionKicker>
           <h2 id="ent-heading" style={sectionHeading}>{c.entH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.entBody}
@@ -625,7 +616,7 @@ export default async function ForManufacturingPage() {
                 <span className="bi-demo-closing-mark-ring" />
               </div>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+              <div style={{ marginBottom: space[4] }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="mfg-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}

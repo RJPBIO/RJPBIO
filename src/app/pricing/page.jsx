@@ -14,22 +14,12 @@ import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PartnerApplyModal from "@/components/ui/PartnerApplyModal";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
-
-const kickerStyleMuted = {
-  ...kickerStyle,
-  color: cssVar.textMuted,
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker
+   compartido (src/components/brand/SectionKicker.jsx). Mismo lenguaje
+   visual que / y /why: hairline rule + label mono caps cyan-ink. */
 
 const sectionHeading = {
   margin: 0,
@@ -125,7 +115,7 @@ const COPY = {
           "Residencia de datos (US · EU · LATAM)",
           "99.95 % uptime · 4 h soporte crítico",
           "Customer Success dedicado + onboarding guiado",
-          "SOC 2 Type II + pentest anual",
+          "SOC 2 (en auditoría) + pentest anual",
         ],
         cta: "Hablar con ventas",
       },
@@ -214,7 +204,7 @@ const COPY = {
           ["DPA", false, "Estándar", "Negociable + MSA"],
           ["BAA (HIPAA)", false, false, true],
           ["Residencia (US · EU · LATAM)", false, false, true],
-          ["SOC 2 Type II + pentest anual", false, false, true],
+          ["SOC 2 (en auditoría) + pentest anual", false, false, true],
         ],
       },
       {
@@ -418,7 +408,7 @@ const COPY = {
           "Data residency (US · EU · LATAM)",
           "99.95 % uptime · 4 h critical support",
           "Dedicated Customer Success + guided onboarding",
-          "SOC 2 Type II + annual pentest",
+          "SOC 2 (under audit) + annual pentest",
         ],
         cta: "Talk to sales",
       },
@@ -507,7 +497,7 @@ const COPY = {
           ["DPA", false, "Standard", "Negotiable + MSA"],
           ["BAA (HIPAA)", false, false, true],
           ["Residency (US · EU · LATAM)", false, false, true],
-          ["SOC 2 Type II + annual pentest", false, false, true],
+          ["SOC 2 (under audit) + annual pentest", false, false, true],
         ],
       },
       {
@@ -714,17 +704,7 @@ export default async function PricingPage() {
           </div>
           <IgnitionReveal sparkOrigin="50% 45%">
             <header style={{ textAlign: "center", marginBottom: space[8], position: "relative", zIndex: 1 }}>
-              <div style={{
-                fontFamily: cssVar.fontMono,
-                fontSize: font.size.xs,
-                color: bioSignal.phosphorCyanInk,
-                textTransform: "uppercase",
-                letterSpacing: "0.28em",
-                fontWeight: font.weight.bold,
-                marginBlockEnd: space[4],
-              }}>
-                {c.kicker}
-              </div>
+              <SectionKicker>{c.kicker}</SectionKicker>
               <h1 style={{
                 margin: `${space[2]}px 0`,
                 fontSize: "clamp(40px, 6vw, 72px)",
@@ -833,7 +813,7 @@ export default async function PricingPage() {
         <section aria-labelledby="market" style={{ marginTop: space[8] }}>
          <IgnitionReveal sparkOrigin="50% 40%">
           <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <div style={kickerStyleMuted}>{c.marketKicker}</div>
+            <SectionKicker>{c.marketKicker}</SectionKicker>
             <h2 id="market" style={sectionHeading}>{c.marketTitle}</h2>
             <p style={{ color: cssVar.textDim, marginTop: space[2], maxWidth: 680, marginInline: "auto", lineHeight: 1.5 }}>
               {c.marketSub}
@@ -862,7 +842,7 @@ export default async function PricingPage() {
         <section aria-labelledby="roi" style={{ marginTop: space[8] }}>
          <IgnitionReveal sparkOrigin="50% 40%">
           <div className="bi-roi-card">
-            <div style={kickerStyle}>{c.roiTitle}</div>
+            <SectionKicker>{c.roiTitle}</SectionKicker>
             <h2 id="roi" className="bi-roi-anchor">{c.roiAnchor}</h2>
             <div className="bi-roi-cite">{c.roiCite}</div>
 
@@ -902,7 +882,7 @@ export default async function PricingPage() {
         <section aria-labelledby="roi-calc" style={{ marginTop: space[8] }}>
          <IgnitionReveal sparkOrigin="50% 30%">
           <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <div style={kickerStyle}>{c.roiCalcKicker}</div>
+            <SectionKicker>{c.roiCalcKicker}</SectionKicker>
             <h2 id="roi-calc" style={sectionHeading}>{c.roiCalcTitle}</h2>
             <p style={{ color: cssVar.textDim, marginTop: space[2], maxWidth: 640, marginInline: "auto", lineHeight: 1.5 }}>
               {c.roiCalcSub}
@@ -966,7 +946,7 @@ export default async function PricingPage() {
         <section aria-labelledby="guarantees" style={{ marginTop: space[8] }}>
          <IgnitionReveal sparkOrigin="50% 40%">
           <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <div style={kickerStyle}>{c.guaranteeKicker}</div>
+            <SectionKicker>{c.guaranteeKicker}</SectionKicker>
             <h2 id="guarantees" style={sectionHeading}>{c.guaranteeTitle}</h2>
           </header>
           <SpotlightGrid style={{
@@ -1046,7 +1026,7 @@ export default async function PricingPage() {
         <section aria-labelledby="data" style={{ marginTop: space[8], maxWidth: 1040, marginInline: "auto" }}>
          <IgnitionReveal sparkOrigin="50% 40%">
           <header style={{ textAlign: "center", marginBottom: space[6] }}>
-            <div style={kickerStyle}>{c.dataKicker}</div>
+            <SectionKicker>{c.dataKicker}</SectionKicker>
             <h2 id="data" style={{ ...sectionHeading, marginBottom: space[2] }}>{c.dataTitle}</h2>
             <p style={{ color: cssVar.textDim, maxWidth: 640, marginInline: "auto" }}>
               {c.dataSub}
@@ -1259,7 +1239,7 @@ export default async function PricingPage() {
 
         <section aria-labelledby="final-cta" className="bi-hide-print" style={{ marginTop: space[8], textAlign: "center" }}>
          <IgnitionReveal sparkOrigin="50% 40%">
-          <div style={kickerStyle}>{c.finalCtaKicker}</div>
+          <SectionKicker>{c.finalCtaKicker}</SectionKicker>
           <h2 id="final-cta" style={sectionHeading}>{c.finalCtaTitle}</h2>
           <p style={{ color: cssVar.textDim, margin: `${space[2]}px auto ${space[5]}px`, maxWidth: 560, lineHeight: 1.5 }}>
             {c.finalCtaSub}

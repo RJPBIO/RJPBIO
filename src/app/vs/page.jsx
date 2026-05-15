@@ -12,6 +12,7 @@ import { cssVar, space, font, bioSignal, radius } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -28,15 +29,7 @@ export const metadata = {
 
 const LAST_REVIEWED = "2026-04-22";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.26em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const h1Style = {
   margin: 0,
@@ -266,7 +259,7 @@ export default async function VsIndexPage() {
           </div>
           <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="22% 30%">
-              <p style={kickerStyle}>{t.eyebrow}</p>
+              <SectionKicker>{t.eyebrow}</SectionKicker>
               <h1 style={h1Style}>{t.title}</h1>
               <p style={editorialStyle}>{t.editorial}</p>
             </IgnitionReveal>
@@ -278,7 +271,7 @@ export default async function VsIndexPage() {
         {/* ═══ RULE ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.ruleKicker}</p>
+            <SectionKicker>{t.ruleKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.ruleH}</h2>
             <div
               style={{
@@ -332,7 +325,7 @@ export default async function VsIndexPage() {
         {/* ═══ INDEX ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.indexKicker}</p>
+            <SectionKicker>{t.indexKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.indexH}</h2>
             <p style={sectionSub}>{t.indexBody}</p>
 
@@ -488,7 +481,7 @@ export default async function VsIndexPage() {
         {/* ═══ WHAT WE DON'T COMPARE ═══ */}
         <section style={{ paddingBlock: space[12] }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.cannotKicker}</p>
+            <SectionKicker>{t.cannotKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.cannotH}</h2>
             <p style={sectionSub}>{t.cannotBody}</p>
             <div
@@ -543,7 +536,7 @@ export default async function VsIndexPage() {
         {/* ═══ CLOSING ═══ */}
         <section style={{ paddingBlock: `${space[12]}px ${space[16]}px` }}>
           <Container size="xl">
-            <p style={kickerStyle}>{t.closingKicker}</p>
+            <SectionKicker>{t.closingKicker}</SectionKicker>
             <h2 style={{ ...sectionHeading, fontSize: "clamp(28px, 4vw, 44px)" }}>{t.closingH}</h2>
             <p style={sectionSub}>{t.closingBody}</p>
             <div

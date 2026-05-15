@@ -19,6 +19,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 const API_GA_DATE = "2025-11-01";
@@ -153,15 +154,7 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const COPY = {
   es: {
@@ -549,7 +542,7 @@ export default async function DocsPage() {
           <span aria-hidden className="bi-docs-hero-aura" />
           <div style={{ position: "relative", zIndex: 1 }}>
             <IgnitionReveal sparkOrigin="12% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,

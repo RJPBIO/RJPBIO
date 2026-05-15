@@ -12,6 +12,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -29,15 +30,7 @@ export const metadata = {
 const MODEL_VERSION = "1.2";
 const LAST_REVIEWED = "2026-04-20";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -328,7 +321,7 @@ export default async function RoiPage() {
           <span aria-hidden className="bi-roi-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -433,7 +426,7 @@ export default async function RoiPage() {
       {/* ═══ Calculator ═══ */}
       <Container size="lg" className="bi-prose">
         <section aria-labelledby="roi-calc-heading" className="bi-roicc-section">
-          <div style={kickerStyle}>{c.calcKicker}</div>
+          <SectionKicker>{c.calcKicker}</SectionKicker>
           <h2 id="roi-calc-heading" style={sectionHeading}>{c.calcH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "62ch" }}>
             {c.calcBody}
@@ -447,7 +440,7 @@ export default async function RoiPage() {
 
         {/* ═══ Peer comparison ═══ */}
         <section aria-labelledby="roi-peer-heading" className="bi-roi-peer">
-          <div style={kickerStyle}>{c.peerKicker}</div>
+          <SectionKicker>{c.peerKicker}</SectionKicker>
           <h2 id="roi-peer-heading" style={sectionHeading}>{c.peerH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.peerBody}
@@ -492,7 +485,7 @@ export default async function RoiPage() {
 
         {/* ═══ Model transparency ═══ */}
         <section aria-labelledby="roi-model-heading" className="bi-roi-model">
-          <div style={kickerStyle}>{c.modelKicker}</div>
+          <SectionKicker>{c.modelKicker}</SectionKicker>
           <h2 id="roi-model-heading" style={sectionHeading}>{c.modelH}</h2>
           <pre className="bi-roi-formula" aria-label="formula">
             <code>{c.modelFormula}</code>
@@ -513,7 +506,7 @@ export default async function RoiPage() {
 
         {/* ═══ Sources ═══ */}
         <section aria-labelledby="roi-sources-heading" className="bi-roi-sources">
-          <div style={kickerStyle}>{c.sourcesKicker}</div>
+          <SectionKicker>{c.sourcesKicker}</SectionKicker>
           <h2 id="roi-sources-heading" style={sectionHeading}>{c.sourcesH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.sourcesBody}
@@ -530,7 +523,7 @@ export default async function RoiPage() {
 
         {/* ═══ Enterprise readiness rail ═══ */}
         <section aria-labelledby="roi-ent-heading" className="bi-roi-ent">
-          <div style={kickerStyle}>{c.entKicker}</div>
+          <SectionKicker>{c.entKicker}</SectionKicker>
           <h2 id="roi-ent-heading" style={sectionHeading}>{c.entH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "66ch" }}>
             {c.entBody}

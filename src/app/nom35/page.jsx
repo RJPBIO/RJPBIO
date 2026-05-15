@@ -6,6 +6,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 import StickySectionNav from "@/components/brand/StickySectionNav";
 
@@ -54,14 +55,7 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontSize: font.size.xs,
-  fontFamily: cssVar.fontMono,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.28em",
-  fontWeight: font.weight.bold,
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -665,7 +659,7 @@ export default async function Nom35MarketingPage() {
 
           <IgnitionReveal sparkOrigin="30% 40%">
             <div style={{ position: "relative", zIndex: 1, maxInlineSize: 820 }}>
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -755,7 +749,7 @@ export default async function Nom35MarketingPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.riskKicker}</div>
+              <SectionKicker>{c.riskKicker}</SectionKicker>
               <h2 id="nom-risk" style={sectionHeading}>{c.riskH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -812,7 +806,7 @@ export default async function Nom35MarketingPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.regulationKicker}</div>
+              <SectionKicker>{c.regulationKicker}</SectionKicker>
               <h2 id="nom-regulation" style={sectionHeading}>{c.regulationH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -850,7 +844,7 @@ export default async function Nom35MarketingPage() {
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.howKicker}</div>
+              <SectionKicker>{c.howKicker}</SectionKicker>
               <h2 id="nom-how" style={sectionHeading}>{c.howH}</h2>
             </div>
             <div className="bi-how-grid bi-trust-controls-grid" role="list">
@@ -872,7 +866,7 @@ export default async function Nom35MarketingPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.diffKicker}</div>
+              <SectionKicker>{c.diffKicker}</SectionKicker>
               <h2 id="nom-diff" style={sectionHeading}>{c.diffH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -913,7 +907,7 @@ export default async function Nom35MarketingPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.evidenceKicker}</div>
+              <SectionKicker>{c.evidenceKicker}</SectionKicker>
               <h2 id="nom-evidence" style={sectionHeading}>{c.evidenceH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -955,7 +949,7 @@ export default async function Nom35MarketingPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.confKicker}</div>
+              <SectionKicker>{c.confKicker}</SectionKicker>
               <h2 id="nom-conf" style={sectionHeading}>{c.confH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -1007,7 +1001,7 @@ export default async function Nom35MarketingPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.cadenceKicker}</div>
+              <SectionKicker>{c.cadenceKicker}</SectionKicker>
               <h2 id="nom-cadence" style={sectionHeading}>{c.cadenceH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -1045,7 +1039,7 @@ export default async function Nom35MarketingPage() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.pricingKicker}</div>
+              <SectionKicker>{c.pricingKicker}</SectionKicker>
               <h2 id="nom-pricing" style={sectionHeading}>{c.pricingH}</h2>
             </div>
             <ul className="bi-nom-pricing" role="list">
@@ -1077,7 +1071,7 @@ export default async function Nom35MarketingPage() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.faqKicker}</div>
+              <SectionKicker>{c.faqKicker}</SectionKicker>
               <h2 id="nom-faq" style={sectionHeading}>{c.faqH}</h2>
             </div>
             <div className="bi-faq">
@@ -1101,7 +1095,7 @@ export default async function Nom35MarketingPage() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center" }}>
-              <div style={kickerStyle}>{c.ctaFinalKicker}</div>
+              <SectionKicker>{c.ctaFinalKicker}</SectionKicker>
               <h2 id="nom-cta" style={sectionHeading}>{c.ctaFinalH}</h2>
               <p style={{
                 marginBlockStart: space[3],

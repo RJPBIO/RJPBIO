@@ -8,6 +8,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
 
@@ -22,15 +23,8 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker
+   compartido (src/components/brand/SectionKicker.jsx). */
 
 const sectionHeading = {
   margin: 0,
@@ -284,7 +278,7 @@ export default async function DemoPage() {
 
           <section style={{ position: "relative", zIndex: 1 }}>
             <IgnitionReveal sparkOrigin="20% 25%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -385,7 +379,7 @@ export default async function DemoPage() {
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.stepsKicker}</div>
+              <SectionKicker>{c.stepsKicker}</SectionKicker>
               <h2 id="demo-steps" style={sectionHeading}>{c.stepsH}</h2>
             </div>
             <div className="bi-how-grid" role="list">
@@ -400,7 +394,7 @@ export default async function DemoPage() {
             {/* ── Dedicated 30-min agenda panel — keeps timeline cards uniform ── */}
             <div className="bi-demo-agenda-panel" aria-labelledby="demo-agenda">
               <div className="bi-demo-agenda-head">
-                <div style={kickerStyle}>{c.agendaKicker}</div>
+                <SectionKicker>{c.agendaKicker}</SectionKicker>
                 <h3 id="demo-agenda" className="bi-demo-agenda-title">{c.agendaH}</h3>
               </div>
               <ol className="bi-demo-agenda">
@@ -423,7 +417,7 @@ export default async function DemoPage() {
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.trustKicker}</div>
+              <SectionKicker>{c.trustKicker}</SectionKicker>
               <h2 id="demo-trust-h" style={sectionHeading}>{c.trustH}</h2>
             </div>
             <div className="bi-trust-block bi-trust-block--bare">
@@ -458,7 +452,7 @@ export default async function DemoPage() {
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.refsKicker}</div>
+              <SectionKicker>{c.refsKicker}</SectionKicker>
               <h2 id="demo-refs" style={sectionHeading}>{c.refsH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -492,7 +486,7 @@ export default async function DemoPage() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.faqKicker}</div>
+              <SectionKicker>{c.faqKicker}</SectionKicker>
               <h2 id="demo-faq" style={sectionHeading}>{c.faqH}</h2>
             </div>
             <div className="bi-faq">
@@ -528,7 +522,7 @@ export default async function DemoPage() {
                 <span className="bi-demo-closing-mark-ring" />
               </div>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+              <div style={{ marginBottom: space[4] }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="demo-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}

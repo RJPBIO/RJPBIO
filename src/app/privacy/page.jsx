@@ -12,6 +12,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -23,15 +24,7 @@ export const metadata = {
 const LAST_UPDATED = "2026-04-20";
 const VERSION = "2.2";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -351,7 +344,7 @@ export default async function PrivacyPage() {
           <span aria-hidden className="bi-legal-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -429,7 +422,7 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 01 Principios ═══ */}
         <section id="s1" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s1Kicker}</div>
+          <SectionKicker>{c.s1Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s1H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s1L1}</li>
@@ -440,7 +433,7 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 02 Datos que tratamos ═══ */}
         <section id="s2" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s2Kicker}</div>
+          <SectionKicker>{c.s2Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s2H}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim }}>{c.s2Body}</p>
           <div className="bi-legal-table-wrap">
@@ -469,7 +462,7 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 03 Investigación y mejora ═══ */}
         <section id="s3" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s3Kicker}</div>
+          <SectionKicker>{c.s3Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s3H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s3Body1}</p>
           <p>{c.s3Body2}</p>
@@ -487,7 +480,7 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 04 No datos ═══ */}
         <section id="s4" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s4Kicker}</div>
+          <SectionKicker>{c.s4Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s4H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s4L1}</li>
@@ -499,7 +492,7 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 05 Retención ═══ */}
         <section id="s5" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s5Kicker}</div>
+          <SectionKicker>{c.s5Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s5H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s5R1}</li>
@@ -516,7 +509,7 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 06 Subprocesadores ═══ */}
         <section id="s6" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s6Kicker}</div>
+          <SectionKicker>{c.s6Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s6H}</h2>
           <p style={{ marginBlockStart: space[3] }}>
             {c.s6Body}
@@ -527,7 +520,7 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 07 Derechos ═══ */}
         <section id="s7" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s7Kicker}</div>
+          <SectionKicker>{c.s7Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s7H}</h2>
           <p style={{ marginBlockStart: space[3] }}>
             {c.s7Body}
@@ -550,28 +543,28 @@ export default async function PrivacyPage() {
 
         {/* ═══ § 08 Menores ═══ */}
         <section id="s8" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s8Kicker}</div>
+          <SectionKicker>{c.s8Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s8H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s8Body}</p>
         </section>
 
         {/* ═══ § 09 Brechas ═══ */}
         <section id="s9" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s9Kicker}</div>
+          <SectionKicker>{c.s9Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s9H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s9Body}</p>
         </section>
 
         {/* ═══ § 10 Cambios ═══ */}
         <section id="s10" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s10Kicker}</div>
+          <SectionKicker>{c.s10Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s10H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s10Body}</p>
         </section>
 
         {/* ═══ § 11 Contacto ═══ */}
         <section id="s11" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s11Kicker}</div>
+          <SectionKicker>{c.s11Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s11H}</h2>
           <p style={{ marginBlockStart: space[3] }}>
             {c.s11Body1}{" "}
@@ -590,7 +583,7 @@ export default async function PrivacyPage() {
       {/* ═══ Related legal docs ═══ */}
       <Container size="lg" className="bi-prose">
         <section aria-labelledby="privacy-related" className="bi-legal-related">
-          <div style={kickerStyle}>{c.relatedKicker}</div>
+          <SectionKicker>{c.relatedKicker}</SectionKicker>
           <h2 id="privacy-related" style={sectionHeading}>{c.relatedH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "58ch" }}>{c.relatedBody}</p>
           <ul className="bi-legal-related-grid">

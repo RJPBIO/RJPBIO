@@ -7,6 +7,7 @@ import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
+import SectionKicker from "@/components/brand/SectionKicker";
 import TrustEnhancements from "./TrustEnhancements";
 
 export const metadata = {
@@ -20,14 +21,7 @@ export const metadata = {
   },
 };
 
-const kickerStyle = {
-  fontSize: font.size.xs,
-  fontFamily: cssVar.fontMono,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.28em",
-  fontWeight: font.weight.bold,
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -578,7 +572,7 @@ export default async function TrustCenter() {
 
           <IgnitionReveal sparkOrigin="30% 40%">
             <div style={{ position: "relative", zIndex: 1, maxInlineSize: 760 }}>
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -677,7 +671,7 @@ export default async function TrustCenter() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.principlesKicker}</div>
+              <SectionKicker>{c.principlesKicker}</SectionKicker>
               <h2 id="trust-principles" style={sectionHeading}>{c.principlesH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -712,7 +706,7 @@ export default async function TrustCenter() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.certsKicker}</div>
+              <SectionKicker>{c.certsKicker}</SectionKicker>
               <h2 id="trust-certs" style={sectionHeading}>{c.certsH}</h2>
             </div>
             <div className="bi-trust-certs-stamp" aria-hidden>
@@ -756,7 +750,7 @@ export default async function TrustCenter() {
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.controlsKicker}</div>
+              <SectionKicker>{c.controlsKicker}</SectionKicker>
               <h2 id="trust-controls" style={sectionHeading}>{c.controlsH}</h2>
             </div>
             <div className="bi-how-grid bi-how-grid--nocount bi-trust-controls-grid" role="list">
@@ -776,7 +770,7 @@ export default async function TrustCenter() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.methodologyKicker}</div>
+              <SectionKicker>{c.methodologyKicker}</SectionKicker>
               <h2 id="trust-methodology" style={sectionHeading}>{c.methodologyH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -850,7 +844,7 @@ export default async function TrustCenter() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.packageKicker}</div>
+              <SectionKicker>{c.packageKicker}</SectionKicker>
               <h2 id="trust-package" style={sectionHeading}>{c.packageH}</h2>
             </div>
             <ul className="bi-trust-package" role="list">
@@ -887,7 +881,7 @@ export default async function TrustCenter() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.incidentsKicker}</div>
+              <SectionKicker>{c.incidentsKicker}</SectionKicker>
               <h2 id="trust-incidents" style={sectionHeading}>{c.incidentsH}</h2>
             </div>
             <div className="bi-trust-incidents">
@@ -931,7 +925,7 @@ export default async function TrustCenter() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={kickerStyle}>{c.disclosureKicker}</div>
+              <SectionKicker>{c.disclosureKicker}</SectionKicker>
               <h2 id="trust-disclosure" style={sectionHeading}>{c.disclosureH}</h2>
               <p style={{
                 marginBlockStart: space[3],
@@ -986,7 +980,7 @@ export default async function TrustCenter() {
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.docsKicker}</div>
+              <SectionKicker>{c.docsKicker}</SectionKicker>
               <h2 id="trust-docs" style={sectionHeading}>{c.docsH}</h2>
             </div>
             <div className="bi-trust-doc-groups">
@@ -1031,7 +1025,7 @@ export default async function TrustCenter() {
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={kickerStyle}>{c.faqKicker}</div>
+              <SectionKicker>{c.faqKicker}</SectionKicker>
               <h2 id="trust-faq" style={sectionHeading}>{c.faqH}</h2>
             </div>
             <div className="bi-faq">

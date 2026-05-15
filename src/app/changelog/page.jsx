@@ -13,6 +13,7 @@ import { fmtDateL } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -28,15 +29,7 @@ export const metadata = {
 
 const API_GA_DATE = "2025-11-01";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -184,7 +177,7 @@ export default async function ChangelogPage() {
           <span aria-hidden className="bi-changelog-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -268,7 +261,7 @@ export default async function ChangelogPage() {
       {/* ═══ Deprecation policy timeline ═══ */}
       <Container size="lg" className="bi-prose">
         <section aria-labelledby="changelog-policy" style={{ marginBlockEnd: space[7] }}>
-          <div style={kickerStyle}>{c.policyKicker}</div>
+          <SectionKicker>{c.policyKicker}</SectionKicker>
           <h2 id="changelog-policy" style={sectionHeading}>{c.policyH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "62ch" }}>
             {c.policyBody}
@@ -301,7 +294,7 @@ export default async function ChangelogPage() {
 
         {/* ═══ Release log ═══ */}
         <section aria-labelledby="changelog-releases" style={{ marginBlock: space[7] }}>
-          <div style={kickerStyle}>{c.releasesKicker}</div>
+          <SectionKicker>{c.releasesKicker}</SectionKicker>
           <h2 id="changelog-releases" style={sectionHeading}>{c.releasesH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "62ch" }}>
             {c.releasesBody}

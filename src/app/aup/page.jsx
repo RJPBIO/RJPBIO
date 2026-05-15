@@ -10,6 +10,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -22,15 +23,7 @@ const LAST_UPDATED = "2026-04-20";
 const VERSION = "1.1";
 const EFFECTIVE_FROM = "2026-04-01";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -219,7 +212,7 @@ export default async function AupPage() {
           <span aria-hidden className="bi-legal-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -296,7 +289,7 @@ export default async function AupPage() {
         </nav>
 
         <section id="compliance" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s1Kicker}</div>
+          <SectionKicker>{c.s1Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s1H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s1L1}</li>
@@ -307,7 +300,7 @@ export default async function AupPage() {
         </section>
 
         <section id="abuso" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s2Kicker}</div>
+          <SectionKicker>{c.s2Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s2H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s2L1}</li>
@@ -318,7 +311,7 @@ export default async function AupPage() {
         </section>
 
         <section id="tecnico" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s3Kicker}</div>
+          <SectionKicker>{c.s3Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s3H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s3L1}</li>
@@ -329,7 +322,7 @@ export default async function AupPage() {
         </section>
 
         <section id="comercial" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s4Kicker}</div>
+          <SectionKicker>{c.s4Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s4H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s4L1}</li>
@@ -339,7 +332,7 @@ export default async function AupPage() {
         </section>
 
         <section id="consecuencias" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s5Kicker}</div>
+          <SectionKicker>{c.s5Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s5H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s5L1}</li>
@@ -350,7 +343,7 @@ export default async function AupPage() {
         </section>
 
         <section id="reportar" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s6Kicker}</div>
+          <SectionKicker>{c.s6Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s6H}</h2>
           <aside className="bi-legal-callout bi-legal-callout--moat" style={{ marginBlockStart: space[3] }}>
             <div className="bi-legal-callout-kicker">{en ? "ABUSE CHANNEL · < 72 h" : "CANAL DE ABUSO · < 72 h"}</div>
@@ -368,7 +361,7 @@ export default async function AupPage() {
       {/* ═══ Related legal docs ═══ */}
       <Container size="lg" className="bi-prose">
         <section aria-labelledby="aup-related" className="bi-legal-related">
-          <div style={kickerStyle}>{c.relatedKicker}</div>
+          <SectionKicker>{c.relatedKicker}</SectionKicker>
           <h2 id="aup-related" style={sectionHeading}>{c.relatedH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "58ch" }}>{c.relatedBody}</p>
           <ul className="bi-legal-related-grid">

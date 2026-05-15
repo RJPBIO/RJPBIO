@@ -9,6 +9,7 @@ import { cssVar, space, font, bioSignal } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 
 export const metadata = {
@@ -21,15 +22,7 @@ const LAST_UPDATED = "2026-04-20";
 const VERSION = "1.3";
 const EFFECTIVE_FROM = "2026-04-01";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -315,7 +308,7 @@ export default async function TermsPage() {
           <span aria-hidden className="bi-legal-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div style={kickerStyle}>{c.eyebrow}</div>
+              <SectionKicker>{c.eyebrow}</SectionKicker>
               <h1
                 style={{
                   margin: `${space[3]}px 0 ${space[4]}px`,
@@ -393,21 +386,21 @@ export default async function TermsPage() {
 
         {/* ═══ § 1 Aceptación ═══ */}
         <section id="s1" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s1Kicker}</div>
+          <SectionKicker>{c.s1Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s1H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s1Body}</p>
         </section>
 
         {/* ═══ § 2 Cuenta ═══ */}
         <section id="s2" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s2Kicker}</div>
+          <SectionKicker>{c.s2Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s2H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s2Body}</p>
         </section>
 
         {/* ═══ § 3 AUP ═══ */}
         <section id="s3" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s3Kicker}</div>
+          <SectionKicker>{c.s3Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s3H}</h2>
           <p style={{ marginBlockStart: space[3] }}>
             {c.s3Body}{" "}
@@ -417,7 +410,7 @@ export default async function TermsPage() {
 
         {/* ═══ § 4 IP + datos derivados ═══ */}
         <section id="s4" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s4Kicker}</div>
+          <SectionKicker>{c.s4Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s4H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s4Body}</p>
           <aside className="bi-legal-callout bi-legal-callout--moat">
@@ -430,7 +423,7 @@ export default async function TermsPage() {
 
         {/* ═══ § 5 Confidencialidad ═══ */}
         <section id="s5" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s5Kicker}</div>
+          <SectionKicker>{c.s5Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s5H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s5Body}</p>
           <ul className="bi-legal-list">
@@ -442,7 +435,7 @@ export default async function TermsPage() {
 
         {/* ═══ § 6 Pagos ═══ */}
         <section id="s6" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s6Kicker}</div>
+          <SectionKicker>{c.s6Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s6H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s6L1}</li>
@@ -454,7 +447,7 @@ export default async function TermsPage() {
 
         {/* ═══ § 7 Terminación ═══ */}
         <section id="s7" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s7Kicker}</div>
+          <SectionKicker>{c.s7Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s7H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s7L1}</li>
@@ -469,21 +462,21 @@ export default async function TermsPage() {
 
         {/* ═══ § 8 Garantías ═══ */}
         <section id="s8" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s8Kicker}</div>
+          <SectionKicker>{c.s8Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s8H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s8Body}</p>
         </section>
 
         {/* ═══ § 9 Limitación ═══ */}
         <section id="s9" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s9Kicker}</div>
+          <SectionKicker>{c.s9Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s9H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s9Body}</p>
         </section>
 
         {/* ═══ § 10 Indemnización ═══ */}
         <section id="s10" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s10Kicker}</div>
+          <SectionKicker>{c.s10Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s10H}</h2>
           <ul className="bi-legal-list">
             <li>{c.s10L1}</li>
@@ -493,28 +486,28 @@ export default async function TermsPage() {
 
         {/* ═══ § 11 Fuerza mayor ═══ */}
         <section id="s11" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s11Kicker}</div>
+          <SectionKicker>{c.s11Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s11H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s11Body}</p>
         </section>
 
         {/* ═══ § 12 Cambios ═══ */}
         <section id="s12" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s12Kicker}</div>
+          <SectionKicker>{c.s12Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s12H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s12Body}</p>
         </section>
 
         {/* ═══ § 13 Ley ═══ */}
         <section id="s13" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s13Kicker}</div>
+          <SectionKicker>{c.s13Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s13H}</h2>
           <p style={{ marginBlockStart: space[3] }}>{c.s13Body}</p>
         </section>
 
         {/* ═══ § 14 Cesión y sucesión ═══ */}
         <section id="s14" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s14Kicker}</div>
+          <SectionKicker>{c.s14Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s14H}</h2>
           <aside className="bi-legal-callout bi-legal-callout--moat" style={{ marginBlockStart: space[3] }}>
             <div className="bi-legal-callout-kicker">{c.s14Kicker2}</div>
@@ -524,7 +517,7 @@ export default async function TermsPage() {
 
         {/* ═══ § 15 Contacto ═══ */}
         <section id="s15" className="bi-legal-section">
-          <div style={kickerStyle}>{c.s15Kicker}</div>
+          <SectionKicker>{c.s15Kicker}</SectionKicker>
           <h2 style={sectionHeading}>{c.s15H}</h2>
           <p style={{ marginBlockStart: space[3] }}>
             <a href="mailto:legal@bio-ignicion.app" className="bi-legal-link">legal@bio-ignicion.app</a>
@@ -537,7 +530,7 @@ export default async function TermsPage() {
       {/* ═══ Related legal docs ═══ */}
       <Container size="lg" className="bi-prose">
         <section aria-labelledby="terms-related" className="bi-legal-related">
-          <div style={kickerStyle}>{c.relatedKicker}</div>
+          <SectionKicker>{c.relatedKicker}</SectionKicker>
           <h2 id="terms-related" style={sectionHeading}>{c.relatedH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "58ch" }}>{c.relatedBody}</p>
           <ul className="bi-legal-related-grid">

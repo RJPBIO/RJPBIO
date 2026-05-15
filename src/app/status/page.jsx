@@ -15,6 +15,7 @@ import { fmtDateL } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
+import SectionKicker from "@/components/brand/SectionKicker";
 import PulseDivider from "@/components/brand/PulseDivider";
 // Sprint 19 — incidents desde DB
 import { listStatusIncidents } from "@/server/incidents";
@@ -60,15 +61,7 @@ async function probe(url, { timeoutMs = 2500, parseJson = false } = {}) {
 // Sprint 19 — INCIDENTS leídos en runtime de DB (ver listStatusIncidents).
 // Antes era array vacío hardcoded. Si DB falla → fallback a [] silencioso.
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.24em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker compartido. */
 
 const sectionHeading = {
   margin: 0,
@@ -265,9 +258,9 @@ export default async function StatusPage() {
           <span aria-hidden className="bi-status-hero-aura" />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <IgnitionReveal sparkOrigin="50% 30%">
-              <div className="bi-status-live-eyebrow" style={kickerStyle}>
+              <div className="bi-status-live-eyebrow">
                 <span aria-hidden className="bi-status-live-dot" />
-                <span>{c.eyebrow}</span>
+                <SectionKicker>{c.eyebrow}</SectionKicker>
               </div>
               <h1
                 style={{
@@ -340,7 +333,7 @@ export default async function StatusPage() {
       {/* ═══ Components — probed live ═══ */}
       <Container size="lg" className="bi-prose">
         <section aria-labelledby="status-components" style={{ marginBlockEnd: space[7] }}>
-          <div style={kickerStyle}>{c.componentsKicker}</div>
+          <SectionKicker>{c.componentsKicker}</SectionKicker>
           <h2 id="status-components" style={sectionHeading}>{c.componentsH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "58ch" }}>
             {c.componentsBody}
@@ -384,7 +377,7 @@ export default async function StatusPage() {
 
         {/* ═══ SLA targets ═══ */}
         <section aria-labelledby="status-sla" style={{ marginBlock: space[7] }}>
-          <div style={kickerStyle}>{c.slaKicker}</div>
+          <SectionKicker>{c.slaKicker}</SectionKicker>
           <h2 id="status-sla" style={sectionHeading}>{c.slaH}</h2>
           <p style={{ marginBlockStart: space[3], color: cssVar.textDim, maxWidth: "62ch" }}>
             {c.slaBody}
@@ -404,7 +397,7 @@ export default async function StatusPage() {
 
         {/* ═══ Historical uptime ═══ */}
         <section aria-labelledby="status-history" style={{ marginBlock: space[7] }}>
-          <div style={kickerStyle}>{c.historyKicker}</div>
+          <SectionKicker>{c.historyKicker}</SectionKicker>
           <h2 id="status-history" style={sectionHeading}>{c.historyH}</h2>
           <div className="bi-status-history-note">
             <p style={{ margin: 0 }}>
@@ -418,7 +411,7 @@ export default async function StatusPage() {
 
         {/* ═══ Incidents ═══ */}
         <section aria-labelledby="status-incidents" style={{ marginBlock: space[7] }}>
-          <div style={kickerStyle}>{c.incidentsKicker}</div>
+          <SectionKicker>{c.incidentsKicker}</SectionKicker>
           <h2 id="status-incidents" style={sectionHeading}>{c.incidentsH}</h2>
           {INCIDENTS.length === 0 ? (
             <div className="bi-status-incident-empty" role="status">
@@ -454,7 +447,7 @@ export default async function StatusPage() {
         {/* ═══ Sprint 22 — Maintenance windows programadas ═══ */}
         {MAINTENANCES.length > 0 && (
           <section aria-labelledby="status-maintenance" style={{ marginBlock: space[7] }}>
-            <div style={kickerStyle}>MANTENIMIENTO · PROGRAMADO</div>
+            <SectionKicker>{"MANTENIMIENTO · PROGRAMADO"}</SectionKicker>
             <h2 id="status-maintenance" style={sectionHeading}>
               {MAINTENANCES.length === 1 ? "Ventana próxima de mantenimiento." : "Ventanas próximas de mantenimiento."}
             </h2>
@@ -508,7 +501,7 @@ export default async function StatusPage() {
 
         {/* ═══ Sprint 20 — Subscribe to incident notifications ═══ */}
         <section aria-labelledby="status-subscribe" style={{ marginBlock: space[7] }}>
-          <div style={kickerStyle}>NOTIFICACIONES · PUSH POR EMAIL</div>
+          <SectionKicker>{"NOTIFICACIONES · PUSH POR EMAIL"}</SectionKicker>
           <h2 id="status-subscribe" style={sectionHeading}>
             Recibe avisos en cuanto haya un incident.
           </h2>
@@ -544,7 +537,7 @@ export default async function StatusPage() {
                 <span className="bi-demo-closing-mark-ring" />
               </div>
 
-              <div style={{ ...kickerStyle, marginBottom: space[4] }}>{c.closingKicker}</div>
+              <div style={{ marginBottom: space[4] }}><SectionKicker>{c.closingKicker}</SectionKicker></div>
 
               <h2 id="status-closing" className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{c.closingHLead}</span>{" "}
