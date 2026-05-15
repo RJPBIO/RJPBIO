@@ -275,6 +275,9 @@ const COPY = {
       },
     ],
 
+    voiceLine: "La seguridad que vende slides no es seguridad — es marketing. Lo que ves aquí son los controles que pasan un pentest y los documentos que firma tu legal. Si algo en esta página no se sostiene cuando lo verifique tu CISO, escribe a trust@bio-ignicion.app — lo arreglamos antes de que firmes nada.",
+    voiceAttribution: "— Equipo de Trust",
+
     approvalKicker: "REVISIÓN Y APROBACIÓN",
     approvalTitle: "Esta página se aprueba formalmente cada trimestre.",
     approvalBody: "El contenido del Trust Center es revisado y aprobado por el equipo de Trust — Seguridad, Privacidad y Plataforma — al menos cada 90 días. Los cambios materiales se publican en el Changelog y los clientes con DPA firmado reciben notificación por correo.",
@@ -529,6 +532,9 @@ const COPY = {
         ],
       },
     ],
+
+    voiceLine: "Security that sells slides isn't security — it's marketing. What you see here are the controls that pass a pentest and the documents your legal will sign. If anything on this page doesn't hold up under your CISO's review, write to trust@bio-ignicion.app — we'll fix it before you sign anything.",
+    voiceAttribution: "— The Trust team",
 
     approvalKicker: "REVIEW AND APPROVAL",
     approvalTitle: "This page is formally approved every quarter.",
@@ -1041,6 +1047,39 @@ export default async function TrustCenter() {
               ))}
             </div>
           </IgnitionReveal>
+        </Container>
+      </section>
+
+      {/* SP-MKT 9.5 — Voz editorial /trust-specific. La postura
+          security-first se ancla en voz humana antes del Review &
+          approval formal. Italic serif + atribución mono. */}
+      <section aria-labelledby="trust-voice" style={{ paddingBlock: "clamp(56px, 7vw, 96px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p id="trust-voice" style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: `${space[5]}px 0 0`,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
         </Container>
       </section>
 
