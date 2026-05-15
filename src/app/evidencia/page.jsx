@@ -99,6 +99,9 @@ const COPY = {
     cardMeta: (nStudies, yMin, yMax) =>
       `${nStudies} ${nStudies === 1 ? "estudio" : "estudios"} · ${yMin === yMax ? yMin : `${yMin}–${yMax}`}`,
 
+    voiceLine: "Esta biblioteca se va a equivocar a veces — preferimos que sea verificable cuando lo haga. Si la evidencia se pone contra nosotros, lo decimos y degradamos. Si encuentras un estudio que falta o un nivel mal calibrado, abre un issue: es la misma fuente que alimenta el producto.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "SIGUIENTE PASO",
     closingHLead: "Ya revisaste la evidencia.",
     closingHBody: "Ahora mira el producto.",
@@ -165,6 +168,9 @@ const COPY = {
     permalink: "Permalink",
     cardMeta: (nStudies, yMin, yMax) =>
       `${nStudies} ${nStudies === 1 ? "study" : "studies"} · ${yMin === yMax ? yMin : `${yMin}–${yMax}`}`,
+
+    voiceLine: "This library will be wrong sometimes — we prefer it be verifiable when it is. If the evidence turns against us, we say so and downgrade. If you find a missing study or a miscalibrated level, open an issue: it's the same source that feeds the product.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP",
     closingHLead: "You've reviewed the evidence.",
@@ -465,7 +471,38 @@ export default async function EvidenciaPage() {
         </div>
       </Container>
 
-      <PulseDivider intensity="dim" />
+      {/* SP-MKT 9.5 — Voz editorial /evidencia-specific: la academic
+          honesty posture (degradar cuando la evidencia se pone en contra,
+          registro abierto vía issue) ancla en voz humana antes del closing. */}
+      <section aria-labelledby="evid-voice" style={{ paddingBlock: "clamp(56px, 7vw, 96px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "40ch", marginInline: "auto", textAlign: "center" }}>
+            <p id="evid-voice" style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 32px)",
+              lineHeight: 1.32,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: `${space[5]}px 0 0`,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
 
       {/* ═══ Closing CTA — science read, product next ═══ */}
       <section aria-labelledby="evid-closing" className="bi-demo-closing-section">
