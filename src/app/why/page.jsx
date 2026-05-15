@@ -14,6 +14,8 @@ import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
+import SectionKicker from "@/components/brand/SectionKicker";
+import CohortCountdown from "@/components/brand/CohortCountdown";
 import { BioGlyph } from "@/components/BioIgnicionMark";
 
 export const metadata = {
@@ -31,21 +33,10 @@ export const metadata = {
 
 const LAST_REVIEWED = "2026-04-21";
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: bioSignal.phosphorCyanInk,
-  textTransform: "uppercase",
-  letterSpacing: "0.26em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
-
-const kickerStyleMuted = {
-  ...kickerStyle,
-  color: cssVar.textMuted,
-  letterSpacing: "0.24em",
-};
+/* SP-MKT 10/10 — kickerStyle + kickerStyleMuted locales reemplazados por
+   SectionKicker compartido (src/components/brand/SectionKicker.jsx).
+   El kicker per-item de cards sigue inline en el render — es un sub-label
+   dentro de tarjetas, no un kicker de sección. */
 
 const h1Style = {
   margin: 0,
@@ -110,9 +101,9 @@ const COPY = {
       "Outcome seat-por-seat · no PDF de bienestar",
     ],
     heroCompliance: [
-      "SOC 2 · ISO 27001 · ISO 45001",
-      "NOM-035 STPS · GDPR · HIPAA-ready",
-      "k-anonymity ≥ 5 · DPA + BAA",
+      "NOM-035 STPS automatizado · k-anonymity ≥ 5",
+      "GDPR (DSAR Art. 15/17/20) · Audit hash-chain",
+      "SCIM 2.0 · SSO federado · SOC 2 en auditoría",
     ],
     heroPrimaryCta: "Reservar piloto Q2 2026",
     heroSecondaryCta: "Ver ROI en tu operación",
@@ -196,35 +187,35 @@ const COPY = {
     // Full peer comparison table retired — vendor-by-vendor detail now
     // lives on /vs/headspace, /vs/calm, /vs/modern-health.
 
-    compoundKicker: "LO QUE COMPUESTA",
+    compoundKicker: "LO QUE COMPUESTA · PROYECCIÓN, NO PROMESA",
     compoundH: "Cinco outcomes que crecen juntos en 18 meses.",
     compoundBody:
-      "Efecto compuesto: cada uno se refuerza con los demás. Los pilotos Q4 2025 reportaron tracción simultánea — no uno a costa de otro.",
+      "Efecto compuesto basado en literatura sectorial y la arquitectura del producto. Estos son los objetivos del cohorte piloto Q2 2026 — no resultados observados, todavía. La meta es publicarlos con su evidencia al cierre del primer outcome dossier (día 90).",
     compound: [
       {
         k: "+18 pp",
-        t: "Retención 12 m en roles críticos",
-        b: "Benchmark Gartner HR 2024 · el burnout sale del top-3 de exit interviews cuando hay pre-shift activo.",
+        t: "Objetivo retención 12 m en roles críticos",
+        b: "Proyección basada en benchmark Gartner HR 2024 — el burnout sale del top-3 de exit interviews cuando hay pre-shift activo. Se medirá vs baseline del cliente.",
       },
       {
         k: "−9 %",
-        t: "Prima workers' comp renegociada",
-        b: "Aseguradoras empiezan a reconocer evidencia operativa de fatiga mgmt. Rango observado en pilotos 2024 — no garantizado.",
+        t: "Objetivo prima workers' comp renegociada",
+        b: "Aseguradoras empiezan a reconocer evidencia operativa de fatiga mgmt. Magnitud target derivada de literatura actuarial — el cohorte piloto Q2 2026 generará el primer dato propio.",
       },
       {
         k: "100 %",
         t: "Firma NOM-035 STPS sin hallazgos",
-        b: "Export trimestral ya mapeado al ECO37 + Guía III. Tu compliance officer deja de reescribirlo cada ciclo.",
+        b: "Export ECO37 + Guía III ya mapeado en código. Esta es la única promesa concreta — el artifact existe y se firma cada trimestre.",
       },
       {
         k: "Board deck · 1 slide",
         t: "Métrica reportable a accionistas",
-        b: "Un número trimestral (BioSignal Index) que tu CFO puede defender ante ISSB S1/S2 y SASB. No narrativa.",
+        b: "Un número trimestral (BioSignal Index) que tu CFO puede defender ante ISSB S1/S2 y SASB. La definición del índice es pública en /evidencia.",
       },
       {
         k: "Employer brand · tier-1",
         t: "Glassdoor + LinkedIn signal",
-        b: "'Mi empresa mide mi fatiga y me deja decidir entrar al turno' es el #1 menciona en reviews positivas de los pilotos.",
+        b: "'Mi empresa mide mi fatiga y me deja decidir entrar al turno' es la mención objetivo en reviews — lo mediremos en el dossier de cohorte.",
       },
     ],
 
@@ -295,9 +286,12 @@ const COPY = {
       },
       {
         q: "¿Cómo se relaciona con nuestro EAP existente?",
-        a: "Complementa, no sustituye. EAP resuelve crisis; nosotros prevenimos la fatiga que la dispara. Muchos pilotos terminan con EAP reportando −30 % de intake porque el BIO-IGNICIÓN captura antes.",
+        a: "Complementa, no sustituye. EAP resuelve crisis; nosotros instrumentamos la fatiga que la precede. La hipótesis — que el pre-shift reduce intake clínico downstream — la medimos contra tu data EAP existente al cierre del piloto, no la afirmamos a priori.",
       },
     ],
+
+    voiceLine: "Construimos esto porque la \"wellness corporativa\" era teatro. Si tu compliance officer no firma el recibo al cierre del trimestre, no pasó.",
+    voiceAttribution: "— Equipo Bio-Ignición",
 
     closingKicker: "DECISIÓN",
     closingHLead: "Puedes seguir midiendo encuestas trimestrales.",
@@ -317,7 +311,7 @@ const COPY = {
     disclaimer3:
       "Las marcas referidas (Lyra Health, Spring Health, Calm, Headspace, Oura, WHOOP, Apple Watch, Fitbit, SHRM, Gallup, WHO, ILO, NIOSH, Gartner, ISSB, SASB) se usan bajo doctrina de uso nominativo justo con fin de comparación editorial. No implican endorsement, afiliación, sociedad ni subordinación comercial con BIO-IGNICIÓN.",
     disclaimer4:
-      "Los porcentajes de outcome (+18 pp retención, −9 % prima) corresponden a rangos observados en pilotos internos 2024–2025 y literatura sectorial — no se presentan como garantía contractual. La adoption-guarantee y el exit de 30 días se documentan explícitamente en el MSA correspondiente.",
+      "Los porcentajes de outcome (+18 pp retención, −9 % prima) son proyecciones derivadas de literatura sectorial pública (Gartner HR 2024, NIOSH meta-análisis, benchmarks actuariales) y la arquitectura del producto. No corresponden a resultados observados — el cohorte piloto Q2 2026 es el primer ciclo en generar datos propios. No se presentan como garantía contractual. La adoption-guarantee (≥35 % en día 45) y el exit de 30 días se documentan explícitamente en el MSA.",
     disclaimer5:
       "Los términos 'outcome seat-por-seat', 'compliance-nativo' y 'evidencia, no narrativa' describen la arquitectura del producto y la postura operativa; no sustituyen el SLA, DPA, BAA o MSA firmado que constituye la relación contractual definitiva.",
 
@@ -340,9 +334,9 @@ const COPY = {
       "Seat-by-seat outcome · no wellness PDF",
     ],
     heroCompliance: [
-      "SOC 2 · ISO 27001 · ISO 45001",
-      "NOM-035 STPS · GDPR · HIPAA-ready",
-      "k-anonymity ≥ 5 · DPA + BAA",
+      "Automated NOM-035 STPS · k-anonymity ≥ 5",
+      "GDPR (DSAR Art. 15/17/20) · Audit hash-chain",
+      "SCIM 2.0 · Federated SSO · SOC 2 in audit",
     ],
     heroPrimaryCta: "Reserve Q2 2026 pilot",
     heroSecondaryCta: "See ROI on your ops",
@@ -424,35 +418,35 @@ const COPY = {
     ],
     cinePauseLine: "The window is narrow.",
 
-    compoundKicker: "WHAT COMPOUNDS",
+    compoundKicker: "WHAT COMPOUNDS · PROJECTION, NOT PROMISE",
     compoundH: "Five outcomes that grow together over 18 months.",
     compoundBody:
-      "Compound effect: each reinforces the others. Q4 2025 pilots reported simultaneous traction — not one at the cost of another.",
+      "Compound effect grounded in sector literature and the product's architecture. These are the targets for the Q2 2026 pilot cohort — not observed results, yet. The goal is to publish them with evidence at the first outcome dossier close (day 90).",
     compound: [
       {
         k: "+18 pp",
-        t: "12-month retention in critical roles",
-        b: "Gartner HR 2024 benchmark · burnout exits top-3 of exit interviews when pre-shift is active.",
+        t: "Target 12-month retention in critical roles",
+        b: "Projection grounded in Gartner HR 2024 benchmark — burnout exits top-3 of exit interviews when pre-shift is active. Measured vs client baseline.",
       },
       {
         k: "−9 %",
-        t: "Workers' comp premium renegotiated",
-        b: "Carriers beginning to recognize operational fatigue-mgmt evidence. Range observed in 2024 pilots — not guaranteed.",
+        t: "Target workers' comp premium renegotiated",
+        b: "Carriers beginning to recognize operational fatigue-mgmt evidence. Target magnitude derived from actuarial literature — the Q2 2026 pilot will generate the first proprietary data.",
       },
       {
         k: "100 %",
         t: "NOM-035 STPS sign-off with zero findings",
-        b: "Quarterly export already mapped to ECO37 + Guide III. Your compliance officer stops rewriting it every cycle.",
+        b: "ECO37 + Guide III export already mapped in code. This is the only concrete promise — the artifact exists and is signed every quarter.",
       },
       {
         k: "Board deck · 1 slide",
         t: "Shareholder-reportable metric",
-        b: "A quarterly number (BioSignal Index) your CFO can defend to ISSB S1/S2 and SASB. No narrative.",
+        b: "A quarterly number (BioSignal Index) your CFO can defend to ISSB S1/S2 and SASB. The index definition is public at /evidencia.",
       },
       {
         k: "Tier-1 employer brand",
         t: "Glassdoor + LinkedIn signal",
-        b: "'My company measures my fatigue and lets me decide to work the shift' is the #1 mention in pilot positive reviews.",
+        b: "'My company measures my fatigue and lets me decide to work the shift' is the target mention in reviews — measured in the cohort dossier.",
       },
     ],
 
@@ -518,9 +512,12 @@ const COPY = {
       },
       {
         q: "How does this relate to our existing EAP?",
-        a: "It complements, doesn't replace. EAP resolves crisis; we prevent the fatigue that triggers it. Many pilots end with EAP reporting −30 % intake because BIO-IGNITION catches upstream.",
+        a: "It complements, doesn't replace. EAP resolves crisis; we instrument the fatigue that precedes it. The hypothesis — that pre-shift reduces downstream clinical intake — we measure against your existing EAP data at pilot close, not assert a priori.",
       },
     ],
+
+    voiceLine: "We built this because \"corporate wellness\" was theater. If your compliance officer doesn't sign the receipt at quarter close, it didn't happen.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "DECISION",
     closingHLead: "You can keep running quarterly surveys.",
@@ -540,7 +537,7 @@ const COPY = {
     disclaimer3:
       "Referenced marks (Lyra Health, Spring Health, Calm, Headspace, Oura, WHOOP, Apple Watch, Fitbit, SHRM, Gallup, WHO, ILO, NIOSH, Gartner, ISSB, SASB) are used under fair nominative use for editorial comparison. No endorsement, affiliation, partnership or commercial subordination with BIO-IGNITION is implied.",
     disclaimer4:
-      "Outcome percentages (+18 pp retention, −9 % premium) correspond to ranges observed in internal 2024–2025 pilots and sector literature — not presented as contractual guarantee. The adoption-guarantee and 30-day exit are documented explicitly in the corresponding MSA.",
+      "Outcome percentages (+18 pp retention, −9 % premium) are projections derived from public sector literature (Gartner HR 2024, NIOSH meta-analyses, actuarial benchmarks) and the product's architecture. They do not correspond to observed results — the Q2 2026 pilot cohort is the first cycle generating proprietary data. They are not presented as contractual guarantee. The adoption-guarantee (≥35 % at day 45) and the 30-day exit are documented explicitly in the MSA.",
     disclaimer5:
       "Terms 'seat-by-seat outcome', 'compliance-native' and 'evidence, not narrative' describe product architecture and operational posture; they do not substitute the SLA, DPA, BAA or signed MSA that constitutes the definitive contractual relationship.",
 
@@ -573,7 +570,7 @@ export default async function WhyPage() {
           </div>
           <Container size="xl" style={{ position: "relative", zIndex: 1, paddingBlock: 0 }}>
             <IgnitionReveal sparkOrigin="18% 28%">
-              <p style={kickerStyle}>{t.eyebrow}</p>
+              <SectionKicker align="left">{t.eyebrow}</SectionKicker>
               {/* Two-line H1 with gradient on line 2 — mirrors home's
                   hero structure so the brand signature ("sans black
                   first clause + cyan→violet accent on second clause")
@@ -596,8 +593,39 @@ export default async function WhyPage() {
               </h1>
               <p style={editorialStyle}>{t.editorial}</p>
 
-              <div style={{ marginBlockStart: space[6] }}>
+              {/* SP-MKT 10/10 — scarcity chip ahora lleva countdown live
+                  en lugar de "RESERVA ABIERTA" estático. FOMO honesto:
+                  el número cambia cada minuto, no es marketing. */}
+              <div style={{
+                marginBlockStart: space[6],
+                display: "inline-flex", alignItems: "center", gap: space[3],
+                flexWrap: "wrap",
+              }}>
                 <span className="bi-roi-scarcity">{t.scarcity}</span>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "6px 14px",
+                  borderRadius: 999,
+                  border: `1px solid ${bioSignal.phosphorCyan}`,
+                  background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 8%, transparent)`,
+                  fontSize: 12,
+                  fontWeight: font.weight.bold,
+                  color: bioSignal.phosphorCyanInk,
+                }}>
+                  <span aria-hidden style={{
+                    inlineSize: 6, blockSize: 6, borderRadius: "50%",
+                    background: bioSignal.phosphorCyan,
+                    boxShadow: `0 0 8px ${bioSignal.phosphorCyan}`,
+                  }} />
+                  <span style={{
+                    fontFamily: cssVar.fontMono,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}>
+                    Cierra en
+                  </span>
+                  <CohortCountdown locale={locale === "en" ? "en" : "es"} />
+                </span>
               </div>
 
               <ul style={{
@@ -643,7 +671,7 @@ export default async function WhyPage() {
         {/* ═══ COST NOBODY MEASURES ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.costKicker}</p>
+            <SectionKicker>{t.costKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.costH}</h2>
             <p style={sectionSub}>{t.costBody}</p>
             <div className="bi-proof-stats" style={{ marginBlockStart: space[8] }}>
@@ -663,7 +691,7 @@ export default async function WhyPage() {
         {/* ═══ WHY NOW ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.whyNowKicker}</p>
+            <SectionKicker>{t.whyNowKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.whyNowH}</h2>
             <p style={sectionSub}>{t.whyNowBody}</p>
             <div style={{
@@ -672,7 +700,15 @@ export default async function WhyPage() {
             }}>
               {t.whyNowItems.map((it) => (
                 <article key={it.t} style={cardStyle}>
-                  <p style={{ ...kickerStyle, margin: 0, fontSize: "10px" }}>{it.k}</p>
+                  <p style={{
+                    margin: 0,
+                    fontFamily: cssVar.fontMono,
+                    fontSize: 10,
+                    color: bioSignal.phosphorCyanInk,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.16em",
+                    fontWeight: font.weight.bold,
+                  }}>{it.k}</p>
                   <h3 style={{
                     margin: 0, fontSize: font.size.lg, fontWeight: font.weight.bold,
                     color: cssVar.text, letterSpacing: "-0.01em",
@@ -689,7 +725,7 @@ export default async function WhyPage() {
         {/* ═══ 4 PILLARS ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.pillarsKicker}</p>
+            <SectionKicker>{t.pillarsKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.pillarsH}</h2>
             <p style={sectionSub}>{t.pillarsBody}</p>
             <div style={{
@@ -725,7 +761,7 @@ export default async function WhyPage() {
             drifts out of sync between pages. */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.vsKicker}</p>
+            <SectionKicker>{t.vsKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.vsH}</h2>
             <p style={sectionSub}>{t.vsBody}</p>
             <ul
@@ -807,7 +843,7 @@ export default async function WhyPage() {
         {/* ═══ WHAT COMPOUNDS ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.compoundKicker}</p>
+            <SectionKicker>{t.compoundKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.compoundH}</h2>
             <p style={sectionSub}>{t.compoundBody}</p>
             <div className="bi-roi-benchmark-strip" style={{ marginBlockStart: space[8] }}>
@@ -833,7 +869,7 @@ export default async function WhyPage() {
         {/* ═══ WHEN NOT ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.notForKicker}</p>
+            <SectionKicker>{t.notForKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.notForH}</h2>
             <p style={sectionSub}>{t.notForBody}</p>
             <div style={{
@@ -876,9 +912,40 @@ export default async function WhyPage() {
             dark-bg-safe so children don't inherit light-theme cascade. */}
         <section aria-labelledby="cohort" className="bi-darkframe">
           <Container size="xl">
-            <p style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{t.cohortKicker}</p>
+            <SectionKicker tone="bright">{t.cohortKicker}</SectionKicker>
             <h2 id="cohort" style={{ ...sectionHeading, color: "#E6F1EA" }}>{t.cohortH}</h2>
             <p style={{ ...sectionSub, color: "#A7F3D0" }}>{t.cohortBody}</p>
+            {/* SP-MKT 10/10 — countdown live dramático justo bajo el H del
+                cohort darkframe. Reemplaza la confianza estática con un
+                número que se mueve. */}
+            <div style={{
+              marginBlockStart: space[6],
+              display: "inline-flex", alignItems: "baseline", gap: space[4],
+              padding: `${space[3]}px ${space[5]}px`,
+              borderRadius: radius.lg,
+              border: `1px solid rgba(34, 211, 238, 0.32)`,
+              background: "rgba(34, 211, 238, 0.06)",
+            }}>
+              <span style={{
+                fontFamily: cssVar.fontMono,
+                fontSize: 11,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: bioSignal.phosphorCyan,
+                fontWeight: font.weight.bold,
+              }}>
+                Cierra cohorte
+              </span>
+              <span style={{
+                fontFamily: cssVar.fontMono,
+                fontSize: "clamp(20px, 2.4vw, 28px)",
+                color: "#E6F1EA",
+                fontWeight: font.weight.black,
+                letterSpacing: "-0.01em",
+              }}>
+                <CohortCountdown locale={locale === "en" ? "en" : "es"} />
+              </span>
+            </div>
             <div style={{
               marginBlockStart: space[8], display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: space[2],
@@ -954,7 +1021,7 @@ export default async function WhyPage() {
         {/* ═══ FAQ / OBJECTIONS ═══ */}
         <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)" }}>
           <Container size="xl">
-            <p style={kickerStyleMuted}>{t.faqKicker}</p>
+            <SectionKicker>{t.faqKicker}</SectionKicker>
             <h2 style={sectionHeading}>{t.faqH}</h2>
             <div style={{ marginBlockStart: space[8], display: "grid", gap: space[3] }}>
               {t.faq.map((f, i) => (
@@ -979,7 +1046,38 @@ export default async function WhyPage() {
           </Container>
         </section>
 
-        <PulseDivider intensity="dim" />
+        {/* SP-MKT 10/10 — Voz editorial / manifesto. Igual que el home, /why
+            tenía postura sin voz humana. Una línea honesta antes del cierre
+            ancla el thesis en una voz real, no en abstracción corporativa. */}
+        <section aria-labelledby="why-manifesto" style={{ paddingBlock: "clamp(48px, 6vw, 88px)", paddingInline: space[4] }}>
+          <Container size="md">
+            <div style={{ maxInlineSize: "32ch", marginInline: "auto", textAlign: "center" }}>
+              <p id="why-manifesto" style={{
+                margin: 0,
+                fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: "clamp(22px, 2.6vw, 32px)",
+                lineHeight: 1.32,
+                letterSpacing: "-0.018em",
+                color: cssVar.text,
+              }}>
+                {t.voiceLine}
+              </p>
+              <p style={{
+                margin: `${space[5]}px 0 0`,
+                fontFamily: cssVar.fontMono,
+                fontSize: 11,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                fontWeight: font.weight.bold,
+                color: bioSignal.phosphorCyanInk,
+              }}>
+                {t.voiceAttribution}
+              </p>
+            </div>
+          </Container>
+        </section>
 
         {/* ═══ CLOSING CTA ═══ */}
         <section className="bi-demo-closing-section">
@@ -992,7 +1090,7 @@ export default async function WhyPage() {
                 <span className="bi-demo-closing-mark-core" />
                 <span className="bi-demo-closing-mark-ring" />
               </span>
-              <p style={kickerStyle}>{t.closingKicker}</p>
+              <SectionKicker>{t.closingKicker}</SectionKicker>
               <h2 className="bi-demo-closing-h">
                 <span className="bi-demo-closing-h-lead">{t.closingHLead}</span>
                 <span className="bi-demo-closing-h-body">{t.closingHBody}</span>

@@ -1989,7 +1989,11 @@ button, [role="button"], [role="tab"], [role="menuitem"] {
        Placed between /home pricing peek and the final CTA so the
        reader gets a beat of agency before action. */
 .bi-cine-pause {
-  padding-block: clamp(140px, 22vh, 240px);
+  /* SP-MKT polish — padding was clamp(140px,22vh,240px) → up to 480px of
+     dead vertical void around a single editorial line. Apple/Linear
+     "breath" moments are ~120-160px, not half a viewport. Tightened so
+     the pause reads as intentional whitespace, not a layout bug. */
+  padding-block: clamp(72px, 9vh, 116px);
   padding-inline: 24px;
   text-align: center;
   position: relative;
@@ -1997,9 +2001,9 @@ button, [role="button"], [role="tab"], [role="menuitem"] {
   isolation: isolate;
 }
 /* Mid-page variant is slightly shorter so the final pause retains
-   primacy. Final pause = 22vh moment, mid-pause = 16vh bridge. */
+   primacy. Final pause = full beat, mid-pause = compact bridge. */
 .bi-cine-pause--mid {
-  padding-block: clamp(100px, 16vh, 180px);
+  padding-block: clamp(56px, 7vh, 88px);
 }
 .bi-cine-pause--mid::before {
   inline-size: clamp(280px, 38vw, 500px);
@@ -2416,6 +2420,51 @@ button, [role="button"], [role="tab"], [role="menuitem"] {
   font-size: 12px;
   color: var(--bi-text-muted);
   line-height: 1.5;
+}
+
+/* SP-MKT 10/10 — Sectores servidos cells.
+   Linear-style hover lift sin chrome: el background se aclara hacia el
+   accent cyan-soft, indica interacción sin gritar. Cero shadow, cero
+   transform — restraint. */
+.bi-sector-cell:hover,
+.bi-sector-cell:focus-visible {
+  background: color-mix(in srgb, #22D3EE 6%, var(--bi-bg)) !important;
+}
+.bi-sector-cell:focus-visible {
+  outline: 2px solid var(--bi-accent);
+  outline-offset: -2px;
+}
+
+/* SP-MKT 9.5 — Two surfaces split composition.
+   Diptych editorial: dos columnas tipográficas separadas por un spine
+   vertical hairline. Desktop: 1fr | 1px | 1fr. Mobile (<720px): single
+   column, spine pasa a hairline horizontal corto entre columnas. */
+.bi-two-surfaces-split {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  column-gap: clamp(28px, 4vw, 64px);
+  row-gap: 0;
+  align-items: stretch;
+}
+.bi-two-surfaces-spine {
+  display: block;
+  width: 1px;
+  min-height: 100%;
+  align-self: stretch;
+  opacity: 0.42;
+}
+@media (max-width: 720px) {
+  .bi-two-surfaces-split {
+    grid-template-columns: 1fr;
+    row-gap: clamp(32px, 6vw, 48px);
+  }
+  .bi-two-surfaces-spine {
+    width: clamp(80px, 22vw, 140px);
+    height: 1px;
+    min-height: 0;
+    justify-self: center;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, #22D3EE 60%, transparent), color-mix(in srgb, #8B5CF6 60%, transparent), transparent) !important;
+  }
 }
 
 .bi-persona-grid {
@@ -4269,7 +4318,11 @@ a:focus-visible, .bi-btn:focus-visible, button:focus-visible, [role="button"]:fo
 .bi-darkframe {
   position: relative;
   isolation: isolate;
-  padding-block: clamp(80px, 12vw, 140px);
+  /* SP-MKT polish — was clamp(80px,12vw,140px). Each darkframe (Evidence,
+     PWA Showcase, Final CTA) carried up to 280px of combined vertical
+     padding. Tightened to keep the dark moments substantial without
+     bloating total page height. */
+  padding-block: clamp(56px, 7vw, 96px);
   padding-inline: clamp(16px, 4vw, 40px);
   background:
     radial-gradient(ellipse 70% 40% at 50% 0%, color-mix(in srgb, #22D3EE 18%, transparent), transparent 60%),

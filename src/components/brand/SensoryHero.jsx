@@ -63,7 +63,11 @@ export default function SensoryHero({ T }) {
   return (
     <section style={{
       position: "relative",
-      paddingBlock: "clamp(80px, 14vw, 160px) clamp(56px, 10vw, 120px)",
+      /* SP-MKT polish — was clamp(80px,14vw,160px)/clamp(56px,10vw,120px):
+         on desktop the 14vw term pushed ~200px of dead space above the
+         eyebrow and the pulse button fell below the fold. Tightened so
+         the hero composes inside the first viewport. */
+      paddingBlock: "clamp(48px, 6vw, 88px) clamp(40px, 5vw, 72px)",
       paddingInline: space[4],
       textAlign: "center",
       overflow: "hidden",
@@ -123,24 +127,35 @@ export default function SensoryHero({ T }) {
       }} />
 
       <div style={{ position: "relative", zIndex: 4, maxWidth: 980, marginInline: "auto" }}>
+        {/* SP-MKT elevación — kicker reconstruido de texto-gris-perdido a
+            un pill real: borde + dot fósforo + cyan-ink. Reclama la
+            categoría con presencia, no se pierde sobre el fondo. */}
         <div style={{
-          fontFamily: cssVar.fontMono, fontSize: font.size.xs,
-          color: cssVar.textMuted,
-          textTransform: "uppercase", letterSpacing: font.tracking.caps,
+          display: "inline-flex", alignItems: "center", gap: 8,
+          padding: "7px 15px", borderRadius: 999,
+          border: `1px solid color-mix(in srgb, ${bioSignal.phosphorCyan} 32%, transparent)`,
+          background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 7%, transparent)`,
+          fontFamily: cssVar.fontMono, fontSize: 11,
+          color: bioSignal.phosphorCyanInk,
+          textTransform: "uppercase", letterSpacing: "0.16em",
           fontWeight: font.weight.bold,
-          marginBlockEnd: space[4],
+          marginBlockEnd: space[6],
         }}>
+          <span aria-hidden style={{
+            inlineSize: 6, blockSize: 6, borderRadius: "50%",
+            background: bioSignal.phosphorCyan,
+            boxShadow: `0 0 8px ${bioSignal.phosphorCyan}`,
+          }} />
           {T.kicker}
         </div>
 
-        {/* Monumental scale on desktop. Upper clamp 96→128 makes the
-            title the unambiguous focal point on ≥1280px viewports,
-            matching Stripe/Linear's big-type moments. Mobile minimum
-            unchanged (48px) so small screens still read cleanly. */}
+        {/* Monumental scale on desktop — the title is the focal statement,
+            matching Stripe/Linear big-type moments. Mobile minimum keeps
+            small screens legible. */}
         <h1 style={{
-          fontSize: "clamp(48px, 9.5vw, 128px)",
-          lineHeight: 1.01,
-          letterSpacing: "-0.05em",
+          fontSize: "clamp(46px, 9vw, 120px)",
+          lineHeight: 1.02,
+          letterSpacing: "-0.045em",
           fontWeight: font.weight.black,
           color: cssVar.text,
           margin: 0,
@@ -148,7 +163,7 @@ export default function SensoryHero({ T }) {
           {T.title1}
           <br />
           <span style={{
-            background: `linear-gradient(120deg, ${bioSignal.phosphorCyan}, ${bioSignal.neuralViolet})`,
+            background: `linear-gradient(118deg, ${bioSignal.phosphorCyan}, ${bioSignal.neuralViolet})`,
             WebkitBackgroundClip: "text", backgroundClip: "text",
             WebkitTextFillColor: "transparent",
           }}>{T.title2}</span>
@@ -156,18 +171,21 @@ export default function SensoryHero({ T }) {
 
         <p style={{
           marginBlockStart: space[5],
-          fontSize: "clamp(16px, 1.6vw, 20px)",
-          lineHeight: 1.5,
+          fontSize: "clamp(15px, 1.4vw, 18px)",
+          lineHeight: 1.6,
           color: cssVar.textDim,
-          maxWidth: 580, marginInline: "auto",
+          maxWidth: 540, marginInline: "auto",
         }}>
           {T.sub}
         </p>
 
+        {/* SP-MKT elevación — el bloque del pulse button respira con
+            space[9] arriba: es el momento focal del hero (la firma
+            sensorial real del producto), no un elemento más en la pila. */}
         <div style={{
-          marginBlockStart: space[8],
+          marginBlockStart: space[10],
           display: "flex", flexDirection: "column",
-          alignItems: "center", gap: space[5],
+          alignItems: "center", gap: space[4],
         }}>
           <div style={{ position: "relative", width: 220, height: 220 }}>
             {pulsing && [0, 1, 2].map((i) => (
@@ -241,11 +259,24 @@ export default function SensoryHero({ T }) {
             )}
           </AnimatePresence>
 
+        </div>
+
+        {/* SP-MKT elevación — CTA secundario + partner chip salieron de
+            la columna del pulse button a su propia tier secundaria. El
+            hero focal ahora es solo: pill → H1 → sub → button → hint.
+            Esto da jerarquía decisiva en vez de 8 elementos apilados.
+            El wave SVG decorativo del fondo del hero fue eliminado —
+            era ruido sin función. */}
+        <div style={{
+          marginBlockStart: space[8],
+          display: "flex", flexWrap: "wrap",
+          justifyContent: "center", alignItems: "center",
+          gap: space[3],
+        }}>
           {T.secondaryCta && T.secondaryHref && (
             <Link
               href={T.secondaryHref}
               style={{
-                marginBlockStart: space[1],
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
@@ -267,15 +298,14 @@ export default function SensoryHero({ T }) {
             </Link>
           )}
 
-          {/* Design Partner scarcity chip — visible signal in hero so
-              the prospect sees the cohort window before they decide to
-              leave. Copy drawn from lib/pricing.js DESIGN_PARTNER —
-              single source of truth, honest numbers. */}
+          {/* Design Partner scarcity chip — copy from lib/pricing.js
+              DESIGN_PARTNER, single source of truth, honest numbers. */}
           {T.partnerChip && T.partnerChipHref && (
             <Link
               href={T.partnerChipHref}
               className="bi-hero-partner-chip"
               aria-label={T.partnerChipAria || T.partnerChip}
+              style={{ marginBlockStart: 0 }}
             >
               <span className="dot" aria-hidden />
               <span className="label">{T.partnerChip}</span>
@@ -283,41 +313,6 @@ export default function SensoryHero({ T }) {
             </Link>
           )}
         </div>
-
-        <svg viewBox="0 0 900 60" preserveAspectRatio="none"
-          style={{
-            display: "block",
-            marginBlockStart: space[7],
-            marginInline: "auto",
-            width: "min(92vw, 720px)",
-            height: 60,
-            opacity: 0.75,
-          }}
-        >
-          <defs>
-            <linearGradient id="v5-wave" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor={bioSignal.phosphorCyan} stopOpacity="0" />
-              <stop offset="20%" stopColor={bioSignal.phosphorCyan} stopOpacity="1" />
-              <stop offset="80%" stopColor={bioSignal.neuralViolet} stopOpacity="1" />
-              <stop offset="100%" stopColor={bioSignal.neuralViolet} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <motion.path
-            d="M 0 30 Q 50 25, 100 28 T 200 30 T 300 22 T 400 28 T 500 20 T 600 26 T 700 18 T 800 24 T 900 22"
-            fill="none"
-            stroke="url(#v5-wave)"
-            strokeWidth={pulsing ? 2.4 : 1.5}
-            strokeLinecap="round"
-            animate={{
-              d: [
-                "M 0 30 Q 50 25, 100 28 T 200 30 T 300 22 T 400 28 T 500 20 T 600 26 T 700 18 T 800 24 T 900 22",
-                "M 0 26 Q 50 32, 100 24 T 200 28 T 300 20 T 400 24 T 500 22 T 600 18 T 700 22 T 800 20 T 900 24",
-                "M 0 30 Q 50 25, 100 28 T 200 30 T 300 22 T 400 28 T 500 20 T 600 26 T 700 18 T 800 24 T 900 22",
-              ],
-            }}
-            transition={{ duration: pulsing ? 2.2 : 6, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </svg>
 
         {T.chips && T.chips.length > 0 && (
           <motion.ul

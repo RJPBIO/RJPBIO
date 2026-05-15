@@ -58,7 +58,9 @@ next-env.d.ts
 /RECON.md
 /SYSTEM_OVERVIEW.md
 
-# SP-1.5 — capturas regenerables via `node scripts/capture-pwa-mockups.mjs`.
-# Output del Playwright batch capture; no commitear (regenerable, machine-local).
+# SP-1.5 / SP-MKT — capturas regenerables via Playwright (browser tooling).
+# Output del Playwright batch capture o diagnóstico visual; no commitear
+# (regenerable, machine-local, archivos binarios grandes).
 /public/screenshots/why/
 /screenshots/sp-marketing-pwa-analysis/
+/screenshots/sp-mkt-redesign/

@@ -5,21 +5,20 @@ import { Container } from "@/components/ui/Container";
 import { cssVar, space, font, bioSignal, radius } from "@/components/ui/tokens";
 import { getServerLocale } from "@/lib/locale-server";
 import { EVIDENCE } from "@/lib/evidence";
+import { P as PROTOCOLS } from "@/lib/protocols";
 import { PRICE_PEEK, PARTNER_COPY, DESIGN_PARTNER } from "@/lib/pricing";
 // Above-the-fold (eager — necesarios para LCP):
 import SensoryHero from "@/components/brand/SensoryHero";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
-import PulseDivider from "@/components/brand/PulseDivider";
 import CountUp from "@/components/brand/CountUp";
+import CohortCountdown from "@/components/brand/CohortCountdown";
+import SectionKicker from "@/components/brand/SectionKicker";
 import { BioGlyph } from "@/components/BioIgnicionMark";
 
 // Below-the-fold (lazy — chunks separados, no bloquean initial paint).
 // next/dynamic con ssr:true preserva HTML render (SEO intacto) pero el
 // JS de hidratación va a chunks aparte → main bundle más pequeño →
 // menos main-thread work al cargar la landing.
-const BioglyphLattice = dynamic(() => import("@/components/brand/BioglyphLattice"));
-const DashboardMockup = dynamic(() => import("@/components/brand/DashboardMockup"));
-const VideoPreview = dynamic(() => import("@/components/brand/VideoPreview"));
 const PartnerApplyModal = dynamic(() => import("@/components/ui/PartnerApplyModal"));
 const SpotlightGrid = dynamic(() => import("@/components/brand/SpotlightGrid"));
 const PWAShowcase = dynamic(() => import("@/components/brand/PWAShowcase"));
@@ -42,7 +41,7 @@ const COPY = {
       kicker: "INSTRUMENTO NEURAL · B2B",
       title1: "Se siente. Se mide.",
       title2: "Se firma.",
-      sub: "El primer instrumento neural B2B con recibos. HRV medible, pulso háptico, export NOM-035 firmable. 3 minutos pre y post turno — no otra app de meditación.",
+      sub: "El operador resetea su sistema nervioso en 60–180 segundos. Tu compliance officer recibe el recibo firmado. Una PWA local-first y una consola enterprise — la misma plataforma.",
       buttonIdle: "Activar pulso",
       buttonPulsing: "Sintiendo…",
       buttonAria: "Activar pulso sensorial de 3 segundos",
@@ -57,20 +56,65 @@ const COPY = {
       partnerChipAria: `Ver programa Design Partner: ${DESIGN_PARTNER.slotsTotal} cupos abiertos para cohorte Q2 2026 con ${DESIGN_PARTNER.discountPct}% de descuento por ${DESIGN_PARTNER.termMonths} meses`,
     },
 
-    proofKicker: "SEÑALES AUDITABLES",
+    proofKicker: "LO QUE EL CÓDIGO SOSTIENE",
     proof: {
-      s1Label: "protocolos con mecanismo documentado",
-      s1Sub:   () => `Revísalos en /evidencia · catálogo en expansión`,
-      s2Label: "estudios citados con DOI verificable",
-      s2Sub:   "Cohen 1988 · Task Force 1996 · Shaffer 2017…",
-      s3Value: "0",
-      s3Label: "puntajes propietarios sin referencia pública",
-      s3Sub:   "Si aparece en el reporte, su fuente es pública",
+      s1Label: "protocolos neuro-fisiológicos · 60–180 s",
+      s1Sub:   (n) => `${n} con mecanismo documentado · catálogo en src/lib/protocols.js`,
+      s2Label: "estudios peer-reviewed con DOI verificable",
+      s2Sub:   "Balban 2023 · Lehrer 2014 · Goessl 2017 d=0.83 · auditables en /evidencia",
+      s3Value: "k≥5",
+      s3Label: "umbral de agregación · cero datos individuales crudos",
+      s3Sub:   "El admin ve señales de equipo, nunca a una persona",
+      s4Label: "cohorte piloto Q2 2026 · 12 organizaciones",
+      s4Sub:   "Cierra cohorte / abre Q3 con pricing +12 %",
     },
 
-    evidenceKicker: "EVIDENCIA OPERATIVA · LO QUE TU ADMIN VE",
-    evidenceH: "Tres receipts, no tres promesas.",
-    evidenceSub: "Estos son los artifacts que la plataforma produce desde el primer día. Sin capturas simuladas, sin demos curadas.",
+    twoKicker: "UNA PLATAFORMA · DOS SUPERFICIES",
+    twoH: "El operador y su compliance officer. La misma demo.",
+    twoSub: "Casi toda plataforma de bienestar le habla a uno o al otro. Bio-Ignición es una sola pieza de software con dos caras: la que el equipo abre en 60 segundos, y la que RRHH y seguridad auditan.",
+    twoSurfaces: [
+      {
+        tag: "SUPERFICIE 1 · EL OPERADOR",
+        title: "La PWA neural",
+        body: "Local-first, sin app store. El operador abre, mide su HRV — cámara PPG propia o strap BLE — y corre un protocolo de 60–180 s con audio binaural, haptics al milisegundo y voz guiada. El dato individual nunca sale del dispositivo.",
+        points: [
+          "23 protocolos · motor adaptativo bandit UCB",
+          "HRV por cámara PPG propia o strap BLE",
+          "IndexedDB cifrado AES-GCM 256 · offline-first",
+        ],
+      },
+      {
+        tag: "SUPERFICIE 2 · COMPLIANCE",
+        title: "La consola enterprise",
+        body: "24 páginas de administración. RRHH recibe agregados k-anónimos ≥ 5 y el reporte NOM-035 STPS firmable. Seguridad recibe SCIM 2.0, SSO federado, MFA con passkeys y un audit log con hash chain verificable.",
+        points: [
+          "NOM-035 STPS · export ECO37 firmado SHA-256",
+          "SCIM 2.0 · SSO Google · Azure · Okta · Apple",
+          "Audit hash-chain · DSAR GDPR Art. 15/17/20",
+        ],
+      },
+    ],
+
+    sectorsKicker: "DISEÑADO PARA · CONTEXTOS OPERATIVOS",
+    sectorsH: "Donde la fatiga no es métrica de wellness — es riesgo de incidente.",
+    sectorsSub: "8 verticales con guía de implementación dedicada. No es 'enterprise wellness' genérico: cada uno toca un caso real (pre-shift de aviación, on-call de tech, turnos clínicos, traders en cierre).",
+    sectors: [
+      { slug: "/for-aviation",      label: "Aviación",       sub: "Pilotos · tripulación · pre-shift" },
+      { slug: "/for-healthcare",    label: "Salud",          sub: "Clínicos en turno · enfermería" },
+      { slug: "/for-finance",       label: "Finanzas",       sub: "Trading · risk · cierre" },
+      { slug: "/for-tech",          label: "Tecnología",     sub: "Ingeniería · on-call · SRE" },
+      { slug: "/for-energy",        label: "Energía",        sub: "Operadores de planta · turnos" },
+      { slug: "/for-manufacturing", label: "Manufactura",    sub: "Línea de producción · supervisión" },
+      { slug: "/for-logistics",     label: "Logística",      sub: "Conductores · centros · supervisión" },
+      { slug: "/for-public-sector", label: "Sector público", sub: "Operativos · primera respuesta" },
+    ],
+
+    voiceLine: "Construimos esto porque la \"wellness corporativa\" era teatro. Si tu compliance officer no firma el recibo al cierre del trimestre, no pasó.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
+    evidenceKicker: "EVIDENCIA OPERATIVA · EL FORMATO DE LOS ARTIFACTS",
+    evidenceH: "Tres recibos. Este es su formato exacto.",
+    evidenceSub: "El export NOM-035, el JSON GDPR disociado y el audit log que la plataforma produce — en su formato real. Los valores son ilustrativos; la estructura, el firmado SHA-256 y el hash chain son exactos.",
     evidence: {
       nomKicker: "NOM-035 STPS · EXPORT ECO37",
       nomTitle: "El reporte que tu compliance officer firma.",
@@ -133,36 +177,29 @@ const COPY = {
       ],
     },
 
-    bentoKicker: "POR DENTRO",
-    bentoH: "Tres señales. Un lenguaje. Tu sistema nervioso.",
-    bento: {
-      neural: { t: "El motor te escucha", d: "Tu HRV, tu respiración, tu sueño. Tres pulsos entran. Uno sale sintonizado a ti — no a la mediana." },
-      privacy: { t: "Tus datos no respiran fuera", d: "Cifrado en tu dispositivo. Cero telemetría hasta que tú digas sí. Exporta o borra en menos de veinticuatro horas." },
-      protocols: { t: "Cuatro pulsos. Un vocabulario.", d: "Calma. Enfoque. Energía. Reset. Audio binaural, voz guiada y haptics laten en la misma cadencia." },
-      evidence: { t: "Cada pulso cita su estudio", d: "Evidencia alta, moderada o limitada — lo decimos. Si la literatura titubea, también titubeamos." },
-      adoption: { t: "La adopción se mide, no se grafica.", d: "Tap-to-Ignite en lobby y salas: 15 segundos por pulso. Dashboard de uso por equipo con k-anonymity ≥ 5 — sin nombres, sin crudo." },
-      meter: { t: "Lo que usas es lo que ves.", d: "Sesiones contadas al segundo. Cap por plan, overage transparente. Cero sobresaltos al cierre del mes — factura CFDI 4.0 o invoice USD/EUR." },
-    },
 
     howKicker: "CÓMO FUNCIONA",
     howH: "Tres pasos. Cero abstracciones.",
-    howSub: "De tocar el botón a medir adopción de equipo — con mecanismo y evidencia citada en cada paso. Sin blackbox.",
+    howSub: "Mide, ejecuta, firma — con mecanismo y evidencia citada en cada paso. El motor adaptativo elige el protocolo correcto según tu HRV, tu sueño y tu hora pico. Sin blackbox.",
     how: [
       {
-        t: "Tocas. El motor responde.",
-        d: "Abre la PWA en cualquier navegador moderno — sin instalar nada. Tap-to-Ignite dispara 15 segundos de audio binaural + haptics + voz guiada sincronizados al ms. Si tu dispositivo tiene motor de vibración, lo usamos; si no, el audio lleva el pulso solo.",
-        cite: "Balban et al., 2023 · Cell Reports Medicine · n=114, d≈0.45",
-        citeHref: "https://doi.org/10.1016/j.xcrm.2022.100895",
-      },
-      {
-        t: "El motor escucha tu fisiología.",
-        d: "Medimos HRV directamente: strap BLE (Polar, Wahoo, Garmin HRM) o cámara del teléfono (PPG con algoritmo propio). Webhook de ingestión para Whoop / Oura / Fitbit (UI de conexión en roadmap). El motor adaptativo — abierto en /evidencia — elige el protocolo correcto: calma, enfoque, energía o reset. Cada recomendación cita el estudio detrás.",
+        n: "01",
+        t: "Mide.",
+        d: "El operador mide su HRV: cámara PPG con algoritmo propio o strap BLE (Polar / Wahoo / Garmin HRM). RMSSD + SDNN al milisegundo. El dato individual nunca sale del dispositivo.",
         cite: "Lehrer & Gevirtz, 2014 · Frontiers in Psychology",
         citeHref: "https://doi.org/10.3389/fpsyg.2014.00756",
       },
       {
-        t: "El equipo adopta sin forzar.",
-        d: "Estaciones físicas NFC/QR en lobbies y salas. Nudges opcionales vía Slack y Google Calendar. Panel de adopción con k-anonymity ≥5 — sin nombres, sin datos crudos. Reporte NOM-035 STPS automatizado y export firmado para auditoría.",
+        n: "02",
+        t: "Ejecuta.",
+        d: "23 protocolos de 60–180 s con visualización dedicada por fase. El motor adaptativo elige según HRV, sueño y hora pico. Audio binaural, haptics al milisegundo y voz guiada.",
+        cite: "Balban et al., 2023 · Cell Reports Medicine · n=114, d≈0.45",
+        citeHref: "https://doi.org/10.1016/j.xcrm.2022.100895",
+      },
+      {
+        n: "03",
+        t: "Firma.",
+        d: "Export NOM-035 STPS automatizado, agregados k-anónimos ≥ 5, audit log con hash chain verificable. Lo firma tu compliance officer — nosotros solo producimos el artifact.",
         cite: "Goessl, Curtiss & Hofmann, 2017 · Psychological Medicine · meta-análisis n=1868, d=0.83",
         citeHref: "https://doi.org/10.1017/S0033291717001003",
       },
@@ -178,35 +215,29 @@ const COPY = {
     howFootnote: "Mecanismos y citas completas en ",
     howFootnoteLink: "/evidencia",
 
-    previewKicker: "EL PRODUCTO · EN 60 SEGUNDOS",
-    previewH: "Lo sentiste. Ahora míralo por dentro.",
-    previewBody: "HRV en tiempo real, pulsos diarios, adherencia por equipo y evidencia citada. Sin capturas simuladas — la misma vista que abre tu admin el lunes a las 9.",
-    previewVideoCta: "Verlo en 90 segundos",
-    previewVideoPlaceholder: "Demo en vivo · agenda con un humano para un walkthrough completo.",
-
     personaKicker: "PARA QUIÉN",
-    personaH: "Tres mesas. Tres preguntas que contestamos sin rodeos.",
+    personaH: "Tres escritorios. Tres preguntas, contestadas con lo que el código sostiene.",
     personas: [
       {
         role: "CHRO · PEOPLE OPS",
         title: "¿Cómo mido bienestar sin invadir?",
-        body: "Panel de equipo con k-anonymity ≥5, reporte NOM-035 automatizado y export firmado para RRHH. Sin nombres, sin datos crudos — solo señales agregadas.",
-        points: ["NOM-035 STPS automatizado", "Agregados solo cuando hay ≥5", "Export firmado para auditoría"],
-        outcome: "En 90 días: primer reporte NOM-035 firmado y adherencia por equipo medible.",
+        body: "Panel de equipo con k-anonymity ≥ 5: si no hay 5 personas, no hay número. Reporte NOM-035 STPS automatizado — aplicador de 46 ítems, Guía II/III — con export ECO37 firmado SHA-256.",
+        points: ["NOM-035 STPS · 46 ítems · export firmado", "Agregados solo con n ≥ 5 · cero datos crudos", "3 instrumentos validados: PSS-4 · SWEMWBS-7 · PHQ-2"],
+        outcome: "Día 90: primer reporte NOM-035 firmado y adherencia por equipo medible.",
       },
       {
         role: "VP PEOPLE · L&D",
-        title: "¿Cómo adopto sin forzar?",
-        body: "Tap-to-Ignite en lobbies y salas: 15 segundos por pulso. Integración con Slack y Calendar para nudges que respetan tu día — no lo interrumpen.",
-        points: ["Estaciones NFC/QR físicas", "Slack + Google Calendar", "Nudges no intrusivos"],
-        outcome: "En 90 días: cohorte activa con ≥3 pulsos/semana sin comunicados forzados.",
+        title: "¿Cómo logro adopción sin forzar?",
+        body: "Tap-to-Ignite en estaciones físicas NFC/QR firmadas con HMAC: 15 segundos por pulso, sin login. Integración con Slack y Google Calendar para nudges que respetan la agenda — no la interrumpen.",
+        points: ["Estaciones NFC/QR · firma HMAC + replay-guard", "Slack + Google Calendar · nudges no intrusivos", "Sesiones de 60–180 s — caben en lo que tardas en un café"],
+        outcome: "Día 90: cohorte activa a ≥ 3 pulsos/semana sin comunicados forzados.",
       },
       {
         role: "CISO · IT SECURITY",
         title: "¿Y tu historia de seguridad?",
-        body: "SAML 2.0 + SCIM 2.0 + OIDC federado. BAA firmable, residencia US/EU/LATAM, audit log con hash chain verificable. Pentest anual y SOC 2 Type II.",
-        points: ["SAML · SCIM · OIDC", "BAA HIPAA · residencia elegible", "Audit log verificable + SOC 2"],
-        outcome: "En 60 días: BAA firmado, SSO federado en producción y audit log auditable.",
+        body: "SSO federado con 4 proveedores OIDC (Google · Azure · Okta · Apple) más SAML. SCIM 2.0 completo para provisioning. MFA TOTP + passkeys WebAuthn. Audit log con hash chain — corre verify:audit para tu evidence pack.",
+        points: ["SCIM 2.0 · SSO 4 proveedores OIDC · SAML", "WebAuthn passkeys + TOTP MFA · ipAllowlist por org", "Audit hash-chain verificable · DSAR GDPR · SOC 2 en auditoría"],
+        outcome: "Día 60: SSO federado en producción, SCIM provisionando y audit log auditable.",
       },
     ],
 
@@ -235,14 +266,16 @@ const COPY = {
     priceSub: "Por usuario activo. 20 % off anual. Volume discount hasta −20 %. MXN · USD · EUR. Cero setup oculto.",
     priceCta: "Ver precios completos",
     priceNote: "Starter trial 14 d · Growth piloto 30 d · Enterprise 60 d con DPA",
+    trialKicker: "PARA EVALUACIÓN INDIVIDUAL",
+    trialBody: "Empieza un Starter trial 14 días sin tarjeta. Mide tu baseline antes de pitchear internamente.",
+    trialCtaInline: "Empezar trial 14 d · sin tarjeta",
 
-    cineMidLine: "Todo late por una razón.",
     cinePauseLine: "Ya viste cómo late. Ahora tócalo.",
 
     finalKicker: "SIGUIENTE",
-    finalH1: "30 minutos.",
-    finalH2: "Una sesión en vivo.",
-    finalBody: "Sin slides. Corremos un protocolo contigo, leemos tu HRV y respondemos todo sobre seguridad.",
+    finalH1: "Esto no es wellness.",
+    finalH2: "Es pre-shift physiological instrumentation.",
+    finalBody: "30 minutos · una sesión en vivo · 12 cupos cohorte Q2 2026. Sin slides. Corremos un protocolo contigo, leemos tu HRV y respondemos todo sobre seguridad.",
     finalCta: "Agendar demo",
     trialCta: "Empezar gratis · 14 d",
     trialSub: "Plan Starter · sin tarjeta",
@@ -252,34 +285,6 @@ const COPY = {
       kicker: "EL MOTOR · EN TU BOLSILLO",
       headline: "Tu app neural. Instalable en iOS y Android. Sin app store.",
       sub: "BIO-IGNICIÓN es una Progressive Web App. Se instala desde el navegador en 15 segundos — Safari en iOS, Chrome en Android. Cero descarga desde tienda. Cero revisiones de Apple o Google. Cero actualizaciones forzadas. El motor vive en el bolsillo de tu equipo en minutos, no en semanas.",
-      stageAria: "Vista previa de tres pantallas clave de la PWA: Ignición, sesión en vivo y perfil del operador",
-      stageCapsAria: "Qué ves en cada pantalla",
-      stageCaps: [
-        "Ignición · el motor ya sabe qué protocolo hoy — basado en tu HRV, tu sueño y tu hora pico.",
-        "Sesión · respiras con la onda. Audio binaural, haptics y voz guiada laten al milisegundo.",
-        "Perfil · tu baseline inicial, composite neural 0–100, racha y delta semanal. Sync opcional.",
-      ],
-      screens: {
-        ignicion: {
-          todayLabel: "Enfoque · resonancia",
-          todayPhrase: "El viento sigue soplando.",
-          protoLabel: "Calma 4·8",
-          protoPhases: "3 fases",
-        },
-        runner: {
-          phaseKicker: "FASE · INHALA",
-          phase: "Inhala",
-          signalBtn: "SIG",
-          resetBtn: "RESET",
-        },
-        perfil: {
-          operatorLabel: "Operador Neural",
-          statusLabel: "ÓPTIMO · n3",
-          syncedName: "Ana · Acme",
-          syncedLabel: "Sincronizado",
-          compositeLabel: "COMPOSITE · RT · BR · FOC · STR",
-        },
-      },
       benefitsAria: "Beneficios clave de la PWA",
       benefits: [
         { glyph: "download", t: "iOS + Android · 15 s", d: "Safari → Compartir → Añadir a inicio. Chrome → Instalar. Se comporta como una app nativa sin pasar por tienda." },
@@ -306,7 +311,7 @@ const COPY = {
       kicker: "NEURAL INSTRUMENT · B2B",
       title1: "Felt. Measured.",
       title2: "Signed.",
-      sub: "The first B2B neural instrument with receipts. Measurable HRV, haptic pulse, signable NOM-035 export. 3 minutes pre- and post-shift — not another meditation app.",
+      sub: "The operator resets their nervous system in 60–180 seconds. Your compliance officer gets the signed receipt. A local-first PWA and an enterprise console — one platform.",
       buttonIdle: "Activate pulse",
       buttonPulsing: "Feeling…",
       buttonAria: "Activate 3-second sensory pulse",
@@ -321,20 +326,65 @@ const COPY = {
       partnerChipAria: `See Design Partner program: ${DESIGN_PARTNER.slotsTotal} slots open for Q2 2026 cohort at ${DESIGN_PARTNER.discountPct}% off for ${DESIGN_PARTNER.termMonths} months`,
     },
 
-    proofKicker: "AUDITABLE SIGNALS",
+    proofKicker: "WHAT THE CODE BACKS",
     proof: {
-      s1Label: "protocols with documented mechanism",
-      s1Sub:   () => `Inspect them at /evidencia · growing catalog`,
-      s2Label: "studies cited with verifiable DOIs",
-      s2Sub:   "Cohen 1988 · Task Force 1996 · Shaffer 2017…",
-      s3Value: "0",
-      s3Label: "proprietary scores without public reference",
-      s3Sub:   "If it shows up in the report, its source is public",
+      s1Label: "neuro-physiological protocols · 60–180 s",
+      s1Sub:   (n) => `${n} with documented mechanism · catalog in src/lib/protocols.js`,
+      s2Label: "peer-reviewed studies with verifiable DOI",
+      s2Sub:   "Balban 2023 · Lehrer 2014 · Goessl 2017 d=0.83 · auditable at /evidencia",
+      s3Value: "k≥5",
+      s3Label: "aggregation threshold · zero raw individual data",
+      s3Sub:   "The admin sees team signals, never one person",
+      s4Label: "Q2 2026 pilot cohort · 12 organizations",
+      s4Sub:   "Cohort closes / Q3 opens at +12 % pricing",
     },
 
-    evidenceKicker: "OPERATIONAL EVIDENCE · WHAT YOUR ADMIN SEES",
-    evidenceH: "Three receipts, not three promises.",
-    evidenceSub: "These are the artifacts the platform produces from day one. No simulated screenshots, no curated demos.",
+    twoKicker: "ONE PLATFORM · TWO SURFACES",
+    twoH: "The operator and their compliance officer. Same demo.",
+    twoSub: "Almost every wellness platform talks to one or the other. Bio-Ignición is a single piece of software with two faces: the one your team opens in 60 seconds, and the one HR and security audit.",
+    twoSurfaces: [
+      {
+        tag: "SURFACE 1 · THE OPERATOR",
+        title: "The neural PWA",
+        body: "Local-first, no app store. The operator opens it, measures HRV — in-house camera PPG or BLE strap — and runs a 60–180 s protocol with binaural audio, millisecond haptics and guided voice. Individual data never leaves the device.",
+        points: [
+          "23 protocols · bandit-UCB adaptive engine",
+          "HRV via in-house camera PPG or BLE strap",
+          "AES-GCM 256 encrypted IndexedDB · offline-first",
+        ],
+      },
+      {
+        tag: "SURFACE 2 · COMPLIANCE",
+        title: "The enterprise console",
+        body: "24 admin pages. HR gets k-anonymous ≥ 5 aggregates and the signable NOM-035 STPS report. Security gets SCIM 2.0, federated SSO, MFA with passkeys and an audit log with verifiable hash chain.",
+        points: [
+          "NOM-035 STPS · ECO37 export signed SHA-256",
+          "SCIM 2.0 · SSO Google · Azure · Okta · Apple",
+          "Audit hash-chain · DSAR GDPR Art. 15/17/20",
+        ],
+      },
+    ],
+
+    sectorsKicker: "BUILT FOR · OPERATIONAL CONTEXTS",
+    sectorsH: "Where fatigue isn't a wellness metric — it's incident risk.",
+    sectorsSub: "8 verticals with dedicated implementation playbooks. Not generic enterprise wellness: each one hits a real case (aviation pre-shift, tech on-call, clinical shifts, traders at close).",
+    sectors: [
+      { slug: "/for-aviation",      label: "Aviation",       sub: "Pilots · crew · pre-shift" },
+      { slug: "/for-healthcare",    label: "Healthcare",     sub: "Clinicians on shift · nursing" },
+      { slug: "/for-finance",       label: "Finance",        sub: "Trading · risk · close" },
+      { slug: "/for-tech",          label: "Technology",     sub: "Engineering · on-call · SRE" },
+      { slug: "/for-energy",        label: "Energy",         sub: "Plant operators · shifts" },
+      { slug: "/for-manufacturing", label: "Manufacturing",  sub: "Production line · supervision" },
+      { slug: "/for-logistics",     label: "Logistics",      sub: "Drivers · centers · supervision" },
+      { slug: "/for-public-sector", label: "Public sector",  sub: "Operations · first response" },
+    ],
+
+    voiceLine: "We built this because \"corporate wellness\" was theater. If your compliance officer doesn't sign the receipt at quarter close, it didn't happen.",
+    voiceAttribution: "— The Bio-Ignición team",
+
+    evidenceKicker: "OPERATIONAL EVIDENCE · THE ARTIFACT FORMAT",
+    evidenceH: "Three receipts. This is their exact format.",
+    evidenceSub: "The NOM-035 export, the disassociated GDPR JSON and the audit log the platform produces — in their real format. Values are illustrative; the structure, the SHA-256 signing and the hash chain are exact.",
     evidence: {
       nomKicker: "NOM-035 STPS · ECO37 EXPORT",
       nomTitle: "The report your compliance officer signs.",
@@ -397,36 +447,29 @@ const COPY = {
       ],
     },
 
-    bentoKicker: "INSIDE",
-    bentoH: "Three signals. One language. Your nervous system.",
-    bento: {
-      neural: { t: "The engine listens to you", d: "Your HRV, your breath, your sleep. Three pulses in. One comes out tuned to you — not to the median." },
-      privacy: { t: "Your data doesn't breathe outside", d: "Encrypted on your device. Zero telemetry until you say yes. Export or erase in under twenty-four hours." },
-      protocols: { t: "Four pulses. One vocabulary.", d: "Calm. Focus. Energy. Reset. Binaural audio, guided voice and haptics beat in the same cadence." },
-      evidence: { t: "Every pulse cites its study", d: "Evidence high, moderate or limited — we say it. If the literature hesitates, we hesitate too." },
-      adoption: { t: "Adoption is measured, not plotted.", d: "Tap-to-Ignite in lobbies and rooms: 15 seconds per pulse. Team usage dashboard with k-anonymity ≥ 5 — no names, no raw data." },
-      meter: { t: "What you use is what you see.", d: "Sessions counted to the second. Cap per plan, transparent overage. Zero end-of-month surprises — CFDI 4.0 invoice or USD/EUR invoice." },
-    },
 
     howKicker: "HOW IT WORKS",
     howH: "Three steps. Zero abstractions.",
-    howSub: "From tapping the button to measuring team adoption — with mechanism and cited evidence at every step. No blackbox.",
+    howSub: "Measure, execute, sign — with mechanism and cited evidence at every step. The adaptive engine picks the right protocol from your HRV, sleep and peak hour. No blackbox.",
     how: [
       {
-        t: "You tap. The engine responds.",
-        d: "Open the PWA in any modern browser — no install. Tap-to-Ignite fires 15 seconds of binaural audio + haptics + guided voice synced to the ms. If your device has a vibration motor, we use it; if not, audio carries the pulse alone.",
-        cite: "Balban et al., 2023 · Cell Reports Medicine · n=114, d≈0.45",
-        citeHref: "https://doi.org/10.1016/j.xcrm.2022.100895",
-      },
-      {
-        t: "The engine listens to your physiology.",
-        d: "Direct HRV: BLE strap (Polar, Wahoo, Garmin HRM) or phone camera (in-house PPG algorithm). Webhook ingestion for Whoop / Oura / Fitbit (connection UI on roadmap). The adaptive engine — open at /evidencia — picks the right protocol: calm, focus, energy or reset. Every recommendation cites the study behind it.",
+        n: "01",
+        t: "Measure.",
+        d: "The operator measures HRV: in-house camera PPG algorithm or BLE strap (Polar / Wahoo / Garmin HRM). RMSSD + SDNN to the millisecond. Individual data never leaves the device.",
         cite: "Lehrer & Gevirtz, 2014 · Frontiers in Psychology",
         citeHref: "https://doi.org/10.3389/fpsyg.2014.00756",
       },
       {
-        t: "Your team adopts without forcing it.",
-        d: "Physical NFC/QR stations in lobbies and rooms. Optional nudges via Slack and Google Calendar. Adoption panel with k-anonymity ≥5 — no names, no raw data. Automated NOM-035 STPS report and signed export for audit.",
+        n: "02",
+        t: "Execute.",
+        d: "23 protocols of 60–180 s with phase-dedicated visualization. The adaptive engine picks from HRV, sleep and peak hour. Binaural audio, millisecond haptics and guided voice.",
+        cite: "Balban et al., 2023 · Cell Reports Medicine · n=114, d≈0.45",
+        citeHref: "https://doi.org/10.1016/j.xcrm.2022.100895",
+      },
+      {
+        n: "03",
+        t: "Sign.",
+        d: "Automated NOM-035 STPS export, k-anonymous ≥ 5 aggregates, audit log with verifiable hash chain. Your compliance officer signs it — we just produce the artifact.",
         cite: "Goessl, Curtiss & Hofmann, 2017 · Psychological Medicine · meta-analysis n=1868, d=0.83",
         citeHref: "https://doi.org/10.1017/S0033291717001003",
       },
@@ -442,35 +485,29 @@ const COPY = {
     howFootnote: "Full mechanisms and citations at ",
     howFootnoteLink: "/evidencia",
 
-    previewKicker: "THE PRODUCT · IN 60 SECONDS",
-    previewH: "You felt it. Now look inside.",
-    previewBody: "Real-time HRV, daily pulses, team adherence and cited evidence. No stock screenshots — the same view your admin opens at 9 a.m. Monday.",
-    previewVideoCta: "See it in 90 seconds",
-    previewVideoPlaceholder: "Live demo · book a human for a full walkthrough.",
-
     personaKicker: "FOR WHO",
-    personaH: "Three desks. Three questions we answer without dodging.",
+    personaH: "Three desks. Three questions, answered with what the code backs.",
     personas: [
       {
         role: "CHRO · PEOPLE OPS",
         title: "How do I measure wellbeing without invading?",
-        body: "Team panel with k-anonymity ≥5, automated NOM-035 report and signed export for HR. No names, no raw data — only aggregated signals.",
-        points: ["Automated NOM-035 STPS", "Aggregates only when n ≥ 5", "Signed export for audit"],
-        outcome: "In 90 days: first signed NOM-035 report and measurable team adherence.",
+        body: "Team panel with k-anonymity ≥ 5: no 5 people, no number. Automated NOM-035 STPS report — 46-item applicator, Guide II/III — with ECO37 export signed SHA-256.",
+        points: ["NOM-035 STPS · 46 items · signed export", "Aggregates only at n ≥ 5 · zero raw data", "3 validated instruments: PSS-4 · SWEMWBS-7 · PHQ-2"],
+        outcome: "Day 90: first signed NOM-035 report and measurable team adherence.",
       },
       {
         role: "VP PEOPLE · L&D",
         title: "How do I drive adoption without forcing it?",
-        body: "Tap-to-Ignite in lobbies and rooms: 15 seconds per pulse. Slack and Calendar integration for nudges that respect the day — not interrupt it.",
-        points: ["Physical NFC/QR stations", "Slack + Google Calendar", "Non-intrusive nudges"],
-        outcome: "In 90 days: active cohort at ≥3 pulses/week without mandated rollouts.",
+        body: "Tap-to-Ignite at physical NFC/QR stations signed with HMAC: 15 seconds per pulse, no login. Slack and Google Calendar integration for nudges that respect the calendar — not interrupt it.",
+        points: ["NFC/QR stations · HMAC signature + replay-guard", "Slack + Google Calendar · non-intrusive nudges", "60–180 s sessions — they fit in a coffee break"],
+        outcome: "Day 90: active cohort at ≥ 3 pulses/week without mandated rollouts.",
       },
       {
         role: "CISO · IT SECURITY",
         title: "What's your security story?",
-        body: "SAML 2.0 + SCIM 2.0 + federated OIDC. Signable BAA, US/EU/LATAM residency, audit log with verifiable hash chain. Annual pentest and SOC 2 Type II.",
-        points: ["SAML · SCIM · OIDC", "HIPAA BAA · residency of choice", "Verifiable audit log + SOC 2"],
-        outcome: "In 60 days: BAA signed, federated SSO in prod and auditable audit log.",
+        body: "Federated SSO with 4 OIDC providers (Google · Azure · Okta · Apple) plus SAML. Full SCIM 2.0 provisioning. TOTP MFA + WebAuthn passkeys. Audit log with hash chain — run verify:audit for your evidence pack.",
+        points: ["SCIM 2.0 · SSO 4 OIDC providers · SAML", "WebAuthn passkeys + TOTP MFA · per-org ipAllowlist", "Verifiable audit hash-chain · DSAR GDPR · SOC 2 in audit"],
+        outcome: "Day 60: federated SSO in production, SCIM provisioning and auditable audit log.",
       },
     ],
 
@@ -499,14 +536,16 @@ const COPY = {
     priceSub: "Per active user. 20% off annual. Volume discount up to −20%. MXN · USD · EUR. Zero hidden setup.",
     priceCta: "See full pricing",
     priceNote: "Starter trial 14 d · Growth pilot 30 d · Enterprise 60 d with DPA",
+    trialKicker: "FOR INDIVIDUAL EVALUATION",
+    trialBody: "Start a 14-day Starter trial — no card. Measure your baseline before pitching internally.",
+    trialCtaInline: "Start 14-day trial · no card",
 
-    cineMidLine: "Everything pulses for a reason.",
     cinePauseLine: "You've seen the pulse. Now touch it.",
 
     finalKicker: "NEXT",
-    finalH1: "30 minutes.",
-    finalH2: "A live session.",
-    finalBody: "No slides. We run a protocol with you, read your HRV and answer everything about security.",
+    finalH1: "This is not wellness.",
+    finalH2: "It's pre-shift physiological instrumentation.",
+    finalBody: "30 minutes · a live session · 12 seats Q2 2026 cohort. No slides. We run a protocol with you, read your HRV and answer everything about security.",
     finalCta: "Book a demo",
     trialCta: "Start free · 14 d",
     trialSub: "Starter plan · no card",
@@ -516,34 +555,6 @@ const COPY = {
       kicker: "THE ENGINE · IN YOUR POCKET",
       headline: "Your neural app. Installs on iOS and Android. No app store.",
       sub: "BIO-IGNICIÓN is a Progressive Web App. It installs from the browser in 15 seconds — Safari on iOS, Chrome on Android. No store download. No Apple or Google review cycle. No forced updates. The engine lives in your team's pocket in minutes, not weeks.",
-      stageAria: "Preview of three key PWA screens: Ignition, live session and operator profile",
-      stageCapsAria: "What you see on each screen",
-      stageCaps: [
-        "Ignition · the engine already knows which protocol today — based on your HRV, sleep and peak hour.",
-        "Session · you breathe with the wave. Binaural audio, haptics and voice cues beat to the millisecond.",
-        "Profile · your baseline, 0–100 neural composite, streak and weekly delta. Optional sync.",
-      ],
-      screens: {
-        ignicion: {
-          todayLabel: "Focus · resonance",
-          todayPhrase: "The wind keeps blowing.",
-          protoLabel: "Calma 4·8",
-          protoPhases: "3 phases",
-        },
-        runner: {
-          phaseKicker: "PHASE · INHALE",
-          phase: "Inhale",
-          signalBtn: "SIG",
-          resetBtn: "RESET",
-        },
-        perfil: {
-          operatorLabel: "Neural Operator",
-          statusLabel: "OPTIMAL · n3",
-          syncedName: "Ana · Acme",
-          syncedLabel: "Synced",
-          compositeLabel: "COMPOSITE · RT · BR · FOC · STR",
-        },
-      },
       benefitsAria: "Key PWA benefits",
       benefits: [
         { glyph: "download", t: "iOS + Android · 15 s",  d: "Safari → Share → Add to Home Screen. Chrome → Install. Behaves like a native app without the store." },
@@ -575,8 +586,13 @@ export default async function HomePage() {
   const pricePeek = PRICE_PEEK[lang];
   const partner = PARTNER_COPY[lang];
 
+  // Datos precisos derivados del código — no del marketing.
+  //   protocolCount: catálogo real en src/lib/protocols.js (23 protocolos
+  //     activos; antes el home contaba EVIDENCE.length = 10, una métrica
+  //     distinta — familias de evidencia, no protocolos).
+  //   studyCount: estudios peer-reviewed con DOI citados en src/lib/evidence.js.
   const evidenceEntries = Object.values(EVIDENCE);
-  const protocolCount = evidenceEntries.length;
+  const protocolCount = PROTOCOLS.length;
   const studyCount = evidenceEntries.reduce((n, e) => n + (e.studies?.length || 0), 0);
 
   return (
@@ -601,46 +617,117 @@ export default async function HomePage() {
               <span className="l">{T.proof.s3Label}</span>
               <span className="s">{T.proof.s3Sub}</span>
             </div>
+            <div>
+              <span className="v" style={{ fontSize: "clamp(20px, 2.4vw, 28px)" }}>
+                <CohortCountdown locale={lang} />
+              </span>
+              <span className="l">{T.proof.s4Label}</span>
+              <span className="s">{T.proof.s4Sub}</span>
+            </div>
           </div>
         </Container>
       </section>
 
-      <PulseDivider />
-
-      {/* Manifesto section lived here — cut. The full thesis (incl.
-          this copy + editorial framing + supporting stats) lives on
-          /why. Home's job is to get the prospect into /why or /demo
-          faster, not to recite the thesis twice. */}
-
-      {/* Product preview — moved up from post-PWA position so the
-          real admin dashboard is visible within the first 2 scrolls.
-          Linear/Stripe pattern: ship the product view above the
-          value-prop copy, not after it. */}
-      <section aria-labelledby="preview" style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
+      {/* ═══ Dos superficies — la verdad estructural del producto ═══
+          SYSTEM_OVERVIEW.md lo dice explícito: "Vendemos al CHRO y al CISO
+          en la misma demo." Una sola pieza de software, dos caras. Esta
+          sección es el bloque conceptual que faltaba — antes el home
+          asumía que el visitante ya sabía qué tipo de producto era. */}
+      <section aria-labelledby="two-surfaces" style={{ paddingBlock: "clamp(48px, 5vw, 80px)", paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
-            <div style={{ textAlign: "center", marginBlockEnd: space[7] }}>
-              <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.previewKicker}</div>
-              <h3 id="preview" style={sectionHeading}>{T.previewH}</h3>
+            <div style={{ textAlign: "center", marginBlockEnd: space[8] }}>
+              <SectionKicker>{T.twoKicker}</SectionKicker>
+              <h3 id="two-surfaces" style={sectionHeading}>{T.twoH}</h3>
               <p style={{
                 marginBlockStart: space[3],
                 marginInline: "auto",
-                maxInlineSize: 640,
+                maxInlineSize: 660,
                 color: cssVar.textDim,
                 fontSize: font.size.md,
                 lineHeight: 1.55,
               }}>
-                {T.previewBody}
+                {T.twoSub}
               </p>
-              <div style={{ marginBlockStart: space[5], display: "inline-flex", justifyContent: "center" }}>
-                <VideoPreview
-                  label={T.previewVideoCta}
-                  placeholder={T.previewVideoPlaceholder}
-                  title="BIO-IGNICIÓN · 90s overview"
-                />
-              </div>
             </div>
-            <DashboardMockup ariaLabel={T.previewH} />
+            {/* SP-MKT 9.5 — Two surfaces split composition. Antes eran 2
+                cards genéricas con top-border accent. Ahora es un diptych
+                editorial: columnas tipográficas a cada lado de un spine
+                central hairline gradient cyan→violet (literalmente "una
+                plataforma, dos superficies"). Sin cajas, sin chrome — el
+                contenido tiene presencia, el spine hace la composición.
+                Mobile: el grid template colapsa via .bi-two-surfaces-split. */}
+            <div className="bi-two-surfaces-split">
+              <SurfaceColumn surface={T.twoSurfaces[0]} accent={bioSignal.phosphorCyan} accentInk={bioSignal.phosphorCyanInk} />
+              <span aria-hidden className="bi-two-surfaces-spine" style={{
+                background: `linear-gradient(to bottom, transparent, ${bioSignal.phosphorCyan} 12%, ${bioSignal.neuralViolet} 88%, transparent)`,
+              }} />
+              <SurfaceColumn surface={T.twoSurfaces[1]} accent={bioSignal.neuralViolet} accentInk={bioSignal.neuralViolet} />
+            </div>
+          </IgnitionReveal>
+        </Container>
+      </section>
+
+      {/* SP-MKT 10/10 — Sectores servidos strip. Social proof de fit
+          honesto: no afirmamos "used by Apple" (no tenemos clientes
+          aún), sí afirmamos "diseñado para estos contextos operativos"
+          con 8 verticales que tienen guía de implementación dedicada
+          (rutas /for-* reales). Es lo que Linear hace con sus "Built
+          for [logos]" — pero anclado a contextos verificables. */}
+      <section aria-labelledby="sectors" style={{ paddingBlock: "clamp(48px, 5vw, 80px)", paddingInline: space[5] }}>
+        <Container size="xl">
+          <IgnitionReveal sparkOrigin="50% 30%">
+            <div style={{ marginBlockEnd: space[8], maxInlineSize: 720 }}>
+              <SectionKicker align="left">{T.sectorsKicker}</SectionKicker>
+              <h3 id="sectors" style={{ ...sectionHeading, marginInline: 0 }}>{T.sectorsH}</h3>
+              <p style={{
+                marginBlockStart: space[3],
+                color: cssVar.textDim,
+                fontSize: font.size.md,
+                lineHeight: 1.6,
+                maxInlineSize: 640,
+              }}>
+                {T.sectorsSub}
+              </p>
+            </div>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: "1px",
+              background: cssVar.border,
+              border: `1px solid ${cssVar.border}`,
+              borderRadius: radius.lg,
+              overflow: "hidden",
+            }}>
+              {T.sectors.map((s) => (
+                <Link key={s.slug} href={s.slug} style={{
+                  display: "block",
+                  padding: `${space[5]}px ${space[5]}px`,
+                  background: cssVar.bg,
+                  textDecoration: "none",
+                  transition: "background 180ms var(--bi-ease-breath)",
+                }} className="bi-sector-cell">
+                  <div style={{
+                    fontFamily: cssVar.fontMono,
+                    fontSize: 11,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    fontWeight: font.weight.bold,
+                    color: bioSignal.phosphorCyanInk,
+                    marginBlockEnd: space[2],
+                  }}>
+                    {s.label}
+                  </div>
+                  <div style={{
+                    color: cssVar.textDim,
+                    fontSize: font.size.sm,
+                    lineHeight: 1.4,
+                  }}>
+                    {s.sub}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </IgnitionReveal>
         </Container>
       </section>
@@ -654,7 +741,7 @@ export default async function HomePage() {
       <section aria-labelledby="evidence" className="bi-darkframe">
         <Container size="xl">
           <div style={{ textAlign: "center", marginBlockEnd: space[8] }}>
-            <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.evidenceKicker}</div>
+            <SectionKicker tone="bright">{T.evidenceKicker}</SectionKicker>
             <h3 id="evidence" style={{ ...sectionHeading, color: "#E6F1EA" }}>{T.evidenceH}</h3>
             <p style={{
               marginBlockStart: space[3],
@@ -671,47 +758,19 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {/* Mid-page cinematic pause — bridges the density of Product
-          Evidence (3 monospace receipts) into the density of Bento
-          (4-6 feature cards). Same scaffolding as the final pause,
-          shorter copy to keep the beat distinct. Replaces the plain
-          PulseDivider that lived here. */}
-      <section aria-labelledby="cinematic-pause-mid" className="bi-cine-pause bi-cine-pause--mid">
-        <div className="bi-cine-pause-glyph">
-          <BioGlyph size={76} />
-        </div>
-        <h2 id="cinematic-pause-mid" className="bi-cine-pause-line">
-          {T.cineMidLine}
-        </h2>
-      </section>
+      {/* SP-MKT recorte — sección Bento (6 cards "Tres señales") eliminada.
+          Era el bloque más redundante del page: privacy/evidence/protocols/
+          adoption ya los cubren How it works + Evidence + Personas. Los 2
+          claims únicos — motor adaptativo + metering transparente — se
+          preservan: el motor adaptativo se fundió en el sub de How it works;
+          el metering vive junto a Pricing. Apple-grade = no tres patrones
+          distintos para explicar features (grid + steps + personas). */}
 
-      <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
-        <Container size="xl">
-          <IgnitionReveal sparkOrigin="50% 50%">
-            <div style={{ marginBlockEnd: space[8], textAlign: "center" }}>
-              <div style={kickerStyle}>{T.bentoKicker}</div>
-              <h3 style={sectionHeading}>{T.bentoH}</h3>
-            </div>
-          </IgnitionReveal>
-
-          <SpotlightGrid className="bi-bento-grid">
-            <BentoCard col={7} row={2} variant="hero" title={T.bento.neural.t}    body={T.bento.neural.d}    lattice="neural"    delay={0} />
-            <BentoCard col={5}        title={T.bento.privacy.t}   body={T.bento.privacy.d}   lattice="privacy"   delay={0.12} />
-            <BentoCard col={5}        title={T.bento.evidence.t}  body={T.bento.evidence.d}  lattice="evidence"  delay={0.24} />
-            <BentoCard col={6}        title={T.bento.adoption.t}  body={T.bento.adoption.d}  lattice="neural"    delay={0.30} />
-            <BentoCard col={6}        title={T.bento.meter.t}     body={T.bento.meter.d}     lattice="privacy"   delay={0.36} />
-            <BentoCard col={12}       title={T.bento.protocols.t} body={T.bento.protocols.d} lattice="protocols" delay={0.42} wide />
-          </SpotlightGrid>
-        </Container>
-      </section>
-
-      <PulseDivider intensity="dim" />
-
-      <section aria-labelledby="how-it-works" style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
+      <section aria-labelledby="how-it-works" style={{ paddingBlock: "clamp(48px, 5vw, 80px)", paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 30%">
             <div style={{ textAlign: "center", marginBlockEnd: space[8] }}>
-              <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.howKicker}</div>
+              <SectionKicker>{T.howKicker}</SectionKicker>
               <h3 id="how-it-works" style={sectionHeading}>{T.howH}</h3>
               <p style={{
                 marginBlockStart: space[3],
@@ -725,6 +784,11 @@ export default async function HomePage() {
               </p>
             </div>
 
+            {/* SP-MKT reconstrucción — MockupFrame screenshots eliminados.
+                Las capturas iPhone no comunicaban bien y dependían de assets
+                generados aparte. El número de fase (01/02/03) ya lo renderiza
+                el counter CSS `.bi-how-step::before` — cero assets externos,
+                el texto hace el trabajo. */}
             <div className="bi-how-grid" role="list">
               {T.how.map((s) => (
                 <article key={s.t} className="bi-how-step" role="listitem">
@@ -748,8 +812,16 @@ export default async function HomePage() {
               ))}
             </div>
 
+            {/* SP-MKT honestidad — DashboardMockup eliminado. El componente
+                se autodescribía "stand-in until we can ship a pixel render of
+                the real dashboard" y mostraba datos 100% fabricados (58 ms,
+                84 %, 12/12). Un mockup falso presentado como "lo que tu admin
+                ve" contradice el thesis "evidencia, no promesas". La consola
+                admin ya se explica con honestidad en la sección "Dos
+                superficies" y su formato real en "Evidencia operativa". */}
+
             <p style={{
-              marginBlockStart: space[5],
+              marginBlockStart: space[8],
               textAlign: "center",
               fontFamily: cssVar.fontMono,
               fontSize: 11,
@@ -786,12 +858,18 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
+      {/* SP-MKT 9.5 — Personas header pasa a left-aligned para crear ritmo
+          editorial. Hasta ahora todas las secciones llevaban textAlign:
+          center, lo cual aplana la jerarquía y hace que la página entera
+          lea como "variaciones del mismo template". Alternar centered
+          (focal moments) ↔ left (info-dense) es como Linear/Stripe dan
+          textura sin que cada sección invente su propio sistema. */}
+      <section style={{ paddingBlock: "clamp(48px, 5vw, 80px)", paddingInline: space[5] }}>
         <Container size="xl">
           <IgnitionReveal sparkOrigin="50% 40%">
-            <div style={{ marginBlockEnd: space[7], textAlign: "center" }}>
-              <div style={kickerStyle}>{T.personaKicker}</div>
-              <h3 style={sectionHeading}>{T.personaH}</h3>
+            <div style={{ marginBlockEnd: space[8], maxInlineSize: 640 }}>
+              <SectionKicker align="left">{T.personaKicker}</SectionKicker>
+              <h3 style={{ ...sectionHeading, marginInline: 0 }}>{T.personaH}</h3>
             </div>
             <SpotlightGrid className="bi-persona-grid">
               {T.personas.map((p) => (
@@ -827,7 +905,7 @@ export default async function HomePage() {
         <Container size="xl" style={{ paddingInline: space[5] }}>
           <IgnitionReveal sparkOrigin="50% 40%">
             <div style={{ textAlign: "center", marginBlockEnd: space[5] }}>
-              <div style={kickerStyle}>{T.intKicker}</div>
+              <SectionKicker>{T.intKicker}</SectionKicker>
               <h3 style={{
                 margin: `${space[2]}px 0 0`,
                 fontSize: "clamp(22px, 3vw, 32px)",
@@ -852,7 +930,7 @@ export default async function HomePage() {
           </p>
 
           <div className="bi-trust-block" aria-label={T.trustKicker}>
-            <div className="bi-trust-kicker" style={kickerStyle}>{T.trustKicker}</div>
+            <div className="bi-trust-kicker"><SectionKicker>{T.trustKicker}</SectionKicker></div>
             <div className="bi-trust-strip" role="list">
               {T.trust.map((t) => (
                 <span
@@ -886,13 +964,11 @@ export default async function HomePage() {
           live on /pricing where a buyer is actually evaluating. Home
           FAQ is a Stripe/Linear anti-pattern (neither does it on the
           current 2026 homepage). */}
-      <PulseDivider intensity="dim" />
-
-      <section style={{ paddingBlock: "clamp(64px, 9vw, 120px)", paddingInline: space[5] }}>
+      <section style={{ paddingBlock: "clamp(48px, 5vw, 80px)", paddingInline: space[5] }}>
         <Container size="lg">
           <IgnitionReveal sparkOrigin="50% 40%">
             <div style={{ textAlign: "center", marginBlockEnd: space[6] }}>
-              <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.priceKicker}</div>
+              <SectionKicker>{T.priceKicker}</SectionKicker>
               <h3 style={sectionHeading}>{T.priceH}</h3>
               <p style={{
                 marginBlockStart: space[3],
@@ -930,36 +1006,138 @@ export default async function HomePage() {
                 {T.priceNote}
               </span>
             </div>
+
+            {/* B2C funnel — D2 locked. Trial CTA subtle below pricing peek
+                para que un champion individual evalúe baseline antes de
+                pitchear internamente. Banner intencionalmente bajo en
+                jerarquía visual (border-top hairline + mono caps kicker)
+                — no compite con el CTA B2B principal arriba. */}
+            <div style={{
+              marginBlockStart: space[8],
+              paddingBlockStart: space[6],
+              borderBlockStart: `1px solid ${cssVar.border}`,
+              display: "flex", flexDirection: "column",
+              alignItems: "center", gap: space[3], textAlign: "center",
+            }}>
+              <span style={{
+                fontFamily: cssVar.fontMono,
+                fontSize: 11,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                fontWeight: font.weight.bold,
+                color: bioSignal.phosphorCyanInk,
+              }}>
+                {T.trialKicker}
+              </span>
+              <p style={{
+                margin: 0,
+                maxInlineSize: 480,
+                color: cssVar.textDim,
+                fontSize: font.size.base,
+                lineHeight: 1.55,
+              }}>
+                {T.trialBody}
+              </p>
+              <Link href="/signup?plan=starter" className="bi-trial-cta-inline" style={{
+                marginBlockStart: space[2],
+                display: "inline-flex",
+                alignItems: "center",
+                gap: space[2],
+                paddingBlock: space[3],
+                paddingInline: space[5],
+                borderRadius: radius.full,
+                border: `1px solid ${bioSignal.phosphorCyan}`,
+                background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 8%, transparent)`,
+                color: bioSignal.phosphorCyanInk,
+                fontWeight: font.weight.bold,
+                fontSize: font.size.sm,
+                textDecoration: "none",
+                letterSpacing: "0.01em",
+              }}>
+                {T.trialCtaInline}
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
           </IgnitionReveal>
         </Container>
       </section>
 
-      {/* ═══ Cinematic pause ════════════════════════════════════
-          Full-bleed breath between dense pricing and the final CTA.
-          Single glyph + one editorial sentence in serif italic,
-          surrounded by generous whitespace. Stripe/Linear use this
-          pattern to break scroll density and give the reader a beat
-          of agency before action. Copy echoes the hero verbatim
-          ("tócalo" / "touch it") to close the narrative loop. */}
-      <section aria-labelledby="cinematic-pause" className="bi-cine-pause">
-        <div className="bi-cine-pause-glyph">
-          <BioGlyph size={92} />
-        </div>
-        <h2 id="cinematic-pause" className="bi-cine-pause-line">
-          {T.cinePauseLine}
-        </h2>
+      {/* SP-MKT 10/10 — Voz editorial / manifesto line. Las páginas top-tier
+          tienen voz humana en algún punto (Apple: el "It just works." chip,
+          Linear: "Built by Linear", Stripe: párrafo de fundador). Este
+          home no tenía ninguna voz hasta ahora — solo postura editorial
+          impersonal. Una línea honesta, atribuida, anchored a lo que el
+          producto realmente es: anti-teatro. */}
+      <section aria-labelledby="manifesto" style={{ paddingBlock: "clamp(56px, 7vw, 96px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <IgnitionReveal sparkOrigin="50% 40%">
+            <div style={{
+              maxInlineSize: "32ch",
+              marginInline: "auto",
+              textAlign: "center",
+            }}>
+              <p id="manifesto" style={{
+                margin: 0,
+                fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: "clamp(22px, 2.6vw, 32px)",
+                lineHeight: 1.32,
+                letterSpacing: "-0.018em",
+                color: cssVar.text,
+              }}>
+                {T.voiceLine}
+              </p>
+              <p style={{
+                margin: `${space[5]}px 0 0`,
+                fontFamily: cssVar.fontMono,
+                fontSize: 11,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                fontWeight: font.weight.bold,
+                color: bioSignal.phosphorCyanInk,
+              }}>
+                {T.voiceAttribution}
+              </p>
+            </div>
+          </IgnitionReveal>
+        </Container>
       </section>
 
-      {/* Final CTA as the third dark moment — weight of decision.
-          Creates narrative bracket: light hero opens, dark CTA
-          closes. Text colors explicit dark-bg-safe; gradient accent
-          on "Una sesión en vivo." already works because gradient
-          text is self-contained. Button styles get dark-frame
-          overrides in globals.css. */}
+      {/* SP-MKT recorte — sección "Cinematic pause" standalone eliminada.
+          La línea editorial ("Ya viste cómo late. Ahora tócalo.") + el
+          BioGlyph se fundieron como lead-in DENTRO del Final CTA darkframe
+          abajo: un solo cierre, con más peso. */}
+
+      {/* Final CTA — the close. Light hero opens, dark CTA closes the
+          narrative bracket. Lleads in with the BioGlyph + editorial line
+          (absorbed from the retired cinematic pause), then the category
+          contrast statement + CTAs. */}
       <section className="bi-darkframe" style={{ textAlign: "center" }}>
         <Container size="md">
           <IgnitionReveal sparkOrigin="50% 40%">
-            <div style={{ ...kickerStyle, color: bioSignal.phosphorCyan }}>{T.finalKicker}</div>
+            <div style={{
+              display: "inline-flex",
+              color: "var(--bi-phosphor-cyan)",
+              marginBlockEnd: space[5],
+              filter: "drop-shadow(0 0 22px color-mix(in srgb, #22D3EE 45%, transparent))",
+            }}>
+              <BioGlyph size={64} />
+            </div>
+            <p style={{
+              margin: `0 auto ${space[8]}px`,
+              maxInlineSize: "20ch",
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(26px, 4vw, 44px)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              color: "#E6F1EA",
+            }}>
+              {T.cinePauseLine}
+            </p>
+            <SectionKicker tone="bright">{T.finalKicker}</SectionKicker>
             <h3 style={{
               margin: 0,
               fontSize: "clamp(40px, 6vw, 72px)",
@@ -1045,79 +1223,96 @@ export default async function HomePage() {
   );
 }
 
-const kickerStyle = {
-  fontFamily: cssVar.fontMono,
-  fontSize: font.size.xs,
-  color: cssVar.textMuted,
-  textTransform: "uppercase",
-  letterSpacing: "0.22em",
-  fontWeight: font.weight.bold,
-  marginBlockEnd: space[3],
-};
+/* SP-MKT — SectionKicker movido a src/components/brand/SectionKicker.jsx
+   para reuso desde /why y otras páginas marketing. */
 
 const sectionHeading = {
   margin: 0,
-  fontSize: "clamp(28px, 4vw, 44px)",
-  lineHeight: 1.15,
-  letterSpacing: "-0.025em",
+  fontSize: "clamp(30px, 4vw, 46px)",
+  lineHeight: 1.12,
+  letterSpacing: "-0.032em",
   fontWeight: font.weight.black,
   color: cssVar.text,
   maxInlineSize: 720,
   marginInline: "auto",
 };
 
-function BentoCard({ col = 4, row = 1, variant, title, body, lattice, delay = 0, wide }) {
-  const isHero = variant === "hero";
+/* SP-MKT 9.5 — SurfaceColumn = una mitad del diptych "Dos superficies".
+   Sin caja, sin border, sin background — solo tipografía + accent rule
+   horizontal arriba. La composición la hace el spine vertical entre
+   columnas en el padre. Cada columna lleva su acento (cyan o violet)
+   para que el contraste cromático refuerce "operador vs compliance". */
+function SurfaceColumn({ surface, accent, accentInk }) {
   return (
-    <div
-      className="bi-bento-card bi-spot"
-      data-col={col}
-      data-row={row}
-      style={{
-        "--bento-col": col,
-        "--bento-row": row,
-        position: "relative",
-        padding: space[6],
-        borderRadius: radius.lg,
-        background: isHero
-          ? `linear-gradient(150deg, ${bioSignal.deepField}, #0a0d14)`
-          : cssVar.surface,
-        border: `1px solid ${isHero ? `color-mix(in srgb, ${bioSignal.phosphorCyan} 22%, transparent)` : cssVar.border}`,
-        overflow: "hidden",
-        minHeight: isHero ? 460 : wide ? 260 : 220,
-        display: "flex", flexDirection: "column",
-        justifyContent: "space-between",
-        gap: space[5],
+    <article style={{
+      display: "flex", flexDirection: "column", gap: space[4],
+      paddingBlock: space[2],
+    }}>
+      <span aria-hidden style={{
+        inlineSize: 40, blockSize: 2,
+        background: accent,
+        borderRadius: 2,
+        marginBlockEnd: space[1],
+      }} />
+      <span style={{
+        fontFamily: cssVar.fontMono,
+        fontSize: 11,
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+        fontWeight: font.weight.bold,
+        color: accentInk,
       }}>
-      <IgnitionReveal delay={delay} sparkOrigin="50% 40%">
-        <div style={{
-          height: isHero ? 220 : wide ? 160 : 120,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          opacity: 0.95,
-        }}>
-          <BioglyphLattice variant={lattice} animated />
-        </div>
-        <div>
-          <h4 style={{
-            margin: 0,
-            fontSize: isHero ? font.size["2xl"] : font.size.xl,
-            lineHeight: 1.15,
-            letterSpacing: "-0.02em",
-            fontWeight: font.weight.black,
+        {surface.tag}
+      </span>
+      <h4 style={{
+        margin: 0,
+        fontSize: "clamp(24px, 2.6vw, 32px)",
+        lineHeight: 1.12,
+        letterSpacing: "-0.025em",
+        fontWeight: font.weight.black,
+        color: cssVar.text,
+      }}>
+        {surface.title}
+      </h4>
+      <p style={{
+        margin: 0,
+        color: cssVar.textDim,
+        fontSize: font.size.base,
+        lineHeight: 1.65,
+        maxInlineSize: "44ch",
+      }}>
+        {surface.body}
+      </p>
+      <ul style={{
+        listStyle: "none", padding: 0, margin: `${space[2]}px 0 0`,
+        display: "grid", gap: space[2],
+        borderBlockStart: `1px solid ${cssVar.border}`,
+        paddingBlockStart: space[4],
+      }}>
+        {surface.points.map((pt) => (
+          <li key={pt} style={{
+            display: "flex", alignItems: "flex-start", gap: space[3],
+            fontFamily: cssVar.fontMono,
+            fontSize: 12.5,
             color: cssVar.text,
+            lineHeight: 1.5,
           }}>
-            {title}
-          </h4>
-          <p style={{
-            marginBlockStart: space[3],
-            color: cssVar.textDim,
-            fontSize: font.size.sm,
-            lineHeight: 1.55,
-          }}>
-            {body}
-          </p>
-        </div>
-      </IgnitionReveal>
-    </div>
+            <span aria-hidden style={{
+              color: accent,
+              fontWeight: font.weight.bold,
+              flexShrink: 0,
+              marginBlockStart: 2,
+            }}>—</span>
+            <span>{pt}</span>
+          </li>
+        ))}
+      </ul>
+    </article>
   );
 }
+
+/* SP-MKT recorte — BentoCard component eliminado junto con la sección Bento.
+   La sección era el bloque más redundante del page (privacy/evidence/protocols/
+   adoption ya cubiertos por How it works + Evidence + Personas). Los 2 claims
+   únicos se preservaron: motor adaptativo → sub de How it works; metering →
+   junto a Pricing. Histórico del component en git. */
