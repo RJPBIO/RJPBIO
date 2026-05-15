@@ -127,6 +127,9 @@ const COPY = {
       },
     ],
 
+    voiceLine: "Las comparativas que vende un VP de marketing son trampa. Aquí tomamos lo que el competidor publica en su propio sitio, lo citamos con fecha, y donde ellos son mejores lo decimos. Si encuentras un dato mal citado, escribe y lo corregimos en < 30 días — la honestidad comparativa no es un feature, es una postura.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     cannotKicker: "LO QUE NO COMPARAMOS",
     cannotH: "Dos mercados donde no entramos — y por qué.",
     cannotBody:
@@ -214,6 +217,9 @@ const COPY = {
         angle: "Clinical services platform",
       },
     ],
+
+    voiceLine: "Comparisons a VP of marketing sells are a trap. Here we use what the competitor publishes on their own site, cite it with a date, and where they're better we say so. If you find a miscited data point, write us and we'll fix it in < 30 days — honest comparison isn't a feature, it's a posture.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     cannotKicker: "WHAT WE DON'T COMPARE",
     cannotH: "Two markets we don't enter — and why.",
@@ -531,7 +537,37 @@ export default async function VsIndexPage() {
           </Container>
         </section>
 
-        <PulseDivider intensity="dim" />
+        {/* SP-MKT 9.5 — Voz editorial /vs-specific: postura comparativa
+            honesta antes del cierre. Italic serif + atribución mono. */}
+        <section aria-labelledby="vs-voice" style={{ paddingBlock: "clamp(56px, 7vw, 96px)", paddingInline: space[5] }}>
+          <Container size="md">
+            <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+              <p id="vs-voice" style={{
+                margin: 0,
+                fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: "clamp(22px, 2.6vw, 30px)",
+                lineHeight: 1.34,
+                letterSpacing: "-0.018em",
+                color: cssVar.text,
+              }}>
+                {t.voiceLine}
+              </p>
+              <p style={{
+                margin: `${space[5]}px 0 0`,
+                fontFamily: cssVar.fontMono,
+                fontSize: 11,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                fontWeight: font.weight.bold,
+                color: bioSignal.phosphorCyanInk,
+              }}>
+                {t.voiceAttribution}
+              </p>
+            </div>
+          </Container>
+        </section>
 
         {/* ═══ CLOSING ═══ */}
         <section style={{ paddingBlock: `${space[12]}px ${space[16]}px` }}>
