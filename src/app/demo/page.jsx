@@ -9,6 +9,7 @@ import { getServerLocale } from "@/lib/locale-server";
 import IgnitionReveal from "@/components/brand/IgnitionReveal";
 import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import SectionKicker from "@/components/brand/SectionKicker";
+import CohortCountdown from "@/components/brand/CohortCountdown";
 import PulseDivider from "@/components/brand/PulseDivider";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
 
@@ -41,6 +42,9 @@ const COPY = {
     h1: "Vívelo primero. Decide con evidencia.",
     editorial: "30 minutos, en vivo, sin slides — respiras, escuchas, ves el panel.",
     scarcityLabel: "6 VENTANAS ESTA SEMANA · RESPUESTA < 24 H HÁBILES",
+    cohortLabel: "Cohorte Q2 2026 cierra en",
+    voiceLine: "Treinta minutos contigo, no contra ti. Si al minuto 15 decides que no aplica, lo cerramos con un resumen útil y seguimos como amigos. No vendemos haciendo que no se sienta como venta — vendemos respondiendo lo que tu CISO va a preguntar el lunes.",
+    voiceAttribution: "— Equipo de Partnerships",
     p: "Corremos un protocolo neural contigo — respiración coherente + audio binaural + medición HRV. Te mostramos el panel de equipo con datos simulados reales y respondemos preguntas de seguridad y compliance sobre la mesa.",
     bullets: [
       "Sesión neural en vivo (breath + audio + binaural).",
@@ -152,6 +156,9 @@ const COPY = {
     h1: "Experience it live. Decide with evidence.",
     editorial: "30 minutes, live, no slides — you breathe, you listen, you see the panel.",
     scarcityLabel: "6 WINDOWS THIS WEEK · REPLY WITHIN 24 BUSINESS HOURS",
+    cohortLabel: "Q2 2026 cohort closes in",
+    voiceLine: "Thirty minutes with you, not against you. If at minute 15 you decide it doesn't apply, we close with a useful summary and stay friends. We don't sell by hiding that it's a sale — we sell by answering what your CISO will ask on Monday.",
+    voiceAttribution: "— Partnerships team",
     p: "We run a live neural protocol with you — coherent breathing + binaural audio + HRV measurement. We show you the team panel with real simulated data and answer security & compliance questions on the table.",
     bullets: [
       "Live neural session (breath + audio + binaural).",
@@ -307,8 +314,38 @@ export default async function DemoPage() {
                 {c.bullets.map((b, i) => <li key={i}>{b}</li>)}
               </ul>
 
-              <div className="bi-roi-scarcity" aria-label={c.scarcityLabel} style={{ marginBlockStart: space[4], marginBlockEnd: space[5] }}>
-                <span className="bi-roi-scarcity-label">{c.scarcityLabel}</span>
+              {/* SP-MKT 9.5 — scarcity chip ahora junto a countdown live
+                  del cohorte Q2 2026. La urgencia del demo ancla con el
+                  cierre real de la cohorte piloto, no un FOMO inventado. */}
+              <div style={{
+                marginBlockStart: space[4], marginBlockEnd: space[5],
+                display: "flex", flexWrap: "wrap",
+                alignItems: "center", gap: space[3],
+              }}>
+                <div className="bi-roi-scarcity" aria-label={c.scarcityLabel}>
+                  <span className="bi-roi-scarcity-label">{c.scarcityLabel}</span>
+                </div>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "6px 14px",
+                  borderRadius: 999,
+                  border: `1px solid ${bioSignal.phosphorCyan}`,
+                  background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 8%, transparent)`,
+                  fontFamily: cssVar.fontMono,
+                  fontSize: 11,
+                  fontWeight: font.weight.bold,
+                  color: bioSignal.phosphorCyanInk,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                }}>
+                  <span aria-hidden style={{
+                    inlineSize: 6, blockSize: 6, borderRadius: "50%",
+                    background: bioSignal.phosphorCyan,
+                    boxShadow: `0 0 8px ${bioSignal.phosphorCyan}`,
+                  }} />
+                  <span>{c.cohortLabel}</span>
+                  <CohortCountdown locale={L} />
+                </span>
               </div>
 
               <div className="bi-demo-hero-chips" aria-label={L === "en" ? "Compliance preview" : "Vista previa de cumplimiento"}>
@@ -504,7 +541,39 @@ export default async function DemoPage() {
         </Container>
       </section>
 
-      <PulseDivider intensity="dim" />
+      {/* SP-MKT 9.5 — Voz editorial demo-specific. Misma pieza que / y /why:
+          italic serif + atribución mono. Re-ancla el cierre en voz humana
+          antes del último CTA — la decisión de agendar pasa después de
+          esto, no de la FAQ. */}
+      <section aria-labelledby="demo-voice" style={{ paddingBlock: "clamp(56px, 7vw, 96px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "38ch", marginInline: "auto", textAlign: "center" }}>
+            <p id="demo-voice" style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 32px)",
+              lineHeight: 1.32,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: `${space[5]}px 0 0`,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
 
       {/* ═══ Closing CTA — reactivation + human signature for bottom readers ═══ */}
       <section aria-labelledby="demo-closing" className="bi-demo-closing-section">
