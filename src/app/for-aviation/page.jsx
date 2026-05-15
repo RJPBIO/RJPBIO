@@ -179,6 +179,9 @@ const COPY = {
     disclaimer5:
       "'ICAO FRMS Appendix 7-ready' significa que el diseño de BIO-IGNICIÓN es compatible con las fases del FRMS bajo ICAO Annex 6 Appendix 7 y Doc 9966. NO implica aprobación ICAO per se (ICAO no certifica operadores), sino compatibilidad con la implementación que cada State of the Operator debe aprobar formalmente.",
 
+    voiceLine: "Construir esto para tu sector no fue una expansión de mercado — fue un re-mapeo de protocolos contra los riesgos operativos reales. Si tu contexto operativo no calza con lo que ves arriba, escribe y lo evaluamos antes de pedirte una firma. Vender wellness genérico a un sector regulado es trampa; no la jugamos.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "PRÓXIMO PASO · AVIATION",
     closingHLead: "Agenda con supuestos de flota.",
     closingHBody: "Un cierre de 45 min con tu FRMS Manager, VP Flight Ops y legal.",
@@ -323,6 +326,9 @@ const COPY = {
       "'FAA Part 117 / EASA FTL-aligned' means BIO-IGNICIÓN exports and logs are structured to be compatible with indicators of an FRMS program under 14 CFR Part 117 and Regulation (EU) No 83/2014. It does NOT imply FAA certification, is NOT an FAA/EASA-approved FRMS on its own, and does NOT replace the FRMS Manager, the Safety Manager nor the accountable executive.",
     disclaimer5:
       "'ICAO FRMS Appendix 7-ready' means BIO-IGNICIÓN's design is compatible with the FRMS phases under ICAO Annex 6 Appendix 7 and Doc 9966. It does NOT imply ICAO approval per se (ICAO does not certify operators), rather compatibility with the implementation each State of the Operator must formally approve.",
+
+    voiceLine: "Building this for your sector wasn't market expansion — it was a re-mapping of protocols against the real operational risks. If your operational context doesn't match what you see above, write us and we'll evaluate it before asking for your signature. Selling generic wellness to a regulated sector is a trap; we don't play it.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP · AVIATION",
     closingHLead: "Book a demo with fleet assumptions.",
@@ -609,6 +615,38 @@ export default async function ForAviationPage() {
       </Container>
 
       <PulseDivider intensity="dim" />
+      {/* SP-MKT 9.5 — Voz editorial vertical-specific. */}
+      <section aria-labelledby="for-voice" style={{ paddingBlock: "clamp(48px, 6vw, 80px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p id="for-voice" style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: ,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
+
+
 
       {/* ═══ Closing CTA (shared pattern) ═══ */}
       <section aria-labelledby="av-closing" className="bi-demo-closing-section">

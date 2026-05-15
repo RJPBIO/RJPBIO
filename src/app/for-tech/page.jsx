@@ -183,6 +183,9 @@ const COPY = {
     disclaimer6:
       "'DORA' en este contexto refiere exclusivamente a DevOps Research and Assessment · State of DevOps Report. NO debe confundirse con EU DORA (Digital Operational Resilience Act · Regulation (EU) 2022/2554) aplicable a entidades financieras ICT desde enero 2025 — que también cubrimos explícitamente en jurisdicciones.",
 
+    voiceLine: "Construir esto para tu sector no fue una expansión de mercado — fue un re-mapeo de protocolos contra los riesgos operativos reales. Si tu contexto operativo no calza con lo que ves arriba, escribe y lo evaluamos antes de pedirte una firma. Vender wellness genérico a un sector regulado es trampa; no la jugamos.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "PRÓXIMO PASO · TECH",
     closingHLead: "Agenda con supuestos de on-call.",
     closingHBody: "Un cierre de 45 min con tu VP Eng, Head of SRE y security.",
@@ -331,6 +334,9 @@ const COPY = {
       "'ISO/IEC 27035-ready' and 'NIST SP 800-61 mapping' mean BIO-IGNICIÓN's design is compatible with the incident-management phases under those standards. It does NOT imply ISO 27035 certification, does NOT replace the CISO or the SOC, and is NOT an attestation under any of these frameworks.",
     disclaimer6:
       "'DORA' in this context refers exclusively to DevOps Research and Assessment · State of DevOps Report. It should NOT be confused with EU DORA (Digital Operational Resilience Act · Regulation (EU) 2022/2554) applicable to financial ICT entities since January 2025 — which we also explicitly cover under jurisdictions.",
+
+    voiceLine: "Building this for your sector wasn't market expansion — it was a re-mapping of protocols against the real operational risks. If your operational context doesn't match what you see above, write us and we'll evaluate it before asking for your signature. Selling generic wellness to a regulated sector is a trap; we don't play it.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP · TECH",
     closingHLead: "Book a demo with on-call assumptions.",
@@ -619,6 +625,38 @@ export default async function ForTechPage() {
       </Container>
 
       <PulseDivider intensity="dim" />
+      {/* SP-MKT 9.5 — Voz editorial vertical-specific. */}
+      <section aria-labelledby="for-voice" style={{ paddingBlock: "clamp(48px, 6vw, 80px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p id="for-voice" style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: ,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
+
+
 
       {/* ═══ Closing CTA (shared pattern) ═══ */}
       <section aria-labelledby="tech-closing" className="bi-demo-closing-section">

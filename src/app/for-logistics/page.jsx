@@ -178,6 +178,9 @@ const COPY = {
     disclaimer5:
       "'OSHA recordkeeping-ready' significa que los reportes de BIO-IGNICIÓN son estructurables hacia OSHA 300/301 logs. NO implica auditoría OSHA, NO es una atestación, y NO sustituye al programa safety de la operación.",
 
+    voiceLine: "Construir esto para tu sector no fue una expansión de mercado — fue un re-mapeo de protocolos contra los riesgos operativos reales. Si tu contexto operativo no calza con lo que ves arriba, escribe y lo evaluamos antes de pedirte una firma. Vender wellness genérico a un sector regulado es trampa; no la jugamos.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "PRÓXIMO PASO · LOGÍSTICO",
     closingHLead: "Agenda con supuestos de flota.",
     closingHBody: "Un cierre de 45 min con tu VP Safety, Fleet Director y legal.",
@@ -322,6 +325,9 @@ const COPY = {
       "'FMCSA HOS-aligned' means BIO-IGNICIÓN exports and logs are structured to be compatible with a fatigue-management program under the FMCSA Safety Management Cycle. It does NOT imply FMCSA certification, does NOT replace the ELD nor the HOS log, and does NOT replace the DOT compliance officer.",
     disclaimer5:
       "'OSHA recordkeeping-ready' means BIO-IGNICIÓN reports are structurable toward OSHA 300/301 logs. It does NOT imply an OSHA audit, is NOT an attestation, and does NOT replace the operation's safety program.",
+
+    voiceLine: "Building this for your sector wasn't market expansion — it was a re-mapping of protocols against the real operational risks. If your operational context doesn't match what you see above, write us and we'll evaluate it before asking for your signature. Selling generic wellness to a regulated sector is a trap; we don't play it.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP · LOGISTICS",
     closingHLead: "Book a demo with fleet assumptions.",
@@ -608,6 +614,38 @@ export default async function ForLogisticsPage() {
       </Container>
 
       <PulseDivider intensity="dim" />
+      {/* SP-MKT 9.5 — Voz editorial vertical-specific. */}
+      <section aria-labelledby="for-voice" style={{ paddingBlock: "clamp(48px, 6vw, 80px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p id="for-voice" style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: ,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
+
+
 
       {/* ═══ Closing CTA (shared pattern) ═══ */}
       <section aria-labelledby="log-closing" className="bi-demo-closing-section">

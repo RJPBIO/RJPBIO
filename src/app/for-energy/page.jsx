@@ -182,6 +182,9 @@ const COPY = {
     disclaimer5:
       "'OSHA PSM 1910.119-ready' significa que los reportes de BIO-IGNICIÓN son estructurables como evidencia de factores humanos dentro del control environment PSM. NO implica compliance PSM ni es una atestación, y NO sustituye al Safety Report bajo Seveso III / COMAH ni al Process Hazard Analysis formal.",
 
+    voiceLine: "Construir esto para tu sector no fue una expansión de mercado — fue un re-mapeo de protocolos contra los riesgos operativos reales. Si tu contexto operativo no calza con lo que ves arriba, escribe y lo evaluamos antes de pedirte una firma. Vender wellness genérico a un sector regulado es trampa; no la jugamos.",
+    voiceAttribution: "— Equipo Bio-Ignición",
+
     closingKicker: "PRÓXIMO PASO · ENERGY",
     closingHLead: "Agenda con supuestos de plant.",
     closingHBody: "Un cierre de 45 min con tu HSE Director, PSM Coordinator y legal.",
@@ -328,6 +331,9 @@ const COPY = {
       "'API RP 755-aligned' means BIO-IGNICIÓN exports and logs are structured to be compatible with indicators of an FRMS under API RP 755 (2nd ed. 2019). It does NOT imply API endorsement, does NOT replace the operator's FRMS program owner, the PSM Coordinator, nor the external PSM/OSHA auditor.",
     disclaimer5:
       "'OSHA PSM 1910.119-ready' means BIO-IGNICIÓN reports are structurable as human-factors evidence within the PSM control environment. It does NOT imply PSM compliance and is NOT an attestation, and does NOT replace the Safety Report under Seveso III / COMAH nor the formal Process Hazard Analysis.",
+
+    voiceLine: "Building this for your sector wasn't market expansion — it was a re-mapping of protocols against the real operational risks. If your operational context doesn't match what you see above, write us and we'll evaluate it before asking for your signature. Selling generic wellness to a regulated sector is a trap; we don't play it.",
+    voiceAttribution: "— The Bio-Ignición team",
 
     closingKicker: "NEXT STEP · ENERGY",
     closingHLead: "Book a demo with plant assumptions.",
@@ -615,6 +621,38 @@ export default async function ForEnergyPage() {
       </Container>
 
       <PulseDivider intensity="dim" />
+      {/* SP-MKT 9.5 — Voz editorial vertical-specific. */}
+      <section aria-labelledby="for-voice" style={{ paddingBlock: "clamp(48px, 6vw, 80px)", paddingInline: space[5] }}>
+        <Container size="md">
+          <div style={{ maxInlineSize: "44ch", marginInline: "auto", textAlign: "center" }}>
+            <p id="for-voice" style={{
+              margin: 0,
+              fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 2.6vw, 30px)",
+              lineHeight: 1.34,
+              letterSpacing: "-0.018em",
+              color: cssVar.text,
+            }}>
+              {c.voiceLine}
+            </p>
+            <p style={{
+              margin: ,
+              fontFamily: cssVar.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              fontWeight: font.weight.bold,
+              color: bioSignal.phosphorCyanInk,
+            }}>
+              {c.voiceAttribution}
+            </p>
+          </div>
+        </Container>
+      </section>
+
+
 
       {/* ═══ Closing CTA (shared pattern) ═══ */}
       <section aria-labelledby="en-closing" className="bi-demo-closing-section">
