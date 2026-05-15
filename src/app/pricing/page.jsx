@@ -15,6 +15,7 @@ import BioglyphLattice from "@/components/brand/BioglyphLattice";
 import PulseDivider from "@/components/brand/PulseDivider";
 import SpotlightGrid from "@/components/brand/SpotlightGrid";
 import SectionKicker from "@/components/brand/SectionKicker";
+import CohortCountdown from "@/components/brand/CohortCountdown";
 import PartnerApplyModal from "@/components/ui/PartnerApplyModal";
 
 /* SP-MKT 10/10 — kickerStyle local reemplazado por SectionKicker
@@ -318,6 +319,9 @@ const COPY = {
     ],
     effectiveLabel: "Precios vigentes a",
     effectiveDate: "2026-04-20",
+    cohortLockLabel: "Q2 2026 lock-in · cierra en",
+    voiceLine: "Si el precio no cabe en una sola página sin disclaimers, no es honesto. Esta lo es. Si algo no cuadra cuando lo presentes en comité, escribe y lo arreglamos contigo.",
+    voiceAttribution: "— Equipo Bio-Ignición",
     navItems: [
       { id: "plans",      label: "Planes" },
       { id: "addons",     label: "Add-ons" },
@@ -610,6 +614,9 @@ const COPY = {
     ],
     effectiveLabel: "Pricing effective",
     effectiveDate: "2026-04-20",
+    cohortLockLabel: "Q2 2026 lock-in · closes in",
+    voiceLine: "If the price doesn't fit on one page without disclaimers, it isn't honest. This one does. If anything doesn't add up when you present in committee, write us and we'll fix it with you.",
+    voiceAttribution: "— The Bio-Ignición team",
     navItems: [
       { id: "plans",      label: "Plans" },
       { id: "addons",     label: "Add-ons" },
@@ -735,9 +742,40 @@ export default async function PricingPage() {
               }}>
                 {c.sub}
               </p>
-              <div className="bi-price-stamp" aria-label={c.effectiveLabel}>
-                <span className="bi-price-stamp-dot" aria-hidden />
-                {c.effectiveLabel} <strong>{c.effectiveDate}</strong>
+              <div style={{
+                marginBlockStart: space[5],
+                display: "inline-flex", flexWrap: "wrap",
+                alignItems: "center", justifyContent: "center",
+                gap: space[3],
+              }}>
+                <div className="bi-price-stamp" aria-label={c.effectiveLabel}>
+                  <span className="bi-price-stamp-dot" aria-hidden />
+                  {c.effectiveLabel} <strong>{c.effectiveDate}</strong>
+                </div>
+                {/* SP-MKT 9.5 — CohortCountdown chip: precio Q2 2026 lock-in.
+                    Honesto, env-driven (NEXT_PUBLIC_COHORT_CLOSE_DATE).
+                    Cuando cierre la cohorte el chip cambia a "Q3 ABIERTA". */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "6px 14px",
+                  borderRadius: 999,
+                  border: `1px solid ${bioSignal.phosphorCyan}`,
+                  background: `color-mix(in srgb, ${bioSignal.phosphorCyan} 8%, transparent)`,
+                  fontFamily: cssVar.fontMono,
+                  fontSize: 11,
+                  fontWeight: font.weight.bold,
+                  color: bioSignal.phosphorCyanInk,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}>
+                  <span aria-hidden style={{
+                    inlineSize: 6, blockSize: 6, borderRadius: "50%",
+                    background: bioSignal.phosphorCyan,
+                    boxShadow: `0 0 8px ${bioSignal.phosphorCyan}`,
+                  }} />
+                  <span>{c.cohortLockLabel}</span>
+                  <CohortCountdown locale={L} />
+                </div>
               </div>
             </header>
           </IgnitionReveal>
@@ -1235,7 +1273,38 @@ export default async function PricingPage() {
          </IgnitionReveal>
         </section>
 
-        <PulseDivider intensity="dim" />
+        {/* SP-MKT 9.5 — Voz editorial / manifesto pricing-specific. Misma
+            pieza que / y /why: italic serif + atribución mono. Ancla el
+            cierre en una voz humana antes de la decisión. */}
+        <section aria-labelledby="pricing-voice" className="bi-hide-print" style={{ paddingBlock: "clamp(56px, 7vw, 96px)", paddingInline: space[5] }}>
+          <Container size="md">
+            <div style={{ maxInlineSize: "36ch", marginInline: "auto", textAlign: "center" }}>
+              <p id="pricing-voice" style={{
+                margin: 0,
+                fontFamily: "var(--font-editorial), 'Instrument Serif', Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: "clamp(22px, 2.6vw, 32px)",
+                lineHeight: 1.32,
+                letterSpacing: "-0.018em",
+                color: cssVar.text,
+              }}>
+                {c.voiceLine}
+              </p>
+              <p style={{
+                margin: `${space[5]}px 0 0`,
+                fontFamily: cssVar.fontMono,
+                fontSize: 11,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                fontWeight: font.weight.bold,
+                color: bioSignal.phosphorCyanInk,
+              }}>
+                {c.voiceAttribution}
+              </p>
+            </div>
+          </Container>
+        </section>
 
         <section aria-labelledby="final-cta" className="bi-hide-print" style={{ marginTop: space[8], textAlign: "center" }}>
          <IgnitionReveal sparkOrigin="50% 40%">
