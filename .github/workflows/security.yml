@@ -16,6 +16,16 @@ jobs:
   codeql:
     name: CodeQL SAST
     runs-on: ubuntu-latest
+    # CodeQL requiere GitHub Advanced Security en repos privados (~$49/usuario/mes).
+    # En plan free + repo privado este job bloquea el workflow al fallar permissions.
+    # Skipea limpiamente si: (a) repo privado y (b) variable ENABLE_CODEQL ≠ 'true'.
+    # Para habilitar: Settings > Code security > Advanced Security: enable.
+    #                 Luego Settings > Variables > Actions > new var ENABLE_CODEQL=true.
+    if: ${{ vars.ENABLE_CODEQL == 'true' || github.event.repository.visibility == 'public' }}
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     strategy:
       matrix:
         language: [javascript]

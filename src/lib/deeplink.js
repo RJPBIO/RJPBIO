@@ -34,7 +34,17 @@ async function hmac(secret, msg) {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function verifyDeepLink(link, secret = process.env.NEXT_PUBLIC_DEEPLINK_SECRET) {
+// ⚠ Security note (2026-05-15 audit):
+// El secret debe vivir SOLO en server. Hoy el call-site del hook useDeepLink
+// corre client-side y leería NEXT_PUBLIC_DEEPLINK_SECRET — eso bundlea el secret
+// al cliente y permite forjar deeplinks. Fix correcto: mover verifyDeepLink a
+// un endpoint server (/api/deeplink/verify) y que el hook llame fetch en lugar
+// de ejecutar HMAC inline. Mientras tanto, el secret se lee solo si el caller
+// lo pasa explícitamente desde server (rutas server / route handlers). El env
+// var DEEPLINK_SECRET (sin NEXT_PUBLIC_) NO se expone al bundle.
+// TODO[security]: refactor verifyDeepLink a server-only API call. Tracked en
+// próxima revisión de seguridad pre-cohort piloto.
+export async function verifyDeepLink(link, secret = (typeof process !== "undefined" ? process.env.DEEPLINK_SECRET : undefined)) {
   if (!link) return { ok: false, reason: "invalid" };
   if (!secret) return { ok: true, signed: false };
   if (!link.sig || !link.ts) return { ok: false, reason: "unsigned" };
