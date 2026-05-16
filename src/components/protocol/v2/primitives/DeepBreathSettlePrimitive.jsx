@@ -91,7 +91,7 @@ export default function DeepBreathSettlePrimitive({
   subActIdx = 0,
   cycleCountTarget = DEFAULT_TARGET_CYCLES,
   min_duration_ms,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   onComplete,

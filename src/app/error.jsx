@@ -93,6 +93,7 @@ export default function Error({ error, reset }) {
           >
             {en ? "Retry" : "Reintentar"}
           </button>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Next Link is unreliable inside error boundaries; plain anchor is intentional */}
           <a
             href="/"
             style={{

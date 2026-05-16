@@ -65,6 +65,7 @@ export default function GlobalError({ error, reset }) {
             >
               {en ? "Reload" : "Recargar"}
             </button>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Next Link is unreliable in global-error boundary */}
             <a
               href="/"
               style={{

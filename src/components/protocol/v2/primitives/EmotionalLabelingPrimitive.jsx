@@ -104,9 +104,9 @@ export default function EmotionalLabelingPrimitive({
   transition_ms = 4000,
   min_thinking_ms = 6000,
   min_duration_ms,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onSignal,
   onComplete,
 }) {

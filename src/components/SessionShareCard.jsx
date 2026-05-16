@@ -325,6 +325,7 @@ export default function SessionShareCard({
           boxShadow: `0 20px 60px -20px rgba(16,185,129,0.35), 0 0 0 1px rgba(34,211,238,0.08) inset`,
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- preview is a generated data URL/blob; Next Image cannot optimize */}
         <img
           src={previewSrc}
           alt={`Sesión ${protocolName} ${code}, calidad ${bioQ ?? "sin dato"}%, ${dateLabel}`}

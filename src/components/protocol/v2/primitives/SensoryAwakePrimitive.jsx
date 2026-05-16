@@ -83,9 +83,9 @@ const GLOBAL_BODY = "Siente el cuerpo entero despierto";
 export default function SensoryAwakePrimitive({
   mode = "body_scan",
   duration_ms,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onComplete,
 }) {
   const reduceMotion = useReducedMotion();

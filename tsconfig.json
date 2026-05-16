@@ -45,6 +45,9 @@
     "out",
     "coverage",
     "playwright-report",
-    "test-results"
+    "test-results",
+    "tests/e2e/**",
+    "tests/load/**",
+    "scripts/**"
   ]
 }

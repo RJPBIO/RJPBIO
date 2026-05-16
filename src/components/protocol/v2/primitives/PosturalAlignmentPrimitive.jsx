@@ -64,9 +64,9 @@ const TOTAL_ZONES = ZONES.length;
  */
 export default function PosturalAlignmentPrimitive({
   duration_ms,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onComplete,
 }) {
   const reduceMotion = useReducedMotion();

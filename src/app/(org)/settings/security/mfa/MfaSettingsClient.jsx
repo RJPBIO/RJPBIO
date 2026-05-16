@@ -251,6 +251,7 @@ export default function MfaSettingsClient({ locale = "es", email, state }) {
           <h3 className="bi-mfa-step">{T.stepScan}</h3>
           <p className="bi-mfa-hint">{T.scanHint}</p>
           <div className="bi-mfa-qr">
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URI QR code; Next Image does not support data URIs natively */}
             {qrSrc && <img src={qrSrc} alt="QR" width={200} height={200} />}
           </div>
           <details className="bi-mfa-manual">

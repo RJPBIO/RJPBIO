@@ -286,6 +286,7 @@ export default function BrandingClient({ orgId, orgName, plan, canEdit, initial 
             border: `1px solid ${form.primaryColor}40`,
           }}>
             {form.logoUrl
+              // eslint-disable-next-line @next/next/no-img-element -- branding logo from arbitrary customer URL; Next Image requires whitelist
               ? <img
                   src={form.logoUrl}
                   alt={`logo ${orgName}`}
@@ -364,7 +365,7 @@ export default function BrandingClient({ orgId, orgName, plan, canEdit, initial 
         <ul style={{ margin: `${space[2]}px 0 0`, paddingInlineStart: space[5], color: cssVar.textMuted, fontSize: font.size.sm, lineHeight: 1.7 }}>
           <li><strong>Logo:</strong> reemplaza "BIO-IGN · ADMIN" en el sidebar de /admin.</li>
           <li><strong>Color acento:</strong> override del background del item nav activo.</li>
-          <li><strong>Custom domain:</strong> requiere ENTERPRISE + DNS verification flow (TXT record en _bio-ignicion.{domain}).</li>
+          <li><strong>Custom domain:</strong> requiere ENTERPRISE + DNS verification flow (TXT record en <code>_bio-ignicion.{"{"}domain{"}"}</code>).</li>
           <li><strong>Coach persona:</strong> tono que el coach usa al hablar con miembros del org.</li>
           <li><strong>Validación HTTPS:</strong> logos http:// rechazados (mixed-content). data:/ javascript: rechazados (XSS).</li>
         </ul>

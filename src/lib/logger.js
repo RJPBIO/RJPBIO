@@ -24,9 +24,11 @@ function emit(level, event, data) {
     level, event, ts: new Date().toISOString(),
     data: sanitize(data),
   };
+  /* eslint-disable no-console -- this IS the logger sink */
   if (typeof console !== "undefined" && console[level]) {
     console[level](`[bio:${event}]`, entry.data ?? "");
   }
+  /* eslint-enable no-console */
   if (ENDPOINT && typeof fetch !== "undefined" && Math.random() < SAMPLE) {
     try {
       fetch(ENDPOINT, {

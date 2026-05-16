@@ -64,7 +64,7 @@ const DEFAULT_TARGET_CYCLES = 5;
  */
 export default function PhysiologicalSighOrb({
   cycleCountTarget = DEFAULT_TARGET_CYCLES,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   showEyebrow = true,

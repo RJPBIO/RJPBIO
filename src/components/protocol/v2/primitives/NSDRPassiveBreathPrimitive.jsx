@@ -59,7 +59,7 @@ const TOTAL_STAGES = STAGES.length;
  */
 export default function NSDRPassiveBreathPrimitive({
   duration_ms = 150000,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   onComplete,

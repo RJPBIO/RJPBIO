@@ -78,7 +78,7 @@ const TOTAL_STAGES = STAGES.length;
  */
 export default function NSDRConfigurationPrimitive({
   duration_ms = 60000,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   onComplete,

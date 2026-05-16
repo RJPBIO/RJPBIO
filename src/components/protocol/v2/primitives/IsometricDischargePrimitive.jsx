@@ -70,9 +70,9 @@ export default function IsometricDischargePrimitive({
   target_holds = DEFAULT_TARGET_HOLDS,
   hold_duration_ms = HOLD_MS,
   release_duration_ms = RELEASE_MS,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onComplete,
 }) {
   const reduceMotion = useReducedMotion();

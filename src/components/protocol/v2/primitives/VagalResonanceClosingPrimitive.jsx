@@ -66,9 +66,9 @@ const TOTAL_STAGES = STAGES.length;
  */
 export default function VagalResonanceClosingPrimitive({
   duration_ms = 60000,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onComplete,
 }) {
   const reduceMotion = useReducedMotion();

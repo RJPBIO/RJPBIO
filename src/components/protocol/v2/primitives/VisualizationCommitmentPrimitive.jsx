@@ -88,9 +88,9 @@ export default function VisualizationCommitmentPrimitive({
   label = "MANTÉN",
   min_hold_ms = 6000,
   release_message = "Hoy avanzas, paso a paso.",
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onSignal,
   onComplete,
   onCancel,

@@ -80,9 +80,9 @@ const BURST_RING_COUNT = 3;
 export default function VagalBurstExhalePrimitive({
   cycleCountTarget = 3,
   cadence = { in: 4, h1: 0, ex: 6, h2: 0 },
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onCycleComplete,
   onComplete,
 }) {

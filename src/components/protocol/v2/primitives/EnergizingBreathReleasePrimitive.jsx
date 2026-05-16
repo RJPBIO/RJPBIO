@@ -119,7 +119,7 @@ export default function EnergizingBreathReleasePrimitive({
   subActIdx = 0,
   cycleCountTarget = DEFAULT_TARGET_CYCLES,
   duration_ms = DEFAULT_SHAKE_DURATION_MS,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   onSignal,

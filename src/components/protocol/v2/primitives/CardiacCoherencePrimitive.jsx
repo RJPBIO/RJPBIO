@@ -69,7 +69,7 @@ const CARDIAC_PULSE_BPM = 60; // 1Hz heart-brain coupling visualization
  */
 export default function CardiacCoherencePrimitive({
   cycleCountTarget = DEFAULT_TARGET_CYCLES,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   showPhaseLabel = true,

@@ -101,6 +101,7 @@ async function sendMagicLink({ identifier, url, provider }) {
     if (failed.length) throw new Error(`Email delivery failed: ${failed.join(", ")}`);
     return;
   }
+  // eslint-disable-next-line no-console -- intentional dev fallback for magic-link
   console.log(
     [
       "",

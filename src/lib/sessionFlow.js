@@ -49,7 +49,7 @@ export function closeSession({
   preMood = null,
   nfcCtx = null,
   circadian = null,
-  voiceOn = false, // eslint-disable-line no-unused-vars
+  voiceOn = false,  
   refs = null,
   hrvLog = null,
   now = null,

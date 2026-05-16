@@ -53,9 +53,9 @@ export default function VagalResonanceSustainmentPrimitive({
   subActIdx = 0,
   cycleCountTarget = 10,
   cadence = DEFAULT_CADENCE,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   size = DEFAULT_SIZE,
   onCycleComplete,
   onComplete,

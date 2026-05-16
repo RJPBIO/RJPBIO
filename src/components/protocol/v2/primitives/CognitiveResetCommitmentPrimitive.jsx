@@ -69,9 +69,9 @@ export default function CognitiveResetCommitmentPrimitive({
   label = "MANTÉN",
   min_hold_ms = 6000,
   release_message = "Algo cambia ahora.",
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onSignal,
   onComplete,
   onCancel,

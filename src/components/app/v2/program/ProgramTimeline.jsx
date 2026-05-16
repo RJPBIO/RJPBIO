@@ -17,25 +17,18 @@ import { PROGRAM_NAME, PROGRAM_DAYS } from "../home/copy";
 import { getProgramById } from "@/lib/programs";
 
 export default function ProgramTimeline({ activeProgram, onDayClick }) {
-  if (!activeProgram || !activeProgram.programId) return null;
+  const programId = activeProgram?.programId;
+  const program = programId ? getProgramById(programId) : null;
+  const programName = (programId && PROGRAM_NAME[programId]) || program?.n || programId || "";
+  const totalDays = (programId && PROGRAM_DAYS[programId]) || program?.duration || activeProgram?.progress?.total || 0;
+  const completedDays = Array.isArray(activeProgram?.completedDays) ? activeProgram.completedDays : [];
+  const today = activeProgram?.todayStatus?.day || 1;
 
-  const programId = activeProgram.programId;
-  const program = getProgramById(programId);
-  const programName = PROGRAM_NAME[programId] || program?.n || programId;
-  const totalDays = PROGRAM_DAYS[programId] || program?.duration || activeProgram.progress?.total || 0;
-
-  if (!program || !totalDays) {
-    return (
-      <article data-v2-program-timeline data-empty="true">
-        <p style={{ color: colors.text.muted }}>Programa no encontrado en catálogo.</p>
-      </article>
-    );
-  }
-
-  const completedDays = Array.isArray(activeProgram.completedDays) ? activeProgram.completedDays : [];
-  const today = activeProgram.todayStatus?.day || 1;
-
+  // useMemo MUST be called before any early return (rules-of-hooks).
+  // Gracefully handles missing program by returning empty cells; the early
+  // return below renders the empty-state article.
   const cells = useMemo(() => {
+    if (!program || !totalDays) return [];
     const out = [];
     const sessionsByDay = new Map();
     for (const s of program.sessions || []) {
@@ -55,7 +48,16 @@ export default function ProgramTimeline({ activeProgram, onDayClick }) {
       out.push({ day, session, state });
     }
     return out;
-  }, [program.sessions, totalDays, completedDays, today]);
+  }, [program, totalDays, completedDays, today]);
+
+  if (!activeProgram || !activeProgram.programId) return null;
+  if (!program || !totalDays) {
+    return (
+      <article data-v2-program-timeline data-empty="true">
+        <p style={{ color: colors.text.muted }}>Programa no encontrado en catálogo.</p>
+      </article>
+    );
+  }
 
   // Compute reasonable column count for grid: caps at 14 per row to keep dots visible.
   const colsPerRow = totalDays <= 14 ? totalDays : 14;

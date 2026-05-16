@@ -95,7 +95,7 @@ const SAFETY_PHONE = "911";
 export default function CrisisSensoryAnchorPrimitive({
   mode = "visual",
   min_chars = 2,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   onComplete,

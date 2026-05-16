@@ -72,9 +72,9 @@ const TRAIL_DELAYS_MS = [80, 160, 240];
 export default function OcularResetMetronomePrimitive({
   frequency_hz = DEFAULT_FREQUENCY_HZ,
   total_cycles = DEFAULT_TOTAL_CYCLES,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onComplete,
 }) {
   const reduceMotion = useReducedMotion();

@@ -259,14 +259,13 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
   function pause() { setRunning(false); if (tickRef.current) clearInterval(tickRef.current); }
   function resume() { setRunning(true); }
 
-  if (!show) return null;
-
   const progressPct = selectedDuration ? (elapsed / selectedDuration.sec) * 100 : 0;
   const remainingSec = selectedDuration ? Math.max(0, selectedDuration.sec - elapsed) : 0;
   const isWakeStage = currentRegion === "wake";
   const stageAccent = isWakeStage ? AMBER : VIOLET;
 
   /* ── Background ambient: violet wash, deep indigo base ─────── */
+  // useMemo MUST be called before any early return (rules-of-hooks).
   const bgGradient = useMemo(
     () => `
       radial-gradient(ellipse 70% 60% at 50% 0%, ${withAlpha(VIOLET, 14)} 0%, transparent 55%),
@@ -275,6 +274,8 @@ export default function NSDR({ show, isDark, onClose, onComplete }) {
     `,
     [isWakeStage]
   );
+
+  if (!show) return null;
 
   return (
     <motion.div

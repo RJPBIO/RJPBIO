@@ -173,6 +173,7 @@ export default function MfaSetupModal({ onClose, onComplete }) {
               borderRadius: radii.panel,
             }}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URI QR code; Next Image does not support data URIs natively */}
             <img
               src={setupData.qrDataURL}
               alt="Código QR para configurar MFA"

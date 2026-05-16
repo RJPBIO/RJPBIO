@@ -25,6 +25,7 @@ const DEFAULT_FROM = process.env.EMAIL_FROM || "BIO-IGNICIÓN <no-reply@bio-igni
 
 async function postmark(payload) {
   const token = process.env.POSTMARK_SERVER_TOKEN;
+  // eslint-disable-next-line no-console -- intentional dev fallback when no Postmark token
   if (!token) { console.info("[email] skipped (no token):", payload.To, payload.Subject); return { skipped: true }; }
   const r = await fetch("https://api.postmarkapp.com/email", {
     method: "POST",

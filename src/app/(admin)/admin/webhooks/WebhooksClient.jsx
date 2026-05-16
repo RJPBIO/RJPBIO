@@ -81,7 +81,7 @@ function DeliveriesDialog({ hookId, onClose }) {
     } finally { setLoading(false); }
   }
 
-  useEffect(() => { if (hookId) load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [hookId]);
+  useEffect(() => { if (hookId) load();   }, [hookId]);
 
   async function retry(did) {
     setRetrying(did);

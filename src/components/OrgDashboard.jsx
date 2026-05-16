@@ -555,8 +555,10 @@ function InstrumentCard({ agg, title, reference, scale, isDark }) {
   );
 }
 
-function resolveTheme(isDark) {
+ 
+function _resolveThemeFallback(isDark) {
   // fallback reader — duplicates theme.js resolveTheme shape to avoid circular import risk.
+  // Renamed from `resolveTheme` to avoid shadowing the imported `resolveTheme` from "../lib/theme".
   const palette = isDark
     ? { bg: "#0B0E14", card: "#141820", border: "#1E2330", text: { primary: "#E8ECF4", secondary: "#8B95A8", muted: "#4B5568" } }
     : { bg: "#F1F4F9", card: "#FFFFFF", border: "#E2E8F0", text: { primary: "#0F172A", secondary: "#475569", muted: "#94A3B8" } };

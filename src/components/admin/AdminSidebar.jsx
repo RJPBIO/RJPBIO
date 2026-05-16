@@ -53,12 +53,14 @@ export default function AdminSidebar({ branding, userEmail, userRole }) {
     <aside className="bi-admin-sidebar" aria-label="Admin navigation">
       <div className="bi-admin-brand">
         {branding?.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- branding logo from arbitrary customer URL; Next Image requires whitelist
           <img
             src={branding.logoUrl}
             alt={branding.orgName || "logo"}
             style={{ maxHeight: 32, maxWidth: 180, objectFit: "contain" }}
           />
         ) : (
+          // eslint-disable-next-line @next/next/no-html-link-for-pages -- admin shell uses plain anchor to force full reload (clear admin state)
           <a href="/" className="bi-shell-brand bi-shell-brand--admin" aria-label="BIO-IGNICIÓN — inicio">
             <span aria-hidden className="bi-shell-brand-glyph">
               <BioGlyph size={28} />

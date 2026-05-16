@@ -61,9 +61,9 @@ const DEFAULT_CADENCE = { in: 1, h1: 0, ex: 2, h2: 0 };
 export default function RespiratoryPulseTrainPrimitive({
   cycleCountTarget = 10,
   cadence = DEFAULT_CADENCE,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onCycleComplete,
   onComplete,
 }) {

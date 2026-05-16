@@ -90,7 +90,7 @@ const CYCLE_RELEASE_CUES = [
  */
 export default function DescargaRapidaPrimitive({
   cycleCountTarget = DEFAULT_TARGET_CYCLES,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   showPhaseLabel = true,

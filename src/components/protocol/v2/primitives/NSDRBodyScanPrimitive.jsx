@@ -84,7 +84,7 @@ const TOTAL_ZONES = ZONES.length;
 export default function NSDRBodyScanPrimitive({
   subActIdx = 0,
   duration_ms = 75000,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   onComplete,

@@ -92,10 +92,10 @@ export default function DualFocusReFocusPrimitive({
   subActIdx = 0,
   cycles,
   min_duration_ms,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
-  onSignal, // eslint-disable-line no-unused-vars
+  onSignal,  
   onComplete,
 }) {
   const reduceMotion = useReducedMotion();
@@ -251,7 +251,7 @@ export default function DualFocusReFocusPrimitive({
         particleSysRef.current = null;
       }
     };
-  }, [reduceMotion, cfg.kind]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reduceMotion, cfg.kind]);  
 
   // Body anchor per sub-act.
   const bodyAnchor = cfg.kind === "dual_focus"

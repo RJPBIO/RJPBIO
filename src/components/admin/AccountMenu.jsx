@@ -52,6 +52,7 @@ export default function AccountMenu({ userName, userEmail, role, orgName }) {
           <a role="menuitem" className="bi-account-menu-item" href="/settings">Preferencias</a>
           <a role="menuitem" className="bi-account-menu-item" href="/admin">Cambiar de organización</a>
           <div className="bi-account-menu-divider" />
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- POST to signout endpoint requires plain anchor, not Next Link */}
           <a role="menuitem" className="bi-account-menu-item bi-account-menu-item-danger" href="/api/auth/signout">Cerrar sesión</a>
         </div>
       )}

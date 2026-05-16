@@ -42,9 +42,9 @@ const DEFAULT_SIZE = 220;
 export default function VagalResonanceCalibrationPrimitive({
   cycleCountTarget = 5,
   cadence = DEFAULT_CADENCE,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   size = DEFAULT_SIZE,
   onCycleComplete,
   onComplete,

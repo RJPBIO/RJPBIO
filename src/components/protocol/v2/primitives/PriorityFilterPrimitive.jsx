@@ -104,10 +104,10 @@ const EISENHOWER_CELLS = [
 export default function PriorityFilterPrimitive({
   subActIdx = 0,
   min_duration_ms,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
-  hapticEnabled = true, // eslint-disable-line no-unused-vars
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
-  onSignal, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
+  hapticEnabled = true,  
+  voiceEnabled = false,  
+  onSignal,  
   onComplete,
 }) {
   const reduceMotion = useReducedMotion();

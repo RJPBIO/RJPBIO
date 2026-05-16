@@ -91,9 +91,9 @@ export default function ExecutiveCommitmentPrimitive({
   label = "MANTÉN",
   min_hold_ms = 5000,
   release_message = "60 minutos para esto.",
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onSignal,
   onComplete,
   onCancel,

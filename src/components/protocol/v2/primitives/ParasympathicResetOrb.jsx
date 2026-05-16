@@ -69,7 +69,7 @@ const DEFAULT_TARGET_CYCLES = 2; // alineado a validate.min_cycles del catálogo
  */
 export default function ParasympathicResetOrb({
   cycleCountTarget = DEFAULT_TARGET_CYCLES,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   showEyebrow = true,

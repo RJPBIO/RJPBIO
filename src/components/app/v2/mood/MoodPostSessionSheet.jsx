@@ -190,7 +190,7 @@ export default function MoodPostSessionSheet({
   isOpen,
   onSubmit,
   onSkip,
-  proto = null, // eslint-disable-line no-unused-vars
+  proto = null,  
 }) {
   const reduceMotion = useReducedMotion();
   const trapRef = useFocusTrap(!!isOpen, () => onSkip?.());

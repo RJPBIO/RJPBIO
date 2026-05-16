@@ -65,9 +65,9 @@ const DESCENT_PARTICLE_COUNT = 5;
 export default function DiaphragmaticAnchorPrimitive({
   cycleCountTarget = 2,
   cadence = DEFAULT_CADENCE,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onCycleComplete,
   onComplete,
 }) {

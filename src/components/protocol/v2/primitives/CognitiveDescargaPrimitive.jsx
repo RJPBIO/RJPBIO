@@ -94,9 +94,9 @@ export default function CognitiveDescargaPrimitive({
   chips,
   min_thinking_ms = 5000,
   min_duration_ms = 12000,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
-  voiceEnabled = false, // eslint-disable-line no-unused-vars
+  voiceEnabled = false,  
   onSignal,
   onComplete,
 }) {

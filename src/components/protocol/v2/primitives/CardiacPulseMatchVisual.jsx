@@ -65,7 +65,7 @@ const DEFAULT_TARGET_CYCLES = 5; // 5 ciclos × 11s ≈ 55s (≈ Phase 3 60s win
  */
 export default function CardiacPulseMatchVisual({
   cycleCountTarget = DEFAULT_TARGET_CYCLES,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   showEyebrow = true,

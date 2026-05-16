@@ -46,14 +46,14 @@ export default function MockupFrame({
   if (typeof screenshot !== "string" || !screenshot) {
     if (process.env.NODE_ENV !== "production") {
       // Surface dev-mode warning sin throw — placeholder vacío.
-      // eslint-disable-next-line no-console
+       
       console.warn("[MockupFrame] screenshot prop missing or invalid");
     }
     return null;
   }
   if (typeof alt !== "string" || !alt) {
     if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
+       
       console.warn("[MockupFrame] alt prop missing or invalid (a11y violation)");
     }
   }
@@ -143,6 +143,7 @@ export default function MockupFrame({
           overflow: "hidden",
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative mockup screenshot; sizes set via parent, Next Image overkill */}
         <img
           src={screenshot}
           alt=""

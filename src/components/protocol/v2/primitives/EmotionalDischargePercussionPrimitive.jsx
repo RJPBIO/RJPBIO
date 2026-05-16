@@ -78,7 +78,7 @@ const RING_RADIUS = 100;
 export default function EmotionalDischargePercussionPrimitive({
   bpm = DEFAULT_BPM,
   duration_ms = DEFAULT_DURATION_MS,
-  audioEnabled = true, // eslint-disable-line no-unused-vars
+  audioEnabled = true,  
   hapticEnabled = true,
   voiceEnabled = false,
   onComplete,

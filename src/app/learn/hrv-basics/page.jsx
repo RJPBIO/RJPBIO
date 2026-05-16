@@ -515,7 +515,7 @@ export default async function HrvBasicsPage() {
               {c.voiceLine}
             </p>
             <p style={{
-              margin: ,
+              margin: `${space[5]}px 0 0`,
               fontFamily: cssVar.fontMono,
               fontSize: 11,
               letterSpacing: "0.18em",
