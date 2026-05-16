@@ -73,9 +73,14 @@ function buildCSP(nonce) {
   const styleSrc = isProd
     ? ["'self'", `'nonce-${nonce}'`]
     : ["'self'", "'unsafe-inline'"];
+  // React 19 dev mode usa eval() para reconstruir callstacks · NO en prod build.
+  // CLAUDE.md prohibe unsafe-eval EN PROD; este branch es dev-only.
+  const scriptSrc = isProd
+    ? ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"]
+    : ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", "'unsafe-eval'"];
   const d = {
     "default-src": ["'self'"],
-    "script-src": ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"],
+    "script-src": scriptSrc,
     "script-src-attr": ["'none'"],
     // `style-src-attr 'unsafe-hashes'` permite `style="..."` inline que
     // Framer Motion inyecta; en prod style-src sigue strict para que no
