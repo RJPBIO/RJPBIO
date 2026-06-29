@@ -26,6 +26,7 @@ export default function BilateralTapTargets({
   const [taps, setTaps] = useState({ L: 0, R: 0 });
   const [lastTappedSide, setLastTappedSide] = useState(null);
   const completedRef = useRef(false);
+  const tapsRef = useRef({ L: 0, R: 0 });
 
   useEffect(() => {
     if (pattern !== "alternate") return undefined;
@@ -41,22 +42,25 @@ export default function BilateralTapTargets({
 
   const handleTap = (side) => {
     if (completedRef.current) return;
+    // BUG FIX: side-effects (onTap/onComplete → setState en ProtocolPlayer) fuera
+    // del updater de setTaps; antes corrían en fase de render → React "Cannot
+    // update a component while rendering a different component". Conteo síncrono
+    // vía tapsRef; el updater queda puro.
+    const next = { ...tapsRef.current, [side]: tapsRef.current[side] + 1 };
+    tapsRef.current = next;
+    const total = next.L + next.R;
+    setTaps(next);
     setLastTappedSide(side);
-    setTaps((prev) => {
-      const next = { ...prev, [side]: prev[side] + 1 };
-      const total = next.L + next.R;
-      if (typeof onTap === "function") onTap(side);
-      if (haptic_enabled) {
-        try { hap("tap"); } catch { /* noop */ }
-        if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(35);
-      }
-      if (total >= target_taps && !completedRef.current) {
-        completedRef.current = true;
-        try { hapticSignature("checkpoint"); } catch { /* noop */ }
-        if (typeof onComplete === "function") onComplete();
-      }
-      return next;
-    });
+    if (typeof onTap === "function") onTap(side);
+    if (haptic_enabled) {
+      try { hap("tap"); } catch { /* noop */ }
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(35);
+    }
+    if (total >= target_taps && !completedRef.current) {
+      completedRef.current = true;
+      try { hapticSignature("checkpoint"); } catch { /* noop */ }
+      if (typeof onComplete === "function") onComplete();
+    }
   };
 
   const Pad = ({ side, label }) => {

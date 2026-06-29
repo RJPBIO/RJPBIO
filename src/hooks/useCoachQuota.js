@@ -18,9 +18,14 @@ import { useCallback, useEffect, useState } from "react";
    JSON no soporta Infinity nativo). El consumidor debe convertir.
    ═══════════════════════════════════════════════════════════════ */
 
-export function useCoachQuota() {
+export function useCoachQuota(opts = {}) {
+  // BUG FIX (console hygiene): `enabled` permite que CoachV2 evite el fetch
+  // (que 401ea) cuando ya sabe que no hay sesión. Default true = backward
+  // compatible (tests intactos). Con enabled=false marcamos isUnauthenticated
+  // (mismo estado que producía el 401) para que CoachV2 muestre CoachAuthRequired.
+  const enabled = opts.enabled !== false;
   const [quota, setQuota] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState(null);
   // Phase 6D SP4a (Bug-12) — unauthenticated flag explícito.
   // Antes 401 dejaba quota en null y CoachV2 caía al DEFAULT_QUOTA
@@ -61,10 +66,19 @@ export function useCoachQuota() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      // Sin sesión conocida: no fetcheamos (evita 401) y reflejamos el mismo
+      // estado "no autenticado" que el 401 producía → CoachV2 muestra el gate.
+      setIsUnauthenticated(true);
+      setQuota(null);
+      setLoading(false);
+      return;
+    }
+    setIsUnauthenticated(false);
     const ctrl = new AbortController();
     doFetch(ctrl.signal);
     return () => ctrl.abort();
-  }, [doFetch]);
+  }, [doFetch, enabled]);
 
   const refetch = useCallback(() => doFetch(undefined), [doFetch]);
 

@@ -498,15 +498,6 @@ export default function ProgramCompletionSheet({
         </aside>
       </div>
 
-      {/* Pulse keyframe — scoped jsx isolation. Distinct keyframe-name del Fix3
-          (v2-cohort-pulse) para evitar collision visual aunque shape sea idéntico. */}
-      <style jsx global>{`
-        @keyframes v2-program-completion-pulse {
-          0%   { transform: scale(0.55); opacity: 0; }
-          55%  { transform: scale(1.15); opacity: 1; }
-          100% { transform: scale(1.0);  opacity: 0.78; }
-        }
-      `}</style>
     </>
   );
 }

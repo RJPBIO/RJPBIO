@@ -92,28 +92,34 @@ export default function BilateralPulseActivationPrimitive({
   const [tapCount, setTapCount] = useState(0);
   const [lastTappedSide, setLastTappedSide] = useState(null);
   const completedRef = useRef(false);
+  const tapCountRef = useRef(0);
 
+  // BUG FIX: antes los callbacks onTap/onComplete (que hacen setState en
+  // ProtocolPlayer) se invocaban DENTRO del updater de setTapCount. El updater
+  // corre en fase de render → React: "Cannot update a component while rendering
+  // a different component". Ahora todo el side-effect vive en el handler del
+  // evento (pointerdown), donde disparar setState del padre es válido; el
+  // updater queda puro y el conteo se lleva en un ref síncrono.
   function handleTap(side) {
     if (completedRef.current) return;
+    const next = tapCountRef.current + 1;
+    tapCountRef.current = next;
+    setTapCount(next);
     setLastTappedSide(side);
-    setTapCount((prev) => {
-      const next = prev + 1;
+    try {
+      if (typeof onTapRef.current === "function") onTapRef.current(side);
+    } catch { /* noop */ }
+    if (haptic_enabled) {
+      try { hap("tap"); } catch { /* noop */ }
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(35);
+    }
+    if (next >= target_taps && !completedRef.current) {
+      completedRef.current = true;
+      try { hapticSignature("checkpoint"); } catch { /* noop */ }
       try {
-        if (typeof onTapRef.current === "function") onTapRef.current(side);
+        if (typeof onCompleteRef.current === "function") onCompleteRef.current();
       } catch { /* noop */ }
-      if (haptic_enabled) {
-        try { hap("tap"); } catch { /* noop */ }
-        if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(35);
-      }
-      if (next >= target_taps && !completedRef.current) {
-        completedRef.current = true;
-        try { hapticSignature("checkpoint"); } catch { /* noop */ }
-        try {
-          if (typeof onCompleteRef.current === "function") onCompleteRef.current();
-        } catch { /* noop */ }
-      }
-      return next;
-    });
+    }
     // Clear lastTappedSide after brief pulse animation.
     setTimeout(() => setLastTappedSide((curr) => (curr === side ? null : curr)), 180);
   }

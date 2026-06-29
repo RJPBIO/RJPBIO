@@ -37,10 +37,16 @@ async function fetchCohortPrior() {
  * mientras carga o si no hay prior disponible. El motor adaptativo
  * tolera null sin problema (cae a literatura baseline).
  */
-export function useCohortPrior() {
+export function useCohortPrior(opts = {}) {
+  // BUG FIX (console hygiene): el cohort prior solo existe para usuarios
+  // autenticados con org B2B (k≥5). Para un usuario local-first sin sesión el
+  // endpoint siempre 401ea y devuelve null. `enabled` (default true) deja que
+  // el consumidor gatee por auth y evite el 401 en cada carga de Home.
+  const enabled = opts.enabled !== false;
   const [prior, setPrior] = useState(cache.value);
 
   useEffect(() => {
+    if (!enabled) return;
     const now = Date.now();
     const fresh = cache.value && (now - cache.fetchedAt) < TTL_MS;
     if (fresh) {
@@ -58,7 +64,7 @@ export function useCohortPrior() {
       return p;
     });
     cache.inFlight.then((p) => setPrior(p));
-  }, []);
+  }, [enabled]);
 
   return prior;
 }

@@ -34,7 +34,10 @@ export function computeAdaptiveRecommendation(st, options = {}) {
 
 /** Hook React: memoiza por los campos que realmente cambian la recomendación. */
 export function useAdaptiveRecommendation(st, { nom35Dominios = null, readiness = null, currentMood = null } = {}) {
-  const cohortPrior = useCohortPrior();
+  // BUG FIX (console hygiene): el cohort prior es org-scoped y requiere sesión;
+  // solo fetchear si hay usuario autenticado (st._userEmail). Para local-first
+  // sin login el endpoint 401ea y el motor cae a literatura igual.
+  const cohortPrior = useCohortPrior({ enabled: !!st?._userEmail });
   return useMemo(
     () => computeAdaptiveRecommendation(st, { nom35Dominios, readiness, currentMood, cohortPrior }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

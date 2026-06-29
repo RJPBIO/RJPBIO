@@ -86,13 +86,6 @@ export default function HeaderV2({ onBellClick }) {
       >
         <Bell size={icon.size} strokeWidth={icon.strokeWidth} />
       </button>
-
-      <style jsx global>{`
-        @keyframes v2HeaderDotPulse {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-      `}</style>
     </header>
   );
 }

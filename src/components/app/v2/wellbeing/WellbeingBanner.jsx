@@ -14,7 +14,9 @@ import { colors, typography, spacing, radii, withAlpha } from "../tokens";
 
 export default function WellbeingBanner({ totalSessions = 0 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { data, loading } = useWellbeingTrends({ days: 28 });
+  // BUG FIX: el banner ya no se muestra con totalSessions < 1; gatear también
+  // el fetch evita el 401 en cada carga de Home para usuarios nuevos/sin sesión.
+  const { data, loading } = useWellbeingTrends({ days: 28, enabled: totalSessions >= 1 });
 
   // Decision A3 — gate por totalSessions (skip pre-baseline users).
   if (totalSessions < 1) return null;

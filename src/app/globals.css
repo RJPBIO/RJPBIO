@@ -525,6 +525,18 @@ button, [role="button"], [role="tab"], [role="menuitem"] {
 @keyframes breathCircle { 0%, 100% { transform: scale(0.6); opacity: 0.4; } 50% { transform: scale(1); opacity: 1; } }
 @keyframes scoreReveal { 0% { opacity: 0; transform: scale(0.5) translateY(20px); } 60% { transform: scale(1.08) translateY(-4px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes profileGlow { 0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.1); } 50% { box-shadow: 0 0 40px rgba(99,102,241,0.25); } }
+/* BUG FIX (CSP): keyframes migrados desde `<style jsx global>` en componentes
+   cliente v2. styled-jsx en client components inyecta el <style> en RUNTIME sin
+   nonce → CSP los bloqueaba en prod y esas animaciones NO corrían. En globals.css
+   son un stylesheet real (style-src 'self'), sin relajar la policy. */
+@keyframes v2HeaderDotPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+@keyframes bi-sparkline-fade-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bi-dim-tip-in { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes v2CoachCursorBlink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+@keyframes v2-cohort-pulse { 0% { transform: scale(0.55); opacity: 0; } 55% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1.0); opacity: 0.78; } }
+@keyframes v2-monthly-digest-pulse { 0% { transform: scale(0.6); opacity: 0; } 40% { transform: scale(1.08); opacity: 0.95; } 100% { transform: scale(1); opacity: 0.78; } }
+@keyframes v2-streak-milestone-pulse { 0% { transform: scale(0.55); opacity: 0; } 55% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1.0); opacity: 0.78; } }
+@keyframes v2-program-completion-pulse { 0% { transform: scale(0.55); opacity: 0; } 55% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1.0); opacity: 0.78; } }
 @keyframes stepProgress { from { inline-size: 0%; } to { inline-size: 100%; } }
 @keyframes phaseEnter { 0% { opacity: 0; transform: scale(0.92) translateY(8px); filter: blur(4px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
 @keyframes phaseExit { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05); filter: blur(2px); } }

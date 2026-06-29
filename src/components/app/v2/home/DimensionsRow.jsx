@@ -273,13 +273,6 @@ export default function DimensionsRow({
           )}
         </button>
       ))}
-
-      <style jsx global>{`
-        @keyframes bi-dim-tip-in {
-          from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-      `}</style>
     </section>
   );
 }

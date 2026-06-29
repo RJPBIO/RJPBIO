@@ -94,12 +94,6 @@ export default function Sparkline({
       {showDots && computed.points.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r={1.5} fill={stroke} />
       ))}
-      <style jsx global>{`
-        @keyframes bi-sparkline-fade-in {
-          from { opacity: 0; transform: translateY(2px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </svg>
   );
 }

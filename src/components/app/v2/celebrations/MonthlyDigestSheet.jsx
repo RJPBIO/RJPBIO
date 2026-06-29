@@ -502,14 +502,6 @@ export default function MonthlyDigestSheet({
           </div>
         </aside>
       </div>
-
-      <style jsx global>{`
-        @keyframes v2-monthly-digest-pulse {
-          0%   { transform: scale(0.6); opacity: 0; }
-          40%  { transform: scale(1.08); opacity: 0.95; }
-          100% { transform: scale(1); opacity: 0.78; }
-        }
-      `}</style>
     </>
   );
 }

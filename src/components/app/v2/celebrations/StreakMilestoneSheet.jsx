@@ -482,16 +482,6 @@ export default function StreakMilestoneSheet({
         </aside>
       </div>
 
-      {/* Pulse keyframe — distinct keyframe-name del Fix3 (v2-cohort-pulse)
-          y Phase6I-1 (v2-program-completion-pulse). Mismo shape (cubic
-          ease-out scale 0.55→1.15→1.0 + opacity fade). */}
-      <style jsx global>{`
-        @keyframes v2-streak-milestone-pulse {
-          0%   { transform: scale(0.55); opacity: 0; }
-          55%  { transform: scale(1.15); opacity: 1; }
-          100% { transform: scale(1.0);  opacity: 0.78; }
-        }
-      `}</style>
     </>
   );
 }

@@ -107,7 +107,10 @@ export default function CoachV2({ onNavigate, onBellClick, devOverride = null })
     };
   }, []);
 
-  const { quota: realQuota, refetch: refetchQuota, isUnauthenticated } = useCoachQuota();
+  // BUG FIX (console hygiene): solo fetchear quota si hay sesión (store._userEmail
+  // lo setea AppV2Root tras /api/auth/session). Sin sesión, useCoachQuota marca
+  // isUnauthenticated y CoachV2 muestra CoachAuthRequired — sin disparar un 401.
+  const { quota: realQuota, refetch: refetchQuota, isUnauthenticated } = useCoachQuota({ enabled: !!store?._userEmail });
   useEffect(() => { if (realQuota) setQuota(realQuota); }, [realQuota]);
 
   // Mensajes visibles = persisted (store) + streaming placeholder al final

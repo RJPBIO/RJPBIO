@@ -70,8 +70,14 @@ function buildCSP(nonce) {
   // explícitamente (layout.js, loading.jsx, admin/loading.jsx, demo).
   // CLAUDE.md prohibe unsafe-inline EN PROD; este branch es dev-only.
   const isProd = process.env.NODE_ENV === "production";
+  // BUG FIX (CSP): hash del único <style> que inyecta en runtime una dependencia
+  // (Framer Motion, global style fijo por versión). Es hash-based, NO unsafe-inline
+  // → respeta CLAUDE.md y mantiene style-src strict. Si Framer cambia el contenido
+  // el CSP report lo detecta y se actualiza el hash. El resto de <style> propios ya
+  // viven en globals.css (stylesheet real) tras migrar los `<style jsx global>`.
+  const FRAMER_STYLE_HASH = "'sha256-0BBne3Sf65j8x0zVk6a8QAjbz4fuSrv6SC30xCwV+g8='";
   const styleSrc = isProd
-    ? ["'self'", `'nonce-${nonce}'`]
+    ? ["'self'", `'nonce-${nonce}'`, FRAMER_STYLE_HASH]
     : ["'self'", "'unsafe-inline'"];
   // React 19 dev mode usa eval() para reconstruir callstacks · NO en prod build.
   // CLAUDE.md prohibe unsafe-eval EN PROD; este branch es dev-only.
@@ -216,6 +222,13 @@ export async function middleware(request) {
   const reqHeaders = new Headers(request.headers);
   reqHeaders.set("x-nonce", nonce);
   reqHeaders.set("x-csp", csp);
+  // BUG FIX (CSP): Next.js lee el nonce del header `Content-Security-Policy`
+  // del REQUEST para auto-propagarlo a styled-jsx y next/font. Sin esto, esos
+  // <style> (p.ej. @keyframes v2HeaderDotPulse, @font-face Geist) se inyectan
+  // SIN nonce y el navegador los bloquea en prod ("Applying inline style
+  // violates style-src"). Pasar el CSP en el request lo resuelve sin relajar
+  // la policy (style-src sigue strict, sin unsafe-inline). Patrón oficial Next.
+  reqHeaders.set("Content-Security-Policy", csp);
 
   const res = NextResponse.next({ request: { headers: reqHeaders } });
 

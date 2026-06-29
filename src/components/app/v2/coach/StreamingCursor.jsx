@@ -21,12 +21,6 @@ export default function StreamingCursor() {
       >
         |
       </span>
-      <style jsx global>{`
-        @keyframes v2CoachCursorBlink {
-          0%, 50% { opacity: 1; }
-          50.01%, 100% { opacity: 0; }
-        }
-      `}</style>
     </>
   );
 }

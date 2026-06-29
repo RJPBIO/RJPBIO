@@ -453,16 +453,6 @@ export default function CohortCelebrationSheet({
         </aside>
       </div>
 
-      {/* Pulse keyframe — scoped via :global jsx isolation. Si el componente
-          se monta múltiples veces el keyframe-name colision es safe (mismo
-          shape). */}
-      <style jsx global>{`
-        @keyframes v2-cohort-pulse {
-          0%   { transform: scale(0.55); opacity: 0; }
-          55%  { transform: scale(1.15); opacity: 1; }
-          100% { transform: scale(1.0);  opacity: 0.78; }
-        }
-      `}</style>
     </>
   );
 }

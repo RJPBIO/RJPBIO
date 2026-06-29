@@ -26,12 +26,18 @@ const MIN_DAYS = 7;
 const MAX_DAYS = 90;
 
 export function useWellbeingTrends(opts = {}) {
+  // BUG FIX (console hygiene): `enabled` evita disparar el fetch autenticado
+  // cuando el consumidor ya sabe que no lo necesita (ej. WellbeingBanner con
+  // totalSessions < 1, o usuario local-first sin sesión). Antes el hook se
+  // llamaba incondicionalmente antes del early-return del banner → 401 en cada
+  // carga de Home. Default true = backward-compatible (tests intactos).
+  const enabled = opts.enabled !== false;
   const days = Number.isFinite(opts?.days) && opts.days > 0
     ? Math.min(MAX_DAYS, Math.max(MIN_DAYS, Math.floor(opts.days)))
     : DEFAULT_DAYS;
 
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState(null);
 
   const doFetch = useCallback(async (signal) => {
@@ -69,10 +75,11 @@ export function useWellbeingTrends(opts = {}) {
   }, [days]);
 
   useEffect(() => {
+    if (!enabled) { setLoading(false); setData(null); setError(null); return; }
     const ctrl = new AbortController();
     doFetch(ctrl.signal);
     return () => ctrl.abort();
-  }, [doFetch]);
+  }, [doFetch, enabled]);
 
   const refetch = useCallback(() => doFetch(undefined), [doFetch]);
 
