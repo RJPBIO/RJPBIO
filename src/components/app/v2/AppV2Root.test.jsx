@@ -64,6 +64,7 @@ vi.mock("next/dynamic", () => ({
           })}>complete</button>
           <button data-testid="mock-hrv-camera-close" onClick={() => props.onClose?.()}>close</button>
           <button data-testid="mock-hrv-camera-swap-ble" onClick={() => props.onUseBLE?.()}>swap-ble</button>
+          <button data-testid="mock-hrv-camera-start-protocol" onClick={() => props.onStartProtocol?.({ id: 2, n: "Activación Cognitiva" })}>start-protocol</button>
         </div>
       );
     }
@@ -254,6 +255,18 @@ describe("AppV2Root — Phase 6B SP1 wiring HRV/PSS-4", () => {
     expect(logSpy).toHaveBeenCalledTimes(1);
     expect(logSpy.mock.calls[0][0].source).toBe("ble");
     logSpy.mockRestore();
+  });
+
+  it("HRVCameraMeasure onStartProtocol cierra HRV y lanza el player con el protocolo recomendado", () => {
+    render(<AppV2Root />);
+    act(() => { screen.getByRole("button", { name: /variabilidad cardíaca/i }).click(); });
+    expect(screen.getByTestId("mock-hrv-camera")).toBeTruthy();
+    act(() => { screen.getByTestId("mock-hrv-camera-start-protocol").click(); });
+    // Puente medición → acción: cierra el modal HRV y monta el player.
+    expect(screen.queryByTestId("mock-hrv-camera")).toBeNull();
+    const player = screen.getByTestId("mock-protocol-player");
+    expect(player).toBeTruthy();
+    expect(player.getAttribute("data-protocol-id")).toBe("2");
   });
 
   it("InstrumentRunner onComplete invoca store.logInstrument con entry", () => {

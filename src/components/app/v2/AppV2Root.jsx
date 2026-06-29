@@ -437,6 +437,15 @@ export default function AppV2Root() {
     setHrvModalOpen(false);
     setHrvModalMode("camera");
   }, []);
+  // Puente medición → acción: la pantalla "saved" de HRVCameraMeasure ofrece
+  // un protocolo recomendado por la lectura. Al iniciarlo: cerramos el modal
+  // HRV y lanzamos el player con ese protocolo, cerrando el loop
+  // medir → saber → actuar sin pasar por el home.
+  const handleHrvStartProtocol = useCallback((protocol) => {
+    setHrvModalOpen(false);
+    setHrvModalMode("camera");
+    if (protocol) launchProtocol(protocol);
+  }, [launchProtocol]);
   const handleInstrumentComplete = useCallback((entry) => {
     if (entry) {
       try { useStore.getState().logInstrument(entry); } catch (e) { console.error("[v2] logInstrument error", e); }
@@ -1324,6 +1333,7 @@ export default function AppV2Root() {
           onClose={handleHrvClose}
           onComplete={handleHrvComplete}
           onUseBLE={handleHrvSwapToBle}
+          onStartProtocol={handleHrvStartProtocol}
         />
       )}
       {hrvModalOpen && hrvModalMode === "ble" && (

@@ -17,6 +17,7 @@ import { colors, withAlpha } from "./app/v2/tokens";
 import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
 import { createCameraCapture, createStreamingAnalyzer } from "../lib/hrv-camera/capture";
 import { computeHrvInsight, buildHrvBaseline } from "../lib/hrv-camera/insight";
+import { firstProtocolForIntent } from "../lib/first-protocol";
 import { useStore } from "../store/useStore";
 import { track } from "../lib/telemetry";
 import { useHaptic } from "../hooks/useHaptic";
@@ -54,7 +55,20 @@ function detectIOS() {
   return false;
 }
 
-export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, onUseBLE }) {
+// Razón corta del puente medición → protocolo, según la comparación HRV vs
+// baseline. Texto en lenguaje natural (sin "z", "ln", "parasimpático crudo").
+// comparison undefined = sin baseline suficiente → "" (el protocolo habla solo).
+function hrvBridgeReason(comparison) {
+  switch (comparison) {
+    case "above": return "Tu sistema está en buena recuperación. Aprovecha la ventana.";
+    case "near": return "Estás en equilibrio vs tu base. Listo para tu sesión.";
+    case "below": return "Tu tono de recuperación está algo bajo hoy.";
+    case "well-below": return "Tu sistema está bajo carga. Prioriza recuperar.";
+    default: return "";
+  }
+}
+
+export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, onUseBLE, onStartProtocol }) {
   const reduced = useReducedMotion();
   const haptic = useHaptic();
   const titleId = useId();
@@ -399,9 +413,11 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     // 1500ms y el user quedaba atorado si quería salir antes).
     setPhaseSafe("saved");
     announce("Medición guardada en tu historial.");
-    // Auto-close se mantiene como fallback (1.8s, un poco más largo
-    // para que el user pueda leer el resultado sin sentirse apurado).
-    setTimeout(() => onClose?.(), 1800);
+    // Auto-close fallback (1.8s). PERO si hay puente a protocolo
+    // (onStartProtocol), NO auto-cerramos: la pantalla "saved" ofrece una
+    // decisión (Iniciar protocolo recomendado / Continuar) y cerrar sola
+    // robaría esa elección. Cierre explícito vía los botones.
+    if (typeof onStartProtocol !== "function") setTimeout(() => onClose?.(), 1800);
   }
 
   if (!show) return null;
@@ -1245,7 +1261,26 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
         );
       })()}
 
-      {phase === "saved" && finalResult?.hrv && (
+      {phase === "saved" && finalResult?.hrv && (() => {
+        // Puente medición → acción. Cierra el loop "medir → saber → actuar":
+        // recomienda un protocolo según la lectura HRV (insight vs baseline
+        // 14d). Sin baseline suficiente (computeHrvInsight → null) cae al
+        // default seguro (Reinicio Parasimpático, firstProtocolForIntent(undefined)).
+        // Solo aparece si el padre cableó onStartProtocol.
+        const showBridge = typeof onStartProtocol === "function";
+        let recoProtocol = null;
+        let bridgeReason = "";
+        if (showBridge) {
+          const hrvLog = useStore.getState().hrvLog || [];
+          const baseline14d = buildHrvBaseline(hrvLog, 14);
+          const savedInsight = computeHrvInsight({
+            currentLnRmssd: finalResult.hrv.lnRmssd,
+            baseline14d,
+          });
+          recoProtocol = firstProtocolForIntent(savedInsight?.intent);
+          bridgeReason = hrvBridgeReason(savedInsight?.comparison);
+        }
+        return (
         <section
           aria-label="Medición guardada"
           role="status"
@@ -1302,35 +1337,107 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
           >
             Guardado en tu historial
           </h3>
-          <p style={{ color: t2, fontSize: 14, lineHeight: 1.5, margin: 0, marginBlockEnd: 24 }}>
+          <p style={{ color: t2, fontSize: 14, lineHeight: 1.5, margin: 0, marginBlockEnd: showBridge && recoProtocol ? 20 : 24 }}>
             RMSSD {finalResult.hrv.rmssd} ms · {Math.round(finalResult.hrv.meanHr)} bpm
           </p>
-          {/* Sprint 73 — botón explícito. Antes solo había auto-close
-              setTimeout(1500). Si el user quería salir antes, no había
-              forma obvia (la X del header podía no ser visible en
-              algunos viewport mobile). Ahora hay un CTA claro. */}
-          <button
-            type="button"
-            onClick={() => onClose?.()}
-            aria-label="Cerrar y volver"
-            style={{
-              minBlockSize: 48,
-              paddingBlock: 14,
-              paddingInline: 32,
-              background: brand.primary,
-              color: colors.bg.base,
-              border: "none",
-              borderRadius: 14,
-              fontSize: 15,
-              fontWeight: 500,
-              letterSpacing: -0.1,
-              cursor: "pointer",
-            }}
-          >
-            Continuar
-          </button>
+          {showBridge && recoProtocol ? (
+            /* Puente medición → acción: protocolo recomendado por la lectura.
+               Cierra el loop "medir → saber → actuar" sin que el user tenga
+               que volver al home a buscar qué hacer. */
+            <div
+              style={{
+                borderBlockStart: `0.5px solid ${withAlpha(t1, 12)}`,
+                paddingBlockStart: 22,
+                marginBlockStart: 4,
+                textAlign: "left",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: withAlpha(t1, 50),
+                  fontWeight: 500,
+                  marginBlockEnd: 8,
+                }}
+              >
+                Recomendado para ti
+              </div>
+              {bridgeReason && (
+                <p style={{ color: t2, fontSize: 13.5, lineHeight: 1.5, margin: 0, marginBlockEnd: 18 }}>
+                  {bridgeReason}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => onStartProtocol(recoProtocol)}
+                aria-label={`Iniciar protocolo ${recoProtocol.n}`}
+                style={{
+                  inlineSize: "100%",
+                  minBlockSize: 52,
+                  paddingBlock: 15,
+                  paddingInline: 24,
+                  background: brand.primary,
+                  color: colors.bg.base,
+                  border: "none",
+                  borderRadius: 14,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: -0.1,
+                  cursor: "pointer",
+                  marginBlockEnd: 10,
+                }}
+              >
+                Iniciar {recoProtocol.n}
+              </button>
+              <button
+                type="button"
+                onClick={() => onClose?.()}
+                aria-label="Cerrar sin iniciar protocolo"
+                style={{
+                  inlineSize: "100%",
+                  minBlockSize: 44,
+                  paddingBlock: 12,
+                  background: "transparent",
+                  color: withAlpha(t1, 60),
+                  border: "none",
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                Continuar sin protocolo
+              </button>
+            </div>
+          ) : (
+            /* Sprint 73 — botón explícito (fallback sin puente). */
+            <button
+              type="button"
+              onClick={() => onClose?.()}
+              aria-label="Cerrar y volver"
+              style={{
+                minBlockSize: 48,
+                paddingBlock: 14,
+                paddingInline: 32,
+                background: brand.primary,
+                color: colors.bg.base,
+                border: "none",
+                borderRadius: 14,
+                fontSize: 15,
+                fontWeight: 500,
+                letterSpacing: -0.1,
+                cursor: "pointer",
+              }}
+            >
+              Continuar
+            </button>
+          )}
         </section>
-      )}
+        );
+      })()}
 
       {phase === "error" && error && (
         <div role="alert" style={{ maxInlineSize: 500, marginInline: "auto" }}>
