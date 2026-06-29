@@ -227,11 +227,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     warn(code) { console.warn("[auth][warn]", code); },
   },
-  // Cookie config explícito. Crítico: maxAge explícito para que el cookie
-  // sobreviva al "browser close" — sin esto Auth.js v5 emite session
-  // cookies (sin Max-Age header) y PWA standalone (iOS/Android) los borra
-  // al backgroundear la app, deslogueando al user al reabrir. Con maxAge
-  // el cookie persiste cross-restart de PWA y matches el JWT exp del server.
+  // Cookie config EXPLÍCITO para TODAS las cookies que NextAuth v5 usa.
+  //
+  // ⚠ Bug histórico (pre-fix Audit 2026-05-16): solo sessionToken estaba
+  // configurada. Las otras 5 cookies (csrfToken, callbackUrl, pkceCodeVerifier,
+  // state, nonce) usaban defaults de NextAuth. Para Google OAuth flow en PWA
+  // standalone iOS Safari, el cookie `__Secure-authjs.pkce.code_verifier`
+  // del default (sin maxAge explícito + sin path consistente) se perdía entre
+  // el POST /signin/google → redirect a Google → callback GET. Resultado: el
+  // user completaba auth con Google pero llegaba a /signin de nuevo con error
+  // "OAuthCallback" (state mismatch / pkce missing) → sesión "no persistía".
+  //
+  // Fix: configurar las 6 cookies con isma policy (sameSite: lax, path: /,
+  // secure prod-only, httpOnly donde aplica) + maxAge generoso para las
+  // short-lived. El sessionToken sigue siendo 8h (match session.maxAge).
+  // Las cookies de flow (csrf, callbackUrl, pkce, state, nonce) tienen
+  // maxAge de 15 min — generoso para completar el flow OAuth incluso si el
+  // user tarda en consent.
   cookies: {
     sessionToken: {
       name: process.env.NODE_ENV === "production"
@@ -243,6 +255,73 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         path: "/",
         secure: process.env.NODE_ENV === "production",
         maxAge: 8 * 60 * 60, // 8h — match session.maxAge
+      },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.callback-url"
+        : "authjs.callback-url",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60, // 15 min
+      },
+    },
+    csrfToken: {
+      // Host-prefixed cookie en prod (más estricto que Secure-prefix).
+      // __Host- requiere: secure + path=/ + sin Domain attribute.
+      name: process.env.NODE_ENV === "production"
+        ? "__Host-authjs.csrf-token"
+        : "authjs.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60, // 1h — generoso para forms con tabs abiertos
+      },
+    },
+    pkceCodeVerifier: {
+      // Crítico para OAuth PKCE flow (Google/Apple/Azure AD). El default
+      // sin maxAge explícito causa expiración temprana en algunos browsers
+      // PWA standalone. 15 min cubre flujos lentos (consent + 2FA en IdP).
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.pkce.code_verifier"
+        : "authjs.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60,
+      },
+    },
+    state: {
+      // OAuth state cookie — validado en callback. Mismatch = OAuthCallback error.
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.state"
+        : "authjs.state",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60,
+      },
+    },
+    nonce: {
+      // OIDC nonce cookie — validado en id_token. Solo para OIDC providers.
+      name: process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.nonce"
+        : "authjs.nonce",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 15 * 60,
       },
     },
   },
