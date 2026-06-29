@@ -6,6 +6,7 @@ import HeaderV2 from "./home/HeaderV2";
 import DataIntro from "./data/DataIntro";
 import TrajectoryHero from "./data/TrajectoryHero";
 import DimensionsTrends from "./data/DimensionsTrends";
+import ConsistencyHeatmap from "./data/ConsistencyHeatmap";
 import ProgramsSection from "./data/ProgramsSection";
 import ProtocolCatalog from "./data/ProtocolCatalog";
 import SessionsRecent from "./data/SessionsRecent";
@@ -117,7 +118,10 @@ export default function DataV2({
           onSelect={(id) => onNavigate && onNavigate({ target: `/app/profile/engine-health#${id}` })}
         />
       </SectionEmergeWrapper>
-      <SectionEmergeWrapper staggerIndex={2} testid="datav2-section-programs">
+      <SectionEmergeWrapper staggerIndex={2} testid="datav2-section-consistency">
+        <ConsistencyHeatmap history={store.history} />
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-programs">
         <div data-anchor="programs">
           <ProgramsSection
             activeProgram={data.activeProgram}
