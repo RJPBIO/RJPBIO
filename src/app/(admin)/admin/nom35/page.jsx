@@ -1,10 +1,12 @@
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { aggregateScores } from "@/lib/nom35/scoring";
+import { splitByPeriod, compareNom35Aggregates } from "@/lib/nom35/longitudinal";
 import { DOMINIOS, CATEGORIAS } from "@/lib/nom35/items";
 import { cssVar, radius, space, font } from "@/components/ui/tokens";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { KPITile } from "@/components/admin/KPITile";
+import Nom35LongitudinalSection from "@/components/admin/reports/Nom35LongitudinalSection";
 import Link from "next/link";
 
 export const metadata = { title: "NOM-035 · Admin" };
@@ -44,6 +46,15 @@ export default async function Nom35AdminPage() {
   const totalSeats = await orm.membership.count({ where: { orgId: mem.orgId } });
   const agg = aggregateScores(rows, { minN: 5 });
   const coverage = totalSeats ? Math.round((rows.length / totalSeats) * 100) : 0;
+
+  // Longitudinal: período actual (90d) vs anterior (90d previos). k-anon ≥5
+  // por período; si falta muestra, la sección muestra estado "aún sin comparativa".
+  const PERIOD_DAYS = 90;
+  const { baseline: baseRows, current: curRows } = splitByPeriod(rows, { periodDays: PERIOD_DAYS });
+  const comparison = compareNom35Aggregates(
+    aggregateScores(baseRows, { minN: 5 }),
+    aggregateScores(curRows, { minN: 5 })
+  );
 
   return (
     <>
@@ -93,6 +104,8 @@ export default async function Nom35AdminPage() {
           </>
         )}
       </section>
+
+      <Nom35LongitudinalSection comparison={comparison} periodDays={PERIOD_DAYS} />
 
       {!agg.suppressed && (
         <>

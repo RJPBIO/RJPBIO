@@ -75,7 +75,7 @@ describe("runTask", () => {
 });
 
 describe("TASK_REGISTRY", () => {
-  it("has all 14 expected tasks", () => {
+  it("has all 15 expected tasks", () => {
     expect(Object.keys(TASK_REGISTRY).sort()).toEqual([
       "audit-export",
       "audit-prune",
@@ -86,6 +86,8 @@ describe("TASK_REGISTRY", () => {
       "dunning-check",
       "incident-broadcast",
       "maintenance-notify",
+      // NOM-035 longitudinal — push semanal a users con eval >90 días (reaplicar)
+      "nom35-reapply-reminder",
       // Phase 6F SP-A — push reminder diario para users con programa activo
       "program-day-reminder",
       "push-deliver",

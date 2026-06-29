@@ -14,6 +14,7 @@
     { "path": "/api/cron/weekly-summary",     "schedule": "0 14 * * 1" },
     { "path": "/api/cron/program-day-reminder", "schedule": "0 13 * * *" },
     { "path": "/api/cron/quarterly-org-digest", "schedule": "0 16 1 * *" },
-    { "path": "/api/cron/burnout-scan", "schedule": "0 5 * * *" }
+    { "path": "/api/cron/burnout-scan", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/nom35-reapply-reminder", "schedule": "0 12 * * 1" }
   ]
 }

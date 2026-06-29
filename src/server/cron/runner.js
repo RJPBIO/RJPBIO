@@ -128,4 +128,7 @@ export const TASK_REGISTRY = {
   // activo, persiste BurnoutScore y envía push (warn/alert) con throttle 7d.
   // NO es "burnout score" — early-warning detection retrospectiva.
   "burnout-scan": () => import("./burnout-scan.js").then((m) => m.runBurnoutScan),
+  // NOM-035 longitudinal — cron semanal que encola push a users cuya última
+  // evaluación tiene >90 días, invitándolos a reaplicar (genera tendencia).
+  "nom35-reapply-reminder": () => import("./nom35-reapply-reminder.js").then((m) => m.runNom35ReapplyReminder),
 };
