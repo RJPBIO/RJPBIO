@@ -352,6 +352,21 @@ async function saveNow(state) {
   }
 }
 
+// BUG FIX: flush en pagehide/visibilitychange→hidden. Las mutaciones usan
+// scheduleSave (debounce 300ms) y la v2 no monta useAutoSave; sin esto, cerrar
+// o backgroundear la tab dentro de esa ventana perdía el último cambio (setting,
+// mood, etc.). saveNow() flushea el debounce con lastScheduledState (que se
+// actualiza síncronamente en cada scheduleSave). Módulo singleton → se registra
+// una sola vez.
+if (typeof window !== "undefined") {
+  const _flushOnExit = () => { try { saveNow(); } catch {} };
+  window.addEventListener("pagehide", _flushOnExit);
+  window.addEventListener("beforeunload", _flushOnExit);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") _flushOnExit();
+  });
+}
+
 // Dev-mode: expose store on window for browser-side seeding/inspection.
 // Active only when NODE_ENV !== "production". No effect in builds.
 if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {

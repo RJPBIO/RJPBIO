@@ -8,6 +8,8 @@
    El retorno es compatible con `getCircadian()` original.
    ═══════════════════════════════════════════════════════════════ */
 
+import { normalizeChronotype } from "../chronotype";
+
 /** Offset horario (h) por tipo discreto (fallback si no hay score). */
 const OFFSET_BY_TYPE = Object.freeze({
   definite_morning:  -2,
@@ -55,7 +57,7 @@ export function chronotypeOffset(chronotype) {
   // Preferimos el score numérico cuando existe: más resolución que los 5 tipos.
   const fromScore = offsetFromScore(chronotype.score);
   if (fromScore !== null) return fromScore;
-  const t = chronotype.type;
+  const t = normalizeChronotype(chronotype.type);
   if (!t) return 0;
   const v = OFFSET_BY_TYPE[t];
   return typeof v === "number" ? v : 0;

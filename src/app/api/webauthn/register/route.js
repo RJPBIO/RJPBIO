@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const session = await auth();
   if (!session?.user) return new Response("Unauthorized", { status: 401 });
-  const user = await db().user.findUnique({ where: { id: session.user.id } });
+  const client = await db();
+  const user = await client.user.findUnique({ where: { id: session.user.id } });
   const options = await beginRegistration(user);
   (await cookies()).set("webauthn-challenge", options.challenge, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 300 });
   return Response.json(options);

@@ -41,8 +41,13 @@ export const NOM035_ITEMS_GUIA_II = [
   { id: 11, cat: "factores", dom: "jornada", q: "Trabajo horas extras más de tres veces a la semana." },
   { id: 12, cat: "factores", dom: "jornada", q: "Mi trabajo me exige laborar en días de descanso, festivos o fines de semana." },
   { id: 13, cat: "factores", dom: "jornada", q: "Considero que el tiempo en el trayecto de mi casa al trabajo y viceversa se me hace largo." },
-  { id: 14, cat: "factores", dom: "interferencia", q: "Pienso en las actividades familiares o personales cuando estoy en mi trabajo.", reverse: true },
-  { id: 15, cat: "factores", dom: "interferencia", q: "Pienso que mis responsabilidades familiares o personales afectan mi trabajo.", reverse: true },
+  // BUG FIX: ítems de interferencia trabajo-familia están redactados en
+  // NEGATIVO (más frecuencia = más interferencia = más riesgo) → se puntúan
+  // directo, NO reverse. La Guía III (nom35/items.js ids 30/31) marca estas
+  // mismas preguntas reverse:false. Antes ambos reverse:true invertían el
+  // dominio completo `interferencia` en un instrumento de cumplimiento legal.
+  { id: 14, cat: "factores", dom: "interferencia", q: "Pienso en las actividades familiares o personales cuando estoy en mi trabajo." },
+  { id: 15, cat: "factores", dom: "interferencia", q: "Pienso que mis responsabilidades familiares o personales afectan mi trabajo." },
   { id: 16, cat: "organizacion", dom: "liderazgo", q: "Mi jefe tiene problemas para comunicarse conmigo." },
   { id: 17, cat: "organizacion", dom: "liderazgo", q: "La orientación que me da mi jefe me ayuda a realizar mejor mi trabajo.", reverse: true },
   { id: 18, cat: "organizacion", dom: "liderazgo", q: "Mi jefe ayuda a solucionar los problemas que se presentan en el trabajo.", reverse: true },

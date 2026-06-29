@@ -29,12 +29,21 @@ export default function HoldPressButton({
   const startRef = useRef(0);
   const rafRef = useRef(null);
   const tickRef = useRef(null);
+  // BUG FIX: el setTimeout de completion (1.2s) no se capturaba ni limpiaba;
+  // si el primitivo se desmontaba en esa ventana, onComplete (prop crudo)
+  // disparaba un advance sobre una instancia muerta. Lo guardamos en ref y lo
+  // limpiamos en stopAnim/unmount; onComplete vía ref para evitar stale closure.
+  const completeTimerRef = useRef(null);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const stopAnim = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (tickRef.current) clearInterval(tickRef.current);
+    if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
     rafRef.current = null;
     tickRef.current = null;
+    completeTimerRef.current = null;
   };
 
   useEffect(() => () => stopAnim(), []);
@@ -49,8 +58,8 @@ export default function HoldPressButton({
       setPressing(false);
       try { hapticSignature("award"); } catch { /* noop */ }
       setShowRelease(true);
-      setTimeout(() => {
-        if (typeof onComplete === "function") onComplete();
+      completeTimerRef.current = setTimeout(() => {
+        if (typeof onCompleteRef.current === "function") onCompleteRef.current();
       }, 1200);
       return;
     }

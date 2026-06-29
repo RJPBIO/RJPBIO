@@ -11,6 +11,14 @@ import { cssVar, radius, space, font } from "@/components/ui/tokens";
 
 const PAGE = 25;
 
+// CSRF double-submit: leer cookie bio-csrf y mandarla como header x-csrf-token
+// (lo que requireCsrf valida en /api/members/bulk y /api/invite/bulk).
+function csrfHeaders() {
+  if (typeof document === "undefined") return {};
+  const m = document.cookie.match(/(?:^|;\s*)bio-csrf=([^;]+)/);
+  return m ? { "x-csrf-token": decodeURIComponent(m[1]) } : {};
+}
+
 function HeaderCheckbox({ checked, indeterminate, onChange }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -158,7 +166,7 @@ export default function MembersClient({ initialRows, pendingInvites = [], orgId 
     try {
       const res = await fetch("/api/invite/bulk", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ orgId, emails, role }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -189,7 +197,7 @@ export default function MembersClient({ initialRows, pendingInvites = [], orgId 
     try {
       const res = await fetch("/api/members/bulk", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ orgId, ids: Array.from(selected), action }),
       });
       if (!res.ok) throw new Error(await res.text());

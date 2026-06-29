@@ -56,6 +56,7 @@ export function anonymize(rows, { k = 5, epsilon } = {}) {
         sessions: 0,
         coh: 0,
         moodDelta: 0,
+        moodN: 0,
         n: 0,
       });
     }
@@ -66,8 +67,14 @@ export function anonymize(rows, { k = 5, epsilon } = {}) {
       b.coh += r.coherenciaDelta;
       b.n += 1;
     }
-    if (r.moodPre != null && r.moodPost != null) {
+    // BUG FIX: contar sólo sessions con AMBOS valores numéricos y promediar
+    // sobre ese conteo (no sobre todas las sessions). Antes se dividía por
+    // b.sessions, diluyendo el delta hacia 0 en buckets con sessions sin mood;
+    // y `!= null` dejaba pasar no-numéricos que volvían NaN todo el bucket.
+    if (typeof r.moodPre === "number" && Number.isFinite(r.moodPre) &&
+        typeof r.moodPost === "number" && Number.isFinite(r.moodPost)) {
       b.moodDelta += r.moodPost - r.moodPre;
+      b.moodN += 1;
     }
   }
   let suppressed = 0;
@@ -78,7 +85,7 @@ export function anonymize(rows, { k = 5, epsilon } = {}) {
       continue;
     }
     const avgCoh = b.n ? b.coh / b.n : null;
-    const avgMood = b.sessions ? b.moodDelta / b.sessions : null;
+    const avgMood = b.moodN ? b.moodDelta / b.moodN : null;
     out.push({
       day: b.day,
       teamId: b.teamId,

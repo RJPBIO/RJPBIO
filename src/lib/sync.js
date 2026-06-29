@@ -45,12 +45,20 @@ function syncHeaders() {
 // ─── Drain lock — single-flight ───────────────────────────────
 // Evita drains paralelos que dupliquen escrituras o thrasheen DB.
 let _drainInflight = null;
+let _redrainRequested = false;
 
 export async function flushOutbox({ currentUserId = null } = {}) {
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return { skipped: true, reason: "offline", sent: 0, dropped: 0 };
   }
-  if (_drainInflight) return _drainInflight;
+  if (_drainInflight) {
+    // BUG FIX: una entry añadida mientras hay un drain in-flight NO entra en
+    // el snapshot `entries` (se tomó antes de existir). Antes el caller veía
+    // éxito y no reprogramaba → la entry esperaba al próximo evento o se
+    // perdía si se cerraba la tab. Marcamos re-drain para drenar al terminar.
+    _redrainRequested = true;
+    return _drainInflight;
+  }
 
   _drainInflight = (async () => {
     try {
@@ -117,7 +125,13 @@ export async function flushOutbox({ currentUserId = null } = {}) {
       _drainInflight = null;
     }
   })();
-  return _drainInflight;
+  const result = await _drainInflight;
+  // Si llegaron entries durante el vuelo, drenar una vez más (re-snapshot).
+  if (_redrainRequested) {
+    _redrainRequested = false;
+    return flushOutbox({ currentUserId });
+  }
+  return result;
 }
 
 // ─── Hydrate from server (login + multi-device) ───────────────

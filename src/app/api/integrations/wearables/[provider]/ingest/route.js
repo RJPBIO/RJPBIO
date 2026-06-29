@@ -34,16 +34,41 @@ export async function POST(request, { params }) {
   let event;
   try { event = JSON.parse(raw); } catch { return new Response("bad json", { status: 400 }); }
 
-  const { kind, userExt } = normalize(provider, event);
-  const orm = await db();
+  // BUG FIX: normalize() podía lanzar con un payload firmado-pero-inesperado y
+  // wearableEvent.create no estaba guardado. Un throw devolvía 500, y los
+  // providers tratan 5xx como "reintentar" → redelivery infinito + evento crudo
+  // perdido. Ahora: persistir SIEMPRE el evento crudo (kind="unknown" si no se
+  // pudo normalizar) y reservar 5xx sólo para errores reales de DB (reintento
+  // legítimo). Un payload no-normalizable se acepta (200) para no loopear.
+  let kind = "unknown";
+  let userExt = null;
+  try {
+    const norm = normalize(provider, event);
+    kind = norm.kind;
+    userExt = norm.userExt;
+  } catch (e) {
+    await auditLog({
+      action: "wearable.ingest.normalize_failed",
+      payload: { provider, error: String(e?.message || e).slice(0, 200) },
+    }).catch(() => {});
+  }
 
-  await orm.wearableEvent.create({
-    data: {
-      provider,
-      kind,
-      payload: { ...event, _externalUserId: userExt },
-    },
-  });
+  const orm = await db();
+  try {
+    await orm.wearableEvent.create({
+      data: {
+        provider,
+        kind,
+        payload: { ...event, _externalUserId: userExt },
+      },
+    });
+  } catch (e) {
+    await auditLog({
+      action: "wearable.ingest.error",
+      payload: { provider, error: String(e?.message || e).slice(0, 200) },
+    }).catch(() => {});
+    return new Response("ingest_failed", { status: 500 });
+  }
 
   await auditLog({
     action: "wearable.ingest.ok",

@@ -329,8 +329,11 @@ export function aggregateInstrument(responses, instrumentId, { minK = 5 } = {}) 
   }
   const scores = filtered.map((r) => r.score);
   const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const variance = scores.reduce((a, b) => a + (b - mean) ** 2, 0) / (scores.length - 1);
-  const sd = Math.sqrt(variance);
+  // BUG FIX: con n=1 la varianza muestral era 0/0 = NaN (alcanzable si el caller
+  // pasa minK:1). Sample variance sólo tiene sentido con n>1; si no, sd=0.
+  const sd = scores.length > 1
+    ? Math.sqrt(scores.reduce((a, b) => a + (b - mean) ** 2, 0) / (scores.length - 1))
+    : 0;
   const distribution = {};
   for (const r of filtered) {
     const lv = r.level || "unknown";

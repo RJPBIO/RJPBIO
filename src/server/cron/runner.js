@@ -39,9 +39,16 @@ function constantTimeEq(a, b) {
 export function verifyCronAuth(request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
-    // Sin secret configurado, permitimos solo header de Vercel (defensa parcial).
-    if (request.headers.get("x-vercel-cron")) return null;
-    return new Response("CRON_SECRET not configured and no x-vercel-cron header", { status: 401 });
+    // BUG FIX: en PRODUCCIÓN no hacer fail-open con un header spoofable.
+    // x-vercel-cron lo puede setear cualquier caller externo; sin CRON_SECRET
+    // eso permitiría disparar crons destructivos (dunning, dsar-sweep que borra
+    // usuarios). En prod exigimos el secret (CLAUDE.md lo documenta como
+    // requerido en Vercel). En dev/preview mantenemos el fallback por header
+    // para no bloquear el desarrollo local.
+    if (process.env.NODE_ENV !== "production" && request.headers.get("x-vercel-cron")) {
+      return null;
+    }
+    return new Response("CRON_SECRET not configured", { status: 401 });
   }
   const auth = request.headers.get("authorization") || "";
   const match = auth.match(/^Bearer\s+(.+)$/i);

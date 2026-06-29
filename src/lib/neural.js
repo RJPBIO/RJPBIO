@@ -84,8 +84,13 @@ export function getStatus(v) {
 }
 
 export function getWeekNum() {
-  const d = new Date();
-  const j = new Date(d.getFullYear(), 0, 1);
+  // BUG FIX: usar medianoche local de HOY, no `new Date()` con hora. Antes la
+  // fracción de día (hora actual) hacía que Math.ceil saltara de semana el
+  // sábado por la tarde → weeklyData se reseteaba a mitad de semana y las
+  // sesiones del domingo caían en otra semana que la grilla Lun–Dom.
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const j = new Date(now.getFullYear(), 0, 1);
   return Math.ceil(((d - j) / 864e5 + j.getDay() + 1) / 7);
 }
 

@@ -5,7 +5,7 @@
    Anti-trampa: requiere min_chars escritos.
    ═══════════════════════════════════════════════════════════════ */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { hap } from "../../../../lib/audio";
 import { colors, typography, spacing, radii } from "../../../app/v2/tokens";
 
@@ -20,13 +20,20 @@ export default function ObjectAnchorPrompt({
 }) {
   const [value, setValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  // BUG FIX: este primitivo crisis-tier no tenía cleanup. Si el usuario
+  // descartaba la pantalla dentro de los 3s, el onComplete (prop crudo)
+  // disparaba un advance 3s después sobre una instancia ya desmontada.
+  const completeTimerRef = useRef(null);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  useEffect(() => () => { if (completeTimerRef.current) clearTimeout(completeTimerRef.current); }, []);
 
   const handleSubmit = () => {
     if (value.trim().length < min_chars || confirmed) return;
     setConfirmed(true);
     try { hap("ok"); } catch { /* noop */ }
-    setTimeout(() => {
-      if (typeof onComplete === "function") onComplete(value.trim());
+    completeTimerRef.current = setTimeout(() => {
+      if (typeof onCompleteRef.current === "function") onCompleteRef.current(value.trim());
     }, 3000);
   };
 

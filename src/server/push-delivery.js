@@ -30,6 +30,11 @@ import { auditLog } from "./audit";
 
 const MAX_ATTEMPTS = 5;
 const BACKOFF_BASE_MS = 60_000; // 1 min × 2^attempt
+// Lease para el claim atómico: al reclamar una fila marcamos status="processing"
+// y empujamos nextAttempt LEASE_MS al futuro. Otro tick de cron solapado no la
+// re-selecciona (evita envíos DUPLICADOS). Si el proceso crashea mid-send, la
+// fila se recupera cuando el lease expira (status="processing" + nextAttempt<=now).
+const LEASE_MS = 5 * 60_000;
 
 /**
  * Encola un push notification para un user. Idempotente solo en sentido
@@ -69,7 +74,8 @@ export async function drainPushQueue({ batchSize = 50, now = new Date() } = {}) 
   const orm = await db();
   const due = await orm.pushOutbox.findMany({
     where: {
-      status: "pending",
+      // pending vencidos + processing con lease expirado (recovery tras crash).
+      status: { in: ["pending", "processing"] },
       nextAttempt: { lte: now },
     },
     orderBy: { createdAt: "asc" },
@@ -107,6 +113,17 @@ export async function drainPushQueue({ batchSize = 50, now = new Date() } = {}) 
   let errors = 0;
 
   for (const item of due) {
+    // BUG FIX: claim atómico antes de enviar. Sin esto, dos ticks de cron
+    // solapados (run >60s o doble invocación) seleccionaban las mismas filas
+    // pending y las enviaban 2× → notificaciones DUPLICADAS (Web Push no
+    // deduplica). updateMany con guard status+nextAttempt: exactamente un
+    // worker gana la fila; count 0 = ya reclamada → saltar.
+    const claim = await orm.pushOutbox.updateMany({
+      where: { id: item.id, status: { in: ["pending", "processing"] }, nextAttempt: { lte: now } },
+      data: { status: "processing", nextAttempt: new Date(now.getTime() + LEASE_MS) },
+    }).catch(() => ({ count: 0 }));
+    if (!claim.count) continue;
+
     const subs = await orm.pushSubscription.findMany({ where: { userId: item.userId } }).catch(() => []);
     if (!subs.length) {
       // Sin suscripciones → exhausted (no recovery posible).
@@ -172,6 +189,7 @@ export async function drainPushQueue({ batchSize = 50, now = new Date() } = {}) 
         await orm.pushOutbox.update({
           where: { id: item.id },
           data: {
+            status: "pending", // liberar el claim para el próximo reintento
             attempts,
             lastError,
             nextAttempt: new Date(now.getTime() + delayMs),

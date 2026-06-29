@@ -20,6 +20,7 @@ const POLICIES = {
   "billing.view": "ADMIN",
   "billing.update": "OWNER",
   "audit.read": "ADMIN",
+  "org.export": "ADMIN",
   "apikey.manage": "ADMIN",
   "webhook.manage": "ADMIN",
   "integration.manage": "ADMIN",

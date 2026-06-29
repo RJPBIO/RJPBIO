@@ -88,11 +88,33 @@ export function classifyChronotype(answers) {
 }
 
 /**
+ * BUG FIX: dos productores del chronotype persistido (instruments.scoreRmeq
+ * y NeuralCalibrationV2) emiten la forma adverbial "-ly"
+ * (definitely_morning, moderately_morning…), pero este módulo y
+ * chronoCircadian usan la forma adjetival (definite_morning…). Sin
+ * normalizar, isInDeepWorkWindow devolvía false para TODO usuario tipado
+ * (salvo "intermediate"), desactivando los boosts deep-work del prescriber
+ * y disparando un falso chronoDyssynchrony en burnoutEnhanced.
+ * Normalizamos ambas formas → canónica adjetival (compatible con datos ya
+ * persistidos en la forma "-ly").
+ */
+const CHRONOTYPE_ALIASES = {
+  definitely_morning: "definite_morning",
+  moderately_morning: "moderate_morning",
+  moderately_evening: "moderate_evening",
+  definitely_evening: "definite_evening",
+};
+export function normalizeChronotype(type) {
+  return CHRONOTYPE_ALIASES[type] || type;
+}
+
+/**
  * Recommend key windows given chronotype.
  * Based on circadian cortisol & core body temperature peaks for each
  * type (Roenneberg et al. 2007, Sleep Med Rev 11:429).
  */
 function scheduleRecommendation(type) {
+  type = normalizeChronotype(type);
   const schedules = {
     definite_morning: {
       sleepWindow: "21:30 – 05:30",
@@ -156,6 +178,7 @@ export function isInDeepWorkWindow(type, date = new Date()) {
   // Sin chronotype conocido no se infiere ventana; scheduleRecommendation
   // cae a `intermediate` como default general, pero esa ventana no aplica
   // al usuario hasta que haga el test MEQ.
+  type = normalizeChronotype(type);
   if (!KNOWN_CHRONOTYPES.has(type)) return false;
   const rec = scheduleRecommendation(type);
   if (!rec.deepWork) return false;

@@ -1,5 +1,6 @@
 /* Billing — Stripe con per-seat + metered overage. */
 import "server-only";
+import { db } from "./db";
 
 let stripePromise;
 async function getStripe() {
@@ -32,6 +33,15 @@ export async function ensureCustomer(org) {
     name: org.name,
     metadata: { orgId: org.id },
   });
+  // BUG FIX: persistir el customer id. Sin esto cada checkout creaba un
+  // customer huérfano nuevo y el billing portal quedaba inalcanzable
+  // (org.stripeCustomer siempre null → /api/billing/portal devolvía 409).
+  try {
+    const orm = await db();
+    await orm.org.update({ where: { id: org.id }, data: { stripeCustomer: c.id } });
+  } catch (e) {
+    console.error("[billing] persist stripeCustomer failed:", e?.message);
+  }
   return c.id;
 }
 

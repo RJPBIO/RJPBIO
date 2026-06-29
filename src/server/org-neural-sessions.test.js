@@ -44,7 +44,11 @@ function walk(dir) {
 
 // Match: neuralSession.<op>({ where: { orgId ...
 // Cubre findMany, findFirst, findUnique, count, aggregate, deleteMany, etc.
+// El patrón cruza líneas (`.findMany({` y `where: { orgId` en líneas distintas),
+// por eso se evalúa contra el archivo completo, no por línea.
 const ANTI_PATTERN = /neuralSession\.\w+\(\s*\{\s*[^}]*where\s*:\s*\{\s*orgId\b/;
+// Pista de línea para reporte humano (no se usa como criterio de fallo).
+const LINE_HINT = /where\s*:\s*\{\s*orgId\b/;
 
 describe("anti-pattern guard: NeuralSession queried by orgId", () => {
   it("ningún archivo de producción consulta neuralSession por orgId directo", () => {
@@ -54,15 +58,18 @@ describe("anti-pattern guard: NeuralSession queried by orgId", () => {
       if (/\.test\.(jsx?|tsx?)$/.test(file)) continue;
       if (ALLOWED_FILES.has(file)) continue;
       const src = readFileSync(file, "utf8");
-      if (ANTI_PATTERN.test(src)) {
-        // Aislar la línea para reporte humano
-        const lines = src.split(/\r?\n/);
-        const matched = lines
-          .map((ln, i) => ({ ln, n: i + 1 }))
-          .filter(({ ln }) => ANTI_PATTERN.test(ln))
-          .map(({ ln, n }) => `${file}:${n}  ${ln.trim().slice(0, 120)}`);
-        offenders.push(...matched);
-      }
+      // BUG FIX (guard meta-bug): antes se re-evaluaba ANTI_PATTERN por LÍNEA
+      // para aislar ofensores; como el patrón cruza líneas, NINGUNA línea
+      // matcheaba → offenders quedaba vacío → el guard SIEMPRE pasaba aunque
+      // hubiera violaciones. Ahora el fallo se decide a nivel de archivo y la
+      // línea es sólo una pista (fallback al path si no se localiza).
+      if (!ANTI_PATTERN.test(src)) continue;
+      const lines = src.split(/\r?\n/);
+      const hint = lines
+        .map((ln, i) => ({ ln, n: i + 1 }))
+        .filter(({ ln }) => LINE_HINT.test(ln))
+        .map(({ ln, n }) => `${file}:${n}  ${ln.trim().slice(0, 120)}`);
+      offenders.push(...(hint.length ? hint : [file]));
     }
     expect(offenders, [
       "Anti-patrón detectado: NeuralSession se está consultando por orgId.",

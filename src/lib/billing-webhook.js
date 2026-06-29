@@ -54,10 +54,17 @@ export function resolveStripeEvent(event, opts = {}) {
       const seats = Number(obj.items?.data?.[0]?.quantity || 5);
       const trialEnd = obj.trial_end ? new Date(obj.trial_end * 1000) : null;
       const isPastDue = obj.status === "past_due";
+      // BUG FIX: en checkout.session.completed el id es cs_… (sesión), no la
+      // suscripción — la sub real está en obj.subscription. Para eventos de
+      // subscription obj.id ya es sub_…. Persistimos también el customer
+      // (obj.customer) como defensa para que el billing portal sea alcanzable.
+      const isCheckout = event.type === "checkout.session.completed";
+      const subId = isCheckout ? obj.subscription || obj.id : obj.id;
       return {
         orgId,
         orgUpdate: {
-          stripeSub: obj.id,
+          stripeSub: subId,
+          stripeCustomer: obj.customer || undefined,
           plan,
           seats,
           trialEndsAt: trialEnd,
@@ -89,7 +96,17 @@ export function resolveStripeEvent(event, opts = {}) {
 
     case "invoice.payment_failed": {
       if (!orgId) return skip;
-      const grace = makeGraceDate(now, GRACE_DAYS_DEFAULT);
+      // BUG FIX: Stripe emite payment_failed alrededor de la cancelación
+      // (intentos de factura final) y los eventos pueden llegar fuera de
+      // orden. No degradar un grace de cancelación (90d) a 14d ni revivir
+      // un org ya `canceled`. Tampoco acortar un grace existente más largo.
+      const cur = opts.org || {};
+      if (cur.dunningState === "canceled") {
+        return { orgId, orgUpdate: null, notification: null, action, skip: true };
+      }
+      const candidate = makeGraceDate(now, GRACE_DAYS_DEFAULT);
+      const existing = cur.graceUntil ? new Date(cur.graceUntil) : null;
+      const grace = existing && existing.getTime() > candidate.getTime() ? existing : candidate;
       return {
         orgId,
         orgUpdate: {

@@ -1,6 +1,7 @@
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { anonymize } from "@/server/analytics";
+import { findSessionsForOrgMembers } from "@/server/org-neural-sessions";
 import { redirect } from "next/navigation";
 import { cssVar, radius, space, font, bioSignal } from "@/components/ui/tokens";
 
@@ -54,12 +55,11 @@ export default async function TeamPage({ searchParams }) {
     teamId
       ? orm.membership.count({ where: { orgId: mgr.orgId, teamId } })
       : orm.membership.count({ where: { orgId: mgr.orgId } }),
-    orm.neuralSession.findMany({
-      where: {
-        orgId: mgr.orgId,
-        ...(teamId ? { teamId } : {}),
-        completedAt: { gte: new Date(Date.now() - range.days * 86400_000) },
-      },
+    // BUG FIX: sesiones viven en personal-org del user; filtrar por B2B orgId
+    // devolvía 0. Resolver por userId∈members (teamId scopea por membership).
+    findSessionsForOrgMembers(mgr.orgId, {
+      teamId: teamId || undefined,
+      where: { completedAt: { gte: new Date(Date.now() - range.days * 86400_000) } },
       orderBy: { completedAt: "desc" },
     }),
   ]);

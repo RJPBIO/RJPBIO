@@ -1382,12 +1382,46 @@ export function setupMotionDetection(cb) {
 }
 
 // ─── Wake Lock ────────────────────────────────────────────
+// BUG FIX: el Screen Wake Lock se auto-libera cuando el documento pasa a
+// hidden (cambio de tab, notificación, pantalla apagada). Antes sólo se pedía
+// una vez en start(), así que tras el primer backgrounding la pantalla se
+// dormía el RESTO de la sesión — justo en NSDR/Yoga-Nidra largos (ojos
+// cerrados) que es donde más importa. Ahora mantenemos un flag "deseado" y
+// re-adquirimos en visibilitychange + al evento "release" del sentinel.
 let _wakeLock = null;
-export async function requestWakeLock() {
-  try { if ("wakeLock" in navigator) { _wakeLock = await navigator.wakeLock.request("screen"); } } catch (e) {}
+let _wakeLockDesired = false;
+let _wakeLockVisHandler = null;
+
+async function _acquireWakeLock() {
+  try {
+    if (!_wakeLockDesired || _wakeLock) return;
+    if (typeof navigator === "undefined" || !("wakeLock" in navigator)) return;
+    _wakeLock = await navigator.wakeLock.request("screen");
+    // El sistema emite "release" al soltarlo → permitir re-adquisición.
+    _wakeLock?.addEventListener?.("release", () => { _wakeLock = null; });
+  } catch (e) { _wakeLock = null; }
 }
+
+export async function requestWakeLock() {
+  _wakeLockDesired = true;
+  if (typeof document !== "undefined" && !_wakeLockVisHandler) {
+    _wakeLockVisHandler = () => {
+      if (_wakeLockDesired && document.visibilityState === "visible" && !_wakeLock) {
+        _acquireWakeLock();
+      }
+    };
+    document.addEventListener("visibilitychange", _wakeLockVisHandler);
+  }
+  await _acquireWakeLock();
+}
+
 export function releaseWakeLock() {
-  try { if (_wakeLock) { _wakeLock.release(); _wakeLock = null; } } catch (e) {}
+  _wakeLockDesired = false;
+  try { if (_wakeLock) { _wakeLock.release(); _wakeLock = null; } } catch (e) { _wakeLock = null; }
+  if (typeof document !== "undefined" && _wakeLockVisHandler) {
+    document.removeEventListener("visibilitychange", _wakeLockVisHandler);
+    _wakeLockVisHandler = null;
+  }
 }
 
 // ─── Voice Guidance ───────────────────────────────────────

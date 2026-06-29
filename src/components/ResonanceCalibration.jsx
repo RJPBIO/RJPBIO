@@ -35,6 +35,11 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
   const bufferRef = useRef([]);
   const trialTimerRef = useRef(null);
   const breathTimerRef = useRef(null);
+  // BUG FIX: el timer de descanso entre trials (3s) no se guardaba en ref, así
+  // que cerrar el modal en esa ventana disparaba setCurrentIdx/setPhase sobre
+  // un modal descartado → la calibración se reanudaba mid-secuencia con un
+  // currentIdx stale y corrompía la medición de resonancia (clínica).
+  const betweenTimerRef = useRef(null);
 
   useEffect(() => () => cleanup(), []);
 
@@ -80,7 +85,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
         } else {
           setPhase("between");
           setTrialElapsed(0);
-          setTimeout(() => {
+          betweenTimerRef.current = setTimeout(() => {
             setCurrentIdx((i) => i + 1);
             setPhase("running");
           }, 3000);
@@ -92,6 +97,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
       cancelled = true;
       if (trialTimerRef.current) clearInterval(trialTimerRef.current);
       if (breathTimerRef.current) clearTimeout(breathTimerRef.current);
+      if (betweenTimerRef.current) clearTimeout(betweenTimerRef.current);
     };
   }, [phase, currentIdx]);
 
@@ -99,6 +105,7 @@ export default function ResonanceCalibration({ show, isDark, onClose, onComplete
     try { sessionRef.current?.disconnect?.(); } catch {}
     if (trialTimerRef.current) clearInterval(trialTimerRef.current);
     if (breathTimerRef.current) clearTimeout(breathTimerRef.current);
+    if (betweenTimerRef.current) clearTimeout(betweenTimerRef.current);
   }
 
   async function startCalibration() {

@@ -21,6 +21,9 @@ import { db } from "./db";
  *
  * @param {string} orgId — el B2B-org (no la personal-org)
  * @param {object} [opts]
+ * @param {string} [opts.teamId]  — scope por equipo. Las NeuralSessions
+ *   personales (sync/outbox) NO llevan teamId, así que el equipo se resuelve
+ *   por membership.teamId (no por session.teamId, que filtraría a 0).
  * @param {object} [opts.where]   — filtros adicionales (completedAt, protocolId, etc.)
  * @param {object} [opts.select]  — proyección Prisma
  * @param {object} [opts.orderBy] — orden Prisma
@@ -31,13 +34,13 @@ import { db } from "./db";
 export async function findSessionsForOrgMembers(orgId, opts = {}) {
   if (!orgId) return [];
   const orm = await db();
+  const { where = {}, teamId, ...rest } = opts;
   const memberships = await orm.membership.findMany({
-    where: { orgId, deactivatedAt: null },
+    where: { orgId, deactivatedAt: null, ...(teamId ? { teamId } : {}) },
     select: { userId: true },
   });
   const userIds = memberships.map((m) => m.userId);
   if (userIds.length === 0) return [];
-  const { where = {}, ...rest } = opts;
   return orm.neuralSession.findMany({
     where: { userId: { in: userIds }, ...where },
     ...rest,

@@ -1,6 +1,6 @@
-import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import { anonymize } from "@/server/analytics";
+import { findSessionsForOrgMembers } from "@/server/org-neural-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,13 +24,11 @@ export async function GET(req) {
   const rangeId = url.searchParams.get("range") || "30d";
   const days = RANGES[rangeId] ?? 30;
 
-  const orm = await db();
-  const sessions = await orm.neuralSession.findMany({
-    where: {
-      orgId: mgr.orgId,
-      ...(teamId ? { teamId } : {}),
-      completedAt: { gte: new Date(Date.now() - days * 86400_000) },
-    },
+  // BUG FIX: sesiones viven en personal-org del user, no en B2B-org. Resolver
+  // por userId∈members (teamId scopea por membership). Antes el CSV salía vacío.
+  const sessions = await findSessionsForOrgMembers(mgr.orgId, {
+    teamId: teamId || undefined,
+    where: { completedAt: { gte: new Date(Date.now() - days * 86400_000) } },
   });
   const agg = anonymize(sessions, { k: 5, epsilon: 1.0 });
 

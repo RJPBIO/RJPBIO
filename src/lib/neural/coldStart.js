@@ -218,10 +218,15 @@ export function blendBaselineWithCohort(literatureDelta, cohortCell) {
  */
 export function priorBonus(prior) {
   if (!prior || typeof prior.delta !== "number") return 0;
-  // delta típico ∈ [0.1, 1.2]. Convertimos a [-2, +6] linealmente
+  // delta de literatura ∈ [0.1, 1.2]. Convertimos a ~[-3.2, +5.6] linealmente
   // y multiplicamos por weight (decae con sesiones).
   const raw = (prior.delta - 0.5) * 8; // 0.5 → 0, 1.2 → +5.6, 0.1 → -3.2
-  return +(raw * prior.weight).toFixed(2);
+  // BUG FIX: clamp duro a ±6. prior.delta puede ser un cohort delta
+  // (mean(moodPost-moodPre) en Likert 1-5 ∈ [-4,4]); sin clamp el bonus
+  // llegaba a ±28 y DOMINABA el ranking (score base 50, otras señales ±5-15),
+  // justo lo contrario del "cap suave" que documenta esta función.
+  const bonus = raw * prior.weight;
+  return +Math.max(-6, Math.min(6, bonus)).toFixed(2);
 }
 
 /**

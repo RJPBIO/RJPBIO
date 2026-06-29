@@ -8,8 +8,17 @@ export const dynamic = "force-dynamic";
 export async function GET(_request, { params }) {
   const { id: orgId } = await params;
   const session = await auth();
-  const guard = await requireMembership(session, orgId, "org.export");
-  if (guard) return guard;
+  // BUG FIX: requireMembership LANZA en fallo y DEVUELVE la membership en éxito
+  // (no un guard Response). El `if (guard) return guard` previo devolvía la
+  // membership como body en el caso bueno y 500 en el malo; además "org.export"
+  // no estaba en POLICIES → can() false → 500 para TODOS. Ahora: policy añadida
+  // (rbac.js) + try/catch que traduce el throw a 403.
+  if (!session?.user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  try {
+    await requireMembership(session, orgId, "org.export");
+  } catch (e) {
+    return Response.json({ error: "forbidden" }, { status: e?.status || 403 });
+  }
   // BUG FIX (Sprint 62): NeuralSession.orgId es la personal-org del user
   // (escrito en /api/sync/outbox/route.js:137). Query directa por orgId
   // del B2B devolvía [] silently — mismo patrón que Sprint 55 (admin) y

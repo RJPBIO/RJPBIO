@@ -30,9 +30,17 @@ export async function POST(req) {
     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
-  const resolution = resolveStripeEvent(event);
-  const { orgId, orgUpdate, notification, action } = resolution;
+  let resolution = resolveStripeEvent(event);
   const orm = await db();
+  // payment_failed necesita el estado actual del org para no degradar un
+  // grace de cancelación (90d) a 14d con eventos fuera de orden.
+  if (resolution.orgId && event.type === "invoice.payment_failed") {
+    const cur = await orm.org
+      .findUnique({ where: { id: resolution.orgId }, select: { dunningState: true, graceUntil: true } })
+      .catch(() => null);
+    resolution = resolveStripeEvent(event, { org: cur });
+  }
+  const { orgId, orgUpdate, notification, action } = resolution;
 
   // Sprint S1.5 — idempotency. Antes: si Stripe retransmitía un event
   // (network blip, retry burst), `org.update` se aplicaba 2× y un audit

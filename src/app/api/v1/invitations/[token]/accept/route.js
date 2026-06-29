@@ -26,6 +26,21 @@ export async function POST(_request, { params }) {
     return new Response(validation.reason, { status: 410 });
   }
 
+  // BUG FIX: bind a la identidad invitada. Antes cualquier usuario autenticado
+  // que obtuviera el token (email reenviado, historial, referer) podía canjearlo
+  // y recibir el rol — incluido ADMIN/OWNER. Exigir match de email (case-insens).
+  const invEmail = String(inv.email || "").trim().toLowerCase();
+  const userEmail = String(session.user.email || "").trim().toLowerCase();
+  if (invEmail && invEmail !== userEmail) {
+    await auditLog({
+      orgId: inv.orgId,
+      actorId: session.user.id,
+      action: "member.invite_email_mismatch",
+      payload: { invited: invEmail, actor: userEmail || null },
+    }).catch(() => {});
+    return new Response("email_mismatch", { status: 403 });
+  }
+
   await client.membership.upsert({
     where: { userId_orgId: { userId: session.user.id, orgId: inv.orgId } },
     update: { role: inv.role },

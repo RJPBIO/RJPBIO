@@ -78,11 +78,13 @@ export function iivScore(rts) {
 }
 
 /**
- * PVT lapses (>500 ms) — hallmark of sleep debt.
+ * PVT lapses (RT ≥ 500 ms) — hallmark of sleep debt.
+ * Dinges & Powell 1985 / Basner & Dinges 2011 definen lapse como RT ≥ 500ms.
  */
 export function pvtLapses(rts) {
   if (!Array.isArray(rts)) return 0;
-  return rts.filter((t) => t > 500).length;
+  // BUG FIX: era `> 500` (excluía exactamente 500ms); la literatura citada usa ≥500.
+  return rts.filter((t) => t >= 500).length;
 }
 
 /**

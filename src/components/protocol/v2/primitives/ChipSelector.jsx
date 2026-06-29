@@ -19,19 +19,27 @@ export default function ChipSelector({
   const [active, setActive] = useState(false);
   const [selected, setSelected] = useState([]);
   const lockRef = useRef(false);
+  // BUG FIX: el timer de selección (200ms) usaba el prop crudo y no se
+  // limpiaba; si el primitivo se desmontaba en esa ventana, onSelect disparaba
+  // un advance fantasma. Capturar en ref + limpiar en unmount + onSelectRef.
+  const selectTimerRef = useRef(null);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   useEffect(() => {
     const id = setTimeout(() => setActive(true), min_thinking_ms);
     return () => clearTimeout(id);
   }, [min_thinking_ms]);
 
+  useEffect(() => () => { if (selectTimerRef.current) clearTimeout(selectTimerRef.current); }, []);
+
   const handleChip = (id) => {
     if (!active || lockRef.current) return;
     if (!multi_select) {
       lockRef.current = true;
       setSelected([id]);
-      setTimeout(() => {
-        if (typeof onSelect === "function") onSelect(id);
+      selectTimerRef.current = setTimeout(() => {
+        if (typeof onSelectRef.current === "function") onSelectRef.current(id);
       }, 200);
       return;
     }
@@ -41,7 +49,7 @@ export default function ChipSelector({
   const handleConfirm = () => {
     if (lockRef.current || selected.length === 0) return;
     lockRef.current = true;
-    if (typeof onSelect === "function") onSelect(selected);
+    if (typeof onSelectRef.current === "function") onSelectRef.current(selected);
   };
 
   return (

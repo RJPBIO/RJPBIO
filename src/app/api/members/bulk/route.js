@@ -2,10 +2,16 @@
    Auth: OWNER|ADMIN del org. Evita auto-eliminación del owner. */
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
+import { requireCsrf } from "@/server/csrf";
 
 const MAX_BATCH = 200;
 
 export async function POST(request) {
+  // BUG FIX: faltaba CSRF en este endpoint destructivo (mass member removal).
+  // El resto de mutations del repo usan requireCsrf como defense-in-depth
+  // (XSS / subdomain takeover); SameSite=Lax sola no lo cubre.
+  const csrf = requireCsrf(request);
+  if (csrf) return csrf;
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
   const body = await request.json().catch(() => null);

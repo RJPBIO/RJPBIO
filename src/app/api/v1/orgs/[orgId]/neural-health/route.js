@@ -53,7 +53,9 @@ export async function GET(request, { params }) {
   const sinceWindow = new Date(Date.now() - SESSIONS_WINDOW_DAYS * 86400_000);
   const sessions = await orm.neuralSession.findMany({
     where: {
-      orgId,
+      // BUG FIX: NO filtrar por orgId — NeuralSession.orgId es la personal-org
+      // del user, no esta B2B-org. Con orgId el AND con userId∈members daba
+      // siempre []. Resolver sólo por userId∈members (patrón Sprint 62).
       userId: { in: userIds },
       completedAt: { gte: sinceWindow },
     },

@@ -210,10 +210,11 @@ describe("anonymize — aggregate metrics", () => {
       row({ userId: "e", moodPre: 1, moodPost: 3 }),
     ];
     const r = anonymize(rows, { k: 5 });
-    // moodDelta accumulator suma TODAS las sessions con ambos valores
-    // moodDelta = (5-3) + (4-2) + (3-1) = 6
-    // avgMoodDelta = moodDelta / sessions = 6 / 5 = 1.2
-    expect(r.buckets[0].avgMoodDelta).toBeCloseTo(1.2, 5);
+    // moodDelta suma sólo sessions con ambos valores; el promedio se divide
+    // por ese conteo (moodN), no por todas las sessions.
+    // moodDelta = (5-3) + (4-2) + (3-1) = 6, moodN = 3
+    // avgMoodDelta = 6 / 3 = 2.0
+    expect(r.buckets[0].avgMoodDelta).toBeCloseTo(2.0, 5);
   });
 });
 

@@ -105,8 +105,20 @@ export function detectPeaks(signal, fs, options = {}) {
   let lastIdx = -Infinity;
   for (const p of kept) {
     const gap = p.idx - lastIdx;
-    if (lastIdx >= 0 && (gap < minIbiSamples || gap > maxIbiSamples)) {
-      // Gap implausible — skip este candidato pero mantén lastIdx
+    if (lastIdx >= 0 && gap < minIbiSamples) {
+      // Demasiado cerca (eco/doble-detección post-refractario): descartar
+      // este candidato y mantener la referencia previa.
+      continue;
+    }
+    if (lastIdx >= 0 && gap > maxIbiSamples) {
+      // BUG FIX: gap demasiado grande = se perdió ≥1 latido. El pico actual
+      // SÍ es real. Antes se hacía `continue` SIN avanzar lastIdx, así que el
+      // siguiente gap era aún mayor y se descartaba TODO el resto del registro
+      // en cascada (decenas de latidos válidos perdidos por un único dropout).
+      // Lo aceptamos y resincronizamos lastIdx; el IBI inválido que lo cruza
+      // lo filtra validateIbis (300–2000ms) + hampelFilterIbis aguas abajo.
+      finalPeaks.push(p.idx);
+      lastIdx = p.idx;
       continue;
     }
     finalPeaks.push(p.idx);

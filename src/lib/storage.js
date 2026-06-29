@@ -107,6 +107,16 @@ async function idbDelete(store, key) {
   });
 }
 
+async function idbClear(store) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, "readwrite");
+    const r = tx.objectStore(store).clear();
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+
 // ─── Crypto (AES-GCM 256) ────────────────────────────────
 async function getKey() {
   if (!hasCrypto()) return null;
@@ -195,10 +205,21 @@ export async function saveState(state) {
 export async function clearAll() {
   if (!isBrowser()) return;
   try { if (hasIDB()) await idbDelete(STORE_STATE, STATE_KEY); } catch {}
+  // BUG FIX: vaciar también el outbox. Antes quedaban las entries encoladas del
+  // usuario previo; en un user switch (o navegador compartido) las entries
+  // anónimas (userId:null) eran adoptadas por el siguiente login y se subían a
+  // su cuenta. clearAll corre justo en ese punto, así que limpiamos la cola.
+  try { if (hasIDB()) await idbClear(STORE_OUTBOX); } catch {}
   try { localStorage.removeItem("bio-g2"); } catch {}
   // El sync-token está ligado al usuario previo: si se queda, el próximo
   // login puede mergear estado remoto ajeno. Lo eliminamos siempre.
   try { localStorage.removeItem("bio-sync-token"); } catch {}
+}
+
+// Vaciar la cola offline (útil en logout / user switch).
+export async function outboxClear() {
+  if (!hasIDB()) return;
+  return idbClear(STORE_OUTBOX);
 }
 
 // ─── Outbox (offline queue para sync) ───────────────────

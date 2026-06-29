@@ -74,13 +74,48 @@ export async function POST(req) {
   const plan = (org?.plan || "FREE").toUpperCase();
   const period = currentBillingPeriod();
   const orm = await db();
-  const usage = await orm.coachUsage.findUnique({
-    where: { userId_year_month: { userId: session.user.id, year: period.year, month: period.month } },
-  }).catch(() => null);
+  const periodWhere = {
+    userId_year_month: { userId: session.user.id, year: period.year, month: period.month },
+  };
+  const usage = await orm.coachUsage.findUnique({ where: periodWhere }).catch(() => null);
   const quota = evaluateQuota(usage, plan);
   if (!quota.ok) {
     return Response.json(
       { error: "quota_exceeded", plan, max: quota.max, used: quota.used, period },
+      { status: 429, headers: { "X-Quota-Reason": "monthly_cap" } }
+    );
+  }
+
+  // BUG FIX (race): reservar el slot ATÓMICAMENTE antes del fetch upstream.
+  // Antes el counter se incrementaba DESPUÉS del fetch (cientos de ms), así
+  // que N requests concurrentes pasaban el pre-check con el mismo `used` y
+  // quemaban presupuesto Anthropic por encima del hard-cap (rate-limit deja
+  // 60/min). Ahora: asegurar fila + increment condicional `requests < max`,
+  // que sólo cuenta si realmente hay cupo. Refund más abajo si upstream falla.
+  const { maxRequests, modelTier } = getCoachQuota(plan);
+  let reserved = true;
+  if (maxRequests !== Infinity) {
+    await orm.coachUsage.upsert({
+      where: periodWhere,
+      create: { userId: session.user.id, orgId: orgId || null, year: period.year, month: period.month, requests: 0, modelTier },
+      update: {},
+    }).catch(() => {});
+    const res = await orm.coachUsage.updateMany({
+      where: { userId: session.user.id, year: period.year, month: period.month, requests: { lt: maxRequests } },
+      data: { requests: { increment: 1 }, modelTier },
+    }).catch(() => ({ count: 1 })); // adapter sin updateMany → best-effort, no bloquear
+    reserved = (res?.count || 0) > 0;
+  } else {
+    // Unlimited: contamos para analítica, sin cap.
+    await orm.coachUsage.upsert({
+      where: periodWhere,
+      create: { userId: session.user.id, orgId: orgId || null, year: period.year, month: period.month, requests: 1, modelTier },
+      update: { requests: { increment: 1 }, modelTier },
+    }).catch(() => {});
+  }
+  if (!reserved) {
+    return Response.json(
+      { error: "quota_exceeded", plan, max: maxRequests, used: maxRequests, period },
       { status: 429, headers: { "X-Quota-Reason": "monthly_cap" } }
     );
   }
@@ -126,6 +161,12 @@ export async function POST(req) {
   });
 
   if (!upstream.ok || !upstream.body) {
+    // BUG FIX: refund del slot reservado — no cobrarle al user un request
+    // que falló upstream (sin esto el cap se consumía aunque Anthropic 5xx).
+    await orm.coachUsage.updateMany({
+      where: { userId: session.user.id, year: period.year, month: period.month, requests: { gt: 0 } },
+      data: { requests: { decrement: 1 } },
+    }).catch(() => {});
     // Capturar el body de error de Anthropic para diagnóstico — sin body el
     // 502 era ciego. Truncamos a 500 chars para evitar log spam.
     let errBody = "";
@@ -139,24 +180,7 @@ export async function POST(req) {
     return new Response("upstream_error", { status: 502 });
   }
 
-  // Sprint S5.1 — bump quota counter. Upsert por (userId, year, month).
-  // Best-effort: si falla, no rompemos la stream del coach.
-  const modelTier = getCoachQuota(plan).modelTier;
-  await orm.coachUsage.upsert({
-    where: { userId_year_month: { userId: session.user.id, year: period.year, month: period.month } },
-    create: {
-      userId: session.user.id,
-      orgId: orgId || null,
-      year: period.year,
-      month: period.month,
-      requests: 1,
-      modelTier,
-    },
-    update: {
-      requests: { increment: 1 },
-      modelTier,
-    },
-  }).catch(() => {});
+  // Quota ya fue contabilizada atómicamente antes del fetch (ver arriba).
 
   await auditLog({ orgId, actorId: session.user.id, action: "coach.query", payload: { chars: lastUser.length, plan, used: quota.used + 1, max: quota.max } })
     .catch(() => {});

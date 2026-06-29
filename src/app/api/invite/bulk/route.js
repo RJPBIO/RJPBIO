@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 import { db } from "@/server/db";
 import { auth } from "@/server/auth";
+import { requireCsrf } from "@/server/csrf";
 import { sendInvite } from "@/server/email";
 import {
   isValidRole, filterInviteCandidates, defaultExpiry,
@@ -10,6 +11,10 @@ import {
 } from "@/lib/invitation";
 
 export async function POST(request) {
+  // BUG FIX: faltaba CSRF (crea invitaciones + envía email). Consistente con
+  // el resto de mutations del repo (defense-in-depth vs XSS/subdomain takeover).
+  const csrf = requireCsrf(request);
+  if (csrf) return csrf;
   const session = await auth();
   if (!session?.user) return new Response("unauthorized", { status: 401 });
   const body = await request.json().catch(() => null);

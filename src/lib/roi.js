@@ -49,6 +49,11 @@ export function computeRecoveredHours({
   observedLift = null,
   residualFactor = ROI_DEFAULTS.residualFactor,
 } = {}) {
+  // BUG FIX: residualFactor lo puede tunear el CFO (documentado); un valor
+  // negativo o NaN producía horas recuperadas negativas/NaN (y Math.round(NaN)).
+  if (!Number.isFinite(residualFactor) || residualFactor < 0) {
+    residualFactor = ROI_DEFAULTS.residualFactor;
+  }
   const safe = Array.isArray(sessions) ? sessions : [];
   if (safe.length < ROI_DEFAULTS.minSessions) {
     return {

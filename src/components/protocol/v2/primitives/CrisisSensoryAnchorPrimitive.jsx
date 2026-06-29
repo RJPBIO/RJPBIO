@@ -111,6 +111,13 @@ export default function CrisisSensoryAnchorPrimitive({
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
+  // BUG FIX: el setTimeout de completion (2.5s) no se capturaba ni limpiaba.
+  // En un primitivo crisis-tier, si la pantalla se descartaba en esa ventana
+  // se disparaba un advance + una vibración háptica sobre una instancia ya
+  // desmontada (haptic fantasma segundos después de salir).
+  const completeTimerRef = useRef(null);
+  useEffect(() => () => { if (completeTimerRef.current) clearTimeout(completeTimerRef.current); }, []);
+
   const cfg = MODE_CONFIG[mode] || MODE_CONFIG.visual;
 
   const [inputValue, setInputValue] = useState("");
@@ -177,7 +184,7 @@ export default function CrisisSensoryAnchorPrimitive({
     if (hapticEnabled) {
       try { hap("tap"); } catch {}
     }
-    setTimeout(() => {
+    completeTimerRef.current = setTimeout(() => {
       try {
         if (typeof onCompleteRef.current === "function") {
           onCompleteRef.current(finalValue);
