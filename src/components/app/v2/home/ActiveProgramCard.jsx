@@ -15,7 +15,12 @@ export default function ActiveProgramCard({ program, onOpen }) {
   const tag = PROGRAM_TAG[program.id] || program.id.slice(0, 2).toUpperCase();
   const name = PROGRAM_NAME[program.id] || program.id;
   const totalDays = PROGRAM_DAYS[program.id] || program.totalDays || 0;
-  const today = computeProgramDay(program);
+  // BUG FIX: capar el día al total del programa. computeProgramDay deriva el día
+  // de startedAt sin tope, así que un programa que corrió más allá de su duración
+  // mostraba "DÍA 13 DE 10" (imposible). currentProgramDay en lib/programs.js ya
+  // capa; este card duplicaba la lógica sin el cap.
+  const rawDay = computeProgramDay(program);
+  const today = totalDays ? Math.min(rawDay, totalDays) : rawDay;
 
   return (
     <button

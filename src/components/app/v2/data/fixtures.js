@@ -16,15 +16,31 @@
 // program descriptors) que son fuente de verdad del producto, no fakes.
 
 // Achievement id -> label humano + icono lucide name. Catalog estable.
+// BUG FIX: las keys deben coincidir EXACTAMENTE con los ids que el engine
+// pushea a state.achievements (src/lib/neural.js). Antes este catálogo usaba
+// snake_case (early_bird, night_owl, week_streak) que NO matcheaban los ids
+// reales camelCase (earlyBird, nightOwl, streak7) → la UI mostraba el id crudo
+// ("allProtos", "nightOwl"). Labels en español tomados de constants.js.
 export const ACHIEVEMENT_LABELS = {
-  first_session:    { label: "Primera sesión",            icon: "Sparkles"  },
-  mood5:            { label: "Mood óptimo registrado",     icon: "TrendingUp" },
-  calibrated:       { label: "Calibración completada",     icon: "Compass"   },
-  week_streak:      { label: "Racha de 7 días",            icon: "Flame"     },
-  early_bird:       { label: "Sesión antes de las 7am",    icon: "Sunrise"   },
-  night_owl:        { label: "Sesión nocturna",            icon: "Moon"      },
-  deep_focus:       { label: "Foco profundo desbloqueado", icon: "Crosshair" },
-  consistent:       { label: "Constancia 14 días",         icon: "CheckCircle2" },
+  first_session:    { label: "Primera sesión",                  icon: "Sparkles"      },
+  streak7:          { label: "Racha de 7 días",                 icon: "Flame"         },
+  streak14:         { label: "14 días — Disciplina neural",     icon: "Flame"         },
+  streak30:         { label: "30 días consecutivos",            icon: "Flame"         },
+  streak60:         { label: "60 días — Maestro de hábitos",    icon: "Flame"         },
+  coherencia90:     { label: "Coherencia >90%",                 icon: "Activity"      },
+  sessions50:       { label: "50 sesiones",                     icon: "Award"         },
+  sessions100:      { label: "100 sesiones — Centurión",        icon: "Award"         },
+  sessions250:      { label: "250 sesiones — Arquitecto Neural", icon: "Award"        },
+  mood5:            { label: "Sesión en rendimiento óptimo",    icon: "TrendingUp"    },
+  moodRecovery:     { label: "Recuperación en una sesión",      icon: "TrendingUp"    },
+  allProtos:        { label: "Probó los 14 protocolos",         icon: "Grid3x3"       },
+  time60:           { label: "60 minutos invertidos",           icon: "Clock"         },
+  time300:          { label: "5 horas de entrenamiento",        icon: "Clock"         },
+  earlyBird:        { label: "Sesión antes de las 7am",         icon: "Sunrise"       },
+  nightOwl:         { label: "Sesión después de las 10pm",      icon: "Moon"          },
+  calibrated:       { label: "Calibración completada",          icon: "Compass"       },
+  weekPerfect:      { label: "7/7 días en una semana",          icon: "CalendarCheck" },
+  bioSignal80:      { label: "BioSignal Score >80",             icon: "Activity"      },
 };
 
 // Catalog metadata sincronizado con src/lib/programs.js (campo `sb`).

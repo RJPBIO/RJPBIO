@@ -215,10 +215,41 @@ function realCompositeFromHistory(history) {
     .sort((a, b) => a.ts - b.ts);
 }
 
-function realDimensionsFromHistory(_history) {
-  // Future Phase 6D SP6+ — derivar focus/calm/energy desde historial real.
-  // Por ahora arrays vacíos (DimensionsTrends maneja gracefully).
-  return { focus: [], calm: [], energy: [] };
+function realDimensionsFromHistory(history) {
+  // BUG FIX / feature: antes era un stub que devolvía arrays vacíos, así que
+  // la sección DIMENSIONES · 28 DÍAS mostraba FOCO/CALMA/ENERGÍA 0% aunque el
+  // usuario tuviera cientos de sesiones con dimensions. Derivamos las 3 series
+  // del campo h.dimensions {foco,calma,energia} (mismo patrón que el composite),
+  // bucketeadas por día sobre los últimos 28 días. Mapeo es→en para el consumer.
+  const DAY = 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - 28 * DAY;
+  const MAP = { focus: "foco", calm: "calma", energy: "energia" };
+  const buckets = {};
+  for (const h of Array.isArray(history) ? history : []) {
+    if (!h || typeof h.ts !== "number" || h.ts < cutoff) continue;
+    const d = h.dimensions;
+    if (!d || typeof d !== "object") continue;
+    const dayKey = Math.floor(h.ts / DAY);
+    if (!buckets[dayKey]) {
+      buckets[dayKey] = { ts: dayKey * DAY, foco: { s: 0, n: 0 }, calma: { s: 0, n: 0 }, energia: { s: 0, n: 0 } };
+    }
+    for (const esKey of ["foco", "calma", "energia"]) {
+      const v = d[esKey];
+      if (typeof v === "number" && Number.isFinite(v)) {
+        buckets[dayKey][esKey].s += v;
+        buckets[dayKey][esKey].n += 1;
+      }
+    }
+  }
+  const days = Object.values(buckets).sort((a, b) => a.ts - b.ts);
+  const out = { focus: [], calm: [], energy: [] };
+  for (const day of days) {
+    for (const [engKey, esKey] of Object.entries(MAP)) {
+      const agg = day[esKey];
+      if (agg.n > 0) out[engKey].push({ ts: day.ts, value: Math.round(agg.s / agg.n) });
+    }
+  }
+  return out;
 }
 
 // Phase 6D SP3 — DataEmpty: empty state honesto cuando user no tiene

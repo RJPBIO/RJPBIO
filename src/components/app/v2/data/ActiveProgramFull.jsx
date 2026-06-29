@@ -10,7 +10,10 @@ export default function ActiveProgramFull({ program, onSeeToday, onAbandon }) {
   const tag = PROGRAM_TAG[program.id] || program.id.slice(0, 2).toUpperCase();
   const name = PROGRAM_NAME[program.id] || program.id;
   const totalDays = PROGRAM_DAYS[program.id] || program.totalDays || 0;
-  const today = computeProgramDay(program);
+  // BUG FIX: capar el día al total (computeProgramDay deriva de startedAt sin
+  // tope → "Día 13 de 10" para programas que corrieron más allá de su duración).
+  const rawDay = computeProgramDay(program);
+  const today = totalDays ? Math.min(rawDay, totalDays) : rawDay;
   const descriptor = `Día ${today} de ${totalDays} · ${ACTIVE_PROGRAM_DESCRIPTOR[program.id] || ""}`;
   const pct = totalDays ? Math.min(100, Math.max(0, Math.round((today / totalDays) * 100))) : 0;
 
