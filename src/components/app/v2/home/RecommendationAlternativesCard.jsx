@@ -145,7 +145,13 @@ export default function RecommendationAlternativesCard({
 
 function AlternativeRow({ alt, onAction, testid, showSeparator }) {
   const protocol = extractAlternativeProtocol(alt);
-  const reason = extractAlternativeReason(alt);
+  // UX: el engine asigna el mismo reason de intent a todos los candidatos, así
+  // que las alternativas repetían el motivo del primary ("Tu sistema necesita
+  // regulación parasimpática" ×3). Preferimos el beneficio propio del protocolo
+  // (sb, p.ej. "Restaura función ejecutiva") → cada alternativa dice algo
+  // distinto e informativo. Fallback al reason del engine si no hay sb.
+  const reason = (protocol && typeof protocol.sb === "string" && protocol.sb)
+    || extractAlternativeReason(alt);
 
   if (!protocol) return null;
 

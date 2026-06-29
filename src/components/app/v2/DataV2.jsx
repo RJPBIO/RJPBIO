@@ -180,6 +180,15 @@ export function deriveData(store, empty) {
     };
   }
 
+  // BUG FIX: vCoresThisWeek estaba hardcodeado en 0, así que PROGRESO mostraba
+  // "+0 esta semana" aunque el usuario hubiera entrenado. Lo derivamos sumando
+  // los vCores (h.vc) de las sesiones de los últimos 7 días.
+  const weekCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const vCoresThisWeek = realHistory.reduce(
+    (sum, h) => (h && h.ts >= weekCutoff ? sum + (Number(h.vc) || 0) : sum),
+    0,
+  );
+
   // 1+ sesiones reales → render con data del usuario, sin fixtures.
   return {
     isEmpty: false,
@@ -189,7 +198,7 @@ export function deriveData(store, empty) {
     activeProgram: store?.activeProgram || null,
     progress: {
       vCores: store?.vCores || 0,
-      vCoresThisWeek: 0,
+      vCoresThisWeek,
       streak: store?.streak || 0,
       bestStreak: store?.bestStreak || 0,
       achievementsCount: Array.isArray(store?.achievements) ? store.achievements.length : 0,

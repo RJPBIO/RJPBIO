@@ -49,23 +49,26 @@ export default function SessionsRecent({ sessions = [], onSeeAll }) {
         }}
       >
         {list.map((s, idx) => {
-          const proto = PROTOCOLS.find((p) => p.id === s.p) || {};
-          const name = proto.n || "Sesión";
-          const intent = s.int || proto.int || "";
+          // BUG FIX: el history entry (lib/neural._buildHistoryEntry) guarda
+          // `p` = NOMBRE del protocolo (no id), `dur` (no `d`) y `bioQ` (no
+          // `deltaC`). Este componente leía campos del fixture viejo → cada
+          // sesión mostraba "Sesión · 120s · 0". Leemos los campos reales.
+          const proto = PROTOCOLS.find((p) => p.n === s.p || p.id === s.p) || {};
+          const name = s.p || proto.n || "Sesión";
+          const intent = proto.int || s.int || "";
           const dotColor = intent === "energia" && cyanLeft > 0
             ? (cyanLeft--, colors.accent.phosphorCyan)
             : NEUTRAL_DOT;
-          const delta = Number(s.deltaC) || 0;
-          const deltaSign = delta > 0 ? "+" : delta < 0 ? "-" : "";
-          // Grayscale neutral estricto. Sin verde (positivo) ni rojo
-          // (negativo). En Windows ClearType, fuentes peso 200 sobre
-          // dark con alpha < 1 muestran fringing cromatico — alpha 1.0
-          // + font-smoothing grayscale los elimina.
-          const deltaColor = delta > 0
-            ? "rgb(245,245,247)"
-            : delta < 0
-              ? "rgba(245,245,247,0.55)"
-              : "rgba(245,245,247,0.32)";
+          // Métrica por sesión = calidad (bioQ 0-100). Antes mostraba deltaC
+          // (inexistente) → siempre 0. Grayscale por tier de calidad.
+          const score = Number.isFinite(Number(s.bioQ)) ? Math.round(Number(s.bioQ)) : null;
+          const deltaColor = score == null
+            ? "rgba(245,245,247,0.32)"
+            : score >= 70
+              ? "rgb(245,245,247)"
+              : score >= 50
+                ? "rgba(245,245,247,0.70)"
+                : "rgba(245,245,247,0.45)";
 
           return (
             <li
@@ -114,7 +117,7 @@ export default function SessionsRecent({ sessions = [], onSeeAll }) {
                     fontWeight: typography.weight.regular,
                   }}
                 >
-                  {relativeTime(s.ts)} · {s.d || 120}s
+                  {relativeTime(s.ts)} · {s.dur || s.d || 120}s
                 </span>
               </span>
               <span
@@ -136,7 +139,7 @@ export default function SessionsRecent({ sessions = [], onSeeAll }) {
                   textShadow: "0 0 0 transparent",
                 }}
               >
-                {delta === 0 ? "0" : `${deltaSign}${Math.abs(delta)}`}
+                {score == null ? "—" : score}
               </span>
             </li>
           );
