@@ -206,7 +206,7 @@ describe("AppV2Root — Phase 6B SP1 wiring HRV/PSS-4", () => {
     expect(runner.getAttribute("data-instrument-id")).toBe("pss-4");
   });
 
-  it("HRVCameraMeasure onComplete invoca store.logHRV con entry y cierra modal", () => {
+  it("HRVCameraMeasure onComplete invoca store.logHRV (no cierra; cierre vía onClose)", () => {
     const logSpy = vi.spyOn(useStore.getState(), "logHRV");
     render(<AppV2Root />);
     act(() => { screen.getByRole("button", { name: /variabilidad cardíaca/i }).click(); });
@@ -216,6 +216,12 @@ describe("AppV2Root — Phase 6B SP1 wiring HRV/PSS-4", () => {
     const entry = logSpy.mock.calls[0][0];
     expect(entry.source).toBe("camera");
     expect(entry.rmssd).toBe(42);
+    // BUG FIX: onComplete SOLO persiste — no cierra el modal. La cámara
+    // muestra su pantalla "Guardado en tu historial" y cierra vía onClose
+    // (auto 1.8s / Continuar). Antes onComplete cerraba y se saltaba esa
+    // confirmación. El modal sigue montado tras onComplete.
+    expect(screen.getByTestId("mock-hrv-camera")).toBeTruthy();
+    act(() => { screen.getByTestId("mock-hrv-camera-close").click(); });
     expect(screen.queryByTestId("mock-hrv-camera")).toBeNull();
     logSpy.mockRestore();
   });

@@ -418,8 +418,13 @@ export default function AppV2Root() {
     if (entry) {
       try { useStore.getState().logHRV(entry); } catch (e) { console.error("[v2] logHRV error", e); }
     }
-    setHrvModalOpen(false);
-    setHrvModalMode("camera");
+    // BUG FIX: NO cerrar el modal aquí. onComplete solo persiste el dato.
+    // Antes setHrvModalOpen(false) desmontaba el componente apenas se
+    // guardaba → la pantalla de confirmación "Guardado en tu historial"
+    // (checkmark + recap + Continuar, Sprint 73) NUNCA se mostraba en cámara.
+    // Cada componente maneja su cierre vía onClose: la cámara tras su saved
+    // screen (auto 1.8s / Continuar), el BLE (HRVMonitor) llama onClose él
+    // mismo justo después de onComplete. handleHrvClose resetea open+mode.
   }, []);
   const handleHrvSwapToBle = useCallback(() => {
     // El botón "¿Tienes sensor Bluetooth?" del intro de HRVCameraMeasure
