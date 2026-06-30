@@ -21,6 +21,7 @@ import { firstProtocolForIntent } from "../lib/first-protocol";
 import MarkMomentSheet from "./app/v2/data/MarkMomentSheet";
 import { createBioMusicEngine } from "../lib/bioMusicEngine";
 import { mapStateToMusic } from "../lib/bioMusic";
+import { buildMusicSignature } from "../lib/bioMusicSignature";
 import { useStore } from "../store/useStore";
 import { track } from "../lib/telemetry";
 import { useHaptic } from "../hooks/useHaptic";
@@ -201,7 +202,20 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
       const next = !prev;
       if (next) {
         if (!bioMusicRef.current) bioMusicRef.current = createBioMusicEngine();
-        try { bioMusicRef.current.start(); } catch { /* noop */ }
+        // Firma personal: tonalidad + modo + timbre propios del usuario.
+        let signature;
+        try {
+          const st = useStore.getState();
+          const log = Array.isArray(st.hrvLog) ? st.hrvLog : [];
+          const recent = log.slice(-14).map((e) => Number(e?.rmssd)).filter(Number.isFinite);
+          const baselineRmssd = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : null;
+          signature = buildMusicSignature({
+            userId: st._userId || st._userEmail || "anon",
+            baselineRmssd,
+            chronotype: st.chronotype,
+          });
+        } catch { signature = undefined; }
+        try { bioMusicRef.current.start(signature); } catch { /* noop */ }
       } else {
         try { bioMusicRef.current?.stop(); } catch { /* noop */ }
         bioMusicRef.current = null;
