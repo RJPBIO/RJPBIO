@@ -19,6 +19,8 @@ import { createCameraCapture, createStreamingAnalyzer } from "../lib/hrv-camera/
 import { computeHrvInsight, buildHrvBaseline } from "../lib/hrv-camera/insight";
 import { firstProtocolForIntent } from "../lib/first-protocol";
 import MarkMomentSheet from "./app/v2/data/MarkMomentSheet";
+import { createBioMusicEngine } from "../lib/bioMusicEngine";
+import { mapStateToMusic } from "../lib/bioMusic";
 import { useStore } from "../store/useStore";
 import { track } from "../lib/telemetry";
 import { useHaptic } from "../hooks/useHaptic";
@@ -88,6 +90,8 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   // Diario autonómico: etiquetar el momento de esta medición (huella perfecta).
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
   const [momentTagged, setMomentTagged] = useState(false);
+  // Sistema nervioso como instrumento: música procedural del HRV en vivo.
+  const [musicOn, setMusicOn] = useState(false);
 
   const isIOS = typeof window !== "undefined" ? detectIOS() : false;
 
@@ -115,6 +119,8 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
 
   const captureRef = useRef(null);
   const analyzerRef = useRef(null);
+  const bioMusicRef = useRef(null);
+  const musicOnRef = useRef(false);
   const startedAtRef = useRef(0);
   const fingerOkStreakRef = useRef(0);
   const phaseRef = useRef("intro");
@@ -170,8 +176,40 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
     // idempotente y barato; siempre lo intentamos primero.
     try { captureRef.current?.setTorch?.(false); } catch {}
     try { captureRef.current?.stop?.(); } catch {}
+    try { bioMusicRef.current?.stop?.(); } catch {}
+    bioMusicRef.current = null;
     releaseWakeLock();
   }, []);
+
+  // Bio-música: toggle (gesture → start por autoplay policy) + apagado al
+  // salir de la medición. musicOnRef espeja el state para el closure de onUpdate.
+  useEffect(() => {
+    musicOnRef.current = musicOn;
+  }, [musicOn]);
+
+  useEffect(() => {
+    if (phase !== "measuring" && phase !== "settling" && bioMusicRef.current) {
+      try { bioMusicRef.current.stop(); } catch { /* noop */ }
+      bioMusicRef.current = null;
+      musicOnRef.current = false;
+      setMusicOn(false);
+    }
+  }, [phase]);
+
+  function toggleMusic() {
+    setMusicOn((prev) => {
+      const next = !prev;
+      if (next) {
+        if (!bioMusicRef.current) bioMusicRef.current = createBioMusicEngine();
+        try { bioMusicRef.current.start(); } catch { /* noop */ }
+      } else {
+        try { bioMusicRef.current?.stop(); } catch { /* noop */ }
+        bioMusicRef.current = null;
+      }
+      musicOnRef.current = next;
+      return next;
+    });
+  }
 
   const cameraAvailable = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 
@@ -201,6 +239,10 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
       updateMs: 500,
       onUpdate: (u) => {
         setLive(u);
+        // Bio-música: cada update del HRV en vivo afina la música procedural.
+        if (musicOnRef.current && bioMusicRef.current) {
+          try { bioMusicRef.current.update(mapStateToMusic(u)); } catch { /* noop */ }
+        }
         const nowTs = Date.now();
 
         if (phaseRef.current === "settling") {
@@ -1050,6 +1092,31 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
               cambiaba a este texto después de 20s y permitía guardar
               datos incompletos que contaminaban el histórico. Ahora SOLO
               "Cancelar" hasta que la medición termine sola en 60s. */}
+          {/* Sistema nervioso como instrumento: convierte el HRV en vivo en
+              música procedural (armonía si la señal es coherente, disonancia
+              si se fragmenta). Toggle = gesture que arranca el AudioContext. */}
+          <button
+            type="button"
+            onClick={toggleMusic}
+            aria-pressed={musicOn}
+            aria-label={musicOn ? "Apagar la música de tu sistema nervioso" : "Convierte tu HRV en música"}
+            style={{
+              minInlineSize: 120,
+              paddingBlock: 10,
+              paddingInline: 18,
+              marginBlockEnd: 10,
+              background: musicOn ? withAlpha(brand.primary, 14) : "transparent",
+              color: musicOn ? brand.primary : t3,
+              border: `1px solid ${musicOn ? brand.primary : bd}`,
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: 0.3,
+              cursor: "pointer",
+            }}
+          >
+            {musicOn ? "Sonando tu sistema nervioso" : "Convierte tu HRV en música"}
+          </button>
           <button
             onClick={handleStop}
             aria-label="Cancelar medición"
