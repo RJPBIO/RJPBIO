@@ -18,6 +18,7 @@ import { useReducedMotion, useFocusTrap, announce } from "../lib/a11y";
 import { createCameraCapture, createStreamingAnalyzer } from "../lib/hrv-camera/capture";
 import { computeHrvInsight, buildHrvBaseline } from "../lib/hrv-camera/insight";
 import { firstProtocolForIntent } from "../lib/first-protocol";
+import MarkMomentSheet from "./app/v2/data/MarkMomentSheet";
 import { useStore } from "../store/useStore";
 import { track } from "../lib/telemetry";
 import { useHaptic } from "../hooks/useHaptic";
@@ -84,6 +85,9 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [finalResult, setFinalResult] = useState(null);
   const [settlingCountdown, setSettlingCountdown] = useState(null);
+  // Diario autonómico: etiquetar el momento de esta medición (huella perfecta).
+  const [tagSheetOpen, setTagSheetOpen] = useState(false);
+  const [momentTagged, setMomentTagged] = useState(false);
 
   const isIOS = typeof window !== "undefined" ? detectIOS() : false;
 
@@ -1337,9 +1341,48 @@ export default function HRVCameraMeasure({ show, isDark, onClose, onComplete, on
           >
             Guardado en tu historial
           </h3>
-          <p style={{ color: t2, fontSize: 14, lineHeight: 1.5, margin: 0, marginBlockEnd: showBridge && recoProtocol ? 20 : 24 }}>
+          <p style={{ color: t2, fontSize: 14, lineHeight: 1.5, margin: 0, marginBlockEnd: 14 }}>
             RMSSD {finalResult.hrv.rmssd} ms · {Math.round(finalResult.hrv.meanHr)} bpm
           </p>
+
+          {/* Diario autonómico: etiquetar este momento crea una huella perfecta
+              (la lectura recién tomada queda asociada al contexto). */}
+          {momentTagged ? (
+            <p style={{ color: t3, fontSize: 12.5, margin: 0, marginBlockEnd: 22 }}>
+              Momento etiquetado en tu diario
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setTagSheetOpen(true)}
+              style={{
+                appearance: "none",
+                cursor: "pointer",
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                marginBlockEnd: 22,
+                color: brand.primary,
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: -0.1,
+              }}
+            >
+              Etiqueta este momento
+            </button>
+          )}
+
+          {tagSheetOpen && (
+            <MarkMomentSheet
+              onSave={(ev) => {
+                try { useStore.getState().logLifeEvent(ev); } catch { /* noop */ }
+                setMomentTagged(true);
+                setTagSheetOpen(false);
+              }}
+              onClose={() => setTagSheetOpen(false)}
+            />
+          )}
+
           {showBridge && recoProtocol ? (
             /* Puente medición → acción: protocolo recomendado por la lectura.
                Cierra el loop "medir → saber → actuar" sin que el user tenga
