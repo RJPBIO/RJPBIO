@@ -44,7 +44,7 @@ export async function buildBioSignalReport(orgId, opts = {}) {
       available: false,
       needsCohort: true,
       reason: "Define la industria de tu organización para activar el benchmark.",
-      org: { name: org.name },
+      org: { name: org.name, industry: org.industry, companySize: org.companySize, shift: org.shift },
     };
   }
 

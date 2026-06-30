@@ -10,6 +10,7 @@ import { auditLog } from "@/server/audit";
 import { buildBioSignalReport } from "@/server/bioSignalReport";
 import { PageHeader } from "@/components/admin/PageHeader";
 import BioSignalIndexPanel from "@/components/admin/reports/BioSignalIndexPanel";
+import CohortSettingsForm from "@/components/admin/reports/CohortSettingsForm";
 import { cssVar, font } from "@/components/ui/tokens";
 
 export const metadata = { title: "BioSignal Index · Admin" };
@@ -72,6 +73,11 @@ export default async function BioSignalPage() {
         <p style={{ color: cssVar.textMuted, fontSize: font.size.base }}>
           No pudimos generar el índice. Reintenta en unos minutos.
         </p>
+      )}
+
+      {/* OWNER/ADMIN: configurar la cohorte (activa/ajusta el benchmark). */}
+      {mem.role !== "MANAGER" && (
+        <CohortSettingsForm orgId={orgId} current={report?.org || {}} />
       )}
     </main>
   );
