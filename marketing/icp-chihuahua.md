@@ -35,8 +35,8 @@ Objetivo: 40–60 cuentas calificadas para el push de 30 días. Meta: 1 piloto p
 
 ## 4. Fuentes para construir la lista (minado, no inventar)
 
-- **Las 70 empresas del programa IMPAS Chihuahua** → **prospectos más calientes**: el municipio ya les abrió la conversación de salud mental. Conseguir esa lista es la acción #1.
-- **INDEX Chihuahua** e **INDEX Juárez** (asociaciones de maquiladoras / IMMEX): directorios de plantas + directores de RH/seguridad. Eventos y comités de seguridad = entrada.
+- **Las ~76 empresas del programa "Chihuahua Actúa"** (IMPAS + Instituto Municipal de las Mujeres + DIF + Dirección de Desarrollo Económico) → **prospectos más calientes**: en jun-2026 completaron capacitación en salud mental laboral (detectar señales + primera escucha + canalización). El municipio ya les abrió la conversación. **Bio-Ignición es el siguiente paso natural: medición + intervención + evidencia NOM-035 firmada.** Conseguir el reconocimiento/lista (vía Desarrollo Económico) es la acción #1. Ver `commercial-kit-semana1.md`.
+- **INDEX Juárez** (asociación de maquiladoras; **~330 plantas activas, ~260-300k empleos**, automotriz/médico/electrónico/aeroespacial) e **INDEX Chihuahua**: directorios de plantas + directores de RH/seguridad. Chihuahua exporta ~60% de la maquila nacional. Pérdida de ~11k empleos en 2025 = presión de costos (refuerza el ROI). Eventos/comités de seguridad = entrada.
 - **Clúster Aeroespacial de Chihuahua** y **clúster automotriz**: miembros listados públicamente.
 - **CANACINTRA / COPARMEX Chihuahua y Juárez**: cámaras industriales, comités de seguridad.
 - **LinkedIn Sales Navigator** con los filtros de abajo.
