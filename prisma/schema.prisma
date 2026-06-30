@@ -32,6 +32,11 @@ model Org {
   graceUntil     DateTime?     // after sub cancel/payment_failed, keep data until
   trialEndsAt    DateTime?
   personal       Boolean       @default(false)  // auto-creado al signup, no invitable
+  // BioSignal Index (B2B) — cohorte para benchmark anónimo por industria.
+  // Nullable: opt-in del admin. El benchmark exige ≥N orgs por cohorte (k-anon).
+  industry       String?       // p.ej. "manufactura", "tecnologia", "salud"
+  companySize    String?       // "1-50" | "51-200" | "201-1000" | "1000+"
+  shift          String?       // "diurno" | "nocturno" | "rotativo" | "mixto"
   // Security policies (Sprint 7) — enforcement en middleware + auth callbacks.
   requireMfa           Boolean       @default(false)
   sessionMaxAgeMinutes Int?           // null = usar default global de NextAuth (8h)
