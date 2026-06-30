@@ -30,6 +30,7 @@ import TopProtocolsPanel from "./reports/TopProtocolsPanel";
 // Backend executiveReport.js computa report.engagement (DAU/WAU/sessions/
 // activation) pero ningún panel consumer lo exponía → invisible.
 import EngagementPanel from "./reports/EngagementPanel";
+import ExecutiveNarrativeSection from "./reports/ExecutiveNarrativeSection";
 import PrintButton from "./reports/PrintButton";
 
 export default function OrgExecutiveReport({ report, isPrintMode = false }) {
@@ -107,6 +108,8 @@ export default function OrgExecutiveReport({ report, isPrintMode = false }) {
       {showBorrador && <BorradorWatermark />}
 
       <ReportHeader report={report} />
+
+      {report.narrative && <ExecutiveNarrativeSection narrative={report.narrative} />}
 
       <KpiHero kpis={report.kpis} />
 

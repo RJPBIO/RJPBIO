@@ -14,6 +14,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import { auditLog } from "@/server/audit";
 import { buildExecutiveReport } from "@/server/executiveReport";
+import { generateExecutiveNarrative } from "@/server/executiveNarrative";
 import { PageHeader } from "@/components/admin/PageHeader";
 import OrgExecutiveReport from "@/components/admin/OrgExecutiveReport";
 import DaysSelector from "@/components/admin/reports/DaysSelector";
@@ -57,6 +58,14 @@ export default async function ReporteEjecutivoPage(props) {
 
   if (!report) {
     return <NoDataMessage orgName={mem.org?.name} />;
+  }
+
+  // Capa narrativa (dossier): síntesis CHRO con LLM + fallback determinista.
+  // Degrada con gracia (sin API key → narrativa determinista).
+  try {
+    report.narrative = await generateExecutiveNarrative(report, { locale: "es" });
+  } catch {
+    /* el reporte se muestra sin narrativa si falla */
   }
 
   await auditLog({

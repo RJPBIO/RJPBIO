@@ -19,6 +19,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import { auditLog } from "@/server/audit";
 import { buildExecutiveReport } from "@/server/executiveReport";
+import { generateExecutiveNarrative } from "@/server/executiveNarrative";
 import OrgExecutiveReport from "@/components/admin/OrgExecutiveReport";
 import { cssVar, font, space } from "@/components/ui/tokens";
 
@@ -50,6 +51,7 @@ const PRINT_CSS = `
   [data-v2-kpi-card],
   [data-v2-cohort-card],
   [data-v2-dominio-card],
+  [data-v2-executive-narrative],
   [data-v2-hrv-chart] {
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
@@ -98,6 +100,13 @@ export default async function ReporteEjecutivoPrintPage(props) {
 
   if (!report) {
     return <SinDatosBlock />;
+  }
+
+  // Capa narrativa (dossier) — síntesis CHRO con LLM + fallback determinista.
+  try {
+    report.narrative = await generateExecutiveNarrative(report, { locale: "es" });
+  } catch {
+    /* imprime sin narrativa si falla */
   }
 
   await auditLog({
