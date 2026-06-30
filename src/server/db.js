@@ -146,3 +146,39 @@ export async function db() {
   }
   return clientPromise;
 }
+
+/* ─── RLS · contexto de tenant (Fase 1, plumbing) ─────────────────
+   Ejecuta `fn(tx)` dentro de una transacción con el contexto de tenant
+   seteado vía set_config(..., is_local=true) — el equivalente a SET LOCAL
+   que SÍ funciona a través de un pooler en modo transacción (Supabase/
+   PgBouncer): el setting vive solo dentro de esta transacción / conexión.
+
+   HOY es NO-OP funcional: las políticas RLS aún no están habilitadas
+   (Fase 2, requiere migraciones + staging). Setear el contexto ahora es
+   inofensivo y deja el plumbing listo. Las settings se leen en políticas
+   como current_setting('app.user_id', true).
+
+   En el adaptador de memoria (dev/test) no hay transacciones reales ni
+   set_config → se llama fn(orm) directo.
+
+   @param {{userId?:string, orgIds?:string[], role?:string}} ctx
+   @param {(client:any)=>Promise<T>} fn
+   @returns {Promise<T>}
+*/
+export async function withTenant(ctx, fn) {
+  const orm = await db();
+  // Memory adapter: sin $executeRaw → contexto no aplica, ejecuta directo.
+  if (typeof orm.$executeRaw !== "function" || typeof orm.$transaction !== "function") {
+    return fn(orm);
+  }
+  const userId = ctx?.userId ?? "";
+  const orgIds = Array.isArray(ctx?.orgIds) ? ctx.orgIds.join(",") : "";
+  const role = ctx?.role ?? "";
+  return orm.$transaction(async (tx) => {
+    // Parametrizado (no interpolación) → sin riesgo de inyección.
+    await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
+    await tx.$executeRaw`SELECT set_config('app.org_ids', ${orgIds}, true)`;
+    await tx.$executeRaw`SELECT set_config('app.role', ${role}, true)`;
+    return fn(tx);
+  });
+}
