@@ -10,6 +10,7 @@ import ConsistencyHeatmap from "./data/ConsistencyHeatmap";
 import OptimalWindowCard from "./data/OptimalWindowCard";
 import AutonomicTwinCard from "./data/AutonomicTwinCard";
 import ReadinessCard from "./data/ReadinessCard";
+import LifeJournalCard from "./data/LifeJournalCard";
 import ProgramsSection from "./data/ProgramsSection";
 import ProtocolCatalog from "./data/ProtocolCatalog";
 import SessionsRecent from "./data/SessionsRecent";
@@ -132,6 +133,9 @@ export default function DataV2({
       </SectionEmergeWrapper>
       <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-readiness">
         <ReadinessCard hrvLog={store.hrvLog} />
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-life-journal">
+        <LifeJournalCard lifeEvents={store.lifeEvents} hrvLog={store.hrvLog} />
       </SectionEmergeWrapper>
       <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-programs">
         <div data-anchor="programs">

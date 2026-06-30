@@ -176,6 +176,9 @@ export const DS = {
   // v7 — bioneural: HRV, RHR, sleep, chronotype, resonance, NOM-035, evidence
   hrvLog: [],
   rhrLog: [],
+  // v22 — diario autonómico de vida: momentos marcados por el usuario
+  // { id, ts, label, context, valence? }. Local-only.
+  lifeEvents: [],
   lastSleepHours: null,
   sleepTargetHours: 7.5,
   chronotype: null,

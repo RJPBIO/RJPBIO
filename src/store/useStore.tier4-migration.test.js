@@ -100,7 +100,7 @@ describe("Tier-4 Capa-1 — store v17→v18 migration backfill", () => {
       totalSessions: 1,
     };
     await useStore.getState().init({});
-    expect(useStore.getState()._v).toBe(21);
+    expect(useStore.getState()._v).toBe(22);
   });
 
   it("idempotent: re-init con state ya v18 NO modifica entries", async () => {

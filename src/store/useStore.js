@@ -24,7 +24,7 @@ import { logger } from "../lib/logger";
 import { updateArm, armKey, timeBucket, compositeReward } from "../lib/neural/bandit";
 import { logResidual as logResidualEntry } from "../lib/neural/residuals";
 
-const STORE_VERSION = 21;
+const STORE_VERSION = 22;
 
 // Phase 6H Premium-Fix3 — cohort thresholds.
 // MUST stay aligned con NEURAL_CONFIG.health.coldStartSessions/learningSessions
@@ -158,6 +158,8 @@ function migrate(data) {
     // v7: ensure bioneural arrays exist for users migrating from v6
     if (!Array.isArray(merged.hrvLog)) merged.hrvLog = [];
     if (!Array.isArray(merged.rhrLog)) merged.rhrLog = [];
+    // v22: diario autonómico de vida (slice nuevo, default vacío).
+    if (!Array.isArray(merged.lifeEvents)) merged.lifeEvents = [];
     if (!Array.isArray(merged.nom035Results)) merged.nom035Results = [];
     if (!Array.isArray(merged.breathTechniqueLog)) merged.breathTechniqueLog = [];
     if (!Array.isArray(merged.cognitiveLog)) merged.cognitiveLog = [];
@@ -623,6 +625,29 @@ export const useStore = create((set, get) => ({
     set({ hrvLog, rhrLog });
     scheduleSave({ ...st, hrvLog, rhrLog });
     outboxAdd({ kind: "hrv", payload: entry, userId: st._userId ?? null }).catch(() => {});
+  },
+
+  // Diario autonómico de vida (local-only). Marca un momento; la huella
+  // fisiológica la deriva autonomicJournal asociando lecturas HRV cercanas.
+  logLifeEvent: (event) => {
+    const st = get();
+    const ts = Number(event?.ts) || Date.now();
+    const e = {
+      id: event?.id || `le_${ts}_${Math.random().toString(36).slice(2, 8)}`,
+      ts,
+      label: typeof event?.label === "string" ? event.label.slice(0, 120) : "",
+      context: event?.context || null,
+      ...(typeof event?.valence === "number" ? { valence: event.valence } : {}),
+    };
+    const lifeEvents = [...(st.lifeEvents || []), e].slice(-500);
+    set({ lifeEvents });
+    scheduleSave({ ...st, lifeEvents });
+  },
+  removeLifeEvent: (id) => {
+    const st = get();
+    const lifeEvents = (st.lifeEvents || []).filter((e) => e && e.id !== id);
+    set({ lifeEvents });
+    scheduleSave({ ...st, lifeEvents });
   },
 
   logSleep: (hours) => {

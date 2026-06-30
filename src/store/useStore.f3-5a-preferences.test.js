@@ -43,7 +43,7 @@ describe("F3.5-A Capa-2 — store v20→v21 migration", () => {
       totalSessions: 0,
     };
     await useStore.getState().init({});
-    expect(useStore.getState()._v).toBe(21);
+    expect(useStore.getState()._v).toBe(22);
   });
 
   it("estado pre-v21 sin preferences → backfill empty object", async () => {
@@ -88,7 +88,7 @@ describe("F3.5-A Capa-2 — store v20→v21 migration", () => {
     };
     await useStore.getState().init({});
     const s = useStore.getState();
-    expect(s._v).toBe(21);
+    expect(s._v).toBe(22);
     // v18 dimensions backfill
     expect(s.history[0].dimensions).toBeNull();
     // v19 actsLog backfill

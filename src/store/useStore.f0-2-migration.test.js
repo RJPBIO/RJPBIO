@@ -133,7 +133,7 @@ describe("F0-2 Capa-2 — store v18→v19 migration backfill", () => {
       totalSessions: 1,
     };
     await useStore.getState().init({});
-    expect(useStore.getState()._v).toBe(21);
+    expect(useStore.getState()._v).toBe(22);
   });
 
   it("idempotent: re-init con state ya v19 NO modifica entries", async () => {

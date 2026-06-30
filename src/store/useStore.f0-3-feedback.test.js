@@ -227,7 +227,7 @@ describe("F0-3 Capa-2 — store v19→v20 migration backfill", () => {
       totalSessions: 1,
     };
     await useStore.getState().init({});
-    expect(useStore.getState()._v).toBe(21);
+    expect(useStore.getState()._v).toBe(22);
   });
 
   it("entries pre-Tier-4 (v17 sin nada) reciben los 3 backfills en pass único", async () => {
