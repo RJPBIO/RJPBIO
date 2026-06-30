@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useStore } from "@/store/useStore";
 import { P as PROTOCOLS } from "@/lib/protocols";
+import { buildProtocolFraming } from "@/lib/protocolFraming";
+import { buildAutonomicTwin } from "@/lib/neural/autonomicTwin";
 import { PROGRAMS } from "@/lib/programs";
 import { closeSession, adaptPlayerCompletionToSessionData } from "@/lib/sessionFlow";
 import {
@@ -229,6 +231,8 @@ export default function AppV2Root() {
   }, [store._loaded, store.init]);
   const [selectedProtocol, setSelectedProtocol] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
+  // Encuadre contextual pre-sesión (protocolo generativo): se computa al lanzar.
+  const [framingForPlayer, setFramingForPlayer] = useState(null);
   const [sessionStartedAt, setSessionStartedAt] = useState(null);
   const [crisisSheetOpen, setCrisisSheetOpen] = useState(false);
 
@@ -366,6 +370,14 @@ export default function AppV2Root() {
     setPlayerPreMood(validPre);
     setSelectedProtocol(protocol);
     setSessionStartedAt(Date.now());
+    // Encuadre contextual (determinista, instantáneo — sin latencia antes de
+    // la sesión). Integra el gemelo autonómico como twinDirection. El player
+    // solo lo muestra si framing.notable (lunes-AM/viernes-PM/desviación/situación).
+    let twinDirection = null;
+    try {
+      twinDirection = buildAutonomicTwin(useStore.getState().hrvLog || []).deviation?.direction || null;
+    } catch { /* sin gemelo → sin matiz */ }
+    setFramingForPlayer(buildProtocolFraming({ protocol, now: Date.now(), twinDirection }));
     setPlayerOpen(true);
   }, []);
 
@@ -1256,6 +1268,7 @@ export default function AppV2Root() {
           cameraEnabled={false}
           onComplete={handlePlayerComplete}
           onCancel={handlePlayerCancel}
+          framing={framingForPlayer}
         />
       )}
 

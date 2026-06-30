@@ -19,6 +19,7 @@ import { useProtocolPlayer } from "../../../hooks/useProtocolPlayer";
 import { getUseCase } from "../../../lib/protocols";
 import { colors, typography, spacing, layout } from "../../app/v2/tokens";
 import PrimitiveSwitcher from "./PrimitiveSwitcher";
+import ContextualFrame from "./ContextualFrame";
 import TransitionDots from "./primitives/TransitionDots";
 // Phase 7 SP-B-1 Capa 4 — Cinematic phase transitions framework.
 // Overlay strategy: PrimitiveSwitcher mantiene su `key` original (key
@@ -374,6 +375,7 @@ export default function ProtocolPlayer({
   onComplete,
   onCancel,
   autoStart = true,
+  framing = null,
 }) {
   const player = useProtocolPlayer(protocol, {
     voiceOn,
@@ -412,12 +414,18 @@ export default function ProtocolPlayer({
   const requiresSafety = !!protocol?.safety;
   const [safetyAccepted, setSafetyAccepted] = useState(!requiresSafety);
 
+  // Encuadre contextual pre-sesión (opcional). Solo gatea cuando el contexto
+  // aporta señal (framing.notable). Espeja el gate de safety: no autoStart
+  // hasta "Comenzar". Sin framing → aceptado de entrada (cero cambio).
+  const requiresFraming = !!(framing && framing.notable);
+  const [framingAccepted, setFramingAccepted] = useState(!requiresFraming);
+
   useEffect(() => {
-    // No autoStart hasta que safety overlay sea aceptado.
-    if (autoStart && player.status === "idle" && safetyAccepted) {
+    // No autoStart hasta que safety Y framing sean aceptados.
+    if (autoStart && player.status === "idle" && safetyAccepted && framingAccepted) {
       player.start();
     }
-  }, [autoStart, player, safetyAccepted]);
+  }, [autoStart, player, safetyAccepted, framingAccepted]);
 
   if (!protocol) return null;
 
@@ -429,6 +437,20 @@ export default function ProtocolPlayer({
         safetyText={protocol.safety}
         onConfirm={() => setSafetyAccepted(true)}
         onCancelExit={() => {
+          if (typeof onCancel === "function") onCancel();
+        }}
+      />
+    );
+  }
+
+  // Encuadre contextual (tras safety): bloquea autoStart hasta "Comenzar".
+  if (requiresFraming && !framingAccepted) {
+    return (
+      <ContextualFrame
+        framing={framing}
+        protocolName={protocol.n}
+        onStart={() => setFramingAccepted(true)}
+        onCancel={() => {
           if (typeof onCancel === "function") onCancel();
         }}
       />
