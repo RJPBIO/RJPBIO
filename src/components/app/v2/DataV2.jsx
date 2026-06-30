@@ -125,7 +125,7 @@ export default function DataV2({
         <ConsistencyHeatmap history={store.history} />
       </SectionEmergeWrapper>
       <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-optimal-window">
-        <OptimalWindowCard history={store.history} />
+        <OptimalWindowCard history={store.history} chronotype={store.chronotype} onNavigate={onNavigate} />
       </SectionEmergeWrapper>
       <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-autonomic-twin">
         <AutonomicTwinCard hrvLog={store.hrvLog} />

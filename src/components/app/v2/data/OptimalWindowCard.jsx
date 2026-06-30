@@ -10,6 +10,7 @@
    ═══════════════════════════════════════════════════════════════ */
 import { useMemo } from "react";
 import { buildOptimalWindow } from "@/lib/neural/optimalWindow";
+import { buildChronotypeDrift } from "@/lib/neural/chronotypeDrift";
 import { colors, typography, spacing } from "../tokens";
 
 const CYAN = colors.accent.phosphorCyan;
@@ -46,10 +47,15 @@ const eyebrow = {
   fontWeight: typography.weight.medium,
 };
 
-export default function OptimalWindowCard({ history }) {
+export default function OptimalWindowCard({ history, chronotype, onNavigate }) {
   const data = useMemo(
     () => buildOptimalWindow(Array.isArray(history) ? history : [], { now: Date.now() }),
     [history]
+  );
+  // Cronotipo como variable dinámica: compara lo declarado vs lo observado.
+  const drift = useMemo(
+    () => buildChronotypeDrift({ chronotype, history, now: Date.now() }),
+    [chronotype, history]
   );
 
   // Antes de que haya señal alguna, no ocupar espacio (DATOS ya tiene empty arriba).
@@ -228,6 +234,57 @@ export default function OptimalWindowCard({ history }) {
           <span style={{ color: colors.text.secondary }}>Evita {data.worst.label}</span>
           <span style={{ color: "rgba(255,255,255,0.4)" }}>·</span>
           <span style={{ color: colors.text.muted }}>{data.maturity.sessions} sesiones</span>
+        </div>
+      )}
+
+      {/* Cronotipo dinámico: drift declarado vs observado */}
+      {data.available && drift.available && drift.drift !== "aligned" && (
+        <div
+          style={{
+            marginBlockStart: spacing.s16,
+            paddingBlockStart: spacing.s16,
+            borderBlockStart: `0.5px solid ${colors.separator}`,
+          }}
+        >
+          <div
+            style={{
+              ...eyebrow,
+              marginBlockEnd: 6,
+              color: drift.shouldRecalibrate ? "#F59E0B" : "rgba(255,255,255,0.55)",
+            }}
+          >
+            CRONOTIPO · {drift.shouldRecalibrate ? "POSIBLE CAMBIO" : "LIGERA DESVIACIÓN"}
+          </div>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: typography.family,
+              fontSize: typography.size.caption,
+              color: colors.text.secondary,
+              lineHeight: 1.5,
+            }}
+          >
+            {drift.message}
+          </p>
+          {drift.shouldRecalibrate && onNavigate && (
+            <button
+              type="button"
+              onClick={() => onNavigate({ action: "retake-chronotype" })}
+              style={{
+                appearance: "none",
+                cursor: "pointer",
+                background: "transparent",
+                border: "none",
+                padding: "8px 0 0",
+                color: CYAN,
+                fontFamily: typography.family,
+                fontSize: typography.size.caption,
+                fontWeight: typography.weight.medium,
+              }}
+            >
+              Recalibrar cronotipo
+            </button>
+          )}
         </div>
       )}
     </section>
