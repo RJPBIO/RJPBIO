@@ -42,6 +42,8 @@ import {
   motion as motionTok,
   touchTarget,
 } from "../tokens";
+import { useStore } from "@/store/useStore";
+import MarkMomentSheet from "../data/MarkMomentSheet";
 
 // Mood scale 1–5 con icons brand-DNA. Matchea MOODS constant en
 // lib/constants.js (stress/drain/neutral/sharp/peak) — los mismos
@@ -200,6 +202,10 @@ export default function MoodPostSessionSheet({
   // F0-3: state machine local. 'mood' es el step heredado Phase 6J-1.
   const [step, setStep] = useState("mood");
   const [feedback, setFeedback] = useState(F03_INITIAL_FEEDBACK);
+  // Diario autonómico: etiquetar el momento de esta sesión (additive, no
+  // toca la máquina de estados mood/F0-3 ni el reward del bandit).
+  const [tagSheetOpen, setTagSheetOpen] = useState(false);
+  const [momentTagged, setMomentTagged] = useState(false);
 
   // Reset state on unmount/remount.
   useEffect(() => {
@@ -207,6 +213,8 @@ export default function MoodPostSessionSheet({
       setSelectedMood(null);
       setStep("mood");
       setFeedback(F03_INITIAL_FEEDBACK);
+      setTagSheetOpen(false);
+      setMomentTagged(false);
       setMounted(false);
       return;
     }
@@ -559,6 +567,38 @@ export default function MoodPostSessionSheet({
                 >
                   Saltar por ahora
                 </button>
+                {/* Diario autonómico: etiquetar este momento (opcional, additive). */}
+                {momentTagged ? (
+                  <span
+                    style={{
+                      fontFamily: typography.family,
+                      fontSize: typography.size.caption,
+                      color: colors.text.muted,
+                      textAlign: "center",
+                      paddingBlock: spacing.s8,
+                    }}
+                  >
+                    Momento etiquetado en tu diario
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setTagSheetOpen(true)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      paddingBlock: spacing.s8,
+                      color: colors.accent.phosphorCyan,
+                      fontFamily: typography.family,
+                      fontSize: typography.size.caption,
+                      fontWeight: typography.weight.medium,
+                      cursor: "pointer",
+                      minHeight: touchTarget.min,
+                    }}
+                  >
+                    Etiqueta este momento
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -578,6 +618,17 @@ export default function MoodPostSessionSheet({
           )}
         </aside>
       </div>
+
+      {tagSheetOpen && (
+        <MarkMomentSheet
+          onSave={(ev) => {
+            try { useStore.getState().logLifeEvent(ev); } catch { /* noop */ }
+            setMomentTagged(true);
+            setTagSheetOpen(false);
+          }}
+          onClose={() => setTagSheetOpen(false)}
+        />
+      )}
     </>
   );
 }

@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { buildAutonomicJournal } from "@/lib/autonomicJournal";
+import { buildJournalExport, journalExportFilename } from "@/lib/journalExport";
 import { colors, typography, spacing } from "../tokens";
 import MarkMomentSheet from "./MarkMomentSheet";
 
@@ -42,8 +43,24 @@ function footprintParts(z) {
   return { color: CYAN, word: "en tu base" };
 }
 
+function chipStyle(on) {
+  return {
+    appearance: "none",
+    cursor: "pointer",
+    padding: "6px 12px",
+    borderRadius: 999,
+    background: on ? "rgba(34,211,238,0.16)" : "transparent",
+    border: `0.5px solid ${on ? CYAN : colors.separator}`,
+    color: on ? CYAN : colors.text.secondary,
+    fontFamily: typography.family,
+    fontSize: typography.size.caption,
+    fontWeight: typography.weight.medium,
+  };
+}
+
 export default function LifeJournalCard({ lifeEvents, hrvLog }) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [ctxFilter, setCtxFilter] = useState(null);
   const now = Date.now();
   const journal = useMemo(
     () => buildAutonomicJournal(lifeEvents || [], hrvLog || [], { now }),
@@ -57,8 +74,34 @@ export default function LifeJournalCard({ lifeEvents, hrvLog }) {
   const handleRemove = (id) => {
     try { useStore.getState().removeLifeEvent(id); } catch { /* noop */ }
   };
+  const handleExport = () => {
+    try {
+      const data = buildJournalExport(journal, { now: Date.now() });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = journalExportFilename(Date.now());
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { /* noop */ }
+  };
 
   const hasEvents = journal.entries.length > 0;
+
+  // #3 Filtro por contexto: contextos presentes (con etiqueta) en el diario.
+  const presentContexts = useMemo(() => {
+    const seen = new Map();
+    for (const e of journal.entries) {
+      if (e.context && !seen.has(e.context)) seen.set(e.context, e.contextLabel || e.context);
+    }
+    return Array.from(seen, ([id, label]) => ({ id, label }));
+  }, [journal.entries]);
+  const filteredEntries = ctxFilter
+    ? journal.entries.filter((e) => e.context === ctxFilter)
+    : journal.entries;
 
   return (
     <section
@@ -110,6 +153,23 @@ export default function LifeJournalCard({ lifeEvents, hrvLog }) {
         </p>
       )}
 
+      {hasEvents && presentContexts.length > 1 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBlockEnd: spacing.s16 }}>
+          <button
+            type="button"
+            onClick={() => setCtxFilter(null)}
+            style={chipStyle(ctxFilter === null)}
+          >
+            Todos
+          </button>
+          {presentContexts.map((c) => (
+            <button key={c.id} type="button" onClick={() => setCtxFilter(c.id)} style={chipStyle(ctxFilter === c.id)}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {!hasEvents ? (
         <p style={{ margin: 0, fontFamily: typography.family, fontSize: typography.size.body, color: colors.text.secondary, lineHeight: 1.5, maxInlineSize: 460 }}>
           Marca tu primer momento — una conversación, una decisión, una pérdida, un logro.
@@ -117,7 +177,7 @@ export default function LifeJournalCard({ lifeEvents, hrvLog }) {
         </p>
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
-          {journal.entries.slice(0, 12).map((e, i) => {
+          {filteredEntries.slice(0, 12).map((e, i) => {
             const fp = footprintParts(e.autonomic?.z);
             return (
               <li
@@ -174,9 +234,31 @@ export default function LifeJournalCard({ lifeEvents, hrvLog }) {
         </ul>
       )}
 
-      <p style={{ margin: 0, marginBlockStart: spacing.s24, fontFamily: typography.family, fontSize: typography.size.caption, color: colors.text.muted, lineHeight: 1.5 }}>
-        Asocia tu HRV más cercano a cada momento (todo local). Mide alrededor de momentos importantes para ver su huella.
-      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: spacing.s16, marginBlockStart: spacing.s24, flexWrap: "wrap" }}>
+        <p style={{ margin: 0, flex: 1, minWidth: 180, fontFamily: typography.family, fontSize: typography.size.caption, color: colors.text.muted, lineHeight: 1.5 }}>
+          Asocia tu HRV más cercano a cada momento (todo local). Mide alrededor de momentos importantes para ver su huella.
+        </p>
+        {hasEvents && (
+          <button
+            type="button"
+            onClick={handleExport}
+            style={{
+              appearance: "none",
+              cursor: "pointer",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              color: CYAN,
+              fontFamily: typography.family,
+              fontSize: typography.size.caption,
+              fontWeight: typography.weight.medium,
+              flexShrink: 0,
+            }}
+          >
+            Exportar diario
+          </button>
+        )}
+      </div>
 
       {sheetOpen && <MarkMomentSheet onSave={handleSave} onClose={() => setSheetOpen(false)} />}
     </section>
