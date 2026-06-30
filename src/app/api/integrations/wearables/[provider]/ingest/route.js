@@ -8,6 +8,7 @@
 import { db } from "@/server/db";
 import { auditLog } from "@/server/audit";
 import { getProvider, verify, normalize } from "@/server/wearables";
+import { encryptJson } from "@/server/kms";
 import { headers } from "next/headers";
 
 export const runtime = "nodejs";
@@ -59,7 +60,9 @@ export async function POST(request, { params }) {
       data: {
         provider,
         kind,
-        payload: { ...event, _externalUserId: userExt },
+        // Payload crudo del wearable (stream HRV/sueño) cifrado en reposo.
+        // No se agrega en DB; solo se reprocesa server-side al desencriptar.
+        payload: encryptJson({ ...event, _externalUserId: userExt }),
       },
     });
   } catch (e) {

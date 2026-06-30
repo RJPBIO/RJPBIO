@@ -13,6 +13,7 @@ import { check } from "@/server/ratelimit";
 import { auditLog } from "@/server/audit";
 import { scoreAnswers } from "@/lib/nom35/scoring";
 import { ITEMS } from "@/lib/nom35/items";
+import { encryptJson } from "@/server/kms";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -70,8 +71,12 @@ export async function POST(request) {
     data: {
       orgId,
       userId,
+      // Respuestas individuales cifradas en reposo (AES-256-GCM). El scoring
+      // ya corrió sobre el plaintext arriba; los agregados (total/nivel/
+      // porDominio) quedan en claro para reportes. Un dump de DB no revela
+      // las respuestas psicosociales individuales.
       guia: "III",
-      answers: body.answers,
+      answers: encryptJson(body.answers),
       total: result.total,
       nivel: result.nivel,
       porDominio: result.porDominio,

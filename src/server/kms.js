@@ -27,7 +27,11 @@ async function getKmsClient() {
   if (!_kmsClientPromise) {
     _kmsClientPromise = (async () => {
       try {
-        const { KMSClient, EncryptCommand, DecryptCommand } = await import(/* webpackIgnore: true */ "@aws-sdk/client-kms");
+        // Specifier indirecto + @vite-ignore: evita que Vite/Vitest resuelvan
+        // estáticamente el dep opcional cuando no está instalado (mismo patrón
+        // que audit-export.js). Solo se importa si AWS_KMS_KEY_ID está set.
+        const moduleName = "@aws-sdk/client-kms";
+        const { KMSClient, EncryptCommand, DecryptCommand } = await import(/* @vite-ignore */ moduleName);
         return { client: new KMSClient({}), EncryptCommand, DecryptCommand };
       } catch { return null; }
     })();
@@ -115,6 +119,28 @@ export function decryptIfEncrypted(value) {
   if (value == null) return value;
   if (!isEncrypted(value)) return value;
   try { return decrypt(value); } catch { return value; }
+}
+
+/* ─── Campos JSON cifrados en reposo ──────────────────────────────
+   Para columnas Json sensibles que NO se agregan en DB (p.ej.
+   Nom35Response.answers, WearableEvent.payload). Se guardan como string
+   `enc:v1:...` dentro de la columna Json. Idempotente y compatible con
+   filas legacy en texto plano (objetos JSON sin cifrar). */
+
+/* Objeto JSON → string cifrado. null/undefined pasan; ya-cifrado pasa. */
+export function encryptJson(value) {
+  if (value == null) return value;
+  if (typeof value === "string" && isEncrypted(value)) return value;
+  return encrypt(JSON.stringify(value));
+}
+
+/* String cifrado → objeto JSON. Legacy (objeto plano / string no cifrado)
+   se devuelve tal cual. Token corrupto → null (fail-safe, no crash). */
+export function decryptJson(value) {
+  if (typeof value === "string" && isEncrypted(value)) {
+    try { return JSON.parse(decrypt(value)); } catch { return null; }
+  }
+  return value;
 }
 
 export async function newTenantKey() {
