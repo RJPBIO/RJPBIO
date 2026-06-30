@@ -8,6 +8,7 @@ import TrajectoryHero from "./data/TrajectoryHero";
 import DimensionsTrends from "./data/DimensionsTrends";
 import ConsistencyHeatmap from "./data/ConsistencyHeatmap";
 import OptimalWindowCard from "./data/OptimalWindowCard";
+import AutonomicTwinCard from "./data/AutonomicTwinCard";
 import ProgramsSection from "./data/ProgramsSection";
 import ProtocolCatalog from "./data/ProtocolCatalog";
 import SessionsRecent from "./data/SessionsRecent";
@@ -124,6 +125,9 @@ export default function DataV2({
       </SectionEmergeWrapper>
       <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-optimal-window">
         <OptimalWindowCard history={store.history} />
+      </SectionEmergeWrapper>
+      <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-autonomic-twin">
+        <AutonomicTwinCard hrvLog={store.hrvLog} />
       </SectionEmergeWrapper>
       <SectionEmergeWrapper staggerIndex={3} testid="datav2-section-programs">
         <div data-anchor="programs">
