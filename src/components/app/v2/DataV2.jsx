@@ -11,7 +11,7 @@ import OptimalWindowCard from "./data/OptimalWindowCard";
 import AutonomicTwinCard from "./data/AutonomicTwinCard";
 import ReadinessCard from "./data/ReadinessCard";
 import LifeJournalCard from "./data/LifeJournalCard";
-import PresenceTransitionCard from "./data/PresenceTransitionCard";
+import RegulationMomentCard from "./data/RegulationMomentCard";
 import ProgramsSection from "./data/ProgramsSection";
 import ProtocolCatalog from "./data/ProtocolCatalog";
 import SessionsRecent from "./data/SessionsRecent";
@@ -114,7 +114,7 @@ export default function DataV2({
     <SubScreenMountWrapper testid="datav2-mount">
       <HeaderV2 onBellClick={onBellClick} />
       <DataIntro />
-      <PresenceTransitionCard hrvLog={store.hrvLog} onNavigate={onNavigate} />
+      <RegulationMomentCard hrvLog={store.hrvLog} onNavigate={onNavigate} />
       <SectionEmergeWrapper staggerIndex={0} testid="datav2-section-trajectory">
         <TrajectoryHero data={data.composite28d} />
       </SectionEmergeWrapper>

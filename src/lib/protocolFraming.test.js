@@ -61,6 +61,22 @@ describe("buildProtocolFraming — situación (prioridad sobre daypart)", () => 
     expect(f.voiceTone).toBe("calm");
     expect(f.notable).toBe(true);
   });
+  it("creatividad → ventana creativa, tono focus", () => {
+    const f = buildProtocolFraming({ protocol: P, now: wed(10), situation: "creatividad" });
+    expect(f.eyebrow).toMatch(/creativa/i);
+    expect(f.voiceTone).toBe("focus");
+    expect(f.notable).toBe(true);
+  });
+  it("pre-sueño → antes de dormir, tono calm", () => {
+    const f = buildProtocolFraming({ protocol: P, now: wed(23), situation: "pre_sueno" });
+    expect(f.eyebrow).toMatch(/dormir/i);
+    expect(f.voiceTone).toBe("calm");
+  });
+  it("despertar → arranque del día, tono activation", () => {
+    const f = buildProtocolFraming({ protocol: P, now: wed(7), situation: "despertar" });
+    expect(f.eyebrow).toMatch(/arranque/i);
+    expect(f.voiceTone).toBe("activation");
+  });
 });
 
 describe("buildProtocolFraming — gemelo autonómico matiza", () => {

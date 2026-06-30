@@ -64,6 +64,24 @@ const SITUATIONS = {
       "Llegaste a casa, pero tu sistema sigue en el trabajo. Estos minutos son para soltar el rol profesional y llegar de verdad — presente para quienes te esperan.",
     tone: "calm",
   },
+  creatividad: {
+    eyebrow: "Ventana creativa",
+    frame:
+      "Tu sistema está en el equilibrio que precede tu mejor trabajo: ni apagado ni acelerado. Estos minutos son para entrar en foco profundo antes de empezar.",
+    tone: "focus",
+  },
+  pre_sueno: {
+    eyebrow: "Antes de dormir",
+    frame:
+      "Es hora de bajar. Deja que la exhalación se alargue y el cuerpo afloje — preparas al sistema para un descanso más profundo, no para resolver nada más.",
+    tone: "calm",
+  },
+  despertar: {
+    eyebrow: "Arranque del día",
+    frame:
+      "Tu sistema aún está despertando. Antes del primer estímulo del día, sube despacio: una activación gradual para llegar con claridad, no en reacción.",
+    tone: "activation",
+  },
 };
 
 // Encuadre por daypart + intención del protocolo (cuando no hay situación).

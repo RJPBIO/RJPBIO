@@ -2625,7 +2625,7 @@ export const P = [
      anclaje de presencia (objeto del hogar). Outcome real: la presencia
      en relaciones, que el usuario marca en el diario (no el HRV).
      Mecanismo evidenciado fijo; especificidad "umbral de casa" en copy +
-     anchor. Lanzado por PresenceTransitionCard al detectar el estado. */
+     anchor. Lanzado por RegulationMomentCard (momento transición a casa). */
   {id:26,n:"Transición a casa",ct:"Reset",d:180,sb:"Cruza el umbral: del trabajo a la presencia",tg:"TC",cl:"#22D3EE",int:"reset",dif:1,useCase:"active",
   ph:[
     {

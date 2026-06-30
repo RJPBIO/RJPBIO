@@ -1,31 +1,30 @@
 "use client";
 /* ═══════════════════════════════════════════════════════════════
-   PresenceTransitionCard — cruzar el umbral del trabajo a casa.
+   RegulationMomentCard — el momento de regulación de ahora.
    ───────────────────────────────────────────────────────────────
-   Aparece SOLO cuando se detecta el estado de transición (tarde-noche +
-   activación simpática sostenida). Propone 3 minutos para pasar del rol
-   profesional al personal — mecanismo parasimpático (Reinicio
-   Parasimpático) + encuadre "transicion_casa". El outcome no es HRV: es
-   tu presencia, que marcas después en el diario (pareja/familia).
-   Modelo: lib/neural/presenceTransition.
+   Aparece SOLO cuando se detecta un momento (pre-sueño, transición a casa,
+   despertar, ventana creativa) según hora + estado autonómico. Surfacea
+   uno solo + lanza su protocolo enmarcado. El outcome se marca en el
+   diario, no es el HRV. Modelo: lib/neural/regulationMoments.
    ═══════════════════════════════════════════════════════════════ */
 import { useMemo } from "react";
-import { buildPresenceTransition } from "@/lib/neural/presenceTransition";
+import { detectRegulationMoment } from "@/lib/neural/regulationMoments";
 import { colors, typography, spacing } from "../tokens";
 
 const ACCENT = colors.accent.phosphorCyan;
 
-export default function PresenceTransitionCard({ hrvLog, onNavigate, now }) {
-  const data = useMemo(
-    () => buildPresenceTransition({ hrvLog: hrvLog || [], now: now ?? Date.now() }),
+export default function RegulationMomentCard({ hrvLog, onNavigate, now }) {
+  const m = useMemo(
+    () => detectRegulationMoment({ hrvLog: hrvLog || [], now: now ?? Date.now() }),
     [hrvLog, now]
   );
 
-  if (!data || !data.detected) return null;
+  if (!m || !m.detected) return null;
 
   return (
     <section
-      data-v2-presence-transition
+      data-v2-regulation-moment
+      data-moment={m.id}
       style={{
         marginInline: spacing.s24,
         marginBlockStart: spacing.s24,
@@ -47,7 +46,7 @@ export default function PresenceTransitionCard({ hrvLog, onNavigate, now }) {
           marginBlockEnd: spacing.s12,
         }}
       >
-        Transición a casa
+        {m.eyebrow}
       </div>
 
       <p
@@ -63,14 +62,14 @@ export default function PresenceTransitionCard({ hrvLog, onNavigate, now }) {
           maxInlineSize: 480,
         }}
       >
-        {data.message}
+        {m.message}
       </p>
 
       <button
         type="button"
         onClick={() =>
           onNavigate &&
-          onNavigate({ action: "start-protocol", protocolId: data.protocolId, situation: data.situation })
+          onNavigate({ action: "start-protocol", protocolId: m.protocolId, situation: m.situation })
         }
         style={{
           appearance: "none",
@@ -87,7 +86,7 @@ export default function PresenceTransitionCard({ hrvLog, onNavigate, now }) {
           minBlockSize: 48,
         }}
       >
-        Cruzar el umbral · 3 min
+        {m.ctaLabel}
       </button>
 
       <p
@@ -100,7 +99,7 @@ export default function PresenceTransitionCard({ hrvLog, onNavigate, now }) {
           lineHeight: 1.5,
         }}
       >
-        Después, marca cómo fue tu presencia en tu diario — eso es lo que de verdad importa.
+        Después, marca cómo te fue en tu diario — eso es lo que de verdad importa.
       </p>
     </section>
   );
