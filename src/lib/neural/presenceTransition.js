@@ -18,7 +18,7 @@
 
 import { buildAutonomicTwin } from "./autonomicTwin";
 
-const HOME_PROTOCOL_ID = 1; // Reinicio Parasimpático
+const HOME_PROTOCOL_ID = 26; // Transición a casa (protocolo bespoke)
 const EVENING_START = 17;
 const EVENING_END = 22;
 

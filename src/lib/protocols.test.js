@@ -18,16 +18,29 @@ import {
 } from "./protocols";
 
 describe("Phase 4 SP1 — catálogo post-eliminación OMEGA/OMNIA (Phase 5 SP3-SP5)", () => {
-  it("P contiene 23 protocolos (18 base + #21 + #22 + #23 + #24 + #25)", () => {
-    expect(P.length).toBe(23);
+  it("P contiene 24 protocolos (18 base + #21..#25 + #26 Transición a casa)", () => {
+    expect(P.length).toBe(24);
   });
 
-  it("getActiveProtocols() devuelve 18 (todos active de SP3-SP5 sumados)", () => {
+  it("getActiveProtocols() devuelve 19 (18 + #26 Transición a casa)", () => {
     // Phase 4 SP1: 12 base activos + #15 → 13.
     // Phase 5 SP3: +#21 → 14.
     // Phase 5 SP4: +#22 + #23 → 16.
     // Phase 5 SP5: +#24 + #25 → 18.
-    expect(getActiveProtocols().length).toBe(18);
+    // Presencia: +#26 → 19.
+    expect(getActiveProtocols().length).toBe(19);
+  });
+
+  it("protocolo #26 Transición a casa: 3 fases, reset, 180s, primitivas esperadas", () => {
+    const p26 = P.find((p) => p.id === 26);
+    expect(p26).toBeDefined();
+    expect(p26.n).toBe("Transición a casa");
+    expect(p26.int).toBe("reset");
+    expect(p26.d).toBe(180);
+    expect(p26.ph.length).toBe(3);
+    const primitives = p26.ph.map((ph) => ph.iExec?.[0]?.ui?.primitive);
+    expect(primitives).toContain("parasympathic_reset_orb");
+    expect(primitives).toContain("object_anchor_prompt");
   });
 
   it("getCrisisProtocols() devuelve 3 (#18, #19, #20)", () => {

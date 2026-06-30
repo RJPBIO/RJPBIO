@@ -294,9 +294,9 @@ describe("#25 Cardiac Pulse Match — migración Phase 5 SP5", () => {
 // ═══════════════════════════════════════════════════════════════
 
 describe("Catálogo post-#24-#25: invariantes globales", () => {
-  it("getActiveProtocols cuenta ahora 18 (12 base + #15 + #21-#25)", () => {
+  it("getActiveProtocols cuenta ahora 19 (12 base + #15 + #21-#25 + #26)", () => {
     const active = P.filter((x) => getUseCase(x) === "active");
-    expect(active.length).toBe(18);
+    expect(active.length).toBe(19);
   });
 
   it("crisis count sigue siendo 3 (#18, #19, #20)", () => {
@@ -307,16 +307,16 @@ describe("Catálogo post-#24-#25: invariantes globales", () => {
     expect(P.filter((x) => getUseCase(x) === "training").length).toBe(2);
   });
 
-  it("catálogo total ahora 23 protocolos", () => {
-    expect(P.length).toBe(23);
+  it("catálogo total ahora 24 protocolos (+#26 Transición a casa)", () => {
+    expect(P.length).toBe(24);
   });
 
-  it("IDs 24 y 25 presentes; cap de IDs sigue siendo 25", () => {
+  it("IDs 24 y 25 presentes; cap de IDs ahora 26 (+#26 Transición a casa)", () => {
     const ids = new Set(P.map((p) => p.id));
     expect(ids.has(24)).toBe(true);
     expect(ids.has(25)).toBe(true);
     const max = Math.max(...P.map((p) => p.id));
-    expect(max).toBeLessThanOrEqual(25);
+    expect(max).toBeLessThanOrEqual(26);
   });
 
   it("todos los protocolos #21-#25 tienen useCase 'active'", () => {

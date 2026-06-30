@@ -16,9 +16,9 @@ import {
 import { P } from "./protocols";
 
 describe("F0-4 Capa-1 — HAPTIC_SIGNATURES catalog completeness", () => {
-  it("contiene 23 protocol entries (matchea P[] del catálogo)", () => {
+  it("contiene 24 protocol entries (matchea P[] del catálogo)", () => {
     const ids = Object.keys(HAPTIC_SIGNATURES).map((k) => Number(k)).sort((a, b) => a - b);
-    expect(ids.length).toBe(23);
+    expect(ids.length).toBe(24);
     // IDs reservados 13-14 NO deben aparecer (OMEGA/OMNIA eliminados Phase 4 SP1)
     expect(ids.includes(13)).toBe(false);
     expect(ids.includes(14)).toBe(false);

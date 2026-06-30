@@ -2617,6 +2617,117 @@ export const P = [
       sc:"Anclaje cardíaco + commitment motor (Bryan, Adams, Monin 2013)",
       ic:"body",br:null
     }
+  ]},
+
+  /* ═══ #26 TRANSICIÓN A CASA ═══
+     Del rol profesional al personal. 3 actos: descarga cognitiva del
+     trabajo (decisión hoy/mañana) → box 4-4-4-4 (boundary fisiológico) →
+     anclaje de presencia (objeto del hogar). Outcome real: la presencia
+     en relaciones, que el usuario marca en el diario (no el HRV).
+     Mecanismo evidenciado fijo; especificidad "umbral de casa" en copy +
+     anchor. Lanzado por PresenceTransitionCard al detectar el estado. */
+  {id:26,n:"Transición a casa",ct:"Reset",d:180,sb:"Cruza el umbral: del trabajo a la presencia",tg:"TC",cl:"#22D3EE",int:"reset",dif:1,useCase:"active",
+  ph:[
+    {
+      l:"Descarga del trabajo",r:"0–60s",s:0,e:60,
+      k:"¿Qué del trabajo sigue abierto? ¿Hoy o mañana?",
+      i:"Nombra lo que tu mente sigue cargando del trabajo. Decide: ¿necesita cierre hoy, o lo retomas mañana?",
+      sc:"Affect labeling reduce activación amigdalar hasta 40% (Lieberman 2007, UCLA); la decisión binaria interrumpe la rumiación del córtex cingulado anterior y marca el boundary trabajo-casa.",
+      ic:"mind",br:null,
+      iExec:[
+        {
+          from:0,to:25,
+          text:"Nombra lo que tu mente sigue cargando del trabajo.",
+          type:"cognitive_anchor",
+          mechanism:"Externalizar el pendiente dominante reduce rumiación (córtex cingulado anterior)",
+          duration:{min_ms:16000,target_ms:24000,max_ms:32000},
+          validate:{kind:"min_duration",min_ms:14000},
+          ui:{primitive:"text_emphasis_voice"},
+          media:{
+            voice:{enabled_default:false},
+            breath_ticks:{enabled:true,auto_sync:true},
+            binaural:{action:"start",type:"calma"},
+            signature:{kind:"phaseShift",fire_at:"start"}
+          }
+        },
+        {
+          from:25,to:60,
+          text:"¿Se cierra hoy o lo dejas para mañana?",
+          type:"cognitive_anchor",
+          mechanism:"Decisión binaria (hoy vs mañana) consolida el event boundary trabajo-casa (Radvansky 2006)",
+          duration:{min_ms:20000,target_ms:30000,max_ms:38000},
+          validate:{kind:"chip_selection",required:true},
+          ui:{
+            primitive:"chip_selector",
+            props:{
+              chips:[{id:"today",label:"Lo cierro hoy"},{id:"tomorrow",label:"Mañana lo retomo"}],
+              min_thinking_ms:5000
+            }
+          },
+          media:{
+            voice:{enabled_default:false},
+            breath_ticks:{enabled:true,auto_sync:true},
+            binaural:{action:"continue"}
+          }
+        }
+      ]
+    },
+    {
+      l:"Respiración de transición",r:"60–120s",s:60,e:120,
+      k:"Box 4-4-4-4. Deja la oficina en la puerta.",
+      i:"Inhala 4. Sostén 4. Exhala 4. Vacío 4. Dos ciclos. Con cada exhalación, suelta un poco más el rol profesional.",
+      sc:"Box breathing 4-4-4-4 activa el complejo vagal ventral en <20s (Porges 2011, polyvagal theory); el cambio de estado respiratorio marca el boundary fisiológico entre el rol profesional y el personal.",
+      ic:"breath",br:{in:4,h1:4,ex:4,h2:4},
+      iExec:[
+        {
+          from:0,to:60,
+          text:"Inhala 4, sostén 4, exhala 4, vacío 4. Dos ciclos. Suelta la oficina.",
+          type:"breath",
+          mechanism:"Box breathing activa el parasimpático ventral + marca la transición de rol",
+          duration:{min_ms:48000,target_ms:58000,max_ms:68000},
+          validate:{kind:"breath_cycles",min_cycles:2,cycle_min_ms:14000},
+          ui:{primitive:"parasympathic_reset_orb",props:{showEyebrow:false,cycleCountTarget:2}},
+          media:{
+            voice:{enabled_default:false,cues:["inhala","exhala"]},
+            breath_ticks:{enabled:false},
+            binaural:{action:"continue",type:"calma"},
+            haptic:{phase:"transicion_casa_2"}
+          }
+        }
+      ]
+    },
+    {
+      l:"Anclaje de presencia",r:"120–180s",s:120,e:180,
+      k:"Un objeto de casa que diga: aquí estoy.",
+      i:"Mira a tu alrededor. Elige UN objeto de tu casa que represente 'aquí estoy, presente'. Nómbralo.",
+      sc:"El grounding sensorial (nominar un objeto físico del hogar) interrumpe la transición mental incompleta y consolida la presencia en el espacio doméstico vía embodied cognition (córtex visual-temporal + propiocepción local).",
+      ic:"body",br:null,
+      iExec:[
+        {
+          from:0,to:60,
+          text:"Elige un objeto de tu casa que te ancle aquí, ahora. Nómbralo.",
+          type:"cognitive_anchor",
+          mechanism:"Nominar un objeto físico activa córtex visual-temporal + proprioceptivo local; consolida la presencia (embodied cognition)",
+          duration:{min_ms:38000,target_ms:54000,max_ms:64000},
+          validate:{kind:"min_duration",min_ms:28000},
+          ui:{
+            primitive:"object_anchor_prompt",
+            props:{
+              prompt:"Escoge un objeto de tu casa.",
+              placeholder:"Ej: una lámpara, el sofá, una foto",
+              min_chars:2,
+              affirmation_template:"{value} — aquí estoy, presente"
+            }
+          },
+          media:{
+            voice:{enabled_default:false},
+            breath_ticks:{enabled:false},
+            binaural:{action:"stop"},
+            cue:{type:"ok",fire_at:"end"}
+          }
+        }
+      ]
+    }
   ]}
 ];
 
@@ -2643,6 +2754,7 @@ export const SCIENCE_DEEP = {
   22: "Vagal Hum Reset combina tres mecanismos vagales documentados que se activan simultáneamente con humming sostenido. Primero: el humming activa el nervio laríngeo recurrente (rama del vago) por estimulación laríngea + extensión exhalatoria parasimpática (Porges 2009, polyvagal theory). Segundo: la vibración facial durante el humming estimula el nervio trigémino. Tercero: Maniscalco 2003 (European Respiratory Journal) documentó que el humming aumenta la producción de óxido nítrico nasal aproximadamente 15× vs respiración normal — efecto fisiológico medible inmediato. La práctica de Bhramari pranayama del yoga tradicional usa este mecanismo; la innovación de Bio-Ignición es la instrumentación timed con counter (4 humming sostenidos × 10s) + interocepción post-vocalización para consolidar el cambio fisiológico vía ínsula anterior (Khalsa 2018 Roadmap interoception). Limitación honesta: efectos downstream del NO (broncodilatación) requieren uso sostenido para ser clínicamente relevantes; en una sesión de 150s lo principal es activación parasimpática vía vagal. NO se reclama boost inmunológico ni efectos sistémicos no replicados.",
   23: "Power Pose Activation usa el efecto de feedback postural sin reclamar el efecto neuroendocrino disputed. El claim original Carney/Cuddy 2010 (Psychological Science) de que power poses aumentan testosterona y reducen cortisol NO se replica consistentemente — Ranehill 2015 con muestra mayor lo contradijo. Lo que SÍ se sostiene tras p-curve análisis (Cuddy 2018 Psychological Science) es el postural feedback effect: postura erguida modifica self-perception y proprioception central. Adicionalmente, respiración profunda 4:4 con postura erguida activa simpático moderado (Russo 2017 Breathe slow breathing review) y la activación isométrica del core refuerza propiocepción + estabilidad postural sostenida. El protocolo combina los tres factores documentados sin reclamar el efecto hormonal: cambio postural + respiración + isometric activan estado fisiológico de alerta moderada por mecanismos posturales y respiratorios documentados, no por elevación hormonal. 100% ejecutable sin infraestructura externa (cubículo, oficina, casa).",
   24: "Bilateral Walking Meditation instrumenta walking meditation tradicional (yoga / Buddhist) con atención unilateral alternante. Teut 2013 (Evidence-Based Complementary and Alternative Medicine) RCT documentó reducción de distress psicológico tras 4 semanas de práctica de mindful walking. Yang & Conroy 2018 (Psychology of Sport and Exercise) mostraron afecto negativo momentáneo menor durante mindful movement vs sentado quieto. La instrumentación de Bio-Ignición divide la caminata en dos fases unilaterales (8 pasos pie izquierdo + 8 pasos pie derecho con tap manual) para mantener focus alternante explícito, en contraste con bilateral attention difusa. Mecanismo: walking meditation combina circulación cerebral aumentada por marcha lenta + interocepción ambulatoria + atención corporal a los pies. Limitación honesta: efectos crónicos (4+ semanas) son los mejor documentados; single session de 150s tiene effects modestos pero medibles (reset cognitivo + reducción rumiación). NO se reclama mejora cognitiva sostenida ni cambio neuroplástico — sólo reset interocéptivo en sesión.",
+  26: "Transición a casa instrumenta el problema del 'role transition' incompleto: llegar a casa con el sistema nervioso aún en activación simpática laboral. Combina tres mecanismos en serie. (1) Affect labeling / descarga cognitiva: nombrar el pendiente dominante y decidir hoy-vs-mañana reduce la activación amigdalar (Lieberman 2007, UCLA, Psychological Science) e interrumpe la rumiación del córtex cingulado anterior; la decisión binaria cierra el bucle abierto (Zeigarnik effect). (2) Box breathing 4-4-4-4: activa el complejo vagal ventral en <20s (Porges 2011, polyvagal theory; Russo 2017 Breathe) y funciona como event boundary fisiológico que el cerebro usa para segmentar contextos (Radvansky & Zacks 2006, doorway effect). (3) Grounding sensorial: nominar un objeto físico del hogar ancla la atención vía embodied cognition (córtex visual-temporal + propiocepción local), consolidando la presencia en el espacio doméstico. Limitación honesta: el outcome relevante no es el HRV post-sesión sino la calidad de presencia en las relaciones, que es auto-reportada (vía el diario autonómico, contexto pareja/familia) — no un biomarcador. La detección del estado de transición es heurística (hora + desviación HRV vs norma personal), no un sensor de 'modo trabajo'.",
   25: "Cardiac Pulse Match combina dos mecanismos documentados en serie. Primero, heartbeat detection task (Schandry 1981 Psychophysiology; Garfinkel 2015 Biological Psychology): el user cuenta latidos en una ventana de 30s palpando pulso radial, lo cual activa la ínsula posterior y entrena interoceptive accuracy. Segundo, respiración a frecuencia de resonancia ~5.5 rpm (Lehrer & Gevirtz 2014 Frontiers in Psychology; Vaschillo 2006 Applied Psychophysiology and Biofeedback): sostener 5-6 ciclos por minuto maximiza la amplitud de HRV vía resonancia barorrefleja, documentado en biofeedback HRV. La combinación instrumentada timed (heartbeat counting → resonance breathing con interocepción cardíaca sostenida) integra Khalsa 2018 (Roadmap interoception): un ciclo de awareness + accuracy en serie. Limitación honesta: ~10% de población no detecta pulso radial fácilmente (variant pulso carotídeo disponible); efectos clínicos de HRV training requieren semanas de práctica (Lehrer protocolo 20min/día × 4 semanas), no una sola sesión. En 150s, lo principal es el cambio fisiológico inmediato por respiración 5.5rpm + cierre interocéptivo. NO se reclama HRV training acute ni mejora cardíaca clínica.",
 };
 

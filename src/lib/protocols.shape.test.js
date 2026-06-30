@@ -25,13 +25,13 @@ describe("protocols catalog shape", () => {
     expect(P.length).toBeGreaterThanOrEqual(18);
   });
 
-  it("ids únicos, positivos y dentro de [1,25] (gap permanente en 13/14)", () => {
+  it("ids únicos, positivos y dentro de [1,26] (gap permanente en 13/14)", () => {
     const ids = P.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
     ids.forEach((id) => {
       expect(Number.isInteger(id)).toBe(true);
       expect(id).toBeGreaterThanOrEqual(1);
-      expect(id).toBeLessThanOrEqual(25);
+      expect(id).toBeLessThanOrEqual(26);
     });
   });
 

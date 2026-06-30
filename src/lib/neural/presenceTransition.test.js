@@ -23,7 +23,7 @@ describe("buildPresenceTransition", () => {
   it("tarde-noche + estado por debajo de norma → detecta y propone cruzar el umbral", () => {
     const r = buildPresenceTransition({ hrvLog: [...baseline(EVE), { ts: EVE, rmssd: 25 }], now: EVE });
     expect(r.detected).toBe(true);
-    expect(r.protocolId).toBe(1);
+    expect(r.protocolId).toBe(26);
     expect(r.situation).toBe("transicion_casa");
     expect(r.message).toMatch(/umbral/i);
   });

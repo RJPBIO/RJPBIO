@@ -235,6 +235,14 @@ export const HAPTIC_SIGNATURES = {
     completion:    [150, 100, 150, 100, 250],
     intensity_modifier: 0.80,
   },
+  26: { // Transición a casa (reset suave, box 4-4-4-4 + grounding)
+    breath_inhale: [40, 30, 80],
+    breath_hold:   [200],
+    breath_exhale: [120, 80, 40],
+    phase_shift:   [60, 60, 60, 60],
+    completion:    [200, 100, 200],
+    intensity_modifier: 0.85,
+  },
 };
 
 /**
