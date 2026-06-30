@@ -58,6 +58,12 @@ const SITUATIONS = {
     frame: "Un alto a media marcha. Vuelve al cuerpo y retoma desde ahí.",
     tone: "neutral",
   },
+  transicion_casa: {
+    eyebrow: "Cruzar el umbral",
+    frame:
+      "Llegaste a casa, pero tu sistema sigue en el trabajo. Estos minutos son para soltar el rol profesional y llegar de verdad — presente para quienes te esperan.",
+    tone: "calm",
+  },
 };
 
 // Encuadre por daypart + intención del protocolo (cuando no hay situación).

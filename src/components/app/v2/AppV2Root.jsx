@@ -362,7 +362,7 @@ export default function AppV2Root() {
   // en Group C). Llega via onNavigate({preMood}). Se cachea en state local
   // para que handlePlayerComplete pueda computar deltaMood = post - pre
   // cuando user submitea mood post.
-  const _doLaunchProtocol = useCallback((protocol, preMood = null) => {
+  const _doLaunchProtocol = useCallback((protocol, preMood = null, situation = null) => {
     if (!protocol) return;
     const validPre = (typeof preMood === "number" && preMood >= 1 && preMood <= 5)
       ? preMood
@@ -371,17 +371,18 @@ export default function AppV2Root() {
     setSelectedProtocol(protocol);
     setSessionStartedAt(Date.now());
     // Encuadre contextual (determinista, instantáneo — sin latencia antes de
-    // la sesión). Integra el gemelo autonómico como twinDirection. El player
-    // solo lo muestra si framing.notable (lunes-AM/viernes-PM/desviación/situación).
+    // la sesión). Integra el gemelo autonómico como twinDirection + una
+    // situación explícita (p. ej. "transicion_casa"). El player solo lo
+    // muestra si framing.notable (lunes-AM/viernes-PM/desviación/situación).
     let twinDirection = null;
     try {
       twinDirection = buildAutonomicTwin(useStore.getState().hrvLog || []).deviation?.direction || null;
     } catch { /* sin gemelo → sin matiz */ }
-    setFramingForPlayer(buildProtocolFraming({ protocol, now: Date.now(), twinDirection }));
+    setFramingForPlayer(buildProtocolFraming({ protocol, now: Date.now(), twinDirection, situation }));
     setPlayerOpen(true);
   }, []);
 
-  const launchProtocol = useCallback((protocol, preMood = null) => {
+  const launchProtocol = useCallback((protocol, preMood = null, situation = null) => {
     if (!protocol) return;
     // Phase 7 F3.5-A: gate Reset1IntroCard pre-session SOLO para protocolo
     // #1 cuando el user NO ha optado opt-out (preferences.dontShowAgainReset1Intro).
@@ -395,12 +396,12 @@ export default function AppV2Root() {
         }
       } catch { /* defensive: skipPref stays false */ }
       if (!skipPref) {
-        setPendingProtocolLaunch({ protocol, preMood });
+        setPendingProtocolLaunch({ protocol, preMood, situation });
         setReset1IntroOpen(true);
         return;
       }
     }
-    _doLaunchProtocol(protocol, preMood);
+    _doLaunchProtocol(protocol, preMood, situation);
   }, [_doLaunchProtocol]);
 
   // Phase 7 F3.5-A — handlers Reset1IntroCard.
@@ -409,7 +410,7 @@ export default function AppV2Root() {
     const pending = pendingProtocolLaunch;
     setPendingProtocolLaunch(null);
     if (pending?.protocol) {
-      _doLaunchProtocol(pending.protocol, pending.preMood);
+      _doLaunchProtocol(pending.protocol, pending.preMood, pending.situation);
     }
   }, [pendingProtocolLaunch, _doLaunchProtocol]);
 
@@ -490,7 +491,7 @@ export default function AppV2Root() {
       if (!Number.isFinite(id)) return;
       const protocol = PROTOCOLS.find((p) => p.id === id);
       if (!protocol) return;
-      launchProtocol(protocol, event.preMood ?? null);
+      launchProtocol(protocol, event.preMood ?? null, event.situation ?? null);
       return;
     }
     // Phase 6D SP1 — ColdStart "Tu primera sesión". Acepta:

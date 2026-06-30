@@ -54,6 +54,13 @@ describe("buildProtocolFraming — situación (prioridad sobre daypart)", () => 
     expect(f.eyebrow).toMatch(/Cierre/i);
     expect(f.voiceTone).toBe("discharge");
   });
+  it("transición a casa → cruzar el umbral, tono calm, notable", () => {
+    const f = buildProtocolFraming({ protocol: P, now: wed(19), situation: "transicion_casa" });
+    expect(f.eyebrow).toMatch(/umbral/i);
+    expect(f.frame).toMatch(/presente/i);
+    expect(f.voiceTone).toBe("calm");
+    expect(f.notable).toBe(true);
+  });
 });
 
 describe("buildProtocolFraming — gemelo autonómico matiza", () => {
