@@ -49,6 +49,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { db } from "./db";
 import { auditLog } from "./audit";
+import { signArtifactServer } from "./artifact-signing-keys";
 
 const DEFAULT_OBJECT_LOCK_DAYS = 2555; // 7 años (SOC2 + HIPAA típico)
 const DEFAULT_PAGE_SIZE = 500;
@@ -93,6 +94,24 @@ export async function exportChain(orgId, {
   const lastId = entries[entries.length - 1].id;
   const key = `audit/${orgId}/${ts}__${firstId}__${lastId}.ndjson`;
 
+  // Firma Ed25519 del manifest (verificable por terceros con la clave
+  // pública en /api/v1/keys). Convierte el export en evidencia firmada,
+  // no solo tamper-evident. null si no hay clave configurada (honesto).
+  const exportedAt = new Date().toISOString();
+  const signature = signArtifactServer(
+    {
+      type: "audit.export",
+      orgId,
+      key,
+      manifest,
+      firstId: String(firstId),
+      lastId: String(lastId),
+      count: entries.length,
+      exportedAt,
+    },
+    exportedAt
+  );
+
   let target = "fs";
   if (process.env.AUDIT_EXPORT_BUCKET && process.env.AWS_REGION) {
     target = "s3";
@@ -103,6 +122,7 @@ export async function exportChain(orgId, {
       body: ndjson,
       objectLockDays,
       manifest,
+      signature,
     });
   } else {
     await writeFsStub({ key, ndjson });
@@ -111,10 +131,17 @@ export async function exportChain(orgId, {
   await auditLog({
     orgId,
     action: "audit.export.chunk",
-    payload: { manifest, key, exported: entries.length, target, objectLockDays: target === "s3" ? objectLockDays : undefined },
+    payload: {
+      manifest,
+      key,
+      exported: entries.length,
+      target,
+      signatureKeyId: signature?.keyId ?? null,
+      objectLockDays: target === "s3" ? objectLockDays : undefined,
+    },
   }).catch(() => {});
 
-  return { exported: entries.length, manifest, key, sinceId, lastId, target, ...(target === "s3" ? { objectLockDays } : {}) };
+  return { exported: entries.length, manifest, key, sinceId, lastId, target, signature, ...(target === "s3" ? { objectLockDays } : {}) };
 }
 
 /**
@@ -134,7 +161,7 @@ function serializeAuditRow(row) {
  * Escribe a S3 con Object Lock COMPLIANCE. Requiere `@aws-sdk/client-s3`
  * instalado. Lanza error explícito si no está.
  */
-async function putToS3WithObjectLock({ bucket, region, key, body, objectLockDays, manifest }) {
+async function putToS3WithObjectLock({ bucket, region, key, body, objectLockDays, manifest, signature }) {
   let S3Client, PutObjectCommand;
   // Indirect string + @vite-ignore evita que Vite/Vitest intente resolver
   // estáticamente el dep en tiempo de bundle/test cuando no está instalado.
@@ -165,6 +192,9 @@ async function putToS3WithObjectLock({ bucket, region, key, body, objectLockDays
     Metadata: {
       "manifest-sha256": manifest,
       "object-lock-days": String(objectLockDays),
+      ...(signature
+        ? { "signature-alg": signature.alg, "signature-key-id": signature.keyId, "signature": signature.signature }
+        : {}),
     },
     // Nota: ChecksumAlgorithm: "SHA256" disponible en SDK v3 ≥ 3.388.
     // Si está instalado, AWS valida server-side el SHA256 y rechaza si discrepa.
