@@ -805,12 +805,14 @@ model HrvMeasurement {
   orgId        String?
 
   // Core HRV time-domain metrics (Task Force 1996 + Shaffer 2017).
-  rmssd        Float
-  lnRmssd      Float
-  sdnn         Float?
-  pnn50        Float?
-  meanHr       Float
-  rhr          Float?
+  // Cifrados en reposo (AES-256-GCM, kms.encNum) → TEXT en vez de Float.
+  // Se agregan APP-SIDE con decrypt-on-read (src/server/encrypted-fields.js).
+  rmssd        String
+  lnRmssd      String
+  sdnn         String?
+  pnn50        String?
+  meanHr       String
+  rhr          String?
 
   // Measurement metadata + quality.
   durationSec  Int

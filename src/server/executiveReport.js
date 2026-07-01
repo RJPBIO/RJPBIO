@@ -22,6 +22,7 @@
 
 import "server-only";
 import { db } from "./db";
+import { decryptHrvRows } from "./encrypted-fields";
 import { aggregateScores } from "@/lib/nom35/scoring";
 import { aggregateInstrument } from "@/lib/instruments";
 import { aggregateHrvDeltas } from "@/lib/hrvDelta";
@@ -127,7 +128,7 @@ export async function buildExecutiveReport(orgId, opts = {}) {
     safeFindMany(orm.hrvMeasurement, {
       where: { userId: { in: userIds }, measuredAt: { gte: periodStart } },
       orderBy: { measuredAt: "desc" },
-    }),
+    }).then(decryptHrvRows),
     safeFindMany(orm.instrument, {
       where: { userId: { in: userIds }, takenAt: { gte: periodStart } },
       orderBy: { takenAt: "desc" },
@@ -468,7 +469,7 @@ async function buildProgramsCohort({ orm, programs, userIds, periodStart, minN }
     safeFindMany(orm.hrvMeasurement, {
       where: { userId: { in: userIds }, measuredAt: { gte: widePeriodStart } },
       orderBy: { measuredAt: "desc" },
-    }),
+    }).then(decryptHrvRows),
     safeFindMany(orm.instrument, {
       where: { userId: { in: userIds }, takenAt: { gte: widePeriodStart } },
       orderBy: { takenAt: "desc" },

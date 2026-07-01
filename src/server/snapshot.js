@@ -19,6 +19,7 @@
 
 import "server-only";
 import { db } from "./db";
+import { decryptHrvRows } from "./encrypted-fields";
 
 const DAY_MS = 86400_000;
 
@@ -67,10 +68,11 @@ export async function buildUserSnapshot(userId, opts = {}) {
       orderBy: { completedAt: "desc" },
     }),
     // HRV en ventana — tabla puede no existir en memory adapter (returns []).
+    // decrypt-on-read: numéricos cifrados en reposo → números para agregar.
     safeFindMany(orm.hrvMeasurement, {
       where: { userId, measuredAt: { gte: since } },
       orderBy: { measuredAt: "desc" },
-    }),
+    }).then(decryptHrvRows),
     // Instrumentos en ventana — pss-4, swemwbs-7, phq-2, rmeq.
     safeFindMany(orm.instrument, {
       where: { userId, takenAt: { gte: since } },
@@ -175,7 +177,7 @@ export async function buildUserSnapshotLite(userId, opts = {}) {
     safeFindMany(orm.hrvMeasurement, {
       where: { userId, measuredAt: { gte: since } },
       orderBy: { measuredAt: "desc" },
-    }),
+    }).then(decryptHrvRows),
   ]);
 
   if (!user) return null;

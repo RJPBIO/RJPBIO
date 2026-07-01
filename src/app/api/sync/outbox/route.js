@@ -37,6 +37,7 @@ import {
   MAX_BATCH, MAX_PAYLOAD_BYTES, MAX_NEURAL_STATE_BYTES,
 } from "../../../../lib/sync-validation";
 import { mapHrvEntry, mapInstrumentEntry } from "../../../../lib/sync-mapping";
+import { encryptHrvNumerics } from "../../../../server/encrypted-fields";
 
 export const dynamic = "force-dynamic";
 
@@ -179,7 +180,9 @@ export async function POST(request) {
             // testabilidad isolation.
             await orm.hrvMeasurement.upsert({
               where: { id: entry.id },
-              create: mapHrvEntry(entry, { userId, orgId: personalOrg.id }),
+              // Numéricos HRV cifrados en reposo (decrypt-on-read en las
+              // agregaciones vía encrypted-fields).
+              create: encryptHrvNumerics(mapHrvEntry(entry, { userId, orgId: personalOrg.id })),
               update: {},
             });
           } else if (entry.kind === "instrument") {

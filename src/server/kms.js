@@ -143,6 +143,32 @@ export function decryptJson(value) {
   return value;
 }
 
+/* ─── Numéricos cifrados en reposo ────────────────────────────────
+   Para columnas numéricas sensibles (HRV, scores) que se agregan
+   APP-SIDE (mean en JS), no en SQL. Se guardan como string cifrado; la
+   columna Prisma pasa de Float/Int a String en la migración. La lectura
+   descifra a número justo antes de agregar. Passthrough para números
+   legacy en claro y null → decrypt-on-read es no-op sobre datos viejos. */
+
+/* Número → string cifrado. null/undefined pasan; ya-cifrado pasa. */
+export function encNum(value) {
+  if (value == null) return value;
+  if (typeof value === "string" && isEncrypted(value)) return value;
+  return encrypt(String(value));
+}
+
+/* String cifrado → número. Números/strings-plano legacy → Number(v); null
+   pasa. Token corrupto → null (no rompe el mean()). */
+export function decNum(value) {
+  if (value == null) return value;
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && isEncrypted(value)) {
+    try { return Number(decrypt(value)); } catch { return null; }
+  }
+  const n = Number(value);
+  return Number.isNaN(n) ? null : n;
+}
+
 export async function newTenantKey() {
   const dek = randomBytes(32);
   const wrapped = await wrapDataKey(dek);
