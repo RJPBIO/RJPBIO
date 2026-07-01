@@ -46,8 +46,8 @@ export default async function BillingPage({ searchParams }) {
   const upgradedSucces = sp.upgraded;
   const cancelled = sp.cancelled === "1";
 
-  const orgMemberships = await orm.membership.findMany({ where: { orgId } });
-  const seatsUsed = orgMemberships.length;
+  // count() en vez de findMany().length: no serializa 500 filas solo para contar.
+  const seatsUsed = await orm.membership.count({ where: { orgId } });
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
   const sessionsThisMonth = await orm.auditLog.count({
     where: { orgId, action: "session.complete", ts: { gte: monthStart } },

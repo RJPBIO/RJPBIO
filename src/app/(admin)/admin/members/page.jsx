@@ -16,15 +16,26 @@ export default async function MembersPage() {
   const orgId = b2bMembership?.orgId;
   if (!orgId) return null;
   const orm = await db();
-  const orgMemberships = await orm.membership.findMany({ where: { orgId } });
-  const rows = await Promise.all(orgMemberships.map(async (m) => {
-    const u = await orm.user.findUnique({ where: { id: m.userId } });
+  const orgMemberships = await orm.membership.findMany({
+    where: { orgId },
+    orderBy: { createdAt: "desc" },
+  });
+  // Fix N+1 (empresa grande): antes hacía un findUnique por cada miembro
+  // (500 miembros → 501 queries secuenciales → 10-30s). Ahora: 1 findMany
+  // de usuarios por lote + join en memoria (2 queries totales).
+  const memberUsers = await orm.user.findMany({
+    where: { id: { in: orgMemberships.map((m) => m.userId) } },
+    select: { id: true, email: true, name: true },
+  });
+  const userById = new Map(memberUsers.map((u) => [u.id, u]));
+  const rows = orgMemberships.map((m) => {
+    const u = userById.get(m.userId);
     return {
       id: m.id, userId: m.userId, role: m.role, createdAt: m.createdAt,
       scimId: m.scimId,
       email: u?.email || "", name: u?.name || "",
     };
-  }));
+  });
   // Pending invitations — para el panel de admin con acciones revoke/resend.
   // Solo las que NO han sido aceptadas aún (acceptedAt: null).
   const pendingInvites = await orm.invitation.findMany({

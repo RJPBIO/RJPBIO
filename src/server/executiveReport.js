@@ -256,15 +256,21 @@ function buildNom35Trends(responses, periodStart, periodEnd) {
   const endMs = periodEnd.getTime();
   const totalWeeks = Math.max(1, Math.ceil((endMs - startMs) / WEEK_MS));
 
+  // Fix escala O(n×w): agrupa las respuestas por semana UNA vez (O(n)) en
+  // vez de escanear toda la lista por cada dominio×semana (10×semanas×n).
+  const byWeek = Array.from({ length: totalWeeks }, () => []);
+  for (const r of responses) {
+    const ts = toMs(r.completedAt);
+    if (ts == null || ts < startMs || ts >= endMs) continue;
+    const w = Math.floor((ts - startMs) / WEEK_MS);
+    if (w >= 0 && w < totalWeeks) byWeek[w].push(r);
+  }
+
   for (const dominioId of ALL_DOMINIO_IDS) {
     trends[dominioId] = [];
     for (let w = 0; w < totalWeeks; w++) {
       const weekStartMs = startMs + w * WEEK_MS;
-      const weekEndMs = Math.min(weekStartMs + WEEK_MS, endMs);
-      const inWeek = responses.filter((r) => {
-        const ts = toMs(r.completedAt);
-        return ts != null && ts >= weekStartMs && ts < weekEndMs;
-      });
+      const inWeek = byWeek[w];
       if (inWeek.length < MIN_K) {
         trends[dominioId].push({
           week: w,
@@ -476,6 +482,23 @@ async function buildProgramsCohort({ orm, programs, userIds, periodStart, minN }
     }),
   ]);
 
+  // Fix escala O(n×m): antes, por cada programa completado se escaneaba
+  // TODA la lista de instrumentos/HRV (50k+) varias veces. Se indexa por
+  // userId una sola vez (ts precomputado) → lookup O(filas-del-usuario).
+  const pss4ByUser = new Map();
+  for (const i of instrumentsWide) {
+    if (i.instrumentId !== "pss-4") continue;
+    let arr = pss4ByUser.get(i.userId);
+    if (!arr) { arr = []; pss4ByUser.set(i.userId, arr); }
+    arr.push({ ts: toMs(i.takenAt), score: i.score });
+  }
+  const hrvByUser = new Map();
+  for (const h of hrvWide) {
+    let arr = hrvByUser.get(h.userId);
+    if (!arr) { arr = []; hrvByUser.set(h.userId, arr); }
+    arr.push({ ts: toMs(h.measuredAt), rmssd: h.rmssd });
+  }
+
   const cohorts = {};
   for (const [programId, rows] of byProgram.entries()) {
     if (rows.length < minN) {
@@ -504,14 +527,11 @@ async function buildProgramsCohort({ orm, programs, userIds, periodStart, minN }
       const postStart = endMs;
       const postEnd = endMs + Nms;
 
-      const userPss4Pre = instrumentsWide
-        .filter((i) => i.userId === p.userId && i.instrumentId === "pss-4")
-        .map((i) => ({ ts: toMs(i.takenAt), score: i.score }))
+      const userPss4All = pss4ByUser.get(p.userId) || [];
+      const userPss4Pre = userPss4All
         .filter((i) => i.ts != null && i.ts >= preStart && i.ts < preEnd)
         .map((i) => i.score);
-      const userPss4Post = instrumentsWide
-        .filter((i) => i.userId === p.userId && i.instrumentId === "pss-4")
-        .map((i) => ({ ts: toMs(i.takenAt), score: i.score }))
+      const userPss4Post = userPss4All
         .filter((i) => i.ts != null && i.ts >= postStart && i.ts < postEnd)
         .map((i) => i.score);
       if (userPss4Pre.length && userPss4Post.length) {
@@ -519,14 +539,11 @@ async function buildProgramsCohort({ orm, programs, userIds, periodStart, minN }
         postPss4Means.push(mean(userPss4Post));
       }
 
-      const userHrvPre = hrvWide
-        .filter((h) => h.userId === p.userId)
-        .map((h) => ({ ts: toMs(h.measuredAt), rmssd: h.rmssd }))
+      const userHrvAll = hrvByUser.get(p.userId) || [];
+      const userHrvPre = userHrvAll
         .filter((h) => h.ts != null && h.ts >= preStart && h.ts < preEnd)
         .map((h) => h.rmssd);
-      const userHrvPost = hrvWide
-        .filter((h) => h.userId === p.userId)
-        .map((h) => ({ ts: toMs(h.measuredAt), rmssd: h.rmssd }))
+      const userHrvPost = userHrvAll
         .filter((h) => h.ts != null && h.ts >= postStart && h.ts < postEnd)
         .map((h) => h.rmssd);
       if (userHrvPre.length && userHrvPost.length) {
