@@ -191,12 +191,16 @@ export function mergeStates(local, remote) {
   return {
     ...remote,
     ...local, // local wins por defecto (más reciente para esta sesión)
-    // Counters → MAX (nunca decremento)
+    // Counters monotónicos → MAX (nunca decremento)
     totalSessions: Math.max(local.totalSessions || 0, remote.totalSessions || 0),
     totalTime: Math.max(local.totalTime || 0, remote.totalTime || 0),
-    streak: Math.max(local.streak || 0, remote.streak || 0),
     bestStreak: Math.max(local.bestStreak || 0, remote.bestStreak || 0),
     vCores: Math.max(local.vCores || 0, remote.vCores || 0),
+    // streak es DERIVADO de lastDate y SE RESETEA tras un hueco → NO usar MAX
+    // (resucitaría la racha tras 2 meses de ausencia). Toma streak + lastDate
+    // del estado con la fecha más reciente. Alineado con el server, que ya
+    // excluye streak de MAX_COUNTERS (src/server/sync-merge.js).
+    ...pickStreak(local, remote),
     // Listas → dedupe por ts, cap recencia
     history: dedupe([...(local.history || []), ...(remote.history || [])], "ts").slice(-500),
     moodLog: dedupe([...(local.moodLog || []), ...(remote.moodLog || [])], "ts").slice(-500),
@@ -210,6 +214,15 @@ export function mergeStates(local, remote) {
     // Picks por timestamp
     neuralBaseline: pick(local.neuralBaseline, remote.neuralBaseline),
   };
+}
+
+// streak/lastDate del estado con lastDate más reciente (respeta el reset
+// tras un hueco). Empate o ausencia → local (más fresco para la sesión activa).
+function pickStreak(local, remote) {
+  const localLD = Date.parse(local?.lastDate) || 0;
+  const remoteLD = Date.parse(remote?.lastDate) || 0;
+  const src = remoteLD > localLD ? remote : local;
+  return { streak: src?.streak || 0, lastDate: src?.lastDate ?? null };
 }
 
 function dedupe(arr, key) {

@@ -33,7 +33,12 @@ function relTime(ts, now) {
   if (d === 1) return "ayer";
   if (d < 7) return `hace ${d} días`;
   if (d < 30) return `hace ${Math.floor(d / 7)} sem`;
-  return `hace ${Math.floor(d / 30)} mes`;
+  if (d < 365) {
+    const m = Math.floor(d / 30);
+    return `hace ${m} ${m === 1 ? "mes" : "meses"}`;
+  }
+  const y = Math.floor(d / 365);
+  return `hace ${y} ${y === 1 ? "año" : "años"}`;
 }
 
 function footprintParts(z) {

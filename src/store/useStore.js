@@ -200,6 +200,11 @@ function migrate(data) {
     // el v13 lo seteaba true. Aquí no hacemos nada — preservamos preferencia.
     // v16: persistencia local de conversaciones del coach (Phase 6C SP3).
     if (!Array.isArray(merged.coachConversations)) merged.coachConversations = [];
+    // Sanea conversaciones corruptas (messages null/no-array de un sync viejo)
+    // → evita TypeError en logCoachMessage al volver tras un hueco largo.
+    else merged.coachConversations = merged.coachConversations
+      .filter((c) => c && typeof c === "object")
+      .map((c) => (Array.isArray(c.messages) ? c : { ...c, messages: [] }));
     if (typeof merged.coachActiveConversationId === "undefined") merged.coachActiveConversationId = null;
     // v17: Phase Polish-Tier-3 — monthly digest dedup timestamp.
     // Defaults a 0 (epoch) → primer trigger ocurrirá cuando totalSessions ≥ 30
@@ -770,7 +775,9 @@ export const useStore = create((set, get) => ({
     };
     // Sliding window: cap 50 mensajes/conv para evitar bloat IDB en
     // conversaciones muy largas. Dropea los más antiguos.
-    const messages = [...prev.messages, newMsg].slice(-50);
+    // Guard: una conversación corrupta (messages null/no-array, p.ej. de un
+    // sync viejo) haría crash en el spread. Coerción defensiva.
+    const messages = [...(Array.isArray(prev.messages) ? prev.messages : []), newMsg].slice(-50);
     const updated = { ...prev, messages, lastMessageAt: newMsg.ts };
     const next = [...conversations];
     next[idx] = updated;

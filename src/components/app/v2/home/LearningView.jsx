@@ -32,6 +32,10 @@ import { colors, typography, spacing, radii, surfaces, motion as motionTok } fro
 // (manejado dentro de ProgramActiveCard); auto-modal interruptivo si pasaron
 // ≥3 días desde reEvalAt sin completar (manejado en useEffect abajo).
 const REEVAL_AUTO_MODAL_DAYS_OVERDUE = 3;
+// Cota superior: si la re-eval está MUY vencida (usuario volvió tras un hueco
+// largo), el programa está efectivamente abandonado — no emboscar con el modal
+// al abrir la app. Por encima de esto se ofrece de forma pasiva, no automática.
+const REEVAL_AUTO_MODAL_MAX_OVERDUE = 21;
 
 // Phase 6E SP-A — vista intermedia "learning" entre cold-start (0
 // sesiones) y personalized (20+ sesiones). Antes el branch 1≤N<20
@@ -130,7 +134,9 @@ export default function LearningView({
     const reEvalAtMs = new Date(activeProgram.reEvalAt).getTime();
     if (!Number.isFinite(reEvalAtMs)) return;
     const daysOverdue = Math.floor((Date.now() - reEvalAtMs) / 86400_000);
-    if (daysOverdue >= REEVAL_AUTO_MODAL_DAYS_OVERDUE) {
+    // Solo auto-abrir en la ventana [3, 21] días. Más allá = regreso tras hueco
+    // largo → no emboscar; el programa se maneja pasivamente / se puede abandonar.
+    if (daysOverdue >= REEVAL_AUTO_MODAL_DAYS_OVERDUE && daysOverdue <= REEVAL_AUTO_MODAL_MAX_OVERDUE) {
       setReEvalModalOpen(true);
     }
   }, [activeProgram]);

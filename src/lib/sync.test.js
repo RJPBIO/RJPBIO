@@ -12,14 +12,29 @@ describe("mergeStates — merge strategy", () => {
     expect(mergeStates(local, null)).toEqual(local);
   });
 
-  it("counters → MAX (nunca decremento)", () => {
-    const local = { totalSessions: 10, vCores: 50, streak: 3, bestStreak: 5 };
-    const remote = { totalSessions: 12, vCores: 30, streak: 7, bestStreak: 4 };
+  it("counters monotónicos → MAX (nunca decremento)", () => {
+    const local = { totalSessions: 10, vCores: 50, bestStreak: 5 };
+    const remote = { totalSessions: 12, vCores: 30, bestStreak: 4 };
     const merged = mergeStates(local, remote);
     expect(merged.totalSessions).toBe(12); // MAX
     expect(merged.vCores).toBe(50);        // MAX
-    expect(merged.streak).toBe(7);         // MAX
-    expect(merged.bestStreak).toBe(5);     // MAX
+    expect(merged.bestStreak).toBe(5);     // MAX (histórico, sí monotónico)
+  });
+
+  it("streak NO usa MAX — se resetea tras un hueco (bug 2yr+gap)", () => {
+    // Regreso tras 2 meses: local hizo sesión hoy → streak 1; remote (server,
+    // último sync hace 2 meses) tiene streak 5. Debe ganar el de lastDate más
+    // reciente (local=1), NO Math.max que lo resucitaría a 5.
+    const local = { streak: 1, lastDate: "2026-06-30" };
+    const remote = { streak: 5, lastDate: "2026-04-28" };
+    expect(mergeStates(local, remote).streak).toBe(1);
+    expect(mergeStates(local, remote).lastDate).toBe("2026-06-30");
+  });
+
+  it("streak → gana el remote si su lastDate es más reciente (otro dispositivo)", () => {
+    const local = { streak: 2, lastDate: "2026-06-25" };
+    const remote = { streak: 9, lastDate: "2026-06-29" };
+    expect(mergeStates(local, remote).streak).toBe(9);
   });
 
   it("totalTime → MAX", () => {
