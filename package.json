@@ -26,6 +26,7 @@
     "seed": "node scripts/seed.js",
     "verify:audit": "node scripts/verify-audit.js",
     "verify:backup": "node scripts/verify-backup.js",
+    "verify:staging": "node scripts/verify-staging.mjs",
     "rotate:key": "node scripts/rotate-data-key.js",
     "sbom": "cyclonedx-npm --output-file sbom.json",
     "postinstall": "prisma generate || true"
