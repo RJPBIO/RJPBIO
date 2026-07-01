@@ -173,11 +173,13 @@ export async function withTenant(ctx, fn) {
   }
   const userId = ctx?.userId ?? "";
   const orgIds = Array.isArray(ctx?.orgIds) ? ctx.orgIds.join(",") : "";
+  const memberIds = Array.isArray(ctx?.memberIds) ? ctx.memberIds.join(",") : "";
   const role = ctx?.role ?? "";
   return orm.$transaction(async (tx) => {
     // Parametrizado (no interpolación) → sin riesgo de inyección.
     await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
     await tx.$executeRaw`SELECT set_config('app.org_ids', ${orgIds}, true)`;
+    await tx.$executeRaw`SELECT set_config('app.member_ids', ${memberIds}, true)`;
     await tx.$executeRaw`SELECT set_config('app.role', ${role}, true)`;
     return fn(tx);
   });
